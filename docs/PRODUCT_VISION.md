@@ -318,6 +318,13 @@ the spaced production dialogue plays underneath it.
 - Candidate video generation: a fast/cheap tier (e.g. Veo 3.1 Lite with
   audio) for ordinary shots, escalating temporarily to a stronger model when
   the lower tier repeatedly misses the concept.
+- Gemini Omni 1.1 Flash (Google, released 2026) is a concrete example worth
+  designing around: it offers a 360p draft tier at roughly a third of its own
+  720p cost, with a path to upscale an approved draft to 1080p/4K, plus
+  short video-reference, first/last-frame keyframing, and scene-extension
+  features useful for character consistency. See the "Draft Room and
+  Cost-Tiered Generation" design in `docs/design/media-generation.md` for how
+  HeartWord's shot-iteration loop should use this kind of capability.
 - Model choice must be visible and controllable inside HeartWord rather than
   buried in code.
 - Candidate image/keyframe generation: a cost-efficient default model, with
@@ -332,9 +339,12 @@ the spaced production dialogue plays underneath it.
   should lose its generation provenance.
 
 These are starting preferences based on what worked (and what didn't) in
-prior attempts, not permanent hard-coded dependencies. HeartWord should make
-it possible to test, compare, and replace providers as their quality, cost,
-and APIs change.
+prior attempts, not permanent hard-coded dependencies. Every provider sits
+behind a single provider interface (see "Provider abstraction" in
+`docs/ARCHITECTURE.md`) precisely because this list is expected to keep
+changing as vendors ship new capabilities or drop prices; HeartWord should
+make it possible to test, compare, and replace providers as their quality,
+cost, and APIs change without rewriting pipeline stages.
 
 ### Cost Governance
 
