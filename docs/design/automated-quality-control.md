@@ -42,6 +42,9 @@ results for human review rather than silently approving or rejecting
 borderline results. This connects directly to the Image Validator and Video
 Validator stages in the staged production workflow.
 
+A held-for-human-review result is a candidate producer-notification
+event — see `docs/design/notifications.md`.
+
 ## Candidate checks (assembled video)
 
 - Audio/video sync drift across scene boundaries.

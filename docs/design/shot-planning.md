@@ -67,6 +67,10 @@ smoothed over.
 
 ## Interaction Log
 
+An unresolved disagreement, or a chapter reaching a reviewable state, is
+also a candidate producer-notification event — see
+`docs/design/notifications.md`.
+
 The full multi-agent planning interaction for a chapter is captured as a log
 — who (which role) said what, in what order, including proposals,
 objections, and the final resolution — and that log is accessible from the
