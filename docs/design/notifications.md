@@ -54,6 +54,17 @@ Multiple channels are worth having, roughly in order of setup effort:
   effort (an actual app, or a PWA built and configured for web push). This
   is the likely long-term target once notification patterns are well
   understood.
+- **WhatsApp self-message.** If WhatsApp is logged in on the producer's own
+  machine, HeartWord can drive it directly to send a message to the
+  producer's own "(You)" self-chat — effectively free (no third-party
+  signup, no per-message cost) and immediately available without any new
+  integration. The tradeoff is that it depends on the producer's own
+  machine being on and logged into WhatsApp, unlike a cloud-hosted channel
+  such as email, Pushover/ntfy.sh, or Twilio, which work regardless of
+  whether any particular machine is running. Best treated as a
+  convenience/personal channel to try alongside the others, not a
+  replacement for a channel that works when the producer's machine is
+  off.
 
 Like generation providers (`docs/ARCHITECTURE.md`'s Provider abstraction
 principle), notification delivery should sit behind one interface so a
