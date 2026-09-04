@@ -17,9 +17,12 @@ tool exists to enforce, not duplicate.
 - An approved headshot, built for close-up lip-sync work.
 - Multiple body/pose reference images covering different shot types (e.g.
   wide, action, group).
-- Voice mapping: a dropdown selection against available voice provider IDs
-  (e.g. ElevenLabs), with a live audio test so the producer can hear the
-  assigned voice before approving it.
+- Voice mapping — only for a character that has spoken lines in at least
+  one scene. A non-speaking character (a crowd extra, a silent bystander)
+  has no voice field to fill in at all, not just an empty one. For a
+  speaking character: a dropdown selection against available voice
+  provider IDs (e.g. ElevenLabs), with a live audio test so the producer
+  can hear the assigned voice before approving it.
 - Version, approval status, and provenance, consistent with the rest of
   HeartWord's asset model (see Assets, Versions, and Portability in
   `docs/PRODUCT_VISION.md`).
@@ -57,6 +60,13 @@ canon gap is a fast, in-context action taken from the point where it
 blocked production, not a separate offline task the producer has to
 remember to come back to.
 
+A missing voice mapping is its own gap, separate from a missing visual
+asset, and is only ever raised for a shot where that character actually
+speaks. A character can be fully visually approved and still block
+generation later purely on voice, the first time a scene gives them a
+line — that's expected, not a sign the character record was incomplete
+before.
+
 This is expected to be the tool's most common real use: the canon started
 only partially complete, and it keeps growing one gap at a time as new
 chapters surface characters that don't have approved assets yet.
@@ -73,6 +83,10 @@ promotion can be rolled back.
 
 ## Voice Mapping and Live Test
 
+- Applies only to characters with spoken lines. Most named characters in a
+  given chapter will need this; most crowd/background characters won't —
+  the distinction is whichever the source text and scene breakdown actually
+  attributes speech to, not the character's prominence.
 - The voice dropdown lists available provider voice IDs for the character
   to choose from.
 - A live audio test plays a sample line in the assigned voice before the
@@ -81,6 +95,10 @@ promotion can be rolled back.
 - Existing voice assignments recovered from prior BVET-Data work (see Audio
   Model in `docs/PRODUCT_VISION.md`) should be reviewed and reused through
   this same mapping rather than reassigned from scratch.
+- Collective/crowd lines may be voiced by a single representative speaker
+  while the rest of the group is shown reacting silently (see Canon Builder
+  and Voice Approval in `docs/PRODUCT_VISION.md`) — that representative
+  speaker is the one who gets a voice mapping, not the whole group.
 
 ## Open questions
 

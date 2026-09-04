@@ -139,9 +139,12 @@ for the tool's workflow in full; in summary:
 - A character record covers a name, an approved headshot (built for
   close-up lip-sync work), and multiple body/pose reference images for
   different shot types.
-- Voice mapping is a dropdown selection against the available voice
-  providers/IDs (e.g. ElevenLabs), with a live audio test so the producer can
-  hear a character's assigned voice before approving it.
+- Voice mapping applies only to characters with spoken lines in at least
+  one scene — a non-speaking character (a crowd extra, someone who only
+  appears silently) never needs one. For a speaking character, voice
+  mapping is a dropdown selection against the available voice providers/
+  IDs (e.g. ElevenLabs), with a live audio test so the producer can hear a
+  character's assigned voice before approving it.
 - When starting a new character, the AI proposes a starting
   description/prompt for the character's appearance (informed by the
   regional canon and the role the character plays in the source text) for the

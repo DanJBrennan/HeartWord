@@ -19,8 +19,9 @@ the video/casting stage draw from.
 - Stable enough to survive many scenes/chapters without drifting in
   appearance.
 - Built via the Character Creation & Editing Tool described in
-  `docs/PRODUCT_VISION.md`: a headshot, multiple body/pose images, voice
-  mapping with live audio test, and an AI-suggested starting description.
+  `docs/PRODUCT_VISION.md`: a headshot, multiple body/pose images, an
+  AI-suggested starting description, and — for characters with spoken
+  lines only — voice mapping with a live audio test.
 
 ## Recognition Hierarchy
 

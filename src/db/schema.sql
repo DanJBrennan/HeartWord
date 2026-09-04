@@ -46,8 +46,8 @@ CREATE TABLE character_versions (
   character_id TEXT NOT NULL REFERENCES characters(id),
   version_label TEXT NOT NULL,      -- e.g. 'v1', 'v2-candidate'
   status TEXT NOT NULL CHECK (status IN ('candidate','approved','superseded','rejected')),
-  voice_provider TEXT,              -- e.g. 'elevenlabs'
-  voice_id TEXT,
+  voice_provider TEXT,              -- e.g. 'elevenlabs'; NULL for a
+  voice_id TEXT,                    -- character with no spoken lines
   notes TEXT,
   created_at INTEGER NOT NULL,
   UNIQUE (character_id, version_label)
