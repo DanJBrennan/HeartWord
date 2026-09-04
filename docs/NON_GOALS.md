@@ -22,3 +22,9 @@ Explicitly out of scope, to keep the pipeline focused:
   Specific tool choices (e.g. a lip-sync engine, a voice provider) are
   implementation details tracked in `docs/design/`, not baked into the product
   vision.
+- **Not responsible for field playback compatibility.** HeartWord's job is to
+  produce a well-encoded, appropriately small export for the WhatsApp/
+  tribal-distribution channel (see `docs/PRODUCT_VISION.md`'s Post
+  Production and Distribution); validating and troubleshooting playback
+  across the actual range of Android devices in the field is handled by the
+  missionary team on the ground, not by HeartWord itself.

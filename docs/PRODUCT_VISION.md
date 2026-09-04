@@ -511,7 +511,13 @@ actually reaches its audience:
   video message versus a file/document to control what quality survives). A
   third channel, the `heartword.ai` website itself, is planned but does not
   exist yet; once built it would likely host the YouTube-quality master
-  copy for browser/laptop viewing rather than needing its own tier.
+  copy for browser/laptop viewing rather than needing its own tier. Public
+  YouTube publication additionally requires securing rights clearance from
+  FCBH (the source-audio rights holder) first; HeartWord should still
+  design and produce the YouTube-quality master, but no chapter is actually
+  published to YouTube until that clearance is in place — independent of
+  when it's ready for WhatsApp/tribal distribution, which does not wait on
+  it.
 - **Master** — the highest resolution the generation and upscale path
   actually produced for that chapter (up to 4K where the Draft Room's
   upscale-from-360p-draft path in `docs/design/media-generation.md` was
@@ -542,6 +548,26 @@ HeartWord Studio as the production tool and the `heartword.ai` domain (e.g.
 "This Gospel of Mark film was produced in HeartWord Studio"), alongside any
 Scripture-source and translation-team acknowledgments. It should stay
 understated relative to the Scripture content itself.
+
+### Field Review Before Distribution
+
+Because the WhatsApp/Bluetooth/USB-C distribution chain is effectively
+one-way — once a chapter reaches village leaders there is no way to recall
+or quietly replace it — field review is a hard gate before that channel,
+not an optional nicety. Ryan, the missionary partner who distributes each
+chapter, speaks Hatam and leads a team of native Hatam speakers who review
+every chapter before it goes out; their approval is what actually clears a
+chapter for WhatsApp distribution, on top of HeartWord's own automated
+validators (Staged Production Workflow, above). An early 4-minute pilot
+made this way was already distributed to at least 10 people and received
+positive feedback, ahead of the full Mark series.
+
+Feedback from that review, and from the field generally, reaches the
+producer directly through Ryan rather than through any in-app analytics or
+reporting feature. HeartWord is designed for a single producer (Dan) who
+makes the resulting edits; it is not a multi-user review/approval system,
+and native-speaker reviewers are not expected to need accounts or roles
+inside the tool itself.
 
 ## Music and Finishing
 
