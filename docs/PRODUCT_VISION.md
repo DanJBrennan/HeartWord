@@ -33,6 +33,23 @@ The operating lesson from attempt two: keep every unit of work traceable back
 to this vision document. A large batch of disconnected fix-it tickets is a
 warning sign, not progress. See `AGENTS.md` and `docs/NON_GOALS.md`.
 
+## Naming and Branding
+
+- **HeartWord AI** is the organization/company. Its domain is `heartword.ai`.
+  Tagline: "Faithful Scripture media for every heart language."
+- **HeartWord Studio** is the software described by this vision document — the
+  AI production studio itself. Tagline: "An AI production studio for
+  Scripture in every heart language." ("HeartWord" is used as a shorthand for
+  HeartWord Studio elsewhere in this document and repo.)
+- **HeartWord Films** is the finished video output produced by HeartWord
+  Studio.
+- **HeartWord Illustrated** is the comic/illustrated Scripture output
+  produced alongside (or from) the same production.
+- Each Mark video's closing scroll should credit the tool and the
+  organization, e.g. "This Gospel of Mark film was produced in HeartWord
+  Studio," along with the `heartword.ai` domain. See "Post Production and
+  Distribution" below.
+
 ## Why HeartWord Exists
 
 The Mark 2:1-12 pilot (produced under BVET) required more than 50 editing
@@ -423,6 +440,8 @@ audio-only edition. External editors (e.g. Premiere Pro, Filmora) remain
 integration/export targets to evaluate rather than hidden runtime
 dependencies; HeartWord retains the project timeline and provenance as its
 own source of truth.
+
+The closing treatment for each Mark video should include a brief credit scroll naming HeartWord Studio as the production tool and the `heartword.ai` domain (e.g. "This Gospel of Mark film was produced in HeartWord Studio"), alongside any Scripture-source and translation-team acknowledgments. It should stay understated relative to the Scripture content itself, and belongs in the closing treatment discussed above, not layered over the narrative footage.
 
 ## Music and Finishing
 
