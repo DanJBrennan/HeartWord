@@ -133,7 +133,8 @@ workflow, with review and costs accessible where decisions are made.
 
 BVET's canon character library was only partially complete, and building it
 out was ad hoc. HeartWord treats character creation and maintenance as a
-first-class tool, not a side process:
+first-class tool, not a side process. See `docs/design/character-tool.md`
+for the tool's workflow in full; in summary:
 
 - A character record covers a name, an approved headshot (built for
   close-up lip-sync work), and multiple body/pose reference images for

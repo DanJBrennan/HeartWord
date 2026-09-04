@@ -15,7 +15,9 @@ for the full pitch and `docs/ARCHITECTURE.md` for how the pipeline is structured
 1. Read `docs/PRODUCT_VISION.md`, `docs/NON_GOALS.md`, and `docs/ARCHITECTURE.md` first.
 2. Check `docs/plans/CURRENT_GOAL.md` for what's actively being worked on.
 3. Check the relevant file under `docs/design/` before touching timeline, media
-   generation, character, audio, or QC logic — each subsystem has a design doc.
+   generation, character (`canonical-characters.md` for canon/identity rules,
+   `character-tool.md` for the creation/editing tool itself), audio, or QC
+   logic — each subsystem has a design doc.
 4. Prefer extending an existing pipeline stage over adding a new one; if a new
    stage is genuinely needed, add a design doc for it under `docs/design/`.
 
