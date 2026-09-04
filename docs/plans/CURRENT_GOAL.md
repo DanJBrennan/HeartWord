@@ -105,35 +105,44 @@ cost_ledger_entries, review_notes). It deliberately mirrors BVET-Data's own
 `identityId`/`scope`/region conventions so imported characters carry their
 provenance rather than being re-modeled from scratch.
 
+## Mark 2 assets imported (confirmed 2026-09-04)
+
+Dan confirmed the import plan. Copied into `HeartWordData/assets/`
+(sha256-verified against the source manifests after copy):
+
+- `source/hatam/mark-2/` — the Hatam Mark 2 text and FCBH audio, from
+  `BVET-Data/assets/`.
+- `characters/jesus/` and `characters/matthew/` — full production packages
+  (lip-sync close-up + 4 body/pose views), `approved` status, from
+  `OpenAI-Code Comics/assets/characters/Video Character Library/Regional
+  Canon/Papuan/`.
+- `characters/mark-2-{friend-1-rust,friend-2-olive,friend-3-slate,
+  friend-4-brown,paralytic,principal-scribe,crowd-witnesses}/` — one
+  producer-approved turnaround sheet each, same source repo.
+- `characters/import-manifest.json` — provenance for every file above
+  (legacy identity id, canon status, sha256, source path), field-shaped to
+  match `characters`/`character_versions`/`character_assets` in
+  `src/db/schema.sql` so a future seed script can load it directly instead
+  of re-deriving it.
+
+**Voice mapping is scoped to speaking characters only** (see
+`docs/design/character-tool.md`): Jesus and Matthew clearly need it. The
+paralytic, the four friends, and the crowd witnesses probably don't — Mark
+2 gives them no quoted lines — but the manifest flags the principal scribe
+as a maybe, since the Pharisees'/scribes' spoken objections elsewhere in
+the chapter (2:16, 2:24) may get attributed to him once shot planning
+happens. Don't assume "no line" until the scene breakdown confirms it.
+
+`OpenAI-Code Comics/claude-pilot/` (the folder Dan remembered as
+"/claude-pilot") holds the earlier pilot's production scripts (per-scene
+Veo generation, Kling lip-sync client, a 7-scene/50-segment rough-cut
+concat list) — kept as implementation reference for the media-generation
+and assembly stages, not imported as assets (the rough cut's own segment
+files are no longer present there).
+
 ## Next up
 
-- **Mark 2 asset import** — investigated across two source repos; a
-  concrete plan is pending Dan's confirmation before anything is copied.
-  - Hatam text and FCBH audio for Mark 2 exist in `BVET-Data/assets/` and
-    are ready to import as-is.
-  - The real video-production character canon is **not** in BVET-Data's
-    `assets/characters/Books/Mark/` (that JSON-record library is thin/
-    stale for Mark 2) — it's in a separate repo, `OpenAI-Code Comics`, at
-    `assets/characters/Video Character Library/Regional Canon/Papuan/`.
-    This is the canon actually used to produce Dan's earlier 4-minute
-    pilot: Jesus, Peter, John the Baptist, and Matthew are `approved` with
-    full 5-image production packages (lip-sync close-up + 4 body/pose
-    views) and recorded accessory canons. All six Mark-2-specific
-    characters — Friend 1-4, the healed paralytic, and the principal
-    scribe — plus a crowd reference ("Eight recurring witnesses +
-    adolescent") are `production-canon` status: one producer-approved
-    multi-view turnaround sheet each (not yet split into the full 5-image
-    package), with sha256-verified files and provenance recording Dan's
-    2026-08-03 approval. So the earlier read of a missing crowd archetype
-    and unapproved Mark 2 candidates was wrong — corrected here.
-  - `OpenAI-Code Comics/claude-pilot/` (the folder Dan remembered as
-    "/claude-pilot") holds the actual pilot production scripts (per-scene
-    Veo generation, Kling lip-sync client, a 7-scene/50-segment rough-cut
-    concat list) — useful as implementation reference for the media-
-    generation and assembly stages, though the rough cut's own segment
-    files are no longer present there to import.
-- Once the import plan is confirmed and assets land in `HeartWordData/`:
-  actual implementation of the v1 pipeline can begin.
+- Actual implementation of the v1 pipeline can begin.
 
 Out of scope for now: which subset of the illustrated-Scripture prior
 attempt's assets to import — not needed until the Illustrated lane is
