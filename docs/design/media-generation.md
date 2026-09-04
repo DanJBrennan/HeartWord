@@ -68,5 +68,9 @@ in without redesigning this workflow.
   window).
 - Compute requirements and where generation runs (same constraint space as
   lip-sync — see `docs/design/audio-and-speakers.md`).
-- Whether a rejected draft should retry with a revised prompt automatically,
-  or always return to the producer/Scene Choreographer for a new decision.
+- The automated media review in `docs/design/automated-quality-control.md`
+  resolves to one of: accept, retry same prompt, retry with a modified
+  prompt, escalate to a different provider/tier, or hold for human review.
+  What's still open here is the policy for how many automatic retries/
+  escalations a shot gets before it must return to the producer/Scene
+  Choreographer rather than continuing to loop on its own.

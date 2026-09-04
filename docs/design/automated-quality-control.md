@@ -29,6 +29,23 @@ for future review accordingly. This is meant to be a learning/adaptive
 rubric, not a static one — closer in spirit to the Story Validator's retained
 scoring rubric in `docs/PRODUCT_VISION.md` than to a hardcoded checklist.
 
+Good seed dimensions for that rubric, beyond the two above — not a fixed or
+complete list, but concrete enough to start from rather than inventing
+criteria from nothing: canonical likeness (does the character actually match
+their approved reference, not a generic look-alike), correct characters
+present and no extras invented, plausible mouth-sync for a lip-synced
+close-up, malformed or extra hands/faces, unwanted text or artifacts baked
+into the image, continuity with the immediately preceding shot, and coverage
+of the requested action without silently dropping part of it.
+
+When review yields a verdict, it should resolve to one of a small set of
+concrete outcomes rather than a bare pass/fail: accept, retry with the same
+prompt (useful for a provider's own generation variance), retry with a
+modified prompt, escalate to a different provider or tier, or hold for human
+review. This gives the Draft Room's iteration loop
+(`docs/design/media-generation.md`) something concrete to act on
+automatically rather than stopping at "this draft looks wrong."
+
 This review is especially valuable at the cheap draft-tier stage: catching an
 off-tone or off-request draft before it's escalated to an expensive
 full-resolution render protects the cost-governance model in

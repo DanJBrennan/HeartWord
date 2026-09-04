@@ -59,6 +59,17 @@ such as trimming two seconds or sliding audio. HeartWord should make that kind
 of detailed iteration faster and more visible, while supporting the whole path
 from a passage idea to a reviewed, rendered Scripture video.
 
+HeartWord's durable product is the autonomous pipeline, not the editor:
+verified Scripture, its heart-language audio, and an approved regional visual
+canon go in, and a finished chapter video comes out with minimal manual
+intervention (see the autonomous storyboard default in Story and Shot
+Planning, and Product Behavior and Quality Standard below). The editor exists
+so the producer can inspect, correct, and override what the autonomous
+pipeline produced — it is not the primary way a chapter gets made. Investment
+should follow that priority: pipeline judgment and automated quality control
+come first; editor polish exists to support review and correction, not to
+recreate a professional NLE.
+
 HeartWord is envisioned as a Bible-centered video editor that starts with an
 idea and a set of verses, then helps plan, generate, assemble, revise, and
 render the result. It should understand the relationship between verified

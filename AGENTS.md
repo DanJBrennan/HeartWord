@@ -31,6 +31,32 @@ for the full pitch and `docs/ARCHITECTURE.md` for how the pipeline is structured
   translation and narration say — see `docs/NON_GOALS.md`.
 - When you finish a unit of work, update `docs/plans/CURRENT_GOAL.md` and, if a
   plan document is fully done, move it into `docs/plans/completed/`.
+- Never infer a major product requirement from the existing code. The
+  product specification (`docs/PRODUCT_VISION.md` and `docs/design/`) defines
+  what HeartWord should become; the existing code only describes what has
+  been implemented so far. If a change creates ambiguity about product goal,
+  architecture, or priorities, stop and ask Dan rather than resolving it
+  yourself. Do not create additional features, tickets, abstractions, or
+  subsystems merely because they seem useful — this is how a prior attempt
+  at this project fragmented into roughly 100 disconnected tickets and lost
+  the goal (see Lineage and Lessons Learned in `docs/PRODUCT_VISION.md`).
+
+### Goal Guardian check
+
+Before starting substantial implementation work, state the product goal and
+acceptance criteria it serves, in terms of `docs/PRODUCT_VISION.md`,
+`docs/plans/CURRENT_GOAL.md`, and `docs/USER_WORKFLOW.md` — not just the
+ticket or prompt in front of you. When that work is done, check the result
+against those documents, not merely against passing tests: a change can pass
+every test and still not be what was asked for. Concretely, ask: has the
+implementation wandered from the stated goal? Has it invented requirements,
+tickets, or complexity beyond what was asked? Is Dan's actual workflow
+preserved? Anything that genuinely requires a product decision gets
+surfaced to Dan rather than resolved autonomously. This applies regardless
+of which coding agent or harness is doing the work, and is worth running as
+an explicit, separate pass — by a second agent/session, or a dedicated
+review step — rather than trusting the same pass that wrote the code to
+also judge it.
 
 ## Tests
 
