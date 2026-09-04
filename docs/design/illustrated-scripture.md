@@ -188,8 +188,12 @@ Illustrated Scripture and the video lane share the same underlying Scripture
 text, audio, and character identity, but are different visual systems built
 for different media. The prior attempt's direction — and a reasonable
 default here — was: the illustrated canon is the first-approved identity for
-a character, and the video canon is a derived, "slightly more realistic"
-translation of that same identity for on-screen video use. The video canon
+a character, and the video canon is a derived, realistic translation of
+that same semi-realistic illustrated identity for on-screen video use.
+Whether Illustrated itself moves to realistic characters in the future is an
+open question, not yet decided (see Naming and Branding in
+`docs/PRODUCT_VISION.md` and the Visual World and Character Direction
+section there). The video canon
 must not redesign or contradict the illustrated canon, and should retain a
 visible link back to it. See the open question in
 `docs/design/canonical-characters.md` about whether HeartWord keeps this

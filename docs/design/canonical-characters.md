@@ -94,8 +94,8 @@ previously:
   community).
 - How the Illustrated Scripture canon and the video canon relate: the prior
   attempt treated illustrated/comic characters as the primary, first-approved
-  identity and treated video characters as a derived, "slightly more
-  realistic" translation of that same identity that must not redesign it and
+  identity and treated video characters (realistic) as a derived translation
+  of that same semi-realistic illustrated identity that must not redesign it and
   must retain a provenance link back to it. Whether HeartWord keeps that same
   direction, or unifies the two into one canon, is an open decision — see
   `docs/design/illustrated-scripture.md`.

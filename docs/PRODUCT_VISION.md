@@ -200,8 +200,10 @@ historically coherent with that world. The underlying principle is that
 viewers identify with the message through familiar faces; the clothing,
 trees, and buildings do not need to be transplanted to modern Papua.
 
-The existing companion comic uses partially stylized characters. The video
-lane uses realistic or slightly realistic characters. HeartWord should help
+The existing companion comic (HeartWord Illustrated) uses semi-realistic
+characters. The video lane (HeartWord Films) uses realistic characters.
+Whether Illustrated moves to realistic characters in the future is an open
+question, not yet decided. HeartWord should help
 the producer create and complete the video character canon (see "Character
 Creation & Editing Tool" above), including the characters needed for Mark.
 Character headshots should be very high quality, with useful full-body and
