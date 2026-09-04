@@ -61,13 +61,16 @@ in without redesigning this workflow.
 
 ## Open questions
 
-- Specific generation tooling/models to use for 3D scenes and characters,
-  and which providers' draft tiers are worth routing through by default.
 - How to keep a character's appearance consistent scene-to-scene without
   manual correction each time (beyond a single provider's short-reference
-  window).
-- Compute requirements and where generation runs (same constraint space as
-  lip-sync — see `docs/design/audio-and-speakers.md`).
+  window) — the targeted-edit capability above helps for single-detail
+  fixes, but broader drift across many scenes is a separate problem.
+- Compute requirements and where generation runs: resolved for v1 as "not
+  applicable" — Nano Banana, Veo 3.1 Lite, Omni 1.1, and Kling's Avatar API
+  are all cloud-hosted and API-key authenticated, so v1 needs no local GPU
+  provisioning for media generation itself (see
+  `docs/design/audio-and-speakers.md` for whether that holds for lip-sync
+  too).
 - The automated media review in `docs/design/automated-quality-control.md`
   resolves to one of: accept, retry same prompt, retry with a modified
   prompt, escalate to a different provider/tier, or hold for human review.

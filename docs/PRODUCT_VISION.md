@@ -361,33 +361,41 @@ the spaced production dialogue plays underneath it.
 
 ## Generation Providers, Models, and Cost
 
-- Candidate video generation: a fast/cheap tier (e.g. Veo 3.1 Lite with
-  audio) for ordinary shots, escalating temporarily to a stronger model when
-  the lower tier repeatedly misses the concept.
-- Gemini Omni 1.1 Flash (Google, released 2026) is a concrete example worth
-  designing around: it offers a 360p draft tier at roughly a third of its own
-  720p cost, with a path to upscale an approved draft to 1080p/4K, plus
-  short video-reference, first/last-frame keyframing, and scene-extension
-  features useful for character consistency. See the "Draft Room and
-  Cost-Tiered Generation" design in `docs/design/media-generation.md` for how
-  HeartWord's shot-iteration loop should use this kind of capability.
+Confirmed v1 providers (see `docs/ARCHITECTURE.md`'s Provider interface for
+how these map onto the provider abstraction):
+
+- **Image generation:** Google Nano Banana for routine keyframes, Nano
+  Banana Pro for canon-critical or higher-quality needs — the same
+  cost-tiering the vision already called for (routine vs. canon-critical),
+  now naming the actual models. Authenticated via `GEMINI_API_KEY`.
+- **Video generation:** Google Veo 3.1 Lite — 720p for most shots, 1080p for
+  emotionally important or otherwise higher-priority shots. Also
+  authenticated via `GEMINI_API_KEY` (same credential as image generation,
+  since both are part of the same Google/Gemini API family).
+- **Draft tier, keyframe-guided generation, and targeted image editing:**
+  Google Gemini Omni 1.1 — the 360p Draft Room tier (see
+  `docs/design/media-generation.md`), the start/end-keyframe-guided scene
+  generation feature (more directorial control over a shot's beginning and
+  end than open-ended generation gives), and editing just a region of an
+  existing image (e.g. correcting a costume detail like a belt buckle)
+  without regenerating the whole image. Also under `GEMINI_API_KEY`. The
+  targeted-edit capability is a first-class operation HeartWord should
+  expose, not just a fallback — it's the fast path for both fixing an
+  approved character asset (see `docs/design/character-tool.md`) and
+  correcting a returned shot that's otherwise right.
+- **Lip-sync:** Kling.ai's Avatar API, authenticated via `KLING_API_KEY_1`
+  (a separate credential/vendor from the Google-family models above).
 - Model choice must be visible and controllable inside HeartWord rather than
   buried in code.
-- Candidate image/keyframe generation: a cost-efficient default model, with
-  the ability to move to a higher-capability option when results are not
-  sufficient.
-- A dedicated close-up audio-to-video lip-sync provider (e.g. Kling Avatar)
-  is a likely fit for character dialogue shots.
 - HeartWord must monitor generation cost, especially keyframe and video
   calls, and associate costs with the resulting assets and attempts.
 - Track every generated clip, keyframe, provider, model, prompt, source
   asset, version, retry, status, and approval decision. No accepted result
   should lose its generation provenance.
 
-These are starting preferences based on what worked (and what didn't) in
-prior attempts, not permanent hard-coded dependencies. Every provider sits
-behind a single provider interface (see "Provider abstraction" in
-`docs/ARCHITECTURE.md`) precisely because this list is expected to keep
+These are v1's actual providers, not placeholders — but they still sit
+behind the single provider interface described in "Provider abstraction" in
+`docs/ARCHITECTURE.md`, precisely because this list is expected to keep
 changing as vendors ship new capabilities or drop prices; HeartWord should
 make it possible to test, compare, and replace providers as their quality,
 cost, and APIs change without rewriting pipeline stages.

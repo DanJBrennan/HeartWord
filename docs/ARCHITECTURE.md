@@ -215,18 +215,43 @@ next stage starts, so:
 
 ## Provider interface (v1 shape)
 
-One TypeScript interface per media type, with exactly one adapter
-implementation per type for v1 (per the confirmed v1 scope):
+**Confirmed v1 providers:** Google Nano Banana / Nano Banana Pro (images),
+Google Veo 3.1 Lite (video, 720p/1080p), and Google Gemini Omni 1.1 (draft
+tier, keyframe-guided generation, targeted image editing) all sit behind
+one Gemini/Google adapter authenticated with a single `GEMINI_API_KEY` —
+they're one vendor family, so one adapter module implements several
+provider interfaces rather than one interface having several vendors
+behind it. Kling.ai's Avatar API (lip-sync) is a separate adapter,
+authenticated with `KLING_API_KEY_1`. See Generation Providers, Models, and
+Cost in `docs/PRODUCT_VISION.md`.
 
 ```ts
-interface VideoProvider {
-  generateDraft(request: ShotRequest): Promise<GenerationResult>;
-  generateFinal(request: ShotRequest, draftRef?: AttemptId): Promise<GenerationResult>;
+interface ImageProvider {
+  // tier "pro" → Nano Banana Pro; default → Nano Banana
+  generate(request: ShotRequest, opts?: { tier?: "standard" | "pro" }): Promise<GenerationResult>;
 }
-// ImageProvider, VoiceProvider, LipSyncProvider follow the same shape:
-// a draft/final split even if v1 only calls the final path, so the Draft
-// Room's cost-tiering (deferred, see CURRENT_GOAL.md) is an additive call
-// pattern later, not an interface change.
+
+interface ImageEditor {
+  // Omni 1.1 only for v1 — a targeted region edit, not a full regeneration
+  editRegion(asset: AssetRef, instruction: string): Promise<GenerationResult>;
+}
+
+interface VideoProvider {
+  // resolution "1080p" for emotionally important shots, else 720p (Veo 3.1 Lite)
+  generateFinal(request: ShotRequest, opts?: { resolution?: "720p" | "1080p" }): Promise<GenerationResult>;
+}
+
+interface DraftVideoProvider {
+  // Omni 1.1's 360p draft tier
+  generateDraft(request: ShotRequest): Promise<GenerationResult>;
+  // Omni 1.1's start/end-keyframe-guided generation
+  generateGuided(startFrame: AssetRef, endFrame: AssetRef, request: ShotRequest): Promise<GenerationResult>;
+}
+
+interface LipSyncProvider {
+  // Kling.ai Avatar API
+  sync(character: CharacterRef, audio: AudioSegmentRef, referenceFrame: AssetRef): Promise<GenerationResult>;
+}
 
 interface GenerationResult {
   status: "accepted" | "retry_same" | "retry_modified" | "escalate" | "hold_for_review";
@@ -240,7 +265,12 @@ The `status` enum matches the review-outcome set already defined in
 `docs/design/automated-quality-control.md`, so stage 7's QC step and the
 provider layer share one vocabulary for "what happens to this result next"
 from day one, even though v1's QC only implements the structural subset of
-checks that can produce it.
+checks that can produce it. `ImageEditor` is deliberately its own small
+interface rather than a method on `ImageProvider`, since v1 has exactly one
+implementation (Omni 1.1) and no image-generation vendor is assumed to
+support it. A `VoiceProvider` interface (for narration/character-speech
+generation feeding into `LipSyncProvider`) isn't sketched here yet since no
+v1 voice/TTS vendor is confirmed — see Open implementation questions.
 
 ## Development environment
 
@@ -269,13 +299,21 @@ on one deployment's folder layout) already supports this; this just makes
 the OneDrive-specific reason explicit before it causes a real problem
 instead of after.
 
+Required environment variables (`GEMINI_API_KEY`, `KLING_API_KEY_1`,
+`HEARTWORD_DATA_DIR`) are listed in `.env.example` at the repo root; `.env`
+itself stays gitignored, per existing convention.
+
 ## Open implementation questions
 
-- Specific lip-sync engine and video/image/voice providers for the v1
-  adapters (see Generation Providers, Models, and Cost in
-  `docs/PRODUCT_VISION.md` for current starting preferences).
-- Hosting/compute for GPU-heavy stages, if any v1 provider needs local
-  rather than API-hosted generation.
+- All v1 providers (Nano Banana/Pro, Veo 3.1 Lite, Omni 1.1, Kling Avatar)
+  are cloud-hosted and API-key authenticated, so v1 needs no local GPU
+  provisioning — confirmed, not open. A voice/TTS provider for narration
+  and character speech (feeding into the Kling lip-sync step) is still
+  unnamed; see Audio Model in `docs/PRODUCT_VISION.md`.
+- Whether `KLING_API_KEY_1`'s naming implies more than one Kling key is
+  expected (e.g. for quota/rate-limit spreading across concurrent lip-sync
+  calls) — affects whether the Kling adapter needs key-pool logic in v1 or
+  just a single credential.
 - Whether the local web app's backend and frontend run as one process or
   two during development (a detail for implementation, not a design
   decision this document needs to fix).
