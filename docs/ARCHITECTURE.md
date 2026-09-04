@@ -23,6 +23,8 @@ re-run on its own when the user wants to fix just one part of a chapter.
    assembled video before it's handed to the user for review, per
    `docs/design/automated-quality-control.md`.
 
+A separate, lower-priority lane produces **HeartWord Illustrated** (comic-style pages) from the same Scripture, audio, and character canon as stages 1-3 above, using its own page/panel and lettering pipeline rather than stages 4-7. See `docs/design/illustrated-scripture.md`; it is included in this architecture but not being actively built while HeartWord Films is the priority.
+
 ## Design principles
 
 **Stage isolation.** Every stage should be able to run in isolation against

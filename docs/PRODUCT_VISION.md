@@ -49,6 +49,7 @@ warning sign, not progress. See `AGENTS.md` and `docs/NON_GOALS.md`.
   organization, e.g. "This Gospel of Mark film was produced in HeartWord
   Studio," along with the `heartword.ai` domain. See "Post Production and
   Distribution" below.
+- HeartWord Illustrated is part of HeartWord's architecture, but is explicitly lower priority than HeartWord Films while the video lane is under active development. Its strategy (recovered from a prior attempt's Mark/Acts illustrated work) is recorded in `docs/design/illustrated-scripture.md`.
 
 ## Why HeartWord Exists
 
