@@ -53,27 +53,46 @@ Design docs completed, per `docs/ARCHITECTURE.md`'s "Design principles":
   workflow docs, not just tests), aimed directly at the 100-ticket failure
   mode from the prior attempt.
 
+## v1 Scope (confirmed 2026-09-04)
+
+The smallest slice that proves the whole loop end-to-end on one real
+chapter, rather than architecting the full vision at once:
+
+**In scope for v1:** one chapter, Hatam Mark 2 (the chapter with the
+existing pilot to compare against), taken through all seven core pipeline
+stages — ingestion/alignment, scene breakdown, casting & direction, media
+generation, voice & lip-sync, assembly, and QC — to a reviewable rendered
+cut in the editor. One provider per media type (no cross-provider
+escalation yet). Casting & direction as a single planning pass rather than
+the full multi-agent role negotiation. The Character Tool, built just far
+enough to create and approve the handful of characters Mark 2 actually
+needs. QC limited to the structural checks (sync drift, coverage, lip-sync
+confidence) rather than the full evolving media-review rubric. A basic
+running cost total rather than the full live/pending/reconciled ledger.
+
+**Deliberately deferred, but the architecture should leave room for:** the
+Draft Room's cost-tiered draft/escalate loop, the multi-agent shot-planning
+negotiation and its log, the full evolving media-review rubric with
+retry/escalate decision states, the complete cost-governance ledger,
+producer notifications, book-level (vs. chapter-only) storyboards, and the
+Illustrated Scripture lane entirely.
+
 ## Next up
 
-Before handing this to an architecture pass:
+With v1 scoped, the next step is the architecture pass itself. Two things
+remain open but non-blocking — the architecture pass can resolve or carry
+them forward rather than needing them settled first:
 
-- **Scope a v1.** Nothing yet says what gets built first versus what the
-  architecture should merely leave room for. The vision covers an 11-stage
-  workflow, multi-agent shot-planning with a logged negotiation,
-  notifications, three-layer audio, a live cost ledger, an evolving media
-  review rubric, and a full second Illustrated lane — architecting all of
-  it at once repeats the shape of the 100-ticket mistake one phase earlier.
-  A v1 scope needs Dan's confirmation, not an assumption.
 - The application shape (browser app with an embedded AI assistant vs. a
-  stand-alone editor calling an AI assistant via API) — an architecture
-  question to resolve, not a blocker to starting.
-- Which subset of `BVET-Data/assets` to import (planned: FCBH original
-  audio, authorized Scripture text per language, and the in-progress canon
-  character library) and how it lands in HeartWord's own asset area without
-  carrying over BVET's code issues.
-- Which subset of the illustrated-Scripture prior attempt's assets
-  (approved pages, reference sheets, prompt templates) to import, once that
-  lane becomes active — not needed for a Films-first v1.
+  stand-alone editor calling an AI assistant via API).
+- Which subset of `BVET-Data/assets` to import for Mark 2 specifically
+  (planned: FCBH original audio, authorized Hatam Scripture text, and
+  whichever canon characters Mark 2 needs) and how it lands in HeartWord's
+  own asset area without carrying over BVET's code issues.
+
+Out of scope for now: which subset of the illustrated-Scripture prior
+attempt's assets to import — not needed until the Illustrated lane is
+active, which is after v1.
 
 ## Lesson to keep applying
 
