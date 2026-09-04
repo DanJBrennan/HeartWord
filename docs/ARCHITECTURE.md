@@ -80,7 +80,7 @@ its own reasoning (per `AGENTS.md`'s working conventions) so the upgrade to
 multi-agent negotiation later is additive, not a rewrite of what gets shown
 in the UI.
 
-## Application shape — recommended, pending confirmation
+## Application shape (confirmed)
 
 **Recommendation: a local web app.** A React/TypeScript frontend (the
 Premiere-like project/media browser, timeline, and previews from Product
@@ -104,7 +104,7 @@ This resolves the "application shape" question left open in
 it here rather than treating it as silently settled, since it's a
 foundational, costly-to-reverse choice.
 
-## Technology stack (v1) — recommended, pending confirmation
+## Technology stack (v1, confirmed)
 
 - **Language: TypeScript, frontend and backend.** One language across the
   whole stack rather than splitting frontend (React/TS) from a Python
@@ -129,10 +129,7 @@ foundational, costly-to-reverse choice.
   `docs/PRODUCT_VISION.md`), referenced by path from SQLite rows — never
   stored as database blobs.
 
-If Dan would rather use a different stack (e.g. keeping Python for the
-pipeline side, as the prior BVET codebase partly did), that's a
-straightforward substitution at this stage and worth saying now rather than
-after implementation starts.
+Confirmed: TypeScript throughout, not split with Python as the prior BVET codebase partly was.
 
 ## Directory layout (v1)
 
@@ -257,14 +254,20 @@ same problem: OneDrive syncing mid-write risks corrupting the database, and
 syncing large generated video/audio files is slow and pointless since
 they're not meant to be shared via OneDrive anyway.
 
-Recommendation: keep the git repo (source code, docs) on OneDrive as today,
-but point HeartWord's runtime data — the SQLite file and the generated
-asset area — at a local, non-synced path (e.g. outside the OneDrive tree
-entirely), configured via an environment variable rather than hardcoded, so
-moving it later is a config change. `docs/NON_GOALS.md`'s asset-area
-principle (a dedicated area, not dependent on one deployment's folder
-layout) already supports this; this just makes the OneDrive-specific reason
-explicit before it causes a real problem instead of after.
+Decided: keep the git repo (source code, docs) on OneDrive as today, but
+point HeartWord's runtime data at `C:\Users\danbr\HeartWordData\` — a
+plain folder directly under the user profile, a sibling of `Documents`
+rather than nested inside it, so it sits outside anything OneDrive is
+configured to sync. Structure: `HeartWordData\db\heartword.sqlite` for the
+SQLite database, `HeartWordData\assets\` for generated media. The path is
+configurable via a `HEARTWORD_DATA_DIR` environment variable that defaults
+to this location, so moving it later (a different drive, a second machine)
+is a one-line config change rather than a hardcoded path. The directory is
+created on first run if missing — nothing to set up by hand ahead of time.
+`docs/NON_GOALS.md`'s asset-area principle (a dedicated area, not dependent
+on one deployment's folder layout) already supports this; this just makes
+the OneDrive-specific reason explicit before it causes a real problem
+instead of after.
 
 ## Open implementation questions
 

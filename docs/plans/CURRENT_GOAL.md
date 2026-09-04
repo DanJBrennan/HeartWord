@@ -77,18 +77,28 @@ retry/escalate decision states, the complete cost-governance ledger,
 producer notifications, book-level (vs. chapter-only) storyboards, and the
 Illustrated Scripture lane entirely.
 
+## Architecture (confirmed 2026-09-04)
+
+`docs/ARCHITECTURE.md` now has the v1 architecture: a local web app
+(React/TypeScript frontend, Node/TypeScript backend, both on Dan's
+machine), TypeScript throughout rather than splitting with Python, SQLite
+for structured data with generated media on the filesystem, a v1 directory
+layout, a data model covering the core entities, queue-free stage
+orchestration, and a provider interface whose result states already match
+the QC review-outcome vocabulary. Runtime data (the SQLite file and
+generated assets) lives at `C:\Users\danbr\HeartWordData\`, outside the
+OneDrive-synced repo, configurable via `HEARTWORD_DATA_DIR`.
+
 ## Next up
 
-With v1 scoped, the next step is the architecture pass itself. Two things
-remain open but non-blocking — the architecture pass can resolve or carry
-them forward rather than needing them settled first:
-
-- The application shape (browser app with an embedded AI assistant vs. a
-  stand-alone editor calling an AI assistant via API).
 - Which subset of `BVET-Data/assets` to import for Mark 2 specifically
   (planned: FCBH original audio, authorized Hatam Scripture text, and
   whichever canon characters Mark 2 needs) and how it lands in HeartWord's
   own asset area without carrying over BVET's code issues.
+- Specific v1 providers (image/video/voice/lip-sync) and the exact SQLite
+  schema — both named as open implementation questions in
+  `docs/ARCHITECTURE.md`.
+- Then: actual implementation of the v1 pipeline can begin.
 
 Out of scope for now: which subset of the illustrated-Scripture prior
 attempt's assets to import — not needed until the Illustrated lane is

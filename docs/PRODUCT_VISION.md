@@ -646,9 +646,6 @@ unreviewable asset history.
 These are product questions for HeartWord's architecture and design phase to
 answer, not omissions:
 
-- the application architecture (e.g. a browser-based app with an AI
-  assistant integrated into it, versus a stand-alone editor calling an AI
-  assistant through an API);
 - the most useful limited set of post-production capabilities;
 - whether comic production uses a separate storyboard;
 - whether comic panels and realistic video use the same character references
