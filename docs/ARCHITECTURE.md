@@ -49,6 +49,16 @@ tier to another's is a configuration change, not a pipeline rewrite. Provider
 mechanism) are the provider adapter's problem to normalize, not something
 that should leak into stage logic.
 
+**Role agents interact, and the interaction is logged.** Each named
+film-production role (director, cinematographer, choreographer, and the
+rest — see `docs/PRODUCT_VISION.md`) is its own agent rather than folded
+into one monolithic planning call. Where a decision genuinely depends on
+more than one role — shot planning is the current concrete case, see
+`docs/design/shot-planning.md` — those agents interact with each other
+(propose, object, resolve) instead of each producing an isolated answer
+that gets silently merged. The interaction itself is captured as a log and
+surfaced in the UI, not discarded once a final decision is reached.
+
 ## Open implementation questions
 
 Tracked as design decisions, not baked into this document — see the relevant

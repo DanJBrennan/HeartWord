@@ -230,6 +230,18 @@ not silently collapse or redesign established comic and video canons.
 
 ## Story and Shot Planning
 
+A storyboard exists at two levels: an overarching, book-level storyboard
+covering the whole book at a lighter level of detail, and a detailed
+chapter-level storyboard produced when a specific chapter is actually worked
+on. Alongside HeartWord's autonomous default, the UI provides an explicit
+"Create Storyboard" button for a chapter for producer-controlled, manual
+operation. See `docs/design/shot-planning.md` for how that storyboard is
+actually produced: each film-production role (director, cinematographer,
+choreographer, and the rest — see Editing Experience below) runs as its own
+agent, and shots are planned through those agents interacting with each
+other rather than one model deciding everything alone. That interaction is
+captured in a log accessible from the UI, not just the resulting storyboard.
+
 HeartWord should:
 
 - create an initial storyboard for a chapter and keep it synchronized as the
