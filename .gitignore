@@ -1,0 +1,32 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Generated media (large binary pipeline outputs — keep out of git)
+/output/
+/renders/
+*.mp4
+*.mov
+*.wav
+!**/samples/**
+
+# Logs
+*.log
