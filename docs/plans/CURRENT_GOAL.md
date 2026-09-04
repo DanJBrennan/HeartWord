@@ -107,17 +107,31 @@ provenance rather than being re-modeled from scratch.
 
 ## Next up
 
-- **BVET-Data asset import for Mark 2** — investigated; a concrete plan is
-  pending Dan's confirmation before anything is copied. Findings: Mark 2's
-  Hatam text and FCBH audio both exist and are ready to import as-is.
-  Character canon is uneven — Jesus and Matthew/Levi are approved with rich
-  Papuan reference sets; the paralytic is approved but thin (one image);
-  the four friends, the principal scribe, and the eight witnesses exist
-  only as unapproved single-image candidates; no Mark 2 chapter index was
-  ever finished (only Mark 1's); no crowd archetype (Pharisees, generic
-  disciples, tax collectors and sinners) exists yet for anyone. No
-  `/claude-pilot` folder was found anywhere in BVET, BVET-Data, or
-  BVET-Claude — flagged back to Dan rather than guessed at.
+- **Mark 2 asset import** — investigated across two source repos; a
+  concrete plan is pending Dan's confirmation before anything is copied.
+  - Hatam text and FCBH audio for Mark 2 exist in `BVET-Data/assets/` and
+    are ready to import as-is.
+  - The real video-production character canon is **not** in BVET-Data's
+    `assets/characters/Books/Mark/` (that JSON-record library is thin/
+    stale for Mark 2) — it's in a separate repo, `OpenAI-Code Comics`, at
+    `assets/characters/Video Character Library/Regional Canon/Papuan/`.
+    This is the canon actually used to produce Dan's earlier 4-minute
+    pilot: Jesus, Peter, John the Baptist, and Matthew are `approved` with
+    full 5-image production packages (lip-sync close-up + 4 body/pose
+    views) and recorded accessory canons. All six Mark-2-specific
+    characters — Friend 1-4, the healed paralytic, and the principal
+    scribe — plus a crowd reference ("Eight recurring witnesses +
+    adolescent") are `production-canon` status: one producer-approved
+    multi-view turnaround sheet each (not yet split into the full 5-image
+    package), with sha256-verified files and provenance recording Dan's
+    2026-08-03 approval. So the earlier read of a missing crowd archetype
+    and unapproved Mark 2 candidates was wrong — corrected here.
+  - `OpenAI-Code Comics/claude-pilot/` (the folder Dan remembered as
+    "/claude-pilot") holds the actual pilot production scripts (per-scene
+    Veo generation, Kling lip-sync client, a 7-scene/50-segment rough-cut
+    concat list) — useful as implementation reference for the media-
+    generation and assembly stages, though the rough cut's own segment
+    files are no longer present there to import.
 - Once the import plan is confirmed and assets land in `HeartWordData/`:
   actual implementation of the v1 pipeline can begin.
 
