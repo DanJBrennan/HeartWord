@@ -490,11 +490,32 @@ capabilities for:
 - **An ending scroll** — closing credits/acknowledgments, separate from the
   narrative footage itself.
 
-The initial delivery package should plan for a master, a mobile-resolution
-copy, a low-data copy, a review preview, and an audio-only edition. External
-editors (e.g. Premiere Pro, Filmora) remain integration/export targets to
-evaluate rather than hidden runtime dependencies; HeartWord retains the
-project timeline and provenance as its own source of truth.
+The initial delivery package should plan for multiple resolution/quality
+tiers on export, rather than a single fixed output:
+
+- **Master** — the highest resolution the generation and upscale path
+  actually produced for that chapter (up to 4K where the Draft Room's
+  upscale-from-360p-draft path in `docs/design/media-generation.md` was
+  used, otherwise 1080p), kept as the archival copy and the source for any
+  future re-export.
+- **Standard share copy** — 1080p, the default resolution for normal
+  viewing and sharing.
+- **Mobile-resolution copy** — a smaller export (e.g. 720p or lower) sized
+  for phone playback, since many heart-language audiences are phone-first.
+- **Low-data copy** — an aggressively compressed export for low-bandwidth
+  or limited-data contexts, prioritizing playability over visual fidelity.
+- **Review preview** — a fast, low-resolution export (reusing the Draft
+  Room's cheap-tier output where possible) for internal review before a
+  full-resolution final is rendered.
+- **Audio-only edition** — for audio-first distribution or accessibility.
+
+Exactly which resolutions, aspect ratios (e.g. whether a 9:16/vertical crop
+is offered alongside standard 16:9 for phone-first viewing), and
+container/codec choices (e.g. MP4/H.264 as a likely safe default) HeartWord
+commits to is not yet finalized — see Design Decisions Intentionally Left
+Open. External editors (e.g. Premiere Pro, Filmora) remain integration/export
+targets to evaluate rather than hidden runtime dependencies; HeartWord
+retains the project timeline and provenance as its own source of truth.
 
 The ending scroll for each Mark video should include a brief credit naming
 HeartWord Studio as the production tool and the `heartword.ai` domain (e.g.
@@ -579,4 +600,6 @@ answer, not omissions:
 - the appropriate generation model for each kind of image, keyframe, action
   shot, dialogue close-up, and retry; and
 - the appropriate use of generated music and heart-language musical
-  influences.
+  influences; and
+- the exact set of export resolutions, aspect ratios, and container/codec
+  choices offered at delivery (see Post Production and Distribution above).
