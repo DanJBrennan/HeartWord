@@ -508,7 +508,10 @@ actually reaches its audience:
   not just resolution — is a first-class constraint for the copy that
   actually reaches most viewers, and WhatsApp's own video re-compression on
   send is a real factor to account for (e.g. deciding whether to send as a
-  video message versus a file/document to control what quality survives).
+  video message versus a file/document to control what quality survives). A
+  third channel, the `heartword.ai` website itself, is planned but does not
+  exist yet; once built it would likely host the YouTube-quality master
+  copy for browser/laptop viewing rather than needing its own tier.
 - **Master** — the highest resolution the generation and upscale path
   actually produced for that chapter (up to 4K where the Draft Room's
   upscale-from-360p-draft path in `docs/design/media-generation.md` was
@@ -621,4 +624,6 @@ answer, not omissions:
 - the exact resolution, bitrate/file-size target, and container/codec
   choices for each export tier, including how to package the WhatsApp/
   tribal-distribution copy so it survives WhatsApp's own re-compression
-  (see Post Production and Distribution above).
+  (see Post Production and Distribution above); and
+- the heartword.ai website itself (not yet built): its scope, and how/
+  whether it becomes a distribution channel alongside YouTube and WhatsApp.
