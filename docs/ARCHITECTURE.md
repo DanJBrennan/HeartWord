@@ -164,9 +164,11 @@ against another stage's already-saved output.
 
 ## Data model (v1)
 
-Not full schema/DDL — the entities and relationships a v1 implementation
-needs, expanding the list already named in Assets, Versions, and
-Portability in `docs/PRODUCT_VISION.md`:
+The entities and relationships a v1 implementation needs, expanding the
+list already named in Assets, Versions, and Portability in
+`docs/PRODUCT_VISION.md`. The actual DDL lives in `src/db/schema.sql`; the
+list below is the rationale, not a duplicate of the columns — read the
+schema file itself for exact fields, types, and constraints.
 
 - **Project** — one row per (language, book, chapter); current stage
   reached; status. This is the unit the language/book/chapter navigation
@@ -317,5 +319,6 @@ itself stays gitignored, per existing convention.
 - Whether the local web app's backend and frontend run as one process or
   two during development (a detail for implementation, not a design
   decision this document needs to fix).
-- Exact SQLite schema/migrations — the data model above is the shape, not
-  the DDL; that belongs in `src/db/` once implementation starts.
+- Migration tooling — `src/db/schema.sql` is the v1 schema (applied directly
+  since there's no deployed data to migrate yet); a migration runner only
+  becomes necessary once the schema needs to change under existing data.

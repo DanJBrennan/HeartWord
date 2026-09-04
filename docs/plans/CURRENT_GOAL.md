@@ -89,16 +89,37 @@ the QC review-outcome vocabulary. Runtime data (the SQLite file and
 generated assets) lives at `C:\Users\danbr\HeartWordData\`, outside the
 OneDrive-synced repo, configurable via `HEARTWORD_DATA_DIR`.
 
+## Providers and schema (confirmed 2026-09-04)
+
+v1 providers are locked in: Google Nano Banana / Nano Banana Pro (images),
+Google Veo 3.1 Lite 720p/1080p (video), and Google Gemini Omni 1.1 (360p
+draft tier, start/end-keyframe-guided generation, targeted region image
+editing) — all one Gemini adapter under `GEMINI_API_KEY`; Kling.ai's Avatar
+API (lip-sync) under `KLING_API_KEY_1`. See `docs/ARCHITECTURE.md`'s
+Provider interface section and `.env.example`. Voice/TTS is still open.
+
+The v1 SQLite schema is written: `src/db/schema.sql` (projects, characters/
+character_versions/character_assets, scenes/shots/shot_characters,
+generation_attempts, clips, audio_segments/tracks, edit_commands,
+cost_ledger_entries, review_notes). It deliberately mirrors BVET-Data's own
+`identityId`/`scope`/region conventions so imported characters carry their
+provenance rather than being re-modeled from scratch.
+
 ## Next up
 
-- Which subset of `BVET-Data/assets` to import for Mark 2 specifically
-  (planned: FCBH original audio, authorized Hatam Scripture text, and
-  whichever canon characters Mark 2 needs) and how it lands in HeartWord's
-  own asset area without carrying over BVET's code issues.
-- Specific v1 providers (image/video/voice/lip-sync) and the exact SQLite
-  schema — both named as open implementation questions in
-  `docs/ARCHITECTURE.md`.
-- Then: actual implementation of the v1 pipeline can begin.
+- **BVET-Data asset import for Mark 2** — investigated; a concrete plan is
+  pending Dan's confirmation before anything is copied. Findings: Mark 2's
+  Hatam text and FCBH audio both exist and are ready to import as-is.
+  Character canon is uneven — Jesus and Matthew/Levi are approved with rich
+  Papuan reference sets; the paralytic is approved but thin (one image);
+  the four friends, the principal scribe, and the eight witnesses exist
+  only as unapproved single-image candidates; no Mark 2 chapter index was
+  ever finished (only Mark 1's); no crowd archetype (Pharisees, generic
+  disciples, tax collectors and sinners) exists yet for anyone. No
+  `/claude-pilot` folder was found anywhere in BVET, BVET-Data, or
+  BVET-Claude — flagged back to Dan rather than guessed at.
+- Once the import plan is confirmed and assets land in `HeartWordData/`:
+  actual implementation of the v1 pipeline can begin.
 
 Out of scope for now: which subset of the illustrated-Scripture prior
 attempt's assets to import — not needed until the Illustrated lane is
