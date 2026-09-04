@@ -3,6 +3,17 @@
 This describes the end-to-end flow from the user's point of view (Dan, or
 whoever runs the pipeline for a given language/chapter).
 
+## Navigation
+
+The producer selects a language, a book of the Bible, and a chapter (e.g.
+Hatam, Mark, chapter 2), and lands on that specific video's current state —
+whatever stage it has reached, from not-yet-started through a fully reviewed
+cut. Available languages today are Hatam, Meyah, Sougb, and English; available
+books today are Mark and Acts. This selector is the normal entry point into
+the product, not a separate admin/debug view — see "Project Identity:
+Language x Book x Chapter" in `docs/design/timeline.md` for how each
+combination is modeled as its own project.
+
 ## Inputs, per chapter
 
 1. An existing audio recording of the chapter being read aloud in the heart

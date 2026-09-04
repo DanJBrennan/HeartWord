@@ -251,6 +251,10 @@ HeartWord should:
 HeartWord should provide the fundamentals needed for rapid review and final
 rendering, including:
 
+- a language / book / chapter selector so the producer can navigate
+  directly to any (language, book, chapter) combination and see that
+  video's current state, rather than only working through one continuous
+  project;
 - a visual, multitrack timeline;
 - drag-and-drop clip placement and reordering;
 - trimming from either end of a clip;
@@ -261,6 +265,10 @@ rendering, including:
 - clip, shot, scene, and chapter organization;
 - useful post-production controls, selected and designed with expert
   guidance;
+- edits that are preserved automatically as they're made, with no separate
+  manual save step;
+- undo and redo for editing actions (see the edit-history design in
+  `docs/design/timeline.md`);
 - iteration, comparison, review, correction, and improvement rather than a
   one-pass generation workflow; and
 - reliable final rendering.
@@ -447,14 +455,31 @@ silently, matching how the source recording actually attributes the speech.
 
 Post production should support a consistent chapter identity, restrained
 scene-appropriate music, ambience and effects, opening/closing treatment, and
-final quality control. The initial delivery package should plan for a
-master, a mobile-resolution copy, a low-data copy, a review preview, and an
-audio-only edition. External editors (e.g. Premiere Pro, Filmora) remain
-integration/export targets to evaluate rather than hidden runtime
-dependencies; HeartWord retains the project timeline and provenance as its
-own source of truth.
+final quality control. Concretely, HeartWord should provide post-production
+capabilities for:
 
-The closing treatment for each Mark video should include a brief credit scroll naming HeartWord Studio as the production tool and the `heartword.ai` domain (e.g. "This Gospel of Mark film was produced in HeartWord Studio"), alongside any Scripture-source and translation-team acknowledgments. It should stay understated relative to the Scripture content itself, and belongs in the closing treatment discussed above, not layered over the narrative footage.
+- **Special effects** — visual effects applied after scene generation
+  (transitions, light/particle effects, color treatment) rather than only
+  what a generation provider bakes into a shot, so a scene doesn't need to be
+  regenerated from scratch just to add or change an effect.
+- **Titles** — chapter/section title cards and any recurring opening
+  treatment, respecting the Scripture and Language Principles above (a title
+  stays in the heart language; no English text leaks into a heart-language
+  deliverable).
+- **An ending scroll** — closing credits/acknowledgments, separate from the
+  narrative footage itself.
+
+The initial delivery package should plan for a master, a mobile-resolution
+copy, a low-data copy, a review preview, and an audio-only edition. External
+editors (e.g. Premiere Pro, Filmora) remain integration/export targets to
+evaluate rather than hidden runtime dependencies; HeartWord retains the
+project timeline and provenance as its own source of truth.
+
+The ending scroll for each Mark video should include a brief credit naming
+HeartWord Studio as the production tool and the `heartword.ai` domain (e.g.
+"This Gospel of Mark film was produced in HeartWord Studio"), alongside any
+Scripture-source and translation-team acknowledgments. It should stay
+understated relative to the Scripture content itself.
 
 ## Music and Finishing
 
