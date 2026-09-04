@@ -491,31 +491,48 @@ capabilities for:
   narrative footage itself.
 
 The initial delivery package should plan for multiple resolution/quality
-tiers on export, rather than a single fixed output:
+tiers on export, rather than a single fixed output, driven by how the video
+actually reaches its audience:
 
+- **Real-world distribution path.** The target playback device is an
+  Android phone (a few village leaders have laptops). Distribution is
+  multi-channel: a YouTube upload carries the highest-quality copy, useful
+  for initial tests and for when leaders visit the city for high-speed
+  internet — YouTube handles its own bandwidth-adaptive downscaling, so this
+  copy doesn't need to be size-optimized itself. Inside the tribal region
+  itself, the primary distribution channel is WhatsApp: the missionary
+  partner shares each chapter video to roughly 150 village leaders, who
+  redistribute to roughly 200 people per village, with further
+  redistribution between individuals often happening over Bluetooth or a
+  USB-C cable rather than any network at all. This means final file size —
+  not just resolution — is a first-class constraint for the copy that
+  actually reaches most viewers, and WhatsApp's own video re-compression on
+  send is a real factor to account for (e.g. deciding whether to send as a
+  video message versus a file/document to control what quality survives).
 - **Master** — the highest resolution the generation and upscale path
   actually produced for that chapter (up to 4K where the Draft Room's
   upscale-from-360p-draft path in `docs/design/media-generation.md` was
-  used, otherwise 1080p), kept as the archival copy and the source for any
-  future re-export.
-- **Standard share copy** — 1080p, the default resolution for normal
-  viewing and sharing.
-- **Mobile-resolution copy** — a smaller export (e.g. 720p or lower) sized
-  for phone playback, since many heart-language audiences are phone-first.
-- **Low-data copy** — an aggressively compressed export for low-bandwidth
-  or limited-data contexts, prioritizing playability over visual fidelity.
+  used, otherwise 1080p), kept as the archival copy, the YouTube upload
+  source, and the source for any future re-export.
+- **WhatsApp/tribal distribution copy** — sized and encoded specifically for
+  the WhatsApp → Bluetooth/USB-C chain above: Android-phone-appropriate
+  resolution, a deliberately small file size, and a codec/container choice
+  tested against what WhatsApp actually preserves on send.
+- **Low-data copy** — an even more aggressively compressed export for the
+  most constrained hops in that chain, prioritizing playability and small
+  size over visual fidelity.
 - **Review preview** — a fast, low-resolution export (reusing the Draft
   Room's cheap-tier output where possible) for internal review before a
   full-resolution final is rendered.
 - **Audio-only edition** — for audio-first distribution or accessibility.
 
-Exactly which resolutions, aspect ratios (e.g. whether a 9:16/vertical crop
-is offered alongside standard 16:9 for phone-first viewing), and
-container/codec choices (e.g. MP4/H.264 as a likely safe default) HeartWord
-commits to is not yet finalized — see Design Decisions Intentionally Left
-Open. External editors (e.g. Premiere Pro, Filmora) remain integration/export
-targets to evaluate rather than hidden runtime dependencies; HeartWord
-retains the project timeline and provenance as its own source of truth.
+Exactly which resolutions, bitrates/file-size targets, and container/codec
+choices (e.g. MP4/H.264 as a likely safe default, and how to package for
+WhatsApp specifically) HeartWord commits to is not yet finalized — see
+Design Decisions Intentionally Left Open. External editors (e.g. Premiere
+Pro, Filmora) remain integration/export targets to evaluate rather than
+hidden runtime dependencies; HeartWord retains the project timeline and
+provenance as its own source of truth.
 
 The ending scroll for each Mark video should include a brief credit naming
 HeartWord Studio as the production tool and the `heartword.ai` domain (e.g.
@@ -601,5 +618,7 @@ answer, not omissions:
   shot, dialogue close-up, and retry; and
 - the appropriate use of generated music and heart-language musical
   influences; and
-- the exact set of export resolutions, aspect ratios, and container/codec
-  choices offered at delivery (see Post Production and Distribution above).
+- the exact resolution, bitrate/file-size target, and container/codec
+  choices for each export tier, including how to package the WhatsApp/
+  tribal-distribution copy so it survives WhatsApp's own re-compression
+  (see Post Production and Distribution above).
