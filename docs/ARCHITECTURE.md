@@ -121,9 +121,10 @@ foundational, costly-to-reverse choice.
   than reimplementing media handling — FFmpeg is the right tool for that
   regardless of the pipeline's own language, and the prior BVET codebase
   already used it successfully.
-- **Structured data: SQLite**, one file — see Development Environment
-  below for why this needs a specific location decision, not just "a file
-  in the project folder."
+- **Structured data: SQLite** via Node's built-in `node:sqlite` (see
+  "Implementation notes" below for why, over `better-sqlite3`), one file —
+  see Development Environment below for why this needs a specific location
+  decision, not just "a file in the project folder."
 - **Media files (audio, images, video)** live on the filesystem in
   HeartWord's own asset area (per Assets, Versions, and Portability in
   `docs/PRODUCT_VISION.md`), referenced by path from SQLite rows — never
@@ -316,9 +317,52 @@ itself stays gitignored, per existing convention.
   expected (e.g. for quota/rate-limit spreading across concurrent lip-sync
   calls) — affects whether the Kling adapter needs key-pool logic in v1 or
   just a single credential.
-- Whether the local web app's backend and frontend run as one process or
-  two during development (a detail for implementation, not a design
-  decision this document needs to fix).
 - Migration tooling — `src/db/schema.sql` is the v1 schema (applied directly
   since there's no deployed data to migrate yet); a migration runner only
   becomes necessary once the schema needs to change under existing data.
+
+## Implementation notes (v1 walking skeleton)
+
+Resolved while building the first runnable slice (server, DB, character
+seed script, minimal frontend — see `src/README.md` for what's real vs.
+stubbed):
+
+- **Dev process count: two.** `npm run dev` runs the Express backend
+  (`tsx watch`, port 4000) and the Vite dev server (port 5173, proxying
+  `/api` to the backend) concurrently. In production, `npm run build:web`
+  then starting the backend alone is one process — Express serves the
+  built static files directly. This closes the "one process or two" open
+  question above.
+- **SQLite driver: Node's built-in `node:sqlite`, not `better-sqlite3`.**
+  `better-sqlite3` needs a native addon compiled via node-gyp, and that
+  install hung/failed repeatedly in this dev environment; `node:sqlite`
+  ships with Node 22 (used here without the `--experimental-sqlite` flag,
+  which this Node version no longer requires) and needs no native build at
+  all. Its API is close enough to `better-sqlite3`'s (named parameters,
+  `.prepare()/.run()/.get()/.all()`) that this cost nothing in ergonomics.
+- **Journal mode: `PERSIST`, not the SQLite default (`DELETE`) or `WAL`.**
+  Both alternatives fail outright against `HeartWordData` from this dev
+  environment: `WAL`'s mmap-based shared memory produces a "disk I/O
+  error" over the mount this shell reaches that folder through, and the
+  default `DELETE` mode fails because it needs to `unlink()` the journal
+  file after every commit, which this mount doesn't permit without an
+  explicit one-time grant (see `AGENTS.md`'s `_to_delete/` convention).
+  `PERSIST` gets the same crash-safety (a real journal file backs every
+  write transaction) by truncating that file instead of deleting it, which
+  this mount does allow.
+- **Open risk from the same limitation, not yet resolved:** if a write is
+  ever interrupted uncleanly (a crash, a forced kill) while a **different**
+  process has the database open without `PERSIST` already set — as
+  happened once during this session, from an ad hoc debug script — SQLite
+  is left with a non-empty "hot" journal in `DELETE` format. Recovering
+  from that requires deleting the journal on next open, which fails for
+  the same reason above, and the database becomes unopenable until someone
+  either grants delete permission for `HeartWordData` or manually moves
+  the stray `-journal` file aside. Every path in this app's own code opens
+  the database exclusively through `src/db/client.ts`'s `getDb()`, which
+  sets `PERSIST` immediately after opening and before anything else can
+  write — so this shouldn't happen through normal use of the app itself —
+  but it's a real failure mode worth a decision: grant delete permission
+  for `HeartWordData` now to remove the risk category entirely, or accept
+  it as a rare manual-recovery case. Not resolved yet; see
+  `docs/plans/CURRENT_GOAL.md`.

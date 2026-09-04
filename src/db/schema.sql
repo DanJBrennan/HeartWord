@@ -8,7 +8,7 @@ PRAGMA foreign_keys = ON;
 
 -- One row per (language, book, chapter) production — the unit the
 -- language/book/chapter navigation in docs/design/timeline.md selects.
-CREATE TABLE projects (
+CREATE TABLE IF NOT EXISTS projects (
   id TEXT PRIMARY KEY,
   language TEXT NOT NULL,
   book TEXT NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE projects (
 
 -- Canon character identity — one row per character concept (Jesus,
 -- Matthew/Levi, "Friend 1, Mark 2", ...), independent of region or version.
-CREATE TABLE characters (
+CREATE TABLE IF NOT EXISTS characters (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   scope_kind TEXT NOT NULL CHECK (scope_kind IN ('global','book','chapter')),
@@ -36,12 +36,12 @@ CREATE TABLE characters (
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
-CREATE INDEX idx_characters_scope ON characters(scope_kind, scope_book, scope_chapter);
+CREATE INDEX IF NOT EXISTS idx_characters_scope ON characters(scope_kind, scope_book, scope_chapter);
 
 -- Non-destructive version history for a character — the v2-candidate
 -- workflow in canonical-characters.md. Approving a version never deletes
 -- an earlier one.
-CREATE TABLE character_versions (
+CREATE TABLE IF NOT EXISTS character_versions (
   id TEXT PRIMARY KEY,
   character_id TEXT NOT NULL REFERENCES characters(id),
   version_label TEXT NOT NULL,      -- e.g. 'v1', 'v2-candidate'
@@ -52,12 +52,12 @@ CREATE TABLE character_versions (
   created_at INTEGER NOT NULL,
   UNIQUE (character_id, version_label)
 );
-CREATE INDEX idx_character_versions_character ON character_versions(character_id);
+CREATE INDEX IF NOT EXISTS idx_character_versions_character ON character_versions(character_id);
 
 -- Individual asset files (headshot, body/pose refs, motion clips) tied to a
 -- specific character version. Category mirrors what BVET-Data already used
 -- (References / Candidates / Versions; Portraits / Full Body / Motion).
-CREATE TABLE character_assets (
+CREATE TABLE IF NOT EXISTS character_assets (
   id TEXT PRIMARY KEY,
   character_version_id TEXT NOT NULL REFERENCES character_versions(id),
   category TEXT NOT NULL,           -- 'headshot' | 'body_pose' | 'motion_reference' | ...
@@ -66,10 +66,10 @@ CREATE TABLE character_assets (
   imported_from TEXT,               -- original path, if imported from BVET-Data
   created_at INTEGER NOT NULL
 );
-CREATE INDEX idx_character_assets_version ON character_assets(character_version_id);
+CREATE INDEX IF NOT EXISTS idx_character_assets_version ON character_assets(character_version_id);
 
 -- Scene/shot breakdown for a project (pipeline stages 2-3).
-CREATE TABLE scenes (
+CREATE TABLE IF NOT EXISTS scenes (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL REFERENCES projects(id),
   sequence INTEGER NOT NULL,        -- ordering within the chapter
@@ -81,7 +81,7 @@ CREATE TABLE scenes (
   UNIQUE (project_id, sequence)
 );
 
-CREATE TABLE shots (
+CREATE TABLE IF NOT EXISTS shots (
   id TEXT PRIMARY KEY,
   scene_id TEXT NOT NULL REFERENCES scenes(id),
   sequence INTEGER NOT NULL,
@@ -90,9 +90,9 @@ CREATE TABLE shots (
   created_at INTEGER NOT NULL,
   UNIQUE (scene_id, sequence)
 );
-CREATE INDEX idx_shots_scene ON shots(scene_id);
+CREATE INDEX IF NOT EXISTS idx_shots_scene ON shots(scene_id);
 
-CREATE TABLE shot_characters (
+CREATE TABLE IF NOT EXISTS shot_characters (
   shot_id TEXT NOT NULL REFERENCES shots(id),
   character_id TEXT NOT NULL REFERENCES characters(id),
   PRIMARY KEY (shot_id, character_id)
@@ -100,7 +100,7 @@ CREATE TABLE shot_characters (
 
 -- One immutable row per paid provider call — Cost Governance in
 -- PRODUCT_VISION.md. Never UPDATEd or DELETEd after insert.
-CREATE TABLE generation_attempts (
+CREATE TABLE IF NOT EXISTS generation_attempts (
   id TEXT PRIMARY KEY,
   shot_id TEXT NOT NULL REFERENCES shots(id),
   provider TEXT NOT NULL,           -- 'nano_banana' | 'nano_banana_pro' |
@@ -115,10 +115,10 @@ CREATE TABLE generation_attempts (
   cost_usd REAL NOT NULL,
   created_at INTEGER NOT NULL
 );
-CREATE INDEX idx_generation_attempts_shot ON generation_attempts(shot_id);
+CREATE INDEX IF NOT EXISTS idx_generation_attempts_shot ON generation_attempts(shot_id);
 
 -- An accepted result placed on the timeline.
-CREATE TABLE clips (
+CREATE TABLE IF NOT EXISTS clips (
   id TEXT PRIMARY KEY,
   shot_id TEXT NOT NULL REFERENCES shots(id),
   generation_attempt_id TEXT NOT NULL REFERENCES generation_attempts(id),
@@ -126,10 +126,10 @@ CREATE TABLE clips (
   timeline_end_ms INTEGER NOT NULL,
   created_at INTEGER NOT NULL
 );
-CREATE INDEX idx_clips_shot ON clips(shot_id);
+CREATE INDEX IF NOT EXISTS idx_clips_shot ON clips(shot_id);
 
 -- Three-Layer Audio Architecture (PRODUCT_VISION.md).
-CREATE TABLE audio_segments (
+CREATE TABLE IF NOT EXISTS audio_segments (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL REFERENCES projects(id),
   layer TEXT NOT NULL CHECK (layer IN ('original_reading','composite_cast_master','spaced_production')),
@@ -139,9 +139,9 @@ CREATE TABLE audio_segments (
   speaker_character_id TEXT REFERENCES characters(id),   -- NULL for narration
   created_at INTEGER NOT NULL
 );
-CREATE INDEX idx_audio_segments_project ON audio_segments(project_id);
+CREATE INDEX IF NOT EXISTS idx_audio_segments_project ON audio_segments(project_id);
 
-CREATE TABLE tracks (
+CREATE TABLE IF NOT EXISTS tracks (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL REFERENCES projects(id),
   kind TEXT NOT NULL,               -- 'narration' | 'dialogue' | 'music' | 'sfx'
@@ -151,7 +151,7 @@ CREATE TABLE tracks (
 
 -- Append-only edit history — undo/redo replays this (timeline.md), rather
 -- than mutating a single current-state record.
-CREATE TABLE edit_commands (
+CREATE TABLE IF NOT EXISTS edit_commands (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL REFERENCES projects(id),
   sequence INTEGER NOT NULL,        -- position in this project's history
@@ -164,17 +164,17 @@ CREATE TABLE edit_commands (
 );
 
 -- Append-only; a project's running cost total is SUM(amount_usd) here.
-CREATE TABLE cost_ledger_entries (
+CREATE TABLE IF NOT EXISTS cost_ledger_entries (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL REFERENCES projects(id),
   generation_attempt_id TEXT REFERENCES generation_attempts(id),
   amount_usd REAL NOT NULL,
   created_at INTEGER NOT NULL
 );
-CREATE INDEX idx_cost_ledger_project ON cost_ledger_entries(project_id);
+CREATE INDEX IF NOT EXISTS idx_cost_ledger_project ON cost_ledger_entries(project_id);
 
 -- A held-for-review flag from QC (stage 7) or a human note.
-CREATE TABLE review_notes (
+CREATE TABLE IF NOT EXISTS review_notes (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL REFERENCES projects(id),
   subject_type TEXT NOT NULL CHECK (subject_type IN ('shot','clip','character_version')),
@@ -184,4 +184,4 @@ CREATE TABLE review_notes (
   resolved INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL
 );
-CREATE INDEX idx_review_notes_project ON review_notes(project_id);
+CREATE INDEX IF NOT EXISTS idx_review_notes_project ON review_notes(project_id);

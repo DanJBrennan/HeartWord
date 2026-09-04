@@ -140,9 +140,44 @@ concat list) — kept as implementation reference for the media-generation
 and assembly stages, not imported as assets (the rough cut's own segment
 files are no longer present there).
 
+## v1 walking skeleton built (2026-09-04)
+
+A real, tested foundation is running, not just scaffolding — see
+`src/README.md` for the exact layout and what's real vs. stubbed:
+
+- The v1 SQLite schema applies cleanly via Node's built-in `node:sqlite`
+  (switched from `better-sqlite3` — its native-module install hung
+  repeatedly in this dev environment; see `docs/ARCHITECTURE.md`'s
+  "Implementation notes" for this and two other environment-specific
+  fixes needed to get SQLite writing reliably to `HeartWordData`).
+- `npm run db:seed-characters` loads the Mark 2 import manifest into the
+  database — verified idempotent (a second run inserts nothing) and
+  correct (9 characters, 9 versions, 18 assets, matching what was
+  imported).
+- The Express API (project create/list/run, character list) and the React
+  frontend both work end to end against that database — verified with a
+  full request-cycle smoke test (create a project, run its pipeline, see
+  it correctly stop at the first stub stage with a reasoning message,
+  confirm characters list), not just a typecheck.
+- Every pipeline stage (`src/pipeline/*/index.ts`) and provider adapter
+  method (`src/providers/{gemini,kling}/index.ts`) is wired into the
+  orchestrator and the type system but not yet implemented — each returns
+  or throws a clearly labeled "not yet implemented" result.
+
+**Needs Dan's input, not resolved autonomously:** whether to grant delete
+permission for `HeartWordData` (see `docs/ARCHITECTURE.md`'s
+"Implementation notes" — the one remaining SQLite risk on this mount:
+recovering from an uncleanly-interrupted write outside the app's own
+`getDb()` path needs a delete the mount doesn't allow without an explicit
+grant).
+
 ## Next up
 
-- Actual implementation of the v1 pipeline can begin.
+- Pick one pipeline stage to implement for real, starting with ingestion
+  (align the imported Hatam Mark 2 text/audio) — the natural next step
+  now that the skeleton it plugs into actually runs.
+- Implement one provider adapter method for real (e.g. Gemini image
+  generation) once an approach to alignment/casting exists to feed it.
 
 Out of scope for now: which subset of the illustrated-Scripture prior
 attempt's assets to import — not needed until the Illustrated lane is

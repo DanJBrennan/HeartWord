@@ -9,7 +9,11 @@ Claude-specific notes:
 - Dan drives this project from Claude (Cowork/Claude Code) sessions linked to
   his own computer — changes are usually made directly in this folder via a
   local shell, not by staging files back and forth.
-- This repo lives at `~/Projects/HeartWord` on Dan's machine.
+- This repo lives at `C:\Users\danbr\OneDrive\Documents\HeartWord` on Dan's
+  machine (reached from a Claude session as `$HOME/mnt/HeartWord`). Runtime
+  data (SQLite DB, generated assets) lives separately at
+  `C:\Users\danbr\HeartWordData\`, outside OneDrive sync — see
+  "Development environment" in `docs/ARCHITECTURE.md`.
 - Related background (missions context, hardware/tooling decisions already
   made, sister project Studytime) lives in Dan's Claude memory, not in this
   repo — ask if repo docs seem to be missing context rather than guessing.
