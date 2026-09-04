@@ -36,7 +36,9 @@ warning sign, not progress. See `AGENTS.md` and `docs/NON_GOALS.md`.
 ## Naming and Branding
 
 - **HeartWord AI** is the organization/company. Its domain is `heartword.ai`.
-  Tagline: "Faithful Scripture media for every heart language."
+  Tagline: "Scripture media for every heart language." (Earlier drafts
+  included the word "Faithful"; dropped as implied rather than stated.)
+- The HeartWord AI logo is at `docs/assets/branding/heartword-ai-logo.png`.
 - **HeartWord Studio** is the software described by this vision document — the
   AI production studio itself. Tagline: "An AI production studio for
   Scripture in every heart language." ("HeartWord" is used as a shorthand for
