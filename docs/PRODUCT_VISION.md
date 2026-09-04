@@ -86,11 +86,15 @@ preserving the biblical setting and the exact Scripture.
 Modern cinematography and coordinated film roles shape that storyboard. The
 Director guides the scene's purpose and emotional flow; the cinematographer
 guides framing, camera movement, coverage, and light; the choreographer
-guides staging and action; and production design, continuity, picture
-editing, and sound contribute to a coherent experience. Scripture and
-cultural review keep those creative choices faithful and respectful. Each
-proposed choice should have a visible purpose grounded in the passage. Music
-supports the mood while giving narration and character speech priority.
+guides staging and action; production design (including costume and
+lighting) shapes the visual world; a script supervisor / continuity role
+keeps character appearance, props, and exact Scripture wording consistent
+across shots; a colorist keeps the final look coherent across scenes; a
+sound designer and composer shape the sonic world and score; and picture
+editing assembles the result. Scripture and cultural review keep those
+creative choices faithful and respectful. Each proposed choice should have a
+visible purpose grounded in the passage. Music supports the mood while
+giving narration and character speech priority.
 
 The visual interface should be familiar to an Adobe Premiere user: project
 and media browsers, source and program monitors, a visual multitrack
@@ -275,9 +279,14 @@ rendering, including:
 
 HeartWord should offer a way for the producer to inspect and direct the
 workflow through an AI assistant, not only through direct manipulation. The
-producer is looking to that assistant not only for software operation but for
-active insight and guidance as a director, choreographer, costume designer,
-lighting designer, staging designer, and post-production partner.
+producer is looking to that assistant not only for software operation but
+for active insight and guidance across the same film-production roles named
+above: director, cinematographer, choreographer, costume designer, lighting
+designer, staging designer, script supervisor / continuity, colorist, sound
+designer, composer, and post-production/editing partner. The assistant
+should be askable to "put on" one of these hats for a specific question
+(e.g. "as the colorist, does this scene match the previous one") rather than
+only giving generic feedback.
 
 ## Audio Model
 
