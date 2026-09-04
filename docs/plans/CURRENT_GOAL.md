@@ -1,23 +1,32 @@
 # Current Goal
 
-## Status: project scaffold just created (2026-09-04)
+## Status: product vision rewritten from BVET lineage (2026-09-04)
 
-No pipeline code exists yet. This doc tracks whatever is actively being worked
-on — update it as work progresses, and move it (or a copy) into
-`docs/plans/completed/` when a goal is fully done, starting a fresh one here.
+`docs/PRODUCT_VISION.md` now reflects the mature vision recovered from BVET
+(the second of two prior attempts at this project), plus lessons learned and
+one new capability the producer added this time: a first-class Character
+Creation & Editing Tool (headshot + body images + voice mapping with live
+audio test + AI-suggested starting description).
 
-## Suggested first milestone
+## Next up
 
-Produce one complete, if rough, chapter video (e.g. Mark 2) end to end, even
-with placeholder/manual stand-ins for the hardest stages (lip-sync, media
-generation), to validate the full pipeline shape before optimizing any single
-stage. Concretely, that likely means settling, in order:
+Design the architecture (`docs/ARCHITECTURE.md` and `docs/design/*`) informed
+by that vision — still open, per the vision doc's "Design Decisions
+Intentionally Left Open" section:
 
-1. A canon character library for the first target community/language.
-2. The ingestion/alignment approach for narrator audio + translated text.
-3. A lip-sync approach that runs on available compute (cloud GPU vs. local —
-   see `docs/design/audio-and-speakers.md`).
-4. A minimal media generation + assembly path to produce *something* watchable.
+- application shape (browser app with an embedded AI assistant vs. a
+  stand-alone editor calling an AI assistant via API);
+- the staged production workflow's concrete implementation (11 stages, from
+  Source Material Validator through Distribution);
+- the Character Creation & Editing Tool's own design;
+- which subset of `BVET-Data/assets` to import (planned: FCBH original
+  audio, authorized Scripture text per language, and the in-progress canon
+  character library) and how it lands in HeartWord's own asset area without
+  carrying over BVET's code issues.
 
-Revise this once work actually starts — this is a starting point, not a
-committed plan.
+## Lesson to keep applying
+
+A prior attempt to fix BVET's issues fragmented into ~100 disconnected
+tickets and lost the thread of the actual goal. Keep every piece of design
+and implementation work traceable back to `docs/PRODUCT_VISION.md` rather
+than letting a backlog of fixes become the de facto plan.

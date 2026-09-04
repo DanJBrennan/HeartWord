@@ -30,3 +30,6 @@ npm-debug.log*
 
 # Logs
 *.log
+
+# Local cleanup staging (git can't delete on this mount)
+_to_delete/
