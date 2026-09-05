@@ -101,3 +101,79 @@ function hammingWindow(size: number): Float64Array {
   for (let i = 0; i < size; i++) window[i] = 0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (size - 1));
   return window;
 }
+
+export interface PitchFrame {
+  tSec: number;
+  hz: number | null;
+}
+
+/**
+ * Same autocorrelation pitch estimator as estimateMeanPitchHz, but run
+ * once across an ENTIRE file at fine granularity (20ms hop by default)
+ * instead of being re-run per query window. Used by the drama-edition
+ * alignment run (mark-2-drama.ts), which needs pitch at many different,
+ * overlapping time ranges (per-utterance windows, the "bracket" windows
+ * just outside each one, and a whole-chapter narrator-only sample) --
+ * computing the frame track once and slicing it with meanPitchInRange is
+ * far cheaper than re-decoding/re-windowing per range.
+ */
+export function computePitchTrack(
+  pcm: Int16Array,
+  sampleRate: number,
+  frameSec = 0.04,
+  hopSec = 0.02,
+  voicingThreshold = 0.3
+): PitchFrame[] {
+  const frameSize = Math.round(sampleRate * frameSec);
+  const hopSize = Math.round(sampleRate * hopSec);
+  const minLag = Math.floor(sampleRate / 400);
+  const maxLag = Math.ceil(sampleRate / 80);
+  const window = hammingWindow(frameSize);
+
+  const track: PitchFrame[] = [];
+  const frame = new Float64Array(frameSize);
+  for (let frameStart = 0; frameStart + frameSize <= pcm.length; frameStart += hopSize) {
+    for (let i = 0; i < frameSize; i++) frame[i] = pcm[frameStart + i]! * window[i]!;
+
+    const r0 = autocorrelate(frame, 0);
+    let hz: number | null = null;
+    if (r0 > 0) {
+      let bestLag = -1;
+      let bestValue = 0;
+      for (let lag = minLag; lag <= maxLag; lag++) {
+        const value = autocorrelate(frame, lag) / r0;
+        if (value > bestValue) {
+          bestValue = value;
+          bestLag = lag;
+        }
+      }
+      if (bestLag > 0 && bestValue >= voicingThreshold) hz = sampleRate / bestLag;
+    }
+    track.push({ tSec: frameStart / sampleRate, hz });
+  }
+  return track;
+}
+
+/** Mean pitch over [startSec, endSec) from a track built by
+ *  computePitchTrack. Track is in ascending tSec order (it's built as a
+ *  single forward pass), so this is a simple linear scan. */
+export function meanPitchInRange(
+  track: PitchFrame[],
+  startSec: number,
+  endSec: number
+): { meanHz: number | null; voicedFrameCount: number; totalFrameCount: number } {
+  let sum = 0;
+  let voiced = 0;
+  let total = 0;
+  for (const f of track) {
+    if (f.tSec < startSec) continue;
+    if (f.tSec >= endSec) break;
+    total++;
+    if (f.hz !== null) {
+      sum += f.hz;
+      voiced++;
+    }
+  }
+  if (voiced === 0) return { meanHz: null, voicedFrameCount: 0, totalFrameCount: total };
+  return { meanHz: Math.round((sum / voiced) * 10) / 10, voicedFrameCount: voiced, totalFrameCount: total };
+}
