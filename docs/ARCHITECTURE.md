@@ -604,3 +604,91 @@ the one file back:
 - **Reusable for future chapters/books/languages**: `separate_audio.py`
   takes any input audio path and reuses the same locally-stored weights
   file — no new download needed unless the weights file itself is lost.
+
+## Stage 1 completed for Mark 2: quote-aware ingestion wired in for real — 2026-09-05
+
+The "Ingestion & alignment (v1)" section above describes stage 1's
+ORIGINAL scope: paragraph-level timing only, no speaker attribution
+(`speaker_character_id` always `NULL`). That was always a partial
+implementation of what PRODUCT_VISION.md's "Source Material Validator"
+actually specifies — "quotation boundaries, speaker attribution,
+source-audio alignment" — the speaker-attribution and quotation-boundary
+half was missing entirely from the real database-backed pipeline, even
+though the exploratory quote-alignment work in `scripts/quote-alignment/`
+(mark-2.ts/mark-2-drama.ts/mark-2-drama-v3.ts) had already worked it out
+for Mark 2 and written it to human-readable text reports. Decided
+(2026-09-05, "wire in today's Mark 2 work as-is") to close that gap using
+that existing work directly, rather than either leaving it unwired or
+building a general chapter-agnostic quotation/speaker-detection model
+first — matching v1's own philosophy of proving the whole loop on one
+real chapter before generalizing.
+
+**What changed:**
+- `mark-2-quote-decisions.ts` (the 13 hand-authored decisions) and
+  `pitch.ts` moved from `scripts/quote-alignment/` into
+  `src/pipeline/ingestion/` — they're load-bearing pipeline logic now, not
+  just diagnostic-script internals. The standalone report scripts
+  (`mark-2.ts`, `mark-2-drama.ts`, `mark-2-drama-v3.ts`,
+  `music-dynamics-mark-2.ts`) still exist and still work, now importing
+  from the new location instead of duplicating it.
+- `mark-2-acoustic-scoring.ts` (new) extracts version-3's scoring pass
+  (narrator baseline, peak-search acoustic corroboration, confidence
+  blending) into a function shared by that same report script and the
+  real pipeline — one implementation, not two that could drift apart.
+- `mark-2-segments.ts` (new) turns the 13 decisions' independently-
+  estimated timing windows into one contiguous, non-overlapping,
+  chapter-spanning segment timeline — narration filling every gap between
+  quotations (including before the first and after the last), with q2
+  (the scribes' unvocalized inner reasoning) correctly folded into
+  ordinary narration rather than given its own segment.
+- **A real bug this surfaced**: q3's and q4's independently-estimated
+  windows overlap by ~8.7 seconds. Nothing in the report-generation path
+  ever checked neighboring decisions against each other — a human reading
+  a text report just sees two windows, not a conflict. Building an actual
+  non-overlapping timeline forced the issue into the open. Resolved by
+  snapping both to their shared midpoint and marking that boundary
+  uncorroborated on both sides pending a language specialist's
+  confirmation, with a review note explaining exactly why. This is exactly
+  the kind of thing a real "let's actually build it" pass catches that a
+  report-only exercise doesn't.
+- `runIngestion` (stage 1) now branches: Hatam Mark 2, when its separated
+  vocals track exists, runs this real quote-aware path; every other
+  chapter (or Mark 2 before separation has been run) falls back to the
+  original generic paragraph-timing path unchanged.
+- `audio_segments.confidence` is deliberately kept to its documented
+  meaning — TIMING-only assurance (min of a segment's two boundary
+  confidences) — even though a quote decision's `overallConfidence` also
+  folds in text/speaker-attribution confidence at 50% weight. The
+  `review_notes` gate uses the fuller `overallConfidence` number (so a
+  segment with solid timing but shaky speaker attribution, like q9, still
+  gets flagged), and each flagged segment's note carries the full context
+  — evidence phrase, rationale, all three confidence numbers, the
+  acoustic finding — not just a bare score, per PRODUCT_VISION.md's
+  text-first assurance model.
+- `source_path` for every Mark 2 segment (dialogue AND narration) points
+  at the separated vocals track, not the original drama mix. Chosen
+  because it's both the more accurate audio for this stage's own analysis
+  and plausibly the better source for later per-character voice/lip-sync
+  clipping (clean dialogue, no music bleed) — but that second part is a
+  reasonable default, not a settled decision; worth revisiting once stage
+  5 (voice & lip-sync) is actually built and audio *quality* (not just
+  timing accuracy) becomes directly consequential.
+- Verified against the real imported Mark 2 project (not synthetic data):
+  produces 21 contiguous segments (12 character-attributed dialogue, 9
+  narration) covering the full 446.4s chapter with no gaps or overlaps,
+  20 of which are flagged in `review_notes` for language-specialist
+  confirmation (matches `clips-alignment-Mark-2-version-3.txt`'s own
+  count almost exactly — the 21st segment, q1's dialogue, is the one
+  genuinely clean result). Idempotent (a second run replaces rather than
+  duplicates). `mark-2-segments.test.ts` covers the overlap-resolution and
+  contiguity logic directly (5 new tests; 10 total across the ingestion
+  stage, all passing) since that's the one piece of genuinely tricky logic
+  this added.
+
+**Still open, unchanged from before**: no reviewer UI exists yet to act on
+a `review_notes` flag — confirming or correcting a boundary still means
+querying the database directly. And this remains explicitly
+Mark-2-specific; a future chapter still needs either its own
+hand-authored decisions or (more likely, longer-term) a real chapter-
+agnostic quotation/speaker-detection pass, which was deliberately not
+attempted here.

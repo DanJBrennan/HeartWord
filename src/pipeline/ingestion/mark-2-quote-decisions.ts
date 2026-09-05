@@ -9,7 +9,7 @@
  * See mark-2.ts for the full explanation of how these decisions were
  * reached (a close reading of Hatam against English, not an algorithm).
  */
-import type { VerseRecord } from "../../src/pipeline/ingestion/parse-source-text.js";
+import type { VerseRecord } from "./parse-source-text.js";
 
 export const OPEN_QUOTE = "“";
 export const CLOSE_QUOTE = "”";
@@ -215,7 +215,7 @@ export function extractQuoteSpan(verses: VerseRecord[], decision: QuoteDecision)
  * against its own audio's own duration and detected silence gaps -- the
  * two editions are NOT assumed to share timing.
  */
-import type { SilenceGap } from "../../src/pipeline/ingestion/detect-silences.js";
+import type { SilenceGap } from "./detect-silences.js";
 
 export interface TimingEstimate {
   estimatedStartMs: number;

@@ -224,25 +224,47 @@ pursue real source separation:
   see "Next up" below, still the same gate as before, just with a
   stronger v3 report to review against.
 
+## Stage 1 (ingestion) completed for real for Mark 2 (2026-09-05)
+
+Closed the gap the "Next up" list below used to describe: the quote-
+alignment R&D work (version-1/2/3 reports) is now wired into the real,
+database-backed `runIngestion` for Hatam Mark 2 specifically, not just
+sitting in text reports. `audio_segments` now has real
+`speaker_character_id` values, real per-segment confidence scores, and a
+`review_notes` row per segment needing a language specialist's
+confirmation (20 of 21) -- verified against the real imported project,
+not synthetic data. See `docs/ARCHITECTURE.md`'s "Stage 1 completed for
+Mark 2" section for the full writeup, including a real overlap bug this
+surfaced and fixed (q3/q4's independent timing estimates conflicted by
+~8.7s) that the report-only version never caught. This is still
+Mark-2-specific by design (see that section) -- a future chapter needs
+either its own hand-authored decisions or a general algorithm, neither of
+which exists yet.
+
+Reviewer UI is still the one piece of "Next up" below that's genuinely
+unchanged: the 20 flagged segments are real database rows now, not text
+report lines, but there's still no UI for a human to act on them --
+querying `review_notes` directly is still how you'd see them today.
+
 ## Next up
 
 - Get a language specialist (or Dan, if he can informally judge Hatam
-  audio against verse boundaries some other way) to actually check the 13
-  candidate segment boundaries ingestion just produced against the real
-  audio — `clips-alignment-Mark-2-version-3.txt` is now the strongest
-  basis for that review (13 utterances, per-utterance confidence, and
-  real acoustic corroboration where it exists), but it's still a report
-  sitting in a folder, not a reviewer decision — the flagged review_notes
-  row is unactioned in the database with no UI to surface it yet. Until a
-  human confirms or corrects it, scene breakdown would be building on
-  unverified timing and speaker attribution.
+  audio against verse boundaries some other way) to actually check the 20
+  flagged `audio_segments`/`review_notes` rows ingestion now produces for
+  real against the real audio — each one carries full context (evidence
+  phrase, rationale, all three confidence numbers, the acoustic finding),
+  but it's still a database row, not a reviewer decision, and there's no
+  UI yet to surface it. Until a human confirms or corrects them, scene
+  breakdown (in progress, see below) is building on unverified timing and
+  speaker attribution for those 20.
 - Decide the voice/TTS provider (still open, per "Providers and schema"
   above) — doesn't block scene breakdown, but does block the voice &
   lip-sync stage, so it's worth deciding before that stage is reached.
-- Pick the next pipeline stage to implement for real. Scene breakdown
-  (stage 2) is the natural next step — it can consume ingestion's
-  paragraph-level `audio_segments` even before their timing is confirmed,
-  as long as its own output makes clear it's provisional too.
+- Scene breakdown (stage 2) — Dan confirmed starting this next
+  (2026-09-05+1). It can consume ingestion's now-speaker-attributed
+  `audio_segments` for Mark 2 even before the 20 flagged rows are
+  confirmed, as long as its own output makes clear which of it rests on
+  unconfirmed input.
 - Implement one provider adapter method for real (e.g. Gemini image
   generation) once scene breakdown/casting exists to feed it.
 

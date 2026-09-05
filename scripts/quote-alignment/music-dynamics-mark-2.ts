@@ -39,7 +39,7 @@ import { join } from "node:path";
 import { getDataDir } from "../../src/db/client.js";
 import { getAudioDurationMs } from "../../src/pipeline/ingestion/detect-silences.js";
 import { parseSourceTextByVerse, type VerseRecord } from "../../src/pipeline/ingestion/parse-source-text.js";
-import { decodeToPcm16Mono } from "./pitch.js";
+import { decodeToPcm16Mono } from "../../src/pipeline/ingestion/pitch.js";
 
 const HOP_SEC = 1.0;
 const SMOOTH_SEC = 3.0;

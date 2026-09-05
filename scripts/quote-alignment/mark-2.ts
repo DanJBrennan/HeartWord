@@ -31,8 +31,8 @@ import { join } from "node:path";
 import { getDataDir } from "../../src/db/client.js";
 import { detectSilences, getAudioDurationMs } from "../../src/pipeline/ingestion/detect-silences.js";
 import { parseSourceTextByVerse } from "../../src/pipeline/ingestion/parse-source-text.js";
-import { decodeToPcm16Mono, estimateMeanPitchHz } from "./pitch.js";
-import { DECISIONS, extractQuoteSpan, estimateTimingWindow, fmtTime, type QuoteDecision } from "./decisions-mark-2.js";
+import { decodeToPcm16Mono, estimateMeanPitchHz } from "../../src/pipeline/ingestion/pitch.js";
+import { DECISIONS, extractQuoteSpan, estimateTimingWindow, fmtTime, type QuoteDecision } from "../../src/pipeline/ingestion/mark-2-quote-decisions.js";
 
 
 interface ScoredUtterance extends QuoteDecision {

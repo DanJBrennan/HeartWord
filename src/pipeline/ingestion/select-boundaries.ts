@@ -90,7 +90,7 @@ function confidenceForGap(durationMs: number, topDurationMs: number): number {
   return Math.round(Math.min(MAX_HEURISTIC_CONFIDENCE, Math.max(MIN_HEURISTIC_CONFIDENCE, scaled)));
 }
 
-function minConfidence(a: number | null, b: number | null): number | null {
+export function minConfidence(a: number | null, b: number | null): number | null {
   if (a === null) return b;
   if (b === null) return a;
   return Math.min(a, b);
