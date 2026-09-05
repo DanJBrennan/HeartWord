@@ -276,15 +276,17 @@ confirmation rather than silently misassigned. Idempotent, fully tested
   rows, not reviewer decisions, and there's no UI yet to surface them.
   Both stage 2's scenes and any future stage 3 casting work are building
   on this unconfirmed input in the meantime.
-- Voice/TTS provider decided (2026-09-05, Dan): Kling.io's Avatar API --
-  the same provider and `KLING_API_KEY_1` credential as lip-sync, not a
-  separate vendor. Doesn't block stage 3 (casting & direction). Still
-  open before stage 5 (voice & lip-sync) is built: whether Kling's Avatar
-  API takes text directly (built-in TTS, one call does both voice and
-  lip-sync) or expects a pre-generated audio track (a separate TTS step
-  still needed upstream) -- check Kling's actual API docs rather than
-  assuming either shape. See `docs/ARCHITECTURE.md`'s Provider interface
-  section.
+- Voice provider decided (2026-09-05, Dan): ElevenLabs' voice-changer
+  (speech-to-speech) API, `ELEVENLABS_API_KEY` -- a separate vendor and
+  step from Kling, not folded into it. Used to (1) audition ElevenLabs'
+  voices and pick each canonical speaking character's voice, and (2)
+  re-voice that character's real Hatam dialogue (stage 1's
+  `original_reading` segments) into the chosen voice for the composite
+  cast master. Kling.io's Avatar API (`KLING_API_KEY_1`, already decided)
+  then lip-syncs that ElevenLabs-voiced clip against a scene keyframe plus
+  the character's headshot. Doesn't block stage 3 (casting & direction) --
+  only stage 5 (voice & lip-sync). See `docs/ARCHITECTURE.md`'s Provider
+  interface section.
 - Stage 3 (casting & direction) next — per ARCHITECTURE.md's v1
   simplification, this runs as a single AI planning pass (not full
   multi-agent negotiation) and owns `shots`, `shot_characters`, and

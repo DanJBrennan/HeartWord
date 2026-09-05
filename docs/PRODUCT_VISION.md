@@ -142,10 +142,14 @@ for the tool's workflow in full; in summary:
 - Voice mapping applies only to characters with spoken lines in at least
   one scene — a non-speaking character (a crowd extra, someone who only
   appears silently) never needs one. For a speaking character, voice
-  mapping is a dropdown selection against the available voice IDs (v1:
-  Kling.ai's Avatar API, the confirmed voice/TTS provider — see Generation
-  Providers, Models, and Cost below), with a live audio test so the
-  producer can hear a character's assigned voice before approving it.
+  mapping is a dropdown selection against ElevenLabs' available voices (v1's
+  confirmed voice provider — see Generation Providers, Models, and Cost
+  below) — auditioning candidate voices there is how the producer picks
+  each canonical character's voice in the first place, not just a lookup
+  against an already-decided ID. A live audio test then plays a sample of
+  the character's own Hatam line (re-voiced via ElevenLabs' voice-changer,
+  not synthesized from scratch) so the producer hears the actual assigned
+  performance before approving it, not just the stock ElevenLabs sample.
 - When starting a new character, the AI proposes a starting
   description/prompt for the character's appearance (informed by the
   regional canon and the role the character plays in the source text) for the
@@ -387,11 +391,25 @@ how these map onto the provider abstraction):
   expose, not just a fallback — it's the fast path for both fixing an
   approved character asset (see `docs/design/character-tool.md`) and
   correcting a returned shot that's otherwise right.
-- **Lip-sync and voice/TTS:** Kling.ai's Avatar API, authenticated via
-  `KLING_API_KEY_1` (a separate credential/vendor from the Google-family
-  models above). Confirmed 2026-09-05: this same provider covers both
-  narration/character-speech generation and lip-sync — there's no
-  separate v1 TTS vendor.
+- **Voice/re-voicing:** ElevenLabs' voice-changer (speech-to-speech) API,
+  authenticated via `ELEVENLABS_API_KEY`. Confirmed 2026-09-05. Used two
+  ways: (1) auditioning ElevenLabs' available voices to pick each
+  canonical speaking character's voice, and (2) re-voicing that
+  character's real Hatam dialogue -- the original narrator's actual
+  reading, from stage 1's `original_reading` audio segments -- into the
+  chosen voice for the composite cast master (see Three-Layer Audio
+  Architecture above). This is speech-to-speech, not text-to-speech: no
+  Hatam TTS model exists, so the actual heart-language audio a real
+  narrator already recorded is what gets re-voiced, preserving Hatam
+  pronunciation and performance rather than synthesizing it from text.
+- **Lip-sync:** Kling.ai's Avatar API, authenticated via `KLING_API_KEY_1`
+  (a separate credential/vendor from ElevenLabs and the Google-family
+  models above). Takes the composite-cast-master audio clip for a
+  character's line plus a scene keyframe -- close enough on the character
+  to show lip movement, but still framed with the scene's actual
+  background -- as the reference frame; the character's approved headshot
+  is also passed alongside the keyframe for added likeness/lip-sync
+  quality.
 - Model choice must be visible and controllable inside HeartWord rather than
   buried in code.
 - HeartWord must monitor generation cost, especially keyframe and video

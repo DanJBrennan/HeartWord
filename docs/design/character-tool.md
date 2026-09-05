@@ -87,11 +87,16 @@ promotion can be rolled back.
   given chapter will need this; most crowd/background characters won't —
   the distinction is whichever the source text and scene breakdown actually
   attributes speech to, not the character's prominence.
-- The voice dropdown lists available provider voice IDs for the character
-  to choose from.
-- A live audio test plays a sample line in the assigned voice before the
-  producer approves it, so a voice/face mismatch is caught by ear, not
-  guessed from a provider ID.
+- The voice dropdown lists ElevenLabs' available voices (v1's confirmed
+  voice provider, 2026-09-05) for the character to audition and choose
+  from.
+- A live audio test plays that character's own Hatam line, re-voiced via
+  ElevenLabs' voice-changer (speech-to-speech, not text-to-speech -- it
+  re-voices the real narrator's original recording rather than
+  synthesizing Hatam from text, since no Hatam TTS model exists) in the
+  candidate voice, before the producer approves it -- so a voice/face
+  mismatch is caught by ear against the character's actual line, not
+  guessed from a provider ID or a generic sample.
 - Existing voice assignments recovered from prior BVET-Data work (see Audio
   Model in `docs/PRODUCT_VISION.md`) should be reviewed and reused through
   this same mapping rather than reassigned from scratch.

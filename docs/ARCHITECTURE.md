@@ -224,11 +224,17 @@ tier, keyframe-guided generation, targeted image editing) all sit behind
 one Gemini/Google adapter authenticated with a single `GEMINI_API_KEY` —
 they're one vendor family, so one adapter module implements several
 provider interfaces rather than one interface having several vendors
-behind it. Kling.ai's Avatar API is a separate adapter, authenticated with
-`KLING_API_KEY_1` — and, per Dan's 2026-09-05 confirmation, it's also the
-v1 voice/TTS provider, not just lip-sync: there's no separate narration/
-character-speech vendor in v1, one Kling credential covers both. See
-Generation Providers, Models, and Cost in `docs/PRODUCT_VISION.md`.
+behind it. Two more vendors are each a separate adapter: ElevenLabs'
+voice-changer (speech-to-speech) API, authenticated with
+`ELEVENLABS_API_KEY` -- confirmed 2026-09-05 as v1's voice/re-voicing
+provider, both for auditioning/selecting each canonical character's voice
+and for re-voicing their real Hatam dialogue (stage 1's `original_reading`
+segments) into the composite cast master -- and Kling.ai's Avatar API,
+authenticated with `KLING_API_KEY_1`, for lip-sync: it takes that
+ElevenLabs-voiced audio clip plus a scene keyframe (backgrounded in the
+actual scene, close enough to see lip movement) and the character's
+approved headshot as inputs. See Generation Providers, Models, and Cost in
+`docs/PRODUCT_VISION.md`.
 
 ```ts
 interface ImageProvider {
@@ -253,9 +259,21 @@ interface DraftVideoProvider {
   generateGuided(startFrame: AssetRef, endFrame: AssetRef, request: ShotRequest): Promise<GenerationResult>;
 }
 
+interface VoiceProvider {
+  // ElevenLabs voice-changer (speech-to-speech) -- re-voices the real
+  // Hatam performance, doesn't synthesize speech from text (no Hatam TTS
+  // model exists). originalAudio is a stage-1 original_reading segment;
+  // result becomes part of the composite cast master.
+  reVoice(originalAudio: AudioSegmentRef, voiceId: string): Promise<GenerationResult>;
+}
+
 interface LipSyncProvider {
-  // Kling.ai Avatar API
-  sync(character: CharacterRef, audio: AudioSegmentRef, referenceFrame: AssetRef): Promise<GenerationResult>;
+  // Kling.ai Avatar API -- audio is the VoiceProvider output (composite
+  // cast master), referenceFrame is a scene keyframe close enough to show
+  // lip movement but still framed on the scene's real background;
+  // headshot is the character's approved reference image, passed
+  // alongside referenceFrame for added likeness/lip-sync quality.
+  sync(character: CharacterRef, audio: AudioSegmentRef, referenceFrame: AssetRef, headshot: AssetRef): Promise<GenerationResult>;
 }
 
 interface GenerationResult {
@@ -273,15 +291,13 @@ from day one, even though v1's QC only implements the structural subset of
 checks that can produce it. `ImageEditor` is deliberately its own small
 interface rather than a method on `ImageProvider`, since v1 has exactly one
 implementation (Omni 1.1) and no image-generation vendor is assumed to
-support it. A `VoiceProvider` interface (for narration/character-speech
-generation feeding into `LipSyncProvider`) isn't sketched here yet -- not
-because the vendor is unconfirmed anymore (it's Kling.ai's Avatar API, same
-as lip-sync — see Open implementation questions), but because it's still
-unconfirmed whether Kling's Avatar API takes raw text (built-in TTS, no
-separate voice-generation step needed) or requires a pre-generated audio
-track (meaning `VoiceProvider` is still a real, separate interface feeding
-into `LipSyncProvider`). Worth checking Kling's actual API docs before
-stage 5 (voice & lip-sync) is built rather than guessing the shape now.
+support it. `VoiceProvider` is ElevenLabs' voice-changer (speech-to-speech)
+API, confirmed 2026-09-05 -- genuinely a separate step from `LipSyncProvider`,
+not folded into it: ElevenLabs re-voices a character's real Hatam dialogue
+(re-voicing, not synthesizing from text -- no Hatam TTS model exists) into
+the composite cast master, and that resulting audio clip is what
+`LipSyncProvider` (Kling.ai's Avatar API) then takes as input alongside a
+scene keyframe and the character's headshot.
 
 ## Development environment
 
@@ -310,22 +326,21 @@ on one deployment's folder layout) already supports this; this just makes
 the OneDrive-specific reason explicit before it causes a real problem
 instead of after.
 
-Required environment variables (`GEMINI_API_KEY`, `KLING_API_KEY_1`,
-`HEARTWORD_DATA_DIR`) are listed in `.env.example` at the repo root; `.env`
-itself stays gitignored, per existing convention.
+Required environment variables (`GEMINI_API_KEY`, `ELEVENLABS_API_KEY`,
+`KLING_API_KEY_1`, `HEARTWORD_DATA_DIR`) are listed in `.env.example` at
+the repo root; `.env` itself stays gitignored, per existing convention.
 
 ## Open implementation questions
 
-- All v1 providers (Nano Banana/Pro, Veo 3.1 Lite, Omni 1.1, Kling Avatar)
-  are cloud-hosted and API-key authenticated, so v1 needs no local GPU
-  provisioning — confirmed, not open. The voice/TTS provider for narration
-  and character speech is also confirmed now (2026-09-05, Dan): Kling.ai's
-  Avatar API, the same vendor and `KLING_API_KEY_1` credential as
-  lip-sync — not a separate vendor like ElevenLabs. Still open: whether
-  that means one Kling call does TTS + lip-sync together (text in, synced
-  video out) or Kling still expects a pre-generated audio track as input
-  (a separate TTS step upstream). See Audio Model in
-  `docs/PRODUCT_VISION.md` and the Provider interface section above.
+- All v1 providers (Nano Banana/Pro, Veo 3.1 Lite, Omni 1.1, Kling Avatar,
+  ElevenLabs voice-changer) are cloud-hosted and API-key authenticated, so
+  v1 needs no local GPU provisioning — confirmed, not open. The voice
+  provider is also confirmed (2026-09-05, Dan): ElevenLabs' voice-changer
+  (speech-to-speech) API, `ELEVENLABS_API_KEY` -- a separate vendor and
+  step from Kling's lip-sync, not folded into it. ElevenLabs re-voices
+  each speaking character's real Hatam dialogue into their chosen voice;
+  Kling then lip-syncs that resulting audio against a scene keyframe plus
+  the character's headshot.
 - Whether `KLING_API_KEY_1`'s naming implies more than one Kling key is
   expected (e.g. for quota/rate-limit spreading across concurrent lip-sync
   calls) — affects whether the Kling adapter needs key-pool logic in v1 or
