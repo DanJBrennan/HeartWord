@@ -184,14 +184,61 @@ approach and its known limitations (paragraph-, not verse-level timing; no
 reviewer UI yet to act on the flag; heuristic tuned to this specific
 docx/audio pair).
 
+## Audio corroboration deepened, real vocal separation added (2026-09-05)
+
+Went well beyond the "ingestion & alignment implemented for real" milestone
+above, still within stage 1, driven by Dan's own listening and a request to
+pursue real source separation:
+
+- **version-2** (`mark-2-drama.ts`): re-scored the same 13 quote/speaker
+  decisions against FCBH's actual multi-cast "Drama" edition instead of the
+  single-reader Non-Drama edition, adding a real (if weak) acoustic signal —
+  does a candidate quotation's audio sound like a different voice than the
+  narrator, and does that difference disappear again right after (the
+  "bracket" pattern only a true multi-voice recording could produce).
+- Diagnosed and fixed two real bugs in that acoustic check along the way
+  (narrator-pitch noise floor, and diluted signal in long estimate windows)
+  and separately confirmed the drama edition's background music was
+  distorting silence detection (fixed with a recording-specific noise-floor
+  tune) but not the coarse pitch numbers.
+- **version-3** (`mark-2-drama-v3.ts`): once Dan obtained real Demucs
+  (htdemucs) pretrained weights through his own Hugging Face login — see
+  `scripts/quote-alignment/separate_audio.py` and `docs/ARCHITECTURE.md`'s
+  "Real vocal isolation achieved" section — re-ran the same check against a
+  genuinely separated vocals track. Confirmed a real confound (a periodic
+  instrument note in the underscore had been confusing the pitch estimator
+  at some speaker transitions) and, more importantly, surfaced a much
+  cleaner finding: 6 of 7 Jesus utterances now show a consistently
+  lower-pitched voice than the narrator baseline — real corroborating
+  evidence this recording uses a distinct voice actor for Jesus.
+- **`music-dynamics-mark-2.ts`**: a bonus deliverable from having a clean
+  instrumental stem — reads the drama edition's own music loudness contour
+  (swells/recedes) as a reference for whoever eventually scores this
+  chapter's video. A first attempt (before real separation) was mostly
+  noise and wasn't delivered; the real-separation version finds 10 events
+  that plausibly track real story beats.
+- All three reports live in `HEARTWORD_DATA_DIR/exports/` as
+  `clips-alignment-Mark-2-version-{1,2,3}.txt` and `music-dynamics-Mark-2.txt`.
+  **The underlying open item is unchanged**: none of this has been
+  confirmed by a human who actually understands Hatam or this recording —
+  see "Next up" below, still the same gate as before, just with a
+  stronger v3 report to review against.
+
 ## Next up
 
 - Get a language specialist (or Dan, if he can informally judge Hatam
   audio against verse boundaries some other way) to actually check the 13
   candidate segment boundaries ingestion just produced against the real
-  audio — the flagged review_notes row is sitting unactioned in the
-  database with no UI to surface it yet. Until that happens, scene
-  breakdown would be building on unverified timing.
+  audio — `clips-alignment-Mark-2-version-3.txt` is now the strongest
+  basis for that review (13 utterances, per-utterance confidence, and
+  real acoustic corroboration where it exists), but it's still a report
+  sitting in a folder, not a reviewer decision — the flagged review_notes
+  row is unactioned in the database with no UI to surface it yet. Until a
+  human confirms or corrects it, scene breakdown would be building on
+  unverified timing and speaker attribution.
+- Decide the voice/TTS provider (still open, per "Providers and schema"
+  above) — doesn't block scene breakdown, but does block the voice &
+  lip-sync stage, so it's worth deciding before that stage is reached.
 - Pick the next pipeline stage to implement for real. Scene breakdown
   (stage 2) is the natural next step — it can consume ingestion's
   paragraph-level `audio_segments` even before their timing is confirmed,
