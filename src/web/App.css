@@ -32,3 +32,24 @@ form {
 input {
   padding: 0.25rem 0.5rem;
 }
+
+.hint {
+  color: #555;
+  font-size: 0.9rem;
+  max-width: 640px;
+}
+
+.voice-cast-row {
+  margin-bottom: 0.5rem;
+}
+
+.voice-cast-row .approved {
+  color: #1a7a3a;
+}
+
+.voice-cast-row > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}

@@ -6,6 +6,7 @@ import { existsSync } from "node:fs";
 import { getDb } from "../db/client.js";
 import { projectsRouter } from "./routes/projects.js";
 import { charactersRouter } from "./routes/characters.js";
+import { voicesRouter } from "./routes/voices.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -21,6 +22,7 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/projects", projectsRouter);
 app.use("/api/characters", charactersRouter);
+app.use("/api/voices", voicesRouter);
 
 // Production: serve the Vite build directly (single local web app — see
 // "Application shape" in docs/ARCHITECTURE.md). In dev, Vite's own server

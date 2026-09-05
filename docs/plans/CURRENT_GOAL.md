@@ -298,6 +298,31 @@ Board artifact with the corrected headshot. See ARCHITECTURE.md for the
 full writeup. Not yet checked: whether the same v1/v2 mismatch exists for
 other characters.
 
+## Voice-casting UI added (2026-09-05)
+
+Built a real "Voice casting" section in the web app (not a mockup):
+`GET /api/voices` (`src/server/routes/voices.ts` + `src/server/providers/
+elevenlabs.ts`) calls ElevenLabs' `GET /v2/voices` and returns every voice
+on Dan's account; the UI lists each character with a filterable dropdown
+(text filter, since ElevenLabs has no native "voice group" API object --
+Dan's "BVET" set is whatever he's organized in his own account/labels, so
+this can't query it directly) plus an audio preview and an Approve
+button. Approving calls `PATCH /api/characters/:id/voice`, which writes
+`voice_provider`/`voice_id` onto that character's current
+`character_versions` row -- the same columns seeded NULL for all 9
+characters. Jesus's dropdown pre-selects "Brian" by name match (Dan's
+already-decided voice) so approving him is one click.
+
+Not yet done: the actual re-voicing (speech-to-speech) call once a voice
+is approved -- this UI only covers audition/selection/approval, per the
+VoiceProvider interface split in ARCHITECTURE.md. Also untested against
+the live ElevenLabs API in this environment (both the cloud sandbox and
+the device shell used for this session have no network path to
+api.elevenlabs.io -- blocked by egress policy on both), so it hasn't been
+run against real data yet; it should work once Dan runs the server
+locally with `ELEVENLABS_API_KEY` set in `.env`, where his machine's
+normal internet access applies.
+
 ## Next up
 
 - Get a language specialist (or Dan, if he can informally judge Hatam

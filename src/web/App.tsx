@@ -20,6 +20,16 @@ interface Character {
   version_label: string | null;
   version_status: string | null;
   voice_provider: string | null;
+  voice_id: string | null;
+}
+
+interface Voice {
+  voiceId: string;
+  name: string;
+  category: string | null;
+  labels: Record<string, string>;
+  description: string | null;
+  previewUrl: string | null;
 }
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -34,11 +44,27 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+function matchesFilter(v: Voice, filter: string): boolean {
+  if (!filter.trim()) return true;
+  const needle = filter.trim().toLowerCase();
+  const haystack = [v.name, v.category ?? "", v.description ?? "", ...Object.values(v.labels)]
+    .join(" ")
+    .toLowerCase();
+  return haystack.includes(needle);
+}
+
 export default function App() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ language: "hatam", book: "mark", chapter: 2 });
+
+  const [voices, setVoices] = useState<Voice[]>([]);
+  const [voicesError, setVoicesError] = useState<string | null>(null);
+  // "BVET" pre-filled because that's the ElevenLabs voice set Dan built for
+  // this project (2026-09-05) -- clear it to browse the whole account.
+  const [voiceFilter, setVoiceFilter] = useState("BVET");
+  const [pendingSelection, setPendingSelection] = useState<Record<string, string>>({});
 
   async function refresh() {
     try {
@@ -56,12 +82,40 @@ export default function App() {
 
   useEffect(() => {
     refresh();
+    api<{ voices: Voice[] }>("/voices")
+      .then(({ voices }) => setVoices(voices))
+      .catch((err) => setVoicesError((err as Error).message));
   }, []);
+
+  // Pre-select Brian for Jesus (Dan's existing decision) once both the
+  // voice list and character list are in, so it's a one-click Approve
+  // rather than making him find it in a long dropdown every time.
+  useEffect(() => {
+    if (voices.length === 0 || characters.length === 0) return;
+    const jesus = characters.find((c) => c.name.toLowerCase() === "jesus" && !c.voice_id);
+    const brian = voices.find((v) => v.name.toLowerCase() === "brian");
+    if (jesus && brian && !pendingSelection[jesus.id]) {
+      setPendingSelection((prev) => ({ ...prev, [jesus.id]: brian.voiceId }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voices, characters]);
 
   async function createProject(e: React.FormEvent) {
     e.preventDefault();
     try {
       await api("/projects", { method: "POST", body: JSON.stringify(form) });
+      await refresh();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  async function approveVoice(characterId: string, voiceId: string) {
+    try {
+      await api(`/characters/${characterId}/voice`, {
+        method: "PATCH",
+        body: JSON.stringify({ voiceProvider: "elevenlabs", voiceId })
+      });
       await refresh();
     } catch (err) {
       setError((err as Error).message);
@@ -120,6 +174,64 @@ export default function App() {
           {characters.length === 0 && (
             <li className="empty">No characters yet — run `npm run db:seed-characters`.</li>
           )}
+        </ul>
+      </section>
+
+      <section>
+        <h2>Voice casting</h2>
+        <p className="hint">
+          Voices come from your ElevenLabs account (needs <code>ELEVENLABS_API_KEY</code> in{" "}
+          <code>.env</code>). ElevenLabs doesn't have a real "voice group" API, so this filter is just a
+          text match on name/category/labels — try "BVET" for the set you built for this project, or clear
+          it to browse everything.
+        </p>
+        {voicesError && <p className="error">Couldn't load ElevenLabs voices: {voicesError}</p>}
+        <input
+          aria-label="voice filter"
+          placeholder="Filter voices (e.g. BVET)"
+          value={voiceFilter}
+          onChange={(e) => setVoiceFilter(e.target.value)}
+        />
+        <ul>
+          {characters.map((c) => {
+            const filtered = voices.filter((v) => matchesFilter(v, voiceFilter));
+            const selected = pendingSelection[c.id] ?? c.voice_id ?? "";
+            const selectedVoice = voices.find((v) => v.voiceId === selected);
+            const approvedVoiceName =
+              c.voice_id && voices.find((v) => v.voiceId === c.voice_id)?.name;
+
+            return (
+              <li key={c.id} className="voice-cast-row">
+                <strong>{c.name}</strong>{" "}
+                {c.voice_id ? (
+                  <span className="approved">approved: {approvedVoiceName ?? c.voice_id}</span>
+                ) : (
+                  <span className="empty">no voice yet</span>
+                )}
+                <div>
+                  <select
+                    aria-label={`voice for ${c.name}`}
+                    value={selected}
+                    onChange={(e) => setPendingSelection({ ...pendingSelection, [c.id]: e.target.value })}
+                  >
+                    <option value="">— choose a voice —</option>
+                    {filtered.map((v) => (
+                      <option key={v.voiceId} value={v.voiceId}>
+                        {v.name}
+                        {v.category ? ` (${v.category})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedVoice?.previewUrl && (
+                    <audio controls src={selectedVoice.previewUrl} style={{ height: 28, verticalAlign: "middle" }} />
+                  )}
+                  <button type="button" disabled={!selected} onClick={() => approveVoice(c.id, selected)}>
+                    Approve
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </section>
     </main>
