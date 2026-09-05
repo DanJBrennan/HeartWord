@@ -467,3 +467,59 @@ fileset ID from a streaming page's embedded JSON:
 still worth knowing about for programmatic fileset lookups, but for a
 human picking out one book/chapter/edition, the mp3-downloads page above
 is the simpler starting point.
+
+## Real vocal isolation is blocked by network policy — investigated 2026-09-05
+
+Dan asked for Demucs (or similar) to separate the drama edition's
+background music from dialogue, both to clean up the pitch-based
+voice-identity check in the quote-alignment exercise and, separately, to
+extract the music's own dynamics as a reference for whoever scores
+future videos. Findings, so a future session doesn't have to re-derive
+them:
+
+- **Demucs itself can't run here.** `pip install demucs` works fine
+  (PyPI is reachable), but loading any pretrained model tries to download
+  weights from `huggingface.co` or `dl.fbaipublicfiles.com`, and both are
+  blocked with a `403` at the egress proxy — confirmed from both this
+  cloud environment and Dan's own machine, so it's an org-level network
+  policy, not a fixable config issue. Getting real separation working
+  needs either those hosts allowlisted for this environment, or the
+  model weights obtained on an unrestricted network and handed over as a
+  file.
+- **A model-free fallback was tried**: a "modulation-based spectral
+  gate" (`scripts` were exploratory, not committed — see chat history if
+  reconstructing) that keeps time-frequency bins with high short-term
+  variance (speech-like) and discards steady ones (sustained pad/string
+  chords are much steadier than a voice). Cross-checked against the raw
+  mixed audio using both the from-scratch autocorrelation pitch
+  estimator (pitch.ts) and librosa's `pyin` (available in the cloud
+  sandbox's Python environment, not in this Node pipeline): filtering
+  barely changed the coarse (3-second-binned) per-utterance results,
+  consistent with the music sitting roughly 10-20dB below dialogue in
+  this recording (measured directly). So the existing version-2 report's
+  numbers aren't invalidated by the music at that resolution.
+- **But it's not clean at fine resolution.** Zooming into two of the
+  tightest speaker transitions (a question immediately followed by
+  Jesus's answer) with `pyin`, the pitch estimate repeatedly flips
+  between ~110Hz and ~220Hz — an exact octave — in BOTH scenes,
+  regardless of which character is speaking. That's a strong sign of a
+  shared low sustained note (a bass/pad line, not either voice actor)
+  confusing the fundamental-frequency estimate. It means a genuinely
+  reliable "which exact instant does the voice change" check — the level
+  of precision Dan can apparently do by ear — likely does need real
+  separation, not just this heuristic.
+- **The music-dynamics-for-composers idea is worth doing but not ready.**
+  A first pass at extracting a loudness envelope from the modulation
+  gate's "steady" residual and flagging rise/fall runs produced mostly
+  noise (dozens of small 4-8dB blips, almost certainly leaked
+  unvoiced-consonant/breath energy rather than real musical swells) plus
+  a couple of large jumps that look like reconstruction edge artifacts
+  at the very start/end of the file rather than real cues. Revisit once
+  a clean instrumental stem exists.
+- **Separately, `pyin` and the hand-rolled autocorrelation estimator
+  disagree** on which utterances count as acoustically "distinct" (2 of
+  5 previously-flagged utterances agree between the two). Worth
+  switching the pipeline to a validated pitch algorithm rather than the
+  from-scratch one if this analysis gets relied on more heavily — Python
+  wasn't available in earlier sessions but is now (librosa installs
+  cleanly from PyPI in the cloud sandbox).
