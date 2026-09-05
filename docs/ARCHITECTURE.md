@@ -443,3 +443,27 @@ decision logic in this stage.
   EXISTS` doesn't retroactively add columns — resolved per the Migration
   tooling note above by deleting and recreating the dev database (no real
   data existed yet to lose).
+
+## Source audio acquisition (FCBH) — added 2026-09-05
+
+For Mark 2, the Hatam source audio was tracked down the hard way: found
+`bible.is`'s per-chapter streaming page, confirmed FCBH's fileset catalog
+(`HADLAIN1DA` = Non-Drama single reader, `HADLAIN2DA` = Drama multi-voice)
+via that page's embedded `__NEXT_DATA__`, then pulled the actual files
+from Dan's existing `BVET-Data/assets/Original-FCBH-Audio/` folders, which
+already had the full Hatam New Testament in both editions
+(`Hatam_had_LAI_NT_Non-Drama/` and `Hatam_had_LAI_NT_Drama/`, one mp3 per
+chapter, named like `B02___02_Markus______HADLAIN2DA.mp3`).
+
+For any future chapter, book, or language, start here instead — FCBH runs
+a public bulk-download page that's far more direct than reconstructing a
+fileset ID from a streaming page's embedded JSON:
+
+- Hatam specifically: https://www.faithcomesbyhearing.com/audio-bible-resources/mp3-downloads?language=Hatam&version=HADLAIN2DA
+- Any language (starting point): https://www.faithcomesbyhearing.com/audio-bible-resources/mp3-downloads
+
+(Dan's own note, added here so it isn't lost.) The Bible Brain API
+(`4.dbt.io`, née DBP) documented in the version-2 quote-alignment work is
+still worth knowing about for programmatic fileset lookups, but for a
+human picking out one book/chapter/edition, the mp3-downloads page above
+is the simpler starting point.
