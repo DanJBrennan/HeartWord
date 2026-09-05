@@ -119,6 +119,70 @@ export function parseSourceTextByVerse(docxPath: string): VerseRecord[] {
  * they have no corresponding audio and would misalign everything after
  * them if included.
  */
+export interface SourceHeading {
+  /** The Hatam pericope heading text, e.g. "Yesus dimig Lewi". */
+  headingText: string;
+  /** The parenthetical synoptic cross-reference that follows the heading
+   *  in this source docx, e.g. "Mat. 9:9-13; Luk. 5:27-32" -- null if a
+   *  heading has none (not expected in practice for this docx, but not
+   *  assumed). */
+  parallelRefs: string | null;
+  /** The verse number of the first verse-marked paragraph that follows
+   *  this heading -- how a heading is anchored to the text, since the
+   *  docx has no other structural link between them. */
+  verseStart: number;
+}
+
+/**
+ * Recovers the chapter's own pericope headings and synoptic cross-
+ * references -- the exact things parseSourceText/parseSourceTextByVerse
+ * deliberately DISCARD because they have no corresponding audio. Scene
+ * breakdown (stage 2) needs the opposite: these headings are the
+ * translation's OWN scene divisions, already reviewed and published, so
+ * using them is following the source text rather than inventing
+ * narrative structure -- see AGENTS.md/NON_GOALS.md on not inventing
+ * content beyond what the source says. Confirmed against Hatam Mark 2's
+ * real docx: exactly 4 headings, matching the 4 standard synoptic
+ * pericopes (healing the paralytic / calling Levi / question about
+ * fasting / lord of the Sabbath), each followed by the expected
+ * Matthew/Luke parallel reference.
+ *
+ * Same crude "no verse marker on this paragraph" signal as the functions
+ * above, refined further: a parenthetical-only paragraph is a cross-
+ * reference, not a heading, and the document's very first paragraph (the
+ * bare chapter title, e.g. "MARKUS 2") is dropped positionally rather
+ * than pattern-matched, since matching it as "no lowercase letters"
+ * would also wrongly catch a heading that happened to be short and
+ * capitalized.
+ */
+export function parseSourceHeadings(docxPath: string): SourceHeading[] {
+  const xml = readDocumentXml(docxPath);
+  const lines = xmlToParagraphLines(xml).slice(1); // drop the bare chapter title (first paragraph)
+
+  const headings: SourceHeading[] = [];
+  let pendingHeading: string | null = null;
+  let pendingParallelRefs: string | null = null;
+
+  for (const line of lines) {
+    const verses = splitParagraphIntoVerses(line);
+    if (verses.length > 0) {
+      if (pendingHeading !== null) {
+        headings.push({ headingText: pendingHeading, parallelRefs: pendingParallelRefs, verseStart: verses[0]!.verse });
+      }
+      pendingHeading = null;
+      pendingParallelRefs = null;
+      continue;
+    }
+    if (/^\(.+\)$/.test(line)) {
+      pendingParallelRefs = line.slice(1, -1);
+      continue;
+    }
+    pendingHeading = line;
+  }
+
+  return headings;
+}
+
 export function parseSourceText(docxPath: string, book: string, chapter: number): VerseGroup[] {
   const verses = parseSourceTextByVerse(docxPath);
   const bookTitle = book.charAt(0).toUpperCase() + book.slice(1);

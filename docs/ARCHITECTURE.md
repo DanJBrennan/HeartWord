@@ -692,3 +692,62 @@ Mark-2-specific; a future chapter still needs either its own
 hand-authored decisions or (more likely, longer-term) a real chapter-
 agnostic quotation/speaker-detection pass, which was deliberately not
 attempted here.
+
+## Stage 2 (scene breakdown) implemented for real — 2026-09-05
+
+`runSceneBreakdown` (`src/pipeline/scene-breakdown/index.ts`) is no longer
+a stub. Unlike stage 1's Mark-2-specific quote-aware path, this stage is
+chapter-agnostic by design:
+
+- **Scene boundaries come from the source text's own published pericope
+  headings, not an invented narrative breakdown.** A new
+  `parseSourceHeadings()` (`src/pipeline/ingestion/parse-source-text.ts`)
+  extracts these from the same .docx stage 1 already reads — the Hatam
+  Mark 2 file was found to contain its own section headings plus synoptic
+  parallel-passage references (e.g. "Yesus dimig Lewi (Mat. 9:9-13; Luk.
+  5:27-32)"), previously silently discarded by `parseSourceText` as
+  paragraphs with no verse marker. These map exactly onto the four
+  standard Markan pericope divisions (healing the paralytic / calling
+  Levi / the fasting question / grainfields on the Sabbath), giving scene
+  boundaries that follow the translation's own already-published
+  structure — see NON_GOALS.md ("Scene/action decisions fill in *how* the
+  text is shown, not *what* the text says").
+- **Stage boundary respected**: this stage owns only the `scenes` table
+  (sequence, verse range, a text-grounded summary). `shots`,
+  `shot_characters`, and `scenes.reasoning` (the schema's own
+  "casting/direction reasoning log" comment) are stage 3's (casting &
+  direction's) job, not this one's — confirmed by cross-referencing this
+  file, the schema comments, and NON_GOALS.md before writing any code.
+- **Scene summaries state only what's already established**: heading
+  text, synoptic parallel reference, verse range, and which characters
+  stage 1's real speaker attribution shows actually speak in that
+  range — no staging, camera, or action content invented at this stage.
+- `buildScenesFromHeadings()` (`src/pipeline/scene-breakdown/build-
+  scenes.ts`) is the pure, directly-tested grouping logic: it assigns
+  each stage-1 audio segment to the scene its starting verse falls in,
+  and separately flags any segment whose verse range crosses a scene
+  boundary rather than silently misassigning it — a real, expected case
+  for narration segments that bridge two pericopes (e.g. "Mark 2:12-14
+  (narration)" spans the healing-of-the-paralytic scene and the calling-
+  of-Levi scene). These get written as a single project-level
+  `review_notes` row (subject_type `'project'`, since the schema's
+  `review_notes.subject_type` CHECK constraint has no `'scene'` option)
+  prefixed `"Scene breakdown:"` so re-runs can idempotently replace only
+  this stage's own notes without touching stage 1's unrelated
+  project-level QC notes.
+- Verified against the real imported Mark 2 project (not synthetic data):
+  produces exactly 4 scenes (Mark 2:1-12, 2:13-17, 2:18-22, 2:23-28),
+  correctly grouping all 21 of stage 1's real audio segments, with
+  correct speaker attribution surfaced per scene (e.g. scene 1: Jesus,
+  the paralytic's four/eight bearers, the crowd; scene 2: Jesus, the
+  scribes) and 3 boundary-straddling narration segments correctly flagged
+  for human confirmation — one at each pericope seam. Idempotent (a
+  second run replaces rather than duplicates both the `scenes` rows and
+  this stage's `review_notes` row). New `build-scenes.test.ts` covers
+  `parseVerseRange` and `buildScenesFromHeadings` directly (9 tests; 19
+  total across the pipeline, all passing); `npm run typecheck` clean.
+
+**Still open**: no reviewer UI, same as stage 1. A chapter whose source
+.docx doesn't carry published pericope headings has no scene-boundary
+strategy yet — this stage fails clearly rather than guessing in that
+case, per the same "don't invent structure" principle.

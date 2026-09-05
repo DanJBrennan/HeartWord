@@ -246,27 +246,48 @@ unchanged: the 20 flagged segments are real database rows now, not text
 report lines, but there's still no UI for a human to act on them --
 querying `review_notes` directly is still how you'd see them today.
 
+## Stage 2 (scene breakdown) completed for real for Mark 2 (2026-09-05)
+
+`runSceneBreakdown` is no longer a stub. It groups stage 1's real
+`audio_segments` into scenes using the source .docx's own published
+pericope headings (a new `parseSourceHeadings()`) as scene boundaries —
+following the translation's already-published structure rather than
+inventing a narrative breakdown, per NON_GOALS.md. Unlike stage 1, this
+stage is chapter-agnostic by design, not Mark-2-specific — it just needs
+a source .docx with published section headings, which is a translation
+publishing convention, not something particular to Mark 2.
+
+Verified against the real Mark 2 project: 4 scenes (Mark 2:1-12, 2:13-17,
+2:18-22, 2:23-28) matching the four standard synoptic pericope divisions,
+correctly grouping all 21 real audio segments with correct per-scene
+speaker attribution, and 3 boundary-straddling narration segments (one at
+each pericope seam) correctly flagged in `review_notes` for human
+confirmation rather than silently misassigned. Idempotent, fully tested
+(9 new tests), typecheck clean. See `docs/ARCHITECTURE.md`'s "Stage 2
+(scene breakdown) implemented for real" section for the full writeup.
+
 ## Next up
 
 - Get a language specialist (or Dan, if he can informally judge Hatam
   audio against verse boundaries some other way) to actually check the 20
-  flagged `audio_segments`/`review_notes` rows ingestion now produces for
-  real against the real audio — each one carries full context (evidence
-  phrase, rationale, all three confidence numbers, the acoustic finding),
-  but it's still a database row, not a reviewer decision, and there's no
-  UI yet to surface it. Until a human confirms or corrects them, scene
-  breakdown (in progress, see below) is building on unverified timing and
-  speaker attribution for those 20.
+  flagged `audio_segments`/`review_notes` rows stage 1 produces, and the
+  3 new boundary-straddling `review_notes` rows stage 2 produces, against
+  the real audio — each carries full context, but they're still database
+  rows, not reviewer decisions, and there's no UI yet to surface them.
+  Both stage 2's scenes and any future stage 3 casting work are building
+  on this unconfirmed input in the meantime.
 - Decide the voice/TTS provider (still open, per "Providers and schema"
-  above) — doesn't block scene breakdown, but does block the voice &
-  lip-sync stage, so it's worth deciding before that stage is reached.
-- Scene breakdown (stage 2) — Dan confirmed starting this next
-  (2026-09-05+1). It can consume ingestion's now-speaker-attributed
-  `audio_segments` for Mark 2 even before the 20 flagged rows are
-  confirmed, as long as its own output makes clear which of it rests on
-  unconfirmed input.
+  above) — doesn't block stage 3 (casting & direction), but does block
+  the voice & lip-sync stage, so it's worth deciding before that stage is
+  reached. Lip-sync provider is decided: Kling.io's avatar API
+  (`KLING_API_KEY_1` env var) — still need the separate voice/TTS choice
+  for generating each character's line audio before Kling can lip-sync it.
+- Stage 3 (casting & direction) next — per ARCHITECTURE.md's v1
+  simplification, this runs as a single AI planning pass (not full
+  multi-agent negotiation) and owns `shots`, `shot_characters`, and
+  `scenes.reasoning`, which stage 2 deliberately left alone.
 - Implement one provider adapter method for real (e.g. Gemini image
-  generation) once scene breakdown/casting exists to feed it.
+  generation) once stage 3 (casting) exists to feed it.
 
 Out of scope for now: which subset of the illustrated-Scripture prior
 attempt's assets to import — not needed until the Illustrated lane is

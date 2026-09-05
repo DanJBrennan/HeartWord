@@ -10,7 +10,7 @@ import { decodeToPcm16Mono, computePitchTrack } from "./pitch.js";
 import { scoreMark2Utterances } from "./mark-2-acoustic-scoring.js";
 import { buildMark2Segments, type SegmentDescriptor } from "./mark-2-segments.js";
 
-interface ProjectRow {
+export interface ProjectRow {
   id: string;
   language: string;
   book: string;
@@ -24,7 +24,7 @@ interface ProjectRow {
  * not yet imported this way fails here with a clear message rather than
  * a confusing downstream error.
  */
-function resolveSourcePaths(project: ProjectRow): { docxPath: string; audioPath: string; audioRelPath: string } {
+export function resolveSourcePaths(project: ProjectRow): { docxPath: string; audioPath: string; audioRelPath: string } {
   const chapterDir = `${project.book}-${project.chapter}`;
   const baseName = `${project.book}-${project.chapter}`;
   const audioRelPath = join("source", project.language, chapterDir, `${baseName}-fcbh-audio.mp3`);
