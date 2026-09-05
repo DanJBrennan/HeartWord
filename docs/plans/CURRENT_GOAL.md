@@ -282,6 +282,22 @@ prototype. Manual ear-review (the review queue) stays the mechanism for
 v1; a diarization-purpose-built model (e.g. pyannote) would be the more
 promising thing to try if this gets revisited later.
 
+## Jesus canon assets corrected: legacy v1 files were live in production (2026-09-05)
+
+Cross-checked HeartWord's `character_assets` rows for Jesus against the
+OpenAI-Code Comics character library's own `PROVENANCE.md` (sha256 hash
+comparison) after Dan pointed to the real source folders. Found the
+`headshot` (feeds Kling's Avatar API) and the neutral-standing `body_pose`
+were both stale legacy v1 files -- v1's close-up was originally
+cross-region-contaminated from "Horn of Africa" canon -- while active,
+producer-approved v2 versions existed and were readily available. Fixed:
+copied the v2 files into HeartWordData, updated the two DB rows, backfilled
+`imported_from` on all six of Jesus's asset rows (previously NULL
+everywhere -- a real provenance gap), and republished the Mark 2 Canon
+Board artifact with the corrected headshot. See ARCHITECTURE.md for the
+full writeup. Not yet checked: whether the same v1/v2 mismatch exists for
+other characters.
+
 ## Next up
 
 - Get a language specialist (or Dan, if he can informally judge Hatam

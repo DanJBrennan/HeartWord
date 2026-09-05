@@ -841,3 +841,46 @@ rather than "is this the same person as in that other recording") rather
 than another verification-style embedding model like this one. Prototype
 script: `scripts/quote-alignment/timbre_probe.py` (not wired into any
 stage; kept as a reference for whoever revisits this).
+
+## Jesus canon assets: stale legacy v1 files corrected -- 2026-09-05
+
+Dan pointed to the real source-of-truth folders in the OpenAI-Code Comics
+character library (`.../Regional Canon/Papuan/Production Canon/Lip-Sync
+Close-Ups/jesus` and `.../Motion Scene Full Body/jesus`) and shared that
+library's `PROVENANCE.md`, which distinguishes "Active" (producer-approved)
+from "Legacy" asset versions per file, with sha256 hashes for each.
+
+Cross-referencing those hashes against HeartWord's `character_assets` table
+(exact sha256 string comparison, not filename or date guessing) showed two
+of Jesus's six rows pointed at the wrong file:
+
+- `headshot` (feeds Kling's Avatar API as the character reference image
+  alongside the scene keyframe -- see the Provider interfaces below) was
+  `close-up-neutral-v1.png`, the LEGACY close-up. Per PROVENANCE.md, v1 was
+  originally copied in from the "Horn of Africa" regional canon (a
+  different region than Jesus's own `region='Papuan'` DB tag) and was
+  superseded by an Active v2 close-up the producer approved 2026-08-08.
+- `body_pose` (motion-neutral-standing) was likewise the legacy v1 file;
+  an Active v2 exists.
+- The `approved_source` full-body reference sheet asset was already
+  correct -- its stored hash matches the v2 file byte-for-byte.
+- The other three `body_pose` rows (walking, teaching, seated-listening)
+  have no v2 alternative in the library yet, so v1 is current for those,
+  not stale.
+
+Fix applied: copied the two Active v2 files from the OpenAI-Code Comics
+library into `HeartWordData/assets/characters/jesus/` (kept alongside,
+not over, the v1 files), updated the `headshot` and `motion-neutral-
+standing` `character_assets` rows to the new paths and sha256 hashes, and
+backfilled `imported_from` on all six of Jesus's asset rows with their
+real source paths in the OpenAI-Code Comics library -- closing a
+provenance-tracking gap that existed for every character (the column
+existed in the schema but had never actually been populated for anyone).
+The "Mark 2 Canon Board" review artifact was regenerated from the
+corrected headshot and republished.
+
+This is exactly the kind of gap Dan's Canon Builder concept (visualize
+what exists in canon vs. what's missing or wrong) is meant to catch --
+worth checking whether the same legacy/active mismatch exists for other
+characters as that tool takes shape, rather than assuming this was a
+one-off.
