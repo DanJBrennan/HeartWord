@@ -6,5 +6,5 @@
     "outDir": "../../dist/server",
     "types": ["node"]
   },
-  "include": ["./**/*.ts", "../db/**/*.ts", "../pipeline/**/*.ts", "../providers/**/*.ts", "../characters/**/*.ts"]
+  "include": ["./**/*.ts", "../db/**/*.ts", "../pipeline/**/*.ts", "../providers/**/*.ts", "../characters/**/*.ts", "../../scripts/**/*.ts"]
 }

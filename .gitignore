@@ -15,7 +15,8 @@ venv/
 node_modules/
 npm-debug.log*
 /dist/
-*.config.*.timestamp-*.mjs   # vite and vitest both write these transient compiled-config files
+# vite and vitest both write these transient compiled-config files
+*.config.*.timestamp-*.mjs
 
 # Env / secrets
 .env

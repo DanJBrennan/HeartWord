@@ -76,6 +76,40 @@ function splitParagraphIntoVerses(line: string): Array<{ verse: number; text: st
   return verses;
 }
 
+export interface VerseRecord {
+  verse: number;
+  text: string;
+  /** Which source paragraph (0-indexed, in document order) this verse's
+   *  text came from — lets a caller that needs paragraph grouping (like
+   *  parseSourceText below) or paragraph-relative audio timing (like the
+   *  quote-alignment exercise in scripts/quote-alignment/) recover it
+   *  without re-parsing the docx. */
+  paragraphIndex: number;
+}
+
+/**
+ * Parses a chapter's source .docx into individual verses, in document
+ * order, skipping any paragraph with no recognizable verse marker (the
+ * chapter title, pericope headings like "Yesus dimig Lewi", and
+ * parallel-passage references like "(Mat. 9:9-13; Luk. 5:27-32)") — see
+ * parseSourceText below for why those are excluded. This is the finer
+ * grain parseSourceText groups into paragraphs; use this directly when a
+ * caller needs to locate something (like a quotation) within a specific
+ * verse rather than only the paragraph it's part of.
+ */
+export function parseSourceTextByVerse(docxPath: string): VerseRecord[] {
+  const xml = readDocumentXml(docxPath);
+  const lines = xmlToParagraphLines(xml);
+
+  const records: VerseRecord[] = [];
+  lines.forEach((line, paragraphIndex) => {
+    for (const { verse, text } of splitParagraphIntoVerses(line)) {
+      records.push({ verse, text, paragraphIndex });
+    }
+  });
+  return records;
+}
+
 /**
  * Parses a chapter's source .docx into ordered verse-group paragraphs.
  * Skips any paragraph with no recognizable verse marker (the chapter
@@ -86,25 +120,34 @@ function splitParagraphIntoVerses(line: string): Array<{ verse: number; text: st
  * them if included.
  */
 export function parseSourceText(docxPath: string, book: string, chapter: number): VerseGroup[] {
-  const xml = readDocumentXml(docxPath);
-  const lines = xmlToParagraphLines(xml);
+  const verses = parseSourceTextByVerse(docxPath);
   const bookTitle = book.charAt(0).toUpperCase() + book.slice(1);
 
   const groups: VerseGroup[] = [];
-  for (const line of lines) {
-    const verses = splitParagraphIntoVerses(line);
-    if (verses.length === 0) continue; // heading/reference/title line
+  let currentParagraph = -1;
+  let currentVerses: Array<{ verse: number; text: string }> = [];
 
-    const text = verses.map((v) => v.text).join(" ");
-    const verseStart = verses[0]!.verse; // verses.length > 0, checked above
-    const verseEnd = verses[verses.length - 1]!.verse;
+  const flush = () => {
+    if (currentVerses.length === 0) return;
+    const text = currentVerses.map((v) => v.text).join(" ");
+    const verseStart = currentVerses[0]!.verse;
+    const verseEnd = currentVerses[currentVerses.length - 1]!.verse;
     const verseRef =
       verseStart === verseEnd
         ? `${bookTitle} ${chapter}:${verseStart}`
         : `${bookTitle} ${chapter}:${verseStart}-${verseEnd}`;
-
     groups.push({ verseStart, verseEnd, verseRef, text });
+  };
+
+  for (const record of verses) {
+    if (record.paragraphIndex !== currentParagraph) {
+      flush();
+      currentVerses = [];
+      currentParagraph = record.paragraphIndex;
+    }
+    currentVerses.push({ verse: record.verse, text: record.text });
   }
+  flush();
 
   return groups;
 }
