@@ -164,12 +164,11 @@ A real, tested foundation is running, not just scaffolding — see
   orchestrator and the type system but not yet implemented — each returns
   or throws a clearly labeled "not yet implemented" result.
 
-**Needs Dan's input, not resolved autonomously:** whether to grant delete
-permission for `HeartWordData` (see `docs/ARCHITECTURE.md`'s
-"Implementation notes" — the one remaining SQLite risk on this mount:
-recovering from an uncleanly-interrupted write outside the app's own
-`getDb()` path needs a delete the mount doesn't allow without an explicit
-grant).
+**Resolved (2026-09-05):** Dan granted delete permission for
+`HeartWordData` specifically, closing the one remaining SQLite risk on
+this mount (see `docs/ARCHITECTURE.md`'s "Implementation notes") — an
+uncleanly-interrupted write outside the app's own `getDb()` path can now
+self-heal instead of needing manual recovery.
 
 ## Next up
 

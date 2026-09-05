@@ -350,19 +350,18 @@ stubbed):
   `PERSIST` gets the same crash-safety (a real journal file backs every
   write transaction) by truncating that file instead of deleting it, which
   this mount does allow.
-- **Open risk from the same limitation, not yet resolved:** if a write is
-  ever interrupted uncleanly (a crash, a forced kill) while a **different**
-  process has the database open without `PERSIST` already set — as
-  happened once during this session, from an ad hoc debug script — SQLite
-  is left with a non-empty "hot" journal in `DELETE` format. Recovering
-  from that requires deleting the journal on next open, which fails for
-  the same reason above, and the database becomes unopenable until someone
-  either grants delete permission for `HeartWordData` or manually moves
-  the stray `-journal` file aside. Every path in this app's own code opens
-  the database exclusively through `src/db/client.ts`'s `getDb()`, which
-  sets `PERSIST` immediately after opening and before anything else can
-  write — so this shouldn't happen through normal use of the app itself —
-  but it's a real failure mode worth a decision: grant delete permission
-  for `HeartWordData` now to remove the risk category entirely, or accept
-  it as a rare manual-recovery case. Not resolved yet; see
-  `docs/plans/CURRENT_GOAL.md`.
+- **Resolved (2026-09-05): delete permission granted for `HeartWordData`.**
+  The risk this closes: if a write is ever interrupted uncleanly (a crash,
+  a forced kill) while a **different** process has the database open
+  without `PERSIST` already set — as happened once during this session,
+  from an ad hoc debug script — SQLite is left with a non-empty "hot"
+  journal in `DELETE` format, and recovering from that requires deleting
+  the journal on next open. Dan chose to grant delete permission for
+  `HeartWordData` specifically (not the OneDrive-synced repo, not any
+  other connected folder) rather than leave this as a rare manual-recovery
+  case, so this failure mode now self-heals. Every path in this app's own
+  code still opens the database exclusively through `src/db/client.ts`'s
+  `getDb()`, which sets `PERSIST` immediately after opening — so this
+  isn't expected to trigger through normal use of the app itself; the
+  grant is a safety net for exactly the kind of ad hoc/external access
+  that caused it once already.
