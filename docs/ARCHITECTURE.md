@@ -779,3 +779,65 @@ chapter-agnostic by design:
 .docx doesn't carry published pericope headings has no scene-boundary
 strategy yet — this stage fails clearly rather than guessing in that
 case, per the same "don't invent structure" principle.
+
+## Speaker-embedding (timbre) corroboration tried, negative result — 2026-09-05
+
+The "Real vocal isolation achieved" section above left one thing
+unresolved: pitch analysis can't distinguish two same-range voices by
+timbre, only by height, and the acoustic-check notes on individual
+review_notes items say so explicitly ("A same-range voice actor would
+look identical to pitch-only analysis, which cannot separate voices by
+timbre"). Dan asked whether adding real timbre detection was worth doing.
+It's a reasonable next step in principle -- a pretrained speaker-embedding
+model (voice-verification tech: turn a clip into a vector, compare vectors
+by cosine similarity) targets exactly the dimension pitch can't. Tried it
+against the real separated vocals track before committing to building it
+in for real. The result was negative, and worth recording so this isn't
+re-attempted blind later.
+
+**What was tried**: Resemblyzer (a pretrained GE2E speaker encoder,
+weights bundled in the pip wheel -- confirmed it loads and runs with zero
+network access, sidestepping the Hugging Face network block that affected
+Demucs). Two tests against `sep_vocals.wav`:
+
+1. Whole-segment embeddings for every stage-1 segment ≥1.5s, grouped by
+   attributed speaker (Jesus, narration, Crowd, Scribe). Within narration:
+   mean cosine similarity 0.911. Within Jesus: 0.934. Cross narration-vs-
+   Jesus: 0.904 -- essentially the same as the within-group numbers. No
+   usable separation margin.
+2. Fine 2-second windows straddling several boundaries the hand-authored
+   decisions (and, for the 76.458s one, Dan's own ear) already treat as
+   real speaker changes, compared against 2-second windows placed inside
+   a single continuous quotation/narration stretch (no change expected).
+   Real-boundary similarities: 0.637, 0.795, 0.748, 0.679 (mean ~0.71).
+   Same-speaker control similarities: 0.772, 0.726, 0.749, 0.857, 0.643
+   (mean ~0.75). The two distributions overlap heavily -- one same-speaker
+   control (0.643) scored lower than three of the four real transitions.
+
+**Conclusion**: off-the-shelf speaker-verification embeddings, at either
+whole-segment or fine-boundary resolution, don't cleanly separate these
+voices in this recording. Likely reasons, not confirmed: (a) Resemblyzer
+is trained on cross-session data (VoxCeleb-style: the same speaker
+recorded on different mics/rooms/days) where recording-condition variance
+is normally much larger than it is here -- one continuous single-session
+recording removes exactly the variance the model learned to key off, so
+speaker identity may be a weaker signal here than it is in the model's
+own training distribution; (b) residual Demucs separation artifacts
+likely affect the whole vocals track fairly uniformly, adding shared
+noise that a same-session comparison can't average away the way a
+cross-session one would.
+
+**Decision**: don't wire this into production scoring -- it would add
+false confidence (or false alarms) no more reliable than the existing
+pitch check, while being harder to explain in a review note. Manual
+ear-confirmation (Dan working through the review queue) stays the actual
+mechanism for v1, and it's already working (see the 76.458s boundary,
+confirmed correct by ear in conversation). If this gets revisited later
+(e.g. once per-chapter review volume makes manual confirmation the
+bottleneck), the more promising next experiment is a model actually built
+for single-recording diarization (e.g. pyannote's diarization pipeline,
+which is trained to answer "who spoke when within this one recording"
+rather than "is this the same person as in that other recording") rather
+than another verification-style embedding model like this one. Prototype
+script: `scripts/quote-alignment/timbre_probe.py` (not wired into any
+stage; kept as a reference for whoever revisits this).

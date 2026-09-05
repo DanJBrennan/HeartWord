@@ -266,6 +266,22 @@ confirmation rather than silently misassigned. Idempotent, fully tested
 (9 new tests), typecheck clean. See `docs/ARCHITECTURE.md`'s "Stage 2
 (scene breakdown) implemented for real" section for the full writeup.
 
+## Timbre-based speaker corroboration tried, negative result (2026-09-05)
+
+Dan asked whether a real voice-timbre check could replace/supplement the
+pitch-only acoustic corroboration (which admittedly can't tell apart two
+same-range voices). Prototyped it with Resemblyzer, a pretrained speaker-
+embedding model that runs fully offline. Result: no clean separation,
+either comparing whole segments by attributed speaker or comparing short
+windows straddling known-real boundaries against same-speaker controls --
+the numbers overlap too much to trust. Not wiring this into production
+scoring. See `docs/ARCHITECTURE.md`'s "Speaker-embedding (timbre)
+corroboration tried, negative result" section for the full numbers and
+reasoning, and `scripts/quote-alignment/timbre_probe.py` for the kept
+prototype. Manual ear-review (the review queue) stays the mechanism for
+v1; a diarization-purpose-built model (e.g. pyannote) would be the more
+promising thing to try if this gets revisited later.
+
 ## Next up
 
 - Get a language specialist (or Dan, if he can informally judge Hatam
