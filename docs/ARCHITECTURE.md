@@ -523,3 +523,84 @@ them:
   from-scratch one if this analysis gets relied on more heavily — Python
   wasn't available in earlier sessions but is now (librosa installs
   cleanly from PyPI in the cloud sandbox).
+
+## Real vocal isolation achieved — updated 2026-09-05
+
+The network block above still applies to every automated environment
+this pipeline runs in — nothing about that changed, and no workaround
+was attempted. What changed is that Dan downloaded the weights himself,
+through his own already-authenticated Hugging Face session, and handed
+the one file back:
+
+- **Exact weights used**: `955717e8.safetensors` (~84MB) from
+  `https://huggingface.co/adefossez/HTDemucs` — this is the standard
+  PyTorch `htdemucs` model (NOT `mlx-community/demucs-mlx`, which is an
+  Apple-Silicon-only MLX port Dan initially found and which would not
+  have run on his confirmed-Windows machine or in this Linux sandbox).
+  The bag definition (`demucs/remote/htdemucs.yaml`, already present in
+  the installed `demucs` package) lists a single model signature,
+  `955717e8`, so this one file is the entire model — no separate
+  `.yaml`/multi-file bag to track down.
+- **Offline loading trick**: `demucs`'s built-in `LocalRepo` only scans
+  for legacy `.th` files, not the newer `.safetensors` format the HF hub
+  now serves, so this doesn't use `LocalRepo` at all — it calls
+  `demucs.hf.load_safetensors_model()` (the same function
+  `get_hf_model()` uses internally after downloading) directly on the
+  local file, then wraps the single resulting model in a
+  `BagOfModels([model])`. Verified to load and run with zero network
+  access. See `scripts/quote-alignment/separate_audio.py` for the
+  reusable script (one-time setup instructions for a new machine are in
+  its docstring) — the weights file itself lives at
+  `HEARTWORD_DATA_DIR/tools/955717e8.safetensors` and is NOT committed to
+  git (an 84MB binary, and not project source).
+- **Output**: `assets/source/hatam/mark-2/separated/{vocals,music}.mp3`
+  (music = drums+bass+other summed; htdemucs' own drums/bass stems came
+  back almost silent for this recording, as expected for a
+  drums-and-bass-free orchestral score — the real musical content is
+  almost entirely in the "other" stem).
+- **This resolved both open questions from the section above, cleanly**:
+  1. The `pyin` 110/220Hz exact-octave alternation at speaker
+     transitions — previously blamed on a periodic bass/pad note
+     confusing the pitch estimator — is completely gone once run against
+     the separated vocals track instead of the raw mix, at both
+     transitions tested. Confirms that diagnosis was correct.
+  2. Silence detection no longer needs the version-2 recording-specific
+     -22dB hand-tuning: the default -30dB threshold (same as the clean
+     Non-Drama edition) works correctly again on the separated vocals
+     track, and finds *more* gaps (~55) than either prior run, because
+     the vocals track really is near-silent between lines now.
+  3. The music-dynamics-for-composers idea, previously "not ready," now
+     produces a plausible-looking result: `music-dynamics-mark-2.ts`
+     against the real separated music stem finds 10 events ≥6dB (vs. the
+     modulation-gate attempt's 53-mostly-noise), several of which line
+     up with real story beats (e.g. a recede-then-swell right around the
+     crowd's amazed reaction to the healing in Mark 2:12; a sustained
+     two-part build leading into the scribes' objection scene in Mark
+     2:16). See `HEARTWORD_DATA_DIR/exports/music-dynamics-Mark-2.txt`.
+- **What did NOT get fully resolved**: Dan's original ask — "I can hear
+  a slightly different voice [at a speaker transition], see if you can
+  detect it" — still isn't cleanly confirmed at the fine-resolution,
+  moment-of-transition level. With the octave-artifact gone, pitch at
+  both tested transitions (q9→q10, q11→q12) sits in a similar ~200-240Hz
+  range on both sides of the predicted boundary — no obvious step. This
+  doesn't contradict what Dan hears (two adult male voices can easily
+  share an F0 range; pitch was never going to be able to confirm a
+  same-range voice change on its own, separated audio or not — it would
+  take a timbre/formant-based comparison, which this pipeline doesn't
+  attempt), it just means this specific check couldn't independently
+  verify it either way.
+- **A new, more compelling pattern did emerge from the whole-chapter
+  version-3 alignment run** (`mark-2-drama-v3.ts`,
+  `clips-alignment-Mark-2-version-3.txt`): 6 of the 7 Jesus utterances
+  checked show a statistically distinct pitch peak *and every single one
+  of those 6 is lower-pitched than the narrator baseline* (the 7th,
+  q6, is only two words — too little voiced audio to get a reading
+  either way). A consistent direction across 6 independent utterances,
+  rather than version-2's noisier mixed-direction ~3-5, is much harder
+  to explain as coincidence than any single flagged utterance was — real
+  corroborating evidence (still not proof) that this drama recording
+  really does use a distinct, lower-pitched voice actor for Jesus's
+  lines specifically.
+- **Reusable for future chapters/books/languages**: `separate_audio.py`
+  takes any input audio path and reuses the same locally-stored weights
+  file — no new download needed unless the weights file itself is lost.
