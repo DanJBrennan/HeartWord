@@ -229,7 +229,17 @@ async function main() {
   const verses = parseSourceTextByVerse(docxPath);
   const totalDurationMs = getAudioDurationMs(audioPath);
   const nonDramaDurationMs = getAudioDurationMs(nonDramaAudioPath);
-  const gaps = detectSilences(audioPath);
+  // Default noiseFloorDb (-30dB, tuned for the near-silent Non-Drama
+  // recording) mostly fails on this edition: it has continuous light
+  // orchestral underscore that never drops the true "pause" moments
+  // below -30dBFS, so almost no real pause gets flagged (10 gaps found,
+  // vs. the Non-Drama edition's 36 at the same threshold). Empirically
+  // raising the threshold to -22dB recovers 33 gaps -- back in the same
+  // range as the clean recording -- because the music's floor sits
+  // between -30dB and -22dB, so this is closing a real, measured gap in
+  // pause detection, not just adding noise (spot-checked: the recovered
+  // gaps land at plausible inter-clause spacing, ~0.6-1.6s each).
+  const gaps = detectSilences(audioPath, { noiseFloorDb: -22 });
 
   console.log(`Decoding ${audioPath} to PCM for pitch analysis...`);
   const pcm = decodeToPcm16Mono(audioPath, 16000);
@@ -332,7 +342,13 @@ function writeReport(
   lines.push("Edition: FCBH Drama (fileset HADLAIN2DA -- intended multi-voice cast)");
   lines.push("Generated: " + new Date().toISOString());
   lines.push(`Source text: ${meta.docxPath}`);
-  lines.push(`Source audio: ${meta.audioPath} (${(meta.totalDurationMs / 1000).toFixed(1)}s, ${meta.gapsDetected} silence gaps detected)`);
+  lines.push(`Source audio: ${meta.audioPath} (${(meta.totalDurationMs / 1000).toFixed(1)}s, ${meta.gapsDetected} silence gaps detected at a -22dB threshold)`);
+  lines.push(
+    "  NOTE: this edition has continuous light orchestral underscore, which raises the noise floor enough that\n" +
+    "  the -30dB threshold used for the Non-Drama edition (36 gaps) misses almost all real pauses here (10 gaps).\n" +
+    "  -22dB was chosen empirically to recover a comparable gap count (33) without over-triggering on speech\n" +
+    "  itself -- see mark-2-drama.ts for how that was validated."
+  );
   lines.push(
     `Non-Drama edition for comparison: ${meta.nonDramaAudioPath} (${(meta.nonDramaDurationMs / 1000).toFixed(1)}s)` +
       (Math.abs(meta.totalDurationMs - meta.nonDramaDurationMs) < 50
@@ -386,6 +402,22 @@ function writeReport(
     "are still the same proportional-position-plus-nearest-silence-gap estimate as version-1, just computed against\n" +
     "the drama file's own duration and its own detected silence gaps (the two editions are NOT assumed to share\n" +
     "timing, even though their total runtimes happen to match almost exactly)."
+  );
+  lines.push("");
+  lines.push(
+    "CAVEAT worth flagging explicitly: this recording has continuous light orchestral underscore. Two checks were\n" +
+    "run to see whether that music was corrupting the analysis rather than just being background: (1) whether a\n" +
+    "cheap stereo trick (comparing left/right channels) could isolate dialogue from score -- it can't, L/R\n" +
+    "correlation is 0.98-0.99 throughout, i.e. this is an essentially mono-compatible mix with no exploitable\n" +
+    "stereo separation between voice and music; (2) whether the music was masking real pauses from the silence\n" +
+    "detector -- it was (see the source-audio line above), and that's been corrected by tuning the detector's noise\n" +
+    "floor for this edition specifically. What ISN'T corrected: the pitch check below still measures whatever\n" +
+    "periodic content is loudest in each window, which could sometimes be an instrument rather than a voice, and\n" +
+    "dramatic underscore is often composed to swell at the same emotionally significant story beats (a healing, a\n" +
+    "rebuke) that these utterances happen to be. A 'distinct voice' verdict below is corroborating, not conclusive,\n" +
+    "for that reason on top of the reasons already stated -- real vocal isolation (a source-separation model, not\n" +
+    "available in this environment without adding a new ML dependency) would be needed to rule that out with any\n" +
+    "confidence."
   );
   lines.push("");
 
