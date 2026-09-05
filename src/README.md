@@ -31,9 +31,19 @@ import), the project API (create/list/run), and the frontend (lists
 projects and characters, can create a project). Confirmed via a full
 request-cycle smoke test, not just typechecking.
 
-Every pipeline stage in `src/pipeline/*/index.ts` and every provider method
-in `src/providers/{gemini,kling}/index.ts` is wired into the orchestrator
-and the type system, but its actual logic (calling an AI provider, running
-FFmpeg, etc.) is not implemented yet — each throws or returns a clearly
-labeled "not yet implemented" result rather than pretending to work. See
-`docs/plans/CURRENT_GOAL.md` for what's next.
+Stage 1 (`src/pipeline/ingestion/`) is implemented for real: it parses the
+source `.docx` into verse-group paragraphs, detects silence gaps in the
+source audio via ffmpeg, and picks the longest gaps as verse-group
+boundaries, writing `audio_segments` rows. It is honestly low-confidence —
+there's no ASR or forced-alignment model for Hatam, so every boundary is
+scored well below the auto-decide threshold and flagged in `review_notes`
+for a language specialist to confirm. See "Known limitations" in
+`src/pipeline/ingestion/index.ts` and the "Ingestion & alignment (v1)"
+section of `docs/ARCHITECTURE.md`.
+
+Every other pipeline stage in `src/pipeline/*/index.ts` and every provider
+method in `src/providers/{gemini,kling}/index.ts` is wired into the
+orchestrator and the type system, but its actual logic (calling an AI
+provider, running FFmpeg, etc.) is not implemented yet — each throws or
+returns a clearly labeled "not yet implemented" result rather than
+pretending to work. See `docs/plans/CURRENT_GOAL.md` for what's next.

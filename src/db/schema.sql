@@ -137,6 +137,14 @@ CREATE TABLE IF NOT EXISTS audio_segments (
   start_ms INTEGER NOT NULL,
   end_ms INTEGER NOT NULL,
   speaker_character_id TEXT REFERENCES characters(id),   -- NULL for narration
+  verse_ref TEXT,            -- e.g. 'Mark 2:1-5'; set by ingestion for the
+                             -- 'original_reading' layer, NULL for the other
+                             -- two layers (they're keyed by shot/clip instead)
+  confidence INTEGER,        -- 0-100 assurance score for this segment's
+                             -- timing (PRODUCT_VISION.md's Source Material
+                             -- Validator scoring model); NULL where a
+                             -- boundary is certain rather than estimated
+                             -- (e.g. the chapter's very first/last segment)
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_audio_segments_project ON audio_segments(project_id);
@@ -177,7 +185,7 @@ CREATE INDEX IF NOT EXISTS idx_cost_ledger_project ON cost_ledger_entries(projec
 CREATE TABLE IF NOT EXISTS review_notes (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL REFERENCES projects(id),
-  subject_type TEXT NOT NULL CHECK (subject_type IN ('shot','clip','character_version')),
+  subject_type TEXT NOT NULL CHECK (subject_type IN ('shot','clip','character_version','audio_segment','project')),
   subject_id TEXT NOT NULL,
   source TEXT NOT NULL CHECK (source IN ('qc','human')),
   note TEXT NOT NULL,

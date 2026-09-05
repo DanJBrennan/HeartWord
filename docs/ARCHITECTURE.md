@@ -365,3 +365,81 @@ stubbed):
   isn't expected to trigger through normal use of the app itself; the
   grant is a safety net for exactly the kind of ad hoc/external access
   that caused it once already.
+
+## Ingestion & alignment (v1) — implemented 2026-09-05
+
+Stage 1 is implemented for real against Hatam Mark 2, in
+`src/pipeline/ingestion/`. The core problem: align a chapter's translated
+text to its audio recording's timing, with no ASR or forced-alignment
+model available for Hatam and no one on this team who reads it — so
+nothing here can be verified by ear. The approach:
+
+1. **Parse the source `.docx`** (`parse-source-text.ts`) into
+   paragraph-level verse groups. The source docx's own paragraph breaks
+   already read as sense-units spanning one or more verses (e.g. one
+   paragraph covers Mark 2:1-5), so paragraph — not single-verse — is the
+   alignment grain v1 targets; verse numbers are recovered from inline
+   markers in the text (`"1Njap..."`, `"23 Mpe..."`) via a regex tuned to
+   this file's formatting, and non-verse paragraphs (the chapter title,
+   pericope headings, parallel-passage references like
+   `"(Mat. 9:1-8; Luk. 5:17-26)"`) are skipped since they aren't part of
+   the read-aloud text. For Mark 2 this yields 13 verse-group paragraphs
+   covering verses 1-28 with no gaps or overlaps.
+2. **Detect silence in the source audio** (`detect-silences.ts`) via
+   ffmpeg's `silencedetect` filter (shelled out to — ffmpeg and ffprobe
+   are both preinstalled system tools, so this adds no npm dependency).
+   For the actual Mark 2 FCBH recording (446s, mostly clean narration)
+   this finds 36 candidate gaps at a -30dB/0.5s threshold.
+3. **Pick verse-group boundaries from the longest gaps**
+   (`select-boundaries.ts`): assumes a pause between verse-groups tends to
+   be longer than a clause-internal breath, and takes exactly as many of
+   the longest gaps as there are internal boundaries needed (12, for 13
+   segments). This is a real but weak signal — confirmed weak by running
+   it: the resulting segment durations for Mark 2 are not evenly
+   proportional to each group's verse count or expected content length in
+   an unnervingly noticeable way (e.g. one 2-verse segment currently spans
+   over two minutes). Every boundary this heuristic picks is capped below
+   80 on PRODUCT_VISION.md's 0-100 assurance scale (the model's own
+   "hold for a qualified language specialist" threshold) — this is not
+   miscalibration, it's the honest position given the evidence: gap
+   duration alone shouldn't be trusted to auto-decide a boundary here. The
+   chapter's true start and end are the only two "boundaries" not guessed
+   (confidence `NULL`, meaning certain rather than estimated).
+4. **Write results and flag for review**: one `audio_segments` row per
+   verse-group (`layer='original_reading'`, `verse_ref` e.g. `'Mark
+   2:1-5'`, `confidence`), plus one `review_notes` row
+   (`subject_type='project'`, `source='qc'`) summarizing that the chapter's
+   segment boundaries are heuristic and need language-specialist
+   confirmation. The stage still returns `ok: true` — it produced a real,
+   inspectable artifact, just not a high-confidence one — rather than
+   `ok: false`, which would imply the stage itself failed to run.
+
+Verified by running ingestion against the real imported Hatam Mark 2
+assets (not synthetic test data) and inspecting the resulting database
+rows directly; `select-boundaries.ts`'s heuristic also has a small vitest
+suite (`select-boundaries.test.ts`) since it's the one piece of real
+decision logic in this stage.
+
+**Known limitations, left open rather than silently resolved:**
+- Alignment granularity is per-paragraph, not per-verse — a paragraph
+  spanning several verses (e.g. Mark 2:1-5) gets one timing range, not one
+  per verse. Scene breakdown (stage 2) can still work from this — scenes
+  are naturally multi-verse anyway — but per-verse timing isn't available
+  if a later stage needs it.
+- No reviewer UI exists yet to act on a `review_notes` flag; today,
+  confirming or correcting a boundary means querying `audio_segments`
+  directly and re-running ingestion isn't yet wired to accept manual
+  corrections as input. Both are real gaps, not deferred by oversight.
+- The verse-marker regex and the "audio contains only the verses, no
+  spoken headings" assumption are both tuned to this specific Mark 2
+  docx/audio pair; a different chapter's source files may need either
+  adjusted.
+- The longest-gap heuristic has no fallback if a chapter's audio has fewer
+  silence gaps than verse-group boundaries needed (it throws, rather than
+  guessing at a finer noise-floor automatically) — encountered this while
+  building it: the first attempt right after adding the `verse_ref`/
+  `confidence` columns to `audio_segments` failed with "no such column"
+  against the already-existing dev database, since `CREATE TABLE IF NOT
+  EXISTS` doesn't retroactively add columns — resolved per the Migration
+  tooling note above by deleting and recreating the dev database (no real
+  data existed yet to lose).

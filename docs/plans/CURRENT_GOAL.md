@@ -170,13 +170,34 @@ this mount (see `docs/ARCHITECTURE.md`'s "Implementation notes") — an
 uncleanly-interrupted write outside the app's own `getDb()` path can now
 self-heal instead of needing manual recovery.
 
+**Ingestion & alignment implemented for real (2026-09-05):** stage 1
+(`src/pipeline/ingestion/`) now parses the source docx into 13 verse-group
+paragraphs, detects silence in the FCBH audio via ffmpeg, and picks
+verse-group boundaries from the longest gaps — run against the real
+imported Hatam Mark 2 assets and verified by inspecting the resulting
+`audio_segments`/`review_notes` rows directly. This is honestly
+low-confidence, by design: there's no ASR or forced-alignment model for
+Hatam, so every boundary is capped below PRODUCT_VISION.md's 80-point
+auto-decide threshold and flagged for a language specialist to confirm —
+see "Ingestion & alignment (v1)" in `docs/ARCHITECTURE.md` for the full
+approach and its known limitations (paragraph-, not verse-level timing; no
+reviewer UI yet to act on the flag; heuristic tuned to this specific
+docx/audio pair).
+
 ## Next up
 
-- Pick one pipeline stage to implement for real, starting with ingestion
-  (align the imported Hatam Mark 2 text/audio) — the natural next step
-  now that the skeleton it plugs into actually runs.
+- Get a language specialist (or Dan, if he can informally judge Hatam
+  audio against verse boundaries some other way) to actually check the 13
+  candidate segment boundaries ingestion just produced against the real
+  audio — the flagged review_notes row is sitting unactioned in the
+  database with no UI to surface it yet. Until that happens, scene
+  breakdown would be building on unverified timing.
+- Pick the next pipeline stage to implement for real. Scene breakdown
+  (stage 2) is the natural next step — it can consume ingestion's
+  paragraph-level `audio_segments` even before their timing is confirmed,
+  as long as its own output makes clear it's provisional too.
 - Implement one provider adapter method for real (e.g. Gemini image
-  generation) once an approach to alignment/casting exists to feed it.
+  generation) once scene breakdown/casting exists to feed it.
 
 Out of scope for now: which subset of the illustrated-Scripture prior
 attempt's assets to import — not needed until the Illustrated lane is
