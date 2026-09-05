@@ -224,9 +224,11 @@ tier, keyframe-guided generation, targeted image editing) all sit behind
 one Gemini/Google adapter authenticated with a single `GEMINI_API_KEY` —
 they're one vendor family, so one adapter module implements several
 provider interfaces rather than one interface having several vendors
-behind it. Kling.ai's Avatar API (lip-sync) is a separate adapter,
-authenticated with `KLING_API_KEY_1`. See Generation Providers, Models, and
-Cost in `docs/PRODUCT_VISION.md`.
+behind it. Kling.ai's Avatar API is a separate adapter, authenticated with
+`KLING_API_KEY_1` — and, per Dan's 2026-09-05 confirmation, it's also the
+v1 voice/TTS provider, not just lip-sync: there's no separate narration/
+character-speech vendor in v1, one Kling credential covers both. See
+Generation Providers, Models, and Cost in `docs/PRODUCT_VISION.md`.
 
 ```ts
 interface ImageProvider {
@@ -272,8 +274,14 @@ checks that can produce it. `ImageEditor` is deliberately its own small
 interface rather than a method on `ImageProvider`, since v1 has exactly one
 implementation (Omni 1.1) and no image-generation vendor is assumed to
 support it. A `VoiceProvider` interface (for narration/character-speech
-generation feeding into `LipSyncProvider`) isn't sketched here yet since no
-v1 voice/TTS vendor is confirmed — see Open implementation questions.
+generation feeding into `LipSyncProvider`) isn't sketched here yet -- not
+because the vendor is unconfirmed anymore (it's Kling.ai's Avatar API, same
+as lip-sync — see Open implementation questions), but because it's still
+unconfirmed whether Kling's Avatar API takes raw text (built-in TTS, no
+separate voice-generation step needed) or requires a pre-generated audio
+track (meaning `VoiceProvider` is still a real, separate interface feeding
+into `LipSyncProvider`). Worth checking Kling's actual API docs before
+stage 5 (voice & lip-sync) is built rather than guessing the shape now.
 
 ## Development environment
 
@@ -310,9 +318,14 @@ itself stays gitignored, per existing convention.
 
 - All v1 providers (Nano Banana/Pro, Veo 3.1 Lite, Omni 1.1, Kling Avatar)
   are cloud-hosted and API-key authenticated, so v1 needs no local GPU
-  provisioning — confirmed, not open. A voice/TTS provider for narration
-  and character speech (feeding into the Kling lip-sync step) is still
-  unnamed; see Audio Model in `docs/PRODUCT_VISION.md`.
+  provisioning — confirmed, not open. The voice/TTS provider for narration
+  and character speech is also confirmed now (2026-09-05, Dan): Kling.ai's
+  Avatar API, the same vendor and `KLING_API_KEY_1` credential as
+  lip-sync — not a separate vendor like ElevenLabs. Still open: whether
+  that means one Kling call does TTS + lip-sync together (text in, synced
+  video out) or Kling still expects a pre-generated audio track as input
+  (a separate TTS step upstream). See Audio Model in
+  `docs/PRODUCT_VISION.md` and the Provider interface section above.
 - Whether `KLING_API_KEY_1`'s naming implies more than one Kling key is
   expected (e.g. for quota/rate-limit spreading across concurrent lip-sync
   calls) — affects whether the Kling adapter needs key-pool logic in v1 or

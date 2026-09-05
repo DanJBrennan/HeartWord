@@ -142,9 +142,10 @@ for the tool's workflow in full; in summary:
 - Voice mapping applies only to characters with spoken lines in at least
   one scene — a non-speaking character (a crowd extra, someone who only
   appears silently) never needs one. For a speaking character, voice
-  mapping is a dropdown selection against the available voice providers/
-  IDs (e.g. ElevenLabs), with a live audio test so the producer can hear a
-  character's assigned voice before approving it.
+  mapping is a dropdown selection against the available voice IDs (v1:
+  Kling.ai's Avatar API, the confirmed voice/TTS provider — see Generation
+  Providers, Models, and Cost below), with a live audio test so the
+  producer can hear a character's assigned voice before approving it.
 - When starting a new character, the AI proposes a starting
   description/prompt for the character's appearance (informed by the
   regional canon and the role the character plays in the source text) for the
@@ -386,8 +387,11 @@ how these map onto the provider abstraction):
   expose, not just a fallback — it's the fast path for both fixing an
   approved character asset (see `docs/design/character-tool.md`) and
   correcting a returned shot that's otherwise right.
-- **Lip-sync:** Kling.ai's Avatar API, authenticated via `KLING_API_KEY_1`
-  (a separate credential/vendor from the Google-family models above).
+- **Lip-sync and voice/TTS:** Kling.ai's Avatar API, authenticated via
+  `KLING_API_KEY_1` (a separate credential/vendor from the Google-family
+  models above). Confirmed 2026-09-05: this same provider covers both
+  narration/character-speech generation and lip-sync — there's no
+  separate v1 TTS vendor.
 - Model choice must be visible and controllable inside HeartWord rather than
   buried in code.
 - HeartWord must monitor generation cost, especially keyframe and video

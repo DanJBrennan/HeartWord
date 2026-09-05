@@ -276,12 +276,15 @@ confirmation rather than silently misassigned. Idempotent, fully tested
   rows, not reviewer decisions, and there's no UI yet to surface them.
   Both stage 2's scenes and any future stage 3 casting work are building
   on this unconfirmed input in the meantime.
-- Decide the voice/TTS provider (still open, per "Providers and schema"
-  above) — doesn't block stage 3 (casting & direction), but does block
-  the voice & lip-sync stage, so it's worth deciding before that stage is
-  reached. Lip-sync provider is decided: Kling.io's avatar API
-  (`KLING_API_KEY_1` env var) — still need the separate voice/TTS choice
-  for generating each character's line audio before Kling can lip-sync it.
+- Voice/TTS provider decided (2026-09-05, Dan): Kling.io's Avatar API --
+  the same provider and `KLING_API_KEY_1` credential as lip-sync, not a
+  separate vendor. Doesn't block stage 3 (casting & direction). Still
+  open before stage 5 (voice & lip-sync) is built: whether Kling's Avatar
+  API takes text directly (built-in TTS, one call does both voice and
+  lip-sync) or expects a pre-generated audio track (a separate TTS step
+  still needed upstream) -- check Kling's actual API docs rather than
+  assuming either shape. See `docs/ARCHITECTURE.md`'s Provider interface
+  section.
 - Stage 3 (casting & direction) next — per ARCHITECTURE.md's v1
   simplification, this runs as a single AI planning pass (not full
   multi-agent negotiation) and owns `shots`, `shot_characters`, and
