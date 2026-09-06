@@ -323,6 +323,22 @@ run against real data yet; it should work once Dan runs the server
 locally with `ELEVENLABS_API_KEY` set in `.env`, where his machine's
 normal internet access applies.
 
+## Voice casting complete for Mark 2's three speaking characters (2026-09-06)
+
+Dan used the new Voice casting UI to pick and approve ElevenLabs voices
+for all three characters who actually speak in Mark 2 (per the
+spoken_segment_count check added the same day): Jesus, the Principal
+scribe, and the Crowd. All three now have voice_provider='elevenlabs'
+and a real voice_id in character_versions -- verified directly against
+the database. The four Friend characters, the healed paralytic, and
+Matthew/Levi correctly have no voice mapped, since none of them have any
+attributed lines in this chapter.
+
+Next real blocker for stage 5 (voice & lip-sync) is building the actual
+re-voicing call (ElevenLabs speech-to-speech on stage 1's
+original_reading segments) -- the casting UI only covers audition/
+selection/approval, not generation yet.
+
 ## Next up
 
 - Get a language specialist (or Dan, if he can informally judge Hatam
