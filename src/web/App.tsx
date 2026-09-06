@@ -33,6 +33,22 @@ interface Voice {
   previewUrl: string | null;
 }
 
+interface CastMasterSegment {
+  id: string;
+  source_path: string;
+  verse_ref: string | null;
+  speaker_name: string | null;
+}
+
+interface VoicingResult {
+  ok: boolean;
+  reasoning: string;
+  generated: number;
+  reused: number;
+  passthrough: number;
+  skippedNoVoice: number;
+}
+
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
     headers: { "Content-Type": "application/json" },
@@ -54,6 +70,11 @@ export default function App() {
   const [voices, setVoices] = useState<Voice[]>([]);
   const [voicesError, setVoicesError] = useState<string | null>(null);
   const [pendingSelection, setPendingSelection] = useState<Record<string, string>>({});
+
+  const [castMasterSegments, setCastMasterSegments] = useState<CastMasterSegment[]>([]);
+  const [castMasterError, setCastMasterError] = useState<string | null>(null);
+  const [castMasterBusy, setCastMasterBusy] = useState(false);
+  const [castMasterResult, setCastMasterResult] = useState<VoicingResult | null>(null);
 
   async function refresh() {
     try {
@@ -110,6 +131,45 @@ export default function App() {
       await refresh();
     } catch (err) {
       setError((err as Error).message);
+    }
+  }
+
+  const activeProject = projects[0] ?? null;
+
+  async function loadCastMaster(projectId: string) {
+    try {
+      const { segments } = await api<{ segments: CastMasterSegment[] }>(
+        `/projects/${projectId}/audio-segments?layer=composite_cast_master`
+      );
+      setCastMasterSegments(segments);
+    } catch (err) {
+      setCastMasterError((err as Error).message);
+    }
+  }
+
+  useEffect(() => {
+    if (activeProject) {
+      loadCastMaster(activeProject.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeProject?.id]);
+
+  async function generateCastMaster() {
+    if (!activeProject) return;
+    setCastMasterBusy(true);
+    setCastMasterError(null);
+    setCastMasterResult(null);
+    try {
+      const result = await api<VoicingResult>(`/projects/${activeProject.id}/voicing`, { method: "POST" });
+      setCastMasterResult(result);
+      if (!result.ok) {
+        setCastMasterError(result.reasoning);
+      }
+      await loadCastMaster(activeProject.id);
+    } catch (err) {
+      setCastMasterError((err as Error).message);
+    } finally {
+      setCastMasterBusy(false);
     }
   }
 
@@ -223,6 +283,39 @@ export default function App() {
             );
           })}
         </ul>
+      </section>
+
+      <section>
+        <h2>Composite cast master</h2>
+        <p className="hint">
+          Re-voices each speaking segment of the real Hatam reading into its approved character voice via
+          ElevenLabs speech-to-speech (narration carries through unchanged). Costs ElevenLabs credits per
+          newly re-voiced segment, so re-running this reuses any clip already generated instead of
+          regenerating it.
+        </p>
+        {!activeProject && <p className="empty">No project yet — create one above first.</p>}
+        {activeProject && (
+          <>
+            <button type="button" onClick={generateCastMaster} disabled={castMasterBusy}>
+              {castMasterBusy ? "Generating…" : "Generate composite cast master"}
+            </button>
+            {castMasterResult && <p>{castMasterResult.reasoning}</p>}
+            {castMasterError && <p className="error">{castMasterError}</p>}
+            <ul>
+              {castMasterSegments.map((s) => (
+                <li key={s.id}>
+                  <strong>{s.verse_ref ?? "—"}</strong> — {s.speaker_name ?? "narration"}
+                  <div>
+                    <audio controls src={`/media/${s.source_path}`} style={{ height: 28, verticalAlign: "middle" }} />
+                  </div>
+                </li>
+              ))}
+              {castMasterSegments.length === 0 && (
+                <li className="empty">Not generated yet — click the button above.</li>
+              )}
+            </ul>
+          </>
+        )}
       </section>
     </main>
   );

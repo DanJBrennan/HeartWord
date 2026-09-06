@@ -1,16 +1,17 @@
 /**
- * ElevenLabs client -- currently just the "list voices" call needed for the
- * voice-casting dropdown (see docs/design/character-tool.md, "Voice Mapping
- * and Live Test"). The actual re-voicing (speech-to-speech) call that
- * produces the composite cast master is a separate, not-yet-built piece --
- * see the VoiceProvider interface in docs/ARCHITECTURE.md.
+ * ElevenLabs client: voice listing (for the voice-casting dropdown -- see
+ * docs/design/character-tool.md, "Voice Mapping and Live Test") and the
+ * speech-to-speech re-voicing call that produces the composite cast
+ * master (see the VoiceProvider interface in docs/ARCHITECTURE.md).
  *
  * ElevenLabs has no native "voice group"/"collection" API object -- any
  * grouping Dan has set up in his account (e.g. a "BVET" set) lives only in
  * the ElevenLabs dashboard UI or as a custom label value, not as a
- * queryable field this client can filter on server-side. So this returns
- * every voice on the account, and the web UI does the filtering.
+ * queryable field this client can filter on server-side. So listVoices
+ * returns every voice on the account, and the web UI does the filtering.
  */
+import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
 
 export interface ElevenLabsVoice {
   voiceId: string;
@@ -73,4 +74,53 @@ export async function listElevenLabsVoices(): Promise<ElevenLabsVoice[]> {
   } while (pageToken);
 
   return voices;
+}
+
+
+export interface ReVoiceResult {
+  audioBuffer: Buffer;
+  contentType: string;
+}
+
+/**
+ * Speech-to-speech (voice changer): re-performs a REAL Hatam audio clip
+ * (a stage-1 original_reading segment) in the chosen character voice.
+ * Not text-to-speech -- there's no Hatam TTS model, so this transforms
+ * the actual recorded performance rather than synthesizing speech from
+ * text. Uses the multilingual model since the source audio is Hatam, not
+ * English. Output feeds the composite cast master (PRODUCT_VISION.md's
+ * Three-Layer Audio Architecture) and, later, Kling's Avatar API for
+ * lip-sync.
+ */
+export async function reVoiceAudio(voiceId: string, sourceAudioPath: string): Promise<ReVoiceResult> {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "ELEVENLABS_API_KEY is not set. Add it to .env (see .env.example) -- this calls ElevenLabs' speech-to-speech " +
+        "API to re-voice a Hatam audio clip into the character's chosen voice."
+    );
+  }
+
+  const audioBytes = await readFile(sourceAudioPath);
+  const form = new FormData();
+  form.append("audio", new Blob([audioBytes]), basename(sourceAudioPath));
+  form.append("model_id", "eleven_multilingual_sts_v2");
+  form.append("remove_background_noise", "true");
+
+  const url = `https://api.elevenlabs.io/v1/speech-to-speech/${voiceId}?output_format=mp3_44100_128`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "xi-api-key": apiKey },
+    body: form
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(
+      `ElevenLabs speech-to-speech failed for voice ${voiceId} on ${sourceAudioPath}: ${res.status} ${res.statusText} -- ${body}`
+    );
+  }
+
+  const arrayBuffer = await res.arrayBuffer();
+  return { audioBuffer: Buffer.from(arrayBuffer), contentType: res.headers.get("content-type") ?? "audio/mpeg" };
 }

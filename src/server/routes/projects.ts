@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import { getDb } from "../../db/client.js";
 import { runPipeline } from "../../pipeline/orchestrator.js";
+import { runVoicing } from "../../pipeline/voicing/index.js";
 
 export const projectsRouter = Router();
 
@@ -45,4 +46,44 @@ projectsRouter.post("/:id/run", async (req, res) => {
 
   const result = await runPipeline(req.params.id);
   res.json(result);
+});
+
+
+projectsRouter.get("/:id/audio-segments", (req, res) => {
+  const db = getDb();
+  const layer = typeof req.query.layer === "string" ? req.query.layer : "composite_cast_master";
+
+  const segments = db
+    .prepare(
+      `SELECT a.id, a.layer, a.source_path, a.start_ms, a.end_ms, a.verse_ref, a.speaker_character_id,
+              c.name AS speaker_name
+       FROM audio_segments a
+       LEFT JOIN characters c ON c.id = a.speaker_character_id
+       WHERE a.project_id = ? AND a.layer = ?
+       ORDER BY a.start_ms`
+    )
+    .all(req.params.id, layer);
+
+  res.json({ segments });
+});
+
+// Runs the composite-cast-master generation (the audio half of stage 5 --
+// see src/pipeline/voicing/index.ts). Costs real ElevenLabs credits for
+// each newly re-voiced segment, so this is only ever run when Dan asks
+// for it, not automatically.
+projectsRouter.post("/:id/voicing", async (req, res) => {
+  const db = getDb();
+  const project = db.prepare(`SELECT * FROM projects WHERE id = ?`).get(req.params.id);
+  if (!project) {
+    res.status(404).json({ error: "Project not found." });
+    return;
+  }
+
+  const force = req.body?.force === true;
+  try {
+    const result = await runVoicing(req.params.id, { force });
+    res.json(result);
+  } catch (err) {
+    res.status(502).json({ error: (err as Error).message });
+  }
 });

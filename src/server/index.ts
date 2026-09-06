@@ -3,7 +3,7 @@ import express from "express";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { existsSync } from "node:fs";
-import { getDb } from "../db/client.js";
+import { getDataDir, getDb } from "../db/client.js";
 import { projectsRouter } from "./routes/projects.js";
 import { charactersRouter } from "./routes/characters.js";
 import { voicesRouter } from "./routes/voices.js";
@@ -23,6 +23,12 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/projects", projectsRouter);
 app.use("/api/characters", charactersRouter);
 app.use("/api/voices", voicesRouter);
+
+// Serve generated/source media (audio clips, character art) so the web
+// app can play them directly -- e.g. audio_segments.source_path values
+// like "generated/hatam/mark-2/composite_cast_master/01-....mp3" become
+// /media/generated/hatam/mark-2/composite_cast_master/01-....mp3.
+app.use("/media", express.static(join(getDataDir(), "assets")));
 
 // Production: serve the Vite build directly (single local web app — see
 // "Application shape" in docs/ARCHITECTURE.md). In dev, Vite's own server

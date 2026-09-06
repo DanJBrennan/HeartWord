@@ -339,6 +339,40 @@ re-voicing call (ElevenLabs speech-to-speech on stage 1's
 original_reading segments) -- the casting UI only covers audition/
 selection/approval, not generation yet.
 
+## Composite cast master generation built (2026-09-06)
+
+Built the audio half of stage 5 (voice & lip-sync) as its own standalone
+piece -- src/pipeline/voicing/index.ts -- rather than folding it into
+src/pipeline/voice-lipsync/index.ts, since the lip-sync half of that
+stage still needs a scene keyframe from stage 4 (media generation),
+which doesn't exist yet. Triggered via `POST /api/projects/:id/voicing`
+and a "Generate composite cast master" button in the web app (Composite
+cast master section, below Voice casting):
+
+- Narration segments carry through from the original reading unchanged
+  (re-encoded into their own clip file via ffmpeg for a consistent
+  one-file-per-segment layout).
+- A segment whose speaker has an approved ElevenLabs voice gets
+  re-voiced via speech-to-speech (src/server/providers/elevenlabs.ts's
+  reVoiceAudio) -- the real Hatam performance clip in, that voice out.
+  Uses eleven_multilingual_sts_v2 since the source audio is Hatam.
+- A segment whose speaker has no approved voice yet is carried through
+  unvoiced and flagged in review_notes, rather than blocking the run.
+- Costs real ElevenLabs credits per re-voiced segment, so any segment
+  whose output file already exists is reused rather than regenerated.
+- New GET /api/projects/:id/audio-segments?layer=... lists a layer's
+  segments; /media now serves HeartWordData/assets statically so the web
+  app can play the resulting clips directly.
+
+Not tested end-to-end yet -- this session's shells have no network path
+to api.elevenlabs.io (same restriction hit during the voice-casting
+work), and node_modules being Windows-targeted now (correctly, for Dan's
+machine) means this session can't even start the dev server to check the
+ffmpeg/DB wiring live. Verified separately: TypeScript compiles clean,
+and the exact ffmpeg extraction command was smoke-tested directly against
+the real vocals.mp3 (produced a correct ~7.5s clip). The real first run
+needs to happen on Dan's machine.
+
 ## Next up
 
 - Get a language specialist (or Dan, if he can informally judge Hatam
