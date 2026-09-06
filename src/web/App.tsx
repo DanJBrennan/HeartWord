@@ -44,15 +44,6 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-function matchesFilter(v: Voice, filter: string): boolean {
-  if (!filter.trim()) return true;
-  const needle = filter.trim().toLowerCase();
-  const haystack = [v.name, v.category ?? "", v.description ?? "", ...Object.values(v.labels)]
-    .join(" ")
-    .toLowerCase();
-  return haystack.includes(needle);
-}
-
 export default function App() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [characters, setCharacters] = useState<Character[]>([]);
@@ -61,9 +52,6 @@ export default function App() {
 
   const [voices, setVoices] = useState<Voice[]>([]);
   const [voicesError, setVoicesError] = useState<string | null>(null);
-  // "BVET" pre-filled because that's the ElevenLabs voice set Dan built for
-  // this project (2026-09-05) -- clear it to browse the whole account.
-  const [voiceFilter, setVoiceFilter] = useState("BVET");
   const [pendingSelection, setPendingSelection] = useState<Record<string, string>>({});
 
   async function refresh() {
@@ -181,20 +169,11 @@ export default function App() {
         <h2>Voice casting</h2>
         <p className="hint">
           Voices come from your ElevenLabs account (needs <code>ELEVENLABS_API_KEY</code> in{" "}
-          <code>.env</code>). ElevenLabs doesn't have a real "voice group" API, so this filter is just a
-          text match on name/category/labels — try "BVET" for the set you built for this project, or clear
-          it to browse everything.
+          <code>.env</code>). Pick a voice, listen to the preview, then Approve to save it.
         </p>
         {voicesError && <p className="error">Couldn't load ElevenLabs voices: {voicesError}</p>}
-        <input
-          aria-label="voice filter"
-          placeholder="Filter voices (e.g. BVET)"
-          value={voiceFilter}
-          onChange={(e) => setVoiceFilter(e.target.value)}
-        />
         <ul>
           {characters.map((c) => {
-            const filtered = voices.filter((v) => matchesFilter(v, voiceFilter));
             const selected = pendingSelection[c.id] ?? c.voice_id ?? "";
             const selectedVoice = voices.find((v) => v.voiceId === selected);
             const approvedVoiceName =
@@ -215,16 +194,23 @@ export default function App() {
                     onChange={(e) => setPendingSelection({ ...pendingSelection, [c.id]: e.target.value })}
                   >
                     <option value="">— choose a voice —</option>
-                    {filtered.map((v) => (
+                    {voices.map((v) => (
                       <option key={v.voiceId} value={v.voiceId}>
                         {v.name}
                         {v.category ? ` (${v.category})` : ""}
                       </option>
                     ))}
                   </select>
-                  {selectedVoice?.previewUrl && (
-                    <audio controls src={selectedVoice.previewUrl} style={{ height: 28, verticalAlign: "middle" }} />
-                  )}
+                  {selectedVoice &&
+                    (selectedVoice.previewUrl ? (
+                      <audio
+                        controls
+                        src={selectedVoice.previewUrl}
+                        style={{ height: 28, verticalAlign: "middle" }}
+                      />
+                    ) : (
+                      <span className="empty">no preview available for this voice</span>
+                    ))}
                   <button type="button" disabled={!selected} onClick={() => approveVoice(c.id, selected)}>
                     Approve
                   </button>
