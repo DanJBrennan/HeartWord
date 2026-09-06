@@ -6,14 +6,15 @@
  * Providers section describes for GEMINI_API_KEY (Nano Banana, Veo,
  * Gemini Omni) -- same key, different model/endpoint.
  *
- * Model choice: gemini-2.5-flash -- the documented, stable "best price-
- * performance for reasoning" tier as of when this was written. Newer
- * model names may exist by the time this runs; swap GEMINI_TEXT_MODEL
- * below if Dan wants a different one; kept as one constant for that
- * reason rather than scattered through casting/index.ts.
+ * Model choice: gemini-3.6-flash. The original choice, gemini-2.5-flash,
+ * turned out to already be retired for new API keys by the time Dan
+ * actually ran this (2026-09-06) -- Gemini's own 404 response named
+ * gemini-3.6-flash as the replacement, which is what's live here. Model
+ * names keep moving; swap GEMINI_TEXT_MODEL below rather than scattering
+ * the string through casting/index.ts if this one gets retired too.
  */
 
-export const GEMINI_TEXT_MODEL = "gemini-2.5-flash";
+export const GEMINI_TEXT_MODEL = "gemini-3.6-flash";
 
 // A JSON-Schema-like object, per Gemini's responseSchema (a restricted
 // subset of OpenAPI schema: type/properties/items/required/enum/

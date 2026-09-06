@@ -443,6 +443,17 @@ re-ran the full test suite (19/19 still passing) plus a direct run of
 the casting module, which now gets all the way through docx parsing and
 fails only at the (expected, from this session) Gemini network call.
 
+## Fixed: gemini-2.5-flash retired, switched to gemini-3.6-flash (2026-09-06)
+
+Dan's first real "Generate shot plan" click got a 404 from Gemini:
+"This model models/gemini-2.5-flash is no longer available to new users.
+Please update your code to use models/gemini-3.6-flash." Swapped
+GEMINI_TEXT_MODEL in src/server/providers/gemini.ts accordingly --
+generateContent's request/response shape (including responseSchema/
+responseMimeType) is unaffected, just the model string. Not yet
+confirmed this actually produces a good shot plan -- that's the next
+thing to check once Dan re-runs it.
+
 ## Next up
 
 - Get a language specialist (or Dan, if he can informally judge Hatam
