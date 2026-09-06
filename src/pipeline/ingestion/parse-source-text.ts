@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { readZipEntry } from "./simple-zip.js";
 
 /**
  * One translation-unit of source Scripture text: a paragraph from the
@@ -16,17 +16,15 @@ export interface VerseGroup {
 }
 
 /**
- * Extracts word/document.xml from a .docx (a plain zip container) via the
- * `unzip` CLI. Deliberately avoids adding a zip-parsing npm dependency —
- * see docs/ARCHITECTURE.md's implementation notes on why native-module
- * installs are risky on this dev setup; `unzip` is a preinstalled system
- * tool, so this has no install step at all.
+ * Extracts word/document.xml from a .docx (a plain zip container). Used
+ * to shell out to the `unzip` CLI on the theory that it's "a preinstalled
+ * system tool" -- true on Linux, but not on native Windows, where Dan
+ * actually runs the app (see simple-zip.ts's header for the full story).
+ * readZipEntry reads the zip format directly with node:zlib, no external
+ * tool or npm dependency needed, and works the same on every platform.
  */
 function readDocumentXml(docxPath: string): string {
-  return execFileSync("unzip", ["-p", docxPath, "word/document.xml"], {
-    encoding: "utf-8",
-    maxBuffer: 32 * 1024 * 1024
-  });
+  return readZipEntry(docxPath, "word/document.xml").toString("utf-8");
 }
 
 /**

@@ -417,6 +417,32 @@ PRODUCT_VISION.md's existing provider preference. Worth asking Dan
 whether he wants OpenAI used instead/as well before building anything
 else against it.
 
+## Fixed: docx parsing depended on the `unzip` CLI, missing on Windows (2026-09-06)
+
+Dan's first live run of the new casting UI failed immediately with
+`spawnSync unzip ENOENT`. Root cause: parse-source-text.ts's
+readDocumentXml shelled out to the `unzip` command-line tool to read a
+.docx's word/document.xml, on the assumption it's "a preinstalled system
+tool" -- true on Linux, where every prior test of stages 1-3 happened to
+run (this session's device bridge), but not true on native Windows,
+where Dan actually runs the app. This was a latent, pre-existing bug in
+ingestion and scene breakdown too, not something new to casting --
+casting was just the first stage whose first real run happened to be on
+Dan's own machine after `unzip`-independent testing had masked it
+everywhere else.
+
+Fixed by replacing the `unzip` shell-out with a small dependency-free ZIP
+reader (src/pipeline/ingestion/simple-zip.ts) that reads the End-Of-
+Central-Directory record and Central Directory entries directly and
+inflates the target entry with node:zlib -- no external tool, no new npm
+dependency (keeping the same "avoid native-module install risk" goal the
+`unzip` approach was originally chasing), works identically on every
+platform. Verified byte-for-byte identical output against the real
+`unzip` CLI on both the Hatam and English reference docx files, and
+re-ran the full test suite (19/19 still passing) plus a direct run of
+the casting module, which now gets all the way through docx parsing and
+fails only at the (expected, from this session) Gemini network call.
+
 ## Next up
 
 - Get a language specialist (or Dan, if he can informally judge Hatam
