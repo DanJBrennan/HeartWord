@@ -49,6 +49,29 @@ interface VoicingResult {
   skippedNoVoice: number;
 }
 
+interface CastingResult {
+  ok: boolean;
+  reasoning: string;
+}
+
+interface Shot {
+  id: string;
+  sequence: number;
+  action: string;
+  status: string;
+  characters: string | null;
+}
+
+interface SceneWithShots {
+  id: string;
+  sequence: number;
+  verse_start: string;
+  verse_end: string;
+  summary: string | null;
+  reasoning: string | null;
+  shots: Shot[];
+}
+
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
     headers: { "Content-Type": "application/json" },
@@ -75,6 +98,11 @@ export default function App() {
   const [castMasterError, setCastMasterError] = useState<string | null>(null);
   const [castMasterBusy, setCastMasterBusy] = useState(false);
   const [castMasterResult, setCastMasterResult] = useState<VoicingResult | null>(null);
+
+  const [scenesWithShots, setScenesWithShots] = useState<SceneWithShots[]>([]);
+  const [castingError, setCastingError] = useState<string | null>(null);
+  const [castingBusy, setCastingBusy] = useState(false);
+  const [castingResult, setCastingResult] = useState<CastingResult | null>(null);
 
   async function refresh() {
     try {
@@ -173,6 +201,41 @@ export default function App() {
     }
   }
 
+  async function loadShots(projectId: string) {
+    try {
+      const { scenes } = await api<{ scenes: SceneWithShots[] }>(`/projects/${projectId}/shots`);
+      setScenesWithShots(scenes);
+    } catch (err) {
+      setCastingError((err as Error).message);
+    }
+  }
+
+  useEffect(() => {
+    if (activeProject) {
+      loadShots(activeProject.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeProject?.id]);
+
+  async function generateCasting() {
+    if (!activeProject) return;
+    setCastingBusy(true);
+    setCastingError(null);
+    setCastingResult(null);
+    try {
+      const result = await api<CastingResult>(`/projects/${activeProject.id}/casting`, { method: "POST" });
+      setCastingResult(result);
+      if (!result.ok) {
+        setCastingError(result.reasoning);
+      }
+      await loadShots(activeProject.id);
+    } catch (err) {
+      setCastingError((err as Error).message);
+    } finally {
+      setCastingBusy(false);
+    }
+  }
+
   return (
     <main>
       <h1>HeartWord</h1>
@@ -226,6 +289,41 @@ export default function App() {
             <li className="empty">No characters yet — run `npm run db:seed-characters`.</li>
           )}
         </ul>
+      </section>
+
+      <section>
+        <h2>Casting &amp; direction</h2>
+        <p className="hint">
+          For each scene, asks Gemini to plan shots -- which canon characters appear and what the action is --
+          grounded in the chapter's English reference text. Costs one Gemini call per scene, so re-running
+          replaces the existing shot plan rather than adding to it.
+        </p>
+        {!activeProject && <p className="empty">No project yet — create one above first.</p>}
+        {activeProject && (
+          <>
+            <button type="button" onClick={generateCasting} disabled={castingBusy}>
+              {castingBusy ? "Planning…" : "Generate shot plan"}
+            </button>
+            {castingResult && <p>{castingResult.reasoning}</p>}
+            {castingError && <p className="error">{castingError}</p>}
+            {scenesWithShots.map((scene) => (
+              <div key={scene.id} className="scene-block">
+                <h3>
+                  Scene {scene.sequence}: {scene.verse_start}–{scene.verse_end}
+                </h3>
+                {scene.reasoning && <p className="hint">{scene.reasoning}</p>}
+                <ul>
+                  {scene.shots.map((shot) => (
+                    <li key={shot.id}>
+                      <strong>Shot {shot.sequence}</strong> ({shot.characters ?? "no characters"}) — {shot.action}
+                    </li>
+                  ))}
+                  {scene.shots.length === 0 && <li className="empty">No shots planned yet.</li>}
+                </ul>
+              </div>
+            ))}
+          </>
+        )}
       </section>
 
       <section>

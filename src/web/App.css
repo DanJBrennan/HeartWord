@@ -53,3 +53,9 @@ input {
   gap: 0.5rem;
   margin-top: 0.25rem;
 }
+
+.scene-block {
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid #ccc;
+}

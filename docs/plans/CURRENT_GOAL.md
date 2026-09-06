@@ -373,6 +373,50 @@ and the exact ffmpeg extraction command was smoke-tested directly against
 the real vocals.mp3 (produced a correct ~7.5s clip). The real first run
 needs to happen on Dan's machine.
 
+## Casting & direction (stage 3) built (2026-09-06)
+
+Implemented src/pipeline/casting/index.ts: for each of Mark 2's 4 scenes,
+one Gemini call (gemini-2.5-flash, via the new src/server/providers/
+gemini.ts) grounded in the chapter's real English reference text
+(assets/reference/english/mark-2/mark-2-text.docx -- an LLM can't read
+Hatam directly, and NON_GOALS.md rules out inventing narrative content,
+so the English reference is the actual source of truth handed to the
+model, not the Hatam source or a free-form request). The prompt also
+tells Gemini which characters stage 1 already confirmed as speaking in
+that scene, and the full approved canon character list with their notes,
+and asks for a shot-by-shot breakdown -- action plus which canon
+characters are visible -- as schema-constrained JSON
+(responseSchema/responseMimeType). Writes to `shots`, `shot_characters`,
+and `scenes.reasoning`. Idempotent (clears this project's shots before
+regenerating). A character name Gemini returns that doesn't exactly
+match the canon list is dropped from that shot and flagged in
+review_notes rather than silently kept -- catching a hallucinated name
+is exactly the kind of thing AGENTS.md's stage-reasoning-logging
+convention is for.
+
+Wired up via POST /api/projects/:id/casting and GET /api/projects/:id/
+shots, plus a "Casting & direction" section in the web app (above Voice
+casting, matching pipeline order) with a generate button and a per-scene
+list of planned shots.
+
+Verified as far as this session's tools allow: TypeScript compiles
+clean, and running the module directly (`node --import tsx`, after
+adding the platform's esbuild/rollup optional packages locally so tsx's
+transform would even load) confirmed every step up through prompt
+construction -- project/scene/character loading, the verse-range overlap
+match between scenes and stage 1's speaker attribution, pulling the
+correct English verses per scene -- works correctly, then fails cleanly
+at the actual Gemini network call (blocked from this session, same as
+the ElevenLabs and prior Gemini-adjacent restrictions) with no partial
+DB writes (transaction rolled back). The real first run needs to happen
+on Dan's machine.
+
+Dan also added OPENAI_API_KEY to .env (2026-09-06) as an available
+alternative -- not yet used anywhere; stage 3 still calls Gemini per
+PRODUCT_VISION.md's existing provider preference. Worth asking Dan
+whether he wants OpenAI used instead/as well before building anything
+else against it.
+
 ## Next up
 
 - Get a language specialist (or Dan, if he can informally judge Hatam

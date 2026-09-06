@@ -3,6 +3,7 @@ import { Router } from "express";
 import { getDb } from "../../db/client.js";
 import { runPipeline } from "../../pipeline/orchestrator.js";
 import { runVoicing } from "../../pipeline/voicing/index.js";
+import { runCasting } from "../../pipeline/casting/index.js";
 
 export const projectsRouter = Router();
 
@@ -86,4 +87,44 @@ projectsRouter.post("/:id/voicing", async (req, res) => {
   } catch (err) {
     res.status(502).json({ error: (err as Error).message });
   }
+});
+
+
+// Runs stage 3 (casting & direction) -- one Gemini planning call per
+// scene, see src/pipeline/casting/index.ts. Costs a Gemini call per
+// scene, so only run when Dan asks for it.
+projectsRouter.post("/:id/casting", async (req, res) => {
+  const db = getDb();
+  const project = db.prepare(`SELECT * FROM projects WHERE id = ?`).get(req.params.id);
+  if (!project) {
+    res.status(404).json({ error: "Project not found." });
+    return;
+  }
+
+  try {
+    const result = await runCasting(req.params.id);
+    res.json(result);
+  } catch (err) {
+    res.status(502).json({ error: (err as Error).message });
+  }
+});
+
+projectsRouter.get("/:id/shots", (req, res) => {
+  const db = getDb();
+  const scenes = db
+    .prepare(`SELECT id, sequence, verse_start, verse_end, summary, reasoning FROM scenes WHERE project_id = ? ORDER BY sequence`)
+    .all(req.params.id) as Array<{ id: string; sequence: number; verse_start: string; verse_end: string; summary: string | null; reasoning: string | null }>;
+
+  const shotsStmt = db.prepare(
+    `SELECT s.id, s.sequence, s.action, s.status,
+            (SELECT GROUP_CONCAT(c.name, ', ') FROM shot_characters sc JOIN characters c ON c.id = sc.character_id WHERE sc.shot_id = s.id) AS characters
+     FROM shots s WHERE s.scene_id = ? ORDER BY s.sequence`
+  );
+
+  const scenesWithShots = scenes.map((scene) => ({
+    ...scene,
+    shots: shotsStmt.all(scene.id)
+  }));
+
+  res.json({ scenes: scenesWithShots });
 });
