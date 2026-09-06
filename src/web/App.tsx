@@ -21,6 +21,7 @@ interface Character {
   version_status: string | null;
   voice_provider: string | null;
   voice_id: string | null;
+  spoken_segment_count: number;
 }
 
 interface Voice {
@@ -78,6 +79,8 @@ export default function App() {
   // Pre-select Brian for Jesus (Dan's existing decision) once both the
   // voice list and character list are in, so it's a one-click Approve
   // rather than making him find it in a long dropdown every time.
+  const speakingCharacters = characters.filter((c) => c.spoken_segment_count > 0);
+
   useEffect(() => {
     if (voices.length === 0 || characters.length === 0) return;
     const jesus = characters.find((c) => c.name.toLowerCase() === "jesus" && !c.voice_id);
@@ -169,11 +172,12 @@ export default function App() {
         <h2>Voice casting</h2>
         <p className="hint">
           Voices come from your ElevenLabs account (needs <code>ELEVENLABS_API_KEY</code> in{" "}
-          <code>.env</code>). Pick a voice, listen to the preview, then Approve to save it.
+          <code>.env</code>). Pick a voice, listen to the preview, then Approve to save it. Only
+          characters with attributed spoken lines in this chapter are listed here.
         </p>
         {voicesError && <p className="error">Couldn't load ElevenLabs voices: {voicesError}</p>}
         <ul>
-          {characters.map((c) => {
+          {speakingCharacters.map((c) => {
             const selected = pendingSelection[c.id] ?? c.voice_id ?? "";
             const selectedVoice = voices.find((v) => v.voiceId === selected);
             const approvedVoiceName =

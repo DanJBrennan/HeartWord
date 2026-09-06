@@ -9,7 +9,9 @@ charactersRouter.get("/", (_req, res) => {
     .prepare(
       `SELECT c.id, c.name, c.scope_kind, c.scope_book, c.scope_chapter, c.canon_status, c.region,
               cv.id AS latest_version_id, cv.version_label, cv.status AS version_status,
-              cv.voice_provider, cv.voice_id
+              cv.voice_provider, cv.voice_id,
+              (SELECT COUNT(*) FROM audio_segments a
+                WHERE a.speaker_character_id = c.id AND a.layer = 'original_reading') AS spoken_segment_count
        FROM characters c
        LEFT JOIN character_versions cv ON cv.character_id = c.id
        GROUP BY c.id
