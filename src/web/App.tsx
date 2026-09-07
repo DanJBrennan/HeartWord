@@ -54,12 +54,27 @@ interface CastingResult {
   reasoning: string;
 }
 
+interface MediaGenerationResult {
+  ok: boolean;
+  reasoning: string;
+}
+
 interface Shot {
   id: string;
   sequence: number;
   action: string;
   status: string;
   characters: string | null;
+  verse_ref: string | null;
+  framing: string | null;
+  camera_movement: string | null;
+  needs_lip_sync: number;
+  dialogue_character: string | null;
+  coverage_plan: string;
+  coverage_notes: string | null;
+  keyframe_path: string | null;
+  latest_human_note: string | null;
+  latest_human_note_resolved: number | null;
 }
 
 interface SceneWithShots {
@@ -69,6 +84,8 @@ interface SceneWithShots {
   verse_end: string;
   summary: string | null;
   reasoning: string | null;
+  lighting_continuity: string | null;
+  englishText: string | null;
   shots: Shot[];
 }
 
@@ -103,6 +120,14 @@ export default function App() {
   const [castingError, setCastingError] = useState<string | null>(null);
   const [castingBusy, setCastingBusy] = useState(false);
   const [castingResult, setCastingResult] = useState<CastingResult | null>(null);
+  const [mediaGenError, setMediaGenError] = useState<string | null>(null);
+  const [mediaGenBusy, setMediaGenBusy] = useState(false);
+  const [mediaGenResult, setMediaGenResult] = useState<MediaGenerationResult | null>(null);
+
+  const [reviewDrafts, setReviewDrafts] = useState<Record<string, string>>({});
+  const [reviewBusyShotId, setReviewBusyShotId] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [zoomedKeyframe, setZoomedKeyframe] = useState<{ path: string; label: string } | null>(null);
 
   async function refresh() {
     try {
@@ -217,6 +242,29 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeProject?.id]);
 
+  async function submitShotReview(shotId: string, decision: "approved" | "flagged") {
+    if (!activeProject) return;
+    const comment = (reviewDrafts[shotId] ?? "").trim();
+    if (decision === "flagged" && comment.length === 0) {
+      setReviewError("Add a comment before flagging a shot.");
+      return;
+    }
+    setReviewBusyShotId(shotId);
+    setReviewError(null);
+    try {
+      await api(`/projects/${activeProject.id}/shots/${shotId}/review`, {
+        method: "POST",
+        body: JSON.stringify({ decision, comment: comment.length > 0 ? comment : undefined })
+      });
+      setReviewDrafts((prev) => ({ ...prev, [shotId]: "" }));
+      await loadShots(activeProject.id);
+    } catch (err) {
+      setReviewError((err as Error).message);
+    } finally {
+      setReviewBusyShotId(null);
+    }
+  }
+
   async function generateCasting() {
     if (!activeProject) return;
     setCastingBusy(true);
@@ -233,6 +281,27 @@ export default function App() {
       setCastingError((err as Error).message);
     } finally {
       setCastingBusy(false);
+    }
+  }
+
+  async function generateMedia() {
+    if (!activeProject) return;
+    setMediaGenBusy(true);
+    setMediaGenError(null);
+    setMediaGenResult(null);
+    try {
+      const result = await api<MediaGenerationResult>(`/projects/${activeProject.id}/media-generation`, {
+        method: "POST"
+      });
+      setMediaGenResult(result);
+      if (!result.ok) {
+        setMediaGenError(result.reasoning);
+      }
+      await loadShots(activeProject.id);
+    } catch (err) {
+      setMediaGenError((err as Error).message);
+    } finally {
+      setMediaGenBusy(false);
     }
   }
 
@@ -311,17 +380,101 @@ export default function App() {
                 <h3>
                   Scene {scene.sequence}: {scene.verse_start}–{scene.verse_end}
                 </h3>
+                {scene.englishText && (
+                  <blockquote style={{ margin: "4px 0", padding: "8px 12px", borderLeft: "3px solid #999" }}>
+                    {scene.englishText}
+                  </blockquote>
+                )}
                 {scene.reasoning && <p className="hint">{scene.reasoning}</p>}
+                {scene.lighting_continuity && (
+                  <p className="hint">
+                    <em>Lighting/continuity:</em> {scene.lighting_continuity}
+                  </p>
+                )}
                 <ul>
                   {scene.shots.map((shot) => (
                     <li key={shot.id}>
                       <strong>Shot {shot.sequence}</strong> ({shot.characters ?? "no characters"}) — {shot.action}
+                      {(shot.framing || shot.camera_movement) && (
+                        <span className="hint">
+                          {" "}
+                          [{shot.framing ?? "framing?"}, {shot.camera_movement ?? "movement?"}
+                          {shot.needs_lip_sync ? `, lip-sync: ${shot.dialogue_character ?? "?"}` : ""}]
+                        </span>
+                      )}
+                      {shot.verse_ref && <span className="hint"> ({shot.verse_ref})</span>}
+                      {shot.coverage_plan === "covered_sequence" && (
+                        <p className="hint">Needs covered-sequence coverage: {shot.coverage_notes}</p>
+                      )}
+                      {shot.keyframe_path && (
+                        <div className="keyframe-review">
+                          <img
+                            src={`/media/${shot.keyframe_path}`}
+                            alt={`Generated keyframe for shot ${shot.sequence}`}
+                            title="Click to zoom"
+                            style={{ maxWidth: 360, display: "block", marginTop: 4, cursor: "zoom-in" }}
+                            onClick={() =>
+                              setZoomedKeyframe({ path: shot.keyframe_path!, label: `Shot ${shot.sequence} — ${shot.action}` })
+                            }
+                          />
+                          {shot.latest_human_note && (
+                            <p className={shot.latest_human_note_resolved ? "hint" : "error"}>
+                              {shot.latest_human_note_resolved ? "✓ " : "⚑ "}
+                              {shot.latest_human_note}
+                            </p>
+                          )}
+                          <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 4 }}>
+                            <button
+                              type="button"
+                              onClick={() => submitShotReview(shot.id, "approved")}
+                              disabled={reviewBusyShotId === shot.id}
+                            >
+                              Approve
+                            </button>
+                            <textarea
+                              aria-label={`Comment on shot ${shot.sequence}`}
+                              placeholder="Comment (required to flag)…"
+                              rows={2}
+                              value={reviewDrafts[shot.id] ?? ""}
+                              onChange={(e) => setReviewDrafts((prev) => ({ ...prev, [shot.id]: e.target.value }))}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => submitShotReview(shot.id, "flagged")}
+                              disabled={reviewBusyShotId === shot.id}
+                            >
+                              Flag
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </li>
                   ))}
                   {scene.shots.length === 0 && <li className="empty">No shots planned yet.</li>}
                 </ul>
               </div>
             ))}
+            {reviewError && <p className="error">{reviewError}</p>}
+          </>
+        )}
+      </section>
+
+      <section>
+        <h2>Media generation</h2>
+        <p className="hint">
+          Generates one keyframe still image per shot via Nano Banana (Gemini) -- Nano Banana Pro for any shot
+          needing lip-sync, standard tier otherwise -- grounded in each visible character's approved canon
+          reference image. Costs one real Gemini image call per shot not already generated; re-running reuses
+          any shot whose keyframe already exists on disk. Still images only for now -- no video clips yet.
+        </p>
+        {!activeProject && <p className="empty">No project yet — create one above first.</p>}
+        {activeProject && (
+          <>
+            <button type="button" onClick={generateMedia} disabled={mediaGenBusy}>
+              {mediaGenBusy ? "Generating…" : "Generate media"}
+            </button>
+            {mediaGenResult && <p>{mediaGenResult.reasoning}</p>}
+            {mediaGenError && <p className="error">{mediaGenError}</p>}
           </>
         )}
       </section>
@@ -415,6 +568,33 @@ export default function App() {
           </>
         )}
       </section>
+
+      {zoomedKeyframe && (
+        <div
+          role="button"
+          aria-label="Close zoomed image"
+          onClick={() => setZoomedKeyframe(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.85)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            cursor: "zoom-out",
+            padding: 24
+          }}
+        >
+          <img
+            src={`/media/${zoomedKeyframe.path}`}
+            alt={zoomedKeyframe.label}
+            style={{ maxWidth: "92vw", maxHeight: "82vh", objectFit: "contain" }}
+          />
+          <p style={{ color: "#fff", marginTop: 12 }}>{zoomedKeyframe.label} — click anywhere to close</p>
+        </div>
+      )}
     </main>
   );
 }
