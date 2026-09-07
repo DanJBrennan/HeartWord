@@ -219,6 +219,16 @@ blocking production or working around the gap informally.
 
 ## Visual World and Character Direction
 
+**Aspect ratio: 16:9 landscape** (confirmed 2026-09-06, Dan). Every
+image and video generation call must request this explicitly rather than
+accepting a provider's own default -- caught as a real, live gap the same
+day: `GeminiVideoProvider.generateFinal()` already hardcoded 16:9 for Veo,
+but the image generation calls (Nano Banana) requested no aspect ratio at
+all and were landing mostly portrait, a real mismatch between the
+keyframes and the landscape video they're meant to feed into. Fixed in
+`src/providers/gemini/index.ts`'s `GeminiImageProvider.generate()` via
+`generationConfig.imageConfig.aspectRatio`.
+
 The people should have Hatam/Papuan faces while the physical setting remains
 first-century Jerusalem and Galilee. Characters wear traditional first-century
 tunics and robes. Buildings, landscapes, props, and Roman soldiers remain

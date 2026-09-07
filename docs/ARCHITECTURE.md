@@ -20,8 +20,10 @@ requirement.
 3. **Casting & direction** — for each scene, select which canon characters
    appear (see `docs/design/canonical-characters.md`) and decide the action/
    blocking for the scene.
-4. **Media generation** — generate the visual content for each scene (Pixar-
-   style 3D characters and settings) per `docs/design/media-generation.md`.
+4. **Media generation** — generate the visual content for each scene
+   (characters and settings, per the established photorealistic canon —
+   see `docs/design/canonical-characters.md`) per
+   `docs/design/media-generation.md`.
 5. **Voice & lip-sync** — produce per-character speech audio (narrator voice
    clone and/or per-character voice IDs) and lip-sync it to each character's
    on-screen face, per `docs/design/audio-and-speakers.md`.
@@ -232,9 +234,12 @@ and for re-voicing their real Hatam dialogue (stage 1's `original_reading`
 segments) into the composite cast master -- and Kling.ai's Avatar API,
 authenticated with `KLING_API_KEY_1`, for lip-sync: it takes that
 ElevenLabs-voiced audio clip plus a scene keyframe (backgrounded in the
-actual scene, close enough to see lip movement) and the character's
-approved headshot as inputs. See Generation Providers, Models, and Cost in
-`docs/PRODUCT_VISION.md`.
+actual scene, close enough to see lip movement) as inputs. See Generation
+Providers, Models, and Cost in `docs/PRODUCT_VISION.md`. (Confirmed
+2026-09-06 against the real, live API: the actual endpoint,
+`POST /v1/videos/avatar/image2video`, takes exactly one `image` field, not
+a separate keyframe-plus-headshot pair -- the interface below reflects
+that real shape, not an earlier, unconfirmed assumption.)
 
 ```ts
 interface ImageProvider {
@@ -268,12 +273,12 @@ interface VoiceProvider {
 }
 
 interface LipSyncProvider {
-  // Kling.ai Avatar API -- audio is the VoiceProvider output (composite
-  // cast master), referenceFrame is a scene keyframe close enough to show
-  // lip movement but still framed on the scene's real background;
-  // headshot is the character's approved reference image, passed
-  // alongside referenceFrame for added likeness/lip-sync quality.
-  sync(character: CharacterRef, audio: AudioSegmentRef, referenceFrame: AssetRef, headshot: AssetRef): Promise<GenerationResult>;
+  // Kling.ai Avatar API (POST /v1/videos/avatar/image2video) -- audio is
+  // the VoiceProvider output (composite cast master), referenceFrame is a
+  // scene keyframe close enough to show lip movement but still framed on
+  // the scene's real background. The real endpoint takes exactly one
+  // image field, so there's no separate headshot parameter here.
+  sync(character: CharacterRef, audio: AudioSegmentRef, referenceFrame: AssetRef): Promise<GenerationResult>;
 }
 
 interface GenerationResult {
@@ -297,7 +302,7 @@ not folded into it: ElevenLabs re-voices a character's real Hatam dialogue
 (re-voicing, not synthesizing from text -- no Hatam TTS model exists) into
 the composite cast master, and that resulting audio clip is what
 `LipSyncProvider` (Kling.ai's Avatar API) then takes as input alongside a
-scene keyframe and the character's headshot.
+scene keyframe.
 
 ## Development environment
 
@@ -339,8 +344,7 @@ the repo root; `.env` itself stays gitignored, per existing convention.
   (speech-to-speech) API, `ELEVENLABS_API_KEY` -- a separate vendor and
   step from Kling's lip-sync, not folded into it. ElevenLabs re-voices
   each speaking character's real Hatam dialogue into their chosen voice;
-  Kling then lip-syncs that resulting audio against a scene keyframe plus
-  the character's headshot.
+  Kling then lip-syncs that resulting audio against a scene keyframe.
 - Whether `KLING_API_KEY_1`'s naming implies more than one Kling key is
   expected (e.g. for quota/rate-limit spreading across concurrent lip-sync
   calls) — affects whether the Kling adapter needs key-pool logic in v1 or
