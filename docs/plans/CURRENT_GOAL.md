@@ -454,33 +454,824 @@ responseMimeType) is unaffected, just the model string. Not yet
 confirmed this actually produces a good shot plan -- that's the next
 thing to check once Dan re-runs it.
 
+## Camera language added to stage 3 (casting & direction) (2026-09-06)
+
+Closed a real gap Dan flagged: stage 2's own docstring already scoped
+"staging, camera, or action content" as stage 3's job, but the first build
+of stage 3 only delivered action + which-characters, not the cinematography
+half. Extended `shots` and `scenes` (new columns, additive migration in
+`src/db/client.ts` so Dan's existing Mark 2 data upgrades in place -- verified
+against the real database, integrity check clean, existing rows intact) and
+`src/pipeline/casting/index.ts`:
+
+- Every shot now gets a `verse_ref`, a `framing` (wide/medium_wide/medium/
+  medium_close/close_up/insert), and a `camera_movement` (static/push_in/
+  pull_out/pan_left/pan_right/tracking/handheld_follow) from the same Gemini
+  planning call, validated against the known enum (falls back to medium/
+  static and flags it in review_notes rather than writing an unrecognized
+  value).
+- Each scene now gets one `lighting_continuity` note (time of day, light
+  source, interior/exterior) meant to be threaded into every shot's stage-4
+  generation prompt so a scene's shots share one lighting decision instead
+  of each reinventing it and drifting.
+- Lip-sync forces framing: a shot can only be flagged `needs_lip_sync` with
+  a named `dialogue_character_id` if its framing is medium_close/close_up/
+  insert -- Kling's Avatar API needs a clear view of the mouth. Gemini's own
+  answer isn't trusted blindly here; `src/pipeline/casting/coverage.ts`'s
+  `validateFraming` tightens a too-wide framing and flags the correction,
+  the same distrust-and-flag pattern already used for hallucinated character
+  names.
+- Coverage detection for long dialogue: a lip-synced shot's REAL dialogue
+  duration is computed from stage 1's actual measured `audio_segments`
+  timing (not a guess), and `coverage.ts`'s `planCoverage` flags anything
+  longer than Veo 3.1's ~8s single-clip ceiling as needing a `covered_sequence`
+  rather than one long lip-synced take -- concretely, a wide master (no
+  lip-sync) plus tight lip-synced inserts on the emphasis lines plus
+  cutaways to listeners, all under one continuous dialogue audio segment
+  (an L-cut). This stage only detects and records that need
+  (`shots.coverage_plan`/`coverage_notes`); building the actual multi-clip
+  sequence is stage 4/5's job once media generation exists -- `clips` is
+  already a separate table from `shots` for exactly this reason.
+
+New pure-logic module `src/pipeline/casting/coverage.ts` (11 new tests,
+same separation-from-DB-glue pattern as `scene-breakdown/build-scenes.ts`).
+Full suite still green (30/30), typecheck clean. Not yet run against a real
+Gemini call with the new prompt fields (same network restriction as every
+other Gemini-adjacent change this session) -- Dan's next "Generate shot
+plan" click on Mark 2 will be the first real run and will re-populate the
+existing shots (casting is idempotent) with the new camera fields.
+
+## Character canon expanded to the other eleven disciples (2026-09-06)
+
+Dan asked to expand the canon beyond Jesus/Matthew. The OpenAI-Code Comics
+video character library already had a full production-ready package for
+every one of the Twelve under precisely disambiguated names (matching
+canonical-characters.md's naming-safety rules, e.g. "Philip the Apostle" vs.
+"Philip the Evangelist", "James son of Zebedee" vs. "James son of Alphaeus")
+-- this was an import task, not a from-scratch creation task, same shape as
+the original Jesus/Matthew import.
+
+Imported all 11 remaining disciples as `scope_kind = 'global'` canon
+characters (so they're automatically available to Mark 2's casting stage
+today, and to every future chapter, without any code change --
+`src/pipeline/casting/index.ts`'s canon-character query already includes
+every global-scope character): Peter, Andrew, James son of Zebedee, John
+son of Zebedee, Philip the Apostle, Bartholomew, Thomas, James son of
+Alphaeus, Thaddaeus (Jude), Simon the Zealot, and Judas Iscariot. Each got
+the same headshot + 4 motion-pose package as Jesus/Matthew, copied into
+`HeartWordData/assets/characters/<slug>/` and sha256-verified against each
+character's own `PROVENANCE.md` after copy (not just trusted). 55 new
+character_assets rows total (5 each), verified idempotent (a second
+`db:seed-characters` run inserted nothing), integrity check clean.
+
+Two real provenance findings surfaced while doing this, both handled rather
+than silently papered over:
+
+- **Peter has an explicit, documented v1->v2 promotion** (headshot +
+  neutral-standing, exactly like Jesus's case) -- imported the v2 files,
+  correctly this time, verified against PROVENANCE.md's stated hash.
+- **John son of Zebedee has an *undocumented* v2 candidate set** sitting on
+  disk (headshot + all 4 motion poses) that PROVENANCE.md never mentions or
+  records as approved -- unlike Peter's case, there's no recorded promotion
+  decision for it (see canonical-characters.md's non-destructive-evolution
+  rule: a promotion must be a recorded decision). Imported v1 for John,
+  matching what's actually documented as approved, and left the orphaned v2
+  set as an open question for Dan rather than guessing which one he meant --
+  worth a look next time he's touching the character library.
+
+Also fixed a latent bug the last Jesus correction (2026-09-05) left behind:
+that fix updated the live database directly but never touched
+`import-manifest.json`, which still listed the old v1 paths/hashes under a
+version_label that already said 'v2' -- a future `npm run db:seed-characters`
+re-run would have matched by path, found no existing row for the (still-v1)
+manifest path, and silently re-inserted the stale legacy asset alongside the
+corrected one. Manifest now matches the live DB.
+
+One open consideration, not yet acted on: casting's canon-character list for
+a project now includes all 20 characters (9 original + 11 new), not just
+the ones relevant to that chapter's text. Mark 2 doesn't name any of these
+eleven, so they shouldn't appear in its shot plans, but it's worth watching
+whether a future casting run ever attributes one of them to an unnamed
+"his disciples" reference the text doesn't actually specify by name --
+NON_GOALS.md already scopes this correctly, but a larger canon list is a
+larger surface for that particular mistake.
+
+Not yet done: voice mapping for any of the eleven (correctly -- per
+character-tool.md, voice mapping is only raised as a gap when a specific
+chapter's shot plan actually gives a character a line; none of these eleven
+speak in Mark 2). Notes on each character record which ones are expected to
+need a voice eventually, based on a review of individually-attributed lines
+in the Gospels/Acts -- flagged in each character's `notes` field as a
+first-pass read, not a verified text search, the same caveat given to Dan
+directly when this research was first done.
+
+## Character canon hierarchy formalized: Global/Book scope, Groups, spokesperson (2026-09-06)
+
+Dan asked for two corrections after the disciple import: (1) follow the
+Global/Book character hierarchy already established in OpenAI-Code Comics'
+own library structure (`Global Character Library` vs. per-book libraries
+like `Mark Character Library`), and represent groups (a crowd, the
+Pharisees and scribes) as 4+ distinct individual designs that get cloned to
+fill out a crowd, with exactly one spokesperson and other members limited
+to non-verbal utterances; (2) redo the disciple voice-need research to
+check for ANY speaking role (not just solo lines) before ruling one out.
+
+**Schema**: new `character_groups` table (itself Global/Book/Chapter-scoped,
+mirroring `characters`) plus `characters.group_id` and
+`characters.is_spokesperson`, with a partial unique index enforcing at most
+one spokesperson per group at the database level -- verified by attempting
+to violate it directly (rejected: `UNIQUE constraint failed:
+characters.group_id`). Both new indexes had to be created in `client.ts`
+after the column migration runs, not in schema.sql's static text -- on
+Dan's already-existing database, `CREATE INDEX ... ON characters(group_id)`
+failed outright before the column existed (a real ordering bug caught by
+actually running it, not just reading the diff).
+
+**`seed-characters.ts` upsert semantics reconsidered**: identity/canon
+fields (name, scope, canon_status, region) and group membership are now
+resynced from the manifest on every run, and so is `notes` -- but
+`character_versions.status`/`voice_provider`/`voice_id` are still
+insert-only, since the live voice-casting UI writes real ElevenLabs values
+there that a manifest resync would otherwise silently overwrite. This
+closes the exact class of bug found earlier today (a direct DB fix that
+never made it back into the manifest) without reopening a worse one.
+
+**Reclassified two Mark 2 "representative" characters** that actually stand
+in for recurring, book-wide groups rather than one-chapter figures:
+Principal scribe -> book-scoped (Mark, not just chapter 2), spokesperson of
+a new "Mark Pharisees and Scribes" group (they object again at 2:16, 2:24,
+3:6, 7:1-13...); the crowd turnaround sheet -> book-scoped, spokesperson of
+a new "Mark Crowd Witnesses" group. Also linked the four already-distinct
+Mark 2 friend characters into a proper "Mark 2 Friends of the Paralytic"
+group (chapter-scoped, correctly at 4/4 members, no spokesperson since none
+of them speak) -- they were already exactly the "4+ distinct designs"
+pattern Dan described, just not yet linked as a group.
+
+Both scribes/crowd groups are honestly flagged as incomplete: each has only
+1 of its required 4+ distinct member designs today (the crowd's one asset
+is itself a flattened multi-person sheet, not even a true individual
+design) -- a Character Tool gap for Dan to fill later, not fabricated here.
+
+**`casting/index.ts` made group-aware**: the canon character list Gemini
+sees now tags each group member as either "spokesperson... the only member
+who can carry dialogue" or "not its spokesperson... may appear and react
+but never carry dialogue," and a resolved `dialogueCharacterName` that
+turns out to be a non-spokesperson group member is corrected to
+`needsLipSync = false` and flagged, the same distrust-and-flag pattern as
+an unresolved character name. Not an active bug for Mark 2 today (both
+groups currently have only their spokesperson as a member), but real once
+the Character Tool gap above gets filled.
+
+**Docs**: `docs/design/canonical-characters.md` gained "Global vs. Book
+Scope" and "Character Groups" sections documenting all of this; a matching
+note in `character-tool.md`'s Voice Mapping section points at the new
+`is_spokesperson` field. Full suite still green (30/30), typecheck clean,
+DB integrity clean, second seed run confirmed idempotent (0/0/0/0 groups).
+
+**Disciple voice research redone properly** (Dan's second ask: check ANY
+speaking role, not just solo lines) -- verified against secondary sources
+via live web search rather than recalled from training, and corrected two
+real mistakes from the first pass:
+- **James son of Zebedee**: previously written off as "likely doesn't need
+  a voice" because he never speaks solo. Corrected -- he DOES have a
+  speaking role, always jointly with John (Mark 10:35-37, Luke 9:54, both
+  "James and John" asking something together). A joint line still needs
+  his voice. Now marked as needing voice mapping.
+- **Matthew (Levi)**: the original manifest note claimed he "speaks in Mark
+  2:14-17," which is simply wrong -- that exchange is between Jesus and
+  the Pharisees/scribes; Matthew has no individually attributed line
+  anywhere in the NT. Corrected the note (the system's actual behavior was
+  already right -- no voice was ever assigned to him -- only the
+  documentation was misleading).
+- **James son of Alphaeus** and **Simon the Zealot** confirmed (now with
+  sources, not just recall) to have zero recorded words anywhere in the
+  NT -- correctly still flagged as not needing voice mapping.
+- Andrew, John son of Zebedee, Philip the Apostle, Bartholomew/Nathanael,
+  Thomas, Thaddaeus/Jude, and Judas Iscariot all reconfirmed with specific
+  verse citations, notes tightened accordingly.
+All corrected notes are live in the database (character_versions.notes),
+not just this file -- verified by direct query after the seed run.
+
+## Mark Pharisees and Scribes group completed at 4 members (2026-09-06)
+
+Closed the gap flagged when the character-group hierarchy was formalized
+earlier the same day: the "Mark Pharisees and Scribes" `character_groups`
+row had only 1 of its required 4+ distinct member designs (the Principal
+scribe). Generated 4 new candidate designs with Nano Banana
+(`gemini-2.5-flash-image`) via a new one-off script,
+`scripts/character-tool/generate-scribe-candidates.ts` -- the first real
+image-generation call against `GEMINI_API_KEY` in this codebase (previously
+only `src/server/providers/gemini.ts`'s text/JSON planning call existed).
+Not folded into `src/providers/gemini/index.ts`'s `GeminiImageProvider`,
+since that interface is shaped around rendering a scene shot against
+already-canon `CharacterRef`s (see `src/providers/types.ts`'s
+`ShotRequest`) -- generating a brand-new character's reference art is a
+Character Tool operation, not a shot-generation one, and doesn't fit that
+interface as-is.
+
+Took several corrective passes based on Dan's direct review, each a real
+design-quality catch, not nitpicking:
+
+- **First draft gave each candidate its own robe color.** Dan redirected:
+  all members should share the Principal scribe's black, with *plainer
+  construction* (single-layer, no shoulder overlayer, no fringe) signaling
+  lower rank instead -- a more legible "antagonist group with one senior
+  figure" read in a crowd shot. Recognition between individual members now
+  rests on face/beard/build/posture (the recognition hierarchy's own
+  strongest cues) plus one accessory each, not color.
+- **Three of four candidates initially had no head covering at all**, an
+  inconsistency within one group Dan caught immediately.
+- **The added head coverings first rendered as South Asian-style wound
+  turbans** (rounded turban ball, spiral-wrapped layers) -- wrong region
+  and culture for a first-century Levantine/Judean setting. Also initially
+  varied in color (charcoal/grey/brown/off-white) across the four, which
+  read as "many colored" rather than copying the Principal scribe's own
+  headscarf construction as Dan asked. Fixed by locking the prompt to the
+  Principal scribe's actual construction (a single cloth draped over the
+  crown and shoulders, not wound) and giving all four the same plain dark
+  grey fabric (his stripe pattern stays reserved for him).
+- **That fix then produced a rigid flat-board/mortarboard artifact** on
+  two of the four (worst on the elder/staff candidate, needing 4 regenerate
+  attempts total before an explicit "no rigid brim/mortarboard, must drape
+  like cloth" instruction reliably fixed it).
+
+Dan approved 3 of the 4 final candidates -- younger/lean, older/stout, and
+middle-aged/tablet-bearer. Promoted these into real canon: copied each PNG
+into its own `characters/<slug>/turnaround/` folder (sha256-computed, not
+assumed), added matching entries to `import-manifest.json` (same
+field-shape `seed-characters.ts` already reads), and ran
+`npm run db:seed-characters` -- 3 new characters/versions/assets, correctly
+0 new groups (reused the existing "Mark Pharisees and Scribes" row).
+Verified idempotent (a second run inserted nothing). `character_groups.notes`
+updated directly in the database to reflect the group is now complete at 4
+members -- `seed-characters.ts` deliberately never resyncs notes for an
+already-existing group, so this needed a direct write, same pattern as
+earlier corrections in this file. Full test suite still green (30/30),
+typecheck clean -- no application code changed, only manifest data and a
+new one-off script.
+
+The 4th candidate (elder, tall/thin, walking staff) was generated and fixed
+(no more rigid-brim artifact), but Dan decided to leave it out -- the group
+stays at its 4 approved members, not 5. Left unpromoted at
+`HeartWordData/assets/characters/candidates/mark-pharisees-scribes/
+candidate-4-elder-tall-thin.png` rather than deleted, in case it's wanted
+later.
+
+## Mark Crowd Witnesses group split into 8 individual characters (2026-09-06)
+
+The other group flagged incomplete alongside the scribes -- and a bigger
+gap than that one, per its own notes: its single existing asset
+(`characters/mark-2-crowd-witnesses/turnaround/
+hatam-crowd-anchors-video-canon-v1.png`) was a flattened sheet of 8
+headshots plus 2 group compositions, modeled as ONE character row ("Eight
+recurring witnesses + adolescent, Mark 2 (crowd)") rather than 4+ distinct
+individual canon characters. Dan also flagged that sheet as stylized/
+comic-leaning rather than matching this canon's photorealistic style.
+
+Per Dan's direction, split it apart one figure at a time (extended
+`scripts/character-tool/generate-crowd-candidates.ts`, same Nano Banana
+approach and candidate-review-before-promotion workflow as the scribes) --
+regenerating each of the sheet's 8 people as a standalone realistic
+photographic portrait, keeping the same identity cues (headscarf color,
+age, build) the original sheet established rather than inventing new
+people. All 8 passed review without needing a corrective regenerate pass
+(unlike the scribes' head-covering saga) -- the earlier fixes (photographic
+realism instruction, Levantine-not-turban head-covering construction, no
+rigid-brim artifact) carried over cleanly from that work. Candidate 8 (the
+woman with her son) kept both figures in one shot, matching how the
+original sheet paired them -- the boy isn't split into his own character
+record.
+
+All 8 promoted into real canon: `characters/mark-crowd-<slug>/turnaround/`
+folders, matching `import-manifest.json` entries, `npm run
+db:seed-characters` (8 new characters/versions/assets, correctly 0 new
+groups), idempotent on a second run, full suite still green (30/30),
+typecheck clean.
+
+Two structural decisions Dan made once all 8 were reviewed:
+
+- **Spokesperson**: the stern man (`mark-crowd-stern-man`) is now this
+  group's spokesperson, not the old composite. His real ElevenLabs voice
+  mapping (`voice_id` `TX3LPaxmHKxFdv7VOQHJ`) was transferred from the
+  retired composite row rather than re-auditioned -- Dan had already
+  approved that voice for this group's spokesperson role during the
+  voice-casting work (2026-09-06 earlier entry), and losing it would have
+  meant re-picking a voice for no real reason.
+- **Old composite retired, not deleted**: `canon_status` set to `rejected`
+  and its version `status` to `superseded` -- both in the database AND in
+  `import-manifest.json` (identity fields and group membership resync from
+  the manifest every seed run, so leaving the manifest saying "approved"
+  would have silently undone the retirement on the next
+  `db:seed-characters`, the exact class of drift bug caught earlier this
+  week with Jesus's asset correction). Its asset file stays on disk as a
+  historical reference; the row itself no longer counts as an active group
+  member.
+
+Caught and fixed one process slip while doing this: after generating and
+copying the first 4 candidates' image files, an earlier response in this
+session (mistakenly) reported them as "promoted into real canon" when only
+the asset files existed on disk -- no manifest entries or database rows had
+actually been created yet. Corrected as part of this same batch (all 8
+manifest entries added and seeded together) rather than left inconsistent.
+
+## Stage 4 (media generation) implemented for real, run for all 24 Mark 2 shots (2026-09-06)
+
+Implemented `ImageProvider.generate()` for real in
+`src/providers/gemini/index.ts` (previously a stub) -- the same Nano Banana
+/ Nano Banana Pro models confirmed against the live Gemini API model list
+while building the character-canon candidates earlier today
+(`gemini-2.5-flash-image` / `gemini-3-pro-image`). Each call now loads a
+representative reference image (headshot, else turnaround, else body-pose)
+per visible canon character straight from `character_assets` and attaches
+it as an input image alongside the text prompt, so a shot's generated
+likeness is grounded in the actual approved canon asset rather than a text
+description alone.
+
+Built `src/pipeline/media-generation/index.ts` (stage 4) around that:
+for every shot with no existing accepted keyframe on disk, builds a prompt
+from the scene's `lighting_continuity`, the shot's `action`/`framing`/
+`camera_movement`, and its cast list, then calls the provider with
+tier="pro" (Nano Banana Pro) for any `needs_lip_sync` shot and "standard"
+otherwise -- a weak keyframe on a lip-synced shot costs a wasted downstream
+Kling call, not just a weak still, so the extra cost there is worth it.
+Records a `generation_attempts` row and a matching `cost_ledger_entries`
+row per call (the first real use of the cost ledger in this codebase --
+even `voicing.ts`'s real ElevenLabs calls don't write to it yet, a gap
+worth fixing separately). Per-shot try/catch, not one big transaction --
+a single Gemini failure shouldn't discard 23 other real, already-paid-for
+results; a failure is flagged in `review_notes` and the run continues.
+Wired to `POST /api/projects/:id/media-generation` and a new "Media
+generation" section in the web app with a keyframe thumbnail under each
+shot in the casting list.
+
+**v1 scope is keyframes only, not video** -- deliberately. A `clips` row
+means timeline-placed video with a real duration; a still image isn't that
+yet. `VideoProvider.generateFinal()` (non-lip-sync shots) and
+`LipSyncProvider.sync()` (lip-sync shots, consuming this stage's keyframe
+as its `referenceFrame`) are both still separate follow-ups.
+
+**Run for real against the actual Mark 2 project**: all 24 shots, zero
+failures, ~$3.56 total (11 standard-tier + 13 pro-tier, since more than
+half the shots carry dialogue). Spot-checked several results directly --
+genuinely strong photographic likeness, including secondary canon
+characters (the Principal scribe's cameo in a wide establishing shot
+correctly kept his black robe/grey headscarf design). The per-call cost
+figures themselves are rough public-pricing estimates, not reconciled
+against a real invoice yet -- flagged in code as needing a real number once
+Dan has billing data to calibrate against, same honesty standard as
+everywhere else costs are estimated in this codebase.
+
+**Visual style confirmed (2026-09-06, Dan)**: `docs/ARCHITECTURE.md` and
+`docs/design/media-generation.md` both described the target visual style as
+"Pixar-style 3D" -- flagged above as inconsistent with every approved
+character-canon asset (all photorealistic) and unsupported by
+PRODUCT_VISION.md itself. Dan confirmed "Pixar-style 3D" was an early,
+since-rejected direction, not the real target -- photorealistic (what
+stage 4 already generates, and what the whole character canon already is)
+is correct. Both docs corrected to remove the stale reference.
+
+Full test suite still green (30/30), typecheck clean.
+
+## Jesus likeness drift flagged in generated keyframes (2026-09-06, Dan)
+
+Dan asked for a direct check on whether Jesus was drifting toward a more
+generic/Mediterranean look in stage 4's generated keyframes rather than
+holding his specific canon likeness. Checked directly against the canon
+headshot: confirmed real -- most visible in the seashore wide shot, where
+Jesus's face reads noticeably softer/more generic than his canon reference
+(less pronounced Melanesian nose/brow/jaw structure, slightly lighter skin
+tone) while the disciples standing right next to him in the *same image*
+kept much stronger, correctly Melanesian/Papuan features. Likely cause:
+`loadCharacterReferenceImages` in `src/providers/gemini/index.ts` attaches
+only one reference image per character -- not enough to lock a specific
+face under Gemini's own generative pull toward a more generic prior,
+especially at a wider angle. Not yet fixed -- logged here so it isn't lost;
+candidate fix is attaching a second reference image per character
+(headshot + a body-pose image) and tightening the prompt's likeness-lock
+language, then regenerating the affected keyframes.
+
+## VideoProvider.generateFinal() and LipSyncProvider.sync() implemented for real (2026-09-06)
+
+Both remaining stage-4/5 provider methods are now real, not stubs --
+requested by Dan the same day the "Pixar-style 3D" references above were
+removed (both docs corrected to drop it, confirmed rejected).
+
+**`GeminiVideoProvider.generateFinal()`** (Veo 3.1 Lite,
+`src/providers/gemini/index.ts`): confirmed `veo-3.1-lite-generate-preview`
+against the live Gemini model list (matching PRODUCT_VISION.md's provider
+decision exactly, not the plain or "-fast-" Veo variants also listed).
+Follows the exact request/poll/download shape already proven in the prior
+pilot's `claude-pilot/gen_veo.py` (`predictLongRunning` + poll, downloading
+via `x-goog-api-key` header when the result comes back as a `uri` rather
+than inline bytes) -- reused a working pattern instead of guessing at one.
+Looks up the shot's own stage-4 keyframe from `generation_attempts` as
+Veo's required start image, since `ShotRequest` has no image field of its
+own. **Verified end-to-end for real** against an actual Mark 2 shot (the
+wide establishing shot, 85d7b634...): produced a real 8-second, ~2.1MB
+video, sent to Dan directly for review.
+
+**`KlingLipSyncProvider.sync()`** (Kling.ai's Avatar API,
+`src/providers/kling/index.ts`): the real endpoint and field names were
+NOT reliably discoverable from Kling's own docs (the doc site is JS-
+rendered and unfetchable; third-party mirrors disagreed with each other,
+several describing only the unrelated video-to-video `/v1/videos/lip-sync`
+endpoint, which requires an existing Kling-generated video, not a static
+image). Confirmed the real endpoint and schema empirically instead --
+submitting real minimal requests against Dan's real account and reading
+back its own validation error messages, the same technique used to
+confirm Nano Banana's model names. Real, confirmed shape: `POST
+/v1/videos/avatar/image2video` on `api-singapore.klingai.com`, fields
+`image` and `sound_file` (both accept a base64 data URI), returning a
+`task_id` polled via `GET /v1/videos/avatar/image2video/{task_id}`.
+
+One real interface correction this surfaced: ARCHITECTURE.md's
+`LipSyncProvider` sketch had drifted from the real `src/providers/types.ts`
+interface -- the doc's code block showed a 4th `headshot` parameter
+alongside `referenceFrame` that was never actually in the compiled
+interface (only 3 params: `character`, `audio`, `referenceFrame`). The real
+Kling endpoint also only takes one `image` field, so there's nowhere to
+send a second reference image even if the interface had one. Fixed
+ARCHITECTURE.md to match the real interface and real endpoint rather than
+the stale aspiration.
+
+**Verification status differs between the two**: Veo's implementation is
+fully confirmed end-to-end (a real result file, played back). Kling's
+submit and poll code paths are confirmed correct -- submission returned a
+real `task_id`, and the exact response schema for a *completed* task
+(`task_result.videos[0].url`) was confirmed by reading real prior
+successful tasks already on Dan's account (from earlier voice-testing
+work, dated late August) via the task-list endpoint discovered along the
+way (`GET /v1/videos/avatar/image2video?pageNum=&pageSize=`) -- but the one
+test task submitted while building this (task_id 925633323790761989,
+Jesus's headshot + a 3-second test tone) was still stuck at `"submitted"`
+after 15+ minutes, well past the ~3.5-4 minute completion time every one
+of Dan's prior successful tasks actually took. Worth checking Dan's own
+Kling dashboard for that task, or just retrying -- may be trial-tier queue
+contention rather than a real bug, but flagged rather than assumed.
+
+Both providers' per-call cost figures (`$1.60`/Veo clip, `$0.50`/Kling
+avatar task) are rough placeholder estimates, not reconciled against real
+billing -- same honesty caveat as the Nano Banana constants.
+
+**Not yet done**: wiring either provider into an actual pipeline stage.
+Stage 5's video half (`src/pipeline/voice-lipsync/index.ts`, still a stub)
+needs to call `KlingLipSyncProvider.sync()` for the 13 lip-sync shots;
+turning the 11 non-lip-sync shots' keyframes into real `clips` rows needs
+a new step calling `GeminiVideoProvider.generateFinal()`. Deliberately not
+run as a real batch yet -- 11 Veo + 13 Kling calls at ~4 minutes and real
+dollars each is a meaningfully bigger spend than stage 4's keyframe batch
+was, worth Dan's explicit go-ahead first, especially with the Jesus
+likeness-drift issue above still unfixed (better to fix that before
+spending on video built from a keyframe that might get regenerated
+anyway).
+
+## Canonical-likeness check built and run for real; Jesus's drift fixed (2026-09-06)
+
+Closed the Jesus likeness-drift issue flagged above, and built the
+reusable automated check Dan asked for so this doesn't need a human eye
+every time. See `src/pipeline/qc/canonical-likeness.ts` and
+`likeness-verdict.ts` (pure decision logic, split out after a plain vitest
+import of the combined file failed to load -- pulled in `db/client.ts`'s
+`node:sqlite` transitively; same reasoning as `coverage.ts`). 11 new tests
+in `canonical-likeness.test.ts`, full suite green (52 total).
+
+**The fix**: `loadCharacterReferenceImages` in `src/providers/gemini/
+index.ts` now attaches up to two reference images per character (a
+headshot/turnaround plus a distinct body-pose image, when both exist)
+instead of one, and each character's reference images are now preceded by
+an explicit "this is the EXACT face... do not redesign, genericize, or
+drift" instruction rather than being handed to the model anonymously.
+
+**The check**: `checkCanonicalLikeness` sends a character's canon
+reference and a generated keyframe to Gemini vision, asking it to judge
+identity match only (not composition/lighting) on a 0-100 scale;
+`runCanonicalLikenessAudit` runs this across every shot/character pair in
+a project, flags failures in `review_notes`, invalidates the underlying
+`generation_attempts` row (status `retry_modified`, an existing
+`GenerationResult` state that exactly fits) so stage 4's normal
+reuse-if-exists logic regenerates it, and can optionally re-check
+afterward to confirm the fix actually worked rather than assuming it did.
+This is one concrete dimension of the "evolving, learned rubric"
+`docs/design/automated-quality-control.md` describes and v1 otherwise
+defers in full -- built as its own standalone module rather than wired
+into stage 7 (still a stub) for the same reason `voicing.ts` runs
+standalone: Dan asked for this specific check directly.
+
+**Run for real, three rounds**: first audit found 11 failing shot/
+character pairs across 7 shots (the check isn't Jesus-specific -- it
+covers every named character) -- including both of Jesus's flagged shots.
+Regenerated all 7; a second audit found the same Jesus shot from the
+"stuck" wide shot now passing, but surfaced a *new* Jesus failure in a
+busy 9-person table scene (visually confirmed real, not noise -- his face
+had drifted again in that regeneration). One more regenerate-and-recheck
+cycle on that shot fixed it. **Final state: Jesus passes on every shot he
+appears in.** Also surfaced (real but explicitly left out of scope for
+this fix, since Dan's ask was specifically about Jesus): Peter and
+"Friend 1 (older, rust)" still fail severely (scores 5-20) in wide/crowd
+shots -- notes consistently say the reference's distinct older, grey-
+haired look simply isn't showing up. Unlike Jesus, Peter has a full
+multi-image reference package, so this isn't the same "only one reference
+image" cause -- looks like a harder, separate problem where Nano Banana
+loses a specific older individual's identity in a busy composition. Not
+yet investigated further; a real one-run-to-the-next non-determinism was
+also observed (an unchanged, previously-passing image scored differently
+on a later run) -- single-run verdicts aren't fully reliable at the
+borderline (50-68) range, only for clear failures (<30) or clear passes.
+
+## Keyframe review UI added (2026-09-06)
+
+Dan asked how to actually look at the generated keyframes and record
+accept/comment decisions. Rather than a one-off tool, extended the
+existing web app (the natural long-term home for this, since it's already
+where casting/media-generation/voice-casting all live):
+
+- `GET /api/projects/:id/shots` now also returns each shot's latest human
+  review note and whether it's resolved.
+- `POST /api/projects/:id/shots/:shotId/review` (`{ decision: 'approved' |
+  'flagged', comment? }`) writes a `review_notes` row (source `'human'`,
+  reusing the same table QC's automated checks already write to, just a
+  different source) -- 'approved' is resolved immediately, 'flagged'
+  requires a comment and stays unresolved for follow-up.
+  Not wired to any pipeline action yet -- approving doesn't do anything
+  special, flagging doesn't auto-regenerate; it's a durable, visible
+  record for now, not a workflow trigger.
+- The "Casting & direction" section's keyframe thumbnails got Approve/Flag
+  controls plus a comment box, and a click-to-zoom overlay (click a
+  thumbnail for a full-size view, click anywhere to close) since the
+  360px inline thumbnails are too small to actually judge a face against.
+
+Verified for real against the running dev server (attached to Dan's own
+already-running `npm run dev` on :5173 rather than starting a second one) --
+the Browser tool's screenshot capture didn't render pixels for this
+externally-attached tab (a tool-side quirk, not an app bug: confirmed via
+direct DOM/JS inspection that images loaded with real pixel dimensions and
+computed styles were normal), so verification was DOM-driven rather than
+visual: clicked a real Approve and a real Flag-with-comment through the
+live UI, confirmed both landed as real `review_notes` rows in the
+database with the right resolved/unresolved state, confirmed the zoom
+overlay opens with the correct image and closes on click, then deleted
+the two test rows so they don't pollute Dan's real review data. Full
+suite still green (41/41), typecheck clean.
+
+## Story fidelity gaps found and fixed: crowd density, continuity, and a real casting/setting bug (2026-09-06)
+
+Dan reviewed the regenerated keyframes and caught three real, separate
+failures in one pass -- exactly the kind of review this project's Goal
+Guardian principle exists for:
+
+1. **Mark 2:1-2 says "no room, not even at the door"; the room rendered as
+   a modestly-sized gathering.** Nothing told stage 4 HOW crowded
+   "crowded" meant.
+2. **Shot 1 already showed the roof opening**, even though the friends
+   don't cut it open until later in the scene -- a continuity break with
+   no mechanism to catch it.
+3. **The scene 2 seashore shot dressed everyone in Melanesian/Pacific
+   Islander tribal clothing** -- woven grass skirts, bare chests as
+   everyday dress, shell/bone arm bands, bare feet -- instead of
+   first-century Judean dress.
+
+(3) traced to a real bug in `src/pipeline/media-generation/index.ts`'s own
+prompt, not a missing design decision: `docs/PRODUCT_VISION.md`'s "Visual
+World and Character Direction" section already states this exactly --
+"Hatam/Papuan faces while the physical setting remains first-century
+Jerusalem and Galilee... the clothing, trees, and buildings do not need to
+be transplanted to modern Papua." The prompt's own style anchor said
+"first-century Hatam/Papuan (Melanesian Arfak highland) *setting*",
+conflating Papuan CASTING (faces) with the SETTING, and the model read
+that license correctly, just not as intended.
+
+**Fixes, addressing both of Dan's questions ("how can casting & direction
+identify this" and "how can it be caught in future")**:
+
+- Rewrote the style anchor (`CASTING_AND_SETTING_ANCHOR` in
+  media-generation/index.ts) to separate the two explicitly, with a hard
+  ban list (no grass/woven skirts, no bare-chest-as-dress, no shell/bone/
+  wood jewelry, no face/body paint, no tropical island scenery).
+- **Stage 3 (casting) now plans two new fields per shot**: `crowdDensity`
+  ('empty'|'sparse'|'moderate'|'packed', schema.sql + coverage.ts's new
+  `CrowdDensity` type) grounded in what the verse text actually says, and
+  `continuityNotes` (free text) -- the prompt now explicitly asks Gemini
+  to read its OWN full shot sequence for a scene before answering, so an
+  object introduced in a later shot doesn't already appear earlier and
+  vice versa. Verified this actually works on the real data: Gemini
+  correctly tracked the roof across 5 shots on its own ("Roof... unopened"
+  -> "before making an opening" -> "roof now has a visible open hole" ->
+  "beneath the freshly opened roof").
+- Stage 4 turns both into explicit generation instructions
+  (`CROWD_DENSITY_INSTRUCTIONS`, an "IMPORTANT continuity constraint"
+  line).
+- **New automated check, `src/pipeline/qc/scene-fidelity.ts`** (+
+  `fidelity-verdict.ts` pure logic, 13 tests) -- parallel to
+  canonical-likeness.ts but checks everything likeness doesn't: setting/
+  costume fidelity to first-century Judea (explicitly NOT penalizing
+  Papuan casting, only wrong-culture clothing/props), crowd density match,
+  and continuity-constraint violations. Same invalidate-and-optionally-
+  regenerate audit loop. On its first real run it also caught something
+  neither Dan nor this fix explicitly targeted: Levi not actually standing
+  up in a shot whose action said he does -- the check generalizes to
+  action-fidelity too, not just the three specific bugs that prompted it.
+
+**A real destructive bug surfaced and fixed along the way**: re-running
+casting to get the new fields on the existing Mark 2 project hit
+`FOREIGN KEY constraint failed` -- casting's idempotent "delete and
+replan shots" logic predates stage 4 existing, and never accounted for
+`generation_attempts`/`cost_ledger_entries`/`clips`/`review_notes` now
+referencing those shot ids. Fixed with an explicit cascading delete
+(`src/pipeline/casting/index.ts`), and the stage's own return now says
+plainly when this happens: re-running casting on a project with existing
+generated media discards those records (files stay on disk, orphaned,
+not deleted) and needs stage 4 re-run afterward. This is real, working-as-
+designed behavior now, not silently swallowed.
+
+**Run for real, full loop**: re-ran casting (24 shots -> 26, Gemini split
+two beats more granularly once given continuity awareness), regenerated
+all 26 keyframes, ran the new scene-fidelity audit (4 failures found,
+regenerated, re-checked down to 2 remaining: Levi still seated in one
+shot, a doorway partially blocked in another), and re-ran
+canonical-likeness for comparison. Setting/costume fidelity is now
+consistently ~95/100 across the board (vs. the original tribal-clothing
+failure) and **24/26 shots pass the full scene-fidelity check** on this
+larger, more heavily-populated regenerated batch. Sent Dan the corrected
+crowd/roof/clothing shots directly.
+
+**One real, still-open tension this surfaced**: canonical-likeness's pass
+rate dropped to 63/89 (71%) on this batch -- including Jesus failing again
+in 2 of the busier shots. The regenerated shots are more heavily
+populated (per the crowd-density fix) and busier crowd/wide shots are
+fundamentally harder for both the image model to keep every named face
+distinct AND for the vision-judge to verify at a distance -- many
+failures explicitly say "too small/distant to verify" rather than
+describing an actual wrong face. This isn't the same bug the two-image
+reference fix solved; it may need a different approach (fewer named
+background characters in a single wide shot, or accepting lower likeness
+precision specifically where a viewer couldn't resolve individual faces
+anyway) -- not yet decided.
+
+Full test suite green (56/56), typecheck clean.
+
+## Second review pass: continuity/costume fixes, disciple timeline, aspect ratio, Critic/Director QC (2026-09-06)
+
+A second real review pass by Dan against the (now landscape-corrected, see
+below) keyframes caught several more real, specific issues, each fixed and
+regenerated for real rather than just logged:
+
+- **Duplicate Jesus, caught by clothing not just face**: Dan flagged a
+  shot with two figures sharing Jesus's exact locked robe combination and
+  hair length, one with his face turned away -- my own visual check had
+  wrongly dismissed the second figure as "similar clothing, different
+  person." Fixed `canonical-likeness.ts`'s `instanceCount` dimension (added
+  earlier this session) to explicitly judge duplicates by BOTH face AND
+  the character's locked canon clothing/hair markers, since clothing is
+  often the clearer signal when a face is turned away or distant -- a
+  locked color-block is a deliberate identity marker for this production,
+  not incidental styling. Verified against the real image via a direct
+  script run: `instanceCount: 1` on the corrected version.
+- **A second, separate duplicate/swap failure mode**: a different shot had
+  Jesus's face on a figure wearing the WRONG robe color, while another
+  disciple wore his correct blue-over-cream -- a clothing/identity SWAP,
+  not a duplication. Fixed via an explicit shot-level continuity-notes
+  lock ("Jesus wears ONLY his own locked canon robe... no other person may
+  wear that combination") rather than a code change, since this is
+  shot-specific content, not a systemic prompt bug.
+- **Capernaum roof height and construction**: Dan asked me to double-check
+  his own estimate that a first-century Capernaum roof was under 10 feet.
+  Confirmed with real historical fact (archaeological excavations,
+  Loffreda/Corbo's House of Peter work): flat roofs, ~6-7 feet at the
+  eaves, built of wood beams + branches/reed matting + packed mud/clay --
+  not the tall peaked/thatched structure generated. Fixed via the scene's
+  `lighting_continuity` field (architecture is scene-wide, not per-shot).
+  The Critic agent (see below) later found this fix was still incomplete
+  in one real, well-cited way: the load-bearing rafters themselves can't
+  be removed without collapsing the roof, so an opening must show
+  rafters still spanning it, not a clean skylight-like hole -- not yet
+  applied back to the shot.
+- **Paralytic sitting up**: Mark 2's paralytic is being lowered on his mat
+  and cannot sit up under his own power -- he was shown upright, hands
+  bracing the mat. Fixed via shot-level continuity notes ("must NOT be
+  shown upright, leaning, or using his arms"). The Critic also flagged the
+  mat itself should read as a soft rollable pallet (Greek *krabattos*),
+  not a rigid framed bed, per Mark 2:4's actual word choice -- not yet
+  applied.
+- **Tax booth shown as an open dining table**: fixed across all three
+  shots depicting it via continuity notes describing a real first-century
+  roadside customs booth (a small stall with a raised counter, money box,
+  ledger, coin scale) -- visibly correct on regeneration, screenshots sent
+  to Dan.
+- **"Remove 'dusty', brighter/clearer" (Scene 1)**: the scene's shared
+  `lighting_continuity` literally said "dusty" -- removed, lighting
+  language strengthened ("clean, well-lit, no haze").
+
+**Disciple-timeline gate built** (`src/pipeline/casting/disciple-timeline.ts`
++ 13 tests) after Dan asked: "once Matthew joins the disciples he should
+be present in scenes where the disciples are mentioned... how can this be
+done and remembered?" `characters.joined_narrative_at` now records each
+disciple's real calling verse (Peter/Andrew: Mark 1:16; James/John son of
+Zebedee: Mark 1:19; Matthew: Mark 2:14; the remaining seven: Mark 3:13,
+where Mark's own text first names the full Twelve as a group -- not
+individually earlier). `casting/index.ts` filters the canon-character list
+offered to Gemini per scene against this automatically -- "remembered" by
+being a database fact every future casting run reads, not a per-run
+prompt instruction. One real bug caught before it shipped: filtering
+against the scene's START verse wrongly excluded Matthew from his own
+calling scene (Mark 2:13-17), since his calling verse (14) is inside that
+scene, not before it -- fixed to filter against the scene's END verse
+instead, letting Gemini's own text-grounded shot planning place him in
+the right shots within the scene. Verified for real: scene 2 (Levi's
+calling through the dinner) now correctly includes James, John, Andrew,
+and Peter throughout, and Matthew from his calling shot onward.
+
+**Aspect ratio bug found and fixed**: Dan noticed most keyframes were
+portrait. Real gap: `GeminiVideoProvider.generateFinal()` already
+hardcoded 16:9 for Veo (inherited from the prior pilot's own default,
+never actually confirmed for this project), but `GeminiImageProvider.
+generate()` (Nano Banana) requested no aspect ratio at all and was
+defaulting to mostly-portrait -- a live mismatch between keyframes and
+the landscape video they feed into. Dan confirmed 16:9 landscape via
+`AskUserQuestion`; documented in `PRODUCT_VISION.md`'s "Visual World and
+Character Direction" section (previously undocumented anywhere) and fixed
+via `generationConfig.imageConfig.aspectRatio` -- confirmed real and
+respected by testing directly against the live API before wiring it in.
+All 28 real shots regenerated in correct landscape.
+
+**Critic + Director QC agents built** at Dan's request: "Whenever an image
+or video clip is generated it should be reviewed by a critic agent...
+uses research on the context of scripture from the internet... The
+director agent weighs the input... reported to the producer and logged."
+`src/pipeline/qc/critic.ts` runs a REAL web-search-grounded Gemini call
+(confirmed working via `tools: [{google_search: {}}]`, empirically tested
+before use, same discipline as everywhere else provider behavior was
+confirmed this session) against a shot's own action/continuity text,
+producing cited findings plus a self-reported severity.
+`director-verdict.ts` (pure, 9 tests) weighs that against the two existing
+automated checks (canonical-likeness, scene-fidelity) into one of the
+same five `GenerationStatus` values `src/providers/types.ts` already
+defined (accepted/retry_same/retry_modified/escalate/hold_for_review) --
+this is the first code to actually choose between all five, not just
+"accepted". `director.ts` wires it together, writes a full report to
+`review_notes` (source 'qc') -- the "reported to the producer, logged for
+future reference" mechanism, since real push-notification channels stay
+the already-known-deferred v1 item (`docs/design/notifications.md`) -- and
+writes the decision directly onto `generation_attempts.status`.
+
+**Verified for real, not just built**: ran `runShotReview` against the
+real roof/paralytic shot. Genuinely found NEW issues beyond what Dan or I
+had caught by eye: the roof's load-bearing rafters must stay visible
+across the opening (removing them would collapse the roof), the mat
+should be a soft rollable *krabattos* not a rigid bed, and the opening
+should look ragged/dusty from being dug through, not clean -- each cited
+to real archaeological sources. Correctly combined with two failing
+automated checks into `hold_for_review`, the most cautious status.
+**Deliberately NOT auto-wired into every `runMediaGeneration` call yet** --
+each reviewed shot costs a real additional grounded search call on top of
+the two existing checks; run standalone per-shot (or could be extended to
+a whole-project audit matching the other two checks' pattern) until Dan
+decides this should run automatically by default.
+
+Full test suite green (90/90), typecheck clean.
+
 ## Next up
+
+Pipeline status as of 2026-09-06 (end of session): stages 1-4 fully
+implemented and run for real, through two full review passes with Dan.
+Stage 5's audio half has run for real; both of stage 5's remaining
+provider methods (Veo, Kling) are implemented and individually verified.
+Three automated QC mechanisms now exist (canonical-likeness,
+scene-fidelity, Critic+Director) plus a disciple-timeline gate in casting
+itself, and Dan has a UI to review keyframes directly. Still open:
 
 - Get a language specialist (or Dan, if he can informally judge Hatam
   audio against verse boundaries some other way) to actually check the 20
   flagged `audio_segments`/`review_notes` rows stage 1 produces, and the
-  3 new boundary-straddling `review_notes` rows stage 2 produces, against
-  the real audio — each carries full context, but they're still database
-  rows, not reviewer decisions, and there's no UI yet to surface them.
-  Both stage 2's scenes and any future stage 3 casting work are building
-  on this unconfirmed input in the meantime.
-- Voice provider decided (2026-09-05, Dan): ElevenLabs' voice-changer
-  (speech-to-speech) API, `ELEVENLABS_API_KEY` -- a separate vendor and
-  step from Kling, not folded into it. Used to (1) audition ElevenLabs'
-  voices and pick each canonical speaking character's voice, and (2)
-  re-voice that character's real Hatam dialogue (stage 1's
-  `original_reading` segments) into the chosen voice for the composite
-  cast master. Kling.io's Avatar API (`KLING_API_KEY_1`, already decided)
-  then lip-syncs that ElevenLabs-voiced clip against a scene keyframe plus
-  the character's headshot. Doesn't block stage 3 (casting & direction) --
-  only stage 5 (voice & lip-sync). See `docs/ARCHITECTURE.md`'s Provider
-  interface section.
-- Stage 3 (casting & direction) next — per ARCHITECTURE.md's v1
-  simplification, this runs as a single AI planning pass (not full
-  multi-agent negotiation) and owns `shots`, `shot_characters`, and
-  `scenes.reasoning`, which stage 2 deliberately left alone.
-- Implement one provider adapter method for real (e.g. Gemini image
-  generation) once stage 3 (casting) exists to feed it.
+  3 boundary-straddling `review_notes` rows stage 2 produces, against the
+  real audio — each carries full context, but they're still database
+  rows, not reviewer decisions. Every later stage is building on this
+  unconfirmed input in the meantime.
+- ~~Apply the Critic's two findings (roof rafters, krabattos mat)~~ --
+  done same day: applied to the shot's continuity_notes, regenerated
+  (only that one shot -- its status was already non-'accepted' from the
+  Director's `hold_for_review` decision, so `runMediaGeneration`'s normal
+  reuse-if-exists logic picked it up on its own). Result: a real
+  load-bearing beam now visibly spans the opening with ragged thatch/
+  branches around it, and the mat reads as a soft woven pallet, not a
+  rigid bed. Re-verified no duplicate-Jesus regression with the
+  strengthened canonical-likeness check (`instanceCount: 1`, "clothing
+  and hair combination remains unique to the central figure").
+- Decide whether/how to run Critic+Director more broadly: per-shot on
+  demand (as built), a whole-project audit mode (matching
+  canonical-likeness.ts/scene-fidelity.ts's own audit runners), or wired
+  into every `runMediaGeneration` call by default -- each real option
+  trades against per-shot cost/latency (a live grounded search call).
+- Decide how to handle the wide/crowd-shot likeness ceiling flagged
+  earlier this session -- distinct from the single-reference-image bug
+  already fixed; many failures there read as "too small/distant to
+  verify" rather than an actual wrong face.
+- Wire `KlingLipSyncProvider.sync()` into stage 5's video half
+  (`voice-lipsync/index.ts`) for the lip-sync shots, and
+  `GeminiVideoProvider.generateFinal()` into a new step that writes real
+  `clips` rows for the non-lip-sync shots -- both providers are ready,
+  neither is wired into a pipeline stage yet.
+- Stages 6-7 (assembly, QC) still fully unbuilt -- blocked on real `clips`
+  existing first.
 
 Out of scope for now: which subset of the illustrated-Scripture prior
 attempt's assets to import — not needed until the Illustrated lane is
