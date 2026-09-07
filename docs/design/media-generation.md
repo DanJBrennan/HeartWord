@@ -3,8 +3,10 @@
 ## Scope
 
 Turns a scene's casting + action/blocking decision into actual visual content:
-backgrounds, characters in position, camera framing — in the project's chosen
-visual style (Pixar-style 3D, per `docs/PRODUCT_VISION.md`).
+backgrounds, characters in position, camera framing — in the project's
+established photorealistic visual style (see
+`docs/design/canonical-characters.md`; an earlier "Pixar-style 3D" direction
+was considered and rejected).
 
 ## Inputs
 

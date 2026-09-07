@@ -103,7 +103,11 @@ promotion can be rolled back.
 - Collective/crowd lines may be voiced by a single representative speaker
   while the rest of the group is shown reacting silently (see Canon Builder
   and Voice Approval in `docs/PRODUCT_VISION.md`) — that representative
-  speaker is the one who gets a voice mapping, not the whole group.
+  speaker is the one who gets a voice mapping, not the whole group. This is
+  now a structured field, not just convention: `characters.is_spokesperson`
+  marks that member (at most one per `character_groups` row, enforced by a
+  database constraint) — see canonical-characters.md's "Character Groups"
+  section.
 
 ## Open questions
 
