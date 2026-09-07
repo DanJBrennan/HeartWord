@@ -20,6 +20,26 @@ CREATE TABLE IF NOT EXISTS projects (
   UNIQUE (language, book, chapter)
 );
 
+-- A reusable set of 4+ visually distinct character designs meant to be
+-- cast (and repeated/"cloned") together to fill out a crowd, rather than
+-- named individuals in their own right -- e.g. "Mark Pharisees and
+-- Scribes", "Mark Crowd Witnesses". Mirrors the Global/Book/Chapter scope
+-- shape of `characters` itself, and the Global Character Library / per-book
+-- Character Library split already established in the source comic canon
+-- (OpenAI-Code Comics) -- see docs/design/canonical-characters.md's
+-- "Character Groups" section.
+CREATE TABLE IF NOT EXISTS character_groups (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  scope_kind TEXT NOT NULL CHECK (scope_kind IN ('global','book','chapter')),
+  scope_book TEXT,
+  scope_chapter INTEGER,
+  notes TEXT,                  -- e.g. how many distinct member designs exist
+                                -- vs. the 4+ target -- see character-tool.md's
+                                -- Gap Detection for an incomplete group
+  created_at INTEGER NOT NULL
+);
+
 -- Canon character identity — one row per character concept (Jesus,
 -- Matthew/Levi, "Friend 1, Mark 2", ...), independent of region or version.
 CREATE TABLE IF NOT EXISTS characters (
@@ -33,10 +53,37 @@ CREATE TABLE IF NOT EXISTS characters (
                                 -- a character's assets never cross regions
   legacy_identity_id TEXT,     -- provenance: the original BVET-Data
                                 -- identityId, when imported from there
+  group_id TEXT REFERENCES character_groups(id),  -- set only for a member of
+                                -- a character group (see above); NULL for a
+                                -- named individual like Jesus or a disciple
+  is_spokesperson INTEGER NOT NULL DEFAULT 0,  -- at most one TRUE per
+                                -- group_id (enforced by the unique index
+                                -- below) -- the member who gets voice-mapped
+                                -- and lip-synced when the group needs a line;
+                                -- other members may still appear making
+                                -- non-verbal utterances (a shot's action
+                                -- text can say so) without their own voice
+                                -- mapping -- see PRODUCT_VISION.md's Canon
+                                -- Builder and Voice Approval
+  joined_narrative_at TEXT,    -- e.g. 'Mark 1:16' -- for a disciple whose
+                                -- entrance into the story is a specific
+                                -- calling verse, the earliest reference at
+                                -- which they're part of "the disciples" and
+                                -- should be offered to stage 3 (casting) for
+                                -- any scene at or after this point. NULL for
+                                -- a character not gated by a calling moment
+                                -- (Jesus, one-chapter characters, group
+                                -- members). See casting/disciple-timeline.ts.
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_characters_scope ON characters(scope_kind, scope_book, scope_chapter);
+-- idx_characters_group and idx_one_spokesperson_per_group are created in
+-- src/db/client.ts, AFTER the column migrations run, not here -- both
+-- reference group_id/is_spokesperson, which an already-existing database
+-- (like Dan's real Mark 2 project) doesn't have until the migration below
+-- adds them, and CREATE INDEX fails immediately if the column doesn't
+-- exist yet (unlike CREATE TABLE IF NOT EXISTS, which just no-ops).
 
 -- Non-destructive version history for a character — the v2-candidate
 -- workflow in canonical-characters.md. Approving a version never deletes
@@ -77,6 +124,13 @@ CREATE TABLE IF NOT EXISTS scenes (
   verse_end TEXT NOT NULL,
   summary TEXT,
   reasoning TEXT,                   -- casting/direction reasoning log (AGENTS.md)
+  lighting_continuity TEXT,         -- one-scene lighting/setting descriptor
+                                     -- (time of day, light source, interior/
+                                     -- exterior) -- set by stage 3 (casting)
+                                     -- and threaded into every shot's stage-4
+                                     -- generation prompt, so a scene's shots
+                                     -- share one lighting decision instead of
+                                     -- each reinventing it and drifting
   created_at INTEGER NOT NULL,
   UNIQUE (project_id, sequence)
 );
@@ -86,6 +140,41 @@ CREATE TABLE IF NOT EXISTS shots (
   scene_id TEXT NOT NULL REFERENCES scenes(id),
   sequence INTEGER NOT NULL,
   action TEXT NOT NULL,             -- blocking/action decision
+  verse_ref TEXT,                   -- e.g. 'Mark 2:5-7' -- which verse(s) this
+                                     -- shot depicts; grounds dialogue-duration
+                                     -- lookups against audio_segments
+  framing TEXT,                     -- 'wide' | 'medium_wide' | 'medium' |
+                                     -- 'medium_close' | 'close_up' | 'insert'
+                                     -- -- see src/pipeline/casting/coverage.ts
+  camera_movement TEXT,             -- 'static' | 'push_in' | 'pull_out' |
+                                     -- 'pan_left' | 'pan_right' | 'tracking' |
+                                     -- 'handheld_follow'
+  needs_lip_sync INTEGER NOT NULL DEFAULT 0,  -- shot carries on-camera dialogue
+                                     -- Kling's Avatar API must lip-sync;
+                                     -- forces framing to medium_close/
+                                     -- close_up/insert (coverage.ts)
+  dialogue_character_id TEXT REFERENCES characters(id),  -- whose mouth needs
+                                     -- to sync, when needs_lip_sync = 1
+  coverage_plan TEXT NOT NULL DEFAULT 'single_clip',  -- 'single_clip' |
+                                     -- 'covered_sequence' -- set when this
+                                     -- shot's real dialogue duration is too
+                                     -- long for one generated clip
+  coverage_notes TEXT,              -- human-readable coverage breakdown when
+                                     -- coverage_plan = 'covered_sequence'
+  crowd_density TEXT,                -- 'empty' | 'sparse' | 'moderate' | 'packed'
+                                     -- -- how full the location should read,
+                                     -- grounded in the verse text (e.g. Mark
+                                     -- 2:2's "no room, not even at the door"
+                                     -- demands 'packed', not left to media
+                                     -- generation to guess from prose alone)
+  continuity_notes TEXT,             -- objects/props/physical states that
+                                     -- must (or must not) appear in this shot
+                                     -- to stay consistent with the rest of
+                                     -- the scene -- e.g. "roof intact, not
+                                     -- yet opened" for a shot before the
+                                     -- roof-opening event, "opening now
+                                     -- visible" after. NULL when nothing
+                                     -- scene-specific applies.
   status TEXT NOT NULL DEFAULT 'planned',
   created_at INTEGER NOT NULL,
   UNIQUE (scene_id, sequence)

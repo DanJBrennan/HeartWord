@@ -74,8 +74,73 @@ export function getDb(): DatabaseSync {
 
   const schema = readFileSync(SCHEMA_PATH, "utf-8");
   db.exec(schema);
+  applyColumnMigrations(db);
+
+  // These two indexes reference characters.group_id/is_spokesperson, which
+  // only exist after applyColumnMigrations runs on an already-existing
+  // database -- see the comment in schema.sql where these used to live.
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_characters_group ON characters(group_id);`);
+  db.exec(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_one_spokesperson_per_group
+       ON characters(group_id) WHERE is_spokesperson = 1;`
+  );
 
   return db;
+}
+
+/**
+ * Additive column migrations for tables that already existed before a
+ * schema change. schema.sql's `CREATE TABLE IF NOT EXISTS` only takes
+ * effect on a brand-new database -- an already-existing table (like Dan's
+ * real Mark 2 project data) never picks up a newly added column from it.
+ * Each entry here is checked against `PRAGMA table_info` before running,
+ * so this is idempotent and safe to call on every server start alongside
+ * the schema above. A fresh database already has every column from
+ * schema.sql's CREATE TABLE, so every check here is a no-op for it.
+ */
+const COLUMN_MIGRATIONS: Array<{ table: string; column: string; ddl: string }> = [
+  { table: "scenes", column: "lighting_continuity", ddl: "ALTER TABLE scenes ADD COLUMN lighting_continuity TEXT" },
+  { table: "shots", column: "verse_ref", ddl: "ALTER TABLE shots ADD COLUMN verse_ref TEXT" },
+  { table: "shots", column: "framing", ddl: "ALTER TABLE shots ADD COLUMN framing TEXT" },
+  { table: "shots", column: "camera_movement", ddl: "ALTER TABLE shots ADD COLUMN camera_movement TEXT" },
+  {
+    table: "shots",
+    column: "needs_lip_sync",
+    ddl: "ALTER TABLE shots ADD COLUMN needs_lip_sync INTEGER NOT NULL DEFAULT 0"
+  },
+  {
+    table: "shots",
+    column: "dialogue_character_id",
+    ddl: "ALTER TABLE shots ADD COLUMN dialogue_character_id TEXT REFERENCES characters(id)"
+  },
+  {
+    table: "shots",
+    column: "coverage_plan",
+    ddl: "ALTER TABLE shots ADD COLUMN coverage_plan TEXT NOT NULL DEFAULT 'single_clip'"
+  },
+  { table: "shots", column: "coverage_notes", ddl: "ALTER TABLE shots ADD COLUMN coverage_notes TEXT" },
+  { table: "shots", column: "crowd_density", ddl: "ALTER TABLE shots ADD COLUMN crowd_density TEXT" },
+  { table: "shots", column: "continuity_notes", ddl: "ALTER TABLE shots ADD COLUMN continuity_notes TEXT" },
+  { table: "characters", column: "group_id", ddl: "ALTER TABLE characters ADD COLUMN group_id TEXT REFERENCES character_groups(id)" },
+  {
+    table: "characters",
+    column: "is_spokesperson",
+    ddl: "ALTER TABLE characters ADD COLUMN is_spokesperson INTEGER NOT NULL DEFAULT 0"
+  },
+  {
+    table: "characters",
+    column: "joined_narrative_at",
+    ddl: "ALTER TABLE characters ADD COLUMN joined_narrative_at TEXT"
+  }
+];
+
+function applyColumnMigrations(db: DatabaseSync): void {
+  for (const migration of COLUMN_MIGRATIONS) {
+    const columns = db.prepare(`PRAGMA table_info(${migration.table})`).all() as Array<{ name: string }>;
+    if (!columns.some((c) => c.name === migration.column)) {
+      db.exec(migration.ddl);
+    }
+  }
 }
 
 export function getDataDir(): string {
