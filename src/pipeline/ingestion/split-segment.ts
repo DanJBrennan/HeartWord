@@ -103,7 +103,9 @@ export function proposeSplit(
     const timings: SegmentTiming[] = selectBoundaries(gaps, verseRefs.length, clipDurationMs);
 
     const subSegments: ProposedSubSegment[] = timings.map((t, i) => ({
-      verseRef: verseRefs[i],
+      // safe: selectBoundaries(gaps, verseRefs.length, ...) always returns
+      // exactly verseRefs.length timings, so index i is always in bounds.
+      verseRef: verseRefs[i]!,
       startMs: segment.start_ms + t.startMs,
       endMs: segment.start_ms + t.endMs,
       durationMs: t.endMs - t.startMs,

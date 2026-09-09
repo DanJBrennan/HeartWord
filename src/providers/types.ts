@@ -57,11 +57,24 @@ export interface ImageEditor {
 }
 
 export interface VideoProvider {
-  generateFinal(request: ShotRequest, opts?: { resolution?: "720p" | "1080p" }): Promise<GenerationResult>;
+  // startFrame overrides the default "shot's own accepted keyframe" lookup
+  // -- needed for a covered_sequence shot's individual beats (see
+  // coverage_beats), each of which has its own keyframe distinct from the
+  // shot-level one this lookup would otherwise find. durationSeconds
+  // overrides the 8s default -- a beat's video should roughly match its
+  // own audio span (a 3.5s master doesn't need an 8s clip), not always
+  // max out the single-clip ceiling.
+  generateFinal(
+    request: ShotRequest,
+    opts?: { resolution?: "720p" | "1080p"; startFrame?: AssetRef; durationSeconds?: number }
+  ): Promise<GenerationResult>;
 }
 
 export interface DraftVideoProvider {
-  generateDraft(request: ShotRequest): Promise<GenerationResult>;
+  // startFrame: same override purpose as VideoProvider.generateFinal's --
+  // without it, generateDraft only has canon character reference images to
+  // animate from, not a specific composed shot/beat keyframe.
+  generateDraft(request: ShotRequest, opts?: { startFrame?: AssetRef }): Promise<GenerationResult>;
   generateGuided(startFrame: AssetRef, endFrame: AssetRef, request: ShotRequest): Promise<GenerationResult>;
 }
 

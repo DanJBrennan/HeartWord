@@ -13,8 +13,8 @@ describe("planCoverageBeats", () => {
 
   it("starts with a master and ends with a lip-sync insert", () => {
     const beats = planCoverageBeats(18019); // Scene 1 Shot 7, Mark 2:8-10
-    expect(beats[0].beatType).toBe("master");
-    expect(beats[0].needsLipSync).toBe(false);
+    expect(beats[0]!.beatType).toBe("master");
+    expect(beats[0]!.needsLipSync).toBe(false);
     expect(beats.at(-1)!.beatType).toBe("lip_sync_insert");
     expect(beats.at(-1)!.needsLipSync).toBe(true);
   });
@@ -31,10 +31,10 @@ describe("planCoverageBeats", () => {
       const beats = planCoverageBeats(durationMs);
       expect(totalDurationMs(beats)).toBe(durationMs);
       for (let i = 1; i < beats.length; i++) {
-        expect(beats[i].audioStartMs).toBe(beats[i - 1].audioEndMs);
-        expect(beats[i].sequence).toBe(beats[i - 1].sequence + 1);
+        expect(beats[i]!.audioStartMs).toBe(beats[i - 1]!.audioEndMs);
+        expect(beats[i]!.sequence).toBe(beats[i - 1]!.sequence + 1);
       }
-      expect(beats[0].audioStartMs).toBe(0);
+      expect(beats[0]!.audioStartMs).toBe(0);
       expect(beats.at(-1)!.audioEndMs).toBe(durationMs);
     }
   });
@@ -50,7 +50,7 @@ describe("planCoverageBeats", () => {
     const beats = planCoverageBeats(36768); // Scene 1 Shot 8, Mark 2:10-11
     const inserts = beats.filter((b) => b.beatType === "lip_sync_insert");
     expect(inserts.length).toBeGreaterThan(1);
-    expect(inserts[0].requiresNewKeyframe).toBe(false);
+    expect(inserts[0]!.requiresNewKeyframe).toBe(false);
     for (const insert of inserts.slice(1)) {
       expect(insert.requiresNewKeyframe).toBe(true);
     }
@@ -72,7 +72,7 @@ describe("planCoverageBeats", () => {
     const beats = planCoverageBeats(76719);
     const inserts = beats.filter((b) => b.beatType === "lip_sync_insert");
     const cutaways = beats.filter((b) => b.beatType === "cutaway");
-    expect(beats[0].beatType).toBe("master");
+    expect(beats[0]!.beatType).toBe("master");
     expect(inserts.length).toBeGreaterThanOrEqual(3);
     expect(cutaways.length).toBeGreaterThanOrEqual(2);
   });

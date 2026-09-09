@@ -118,7 +118,7 @@ function loadCharacterReferenceImages(characters: ShotRequest["characters"]): Ch
 
   const result: CharacterReferenceImages[] = [];
   for (const character of characters) {
-    let rows = findAssets.all(character.characterVersionId) as ReferenceAssetRow[];
+    let rows = findAssets.all(character.characterVersionId) as unknown as ReferenceAssetRow[];
     const nameRow = findName.get(character.characterVersionId) as { name: string } | undefined;
     const characterName = nameRow?.name ?? "this character";
 
@@ -142,7 +142,7 @@ function loadCharacterReferenceImages(characters: ShotRequest["characters"]): Ch
     // better than one, without attaching every pose on file.
     const chosen: ReferenceAssetRow[] = [];
     for (const row of rows) {
-      if (chosen.length === 0 || row.category !== chosen[0].category) {
+      if (chosen.length === 0 || row.category !== chosen[0]!.category) {
         chosen.push(row);
       }
       if (chosen.length === 2) break;
@@ -410,9 +410,10 @@ const VEO_MODEL = "veo-3.1-lite-generate-preview";
 
 // Rough public-pricing-based estimate, NOT reconciled against a real
 // invoice -- same honesty caveat as the Nano Banana cost constants above.
-// Veo charges per second of output; this is a flat per-8-second-clip
-// estimate at 720p.
-const VEO_COST_USD_PER_CLIP = 1.60;
+// Veo charges per second of output at 720p; $1.60 for the original
+// always-8-second clip implies $0.20/sec, scaled here now that a
+// covered_sequence beat can request a shorter duration.
+const VEO_COST_USD_PER_SECOND = 0.20;
 
 interface VeoOperationResponse {
   name?: string;
@@ -426,32 +427,50 @@ interface VeoOperationResponse {
 }
 
 export class GeminiVideoProvider implements VideoProvider {
-  async generateFinal(request: ShotRequest, opts?: { resolution?: "720p" | "1080p" }): Promise<GenerationResult> {
+  async generateFinal(
+    request: ShotRequest,
+    opts?: { resolution?: "720p" | "1080p"; startFrame?: AssetRef; durationSeconds?: number }
+  ): Promise<GenerationResult> {
     const apiKey = requireApiKey();
     const resolution = opts?.resolution ?? "720p";
+    // Veo's real, empirically-confirmed bound (2026-09-09, a live 400
+    // response: "The number value for durationSeconds is out of bound...
+    // between 4 and 8, inclusive"). A coverage beat's cutaway can be as
+    // short as ~3s -- clamping up to Veo's 4s floor means the resulting
+    // clip runs slightly longer than that beat's own audio span; trimming
+    // it down to fit is clip-assembly's job, not generation's.
+    const durationSeconds = Math.min(8, Math.max(4, opts?.durationSeconds ?? 8));
     const dataDir = getDataDir();
 
-    // Veo does image-to-video from a single start frame -- ShotRequest has
-    // no image field of its own, so this reuses whatever stage 4's
-    // ImageProvider already generated for this shot (the same DB-lookup-
-    // by-shotId pattern loadCharacterReferenceImages above uses for
-    // character likeness). A shot with no keyframe yet can't be animated.
-    const db = getDb();
-    const keyframeRow = db
-      .prepare(
-        `SELECT result_asset_path FROM generation_attempts
-         WHERE shot_id = ? AND operation = 'generate' AND status = 'accepted'
-         ORDER BY created_at DESC LIMIT 1`
-      )
-      .get(request.shotId) as { result_asset_path: string | null } | undefined;
-    if (!keyframeRow?.result_asset_path) {
-      throw new Error(
-        `No accepted keyframe found for shot ${request.shotId} -- run stage 4's ImageProvider.generate() first, Veo needs a start frame.`
-      );
+    // Veo does image-to-video from a single start frame. Default: reuse
+    // whatever stage 4's ImageProvider already generated for this shot
+    // (the same DB-lookup-by-shotId pattern loadCharacterReferenceImages
+    // above uses for character likeness). opts.startFrame overrides this
+    // -- required for a covered_sequence beat, whose own keyframe lives in
+    // coverage_beats, not this shot-level lookup (see VideoProvider's
+    // interface comment).
+    let keyframeRelPath: string;
+    if (opts?.startFrame) {
+      keyframeRelPath = opts.startFrame.path;
+    } else {
+      const db = getDb();
+      const keyframeRow = db
+        .prepare(
+          `SELECT result_asset_path FROM generation_attempts
+           WHERE shot_id = ? AND operation = 'generate' AND status = 'accepted'
+           ORDER BY created_at DESC LIMIT 1`
+        )
+        .get(request.shotId) as { result_asset_path: string | null } | undefined;
+      if (!keyframeRow?.result_asset_path) {
+        throw new Error(
+          `No accepted keyframe found for shot ${request.shotId} -- run stage 4's ImageProvider.generate() first, Veo needs a start frame.`
+        );
+      }
+      keyframeRelPath = keyframeRow.result_asset_path;
     }
-    const keyframePath = join(dataDir, "assets", keyframeRow.result_asset_path);
+    const keyframePath = join(dataDir, "assets", keyframeRelPath);
     if (!existsSync(keyframePath)) {
-      throw new Error(`Keyframe file recorded for shot ${request.shotId} is missing on disk: ${keyframePath}`);
+      throw new Error(`Keyframe file for shot ${request.shotId} is missing on disk: ${keyframePath}`);
     }
     const startImageBase64 = readFileSync(keyframePath).toString("base64");
 
@@ -466,7 +485,14 @@ export class GeminiVideoProvider implements VideoProvider {
             image: { bytesBase64Encoded: startImageBase64, mimeType: "image/png" }
           }
         ],
-        parameters: { aspectRatio: "16:9", durationSeconds: 8, resolution }
+        // NOTE: generateAudio:false was tried here 2026-09-09 to suppress
+        // Veo's own (always-muted-in-the-edit-anyway) audio track after a
+        // real RAI-filter failure on a silent master shot's synthesized
+        // audio -- but veo-3.1-lite-generate-preview rejects that param
+        // outright ("generateAudio isn't supported by this model"),
+        // confirmed empirically. Left unset; see VEO_MODEL if this
+        // resurfaces and a variant that supports it becomes worth using.
+        parameters: { aspectRatio: "16:9", durationSeconds, resolution }
       })
     });
 
@@ -534,7 +560,7 @@ export class GeminiVideoProvider implements VideoProvider {
     return {
       status: "accepted",
       media: { path: relPath },
-      cost: { usd: VEO_COST_USD_PER_CLIP },
+      cost: { usd: Math.round(durationSeconds * VEO_COST_USD_PER_SECOND * 100) / 100 },
       provenance: { provider: "gemini", model: VEO_MODEL, prompt: request.prompt }
     };
   }
@@ -559,18 +585,25 @@ export class GeminiDraftVideoProvider implements DraftVideoProvider {
    * GeminiImageProvider.generate() already uses, since Omni is just as
    * prone to drifting a named character's face without it.
    */
-  async generateDraft(request: ShotRequest): Promise<GenerationResult> {
+  async generateDraft(request: ShotRequest, opts?: { startFrame?: AssetRef }): Promise<GenerationResult> {
     const apiKey = requireApiKey();
     const dataDir = getDataDir();
-    const referenceImages = loadCharacterReferenceImages(request.characters);
 
     const content: InteractionContentBlock[] = [];
-    for (const ref of referenceImages) {
-      content.push({
-        text: `Reference image(s) for ${ref.characterName} -- this is the EXACT face, build, and likeness to use for ${ref.characterName} in the video. Do not redesign or genericize.`,
-        type: "text"
-      });
-      content.push(...ref.images.map((img) => ({ type: "image" as const, data: img.data, mime_type: img.mimeType })));
+    if (opts?.startFrame) {
+      // A specific composed shot/beat keyframe to animate from -- takes
+      // priority over generic character references, same as
+      // VideoProvider.generateFinal's startFrame override.
+      content.push(loadImageAsContentBlock(dataDir, opts.startFrame.path, "generateDraft startFrame"));
+    } else {
+      const referenceImages = loadCharacterReferenceImages(request.characters);
+      for (const ref of referenceImages) {
+        content.push({
+          text: `Reference image(s) for ${ref.characterName} -- this is the EXACT face, build, and likeness to use for ${ref.characterName} in the video. Do not redesign or genericize.`,
+          type: "text"
+        });
+        content.push(...ref.images.map((img) => ({ type: "image" as const, data: img.data, mime_type: img.mimeType })));
+      }
     }
     content.push({ type: "text", text: request.prompt });
 

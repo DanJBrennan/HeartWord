@@ -59,7 +59,7 @@ function dialogueDurationForShot(
       `SELECT start_ms, end_ms, verse_ref FROM audio_segments
        WHERE project_id = ? AND layer = 'composite_cast_master' AND speaker_character_id = ? AND verse_ref IS NOT NULL`
     )
-    .all(projectId, characterId) as DialogueSegmentRow[];
+    .all(projectId, characterId) as unknown as DialogueSegmentRow[];
 
   const matching = rows
     .filter((s) => {
@@ -106,7 +106,7 @@ export function reconcileCoveragePlans(projectId: string): ReconcileResult[] {
        WHERE needs_lip_sync = 1 AND dialogue_character_id IS NOT NULL
          AND scene_id IN (SELECT id FROM scenes WHERE project_id = ?)`
     )
-    .all(projectId) as Array<CoveredShotRow & { coverage_plan: string }>;
+    .all(projectId) as unknown as Array<CoveredShotRow & { coverage_plan: string }>;
 
   const updateShot = db.prepare(`UPDATE shots SET coverage_plan = ?, coverage_notes = ? WHERE id = ?`);
   const deletePlannedBeats = db.prepare(`DELETE FROM coverage_beats WHERE shot_id = ? AND status = 'planned'`);
@@ -165,7 +165,7 @@ export function buildCoverageManifestsForProject(projectId: string): BuildManife
          AND scene_id IN (SELECT id FROM scenes WHERE project_id = ?)
        ORDER BY scene_id, sequence`
     )
-    .all(projectId) as CoveredShotRow[];
+    .all(projectId) as unknown as CoveredShotRow[];
 
   const insertBeat = db.prepare(
     `INSERT INTO coverage_beats

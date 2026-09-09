@@ -39,3 +39,6 @@ _to_delete/
 
 # Claude Code session-local runtime state
 .claude/scheduled_tasks.lock
+
+# TypeScript incremental build cache
+*.tsbuildinfo

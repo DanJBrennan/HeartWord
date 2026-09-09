@@ -32,7 +32,7 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { getDataDir } from "../../db/client.js";
-import type { AssetRef, AudioSegmentRef, CharacterRef, GenerationResult, LipSyncProvider } from "../types.js";
+import type { AssetRef, AudioSegmentRef, CharacterRef, GenerationResult, LipSyncProvider, ShotRequest, VideoProvider } from "../types.js";
 
 function requireApiKey(): string {
   const key = process.env.KLING_API_KEY_1;
@@ -160,6 +160,105 @@ export class KlingLipSyncProvider implements LipSyncProvider {
       media: { path: relPath },
       cost: { usd: KLING_AVATAR_COST_USD },
       provenance: { provider: "kling", model: "avatar-image2video", prompt: "" }
+    };
+  }
+}
+
+// Plain scene image-to-video (NOT the Avatar/lip-sync endpoint above) --
+// confirmed real 2026-09-09, added as a higher-quality alternative to
+// Omni's 360p draft fallback (see generate-final-with-fallback.ts) after
+// Dan asked for a path that avoids 360p whenever possible. Real endpoint:
+// `POST /v1/videos/image2video`, fields `model_name`, `image`, `prompt`,
+// `duration` (string), `aspect_ratio`; polled via
+// `GET /v1/videos/image2video/{task_id}`. Confirmed to succeed at a real
+// 1280x720 on the EXACT keyframe Veo's RAI filter rejected (the paralytic
+// composition) -- Kling and Veo evidently don't share a content-filter
+// threshold, which is exactly why this is worth having as a distinct
+// fallback tier rather than just retrying Veo harder.
+const SCENE_SUBMIT_PATH = "/v1/videos/image2video";
+const KLING_SCENE_MODEL = "kling-v1";
+
+// Rough public-pricing-based estimate, NOT reconciled against a real
+// invoice -- same honesty caveat as every other cost constant in this
+// codebase. Kling's own response reported "final_unit_deduction": "1" on
+// the real confirmation call but not a dollar figure.
+const KLING_SCENE_COST_USD = 0.35;
+
+// Kling's duration field takes a small fixed set of values, not an
+// arbitrary number -- "5" is its shortest -- so every beat requests the
+// same 5s and clip-assembly (assemble-covered-shot.ts) trims down to the
+// beat's own exact duration from the start, the same pattern already
+// used for Veo's 4s floor overrunning a shorter beat.
+const SCENE_DURATION = "5";
+
+export class KlingVideoProvider implements VideoProvider {
+  async generateFinal(request: ShotRequest, opts?: { resolution?: "720p" | "1080p"; startFrame?: AssetRef }): Promise<GenerationResult> {
+    const apiKey = requireApiKey();
+    const dataDir = getDataDir();
+    if (!opts?.startFrame) {
+      throw new Error(`KlingVideoProvider.generateFinal for shot ${request.shotId}: startFrame is required (no shot-level keyframe lookup like GeminiVideoProvider's default).`);
+    }
+    const imageAbsPath = join(dataDir, "assets", opts.startFrame.path);
+    const imageBase64 = readFileSync(imageAbsPath).toString("base64");
+
+    const submitRes = await fetch(HOST + SCENE_SUBMIT_PATH, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model_name: KLING_SCENE_MODEL,
+        image: imageBase64,
+        prompt: request.prompt,
+        duration: SCENE_DURATION,
+        aspect_ratio: "16:9"
+      })
+    });
+    const submitData = (await submitRes.json()) as KlingTaskResponse;
+    if (!submitRes.ok || submitData.code !== 0 || !submitData.data?.task_id) {
+      throw new Error(`Kling image2video submit failed for shot ${request.shotId}: ${submitRes.status} -- ${JSON.stringify(submitData).slice(0, 500)}`);
+    }
+    const taskId = submitData.data.task_id;
+
+    const deadline = Date.now() + 15 * 60 * 1000;
+    let finalData: KlingTaskResponse["data"] | undefined;
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 15000));
+      const pollRes = await fetch(`${HOST}${SCENE_SUBMIT_PATH}/${taskId}`, { headers: { Authorization: `Bearer ${apiKey}` } });
+      const pollData = (await pollRes.json()) as KlingTaskResponse;
+      if (!pollRes.ok || pollData.code !== 0) {
+        throw new Error(`Kling image2video poll failed for task ${taskId}: ${pollRes.status} -- ${JSON.stringify(pollData).slice(0, 500)}`);
+      }
+      const status = pollData.data?.task_status;
+      if (status === "succeed" || status === "failed") {
+        finalData = pollData.data;
+        break;
+      }
+    }
+    if (!finalData) {
+      throw new Error(`Kling image2video task ${taskId} did not finish within 15 minutes.`);
+    }
+    if (finalData.task_status === "failed") {
+      throw new Error(`Kling image2video task ${taskId} failed: ${finalData.task_status_msg ?? "no message"}`);
+    }
+
+    const videoUrl = finalData.task_result?.videos?.[0]?.url;
+    if (!videoUrl) {
+      throw new Error(`Kling image2video task ${taskId} succeeded with no video URL: ${JSON.stringify(finalData).slice(0, 500)}`);
+    }
+    const downloadRes = await fetch(videoUrl);
+    if (!downloadRes.ok) {
+      throw new Error(`Failed downloading Kling image2video output for task ${taskId}: ${downloadRes.status} ${downloadRes.statusText}`);
+    }
+    const videoBuffer = Buffer.from(await downloadRes.arrayBuffer());
+
+    const relPath = join("generated", "video", `kling-${taskId}.mp4`);
+    mkdirSync(join(dataDir, "assets", "generated", "video"), { recursive: true });
+    writeFileSync(join(dataDir, "assets", relPath), videoBuffer);
+
+    return {
+      status: "accepted",
+      media: { path: relPath },
+      cost: { usd: KLING_SCENE_COST_USD },
+      provenance: { provider: "kling", model: KLING_SCENE_MODEL, prompt: request.prompt }
     };
   }
 }
