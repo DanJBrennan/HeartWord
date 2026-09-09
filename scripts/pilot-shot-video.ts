@@ -90,7 +90,20 @@ const findExistingClip = db.prepare(
 );
 
 const PROMPTS: Record<number, string> = {
-  1: "Static wide 16:9 master shot of a packed room in a Capernaum home. Everyone holds their pose with only subtle natural movement -- slight breathing, small shifts among the crowd. Jesus stands calm and attentive, facing the seated scribes. No one speaks. The paralytic lies still on his mat, eyes open, alert and hopeful.",
+  // Revised 2026-09-09 (round 2): "continuously" talking overshot the
+  // other way -- Dan caught Jesus's mouth animated through a real ~0.8s
+  // pause actually present in the audio (confirmed via detect-silences.ts
+  // against this beat's own audio slice: a silence gap at 2.47s-3.26s
+  // within this 3.5s beat). Describing the real speak-then-pause cadence
+  // directly in the prompt (not just "talks naturally") let the mouth
+  // rest during that window -- confirmed by sampling frames: open/parted
+  // at 1.0s, closed at 1.5s/2.9s/3.3s. Not frame-accurate sync (no
+  // audio-driven lip movement is happening, just a described cadence),
+  // but tracks the real pause far better than "continuous" did. Beats
+  // longer or with pauses elsewhere need their own detect-silences check
+  // and their own cadence description -- this exact wording only fits
+  // this beat's specific 2.47-3.26s gap.
+  1: "Static wide 16:9 master shot of a packed room in a Capernaum home. Jesus speaks with his mouth moving naturally, animated and engaged, for the first two to three seconds, with his hand gesturing for emphasis -- then he pauses, his mouth closing and going still, holding a brief silent beat before the shot ends, as if catching his breath mid-speech. Everyone else holds their pose with only subtle natural movement -- slight breathing, small shifts among the crowd, all listening attentively to Jesus. The paralytic lies still on his mat, eyes open, alert and hopeful.",
   3: "Static 16:9 close reaction shot. The scribe shifts uneasily, eyes flicking toward Jesus, mouth closed, a flicker of discomfort crossing his face. No dialogue, no camera movement."
 };
 

@@ -169,20 +169,35 @@ export class KlingLipSyncProvider implements LipSyncProvider {
 // Omni's 360p draft fallback (see generate-final-with-fallback.ts) after
 // Dan asked for a path that avoids 360p whenever possible. Real endpoint:
 // `POST /v1/videos/image2video`, fields `model_name`, `image`, `prompt`,
-// `duration` (string), `aspect_ratio`; polled via
+// `duration` (string), `aspect_ratio`, `mode`; polled via
 // `GET /v1/videos/image2video/{task_id}`. Confirmed to succeed at a real
 // 1280x720 on the EXACT keyframe Veo's RAI filter rejected (the paralytic
 // composition) -- Kling and Veo evidently don't share a content-filter
 // threshold, which is exactly why this is worth having as a distinct
 // fallback tier rather than just retrying Veo harder.
+//
+// Model/mode upgraded from kling-v1 to kling-v1-6 + mode:"pro" 2026-09-09
+// after Dan caught real face-quality softness in a kling-v1 wide shot
+// (Jesus's and a background woman's faces were noticeably "melted"
+// compared to the crisp stone-wall background in the same frame). A
+// direct side-by-side on the identical keyframe/prompt confirmed
+// kling-v1 was the actual cause, not an inherent wide-shot limitation:
+// kling-v1-6/pro came back at a genuine 1920x1080 (not just 720p) with
+// face detail comparable to or better than Veo's own successful
+// attempts, succeeding cleanly with no content-filter issue on the same
+// composition Veo still fails roughly half the time.
 const SCENE_SUBMIT_PATH = "/v1/videos/image2video";
-const KLING_SCENE_MODEL = "kling-v1";
+const KLING_SCENE_MODEL = "kling-v1-6";
+const KLING_SCENE_MODE = "pro";
 
 // Rough public-pricing-based estimate, NOT reconciled against a real
 // invoice -- same honesty caveat as every other cost constant in this
-// codebase. Kling's own response reported "final_unit_deduction": "1" on
-// the real confirmation call but not a dollar figure.
-const KLING_SCENE_COST_USD = 0.35;
+// codebase. "pro" mode is expected to cost more than kling-v1's standard
+// tier did, but Kling's own response reports "final_unit_deduction" (a
+// unit count, e.g. "1"), not a dollar figure, so there's no real pricing
+// signal yet to size the increase from -- this estimate is bumped up as
+// a placeholder pending an actual invoice.
+const KLING_SCENE_COST_USD = 0.6;
 
 // Kling's duration field takes a small fixed set of values, not an
 // arbitrary number -- "5" is its shortest -- so every beat requests the
@@ -209,7 +224,8 @@ export class KlingVideoProvider implements VideoProvider {
         image: imageBase64,
         prompt: request.prompt,
         duration: SCENE_DURATION,
-        aspect_ratio: "16:9"
+        aspect_ratio: "16:9",
+        mode: KLING_SCENE_MODE
       })
     });
     const submitData = (await submitRes.json()) as KlingTaskResponse;

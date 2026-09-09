@@ -107,8 +107,16 @@ export function planCoverageBeats(dialogueDurationMs: number): CoverageBeatPlan[
     "master",
     masterMs,
     false,
-    "Wide master establishing geography and staging before the speech -- no lip-sync needed; can be a new wide " +
-      "coverage keyframe or an existing establishing shot for this scene."
+    "Wide master establishing geography and staging -- plays under the OPENING of the speech's real dialogue " +
+      "audio, not before it (this beat's own audio range starts at the speech's true beginning), so if the " +
+      "shot's speaking character is visible, their mouth should move naturally as if talking -- not " +
+      "audio-synced (that's what the lip-sync inserts are for), but not static/closed either, since a frozen " +
+      "mouth reads as wrong once real speech audio is clearly playing over it. Before assuming continuous " +
+      "speech for this beat's whole duration, run detect-silences.ts against this beat's own audio slice " +
+      "(audio_start_ms to audio_end_ms) -- a real pause inside the beat (confirmed to happen even in a 3.5s " +
+      "master) needs its own described cadence ('speaks, then pauses, mouth still, around Xs in') rather than " +
+      "one blanket 'talks continuously' instruction, or the mouth keeps moving through real silence instead. " +
+      "Can be a new wide coverage keyframe or an existing establishing shot for this scene."
   );
 
   const remainingForInserts = dialogueDurationMs - masterMs;
