@@ -1,0 +1,3 @@
+# Beat 3 — scribe cutaway candidate review
+
+The frame is a true reverse reaction: Jesus remains a blurred cream-and-blue foreground shoulder while the approved principal scribe occupies the focus, seated and silently unsettled. The paralytic remains flat in the background and the partially visible damaged roof retains a limited opening with timber. No healing outcome or duplicate blue trim is visible. Hold for producer approval.

@@ -1,0 +1,1 @@
+This correction makes Peter's short curled hair, short beard, broad face, and ochre/rust wardrobe explicit while excluding Jesus entirely. It retains the shared eyeline to the off-screen speaker and the few-grain continuity cue.

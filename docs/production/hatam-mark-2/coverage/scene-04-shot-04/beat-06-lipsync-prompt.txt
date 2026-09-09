@@ -1,0 +1,8 @@
+Use case: historical-scene
+Asset type: close lip-sync insert in a continuous dialogue sequence
+Primary request: Jesus concludes, declaring that the Son of Man is lord even of the Sabbath.
+Scene/backdrop: same bright midday first-century Galilee grainfield, softly blurred golden wheat.
+Subject: approved Papuan/Hatam Jesus, long dark wavy hair and beard, wearing his unique cream robe with TWO parallel simple woven blue vertical trims, one down each front side. He is standing and faces screen-left toward the scribes, his mouth naturally shaped for the closing line.
+Composition/framing: close waist-up frontal-three-quarter frame distinct from the earlier speaking insert. His hands are still or held in one gentle, natural closing gesture; his stance remains stable and calm.
+Style/medium: cinematic live-action historical drama, 16:9.
+Constraints: only Jesus has blue trim. No halo, modern item, text, watermark, striped shawl, duplicate Jesus, or any non-Papuan/Hatam face.

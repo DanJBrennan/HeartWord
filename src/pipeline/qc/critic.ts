@@ -50,13 +50,69 @@
  * before wiring it in by default.
  */
 import { readFileSync } from "node:fs";
-import { generateGroundedText } from "../../server/providers/gemini.js";
+import { generateGroundedText, generateJsonWithImages, type GeminiJsonSchema } from "../../server/providers/gemini.js";
 
 export type CriticSeverity = "none" | "minor" | "moderate" | "severe";
 
 export interface CriticReport {
   severity: CriticSeverity;
   findings: string;
+}
+
+export interface CriticContinuityFrame {
+  label: string;
+  imagePath: string;
+  description: string;
+}
+
+/** Context for one edit inside a longer covered sequence. */
+export interface CriticCoverageBeat {
+  sequence: number;
+  type: string;
+  notes: string;
+}
+
+interface CrowdDuplicateVerdict {
+  largestIdenticalGroup: number;
+  location: string;
+  explanation: string;
+}
+
+const CROWD_DUPLICATE_SCHEMA: GeminiJsonSchema = {
+  type: "object",
+  properties: {
+    largestIdenticalGroup: {
+      type: "number",
+      description: "Largest number of distinct visible people who are the same generated face and visual design. Return 1 when no duplicate exists."
+    },
+    location: { type: "string", description: "Where the largest same-face group appears, or 'none'." },
+    explanation: { type: "string", description: "Concrete comparison of face, hair, beard, garment and pose evidence." }
+  },
+  required: ["largestIdenticalGroup", "location", "explanation"]
+};
+
+/** Pure severity gate for the dedicated visual duplicate-crowd verifier. */
+export function crowdDuplicateSeverity(largestIdenticalGroup: number): CriticSeverity {
+  if (largestIdenticalGroup >= 3) return "severe";
+  if (largestIdenticalGroup === 2) return "moderate";
+  return "none";
+}
+
+function higherSeverity(a: CriticSeverity, b: CriticSeverity): CriticSeverity {
+  const levels: CriticSeverity[] = ["none", "minor", "moderate", "severe"];
+  return levels.indexOf(a) >= levels.indexOf(b) ? a : b;
+}
+
+async function checkCrowdDuplicates(image: { mimeType: string; data: string }): Promise<CrowdDuplicateVerdict> {
+  return generateJsonWithImages<CrowdDuplicateVerdict>(
+    `Inspect this single generated keyframe solely for copied crowd members. Enumerate every visible person, then compare ` +
+      `facial structure, hairline/curl pattern, beard shape, garment folds, and pose. Count the largest group of distinct ` +
+      `people that are visibly the same generated person. Do not count people as duplicates merely because they share a generic ` +
+      `robe or regional traits. A group of three matching background faces is a real clone artifact. Return 1 only after checking ` +
+      `the full crowd, including soft-focus background people.`,
+    [image],
+    CROWD_DUPLICATE_SCHEMA
+  );
 }
 
 const SEVERITY_LINE = /SEVERITY:\s*(none|minor|moderate|severe)/i;
@@ -86,9 +142,14 @@ export async function runCritic(
   verseRef: string | null,
   continuityNotes: string | null,
   crowdDensity: string | null,
-  generatedImagePath: string
+  generatedImagePath: string,
+  precedingCoverageFrame?: CriticContinuityFrame,
+  coverageBeat?: CriticCoverageBeat
 ): Promise<CriticReport> {
   const image = { mimeType: "image/png", data: readFileSync(generatedImagePath).toString("base64") };
+  const precedingImage = precedingCoverageFrame
+    ? { mimeType: "image/png", data: readFileSync(precedingCoverageFrame.imagePath).toString("base64") }
+    : undefined;
 
   const prompt =
     `You are a skeptical critic reviewing one generated keyframe for a Scripture video production dramatizing ` +
@@ -99,6 +160,17 @@ export async function runCritic(
     `Shot action: "${action}"\n` +
     `${continuityNotes ? `Continuity/setting notes already recorded for this shot: "${continuityNotes}"\n` : ""}` +
     `${crowdDensity ? `Required crowd density: "${crowdDensity}"\n` : ""}\n` +
+    `${coverageBeat
+      ? `This is coverage beat ${coverageBeat.sequence}, a ${coverageBeat.type}. Its assigned purpose is: "${coverageBeat.notes}". ` +
+        `Judge the frame against that purpose. A reaction or cutaway may deliberately omit the shot's active speaker, paralytic, ` +
+        `or another action subject when that subject is off-screen; do not call that intentional omission a defect.\n`
+      : ""}` +
+    `${precedingCoverageFrame
+      ? `A preceding coverage frame is attached before the candidate. It is ${precedingCoverageFrame.label}: ${precedingCoverageFrame.description}\n\n`
+      : ""}` +
+    `First inventory what is actually visible in the candidate image. Image evidence is authoritative: do not claim that a person, ` +
+    `prop, posture, architecture feature, or action is visible unless it is actually shown, and do not infer an absent subject's ` +
+    `pose from the shot-level action text.\n\n` +
     `Review the attached image against ALL of the following:\n\n` +
     `1. HISTORICAL/SCRIPTURAL ACCURACY: wrong architecture for the period/region, an anachronistic object or ` +
     `practice, a detail that contradicts what the actual text says or implies, a widely-documented archaeological ` +
@@ -120,14 +192,39 @@ export async function runCritic(
     `exact locked robe/clothing color combination as an automatic, disqualifying failure -- this holds even if ` +
     `their hairstyle, face, or build differs from his reference. A shared locked color-block is not a coincidence ` +
     `in this production; it is always a real identity error.\n\n` +
+    `6. CASTING REGION RULE: every visible person, including background crowd members, must have Papuan/Hatam facial identity. ` +
+    `A clearly white/European-looking background person is a real casting drift: rate it at least moderate, and severe if ` +
+    `it is prominent or an intended canon character.\n\n` +
+    `7. AUDIENCE EYELINE: when an audience is visibly watching Jesus teach, locate Jesus in the image and verify that their ` +
+    `heads and eyes plausibly orient toward him or the relevant off-camera speaker. Report a conflicting spatial eyeline as a ` +
+    `real staging failure, not a stylistic preference.\n\n` +
+    `8. DUPLICATED CROWD MEMBERS: inspect the entire crowd, including background faces, for visibly identical generated ` +
+    `people: group matching faces before assigning severity, and explicitly report the largest same-face group you can see. ` +
+    `The same face, hair, beard, clothing, and pose repeated as though copied is a generation artifact. A repeated canon crowd ` +
+    `design may recur elsewhere in a scene, but two visually indistinguishable rendered people in the same frame are not valid ` +
+    `population. One subtle background pair is minor; a clear pair or a prominent duplicate is at least moderate; three or more ` +
+    `visibly matching people is severe. Do not confuse people who merely share a generic scholar robe with a duplicate.\n\n` +
+    `${precedingCoverageFrame
+      ? `9. COVERAGE-BEAT CONTINUITY: compare the preceding attached coverage frame with this candidate. Posture, position, ` +
+        `orientation, props, crowd arrangement, and active eyelines must progress plausibly unless the attached context explicitly ` +
+        `states an intervening action. Report an unexplained change such as Jesus standing in one beat and seated in the next as ` +
+        `a staging continuity failure.\n\n`
+      : ""}` +
+    `PRODUCTION CANON CALIBRATION: a white-and-black striped shawl on a scribe is a minor costume-canon violation. ` +
+    `Report it briefly, but do not rate it above minor or use it to make an otherwise usable keyframe fail.\n\n` +
     `List every real problem you find, citing research where relevant. If you genuinely find nothing wrong in any ` +
-    `of these five areas, say so plainly rather than inventing a concern.\n\n` +
+    `of these areas, say so plainly rather than inventing a concern.\n\n` +
     `End your response with exactly one line in this format: "SEVERITY: none" (nothing wrong), "SEVERITY: minor" ` +
     `(a small, easily-overlooked detail), "SEVERITY: moderate" (worth fixing before this ships), or "SEVERITY: ` +
     `severe" (a clear error a knowledgeable viewer would notice, or a starting frame the video generator likely ` +
     `can't animate believably).`;
 
-  const findings = await generateGroundedText(prompt, [image]);
-  const severity = parseCriticSeverity(findings);
-  return { severity, findings };
+  const findings = await generateGroundedText(prompt, precedingImage ? [precedingImage, image] : [image]);
+  const duplicateVerdict = await checkCrowdDuplicates(image);
+  const duplicateSeverity = crowdDuplicateSeverity(duplicateVerdict.largestIdenticalGroup);
+  const severity = higherSeverity(parseCriticSeverity(findings), duplicateSeverity);
+  const duplicateFinding = duplicateVerdict.largestIdenticalGroup > 1
+    ? `Dedicated crowd-duplicate verifier: ${duplicateVerdict.largestIdenticalGroup} visually identical people at ${duplicateVerdict.location}. ${duplicateVerdict.explanation}`
+    : "Dedicated crowd-duplicate verifier: no visually identical crowd members detected.";
+  return { severity, findings: `${findings}\n\n${duplicateFinding}\nSEVERITY: ${severity}` };
 }

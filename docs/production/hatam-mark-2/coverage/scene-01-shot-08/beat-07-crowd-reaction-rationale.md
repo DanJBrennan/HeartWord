@@ -1,0 +1,1 @@
+This 07-crowd-reaction frame supplies a distinct coverage angle for the continuous Mark 2:10-11 dialogue while keeping the paralytic flat until the following shot.

@@ -10,6 +10,15 @@ was considered and rejected).
 
 ## Inputs
 
+Producer update, 2026-09-08: Dan asked Codex to take over keyframe generation,
+starting with Hatam Mark 2 Scene 1 Shot 1, using its built-in image tool.
+The assistant-operated handoff extends stage 4's existing attempts/review
+records and does not add a pipeline stage. See
+`docs/production/CODEX_HANDOFF.md` for prompt/reference snapshots, import,
+status, review and billing limitations. Existing video providers remain
+unchanged pending actual video work. Earlier vendor preferences below are
+historical design context, not a requirement to use Gemini for this handoff.
+
 - The scene's cast (which canon characters appear — see
   `docs/design/canonical-characters.md`).
 - The scene's action/blocking (what's happening, where characters are).

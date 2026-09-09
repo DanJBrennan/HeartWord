@@ -1,0 +1,1 @@
+This replacement retains the accepted scribe-reaction composition but directly corrects the failed background population. Three distinct approved crowd references, plus explicitly varied additional people, prevent repeated face/hair/beard/wardrobe/pose combinations within the packed room.

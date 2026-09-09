@@ -1,6 +1,43 @@
 # Current Goal
 
-## Status: vision and design complete; scoping the architecture request (2026-09-04)
+## Active status: Codex keyframe handoff, Hatam Mark 2 (2026-09-08)
+
+Dan asked Codex to take over keyframe generation, beginning with Scene 1,
+Shot 1, and to retain production status/prompts for continued work. The
+existing pipeline remains the product; video generation/provider changes
+have not been requested as a concrete implementation yet.
+
+Implemented an additive stage-4 handoff (`scripts/keyframes.ts`): immutable
+prompt/source/canon briefs, original-pixel reference contact sheets for the
+tool's five-image input limit, per-shot status from SQLite, and non-destructive
+PNG import into existing generation attempts and review notes. References
+are checked for approval, region and file integrity. Stale briefs are blocked.
+Every new take gets its own filename and provenance JSON. Built-in-tool
+model/billing information is explicitly unreported, not inferred.
+
+Scene 1 Shots 1–7 now each have a Codex-generated review candidate, imported
+non-destructively through the keyframe handoff. Dan accepted Shots 2–4; the
+new producer-accept command records that decision and resolves only the
+candidate's own pending review note. Their prompt, rationale and review files
+live under `docs/production/hatam-mark-2/scene-01-shot-0*/`.
+Shot 3 received a second generation after the first drifted to an unsuitable
+lakeside panorama; only the corrected candidate is recorded for review. The
+shared scene lighting default describes an interior/later roof opening,
+conflicting with Shot 1's exterior/intact-roof instructions; that shot's prompt
+resolves the conflict without rewriting the scene or chapter plan.
+
+Current production status: all 28 planned Hatam Mark 2 keyframes have an accepted latest Codex attempt. The producer approved the remaining Scene 1 and Scene 3 candidates on 2026-09-08, with explicit overrides recorded for Critic concerns where needed. The external handoff now requires `keyframes.ts critique <attempt-id>` before a candidate is presented: it runs the grounded Critic, scene fidelity, and canon-reference likeness checks while retaining producer control over acceptance.
+See `docs/production/CODEX_HANDOFF.md` for the repeatable workflow and existing
+integration limits. Prior uncommitted Claude work is preserved. All 100 tests
+pass (90 existing + 10 new); the live shots API returns the new candidate.
+Full typechecking currently reports pre-existing errors in
+QC/casting/provider and scratch/character scripts.
+
+The sections below are historical implementation notes. In particular, the
+project DB row still says ingestion/not_started and the old "Next up" section
+predates subsequent QC wiring; neither is a reliable per-shot production status.
+
+## Historical status: vision and design complete; scoping the architecture request (2026-09-04)
 
 `docs/PRODUCT_VISION.md` reflects the mature vision recovered from BVET (the
 second of two prior attempts at this project), refined across this whole
@@ -1286,3 +1323,45 @@ than letting a backlog of fixes become the de facto plan. The Goal Guardian
 check in `AGENTS.md` exists specifically to catch this during
 implementation; scoping a v1 before architecture exists to catch it one
 step earlier.
+
+## Coverage-beat keyframes: first candidate batch (2026-09-08)
+
+The coverage-beat workflow is now in active production use for the Hatam Mark
+2 reviewable cut. It supports the product goal of keeping continuous
+heart-language dialogue intact while the picture cuts among short master,
+reaction, and lip-sync clips.
+
+Codex prepared, generated, and imported three distinct Scene 1, Shot 7
+(Mark 2:8-9) candidates without changing the shot-level keyframe history:
+
+- Beat 1, a silent interior master;
+- Beat 3, a principal-scribe reaction cutaway; and
+- Beat 4, a fresh Jesus lip-sync insert.
+
+They remain `generated`, pending producer approval; their immutable briefs,
+reviews, image assets, and provenance records are retained. The remaining
+coverage-keyframe worklist is 40 planned beats across the nine
+covered-sequence shots. The proportional beat timings remain composition
+planning estimates until audio phrase-boundary refinement.
+
+## Coverage approval and Critic calibration (2026-09-08)
+
+Dan approved all four Scene 2, Shot 8 coverage beats for Mark 2:17: doorway-scribe and meal-guest cutaways plus two Jesus lip-sync inserts. The Critic prompt now treats a scribe's white-and-black striped shawl as a minor costume-canon violation only; it may be reported but cannot elevate an otherwise usable keyframe above minor severity.
+
+## Coverage critic grounding calibration (2026-09-09)
+
+The coverage-keyframe review path now supplies each critic run with the beat's
+sequence, type, and assigned purpose. This prevents a reaction/cutaway from
+being judged as though it must depict every physical action in its parent
+shot. The Critic also inventories what is actually visible before assessing
+it, and flags visibly cloned crowd members: an exact repeated face, hair,
+wardrobe, and pose in one frame is a generation defect. Recurring canon crowd
+designs remain valid when they are separately staged; similar generic scholar
+robes alone do not constitute duplication. The full suite passes (114 tests).
+
+The duplicate-crowd calibration was strengthened further after the grounded reviewer
+missed a visible three-person clone cluster. `runCritic` now also runs a dedicated
+structured visual duplicate pass that counts the largest same-face group and raises
+the final severity deterministically: two is moderate; three or more is severe.
+A rerun on Scene 1, Shot 8, Beat 5 found a six-person matching background cluster
+and therefore rated the candidate severe. The full suite passes (115 tests).

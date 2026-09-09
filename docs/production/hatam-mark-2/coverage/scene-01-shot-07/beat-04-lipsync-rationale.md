@@ -1,0 +1,1 @@
+The new insert gives a different, stable close starting frame for the speech’s final phrase. It protects the unique Jesus costume, keeps the paralytic immobile before the command in the following shot, and preserves enough background continuity for a lip-sync clip.

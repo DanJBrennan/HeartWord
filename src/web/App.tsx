@@ -75,6 +75,9 @@ interface Shot {
   keyframe_path: string | null;
   latest_human_note: string | null;
   latest_human_note_resolved: number | null;
+  latest_qc_note: string | null;
+  latest_qc_created_at: number | null;
+  latest_generation_status: string | null;
 }
 
 interface SceneWithShots {
@@ -88,6 +91,14 @@ interface SceneWithShots {
   englishText: string | null;
   shots: Shot[];
 }
+
+const QC_STATUS_LABELS: Record<string, string> = {
+  accepted: "✓ QC passed",
+  retry_same: "⟳ QC: flagged for retry",
+  retry_modified: "⟳ QC: flagged, needs a revised prompt",
+  escalate: "⚠ QC: escalated (Critic found a severe issue)",
+  hold_for_review: "⚑ QC: held for human review"
+};
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
@@ -417,6 +428,22 @@ export default function App() {
                               setZoomedKeyframe({ path: shot.keyframe_path!, label: `Shot ${shot.sequence} — ${shot.action}` })
                             }
                           />
+                          {shot.latest_qc_note && (
+                            <details className="qc-review" style={{ marginTop: 4 }}>
+                              <summary
+                                className={shot.latest_generation_status === "accepted" ? "hint" : "error"}
+                                style={{ cursor: "pointer" }}
+                              >
+                                {QC_STATUS_LABELS[shot.latest_generation_status ?? ""] ?? "QC review available"}
+                                {shot.latest_qc_created_at && (
+                                  <span className="hint"> — {new Date(shot.latest_qc_created_at).toLocaleString()}</span>
+                                )}
+                              </summary>
+                              <div style={{ whiteSpace: "pre-wrap", maxWidth: 480, fontSize: "0.9em" }}>
+                                {shot.latest_qc_note}
+                              </div>
+                            </details>
+                          )}
                           {shot.latest_human_note && (
                             <p className={shot.latest_human_note_resolved ? "hint" : "error"}>
                               {shot.latest_human_note_resolved ? "✓ " : "⚑ "}

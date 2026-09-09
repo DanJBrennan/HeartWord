@@ -1,0 +1,9 @@
+Use case: historical-scene
+Asset type: final coverage keyframe for a continuous dialogue sequence
+Primary request: regenerate the final close lip-sync insert of Jesus completing the fresh-wineskin teaching.
+Scene/backdrop: bright afternoon exterior courtyard in first-century Capernaum, rough dark basalt wall and warm side light softly out of focus.
+Subject: Jesus, standing, an adult Papuan/Hatam man with his approved long dark wavy hair and beard.
+Composition/framing: chest-up three-quarter speaking view with lips naturally poised for later lip-sync; a fresh flexible tan whole-goatskin remains low and blurred at the edge.
+Wardrobe lock: his cream robe MUST show TWO parallel simple woven blue vertical trims, one down each front side, clearly visible in frame. These two blue trims are Jesus's unique canon marker and must not be reduced to one stripe.
+Style/medium: cinematic live-action historical drama, 16:9.
+Constraints: preserve approved facial identity and standing posture. No other people or blue garments. No modern items, text, or watermark.

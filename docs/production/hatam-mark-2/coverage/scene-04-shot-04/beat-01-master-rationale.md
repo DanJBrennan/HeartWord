@@ -1,0 +1,1 @@
+The master preserves the familiar wheat-field confrontation geography, confirms all key participants’ standing posture, and establishes a stable frame before the concluding dialogue’s insert/cutaway pattern.

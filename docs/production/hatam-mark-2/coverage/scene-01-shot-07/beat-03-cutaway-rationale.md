@@ -1,0 +1,1 @@
+The cutaway gives the edit a silent listener reaction between lip-sync inserts. Jesus remains only as an identifiable foreground presence so the camera cuts distinctly away from the speaking face while retaining the established confrontation.

@@ -1,0 +1,1 @@
+The first Beat 5 candidate failed principal-scribe likeness. This replacement binds the cutaway to the approved principal-scribe reference, recorded on the beat rather than changing the already-approved parent shot cast.

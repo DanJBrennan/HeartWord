@@ -1,0 +1,1 @@
+The first candidate showed Jesus in a soft background position despite this master being centered on the scribe and used historically wrong dining furniture. This revision keeps Jesus out of frame and specifies an unobstructed scribe starting position.

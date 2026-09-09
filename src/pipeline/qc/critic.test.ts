@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCriticSeverity } from "./critic.js";
+import { crowdDuplicateSeverity, parseCriticSeverity } from "./critic.js";
 
 describe("parseCriticSeverity", () => {
   it("parses each known severity level", () => {
@@ -29,5 +29,14 @@ describe("parseCriticSeverity", () => {
       "Archaeological excavations (Loffreda, Corbo) show first-century Capernaum houses had flat roofs with " +
       "ceilings under 3 meters, not the tall peaked/thatched structure depicted here.\nSEVERITY: severe";
     expect(parseCriticSeverity(findings)).toBe("severe");
+  });
+});
+
+describe("crowdDuplicateSeverity", () => {
+  it("escalates a copied crowd cluster of three or more", () => {
+    expect(crowdDuplicateSeverity(1)).toBe("none");
+    expect(crowdDuplicateSeverity(2)).toBe("moderate");
+    expect(crowdDuplicateSeverity(3)).toBe("severe");
+    expect(crowdDuplicateSeverity(5)).toBe("severe");
   });
 });

@@ -206,6 +206,60 @@ CREATE TABLE IF NOT EXISTS generation_attempts (
 );
 CREATE INDEX IF NOT EXISTS idx_generation_attempts_shot ON generation_attempts(shot_id);
 
+-- A planned (not yet generated) piece of a covered_sequence shot's L-cut
+-- coverage map -- see src/pipeline/casting/coverage-manifest.ts. Distinct
+-- from `clips`: a clip is an ACCEPTED result already placed on the
+-- timeline, whereas a coverage_beats row exists before any generation
+-- call, describing what should be generated and under which slice of the
+-- shot's dialogue audio it will sit once accepted. A beat's audio range
+-- is initially a proportional estimate (audio_confidence NULL or low),
+-- refined against real phrase/silence boundaries before generation --
+-- the same "structurally correct now, confidence capped pending
+-- refinement" pattern used for verse-group boundaries in
+-- src/pipeline/ingestion/select-boundaries.ts. Regenerating a shot's plan
+-- replaces every beat still in 'planned' status (never one already
+-- 'generated' or 'accepted') -- see build-coverage-manifest.ts.
+CREATE TABLE IF NOT EXISTS coverage_beats (
+  id TEXT PRIMARY KEY,
+  shot_id TEXT NOT NULL REFERENCES shots(id),
+  sequence INTEGER NOT NULL,        -- 1-based position within this shot's coverage map
+  beat_type TEXT NOT NULL CHECK (beat_type IN ('master','lip_sync_insert','cutaway')),
+  audio_start_ms INTEGER NOT NULL,  -- offset from the start of the shot's
+  audio_end_ms INTEGER NOT NULL,    -- dialogue audio, not the project timeline
+  audio_confidence INTEGER,         -- 0-100, like audio_segments.confidence;
+                                     -- NULL/low until refined against real
+                                     -- silence/phrase boundaries
+  needs_lip_sync INTEGER NOT NULL DEFAULT 0,
+  character_id TEXT REFERENCES characters(id),  -- who's on camera; NULL for
+                                     -- a master/cutaway until a human or
+                                     -- Codex picks the reaction subject
+  requires_new_keyframe INTEGER NOT NULL DEFAULT 1,  -- false only for a
+                                     -- lip-sync insert reusing the shot's
+                                     -- already-approved keyframe as anchor
+  keyframe_asset_path TEXT,         -- set once a keyframe exists for this beat
+  notes TEXT,
+  status TEXT NOT NULL DEFAULT 'planned' CHECK (status IN ('planned','generated','accepted')),
+  created_at INTEGER NOT NULL,
+  UNIQUE (shot_id, sequence)
+);
+CREATE INDEX IF NOT EXISTS idx_coverage_beats_shot ON coverage_beats(shot_id);
+
+-- Immutable candidate history for a coverage beat.  `coverage_beats` retains
+-- the currently selected candidate path so downstream video stages have one
+-- simple anchor; this table retains every submitted still when a producer
+-- requests a regeneration.
+CREATE TABLE IF NOT EXISTS coverage_keyframe_attempts (
+  id TEXT PRIMARY KEY,
+  coverage_beat_id TEXT NOT NULL REFERENCES coverage_beats(id),
+  provider TEXT NOT NULL,
+  model TEXT NOT NULL,
+  prompt TEXT,
+  status TEXT NOT NULL CHECK (status IN ('accepted','retry_same','retry_modified','escalate','hold_for_review')),
+  result_asset_path TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_coverage_keyframe_attempts_beat ON coverage_keyframe_attempts(coverage_beat_id, created_at);
+
 -- An accepted result placed on the timeline.
 CREATE TABLE IF NOT EXISTS clips (
   id TEXT PRIMARY KEY,

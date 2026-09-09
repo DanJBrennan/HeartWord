@@ -6,12 +6,39 @@
  * (see .env.example).
  *
  * ImageProvider.generate() and VideoProvider.generateFinal() are
- * implemented for real (2026-09-06) -- ImageEditor and DraftVideoProvider
- * are still interface wiring only, each its own deliberately-scoped
- * follow-up. See docs/plans/CURRENT_GOAL.md.
+ * implemented for real (2026-09-06). ImageEditor and DraftVideoProvider
+ * were implemented for real 2026-09-09, after confirming their actual API
+ * shape empirically (never assume a scraped doc is exactly right) --
+ * three real findings from that confirmation pass, all load-bearing:
+ *
+ * 1. Omni 1.1 does NOT live behind the same `models/<id>:generateContent`
+ *    REST shape every other model here uses -- calling it that way fails
+ *    with "This model only supports Interactions API." It's a genuinely
+ *    different, newer endpoint: `POST /v1beta/interactions` (note: NOT
+ *    `/v1beta2/interactions`, which 404s despite that being what public
+ *    docs describe -- confirmed by testing both directly).
+ * 2. `gemini-omni-1.1-flash` is video-only in practice: asking it for
+ *    `response_format: {type: "image"}` doesn't error, it just silently
+ *    ignores the request and returns video anyway (confirmed with a real
+ *    call, including a prompt explicitly saying "output a single still
+ *    image, not a video" -- still got video back). So Omni handles
+ *    generateDraft/generateGuided, but NOT editRegion.
+ * 3. The targeted image-region-edit capability PRODUCT_VISION.md
+ *    describes actually belongs to the Nano Banana family models, called
+ *    through this SAME new Interactions endpoint (not the older
+ *    generateContent call GeminiImageProvider above uses) -- confirmed
+ *    with a real edit-only-the-background call against both
+ *    gemini-3.1-flash-image and gemini-3-pro-image, both of which
+ *    honored `response_format: {type: "image"}` correctly and left the
+ *    rest of the image genuinely unchanged. Also confirmed empirically:
+ *    the image response_format needs `mime_type: "image/jpeg"` (png is
+ *    rejected) and must NOT set `delivery` at all (setting it to
+ *    "inline" -- the value that works for video -- errors with "Image
+ *    delivery mode is not supported").
  */
+import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, extname, join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
 import type {
   AssetRef,
@@ -29,10 +56,6 @@ function requireApiKey(): string {
     throw new Error("GEMINI_API_KEY is not set (see .env.example).");
   }
   return key;
-}
-
-function notImplemented(operation: string): never {
-  throw new Error(`Gemini adapter: ${operation} is not implemented yet.`);
 }
 
 // Nano Banana / Nano Banana Pro model names -- confirmed against the live
@@ -87,7 +110,7 @@ function loadCharacterReferenceImages(characters: ShotRequest["characters"]): Ch
   const findAssets = db.prepare(
     `SELECT category, path FROM character_assets
      WHERE character_version_id = ?
-     ORDER BY CASE category WHEN 'headshot' THEN 0 WHEN 'turnaround' THEN 1 WHEN 'body_pose' THEN 2 ELSE 3 END`
+     ORDER BY CASE category WHEN 'headshot' THEN 0 WHEN 'body_pose' THEN 1 WHEN 'turnaround' THEN 2 ELSE 3 END`
   );
   const findName = db.prepare(
     `SELECT c.name FROM characters c JOIN character_versions cv ON cv.character_id = c.id WHERE cv.id = ?`
@@ -95,14 +118,28 @@ function loadCharacterReferenceImages(characters: ShotRequest["characters"]): Ch
 
   const result: CharacterReferenceImages[] = [];
   for (const character of characters) {
-    const rows = findAssets.all(character.characterVersionId) as ReferenceAssetRow[];
+    let rows = findAssets.all(character.characterVersionId) as ReferenceAssetRow[];
     const nameRow = findName.get(character.characterVersionId) as { name: string } | undefined;
     const characterName = nameRow?.name ?? "this character";
 
-    // First asset (headshot/turnaround), plus one more from a DIFFERENT
-    // category if available (typically a body_pose) -- two distinct views
-    // anchor a face far better than one, without attaching every pose on
-    // file.
+    // 'turnaround' is a multi-panel design-reference SHEET (front/side/
+    // back/headshot/action poses composited into one image, used for the
+    // Mark 2 crowd witnesses and scribes), not a single clean pose --
+    // built 2026-09-08 after attaching several of these sheets as shot
+    // references produced collage-fragment artifacts in the generated
+    // shot (a piece of the reference sheet's own multi-panel layout
+    // bleeding into the output) and appeared to crowd out attention to
+    // the rest of the prompt. Exclude it entirely whenever this character
+    // has any single-pose asset (headshot/body_pose) instead -- only fall
+    // back to the turnaround sheet if it's truly all that exists.
+    const hasSinglePose = rows.some((r) => r.category !== "turnaround");
+    if (hasSinglePose) {
+      rows = rows.filter((r) => r.category !== "turnaround");
+    }
+
+    // First asset (headshot/body_pose), plus one more from a DIFFERENT
+    // category if available -- two distinct views anchor a face far
+    // better than one, without attaching every pose on file.
     const chosen: ReferenceAssetRow[] = [];
     for (const row of rows) {
       if (chosen.length === 0 || row.category !== chosen[0].category) {
@@ -211,10 +248,157 @@ export class GeminiImageProvider implements ImageProvider {
   }
 }
 
+// The Interactions API (POST /<version>/interactions), confirmed live and
+// real 2026-09-09 -- a genuinely different REST shape from the
+// `models/<id>:generateContent` calls every other method in this file
+// uses (input is an array of typed content blocks wrapped in one
+// `{type: "user_input", content: [...]}` step, not `contents`/`parts`).
+// See this file's header comment for the three real findings from
+// confirming this against the live API.
+//
+// Two versions used deliberately, not one: `v1` is the stable/GA
+// endpoint, confirmed to serve gemini-3.1-flash-image and
+// gemini-3-pro-image (editRegion below); gemini-omni-1.1-flash is NOT in
+// v1's own model catalog on this project's API key as of 2026-09-09 (only
+// 21 models total, none "omni") even though Dan found documentation
+// describing it as stable/GA -- that's either a staged rollout that
+// hasn't reached this key/project yet, or forward-looking docs, but
+// either way the live API is the authority here, not the doc. Omni only
+// exists under `v1beta` right now (confirmed via v1beta's own model
+// list), so generateDraft/generateGuided below call that version instead.
+// If Omni later appears in `v1`'s model list, switch
+// INTERACTIONS_VIDEO_VERSION below to "v1" -- the request shape itself
+// doesn't need to change, v1beta accepts the same wrapped shape v1 requires.
+const INTERACTIONS_VIDEO_VERSION = "v1beta";
+const INTERACTIONS_IMAGE_EDIT_VERSION = "v1";
+
+const OMNI_MODEL = "gemini-omni-1.1-flash";
+
+// Rough estimate, NOT reconciled against a real invoice -- same honesty
+// caveat as every other cost constant in this file. Omni's 360p draft
+// tier is meant to be far cheaper than a full Veo render; this is a
+// placeholder until real billing data is available.
+const OMNI_DRAFT_COST_USD = 0.10;
+
+type InteractionContentBlock =
+  | { type: "image"; data: string; mime_type: string }
+  | { type: "video"; uri: string }
+  | { type: "text"; text: string };
+
+interface InteractionStep {
+  type: string;
+  content?: Array<{ type: string; mime_type?: string; data?: string; uri?: string }>;
+}
+
+interface InteractionResponse {
+  id?: string;
+  status?: string;
+  steps?: InteractionStep[];
+  error?: { message?: string };
+}
+
+async function callInteractions(
+  apiKey: string,
+  version: string,
+  model: string,
+  content: InteractionContentBlock[],
+  responseFormat: Record<string, unknown>
+): Promise<InteractionResponse> {
+  const url = `https://generativelanguage.googleapis.com/${version}/interactions?key=${apiKey}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      input: [{ type: "user_input", content }],
+      response_format: responseFormat
+    })
+  });
+  const data = (await res.json()) as InteractionResponse;
+  if (!res.ok || data.error) {
+    throw new Error(
+      `Gemini Interactions API (${version}, ${model}) failed: ${res.status} ${res.statusText} -- ${JSON.stringify(data.error ?? data).slice(0, 500)}`
+    );
+  }
+  return data;
+}
+
+/** Finds the model's actual output content of the given type -- errors
+ *  loudly rather than returning undefined, since a wrong/ignored
+ *  response_format (confirmed to happen silently on this API -- see this
+ *  file's header) should fail the call, not produce a confusing downstream
+ *  "no media" error far from the real cause. */
+function extractOutputContent(
+  data: InteractionResponse,
+  type: "video" | "image",
+  context: string
+): { mime_type?: string; data: string } {
+  const outputStep = data.steps?.find((s) => s.type === "model_output");
+  const content = outputStep?.content?.find((c) => c.type === type);
+  if (!content?.data) {
+    const actualTypes = outputStep?.content?.map((c) => c.type).join(", ") ?? "none";
+    throw new Error(
+      `${context}: expected "${type}" output but got [${actualTypes}] -- Interactions API response: ${JSON.stringify(data).slice(0, 500)}`
+    );
+  }
+  return { mime_type: content.mime_type, data: content.data };
+}
+
 export class GeminiImageEditor implements ImageEditor {
-  async editRegion(_asset: AssetRef, _instruction: string): Promise<GenerationResult> {
-    requireApiKey();
-    notImplemented("editRegion (Omni 1.1 targeted image editing)");
+  /**
+   * Targeted region edit -- confirmed real 2026-09-09 against
+   * gemini-3.1-flash-image via the Interactions API (v1), NOT Omni 1.1:
+   * asking Omni for image output silently returns video instead (see this
+   * file's header). Uses the Pro model rather than the cheaper Nano
+   * Banana tier -- an edit is almost always touching either an approved
+   * canon character asset or an otherwise-accepted shot (PRODUCT_VISION.md),
+   * both precision-sensitive enough to justify the higher-quality model
+   * for a single small correction rather than risk a second retry.
+   *
+   * Empirically confirmed constraints (both produced real 400 errors when
+   * violated): the output `mime_type` must be "image/jpeg" (png is
+   * rejected), and `delivery` must be omitted entirely -- setting it to
+   * "inline" (the value video output requires) errors with "Image
+   * delivery mode is not supported".
+   */
+  async editRegion(asset: AssetRef, instruction: string): Promise<GenerationResult> {
+    const apiKey = requireApiKey();
+    const dataDir = getDataDir();
+    const absPath = join(dataDir, "assets", asset.path);
+    if (!existsSync(absPath)) {
+      throw new Error(`editRegion: asset not found at ${absPath}.`);
+    }
+    const sourceExt = extname(absPath).slice(1).toLowerCase();
+    const sourceMimeType = sourceExt === "jpg" ? "image/jpeg" : `image/${sourceExt || "png"}`;
+    const sourceB64 = readFileSync(absPath).toString("base64");
+
+    const data = await callInteractions(
+      apiKey,
+      INTERACTIONS_IMAGE_EDIT_VERSION,
+      NANO_BANANA_PRO_MODEL,
+      [
+        { type: "image", data: sourceB64, mime_type: sourceMimeType },
+        {
+          type: "text",
+          text:
+            `Make ONLY this specific, targeted edit to the attached image -- leave every other detail (face, pose, ` +
+            `composition, lighting, background, everything not explicitly mentioned) exactly as it already is: ${instruction}`
+        }
+      ],
+      { type: "image", mime_type: "image/jpeg" }
+    );
+    const output = extractOutputContent(data, "image", `editRegion for ${asset.path}`);
+
+    const relPath = join("generated", "edits", `${basename(absPath, extname(absPath))}-${randomUUID().slice(0, 8)}.jpg`);
+    mkdirSync(join(dataDir, "assets", "generated", "edits"), { recursive: true });
+    writeFileSync(join(dataDir, "assets", relPath), Buffer.from(output.data, "base64"));
+
+    return {
+      status: "accepted",
+      media: { path: relPath },
+      cost: { usd: NANO_BANANA_PRO_COST_USD },
+      provenance: { provider: "gemini", model: NANO_BANANA_PRO_MODEL, prompt: instruction }
+    };
   }
 }
 
@@ -356,14 +540,94 @@ export class GeminiVideoProvider implements VideoProvider {
   }
 }
 
+function loadImageAsContentBlock(dataDir: string, assetPath: string, label: string): InteractionContentBlock {
+  const absPath = join(dataDir, "assets", assetPath);
+  if (!existsSync(absPath)) {
+    throw new Error(`${label}: asset not found at ${absPath}.`);
+  }
+  const ext = extname(absPath).slice(1).toLowerCase();
+  const mimeType = ext === "jpg" ? "image/jpeg" : `image/${ext || "png"}`;
+  return { type: "image", data: readFileSync(absPath).toString("base64"), mime_type: mimeType };
+}
+
 export class GeminiDraftVideoProvider implements DraftVideoProvider {
-  async generateDraft(_request: ShotRequest): Promise<GenerationResult> {
-    requireApiKey();
-    notImplemented("generateDraft (Omni 1.1, 360p)");
+  /**
+   * Omni 1.1's cheap 360p draft tier -- confirmed real 2026-09-09: a
+   * synchronous call (no long-running-operation polling like Veo needs)
+   * that returns inline base64 mp4 directly in the response. Reuses the
+   * same character-reference-image + identity-lock prompt pattern
+   * GeminiImageProvider.generate() already uses, since Omni is just as
+   * prone to drifting a named character's face without it.
+   */
+  async generateDraft(request: ShotRequest): Promise<GenerationResult> {
+    const apiKey = requireApiKey();
+    const dataDir = getDataDir();
+    const referenceImages = loadCharacterReferenceImages(request.characters);
+
+    const content: InteractionContentBlock[] = [];
+    for (const ref of referenceImages) {
+      content.push({
+        text: `Reference image(s) for ${ref.characterName} -- this is the EXACT face, build, and likeness to use for ${ref.characterName} in the video. Do not redesign or genericize.`,
+        type: "text"
+      });
+      content.push(...ref.images.map((img) => ({ type: "image" as const, data: img.data, mime_type: img.mimeType })));
+    }
+    content.push({ type: "text", text: request.prompt });
+
+    const data = await callInteractions(apiKey, INTERACTIONS_VIDEO_VERSION, OMNI_MODEL, content, {
+      type: "video",
+      resolution: "360p",
+      aspect_ratio: "16:9",
+      delivery: "inline"
+    });
+    const output = extractOutputContent(data, "video", `generateDraft for shot ${request.shotId}`);
+
+    const relPath = join("generated", "drafts", `${request.shotId}.mp4`);
+    mkdirSync(join(dataDir, "assets", "generated", "drafts"), { recursive: true });
+    writeFileSync(join(dataDir, "assets", relPath), Buffer.from(output.data, "base64"));
+
+    return {
+      status: "accepted",
+      media: { path: relPath },
+      cost: { usd: OMNI_DRAFT_COST_USD },
+      provenance: { provider: "gemini", model: OMNI_MODEL, prompt: request.prompt }
+    };
   }
 
-  async generateGuided(_startFrame: AssetRef, _endFrame: AssetRef, _request: ShotRequest): Promise<GenerationResult> {
-    requireApiKey();
-    notImplemented("generateGuided (Omni 1.1, start/end-keyframe)");
+  /**
+   * Omni 1.1's start/end-keyframe-guided generation -- same endpoint and
+   * response shape as generateDraft, confirmed real 2026-09-09 with two
+   * different characters' headshots as start/end frames and a transition
+   * instruction (produced a real, coherent transition, not an error or a
+   * static/frozen clip).
+   */
+  async generateGuided(startFrame: AssetRef, endFrame: AssetRef, request: ShotRequest): Promise<GenerationResult> {
+    const apiKey = requireApiKey();
+    const dataDir = getDataDir();
+
+    const content: InteractionContentBlock[] = [
+      loadImageAsContentBlock(dataDir, startFrame.path, "generateGuided startFrame"),
+      loadImageAsContentBlock(dataDir, endFrame.path, "generateGuided endFrame"),
+      { type: "text", text: request.prompt }
+    ];
+
+    const data = await callInteractions(apiKey, INTERACTIONS_VIDEO_VERSION, OMNI_MODEL, content, {
+      type: "video",
+      resolution: "360p",
+      aspect_ratio: "16:9",
+      delivery: "inline"
+    });
+    const output = extractOutputContent(data, "video", `generateGuided for shot ${request.shotId}`);
+
+    const relPath = join("generated", "drafts", `${request.shotId}-guided.mp4`);
+    mkdirSync(join(dataDir, "assets", "generated", "drafts"), { recursive: true });
+    writeFileSync(join(dataDir, "assets", relPath), Buffer.from(output.data, "base64"));
+
+    return {
+      status: "accepted",
+      media: { path: relPath },
+      cost: { usd: OMNI_DRAFT_COST_USD },
+      provenance: { provider: "gemini", model: OMNI_MODEL, prompt: request.prompt }
+    };
   }
 }

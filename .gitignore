@@ -36,3 +36,6 @@ npm-debug.log*
 
 # Local cleanup staging (git can't delete on this mount)
 _to_delete/
+
+# Claude Code session-local runtime state
+.claude/scheduled_tasks.lock

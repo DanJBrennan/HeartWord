@@ -1,0 +1,8 @@
+Use case: historical-scene
+Asset type: wide master coverage keyframe for a continuous dialogue sequence
+Primary request: regenerate the Sabbath grainfield confrontation master.
+Scene/backdrop: open first-century Galilee grainfield at bright midday, warm sun, shoulder-high ripened golden grain with a narrow walked path and distant low hills.
+Subjects: Jesus stands at the path's right side, an adult Papuan/Hatam man with long dark wavy hair and beard. His cream robe MUST show TWO parallel simple woven blue vertical trims, one down each front side, clearly visible; these paired blue trims are unique to Jesus. Two Papuan/Hatam disciples stand nearby holding a few loose heads of grain. The older gray-bearded Papuan principal scribe in black and burgundy faces Jesus from the other side, with two Papuan/Hatam scribes near him.
+Composition/framing: broad 16:9 master making the two groups' geography unmistakable, all standing naturally; groups face each other; principal scribe has begun a restrained indication toward disciples.
+Style/medium: cinematic live-action historical drama.
+Constraints: every visible face Papuan/Hatam. No other blue trim, no striped shawls, no modern farm objects, text, watermark.

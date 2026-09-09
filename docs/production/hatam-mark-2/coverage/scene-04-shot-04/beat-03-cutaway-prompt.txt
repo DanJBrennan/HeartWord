@@ -1,0 +1,8 @@
+Use case: historical-scene
+Asset type: listener cutaway in a continuous dialogue sequence
+Primary request: Peter and the principal scribe listen to Jesus’s concluding Sabbath statement.
+Scene/backdrop: same bright midday first-century Galilee grainfield, shallow-focus golden wheat.
+Subjects: medium two-person reaction with Peter in foreground, a short tightly curled-haired Papuan/Hatam disciple wearing a muted ochre tunic and rust-brown shawl, holding only a few loose grain heads. A little behind him stands the older gray-bearded Papuan principal scribe in his exact black-and-burgundy scholar robe.
+Composition/framing: both remain standing and look clearly to screen-right toward off-screen Jesus; their mouths are closed and their hands at rest. Peter’s distinct short curls and short beard prevent any resemblance to Jesus.
+Style/medium: cinematic live-action historical drama, 16:9.
+Constraints: Papuan/Hatam identity for every visible person. Jesus stays completely off-screen: no cream robe, blue trim, long wavy hair, or Jesus look-alike. No striped shawls, modern items, text, watermark.

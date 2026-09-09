@@ -1,0 +1,8 @@
+Use case: historical-scene
+Asset type: listener cutaway in a continuous dialogue sequence
+Primary request: Peter listens to Jesus's David-and-the-bread reply, clearly distinct from Jesus who is entirely off-screen.
+Scene/backdrop: same bright midday first-century Galilee grainfield, waist-high golden grain and warm side light.
+Subjects: close medium reaction shot of the approved Papuan/Hatam Peter: a broad-faced adult man with short tightly curled black hair, a short neat black beard, and no long wavy hair. He wears a coarse muted ochre-brown tunic and a rust-brown shawl, carries only a few loose grain heads at waist level, and has no blue fabric. Behind him at the left is the older gray-bearded Papuan principal scribe in his exact black-and-burgundy scholar robe.
+Composition/framing: Peter and the scribe both stand and look clearly to screen-right toward the off-screen standing Jesus. Their mouths are closed; they listen quietly. Jesus does not appear in any form: no cream robe, blue trims, long wavy hair, or look-alike foreground figure. Keep Peter's face and silhouette distinct from Jesus.
+Style/medium: cinematic live-action historical drama, 16:9.
+Constraints: Papuan/Hatam identity for every visible person. No blue trim, no striped shawls, modern items, text, watermark.

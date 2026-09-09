@@ -1,0 +1,3 @@
+# Beat 4 — Jesus lip-sync candidate review
+
+This is a close, stable, three-quarter speaking frame of the approved Jesus, with his unique cream robe and blue vertical trim; the crowded basalt room and a partial roof opening are visible behind him. It gives the final spoken insert a distinct camera position. The paralytic is not clearly readable in this tight composition, so continuity will depend on the adjacent master and cutaway; no healing outcome is depicted. Hold for producer approval.

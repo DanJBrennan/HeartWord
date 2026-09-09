@@ -49,9 +49,12 @@ const CROWD_DENSITY_INSTRUCTIONS: Record<string, string> = {
   moderate: "A normal, moderately populated scene -- neither empty nor overcrowded.",
   packed:
     "This location is PACKED, at or beyond capacity -- fill the frame with many background figures shoulder to " +
-    "shoulder, including in doorways and openings, with no empty floor space. If the action describes 'no room' " +
-    "or an overflowing crowd, render that literally -- a modestly-sized gathering is a failure here, not a " +
-    "reasonable interpretation."
+    "shoulder, including in doorways and openings, with NO empty floor space and NO open aisle, path, or gap " +
+    "anywhere in the crowd (a wide-open floor in the middle of an otherwise packed room is still a failure, even " +
+    "if the edges are full). Do NOT arrange the crowd as neat, orderly rows or a lineup along the walls -- real " +
+    "packed crowds cluster irregularly, at uneven depths, facing different directions, some partly obscured " +
+    "behind others. If the action describes 'no room' or an overflowing crowd, render that literally -- a " +
+    "modestly-sized or neatly-arranged gathering is a failure here, not a reasonable interpretation."
 };
 
 /**
@@ -67,6 +70,31 @@ const CROWD_DENSITY_INSTRUCTIONS: Record<string, string> = {
  * buildings do not need to be transplanted to modern Papua." This was a
  * bug in how that already-documented vision got translated into a
  * generation prompt, not a missing design decision.
+ *
+ * Extended 2026-09-08 after a full re-review of the Mark 2 project (post
+ * canon-garment-fix) found the SAME handful of setting/staging errors
+ * repeating across most flagged shots, independent of which characters
+ * were in frame -- architecture, missing continuity debris, and
+ * "already-finished" staging aren't costume problems and weren't touched
+ * by that work. Folded the Critic's own recurring findings in directly:
+ * - ARCHITECTURE: was rendering as light tan adobe/Pueblo-style (visible
+ *   projecting log-end vigas) -- 1st-century Capernaum was built from
+ *   dark, rough basalt fieldstone with flat mud/timber roofs, not
+ *   pitched gables, tiled/pantile roofing, glass windows, paneled doors,
+ *   or modern infrastructure.
+ * - PROPS: Nano Banana's own generic "ancient" prior kept reaching for
+ *   Bronze-Age clay tablets or medieval-style bound codices -- 1st-
+ *   century written records were papyrus/parchment scrolls or wax
+ *   tablets.
+ * - GEOGRAPHY: the Sea of Galilee is an inland freshwater lake ringed by
+ *   hills, not an ocean coastline with cliffs.
+ * - CONTINUITY DEBRIS: a shot whose action/continuity notes describe
+ *   recent physical disruption (digging through a roof, breaking
+ *   something) kept rendering a suspiciously clean environment.
+ * - MOTION FEASIBILITY: keyframes kept landing on the END state of the
+ *   described action (already standing, already turned, already
+ *   speaking) rather than a workable starting point for the video
+ *   generator to animate into that action.
  */
 const CASTING_AND_SETTING_ANCHOR =
   "Photorealistic still frame from a Scripture video production (true photographic realism -- do not stylize, " +
@@ -77,7 +105,25 @@ const CASTING_AND_SETTING_ANCHOR =
   "leather sandals, head coverings where appropriate. Do NOT render any Melanesian, Pacific Islander, or " +
   "African tribal clothing, adornment, or setting -- no grass or woven-fiber skirts, no bare chests as everyday " +
   "dress, no shell/bone/wood jewelry or arm bands, no face or body paint, no tropical island scenery. The people " +
-  "are Papuan; the world around them is first-century Judea, exactly as it would be for any other casting.";
+  "are Papuan; the world around them is first-century Judea, exactly as it would be for any other casting.\n\n" +
+  "ARCHITECTURE: buildings are constructed from rough, unhewn DARK BASALT FIELDSTONE bound with mud mortar -- " +
+  "not light tan adobe, smooth plaster, or sandstone. Roofs are FLAT (timber beams topped with reeds/branches and " +
+  "packed mud/clay), never pitched, gabled, or covered in fired ceramic tiles. Do not show projecting rounded " +
+  "log-ends (vigas) on exterior walls, glass windows, modern paneled doors with metal hardware, tiled or polished " +
+  "floors, minarets, or any modern rooftop fixtures (tanks, pipes, wiring). If the location is by the water, it " +
+  "is the Sea of Galilee -- an inland freshwater lake surrounded by rolling hills, never an ocean coastline or " +
+  "sea cliffs.\n\n" +
+  "PROPS: written records are papyrus/parchment SCROLLS or wooden WAX TABLETS with a stylus -- never a bound " +
+  "book/codex (a later invention) and never a Bronze-Age clay tablet.\n\n" +
+  "CONTINUITY DEBRIS: if the shot's action or continuity notes describe something recently broken, dug through, " +
+  "or physically disrupted (e.g. a roof dug open), the visible aftermath (fallen dirt, broken thatch/branches, " +
+  "dust, debris on the floor or on nearby people) MUST be present -- a pristine, undisturbed scene right after " +
+  "such an action is wrong.\n\n" +
+  "MOTION FEASIBILITY: this keyframe is the STARTING FRAME for a video clip that will animate the action " +
+  "described below, not a still capturing its completion. Show the action beginning or mid-progress -- a hand " +
+  "starting to reach, a body starting to turn, feet mid-stride -- with clear physical room left for that motion " +
+  "to continue. A pose already frozen at the action's end state (already standing, already turned, already " +
+  "speaking with the gesture fully extended) gives a video generator nothing to animate and is a failure.";
 
 function buildShotPrompt(scene: SceneRow, shot: ShotRow, characterNames: string[]): string {
   const framing = shot.framing ? (FRAMING_DESCRIPTIONS[shot.framing] ?? shot.framing) : "medium shot";
@@ -97,7 +143,14 @@ ${shot.continuity_notes ? `\nIMPORTANT continuity constraint for this exact shot
 Characters visible in this shot (use the attached reference image(s) for exact likeness -- same face, build, and clothing as shown; do not redesign them): ${
     characterNames.length > 0 ? characterNames.join(", ") : "none named -- establishing/background shot"
   }.
-
+${
+  characterNames.length > 0
+    ? `\nCHARACTER IDENTITY RULES: each named character above must appear EXACTLY ONCE in this frame -- never as two ` +
+      `separate figures, even partially visible or in a doorway/background. Every unnamed background extra must ` +
+      `have a DIFFERENT face and a DIFFERENT clothing color/pattern combination from every named character listed ` +
+      `above -- never let an extra's outfit or face accidentally match a named character's locked design.\n`
+    : ""
+}
 No text, no labels, no logos anywhere in the image.`;
 }
 

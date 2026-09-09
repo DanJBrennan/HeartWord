@@ -1,0 +1,1 @@
+The master establishes the room’s geography, the already-opened roof, Jesus, the still paralytic, and the principal scribe before the covered dialogue cuts to closer inserts. It holds continuity without pretending the roof opening fills the frame.

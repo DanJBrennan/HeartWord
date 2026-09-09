@@ -1,0 +1,1 @@
+The prior candidate gave Jesus a strong lip-sync frame but his eyeline appeared to land on a different foreground listener. This version makes the principal scribe visibly present as the person opposite Jesus, so the final insert carries the exact confrontation in Mark 2:8-9.

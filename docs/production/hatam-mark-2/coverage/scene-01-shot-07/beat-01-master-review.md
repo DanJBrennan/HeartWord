@@ -1,0 +1,3 @@
+# Beat 1 — master candidate review
+
+The image supplies a wide, readable interior geography: Jesus, the seated principal scribe, a densely packed crowd, and the paralytic lying flat on a woven mat are all present. The basalt room, tight doorway, and partial roof opening with retained timbers maintain the prior scene’s continuity. Jesus has a restrained open-hand speaking gesture; the image does not depict a completed healing. Hold for producer approval.

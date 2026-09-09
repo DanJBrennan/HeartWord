@@ -74,6 +74,10 @@ interface ShotCharacterRow {
   reference_path: string | null;
 }
 
+interface CandidateAttemptRow extends ShotRow {
+  attempt_id: string;
+}
+
 /**
  * Reviews one shot end-to-end: runs the Critic's grounded research pass,
  * the two existing automated checks against its current accepted
@@ -174,4 +178,139 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
   }
 
   return { shotId, decision, critic, likenessAligned, fidelityAligned, report };
+}
+
+/**
+ * Reviews an imported Codex keyframe before producer acceptance. This is the
+ * same composite QC used by the normal generation pipeline, but it preserves
+ * the handoff candidate's hold_for_review state: a producer can see every
+ * failure and decide whether to regenerate or explicitly override it.
+ */
+export async function runKeyframeCandidateReview(attemptId: string): Promise<ShotReviewReport> {
+  const db = getDb();
+  const dataDir = getDataDir();
+  const candidate = db.prepare(
+    `SELECT s.id, s.action, s.verse_ref, s.continuity_notes,
+            ga.id AS attempt_id, ga.id AS generation_attempt_id, ga.result_asset_path AS generated_path
+     FROM generation_attempts ga
+     JOIN shots s ON s.id = ga.shot_id
+     WHERE ga.id = ? AND ga.provider = 'codex_imagegen' AND ga.operation = 'generate'`
+  ).get(attemptId) as CandidateAttemptRow | undefined;
+  if (!candidate?.generated_path) throw new Error(`No imported Codex keyframe candidate: ${attemptId}`);
+  const generatedAbsPath = join(dataDir, "assets", candidate.generated_path);
+  if (!existsSync(generatedAbsPath)) throw new Error(`Candidate asset is missing: ${candidate.generated_path}`);
+
+  const fidelityRow = db.prepare(`SELECT crowd_density, continuity_notes FROM shots WHERE id = ?`).get(candidate.id) as
+    | { crowd_density: string | null; continuity_notes: string | null }
+    | undefined;
+  const critic = await runCritic(candidate.action, candidate.verse_ref, candidate.continuity_notes,
+    fidelityRow?.crowd_density ?? null, generatedAbsPath);
+
+  const characters = db.prepare(
+    `SELECT c.name AS character_name, ref.path AS reference_path
+     FROM shot_characters shc
+     JOIN characters c ON c.id = shc.character_id
+     JOIN character_versions cv ON cv.character_id = c.id AND cv.status = 'approved'
+     LEFT JOIN (
+       SELECT character_version_id, path,
+              ROW_NUMBER() OVER (
+                PARTITION BY character_version_id
+                ORDER BY CASE category WHEN 'headshot' THEN 0 WHEN 'turnaround' THEN 1 WHEN 'body_pose' THEN 2 ELSE 3 END
+              ) AS rn
+       FROM character_assets
+     ) ref ON ref.character_version_id = cv.id AND ref.rn = 1
+     WHERE shc.shot_id = ?`
+  ).all(candidate.id) as ShotCharacterRow[];
+
+  let likenessAligned = true;
+  const likenessNotes: string[] = [];
+  for (const character of characters) {
+    if (!character.reference_path) {
+      likenessAligned = false;
+      likenessNotes.push(`${character.character_name} has no approved comparison asset`);
+      continue;
+    }
+    const referenceAbsPath = join(dataDir, "assets", character.reference_path);
+    if (!existsSync(referenceAbsPath)) {
+      likenessAligned = false;
+      likenessNotes.push(`${character.character_name}'s approved comparison asset is missing`);
+      continue;
+    }
+    const verdict = await checkCanonicalLikeness(character.character_name, referenceAbsPath, generatedAbsPath);
+    if (!isLikenessAligned(verdict.score, undefined, verdict.instanceCount)) {
+      likenessAligned = false;
+      likenessNotes.push(`${character.character_name}: ${verdict.score}/100, ${verdict.instanceCount} instance(s) — ${verdict.notes}`);
+    }
+  }
+
+  const fidelityVerdict = await checkSceneFidelity(generatedAbsPath, candidate.action,
+    fidelityRow?.crowd_density ?? null, fidelityRow?.continuity_notes ?? null);
+  const fidelityAligned = isSceneFidelityAligned(fidelityVerdict);
+  const decision = decideGenerationStatus({ criticSeverity: critic.severity, likenessAligned, fidelityAligned });
+  const report =
+    `Candidate QC decision: ${decision.status} -- ${decision.reasoning}\n\n` +
+    `Critic (severity: ${critic.severity}):\n${critic.findings}\n\n` +
+    `Canonical likeness: ${likenessAligned ? "passed" : `FAILED. ${likenessNotes.join(" ")}`}\n` +
+    `Scene fidelity: ${fidelityAligned ? "passed" : `FAILED. ${fidelityVerdict.notes}`}`;
+  db.prepare(
+    `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
+     SELECT ?, sc.project_id, 'shot', ?, 'qc', ?, 0, ?
+     FROM shots s JOIN scenes sc ON sc.id=s.scene_id WHERE s.id=?`
+  ).run(randomUUID(), candidate.id, `Codex candidate ${attemptId} composite QC\n${report}`, Date.now(), candidate.id);
+  return { shotId: candidate.id, decision, critic, likenessAligned, fidelityAligned, report };
+}
+
+export interface ProjectReviewSummary {
+  reviewed: number;
+  heldForReview: Array<{ shotId: string; sceneSequence: number; shotSequence: number; status: string }>;
+  failed: Array<{ shotId: string; sceneSequence: number; shotSequence: number; message: string }>;
+}
+
+/**
+ * One-time (or occasional) audit pass: runs runShotReview against every
+ * shot in the project that currently has an accepted keyframe, regardless
+ * of whether it's already been reviewed before -- built 2026-09-07 at
+ * Dan's request to retroactively cover the 27 shots generated before this
+ * QC pipeline existed and so never got an automatic review from
+ * runMediaGeneration's per-shot wiring. Sequential, not parallel: each
+ * review is itself 3 real API calls (Critic + 2 checks), and running many
+ * of those concurrently risks tripping Gemini's own rate limits for no
+ * real benefit here.
+ */
+export async function runProjectReview(projectId: string): Promise<ProjectReviewSummary> {
+  const db = getDb();
+  const shots = db
+    .prepare(
+      `SELECT s.id, s.sequence AS shot_sequence, sc.sequence AS scene_sequence
+       FROM shots s
+       JOIN scenes sc ON sc.id = s.scene_id
+       JOIN generation_attempts ga ON ga.shot_id = s.id AND ga.operation = 'generate' AND ga.status = 'accepted'
+       WHERE sc.project_id = ?
+       ORDER BY sc.sequence, s.sequence`
+    )
+    .all(projectId) as Array<{ id: string; shot_sequence: number; scene_sequence: number }>;
+
+  const summary: ProjectReviewSummary = { reviewed: 0, heldForReview: [], failed: [] };
+  for (const shot of shots) {
+    try {
+      const result = await runShotReview(shot.id);
+      summary.reviewed++;
+      if (result.decision.status !== "accepted") {
+        summary.heldForReview.push({
+          shotId: shot.id,
+          sceneSequence: shot.scene_sequence,
+          shotSequence: shot.shot_sequence,
+          status: result.decision.status
+        });
+      }
+    } catch (err) {
+      summary.failed.push({
+        shotId: shot.id,
+        sceneSequence: shot.scene_sequence,
+        shotSequence: shot.shot_sequence,
+        message: (err as Error).message
+      });
+    }
+  }
+  return summary;
 }

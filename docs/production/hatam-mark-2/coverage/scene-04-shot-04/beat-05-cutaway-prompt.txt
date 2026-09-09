@@ -1,0 +1,8 @@
+Use case: historical-scene
+Asset type: listener cutaway in a continuous dialogue sequence
+Primary request: the two scribes take in Jesus’s final declaration about the Sabbath.
+Scene/backdrop: same bright midday first-century Galilee grainfield, shallow-focus gold wheat and distant hills.
+Subjects: the older gray-bearded Papuan principal scribe in his exact black scholar robe with burgundy vertical trim, and a distinct middle-aged Papuan companion scribe in a matching black scholarly robe with a clear maroon vertical trim.
+Composition/framing: medium two-person reaction distinct from the earlier scribe cutaway. Both stand naturally, mouths closed, looking screen-right at off-screen Jesus. The principal scribe’s expression is thoughtful and challenged, not angry; the companion is attentive.
+Style/medium: cinematic live-action historical drama, 16:9.
+Constraints: Papuan/Hatam identity for every visible person. Jesus is fully off-screen: no cream robe, blue trim, long wavy hair, or look-alike. No striped shawls, modern items, text, watermark, duplicate faces.

@@ -1,0 +1,1 @@
+This correction restores the disciples and their few grain heads to the scribe's speaking insert, making his visual accusation playable. It preserves the prior cutaway's geography by retaining the companion behind the principal scribe on the same side.

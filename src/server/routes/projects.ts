@@ -182,14 +182,23 @@ projectsRouter.get("/:id/shots", (req, res) => {
             dc.name AS dialogue_character,
             (SELECT GROUP_CONCAT(c.name, ', ') FROM shot_characters sc JOIN characters c ON c.id = sc.character_id WHERE sc.shot_id = s.id) AS characters,
             (SELECT ga.result_asset_path FROM generation_attempts ga
-             WHERE ga.shot_id = s.id AND ga.operation = 'generate' AND ga.status = 'accepted'
+             WHERE ga.shot_id = s.id AND ga.operation = 'generate' AND ga.result_asset_path IS NOT NULL
              ORDER BY ga.created_at DESC LIMIT 1) AS keyframe_path,
             (SELECT rn.note FROM review_notes rn
              WHERE rn.subject_type = 'shot' AND rn.subject_id = s.id AND rn.source = 'human'
              ORDER BY rn.created_at DESC LIMIT 1) AS latest_human_note,
             (SELECT rn.resolved FROM review_notes rn
              WHERE rn.subject_type = 'shot' AND rn.subject_id = s.id AND rn.source = 'human'
-             ORDER BY rn.created_at DESC LIMIT 1) AS latest_human_note_resolved
+             ORDER BY rn.created_at DESC LIMIT 1) AS latest_human_note_resolved,
+            (SELECT rn.note FROM review_notes rn
+             WHERE rn.subject_type = 'shot' AND rn.subject_id = s.id AND rn.source = 'qc'
+             ORDER BY rn.created_at DESC LIMIT 1) AS latest_qc_note,
+            (SELECT rn.created_at FROM review_notes rn
+             WHERE rn.subject_type = 'shot' AND rn.subject_id = s.id AND rn.source = 'qc'
+             ORDER BY rn.created_at DESC LIMIT 1) AS latest_qc_created_at,
+            (SELECT ga.status FROM generation_attempts ga
+             WHERE ga.shot_id = s.id AND ga.operation = 'generate'
+             ORDER BY ga.created_at DESC LIMIT 1) AS latest_generation_status
      FROM shots s
      LEFT JOIN characters dc ON dc.id = s.dialogue_character_id
      WHERE s.scene_id = ? ORDER BY s.sequence`

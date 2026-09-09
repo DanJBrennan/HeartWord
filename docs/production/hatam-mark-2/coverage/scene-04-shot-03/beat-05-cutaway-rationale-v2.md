@@ -1,0 +1,1 @@
+This correction makes the companion unambiguously a scribe by assigning the same black scholarly silhouette and a clear maroon vertical trim as the established scribe group, while retaining the shared listening eyeline to off-screen Jesus.

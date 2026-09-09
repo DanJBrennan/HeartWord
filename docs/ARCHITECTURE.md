@@ -248,7 +248,15 @@ interface ImageProvider {
 }
 
 interface ImageEditor {
-  // Omni 1.1 only for v1 — a targeted region edit, not a full regeneration
+  // Nano Banana Pro (gemini-3-pro-image), NOT Omni 1.1 -- corrected
+  // 2026-09-09 after confirming against the live API that Omni 1.1
+  // silently ignores an image response_format and always returns video
+  // instead (even when the prompt explicitly asks for a still image).
+  // The targeted-region-edit capability actually belongs to the Nano
+  // Banana family, called through the same Interactions API endpoint
+  // Omni uses (POST /v1/interactions), not the older generateContent
+  // call ImageProvider.generate() above uses. A targeted region edit, not
+  // a full regeneration.
   editRegion(asset: AssetRef, instruction: string): Promise<GenerationResult>;
 }
 
@@ -258,9 +266,12 @@ interface VideoProvider {
 }
 
 interface DraftVideoProvider {
-  // Omni 1.1's 360p draft tier
+  // Omni 1.1's 360p draft tier, via POST /v1beta/interactions (NOT /v1 --
+  // confirmed 2026-09-09 that gemini-omni-1.1-flash doesn't appear in
+  // this project's v1 model catalog yet, only v1beta's, regardless of
+  // what public docs describe as "stable"; re-check periodically)
   generateDraft(request: ShotRequest): Promise<GenerationResult>;
-  // Omni 1.1's start/end-keyframe-guided generation
+  // Omni 1.1's start/end-keyframe-guided generation, same endpoint
   generateGuided(startFrame: AssetRef, endFrame: AssetRef, request: ShotRequest): Promise<GenerationResult>;
 }
 
@@ -295,8 +306,9 @@ provider layer share one vocabulary for "what happens to this result next"
 from day one, even though v1's QC only implements the structural subset of
 checks that can produce it. `ImageEditor` is deliberately its own small
 interface rather than a method on `ImageProvider`, since v1 has exactly one
-implementation (Omni 1.1) and no image-generation vendor is assumed to
-support it. `VoiceProvider` is ElevenLabs' voice-changer (speech-to-speech)
+implementation (Nano Banana Pro, called through the Interactions API --
+see the interface comment above) and no image-generation vendor is assumed
+to support it. `VoiceProvider` is ElevenLabs' voice-changer (speech-to-speech)
 API, confirmed 2026-09-05 -- genuinely a separate step from `LipSyncProvider`,
 not folded into it: ElevenLabs re-voices a character's real Hatam dialogue
 (re-voicing, not synthesizing from text -- no Hatam TTS model exists) into

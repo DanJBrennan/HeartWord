@@ -1,0 +1,8 @@
+Use case: historical-scene
+Asset type: close lip-sync insert in a continuous dialogue sequence
+Primary request: Jesus continues his calm David-and-the-bread reply to the scribes.
+Scene/backdrop: bright midday first-century Galilee grainfield, golden grain and low hills softly out of focus.
+Subject: the approved Papuan/Hatam Jesus, long dark wavy hair and beard, in his unique cream robe with TWO parallel simple woven blue vertical trims, one down each front side. He faces screen-left toward the principal scribe and speaks with a naturally parted mouth and restrained explanatory hand gesture.
+Composition/framing: tight chest-up three-quarter frame, clearly isolated for speech animation. A small blurred sliver of the principal scribe's black-and-burgundy robe may appear at the left edge to retain the conversational axis. Jesus remains standing, matching the accepted master.
+Style/medium: cinematic live-action historical drama, 16:9.
+Constraints: every visible face Papuan/Hatam; only Jesus wears blue trim. No modern item, text, watermark, white-and-black striped shawl, or duplicate Jesus.
