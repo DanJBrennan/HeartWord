@@ -45,6 +45,20 @@ export function isRaiFilterFailure(err: unknown): boolean {
   return err instanceof Error && /finished with no video sample|raiMediaFilteredReasons/.test(err.message);
 }
 
+/** A 429/quota-exhausted response -- distinct from the RAI content filter
+ *  above. Per Dan's guidance (2026-09-09, ahead of running Veo across the
+ *  single_clip shots): start any batch of Veo calls at low concurrency
+ *  (3 in flight), retry a 429 with backoff instead of treating it as a
+ *  hard failure, and only raise concurrency after observing stable
+ *  completions -- this function is the retry half of that; the caller
+ *  (a driver script) owns the concurrency-limiting half. */
+export function isRateLimitFailure(err: unknown): boolean {
+  return err instanceof Error && /\b429\b|rate limit|resource_exhausted|quota/i.test(err.message);
+}
+
+const RATE_LIMIT_MAX_RETRIES = 5;
+const RATE_LIMIT_BASE_DELAY_MS = 2000;
+
 export type FallbackTier = "veo" | "kling_scene" | "omni_draft";
 
 export interface FallbackResult extends GenerationResult {
@@ -66,11 +80,21 @@ export async function generateFinalVideoWithFallback(
   let veoAttempts = 0;
   for (let attempt = 1; attempt <= MAX_VEO_ATTEMPTS; attempt++) {
     veoAttempts = attempt;
-    try {
-      const result = await videoProvider.generateFinal(request, opts);
-      return { ...result, tier: "veo", veoAttempts };
-    } catch (err) {
-      if (!isRaiFilterFailure(err)) throw err;
+    let rateLimitRetries = 0;
+    while (true) {
+      try {
+        const result = await videoProvider.generateFinal(request, opts);
+        return { ...result, tier: "veo", veoAttempts };
+      } catch (err) {
+        if (isRateLimitFailure(err) && rateLimitRetries < RATE_LIMIT_MAX_RETRIES) {
+          rateLimitRetries++;
+          const delayMs = RATE_LIMIT_BASE_DELAY_MS * 2 ** (rateLimitRetries - 1);
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+          continue;
+        }
+        if (!isRaiFilterFailure(err)) throw err;
+        break;
+      }
     }
   }
 

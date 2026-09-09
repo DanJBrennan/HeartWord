@@ -1,0 +1,1 @@
+This close insert covers the final 6.154 seconds of the corrected Shot 8 dialogue. Its downward eyeline and phrase-start mouth provide a stable anchor for later lip-sync while the paralytic remains unhealed below frame.

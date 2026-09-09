@@ -19,7 +19,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { getDb } from "../../db/client.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
 import { planCoverageBeats } from "./coverage-manifest.js";
-import { computeDialogueDurationMs, planCoverage } from "./coverage.js";
+import { computeDialogueDurationMs, planCoverage, verseRangesRelated } from "./coverage.js";
 
 interface CoveredShotRow {
   id: string;
@@ -62,10 +62,7 @@ function dialogueDurationForShot(
     .all(projectId, characterId) as unknown as DialogueSegmentRow[];
 
   const matching = rows
-    .filter((s) => {
-      const { start, end } = parseVerseRange(s.verse_ref!);
-      return start <= verseEnd && end >= verseStart;
-    })
+    .filter((s) => verseRangesRelated(parseVerseRange(s.verse_ref!), { start: verseStart, end: verseEnd }))
     .map((s) => ({ startMs: s.start_ms, endMs: s.end_ms }));
 
   return computeDialogueDurationMs(matching);
@@ -102,11 +99,11 @@ export function reconcileCoveragePlans(projectId: string): ReconcileResult[] {
 
   const shots = db
     .prepare(
-      `SELECT id, verse_ref, dialogue_character_id, coverage_plan FROM shots
+      `SELECT id, verse_ref, dialogue_character_id, coverage_plan, coverage_notes FROM shots
        WHERE needs_lip_sync = 1 AND dialogue_character_id IS NOT NULL
          AND scene_id IN (SELECT id FROM scenes WHERE project_id = ?)`
     )
-    .all(projectId) as unknown as Array<CoveredShotRow & { coverage_plan: string }>;
+    .all(projectId) as unknown as Array<CoveredShotRow & { coverage_plan: string; coverage_notes: string | null }>;
 
   const updateShot = db.prepare(`UPDATE shots SET coverage_plan = ?, coverage_notes = ? WHERE id = ?`);
   const deletePlannedBeats = db.prepare(`DELETE FROM coverage_beats WHERE shot_id = ? AND status = 'planned'`);
@@ -127,10 +124,15 @@ export function reconcileCoveragePlans(projectId: string): ReconcileResult[] {
     if (durationMs <= 0) continue;
 
     const recomputed = planCoverage(durationMs);
-    if (recomputed.coveragePlan === shot.coverage_plan) continue;
+    // Compare notes too, not just the plan enum -- a duration correction
+    // that doesn't cross the single_clip/covered_sequence threshold (e.g.
+    // Scene 1 Shot 8's real 18.8s vs. its wrongly-computed 36.8s, both
+    // still covered_sequence) would otherwise leave stale, wrong-duration
+    // text sitting in shots.coverage_notes indefinitely.
+    if (recomputed.coveragePlan === shot.coverage_plan && recomputed.notes === shot.coverage_notes) continue;
 
     let plannedBeatsRemoved = 0;
-    if (recomputed.coveragePlan === "single_clip") {
+    if (recomputed.coveragePlan === "single_clip" && shot.coverage_plan !== "single_clip") {
       plannedBeatsRemoved = (countPlannedBeats.get(shot.id) as { n: number }).n;
       deletePlannedBeats.run(shot.id);
     }

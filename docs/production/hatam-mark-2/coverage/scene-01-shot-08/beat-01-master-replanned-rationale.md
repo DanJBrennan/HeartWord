@@ -1,0 +1,1 @@
+This revised first master matches the corrected 0-3.5 second coverage range. It establishes the geography for the continuous dialogue while preserving the paralytic's unhealed, flat position. The later video prompt will use the confirmed short pause around 2.47-3.26 seconds rather than animate uninterrupted speech.

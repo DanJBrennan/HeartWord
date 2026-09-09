@@ -21,6 +21,7 @@ import {
   isFraming,
   planCoverage,
   validateFraming,
+  verseRangesRelated,
   type CameraMovement,
   type CrowdDensity,
   type Framing
@@ -297,10 +298,7 @@ export const runCasting: Stage = async (projectId) => {
   function dialogueDurationForShot(characterId: string, verseStart: number, verseEnd: number): number {
     const matching = dialogueSegments
       .filter((s) => s.speaker_character_id === characterId && s.verse_ref !== null)
-      .filter((s) => {
-        const { start, end } = parseVerseRange(s.verse_ref!);
-        return start <= verseEnd && end >= verseStart;
-      })
+      .filter((s) => verseRangesRelated(parseVerseRange(s.verse_ref!), { start: verseStart, end: verseEnd }))
       .map((s) => ({ startMs: s.start_ms, endMs: s.end_ms }));
     return computeDialogueDurationMs(matching);
   }

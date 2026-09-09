@@ -1,0 +1,1 @@
+This new cutaway supplies the middle reaction beat of the corrected 18.8-second Shot 8 plan. It gives the L-cut a still, attentive paralytic image while retaining Jesus's correct direction and avoiding any premature healing action.

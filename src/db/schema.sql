@@ -336,3 +336,26 @@ CREATE TABLE IF NOT EXISTS review_notes (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_review_notes_project ON review_notes(project_id);
+
+-- Stage 6: one continuous chapter video, concatenating every shot's own
+-- already-assembled clip (see `clips` / a shot's `assemble_shot`
+-- generation_attempts row) in scene/shot order. v1 scope, per
+-- docs/design/timeline.md: HARD CUTS ONLY between shots -- the
+-- `spaced_production` audio layer that would let a producer place and
+-- approve deliberate editorial gaps between shots doesn't exist yet
+-- (no rows in audio_segments use that layer value), so this reflects
+-- exactly what's already true: each shot's own clip already carries its
+-- own real audio (dialogue or silence) trimmed to its own real duration,
+-- with nothing inserted between one shot's end and the next one's start.
+-- Re-running stage 6 adds a new row rather than overwriting the last one,
+-- the same history-preserving convention already used for a shot's own
+-- assemble_shot attempts.
+CREATE TABLE IF NOT EXISTS chapter_renders (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  result_asset_path TEXT NOT NULL,
+  total_duration_ms INTEGER NOT NULL,
+  shot_count INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_chapter_renders_project ON chapter_renders(project_id);

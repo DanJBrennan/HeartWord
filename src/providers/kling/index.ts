@@ -206,6 +206,180 @@ const KLING_SCENE_COST_USD = 0.6;
 // used for Veo's 4s floor overrunning a shorter beat.
 const SCENE_DURATION = "5";
 
+// Real, separate Kling product confirmed 2026-09-09 while fixing Scene 1
+// Shot 8's QC feedback: a video-based Lip-Sync API (`/v1/videos/lip-sync`,
+// `/v1/videos/identify-face`), distinct from BOTH the Avatar endpoint above
+// (which syncs EVERY detected face to the same audio -- the actual root
+// cause of "both Jesus and the scribe are mouthing Jesus's words" on Shot
+// 7) and the plain scene endpoint below. This one takes an ALREADY
+// GENERATED video plus a `face_id` naming exactly which detected face to
+// sync, so a wide multi-person shot (a covered_sequence master or a
+// cutaway where the speaker is still visible) can get real audio-driven
+// lip-sync on just the speaker, with everyone else in frame left alone --
+// no manual crop-to-isolate needed at all.
+//
+// Confirmed real via live minimal requests against the real account
+// (Kling's own docs proved unreliable to fetch/interpret secondhand, same
+// as every other endpoint in this file):
+// - `POST /v1/videos/lip-sync`, body `{ input: { mode: "audio2video",
+//   video_url, face_id, sound_insert_time, audio_type: "file",
+//   audio_file } }` (video_id -- a bare task_id -- was tried first and
+//   rejected; a real hosted video_url from a completed Kling generation
+//   task works). Polled via `GET /v1/videos/lip-sync/{task_id}`.
+// - `POST /v1/videos/identify-face`, body `{ video_url }` (NOT nested
+//   under `input` -- confirmed by trial, the two endpoints don't share a
+//   body shape). Returns `data.face_data`: an array of `{face_id,
+//   face_image, start_time, end_time}`, one entry per detected face, each
+//   with a real thumbnail URL.
+//
+// CRITICAL: face_id is NOT stable or guessable (confirmed by an actual
+// mistake made while building this -- id "0" in one real test was a
+// background bystander, not Jesus, who was actually id "1"). Every real
+// use MUST fetch identify-face's thumbnails and visually confirm which
+// face_id is the intended speaker before calling lip-sync -- there is no
+// shortcut. sound_insert_time is measured from the START OF THE SOURCE
+// VIDEO CLIP itself (0 = the very start of that beat's own generated
+// clip), not any shot- or project-level timeline offset.
+export interface KlingFaceCandidate {
+  faceId: string;
+  thumbnailUrl: string;
+  startTime: number;
+  endTime: number;
+}
+
+const LIPSYNC_SUBMIT_PATH = "/v1/videos/lip-sync";
+const IDENTIFY_FACE_PATH = "/v1/videos/identify-face";
+
+// Same rough-estimate caveat as every other cost constant in this file --
+// Kling's response reports a unit deduction, not a dollar figure.
+const KLING_FACE_LIPSYNC_COST_USD = 0.5;
+
+export class KlingFaceLipSyncProvider {
+  /** Generates a base scene video via the plain image2video (scene) endpoint -- the real, hosted video_url this flow needs as its input. */
+  async generateSceneVideo(image: AssetRef, prompt: string, durationSec: number): Promise<{ taskId: string; videoUrl: string }> {
+    const apiKey = requireApiKey();
+    const dataDir = getDataDir();
+    const imageAbsPath = join(dataDir, "assets", image.path);
+    const imageBase64 = readFileSync(imageAbsPath).toString("base64");
+
+    const submitRes = await fetch(HOST + SCENE_SUBMIT_PATH, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model_name: KLING_SCENE_MODEL,
+        image: imageBase64,
+        prompt,
+        duration: String(Math.max(5, Math.round(durationSec))), // Kling's scene duration only accepts a small fixed set; "5" is its shortest
+        aspect_ratio: "16:9",
+        mode: KLING_SCENE_MODE
+      })
+    });
+    const submitData = (await submitRes.json()) as KlingTaskResponse;
+    if (!submitRes.ok || submitData.code !== 0 || !submitData.data?.task_id) {
+      throw new Error(`Kling scene submit (for face lip-sync) failed: ${submitRes.status} -- ${JSON.stringify(submitData).slice(0, 500)}`);
+    }
+    const taskId = submitData.data.task_id;
+
+    const deadline = Date.now() + 15 * 60 * 1000;
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 15000));
+      const pollRes = await fetch(`${HOST}${SCENE_SUBMIT_PATH}/${taskId}`, { headers: { Authorization: `Bearer ${apiKey}` } });
+      const pollData = (await pollRes.json()) as KlingTaskResponse;
+      const status = pollData.data?.task_status;
+      if (status === "succeed") {
+        const url = pollData.data?.task_result?.videos?.[0]?.url;
+        if (!url) throw new Error(`Kling scene task ${taskId} succeeded with no video URL.`);
+        return { taskId, videoUrl: url };
+      }
+      if (status === "failed") throw new Error(`Kling scene task ${taskId} failed: ${pollData.data?.task_status_msg ?? "no message"}`);
+    }
+    throw new Error(`Kling scene task ${taskId} did not finish within 15 minutes.`);
+  }
+
+  /** Lists every detected face with a real thumbnail -- inspect these and pick the right face_id BEFORE calling syncFace. Never guess. */
+  async identifyFaces(videoUrl: string): Promise<KlingFaceCandidate[]> {
+    const apiKey = requireApiKey();
+    const res = await fetch(HOST + IDENTIFY_FACE_PATH, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ video_url: videoUrl }) // top-level, NOT nested under `input` -- confirmed by trial
+    });
+    const data = (await res.json()) as { code: number; message: string; data?: { face_data?: Array<{ face_id: string; face_image: string; start_time: number; end_time: number }> } };
+    if (!res.ok || data.code !== 0 || !data.data?.face_data) {
+      throw new Error(`Kling identify-face failed: ${res.status} -- ${JSON.stringify(data).slice(0, 500)}`);
+    }
+    return data.data.face_data.map((f) => ({ faceId: f.face_id, thumbnailUrl: f.face_image, startTime: f.start_time, endTime: f.end_time }));
+  }
+
+  /** Real audio-driven lip-sync of ONE named face in an existing video. Call identifyFaces first and pass its confirmed faceId -- see class header. */
+  async syncFace(videoUrl: string, faceId: string, audio: AudioSegmentRef, soundInsertTimeMs = 0): Promise<GenerationResult> {
+    const apiKey = requireApiKey();
+    const dataDir = getDataDir();
+
+    const audioAbsPath = join(dataDir, "assets", audio.path);
+    const tmpAudioPath = join(tmpdir(), `kling-facesync-${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`);
+    extractAudioClip(audioAbsPath, audio.startMs, audio.endMs, tmpAudioPath);
+    let audioBase64: string;
+    try {
+      audioBase64 = readFileSync(tmpAudioPath).toString("base64");
+    } finally {
+      rmSync(tmpAudioPath, { force: true });
+    }
+
+    const submitRes = await fetch(HOST + LIPSYNC_SUBMIT_PATH, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        input: {
+          mode: "audio2video",
+          video_url: videoUrl,
+          face_id: faceId,
+          sound_insert_time: soundInsertTimeMs,
+          audio_type: "file",
+          audio_file: `data:audio/mp3;base64,${audioBase64}`
+        }
+      })
+    });
+    const submitData = (await submitRes.json()) as KlingTaskResponse;
+    if (!submitRes.ok || submitData.code !== 0 || !submitData.data?.task_id) {
+      throw new Error(`Kling lip-sync submit failed: ${submitRes.status} -- ${JSON.stringify(submitData).slice(0, 500)}`);
+    }
+    const taskId = submitData.data.task_id;
+
+    const deadline = Date.now() + 15 * 60 * 1000;
+    let finalData: KlingTaskResponse["data"] | undefined;
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 15000));
+      const pollRes = await fetch(`${HOST}${LIPSYNC_SUBMIT_PATH}/${taskId}`, { headers: { Authorization: `Bearer ${apiKey}` } });
+      const pollData = (await pollRes.json()) as KlingTaskResponse;
+      const status = pollData.data?.task_status;
+      if (status === "succeed" || status === "failed") {
+        finalData = pollData.data;
+        break;
+      }
+    }
+    if (!finalData) throw new Error(`Kling lip-sync task ${taskId} did not finish within 15 minutes.`);
+    if (finalData.task_status === "failed") throw new Error(`Kling lip-sync task ${taskId} failed: ${finalData.task_status_msg ?? "no message"}`);
+
+    const videoUrlResult = finalData.task_result?.videos?.[0]?.url;
+    if (!videoUrlResult) throw new Error(`Kling lip-sync task ${taskId} succeeded with no video URL.`);
+    const downloadRes = await fetch(videoUrlResult);
+    if (!downloadRes.ok) throw new Error(`Failed downloading Kling lip-sync output for task ${taskId}: ${downloadRes.status} ${downloadRes.statusText}`);
+    const videoBuffer = Buffer.from(await downloadRes.arrayBuffer());
+
+    const relPath = join("generated", "lipsync-face", `${taskId}.mp4`);
+    mkdirSync(join(dataDir, "assets", "generated", "lipsync-face"), { recursive: true });
+    writeFileSync(join(dataDir, "assets", relPath), videoBuffer);
+
+    return {
+      status: "accepted",
+      media: { path: relPath },
+      cost: { usd: KLING_FACE_LIPSYNC_COST_USD },
+      provenance: { provider: "kling", model: "lip-sync-audio2video", prompt: "" }
+    };
+  }
+}
+
 export class KlingVideoProvider implements VideoProvider {
   async generateFinal(request: ShotRequest, opts?: { resolution?: "720p" | "1080p"; startFrame?: AssetRef }): Promise<GenerationResult> {
     const apiKey = requireApiKey();

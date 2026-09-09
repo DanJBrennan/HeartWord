@@ -36,6 +36,7 @@ import { join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { getDataDir } from "../../db/client.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
+import { verseRangesRelated } from "../casting/coverage.js";
 
 // 720p/24fps -- Veo's own defaults, kept as the assembly target since
 // that's the intended top quality tier; a 360p draft-fallback beat gets
@@ -152,9 +153,11 @@ export function assembleCoveredSequenceShot(db: DatabaseSync, shotId: string): A
   if (!shot?.dialogue_character_id) {
     throw new Error(`Shot ${shotId} has no dialogue_character_id -- can't find its composite_cast_master audio.`);
   }
-  // Same verse-range-overlap match casting/index.ts and
-  // build-coverage-manifest.ts already use -- see coverage.ts's docstring
-  // for why this is the shared pattern rather than an exact string match.
+  // Same verse-range CONTAINMENT match casting/index.ts and
+  // build-coverage-manifest.ts use -- see coverage.ts's verseRangesRelated
+  // docstring for why this must be containment, not plain overlap
+  // (adjacent verse ranges sharing one boundary vertex, e.g. 8-10 and
+  // 10-11, are NOT the same shot's dialogue even though they "overlap").
   const { start: verseStart, end: verseEnd } = parseVerseRange(shot.verse_ref!);
   const audioRows = db
     .prepare(
@@ -162,13 +165,17 @@ export function assembleCoveredSequenceShot(db: DatabaseSync, shotId: string): A
        WHERE layer = 'composite_cast_master' AND speaker_character_id = ? AND verse_ref IS NOT NULL`
     )
     .all(shot.dialogue_character_id) as Array<{ source_path: string; verse_ref: string; start_ms: number; end_ms: number }>;
-  const audioSeg = audioRows.find((s) => {
-    const { start, end } = parseVerseRange(s.verse_ref);
-    return start <= verseEnd && end >= verseStart;
-  });
-  if (!audioSeg) {
+  const audioMatches = audioRows.filter((s) => verseRangesRelated(parseVerseRange(s.verse_ref), { start: verseStart, end: verseEnd }));
+  if (audioMatches.length === 0) {
     throw new Error(`No composite_cast_master audio_segments row found for shot ${shotId} (${shot.verse_ref}).`);
   }
+  if (audioMatches.length > 1) {
+    throw new Error(
+      `Ambiguous composite_cast_master match for shot ${shotId} (${shot.verse_ref}): ${audioMatches.length} rows ` +
+        `matched (${audioMatches.map((s) => s.verse_ref).join(", ")}) -- expected exactly one.`
+    );
+  }
+  const audioSeg = audioMatches[0]!;
 
   const tmpDir = mkdtempSync(join(tmpdir(), "heartword-assemble-"));
   try {

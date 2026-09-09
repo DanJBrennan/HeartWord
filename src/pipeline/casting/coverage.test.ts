@@ -6,7 +6,8 @@ import {
   validateFraming,
   isFraming,
   isCameraMovement,
-  isCrowdDensity
+  isCrowdDensity,
+  verseRangesRelated
 } from "./coverage.js";
 
 describe("isCrowdDensity", () => {
@@ -93,5 +94,30 @@ describe("isFraming / isCameraMovement", () => {
     expect(isFraming("extreme_close_up")).toBe(false);
     expect(isCameraMovement("push_in")).toBe(true);
     expect(isCameraMovement("zoom")).toBe(false);
+  });
+});
+
+describe("verseRangesRelated", () => {
+  it("matches an exact range", () => {
+    expect(verseRangesRelated({ start: 10, end: 11 }, { start: 10, end: 11 })).toBe(true);
+  });
+
+  it("matches when one range is fully inside the other", () => {
+    expect(verseRangesRelated({ start: 8, end: 9 }, { start: 8, end: 10 })).toBe(true);
+    expect(verseRangesRelated({ start: 8, end: 10 }, { start: 8, end: 9 })).toBe(true);
+  });
+
+  it("rejects the real Scene 1 Shot 8 bug: adjacent ranges sharing only a boundary verse", () => {
+    // Shot 8's own range (10-11) vs Shot 7's audio segment (8-10) -- these
+    // share verse 10 as a boundary but are different shots' dialogue.
+    expect(verseRangesRelated({ start: 10, end: 11 }, { start: 8, end: 10 })).toBe(false);
+  });
+
+  it("rejects a genuinely disjoint range", () => {
+    expect(verseRangesRelated({ start: 20, end: 21 }, { start: 8, end: 10 })).toBe(false);
+  });
+
+  it("matches single-verse ranges exactly", () => {
+    expect(verseRangesRelated({ start: 20, end: 20 }, { start: 20, end: 20 })).toBe(true);
   });
 });

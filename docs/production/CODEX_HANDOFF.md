@@ -92,13 +92,32 @@ dialogue audio. Each beat that needs a NEW keyframe (`requires_new_keyframe
 = 1`, `keyframe_asset_path IS NULL`) is its own generation, separate from
 the shot's own single keyframe this handoff already covers above.
 
-As of this writing there are **43 such beats** across 9 shots (9 masters,
-17 cutaways, 17 additional lip-sync inserts -- the first lip-sync insert
-in each shot reuses that shot's already-approved keyframe as its anchor,
-so it needs no new generation). Run
+**Update 2026-09-09:** the original 43 beats (9 masters, 17 cutaways, 17
+additional lip-sync inserts) across all 9 covered_sequence shots have all
+been generated and accepted, EXCEPT Scene 1 Shot 8 -- see below. Run
 `npx tsx scripts/coverage-keyframes.ts status fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d`
-for the current list -- each row's `notes` field says what that specific
-beat should show.
+for the live, current list -- each row's `notes` field says what that
+specific beat should show. As of this writing that's **3 beats, all on
+Shot 8**.
+
+**Shot 8's beat IDs changed and its old attempt history was deleted.**
+A real bug was found and fixed in the duration calculation feeding
+`coverage-manifest.ts`: two adjacent audio segments sharing a boundary
+verse (Shot 7's `Mark 2:8-10` and Shot 8's own `Mark 2:10-11`, both
+touching verse 10) were both being summed into Shot 8's total dialogue
+duration, doubling its real 18.8s into a wrong 36.8s. That produced an
+8-beat plan reaching well past where Shot 8's actual dialogue audio
+ends -- beats 5-8 had real, accepted keyframes generated for audio that
+belonged to a different shot's math, not this shot's real speech. The
+duration bug is fixed (`coverage.ts`'s `verseRangesRelated`, containment
+instead of plain overlap -- every other shot's duration was already
+correct, only Shot 8 was affected), Shot 8's stale `coverage_beats` rows
+and their `coverage_keyframe_attempts` history were deleted, and it was
+replanned correctly: **4 beats totaling 18.8s** (master, a reused-keyframe
+lip-sync insert, a cutaway, and a fresh lip-sync insert). The 3 beats
+needing new keyframes (sequence 1, 3, 4) are new rows with new IDs --
+if you have any local notes referencing Shot 8's old beat IDs, they no
+longer exist in the database.
 
 This is a **separate tool**, `scripts/coverage-keyframes.ts`
 (`src/pipeline/media-generation/external-coverage-keyframes.ts`), not a

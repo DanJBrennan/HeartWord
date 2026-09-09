@@ -124,6 +124,32 @@ export function computeDialogueDurationMs(segments: DialogueSegment[]): number {
   return segments.reduce((total, seg) => total + Math.max(0, seg.endMs - seg.startMs), 0);
 }
 
+export interface VerseRange {
+  start: number;
+  end: number;
+}
+
+/**
+ * Whether two verse ranges are close enough that one is the other's
+ * dialogue -- deliberately CONTAINMENT, not plain interval overlap.
+ * Fixed 2026-09-09 after a real bug: Scene 1 Shot 8 (verse range 10-11)
+ * matched against Shot 7's own audio segment (verse range 8-10) under a
+ * naive overlap check (`start <= end && end >= start`), because both
+ * ranges touch verse 10 as a shared boundary -- adjacent verse-range
+ * labels routinely share exactly one boundary vertex like this (one
+ * segment's audio ends partway through verse 10, the next begins where
+ * it left off), and plain overlap treats that shared vertex as "these
+ * two ranges are the same dialogue." That doubled Shot 8's real 18.8s of
+ * audio into a wrongly-computed 36.8s, which then produced 4 real,
+ * already-approved keyframes for a duration that didn't belong to the
+ * shot at all. Containment doesn't have this failure mode: a segment
+ * only counts if it's the shot's own dialogue (one range wholly inside
+ * the other), not merely adjacent to it.
+ */
+export function verseRangesRelated(a: VerseRange, b: VerseRange): boolean {
+  return (a.start >= b.start && a.end <= b.end) || (b.start >= a.start && b.end <= a.end);
+}
+
 export interface CoveragePlanResult {
   coveragePlan: CoveragePlan;
   notes: string | null;
