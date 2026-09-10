@@ -42,6 +42,7 @@ import { basename, extname, join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
 import type {
   AssetRef,
+  CharacterRef,
   DraftVideoProvider,
   GenerationResult,
   ImageEditor,
@@ -390,6 +391,80 @@ export class GeminiImageEditor implements ImageEditor {
     const output = extractOutputContent(data, "image", `editRegion for ${asset.path}`);
 
     const relPath = join("generated", "edits", `${basename(absPath, extname(absPath))}-${randomUUID().slice(0, 8)}.jpg`);
+    mkdirSync(join(dataDir, "assets", "generated", "edits"), { recursive: true });
+    writeFileSync(join(dataDir, "assets", relPath), Buffer.from(output.data, "base64"));
+
+    return {
+      status: "accepted",
+      media: { path: relPath },
+      cost: { usd: NANO_BANANA_PRO_COST_USD },
+      provenance: { provider: "gemini", model: NANO_BANANA_PRO_MODEL, prompt: instruction }
+    };
+  }
+
+  /**
+   * Like editRegion, but for the one case editRegion structurally can't
+   * do: swapping WHO a person in an existing image is, not just touching
+   * up a detail. editRegion takes a single source image and a text
+   * instruction only -- there's nowhere to attach a real reference photo,
+   * so asking it to "make the man in blue look like Jesus" has nothing to
+   * anchor Jesus's actual canon face to and would drift generic, the same
+   * likeness-drift problem loadCharacterReferenceImages was built to fix
+   * for GeminiImageProvider.generate() above. This attaches the source
+   * image AND the named character's real approved reference image(s) in
+   * one Interactions call, so the edit has an actual face to match against
+   * instead of guessing from a text description alone.
+   *
+   * Built 2026-09-09 for a real case: Scene 1's pilot-sourced roof-
+   * lowering shot showed a generic stand-in actor as Jesus; Dan wanted
+   * that figure re-cast as HeartWord's own canonical Jesus while every
+   * other pixel (the four friends, the crowd, the rope rig, the overhead
+   * camera angle) stayed exactly as filmed.
+   */
+  async recastCharacter(asset: AssetRef, character: CharacterRef, instruction: string): Promise<GenerationResult> {
+    const apiKey = requireApiKey();
+    const dataDir = getDataDir();
+    const absPath = join(dataDir, "assets", asset.path);
+    if (!existsSync(absPath)) {
+      throw new Error(`recastCharacter: asset not found at ${absPath}.`);
+    }
+    const sourceExt = extname(absPath).slice(1).toLowerCase();
+    const sourceMimeType = sourceExt === "jpg" ? "image/jpeg" : `image/${sourceExt || "png"}`;
+    const sourceB64 = readFileSync(absPath).toString("base64");
+
+    const [referenceImages] = loadCharacterReferenceImages([character]);
+    if (!referenceImages || referenceImages.images.length === 0) {
+      throw new Error(`recastCharacter: no reference images found for character version ${character.characterVersionId}.`);
+    }
+
+    const content: InteractionContentBlock[] = [
+      { type: "image", data: sourceB64, mime_type: sourceMimeType },
+      {
+        type: "text",
+        text:
+          `Reference image(s) for ${referenceImages.characterName} -- this is the EXACT face, build, and likeness to use. ` +
+          `Do not redesign, genericize, or drift toward a different face -- match this reference's facial structure, skin ` +
+          `tone, and regional appearance precisely.`
+      },
+      ...referenceImages.images.map((img) => ({ type: "image" as const, data: img.data, mime_type: img.mimeType })),
+      {
+        type: "text",
+        text:
+          `In the attached scene image, replace ONLY the specific person described below with ${referenceImages.characterName} ` +
+          `(using the exact reference likeness above) -- keep his approximate pose, position, and framing in the scene, but ` +
+          `render his actual face/build/identity, and his established canon wardrobe if visible. Leave every other person, ` +
+          `the rope rig, the crowd, the roof opening, the camera angle, the lighting, and every other detail in the image ` +
+          `exactly as it already is: ${instruction}`
+      }
+    ];
+
+    const data = await callInteractions(apiKey, INTERACTIONS_IMAGE_EDIT_VERSION, NANO_BANANA_PRO_MODEL, content, {
+      type: "image",
+      mime_type: "image/jpeg"
+    });
+    const output = extractOutputContent(data, "image", `recastCharacter for ${asset.path}`);
+
+    const relPath = join("generated", "edits", `${basename(absPath, extname(absPath))}-recast-${randomUUID().slice(0, 8)}.jpg`);
     mkdirSync(join(dataDir, "assets", "generated", "edits"), { recursive: true });
     writeFileSync(join(dataDir, "assets", relPath), Buffer.from(output.data, "base64"));
 
