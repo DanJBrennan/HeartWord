@@ -71,7 +71,11 @@ const supplementalInserts: Array<{ label: string; verseRef: string; durationMs: 
   { label: "friends-roof-arrival", verseRef: "Mark 2:1-5 (narration)", durationMs: 4000 },
   { label: "friends-roof-digging", verseRef: "Mark 2:1-5 (narration)", durationMs: 4000 },
   { label: "pilot-shot004-recast", verseRef: "Mark 2:1-5 (narration)", durationMs: 4000 },
+  { label: "crowd-indoor-reaction-to-dust-falling", verseRef: "Mark 2:1-5 (narration)", durationMs: 8000 },
+  { label: "paralytic-s-tearful-hope-and-crowd-silence", verseRef: "Mark 2:1-5 (narration)", durationMs: 8000 },
   { label: "paralytic-face-before-healing", verseRef: "Mark 2:5-8 (narration)", durationMs: 4000 },
+  { label: "friends-watching-from-roof-aperture", verseRef: "Mark 2:5-8 (narration)", durationMs: 4000 },
+  { label: "crowd-witness-breathless-reaction", verseRef: "Mark 2:5-8 (narration)", durationMs: 4000 },
   { label: "scribe-unhappy-amid-celebration", verseRef: "Mark 2:12-14 (narration)", durationMs: 4000 }
 ];
 

@@ -123,6 +123,7 @@ interface ShotContextRow {
   action: string;
   scene_seq: number;
   shot_seq: number;
+  needs_lip_sync: number;
 }
 
 interface CharacterRow {
@@ -193,7 +194,7 @@ function gatherGapContext(
 ): { before: ShotContextRow[]; after: ShotContextRow[]; withinGap: ShotContextRow[]; castNames: string[] } {
   const allShots = db
     .prepare(
-      `SELECT s.verse_ref, s.action, sc.sequence AS scene_seq, s.sequence AS shot_seq
+      `SELECT s.verse_ref, s.action, sc.sequence AS scene_seq, s.sequence AS shot_seq, s.needs_lip_sync
        FROM shots s JOIN scenes sc ON sc.id = s.scene_id
        WHERE sc.project_id = ? ORDER BY sc.sequence, s.sequence`
     )
@@ -240,7 +241,9 @@ export async function proposeGapFillers(
   const { before, after, withinGap, castNames } = gatherGapContext(db, projectId, verseStart, verseEnd);
 
   const describe = (rows: ShotContextRow[]) =>
-    rows.length === 0 ? "(none)" : rows.map((r) => `  - [${r.verse_ref}] ${r.action}`).join("\n");
+    rows.length === 0
+      ? "(none)"
+      : rows.map((r) => `  - [${r.verse_ref}]${r.needs_lip_sync ? " (LIP-SYNCED)" : ""} ${r.action}`).join("\n");
 
   const prompt =
     `You are the Creative Director for a Scripture video production (Hatam-language Mark, dramatized with a real ` +
@@ -271,7 +274,11 @@ export async function proposeGapFillers(
     `existing shot (by its exact verse_ref) and describe the new position in "description".\n` +
     `  - "extend_existing": one of the shots already listed above should simply run longer -- more time held on the ` +
     `same action or reaction -- rather than cutting away to something new at all. Say which existing shot (by its ` +
-    `exact verse_ref) and how many additional seconds in "estimatedDurationSec".\n\n` +
+    `exact verse_ref) and how many additional seconds in "estimatedDurationSec". NEVER target a shot marked ` +
+    `(LIP-SYNCED) with extend_existing -- its length is already locked to its real dialogue audio, so lengthening ` +
+    `its video would break lip-sync. If the moment you want to linger on IS a lip-synced line, propose a new_shot ` +
+    `cutaway/reaction instead (e.g. a listener's continued reaction after the line ends), not an extension of the ` +
+    `lip-synced shot itself.\n\n` +
     `Propose enough ideas, of whichever kinds actually fit, to plausibly close roughly ${(gapMs / 1000).toFixed(1)} seconds ` +
     `of gap (durations are estimates, they don't need to sum exactly, and reorder_existing contributes 0 seconds on ` +
     `its own). For each idea, decide honestly whether it's a "continuity" extension of the action already listed ` +

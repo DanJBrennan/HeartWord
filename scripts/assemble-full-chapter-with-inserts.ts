@@ -325,21 +325,31 @@ const timeline: Segment[] = [
   SHOT("81f67f72-22b0-4ca7-84cd-addd7b42115b"), // Scene2 Shot1
   SHOT("26d03459-0d6a-4f1d-b9e3-5239014539bf"), // Scene2 Shot2
   SHOT("ce87d971-d15f-4a75-b636-1c9dcb52a1fb"), // Scene2 Shot3
-  SHOT("097de51b-95bd-485d-952f-10e84160e13a"), // Scene2 Shot4
-  SHOT("19997eba-627e-46e4-ac5b-946265fe57dc"), // Scene2 Shot5
+  RAW("generated/video/matthew-hesitates-at-his-coins-before-choosing-to-follow.mp4", "matthew-hesitates-at-his-coins-before-choosing-to-follow", AI_GENERATED_INSERT), // Mark 2:12-14 gap
+  SHOT("097de51b-95bd-485d-952f-10e84160e13a"), // Scene2 Shot4 (extended 4s->8s)
+  SHOT("19997eba-627e-46e4-ac5b-946265fe57dc"), // Scene2 Shot5 (extended 4s->5.1s, Kling fallback)
+  RAW("generated/video/kling-926905441325154362.mp4", "matthew-serving-bread-and-drink-to-jesus-and-guests"), // Mark 2:14-16 gap (Kling fallback, no audio track)
+  RAW("generated/video/disciples-observe-scribes-murmuring-at-doorway.mp4", "disciples-observe-scribes-murmuring-at-doorway", AI_GENERATED_INSERT), // Mark 2:14-16 gap
   SHOT("9101333a-d2ef-4067-ae4d-c47fc0d398d2"), // Scene2 Shot6
   SHOT("462acce5-2fd3-41df-a38f-872e29a891f3"), // Scene2 Shot7
   SHOT("cb1856ec-2e9f-4ba7-804c-a758da8c20d5"), // Scene2 Shot8
+  RAW("generated/video/matthew-and-disciples-reacting-at-table.mp4", "matthew-and-disciples-reacting-at-table", AI_GENERATED_INSERT), // Mark 2:17-18 gap
   SHOT("8afd8f47-6a49-43ee-8b97-74598a000331"), // Scene3 Shot1
+  RAW("generated/video/scribes-observing-near-doorway.mp4", "scribes-observing-near-doorway", AI_GENERATED_INSERT), // Mark 2:17-18 gap
   SHOT("f26b7be7-3801-4b47-8d38-a8ada38aa981"), // Scene3 Shot2
   SHOT("9a1b2acb-6da9-4291-a4e1-5cbd78629e2c"), // Scene3 Shot3
+  RAW("generated/video/disciples-react-warmly-to-jesus-wedding-analogy.mp4", "disciples-react-warmly-to-jesus-wedding-analogy", AI_GENERATED_INSERT), // Mark 2:18-19 gap
+  RAW("generated/video/questioners-processing-jesus-counter-question.mp4", "questioners-processing-jesus-counter-question", AI_GENERATED_INSERT), // Mark 2:18-19 gap
   SHOT("9c291cdd-389e-45db-b737-866543d730c6"), // Scene3 Shot4
   SHOT("44009342-73b8-4b8a-ad46-085d64253258"), // Scene3 Shot5
   SHOT("8209a47b-eaa0-4dcd-9a43-e3a9afd2e369"), // Scene3 Shot6
-  SHOT("7b719b16-ee4d-4d6a-90ff-3c22327f1a86"), // Scene4 Shot1
+  SHOT("7b719b16-ee4d-4d6a-90ff-3c22327f1a86"), // Scene4 Shot1 (extended 4s->8s)
+  RAW("generated/video/close-up-of-peter-rubbing-grain-and-chaff.mp4", "close-up-of-peter-rubbing-grain-and-chaff", AI_GENERATED_INSERT), // Mark 2:22-24 gap
+  RAW("generated/video/scribes-watch-in-silent-disapproval.mp4", "scribes-watch-in-silent-disapproval", AI_GENERATED_INSERT), // Mark 2:22-24 gap
   SHOT("94a721a3-1fc6-44d1-a9e2-9021e26ec408"), // Scene4 Shot2
   SHOT("cef5e711-3d67-4b5c-aff1-4315587c6e23"), // Scene4 Shot3
-  SHOT("96199814-0884-4a4a-bd95-b84950fce4fd") // Scene4 Shot4
+  SHOT("96199814-0884-4a4a-bd95-b84950fce4fd"), // Scene4 Shot4
+  RAW("generated/video/kling-926911320539140170.mp4", "peter-s-reverent-reflection", AI_GENERATED_INSERT) // Mark 2:28 gap
 ];
 
 function run() {

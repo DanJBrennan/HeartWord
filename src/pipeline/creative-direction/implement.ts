@@ -88,6 +88,27 @@ export async function implementApprovedIdeas(db: DatabaseSync, approvedIdeas: Ga
 
   for (const idea of approvedIdeas) {
     if (idea.operation !== "new_shot") {
+      // Defensive check even though the Creative Director's own prompt
+      // now forbids this (confirmed live: it proposed extending a
+      // lip-synced shot before that guard existed) -- a lip-synced
+      // shot's length is locked to its real dialogue audio, so
+      // "extending" it would desync the mouth from the line.
+      if (idea.operation === "extend_existing") {
+        const candidates = db
+          .prepare(`SELECT needs_lip_sync FROM shots WHERE verse_ref = ?`)
+          .all(idea.targetShotVerseRef) as Array<{ needs_lip_sync: number }>;
+        // Multiple shots can share one verse_ref label -- if ANY of them
+        // is lip-synced, treat the target as ambiguous/risky rather than
+        // guess which one was meant.
+        if (candidates.some((c) => c.needs_lip_sync)) {
+          failures.push({
+            ideaId: idea.id,
+            label: idea.label,
+            error: `Refused: a shot at ${idea.targetShotVerseRef} is lip-synced -- extending it (or an ambiguous same-labeled shot) risks desyncing dialogue audio. Skipped rather than applied.`
+          });
+          continue;
+        }
+      }
       timelineEdits.push({
         ideaId: idea.id,
         operation: idea.operation,
