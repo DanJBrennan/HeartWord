@@ -10,9 +10,27 @@
  * approves deliberate editorial gaps between shots (a beat of silence,
  * an ambience bed, room for a scene transition); no rows in that layer
  * exist yet, and choosing where those gaps belong is an editorial
- * decision this stage can't make on its own. What this DOES do
- * correctly: every shot's own clip already carries its own real
- * dialogue or narration audio, trimmed to its own real duration -- this
+ * decision this stage can't make on its own.
+ *
+ * KNOWN GAP, not an accepted limitation -- see docs/design/timeline.md's
+ * "narrator must never go silent" requirement: this stage assumes every
+ * shot's own clip already carries the audio it needs, but
+ * assemble-single-shot.ts only muxes real dialogue for needs_lip_sync
+ * shots -- a shot with no on-camera speaker comes out of that stage
+ * silent, and this stage has no mechanism (yet) to lay the real
+ * `original_reading` narration underneath it instead. That means whole
+ * narration-only passages of the real recording currently go unheard.
+ * Confirmed live on Mark 2: the source recording runs 446s but shots
+ * with no dialogue only ever got ~4-8s of silent AI-generated video each,
+ * regardless of how long the narrator actually spends on that beat.
+ * Fixing this for real means: (1) real per-shot/per-group duration
+ * targets sized to the real narration span they cover (see the coverage
+ * table this doc's caller should build), and (2) muxing the narration
+ * audio continuously under a whole covering group rather than per-shot.
+ * A worked example of doing this by hand for one beat lives in
+ * docs/production/PARALYTIC_EXIT_SEQUENCE_HANDOFF.md. What this stage
+ * DOES do correctly today: every DIALOGUE shot's own clip already
+ * carries its own real audio, trimmed to its own real duration -- this
  * stage only concatenates those already-correct pieces back to back,
  * adding nothing and removing nothing between them.
  *

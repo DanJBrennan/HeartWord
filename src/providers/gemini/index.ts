@@ -508,13 +508,19 @@ export class GeminiVideoProvider implements VideoProvider {
   ): Promise<GenerationResult> {
     const apiKey = requireApiKey();
     const resolution = opts?.resolution ?? "720p";
-    // Veo's real, empirically-confirmed bound (2026-09-09, a live 400
-    // response: "The number value for durationSeconds is out of bound...
-    // between 4 and 8, inclusive"). A coverage beat's cutaway can be as
-    // short as ~3s -- clamping up to Veo's 4s floor means the resulting
-    // clip runs slightly longer than that beat's own audio span; trimming
-    // it down to fit is clip-assembly's job, not generation's.
-    const durationSeconds = Math.min(8, Math.max(4, opts?.durationSeconds ?? 8));
+    // Veo's stated bound is "between 4 and 8, inclusive" (2026-09-09, a
+    // live 400 response), but the REAL constraint is a discrete set
+    // within that range, not every value in it -- confirmed twice more
+    // (2026-09-09's original 5, and 2026-09-10's 7) both getting the
+    // IDENTICAL "out of bound" error text despite being inside [4,8].
+    // Only 4 and 8 have ever actually succeeded across this whole
+    // project's real calls, so every request snaps to whichever of
+    // those two is closer rather than trusting an arbitrary intermediate
+    // value -- clip-assembly already trims/extends to a shot's own real
+    // target duration regardless of which of these two Veo actually
+    // rendered, so this doesn't lose precision that mattered anyway.
+    const requested = opts?.durationSeconds ?? 8;
+    const durationSeconds = requested <= 6 ? 4 : 8;
     const dataDir = getDataDir();
 
     // Veo does image-to-video from a single start frame. Default: reuse

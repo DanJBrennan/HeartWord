@@ -94,10 +94,102 @@ function concatClips(clipPaths: string[], outPath: string, tmpDir: string): void
   });
 }
 
-function muxAudio(videoPath: string, audioPath: string, outPath: string): void {
+/** Exact decoded frame count -- `-count_frames` actually decodes and
+ *  tallies every frame rather than trusting a container-level `nb_frames`
+ *  tag (which can be an estimate). See assemble-single-shot.ts's
+ *  identical helper: comparing DURATION tags (even stream-level ones)
+ *  was itself a source of the original bug this fixes, because a `-t`-
+ *  based cutoff has real run-to-run timing jitter with a threaded
+ *  encoder -- re-running the IDENTICAL trim command against the
+ *  IDENTICAL source produced different frame counts from one run to the
+ *  next. A frame COUNTER (`-frames:v`) doesn't have that problem. */
+function ffprobeFrameCount(absPath: string): number {
+  const out = execFileSync(
+    "ffprobe",
+    ["-v", "error", "-select_streams", "v", "-count_frames", "-show_entries", "stream=nb_read_frames", "-of", "default=noprint_wrappers=1:nokey=1", absPath],
+    { encoding: "utf-8" }
+  );
+  return parseInt(out.trim().split("\n")[0], 10);
+}
+
+/** Conforms the concat-demuxer's output to EXACTLY `durationMs`,
+ *  deterministically -- confirmed live (2026-09-10, Dan noticed a few
+ *  clips felt "off by a fraction of a second"): each beat's own
+ *  `-t`-based trim in normalizeAndTrim has real timing jitter (see
+ *  ffprobeFrameCount's comment), and that per-beat imprecision then ADDS
+ *  UP across every beat in a covered_sequence shot (confirmed on Scene 1
+ *  Shot 8: 4 beats, ~140ms short overall -- roughly one frame per beat).
+ *  Targets an exact frame count via `-frames:v` rather than a timestamp,
+ *  and pads any genuine shortfall by cloning the last frame (imperceptible
+ *  at this magnitude) rather than let the real dialogue audio outrun
+ *  picture that already stopped moving. */
+function forceExactDuration(sourcePath: string, durationMs: number, outPath: string): void {
+  const targetFrames = Math.round((durationMs / 1000) * TARGET_FPS);
+  const actualFrames = ffprobeFrameCount(sourcePath);
+  if (actualFrames >= targetFrames) {
+    execFileSync(
+      "ffmpeg",
+      ["-y", "-i", sourcePath, "-frames:v", String(targetFrames), "-c:v", "libx264", "-preset", "medium", "-crf", "18", outPath],
+      { stdio: ["ignore", "ignore", "pipe"] }
+    );
+    return;
+  }
+  const deficitMs = ((targetFrames - actualFrames) / TARGET_FPS) * 1000;
   execFileSync(
     "ffmpeg",
-    ["-y", "-i", videoPath, "-i", audioPath, "-c:v", "copy", "-c:a", "aac", "-map", "0:v:0", "-map", "1:a:0", "-shortest", outPath],
+    [
+      "-y",
+      "-i",
+      sourcePath,
+      "-vf",
+      `tpad=stop_mode=clone:stop_duration=${(deficitMs / 1000).toFixed(3)}`,
+      "-frames:v",
+      String(targetFrames),
+      "-c:v",
+      "libx264",
+      "-preset",
+      "medium",
+      "-crf",
+      "18",
+      outPath
+    ],
+    { stdio: ["ignore", "ignore", "pipe"] }
+  );
+}
+
+/** Re-encodes with an explicit `-frames:v` target rather than `-c:v copy`
+ *  + `-shortest` -- see assemble-single-shot.ts's identical fix: stream-
+ *  copying the (already frame-accurate) video while `-shortest` trims
+ *  against the audio can only cut at whatever packet/GOP boundary the
+ *  copied stream already has, which undid forceExactDuration's fix right
+ *  back to the same drift when this was still `-c:v copy`. */
+function muxAudio(videoPath: string, audioPath: string, durationMs: number, outPath: string): void {
+  const targetFrames = Math.round((durationMs / 1000) * TARGET_FPS);
+  execFileSync(
+    "ffmpeg",
+    [
+      "-y",
+      "-i",
+      videoPath,
+      "-i",
+      audioPath,
+      "-frames:v",
+      String(targetFrames),
+      "-c:v",
+      "libx264",
+      "-preset",
+      "medium",
+      "-crf",
+      "18",
+      "-c:a",
+      "aac",
+      "-map",
+      "0:v:0",
+      "-map",
+      "1:a:0",
+      "-shortest",
+      outPath
+    ],
     { stdio: ["ignore", "ignore", "pipe"] }
   );
 }
@@ -191,11 +283,14 @@ export function assembleCoveredSequenceShot(db: DatabaseSync, shotId: string): A
     const silentPath = join(tmpDir, "silent-concat.mp4");
     concatClips(trimmedPaths, silentPath, tmpDir);
 
+    const exactSilentPath = join(tmpDir, "silent-exact.mp4");
+    forceExactDuration(silentPath, totalDurationMs, exactSilentPath);
+
     const audioAbsPath = join(dataDir, "assets", audioSeg.source_path);
     const relPath = join("generated", "assembled", `${shotId}.mp4`);
     const outPath = join(dataDir, "assets", relPath);
     mkdirSync(join(dataDir, "assets", "generated", "assembled"), { recursive: true });
-    muxAudio(silentPath, audioAbsPath, outPath);
+    muxAudio(exactSilentPath, audioAbsPath, totalDurationMs, outPath);
 
     const attemptId = randomUUID();
     const now = Date.now();

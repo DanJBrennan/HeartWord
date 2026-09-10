@@ -359,3 +359,69 @@ CREATE TABLE IF NOT EXISTS chapter_renders (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_chapter_renders_project ON chapter_renders(project_id);
+
+-- Creative Director agent (src/pipeline/creative-direction/index.ts),
+-- added 2026-09-10 at Dan's request: when a real narration-only span in
+-- the source recording has no matching visual coverage (see
+-- docs/design/timeline.md's coverage requirement and
+-- scripts/report-narration-coverage.ts), this agent proposes specific
+-- gap-filling shot ideas -- mostly continuity extensions of the
+-- surrounding action, but free to invent a human-interest beat (a
+-- reaction, a piece of business, an ambient detail) as long as it keeps
+-- the scene's scriptural decorum. History-preserving like every other
+-- generation_attempts-adjacent table here: re-running the agent against
+-- the same gap adds a new row rather than overwriting the last proposal.
+CREATE TABLE IF NOT EXISTS creative_direction_proposals (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  narration_span_verse_ref TEXT NOT NULL,
+  gap_ms INTEGER NOT NULL,
+  ideas_json TEXT NOT NULL,  -- JSON array of GapFillIdea (see index.ts)
+  model TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_creative_direction_proposals_project ON creative_direction_proposals(project_id);
+
+-- Production Director agent (src/pipeline/creative-direction/
+-- production-director.ts), added 2026-09-10 at Dan's request. NOT the
+-- same role as src/pipeline/qc/director.ts's Director (which reviews an
+-- already-generated shot's keyframe against the Critic + automated
+-- checks) -- this is the film-production "director" role from
+-- docs/design/shot-planning.md's multi-agent model, scoped here to
+-- deciding what the Creative Director agent may build to fill a
+-- narration coverage gap: budget/time cost and the overall intent of
+-- the film, not per-shot visual QC.
+--
+-- Every round of the negotiation (a proposal, a requested change, an
+-- approval, a rejection, or a forced final decision) is logged here --
+-- docs/design/shot-planning.md's "Interaction Log" requirement applied
+-- to this specific negotiation, so a producer can see who proposed what
+-- and how a disagreement actually got resolved, not just the outcome.
+CREATE TABLE IF NOT EXISTS director_negotiation_log (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  narration_span_verse_ref TEXT NOT NULL,
+  idea_id TEXT NOT NULL,        -- stable id assigned to one idea/conflict when first proposed, preserved across revisions
+  round INTEGER NOT NULL,       -- 0 = initial Creative Director proposal for this idea
+  role TEXT NOT NULL CHECK (role IN ('creative_director','production_director')),
+  verdict TEXT CHECK (verdict IN ('approve','request_changes','reject','forced_final') OR verdict IS NULL), -- set on production_director rows
+  content TEXT NOT NULL,        -- the idea (JSON) or the verdict's feedback text
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_director_negotiation_log_project ON director_negotiation_log(project_id);
+
+-- Final outcome of one gap's negotiation -- the ideas the Production
+-- Director actually approved (whether by agreement or by exercising its
+-- forced-final authority after 10 rounds on a given conflict), ready to
+-- be implemented (real keyframe/video generation for a new_shot idea; a
+-- direct timeline edit for reorder_existing/extend_existing).
+CREATE TABLE IF NOT EXISTS director_resolutions (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  narration_span_verse_ref TEXT NOT NULL,
+  approved_ideas_json TEXT NOT NULL,
+  rounds_used INTEGER NOT NULL,      -- max round reached across all this gap's conflicts
+  forced_final_count INTEGER NOT NULL DEFAULT 0, -- how many ideas hit the 10-round cap
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_director_resolutions_project ON director_resolutions(project_id);

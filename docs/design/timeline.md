@@ -14,6 +14,41 @@ from the source narration.
   re-inserted without rebuilding the whole timeline.
 - Output a file/format the user can actually open and edit further (per
   `docs/USER_WORKFLOW.md` — this is a starting cut, not a locked final export).
+- **The narrator must never go silent.** HeartWord presents Scripture in its
+  entirety, so every second of the real approved recording — narration and
+  dialogue alike — must be audible somewhere in the final chapter; a shot
+  with no on-camera speaker is not a shot with no audio requirement. This is
+  a hard requirement for every chapter, not just Mark 2 (where it was first
+  caught missing — see `docs/production/PARALYTIC_EXIT_SEQUENCE_HANDOFF.md`
+  for a worked example of the fix). Concretely, for every future chapter's
+  assembly:
+  - The real, continuous source recording (`original_reading` layer) is the
+    master clock. Dialogue spans play the `composite_cast_master` redub in
+    place of the original line (durations match to within tens of ms, so
+    this doesn't drift); every narration-only span plays the original
+    narrator's real voice — never silence, and never a provider's own
+    generated audio track.
+  - A shot (or group of shots) covering a narration-only span must have its
+    video duration(s) sum to that span's real duration — not whatever
+    length a single ~4-8s AI generation happened to produce. Close any
+    shortfall by extending individual clips toward the provider's duration
+    ceiling first, then by adding more short cutaways on the same beat
+    (more coverage, not longer holds); use a brief freeze-frame only for a
+    last few leftover seconds.
+  - Narration audio for a multi-shot span is muxed once, continuously,
+    under the whole concatenated group — never sliced and re-attached
+    per-shot, which risks cutting the narrator off mid-word.
+  - A silent supplementary insert (b-roll with no dialogue of its own) still
+    must not create a silent gap by default: mute its own generated audio
+    and lay the real narration/dialogue that already belongs at that point
+    in the story underneath it, continuing seamlessly into whatever
+    follows. The one deliberate exception is a span the producer has
+    marked for a music bed instead of narration (e.g. a wordless
+    celebratory beat) -- confirmed with Dan, not assumed by default; see
+    `docs/production/PARALYTIC_EXIT_SEQUENCE_HANDOFF.md`'s 3-clip exit
+    sequence for a real example: it stays silent now (no narration
+    forced in) because that stretch is planned for music later, not
+    because muting it was the easy option.
 
 ## Project Identity: Language x Book x Chapter
 

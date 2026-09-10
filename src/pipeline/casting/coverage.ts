@@ -29,6 +29,21 @@
  *    media generation exists: `clips` is already a separate table from
  *    `shots` for exactly this reason (one planned shot legitimately becomes
  *    several clips on the timeline).
+ *
+ *    Per Dan's explicit direction (2026-09-10): only the tight lip-synced
+ *    insert beats actually need Kling's Avatar lip-sync API at all -- the
+ *    wide master and the cutaway/reaction beats never show the speaker's
+ *    mouth, so they should be generated through the REGULAR video pipeline
+ *    (generateFinalVideoWithFallback's Veo/Kling-scene/draft chain), not
+ *    Kling's Avatar API. Two real reasons, not just avoiding an unneeded
+ *    call: it sidesteps Kling Avatar's own ~8-10s single-clip ceiling for
+ *    every beat that isn't a close-up (a wide/cutaway beat can run as long
+ *    as the regular pipeline's own limits allow instead), and it's a
+ *    genuinely more interesting cut for the viewer than holding on the same
+ *    lip-synced close-up for an entire long speech. When stage 4/5 build a
+ *    covered sequence's beats, only mark `needsLipSync` on the tight-insert
+ *    beats -- the master and cutaways get `needsLipSync: false` even though
+ *    they belong to a shot whose overall `dialogue_character_id` is set.
  */
 
 export type Framing = "wide" | "medium_wide" | "medium" | "medium_close" | "close_up" | "insert";
@@ -174,6 +189,8 @@ export function planCoverage(dialogueDurationMs: number): CoveragePlanResult {
       `when stage 4/5 build this shot: one wide master (establishes geography, no lip-sync needed), tight ` +
       `lip-synced inserts on the emphasis lines only, and cutaways to listeners/reactions in between -- all ` +
       `playing under this shot's one continuous dialogue audio (an L-cut: the audio never stops, only the ` +
-      `picture cuts).`
+      `picture cuts). Only the tight inserts need Kling's Avatar lip-sync API -- generate the master and every ` +
+      `cutaway/reaction beat through the regular video pipeline instead, since they never show the speaker's ` +
+      `mouth. That also sidesteps Kling Avatar's own ~8-10s per-clip ceiling for those beats.`
   };
 }
