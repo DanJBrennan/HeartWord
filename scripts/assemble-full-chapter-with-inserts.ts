@@ -175,7 +175,7 @@ const timeline: Segment[] = [
   SHOT("0d43887a-8c20-4271-a6d8-3cafad177558"), // Scene1 Shot7
   RAW("generated/video/paralytic-face-before-healing.mp4", "paralytic-face-before-healing"),
   SHOT("ea5e2ff9-c321-41f2-9c80-fd856c05d78d"), // Scene1 Shot8
-  RAW("generated/video/paralytic-astonishment.mp4", "paralytic-astonishment"),
+  RAW("generated/video/kling-926869751820460115.mp4", "paralytic-astonishment"),
   SHOT("e84e957d-de28-4d44-9bf9-9e84cd83a2ec"), // Scene1 Shot9
   RAW("generated/video/kling-926838984880947236.mp4", "paralytic-gratitude"),
   RAW("generated/video/friends-happy-glance.mp4", "friends-happy-glance"),

@@ -95,10 +95,10 @@ Characters visible: Healed paralytic (matching his reference image), still unhea
     characters: [PARALYTIC],
     prompt: `${CASTING_ANCHOR}
 
-Shot: medium close-up, static camera, straight-on eye level, slightly low angle looking up at him since he is now standing.
-Action: The paralytic now stands fully upright, healed, having just risen from the mat moments ago. His mouth is slightly open in disbelief, eyes wide and staring straight ahead, chest rising with a sharp astonished breath -- the raw, stunned moment of realizing his body works again, before any joy or relief has fully registered. Sweat and dust still visible on his face and simple tunic. A blurred crowd of onlookers fills the background, out of focus, all reacting.
-Population/crowd: dense but out-of-focus crowd filling the background.
-Characters visible: Healed paralytic (matching his reference image), now standing and healed.`
+Shot: medium close-up, static camera, straight-on eye level, slightly low angle looking up at him since he is now standing. INTERIOR of the packed house room where the healing just took place -- the SAME crowded interior room as the rest of this scene: rough dark basalt stone walls, low timber roof beams overhead, a single shaft of daylight falling from the roof opening above, dim ambient light. Absolutely NO exterior village street, NO open sky, NO separate building facades -- this is an interior room, walls visible close behind the crowd on all sides.
+Action: The paralytic now stands fully upright, healed, having just risen from the mat moments ago, still inside the crowded room. His mouth is slightly open in disbelief, eyes wide and staring straight ahead, chest rising with a sharp astonished breath -- the raw, stunned moment of realizing his body works again, before any joy or relief has fully registered. Sweat and dust still visible on his face and simple tunic. A blurred crowd of onlookers fills the background, out of focus, all reacting, packed close within the same room.
+Population/crowd: dense but out-of-focus crowd filling the background, inside the room.
+Characters visible: Healed paralytic (matching his reference image), now standing and healed, indoors.`
   },
   {
     id: "paralytic-gratitude",
