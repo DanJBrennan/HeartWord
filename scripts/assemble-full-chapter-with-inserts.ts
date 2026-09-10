@@ -273,10 +273,15 @@ const byShotId = new Map(shotClips.map((c) => [c.shot_id, c]));
 
 type AudioOverride = { relPath: string; startMs: number };
 type Segment =
-  | { kind: "shot"; shotId: string; audioOverride?: AudioOverride }
+  | { kind: "shot"; shotId: string; audioOverride?: AudioOverride; durationMsOverride?: number }
   | { kind: "raw"; relPath: string; label: string; durationMsOverride?: number; audioOverride?: AudioOverride; forceMute?: boolean };
 
-const SHOT = (id: string, audioOverride?: AudioOverride): Segment => ({ kind: "shot", shotId: id, audioOverride });
+const SHOT = (id: string, audioOverride?: AudioOverride, durationMsOverride?: number): Segment => ({
+  kind: "shot",
+  shotId: id,
+  audioOverride,
+  durationMsOverride
+});
 const RAW = (
   relPath: string,
   label: string,
@@ -294,22 +299,40 @@ const RAW = (
 const AI_GENERATED_INSERT = { forceMute: true };
 
 const timeline: Segment[] = [
+  // Chapter title card (docs/design/chapter-title-card.md, decided with
+  // Dan 2026-09-10: opening card only, no persistent on-screen mark).
+  // Real font rendering (scripts/build-chapter-title-card.ts), never
+  // AI-generated -- every provider prompt in this pipeline forbids
+  // in-scene text.
+  RAW("generated/chapter/blocks/mark-2-title-card.mp4", "title-card"),
   RAW("generated/pilot-source/shot-000-ancient-fishing.mp4", "pilot-intro-1"),
   RAW("generated/pilot-source/shot-000b-people-in.mp4", "pilot-intro-2"),
-  SHOT("f6386c84-b0b0-404d-b080-faa644443f72"), // Scene1 Shot1
-  SHOT("8d9ac62b-9914-45d4-a124-d09546977e3f"), // Scene1 Shot2
-  RAW("generated/video/friends-carrying-to-house.mp4", "friends-carrying-to-house", AI_GENERATED_INSERT),
-  RAW("generated/video/friends-roof-arrival.mp4", "friends-roof-arrival", AI_GENERATED_INSERT),
-  SHOT("b18da4bb-4f23-42c9-bbd1-b02f04cceb67"), // Scene1 Shot3 (extended to 8s by the Production Director)
-  RAW("generated/video/friends-roof-digging.mp4", "friends-roof-digging", AI_GENERATED_INSERT),
-  RAW("generated/video/crowd-indoor-reaction-to-dust-falling.mp4", "crowd-indoor-reaction-to-dust-falling", AI_GENERATED_INSERT),
-  SHOT("b6edbb4d-4643-40c0-8f16-ed5eb9730df1"), // Scene1 Shot4 (extended to 8s by the Production Director)
-  RAW("generated/video/pilot-shot004-recast.mp4", "pilot-shot004-recast", AI_GENERATED_INSERT),
-  RAW("generated/video/paralytic-s-tearful-hope-and-crowd-silence.mp4", "paralytic-s-tearful-hope-and-crowd-silence", AI_GENERATED_INSERT),
+  // Pre-built block (scripts/build-mark-2-1-5-narration-block.ts): the new
+  // Jesus-enters-empty-house insert (trimmed to the real chapter-title
+  // speech length), the reused crowd-gathering shot (trimmed to the real
+  // recorded pause), the over-the-shoulder Shot 2 reshoot, and the rest
+  // of the digging/lowering beat -- with the real "Mark 2:1-5 (narration)"
+  // audio (68955ms) muxed continuously underneath. Dan caught (2026-09-10)
+  // that this whole span was previously ~23s of total silence in this
+  // pipeline -- the earlier gap-closing work only ever fixed this in the
+  // separate Blender-editor extraction, never here. 8436ms freeze-frame
+  // padding on the last clip (paralytic's tearful hope) makes the video
+  // match the real narration exactly, so Shot 5's own dialogue never
+  // overlaps the narration bed.
+  RAW("generated/chapter/blocks/mark-2-1-5-narration-block.mp4", "mark-2-1-5-narration-block"),
   SHOT("445d00de-7f66-494d-a104-d3e927d5dbdd"), // Scene1 Shot5
-  RAW("generated/video/friends-watching-from-roof-aperture.mp4", "friends-watching-from-roof-aperture", AI_GENERATED_INSERT),
-  RAW("generated/video/crowd-witness-breathless-reaction.mp4", "crowd-witness-breathless-reaction", AI_GENERATED_INSERT),
-  SHOT("fe9886dc-0510-4cdb-afdc-ed9c22d14084"), // Scene1 Shot6 (extended to 8s by the Production Director)
+  // Pre-built block (scripts/build-narration-audio-block.ts):
+  // crowd-witness-breathless-reaction + Shot6 (scribes, extended), with
+  // the real "Mark 2:5-8 (narration)" audio muxed continuously underneath
+  // -- Dan caught this span playing silent in review (2026-09-10); closing
+  // the gap's VISUAL duration earlier this session never actually closed
+  // the AUDIO gap. friends-watching-from-roof-aperture, originally part of
+  // this group, was repositioned (2026-09-10, Dan) to the digging beat
+  // inside the Mark 2:1-5 block above -- "the moment the hole finally
+  // opens" -- so this group is now just the 2 remaining clips, with 7083ms
+  // of freeze-frame padding (up from 3083ms) on Shot6's already-still
+  // final frame so the real narration audio never gets cut short.
+  RAW("generated/chapter/blocks/mark-2-5-8-narration-block.mp4", "mark-2-5-8-narration-block"),
   SHOT("0d43887a-8c20-4271-a6d8-3cafad177558"), // Scene1 Shot7
   RAW("generated/video/paralytic-face-before-healing.mp4", "paralytic-face-before-healing", AI_GENERATED_INSERT),
   SHOT("ea5e2ff9-c321-41f2-9c80-fd856c05d78d"), // Scene1 Shot8
@@ -372,7 +395,7 @@ function run() {
         const clip = byShotId.get(seg.shotId);
         if (!clip) throw new Error(`No assembled clip found for shot ${seg.shotId}`);
         sourceAbsPath = join(dataDir, "assets", clip.result_asset_path);
-        durationMs = clip.timeline_end_ms - clip.timeline_start_ms;
+        durationMs = seg.durationMsOverride ?? clip.timeline_end_ms - clip.timeline_start_ms;
         label = seg.shotId;
         audioOverride = seg.audioOverride;
       } else {
