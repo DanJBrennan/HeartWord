@@ -146,6 +146,20 @@ export function buildNarrationAudioBlock(
         finalVideoPath,
         "-ss",
         (narrationAudio.startMs / 1000).toFixed(3),
+        // Trims the SOURCE audio input to exactly the requested narration
+        // interval before anything else touches it. Without this, only the
+        // start was seeked -- the stream read past `endMs` unbounded, into
+        // whatever real speech (the next verse's dialogue) follows in the
+        // source file. That untrimmed stream is what `apad` below then
+        // appended silence AFTER, not what actually got muxed: the later
+        // global `-t` (an output-duration cap, not a per-input trim) cut
+        // the final mux off somewhere inside that leftover real speech
+        // whenever the video ran longer than the narration
+        // (totalVideoMs > realAudioMs, i.e. whenever audioPadSec > 0) --
+        // so the next spoken line bled into what should have been the
+        // silent padded tail. Found via Codex's 2026-09-11 audit.
+        "-t",
+        (realAudioMs / 1000).toFixed(3),
         "-i",
         narrationAudio.sourceAbsPath,
         "-t",
@@ -217,7 +231,16 @@ async function run() {
   console.log(JSON.stringify({ outRelPath, ...result }, null, 2));
 }
 
-run().catch((err) => {
-  console.error("FAILED:", err);
-  process.exit(1);
-});
+// Only run the CLI entry point when this file is executed directly (`npx
+// tsx scripts/build-narration-audio-block.ts`), not when something else
+// imports buildNarrationAudioBlock -- e.g. a regression test importing it
+// previously also triggered a real DB read and ffmpeg run as an
+// unavoidable side effect of the import itself. Same convention as
+// src/db/seed-characters.ts's isMain guard.
+const isMain = process.argv[1] && import.meta.url === `file://${process.argv[1].replace(/\\/g, "/")}`;
+if (isMain || process.argv[1]?.endsWith("build-narration-audio-block.ts")) {
+  run().catch((err) => {
+    console.error("FAILED:", err);
+    process.exit(1);
+  });
+}
