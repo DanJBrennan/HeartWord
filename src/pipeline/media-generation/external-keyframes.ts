@@ -4,6 +4,7 @@ import { constants, copyFileSync, mkdirSync, readFileSync, writeFileSync } from 
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
+import { latestCrewRun, requireCurrentPlan, directionsFromRun, validateHandoffPlan } from "../creative-direction/crew-store.js";
 
 // Codex's image tool runs in the assistant session, outside the Node server.
 // This handoff uses the existing shot/attempt/review tables, without pretending
@@ -19,6 +20,7 @@ export interface KeyframeContext {
 }
 
 export interface KeyframeBrief {
+  productionRunId?: string;
   schemaVersion: 1;
   id: string;
   createdAt: number;
@@ -113,6 +115,9 @@ export function prepareKeyframe(db: DatabaseSync, dataDir: string, shotId: strin
   if (!prompt.trim() || !rationale.trim()) throw new Error("Prompt and production rationale are required.");
   if (!/16\s*:\s*9/.test(prompt)) throw new Error("Explicit 16:9 framing is required.");
   const context = getKeyframeContext(db, dataDir, shotId);
+  if (latestCrewRun(db, context.project.id, "planning")) {
+    prompt += directionsFromRun(requireCurrentPlan(db, dataDir, context.project.id), shotId);
+  }
   const sources = [
     { role: "verified Hatam source", path: "source/hatam/mark-2/mark-2-text.docx" },
     { role: "English reference", path: "reference/english/mark-2/mark-2-text.docx" }
@@ -139,7 +144,7 @@ export function prepareKeyframe(db: DatabaseSync, dataDir: string, shotId: strin
     generationInputs.push({ path, sha256: sha256(readFileSync(assetPath(dataDir, path))),
       referenceNumbers: group.map((_, j) => i + j + 1) });
   }
-  return { schemaVersion: 1, id, createdAt: Date.now(), context,
+  return { schemaVersion: 1, id, createdAt: Date.now(), context, productionRunId: latestCrewRun(db, context.project.id, "planning")?.id,
     contextHash: sha256(JSON.stringify(context)), sources, prompt, promptHash: sha256(prompt), rationale, generationInputs };
 }
 
@@ -162,6 +167,7 @@ export function importKeyframe(db: DatabaseSync, dataDir: string, brief: Keyfram
     throw new Error("Brief changed after preparation. Prepare a new brief.");
   }
   const current = getKeyframeContext(db, dataDir, brief.context.shot.id);
+  validateHandoffPlan(db, dataDir, current.project.id, brief.productionRunId);
   if (sha256(JSON.stringify(current)) !== brief.contextHash) throw new Error("Shot/canon changed after preparation. Prepare a new brief.");
   for (const source of brief.sources) {
     if (sha256(readFileSync(assetPath(dataDir, source.path))) !== source.sha256) throw new Error("Scripture source changed after preparation.");

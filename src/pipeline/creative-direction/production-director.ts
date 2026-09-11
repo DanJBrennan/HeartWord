@@ -26,8 +26,8 @@
  * feedback) and hands it back to the Creative Director for revision.
  * After 10 rounds of requested changes on the SAME idea without
  * approval, the Director stops negotiating and exercises final
- * authority: it keeps the idea's current, most-recently-revised form
- * rather than continuing to iterate. That final authority explicitly
+ * authority: it explicitly approves or rejects the current form. An
+ * unresolved request for changes is rejected at the cap. That authority
  * includes actually generating the approved idea's keyframe/video --
  * see implementApprovedIdeas below -- not just approving it on paper.
  *
@@ -41,6 +41,8 @@ import type { DatabaseSync } from "node:sqlite";
 import { generateJson, type GeminiJsonSchema } from "../../server/providers/gemini.js";
 import type { GapFillIdea, CreativeDirectorProposal } from "./index.js";
 import { reviseGapFillerIdeas } from "./index.js";
+import { getDataDir } from "../../db/client.js";
+import { loadCrewBrief } from "./crew-context.js";
 
 const MAX_ROUNDS_PER_CONFLICT = 10;
 
@@ -110,7 +112,8 @@ async function runDirectorReview(
   activeIdeas: Array<{ idea: GapFillIdea; round: number }>,
   narrationSpanVerseRef: string,
   gapMs: number,
-  alreadyApprovedCount: number
+  approvedIdeas: GapFillIdea[],
+  context: string
 ): Promise<DirectorVerdict[]> {
   const prompt =
     `You are the Production Director for a Scripture video production. The Creative Director has proposed ideas to ` +
@@ -119,7 +122,7 @@ async function runDirectorReview(
     `Creative Director's CURRENT ideas to approve, reject, or send back for revision -- weighing:\n\n` +
     `1. TIME/BUDGET: each new_shot idea costs roughly $${ESTIMATED_COST_USD.new_shot.toFixed(2)} (a keyframe + video ` +
     `generation); each extend_existing idea costs roughly $${ESTIMATED_COST_USD.extend_existing.toFixed(2)} (a longer ` +
-    `video regeneration); reorder_existing is essentially free (a timeline edit only). ${alreadyApprovedCount} idea(s) ` +
+    `video regeneration); reorder_existing is essentially free (a timeline edit only). ${approvedIdeas.length} idea(s) ` +
     `for this same gap are already approved. Don't approve so many ideas that this one ${(gapMs / 1000).toFixed(1)}s ` +
     `gap becomes wildly over-covered or over-budget relative to its own real duration -- but don't reject a genuinely ` +
     `good idea purely to save a fraction of a dollar either.\n` +
@@ -129,6 +132,7 @@ async function runDirectorReview(
     `deepen a real human moment already implied by the text, or maintain believable continuity -- not exist merely ` +
     `to fill seconds. Judge whether each idea actually serves the passage, and whether its own stated decorum ` +
     `reasoning is genuinely sound or just asserted.\n\n` +
+    `EXACT PRODUCTION CONTEXT:\n${context}\nAPPROVED IDEAS (account for their duration and cost):\n${JSON.stringify(approvedIdeas)}\n` +
     `IDEAS UNDER REVIEW THIS ROUND:\n` +
     activeIdeas
       .map(
@@ -159,6 +163,8 @@ export async function negotiateGapProposal(
   initialProposal: CreativeDirectorProposal
 ): Promise<NegotiationOutcome> {
   const { narrationSpanVerseRef, gapMs } = initialProposal;
+  if (initialProposal.projectId !== projectId || !Number.isFinite(gapMs) || gapMs <= 0 || new Set(initialProposal.ideas.map(i => i.id)).size !== initialProposal.ideas.length) throw new Error("Proposal needs the correct project, a measured gap and unique idea IDs.");
+  const context = initialProposal.context ?? JSON.stringify(loadCrewBrief(db, getDataDir(), projectId, "planning"));
 
   const roundCounts = new Map<string, number>();
   let activeIdeas: GapFillIdea[] = initialProposal.ideas;
@@ -174,7 +180,12 @@ export async function negotiateGapProposal(
 
   while (activeIdeas.length > 0) {
     const reviewBatch = activeIdeas.map((idea) => ({ idea, round: roundCounts.get(idea.id)! }));
-    const verdicts = await runDirectorReview(reviewBatch, narrationSpanVerseRef, gapMs, approved.length);
+    const verdicts = await runDirectorReview(reviewBatch, narrationSpanVerseRef, gapMs, approved, context);
+    if (!Array.isArray(verdicts) || verdicts.length !== activeIdeas.length ||
+        new Set(verdicts.map(v => v.ideaId)).size !== activeIdeas.length ||
+        verdicts.some(v => !activeIdeas.some(i => i.id === v.ideaId) || !["approve", "reject", "request_changes"].includes(v.verdict) || typeof v.feedback !== "string" || !v.feedback.trim())) {
+      throw new Error("Production Director returned incomplete or invalid idea verdicts; no automatic approval.");
+    }
 
     const toRevise: GapFillIdea[] = [];
     const feedbackByIdeaId = new Map<string, string>();
@@ -192,14 +203,22 @@ export async function negotiateGapProposal(
       }
 
       const isFinalRound = round >= MAX_ROUNDS_PER_CONFLICT;
-      const effectiveVerdict = isFinalRound && verdict.verdict === "request_changes" ? "approve" : verdict.verdict;
+      const effectiveVerdict = isFinalRound && verdict.verdict === "request_changes" ? "reject" : verdict.verdict;
       const loggedVerdict = isFinalRound && verdict.verdict === "request_changes" ? "forced_final" : verdict.verdict;
+      if (loggedVerdict === "forced_final") forcedFinalCount++;
 
       logRound(db, projectId, narrationSpanVerseRef, idea.id, round, "production_director", loggedVerdict, verdict.feedback);
 
       if (effectiveVerdict === "approve") {
+        const duration = idea.estimatedDurationSec;
+        const alreadyCovered = approved.reduce((sum, i) => sum + i.estimatedDurationSec, 0);
+        if (!Number.isFinite(duration) || duration < 0 || (idea.operation !== "reorder_existing" && duration === 0) ||
+            (alreadyCovered + duration) * 1000 > gapMs + 1000) {
+          rejected.push(idea);
+          logRound(db, projectId, narrationSpanVerseRef, idea.id, round, "production_director", "reject", "Measured duration exceeds the remaining gap or is invalid.");
+          continue;
+        }
         approved.push(idea);
-        if (loggedVerdict === "forced_final") forcedFinalCount++;
       } else if (effectiveVerdict === "reject") {
         rejected.push(idea);
       } else {
@@ -210,7 +229,7 @@ export async function negotiateGapProposal(
 
     if (toRevise.length === 0) break;
 
-    const revised = await reviseGapFillerIdeas(toRevise, feedbackByIdeaId);
+    const revised = await reviseGapFillerIdeas(toRevise, feedbackByIdeaId, context);
     activeIdeas = revised.map((idea) => {
       const newRound = roundCounts.get(idea.id)! + 1;
       roundCounts.set(idea.id, newRound);

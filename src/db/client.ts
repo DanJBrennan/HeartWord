@@ -1,4 +1,8 @@
-import { DatabaseSync } from "node:sqlite";
+import { createRequire } from "node:module";
+// Vite 5 predates node:sqlite. Load the built-in through Node itself so
+// DB-backed stage tests and the server use the same implementation.
+const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
+type DatabaseSync = import("node:sqlite").DatabaseSync;
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,12 +37,10 @@ function resolveDataDir(): string {
   );
 }
 
-const DATA_DIR = resolveDataDir();
-const DB_DIR = join(DATA_DIR, "db");
-const DB_PATH = join(DB_DIR, "heartword.sqlite");
 const SCHEMA_PATH = join(__dirname, "schema.sql");
 
 let db: DatabaseSync | undefined;
+let openedDataDir: string | undefined;
 
 /**
  * Opens (and lazily initializes) the v1 SQLite database using Node's
@@ -50,12 +52,15 @@ let db: DatabaseSync | undefined;
  */
 export function getDb(): DatabaseSync {
   if (db) return db;
+  const dataDir = resolveDataDir();
+  const dbDir = join(dataDir, "db");
 
-  if (!existsSync(DB_DIR)) {
-    mkdirSync(DB_DIR, { recursive: true });
+  if (!existsSync(dbDir)) {
+    mkdirSync(dbDir, { recursive: true });
   }
 
-  db = new DatabaseSync(DB_PATH);
+  db = new DatabaseSync(join(dbDir, "heartword.sqlite"));
+  openedDataDir = dataDir;
   // journal_mode=PERSIST, not the SQLite default (DELETE) or WAL:
   //   - WAL's mmap-based shared memory fails outright ("disk I/O error")
   //     over the network-style mount this dev shell reaches HeartWordData
@@ -99,6 +104,8 @@ export function getDb(): DatabaseSync {
  * schema.sql's CREATE TABLE, so every check here is a no-op for it.
  */
 const COLUMN_MIGRATIONS: Array<{ table: string; column: string; ddl: string }> = [
+  { table: "production_runs", column: "worker_pid", ddl: "ALTER TABLE production_runs ADD COLUMN worker_pid INTEGER" },
+  { table: "creative_direction_proposals", column: "context_json", ddl: "ALTER TABLE creative_direction_proposals ADD COLUMN context_json TEXT" },
   { table: "scenes", column: "lighting_continuity", ddl: "ALTER TABLE scenes ADD COLUMN lighting_continuity TEXT" },
   { table: "shots", column: "verse_ref", ddl: "ALTER TABLE shots ADD COLUMN verse_ref TEXT" },
   { table: "shots", column: "framing", ddl: "ALTER TABLE shots ADD COLUMN framing TEXT" },
@@ -144,5 +151,5 @@ function applyColumnMigrations(db: DatabaseSync): void {
 }
 
 export function getDataDir(): string {
-  return DATA_DIR;
+  return openedDataDir ?? resolveDataDir();
 }

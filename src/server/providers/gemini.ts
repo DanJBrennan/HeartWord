@@ -55,6 +55,7 @@ export async function generateJsonWithImages<T>(
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TEXT_MODEL}:generateContent?key=${apiKey}`;
   const res = await fetch(url, {
     method: "POST",
+    signal: AbortSignal.timeout(180000),
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ role: "user", parts }],

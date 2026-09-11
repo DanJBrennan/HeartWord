@@ -45,8 +45,11 @@ import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { generateJson, type GeminiJsonSchema, GEMINI_TEXT_MODEL } from "../../server/providers/gemini.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
+import { getDataDir } from "../../db/client.js";
+import { loadCrewBrief } from "./crew-context.js";
 
 export interface GapFillIdea {
+  targetShotId?: string;
   /** Stable id assigned locally (not by the LLM) when an idea is first
    *  proposed, and preserved across every revision -- lets the
    *  Production Director negotiation loop (production-director.ts)
@@ -110,6 +113,7 @@ export interface GapFillIdea {
 }
 
 export interface CreativeDirectorProposal {
+  context?: string;
   id: string;
   projectId: string;
   narrationSpanVerseRef: string;
@@ -119,6 +123,7 @@ export interface CreativeDirectorProposal {
 }
 
 interface ShotContextRow {
+  id: string;
   verse_ref: string;
   action: string;
   scene_seq: number;
@@ -140,6 +145,7 @@ const GAP_FILL_SCHEMA: GeminiJsonSchema = {
         properties: {
           operation: { type: "string", enum: ["new_shot", "reorder_existing", "extend_existing"] },
           targetShotVerseRef: { type: "string", description: "Required for reorder_existing/extend_existing; omit (empty string) for new_shot." },
+          targetShotId: { type: "string", description: "Exact existing shot ID for reorder/extend; empty for new_shot." },
           label: { type: "string" },
           description: { type: "string" },
           framing: { type: "string", description: "new_shot only; empty string otherwise." },
@@ -161,6 +167,7 @@ const GAP_FILL_SCHEMA: GeminiJsonSchema = {
         },
         required: [
           "operation",
+          "targetShotId",
           "targetShotVerseRef",
           "label",
           "description",
@@ -194,30 +201,32 @@ function gatherGapContext(
 ): { before: ShotContextRow[]; after: ShotContextRow[]; withinGap: ShotContextRow[]; castNames: string[] } {
   const allShots = db
     .prepare(
-      `SELECT s.verse_ref, s.action, sc.sequence AS scene_seq, s.sequence AS shot_seq, s.needs_lip_sync
+      `SELECT s.id, s.verse_ref, s.action, sc.sequence AS scene_seq, s.sequence AS shot_seq, s.needs_lip_sync
        FROM shots s JOIN scenes sc ON sc.id = s.scene_id
        WHERE sc.project_id = ? ORDER BY sc.sequence, s.sequence`
     )
-    .all(projectId) as ShotContextRow[];
+    .all(projectId) as unknown as ShotContextRow[];
 
   const withinGap: ShotContextRow[] = [];
   let firstWithinIdx = -1;
   let lastWithinIdx = -1;
   allShots.forEach((s, i) => {
     const { start, end } = parseVerseRange(s.verse_ref);
-    if (start >= verseStart && end <= verseEnd) {
+    if (start <= verseEnd && end >= verseStart) {
       withinGap.push(s);
       if (firstWithinIdx === -1) firstWithinIdx = i;
       lastWithinIdx = i;
     }
   });
 
-  const before = firstWithinIdx > 0 ? allShots.slice(Math.max(0, firstWithinIdx - 2), firstWithinIdx) : [];
-  const after = lastWithinIdx >= 0 && lastWithinIdx + 1 < allShots.length ? allShots.slice(lastWithinIdx + 1, lastWithinIdx + 3) : [];
+  const insertion = allShots.findIndex(s => parseVerseRange(s.verse_ref).start > verseEnd);
+  const position = insertion < 0 ? allShots.length : insertion;
+  const beforeIndex = firstWithinIdx >= 0 ? firstWithinIdx : position;
+  const afterIndex = lastWithinIdx >= 0 ? lastWithinIdx + 1 : position;
+  const before = allShots.slice(Math.max(0, beforeIndex - 2), beforeIndex);
+  const after = allShots.slice(afterIndex, afterIndex + 2);
 
-  const castNames = (
-    db.prepare(`SELECT DISTINCT name FROM characters ORDER BY name`).all() as CharacterRow[]
-  ).map((c) => c.name);
+  const castNames = loadCrewBrief(db, getDataDir(), projectId, "planning").canon.map(c => c.name);
 
   return { before, after, withinGap, castNames };
 }
@@ -236,28 +245,35 @@ export async function proposeGapFillers(
   narrationSpanVerseRef: string,
   gapMs: number
 ): Promise<CreativeDirectorProposal> {
+  if (!Number.isFinite(gapMs) || gapMs <= 0) throw new Error("A measured positive coverage gap is required.");
+  const brief = loadCrewBrief(db, getDataDir(), projectId, "planning");
+  const context = JSON.stringify(brief);
   const bareVerseRef = narrationSpanVerseRef.replace(" (narration)", "");
+  const reference = bareVerseRef.match(/^(.+?)\s+(\d+):(\d+)(?:-(\d+))?$/);
+  if (!reference || reference[1]!.toLowerCase() !== brief.project.book.toLowerCase() || Number(reference[2]) !== brief.project.chapter) throw new Error("Coverage requests must refer to this project's book and chapter.");
   const { start: verseStart, end: verseEnd } = parseVerseRange(bareVerseRef);
   const { before, after, withinGap, castNames } = gatherGapContext(db, projectId, verseStart, verseEnd);
 
   const describe = (rows: ShotContextRow[]) =>
     rows.length === 0
       ? "(none)"
-      : rows.map((r) => `  - [${r.verse_ref}]${r.needs_lip_sync ? " (LIP-SYNCED)" : ""} ${r.action}`).join("\n");
+      : rows.map((r) => `  - id=${r.id} [${r.verse_ref}]${r.needs_lip_sync ? " (LIP-SYNCED)" : ""} ${r.action}`).join("\n");
 
   const prompt =
-    `You are the Creative Director for a Scripture video production (Hatam-language Mark, dramatized with a real ` +
+    `You are the Creative Director for a Scripture video production (${brief.project.language}-language ${brief.project.book} ${brief.project.chapter}, dramatized with a real ` +
     `cast, photorealistic style). Your job is to propose specific shot ideas to fill a real gap: the source ` +
     `narration for ${bareVerseRef} runs longer than the video currently covers it, by about ${(gapMs / 1000).toFixed(1)} seconds.\n\n` +
     `PRODUCER'S STANDING GUIDANCE (apply this directly, don't just acknowledge it):\n` +
     `"The general rule is that a clip is muted when the narrator speaks. But spacing or breathing room may be ` +
     `added for effect -- background sound of awe and gasps of excitement can be appropriate. There may be long ` +
     `stretches where the narrator is paused and music builds, dancing occurs, or a character simply reacts. This ` +
-    `is a celebration/emotional time and the mood should reflect that. Fill gaps with ideas that add a human side, ` +
+    `can be an emotional time when the actual passage supports it. Determine THIS passage's mood from the source. Fill gaps with ideas that add a human side, ` +
     `while always maintaining the decorum of the intent of the scripture passage. Most ideas should be continuity ` +
     `keyframes/clips (another angle or extension of action already happening), but invented human-interest beats ` +
     `are welcome when the moment genuinely calls for one."\n\n` +
     `THIS CHAPTER'S SHOTS ALREADY COVERING THIS SPAN (their exact verse_ref is how you must refer to one of them):\n${describe(withinGap)}\n\n` +
+    `Use the exact targetShotId for EVERY idea: the existing target for an edit, or the nearby shot anchoring a new insert. New shots must each be at most eight seconds; split longer coverage into distinct ideas. A verse reference alone is ambiguous.\n` +
+    `EXACT SOURCE, APPROVED CANON, MEASURED TIMING AND CHAPTER CONTEXT:\n${context}\n\n` +
     `SHOTS IMMEDIATELY BEFORE THIS SPAN:\n${describe(before)}\n\n` +
     `SHOTS IMMEDIATELY AFTER THIS SPAN:\n${describe(after)}\n\n` +
     `CHARACTER CANON ALREADY CAST FOR THIS PROJECT (use these names, don't invent new named characters):\n` +
@@ -291,6 +307,7 @@ export async function proposeGapFillers(
   const ideasWithIds: GapFillIdea[] = result.ideas.map((idea) => ({ ...idea, id: randomUUID() }));
 
   const proposal: CreativeDirectorProposal = {
+    context,
     id: randomUUID(),
     projectId,
     narrationSpanVerseRef,
@@ -300,9 +317,9 @@ export async function proposeGapFillers(
   };
 
   db.prepare(
-    `INSERT INTO creative_direction_proposals (id, project_id, narration_span_verse_ref, gap_ms, ideas_json, model, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(proposal.id, projectId, narrationSpanVerseRef, gapMs, JSON.stringify(ideasWithIds), GEMINI_TEXT_MODEL, proposal.createdAt);
+    `INSERT INTO creative_direction_proposals (id, project_id, narration_span_verse_ref, gap_ms, ideas_json, model, created_at, context_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(proposal.id, projectId, narrationSpanVerseRef, gapMs, JSON.stringify(ideasWithIds), GEMINI_TEXT_MODEL, proposal.createdAt, context);
 
   return proposal;
 }
@@ -318,14 +335,15 @@ export async function proposeGapFillers(
  */
 export async function reviseGapFillerIdeas(
   ideasToRevise: GapFillIdea[],
-  feedbackByIdeaId: Map<string, string>
+  feedbackByIdeaId: Map<string, string>,
+  productionContext = ""
 ): Promise<GapFillIdea[]> {
   const prompt =
     `You are the Creative Director for a Scripture video production, revising specific shot ideas in response to ` +
     `the Production Director's feedback. For each idea below, either adjust it to address the feedback, or -- if ` +
     `the feedback makes clear the idea doesn't belong -- replace it with a genuinely different idea that does. Keep ` +
     `every other field (framing, decorum reasoning, etc.) fully filled in on your revision, not just the parts that ` +
-    `changed.\n\n` +
+    `changed. Keep exact targetShotId values for existing-shot operations.\nPRODUCTION CONTEXT AND HARD CONSTRAINTS:\n${productionContext}\n\n` +
     ideasToRevise
       .map(
         (idea, i) =>
@@ -346,6 +364,7 @@ export async function reviseGapFillerIdeas(
             id: { type: "string" },
             operation: { type: "string", enum: ["new_shot", "reorder_existing", "extend_existing"] },
             targetShotVerseRef: { type: "string" },
+            targetShotId: { type: "string" },
             label: { type: "string" },
             description: { type: "string" },
             framing: { type: "string" },
@@ -361,6 +380,7 @@ export async function reviseGapFillerIdeas(
             "id",
             "operation",
             "targetShotVerseRef",
+            "targetShotId",
             "label",
             "description",
             "framing",
@@ -379,5 +399,10 @@ export async function reviseGapFillerIdeas(
   };
 
   const result = await generateJson<{ ideas: GapFillIdea[] }>(prompt, schemaWithId);
+  const expected = new Set(ideasToRevise.map(i => i.id));
+  if (!Array.isArray(result.ideas) || result.ideas.length !== expected.size ||
+      new Set(result.ideas.map(i => i.id)).size !== expected.size || result.ideas.some(i => !expected.has(i.id))) {
+    throw new Error("Creative revision changed, duplicated or omitted an idea ID.");
+  }
   return result.ideas;
 }

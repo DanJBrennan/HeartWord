@@ -8,7 +8,7 @@ src/
 ├── web/          React frontend (Vite)
 ├── server/       Express API + static-serving in production
 ├── pipeline/     One directory per pipeline stage; orchestrator.ts runs them in sequence
-├── providers/    Provider interfaces + Gemini/Kling adapters (wiring only — see below)
+├── providers/    Media adapters, including Gemini music and ElevenLabs sound effects
 ├── characters/   Character Creation & Editing Tool backend (not started)
 └── db/           SQLite schema, client, and the character-canon seed script
 ```
@@ -41,9 +41,18 @@ for a language specialist to confirm. See "Known limitations" in
 `src/pipeline/ingestion/index.ts` and the "Ingestion & alignment (v1)"
 section of `docs/ARCHITECTURE.md`.
 
-Every other pipeline stage in `src/pipeline/*/index.ts` and every provider
-method in `src/providers/{gemini,kling}/index.ts` is wired into the
-orchestrator and the type system, but its actual logic (calling an AI
-provider, running FFmpeg, etc.) is not implemented yet — each throws or
-returns a clearly labeled "not yet implemented" result rather than
-pretending to work. See `docs/plans/CURRENT_GOAL.md` for what's next.
+The project has progressed beyond this original skeleton. Scene breakdown,
+casting, keyframe generation and Critic review are implemented; dedicated
+tools also generate and assemble video/lip-sync coverage. The generic
+`voice-lipsync/index.ts` stage entry point still reports its implementation
+gap, so the seven-stage runner must not be described as fully complete.
+
+The September 2026 production crew extends planning, generation, editing and
+QC with shared chapter context, specialist exchanges and bounded review
+decisions. `ProductionCrew.tsx` exposes these controls in the web app.
+The Picture Editor renderer preserves source performance with deliberate
+pauses; finishing reviews the actual cut and can generate reviewed Gemini
+music / ElevenLabs effects, mix them and check the result. Existing hand
+edits are retained and require their actual timing map before automatic
+finishing. See `docs/design/production-crew.md` and the current goal for
+the precise adoption limits and verification.

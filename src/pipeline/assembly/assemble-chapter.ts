@@ -211,18 +211,27 @@ export function assembleChapter(db: DatabaseSync, projectId: string): AssembleCh
       normalizedPaths.push(normalizedPath);
     }
 
-    const relPath = join("generated", "chapter", `${projectId}.mp4`);
+    const id = randomUUID();
+    const relPath = join("generated", "chapter", `${projectId}-${id}.mp4`);
     const outPath = join(dataDir, "assets", relPath);
     mkdirSync(join(dataDir, "assets", "generated", "chapter"), { recursive: true });
     concatClips(normalizedPaths, outPath, tmpDir);
 
     const totalDurationMs = shotClips.reduce((sum, c) => sum + (c.timeline_end_ms - c.timeline_start_ms), 0);
 
-    const id = randomUUID();
     const now = Date.now();
     db.prepare(
       `INSERT INTO chapter_renders (id, project_id, result_asset_path, total_duration_ms, shot_count, created_at) VALUES (?, ?, ?, ?, ?, ?)`
     ).run(id, projectId, relPath, totalDurationMs, shotClips.length, now);
+
+    let cursor = 0;
+    const timeline = shotClips.map(clip => {
+      const startMs = cursor;
+      cursor += clip.timeline_end_ms - clip.timeline_start_ms;
+      return { shotId: clip.shot_id, startMs, endMs: cursor };
+    });
+    db.prepare("INSERT INTO chapter_render_manifests (render_id, timeline_json, source_audio_json) VALUES (?, ?, ?)")
+      .run(id, JSON.stringify(timeline), JSON.stringify({ mode: "per_shot_audio", warning: "Narration coverage must be verified by chapter review." }));
 
     return { projectId, assembledVideoPath: relPath, totalDurationMs, shotCount: shotClips.length };
   } finally {

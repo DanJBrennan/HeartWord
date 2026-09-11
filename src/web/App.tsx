@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ProductionCrew } from "./ProductionCrew";
 
 interface Project {
   id: string;
@@ -374,16 +375,13 @@ export default function App() {
       <section>
         <h2>Casting &amp; direction</h2>
         <p className="hint">
-          For each scene, asks Gemini to plan shots -- which canon characters appear and what the action is --
-          grounded in the chapter's English reference text. Costs one Gemini call per scene, so re-running
-          replaces the existing shot plan rather than adding to it.
+          Creates the initial shots from the chapter’s reference text, then brings in the filmmaking specialists.
+          Reviewing an existing storyboard preserves its shots and approved takes. Provider charges apply.
         </p>
         {!activeProject && <p className="empty">No project yet — create one above first.</p>}
         {activeProject && (
           <>
-            <button type="button" onClick={generateCasting} disabled={castingBusy}>
-              {castingBusy ? "Planning…" : "Generate shot plan"}
-            </button>
+            <ProductionCrew key={activeProject.id} projectId={activeProject.id} onUpdated={() => void loadShots(activeProject.id)} />
             {castingResult && <p>{castingResult.reasoning}</p>}
             {castingError && <p className="error">{castingError}</p>}
             {scenesWithShots.map((scene) => (

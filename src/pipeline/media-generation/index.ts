@@ -7,7 +7,8 @@ import type { CharacterRef } from "../../providers/types.js";
 import type { ProjectRow } from "../ingestion/index.js";
 import { loadSuggestedFix, runShotReview, type SuggestedFix } from "../qc/director.js";
 import { matchesBeatScope, tagNote } from "../qc/beat-scope.js";
-import type { Stage } from "../types.js";
+import { requireCurrentPlan, directionsFromRun } from "../creative-direction/crew-store.js";
+import type { StageResult } from "../types.js";
 
 interface ShotRow {
   id: string;
@@ -214,7 +215,7 @@ No text, no labels, no logos anywhere in the image.`;
  * media-generation.md, was considered and rejected by Dan (2026-09-06) --
  * both docs corrected to remove it.
  */
-export const runMediaGeneration: Stage = async (projectId) => {
+const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Promise<StageResult> => {
   const db = getDb();
   const project = db.prepare(`SELECT id, language, book, chapter FROM projects WHERE id = ?`).get(projectId) as
     | ProjectRow
@@ -302,6 +303,7 @@ export const runMediaGeneration: Stage = async (projectId) => {
   const awaitingHumanShots: string[] = [];
 
   for (const shot of shots) {
+    if (onlyShotIds && !onlyShotIds.includes(shot.id)) continue;
     const scene = sceneById.get(shot.scene_id) ?? { id: shot.scene_id, sequence: 0, lighting_continuity: null };
 
     const latest = findLatestAttempt.get(shot.id) as { id: string; status: string; result_asset_path: string | null } | undefined;
@@ -349,7 +351,13 @@ export const runMediaGeneration: Stage = async (projectId) => {
       characterVersionId: c.character_version_id
     }));
 
-    const prompt = buildShotPrompt(scene, shot, shotCharacters.map((c) => c.name), loadSuggestedFix(db, shot.id));
+    let prompt: string;
+    try {
+      const plan = requireCurrentPlan(db, dataDir, projectId);
+      prompt = buildShotPrompt(scene, shot, shotCharacters.map((c) => c.name), loadSuggestedFix(db, shot.id)) + directionsFromRun(plan, shot.id);
+    } catch (error) {
+      return { ok: false, reasoning: `New media is held: ${(error as Error).message}` };
+    }
     const tier: "standard" | "pro" = shot.needs_lip_sync ? "pro" : "standard";
 
     try {
@@ -428,7 +436,7 @@ export const runMediaGeneration: Stage = async (projectId) => {
   }
 
   return {
-    ok: failed === 0,
+    ok: failed === 0 && heldForReview === 0 && reviewFailed === 0 && awaitingHuman === 0,
     reasoning:
       `Media generation for ${project.book} ${project.chapter}: ${generated} keyframe(s) generated via Nano Banana` +
       `${failed > 0 || generated > 0 ? "/Pro (tiered by needs_lip_sync)" : ""}, ${reused} reused from a prior run` +
@@ -444,8 +452,14 @@ export const runMediaGeneration: Stage = async (projectId) => {
         : "") +
       ". A retry_modified shot will be regenerated automatically the next time this stage runs; a " +
       "hold_for_review/escalate shot will not, until a human resolves it." +
-      " Still images only (v1 scope) -- no video clips yet: a needs_lip_sync shot's keyframe becomes stage 5's " +
-      "referenceFrame once LipSyncProvider is implemented, and turning a non-lip-sync shot's keyframe into an " +
-      "actual video clip is a separate follow-up (VideoProvider.generateFinal not yet implemented)."
+      " This stage produces still images. The existing video and lip-sync tools turn accepted keyframes into footage before Picture Editor assembly."
   };
+};
+
+const activeGeneration = new Set<string>();
+export const runMediaGeneration = async (projectId: string, onlyShotIds?: string[]): Promise<StageResult> => {
+  if (activeGeneration.has(projectId)) return { ok: false, reasoning: "Keyframe generation is already running for this chapter." };
+  activeGeneration.add(projectId);
+  try { return await generateKeyframes(projectId, onlyShotIds); }
+  finally { activeGeneration.delete(projectId); }
 };

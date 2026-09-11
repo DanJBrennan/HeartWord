@@ -8,6 +8,7 @@ import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
 import type { Stage } from "../types.js";
 import { hasJoinedByScene } from "./disciple-timeline.js";
+import { runProductionCrew } from "../creative-direction/crew-store.js";
 import {
   CAMERA_MOVEMENTS,
   computeDialogueDurationMs,
@@ -229,10 +230,9 @@ Do not invent theological content, dialogue, or narrative beyond what the text s
  * (shots.coverage_plan / coverage_notes); building the actual covered
  * sequence is stage 4/5's job once media generation exists.
  *
- * Idempotent: re-running replaces this project's shots/shot_characters and
- * scene reasoning/lighting rather than appending duplicates.
+ * Re-running refines the existing shot plan through the production crew.
  */
-export const runCasting: Stage = async (projectId) => {
+const buildCasting: Stage = async (projectId) => {
   const db = getDb();
   const project = db.prepare(`SELECT id, language, book, chapter FROM projects WHERE id = ?`).get(projectId) as
     | ProjectRow
@@ -240,6 +240,17 @@ export const runCasting: Stage = async (projectId) => {
 
   if (!project) {
     return { ok: false, reasoning: `Casting failed: no project with id ${projectId}.` };
+  }
+  if (project.language.toLowerCase() !== "hatam") return { ok: false, reasoning: "Configure and approve the regional canon for this language before storyboard generation." };
+
+  // Refinement keeps shot IDs, approved takes, costs and producer edits.
+  const existing = db.prepare(`SELECT s.id FROM shots s JOIN scenes sc ON sc.id = s.scene_id
+    WHERE sc.project_id = ? LIMIT 1`).get(projectId);
+  if (existing) {
+    try {
+      const result = await runProductionCrew(projectId, "planning");
+      return { ok: result.status === "approved", reasoning: result.summary };
+    } catch (error) { return { ok: false, reasoning: (error as Error).message }; }
   }
 
   const scenes = db
@@ -267,7 +278,7 @@ export const runCasting: Stage = async (projectId) => {
        FROM characters c
        JOIN character_versions cv ON cv.character_id = c.id
        LEFT JOIN character_groups g ON g.id = c.group_id
-       WHERE cv.status = 'approved'
+       WHERE cv.status = 'approved' AND c.canon_status = 'approved' AND c.region = 'Papuan'
          AND (c.scope_kind = 'global' OR (c.scope_book = ? AND (c.scope_chapter IS NULL OR c.scope_chapter = ?)))
        ORDER BY c.name`
     )
@@ -308,47 +319,25 @@ export const runCasting: Stage = async (projectId) => {
   const framingCorrections: string[] = [];
   const coverageFlags: string[] = [];
   let totalShots = 0;
-  let discardedShotCount = 0;
+
+  // Model calls complete before the short write transaction. Other local
+  // requests must never join a transaction suspended across a network await.
+  const responses = new Map<string, GeminiSceneResponse>();
+  try {
+    for (const scene of scenes) {
+      const start = parseVerseRange(scene.verse_start).start, end = parseVerseRange(scene.verse_end).end;
+      const text = verses.filter(v => v.verse >= start && v.verse <= end).map(v => `${v.verse}. ${v.text}`).join(" ");
+      const speakers = [...new Set(dialogueSegments.filter(s => s.verse_ref && parseVerseRange(s.verse_ref).start <= end && parseVerseRange(s.verse_ref).end >= start)
+        .map(s => s.speaker_name).filter((n): n is string => n !== null))];
+      const canon = allCanonCharacters.filter(c => hasJoinedByScene(c.joined_narrative_at, scene.verse_end));
+      responses.set(scene.id, await generateJson<GeminiSceneResponse>(buildScenePrompt(project, scene, text, speakers, canon), SHOT_RESPONSE_SCHEMA));
+    }
+  } catch (error) { return { ok: false, reasoning: `Initial storyboard planning incomplete: ${(error as Error).message}` }; }
 
   db.exec("BEGIN TRANSACTION");
   try {
-    // Idempotent re-run: clear this project's existing shots before
-    // regenerating. Originally this only cleared shot_characters, but once
-    // stage 4 (media generation) exists, shots also have downstream
-    // generation_attempts (and their cost_ledger_entries) and per-shot
-    // review_notes -- deleting shots underneath those violated the
-    // generation_attempts.shot_id foreign key the first time this ran
-    // against a project with real generated media (caught 2026-09-06 when
-    // re-running casting to add crowdDensity/continuityNotes to an already-
-    // media-generated Mark 2 project). A re-plan genuinely does invalidate
-    // any media generated against the old shot boundaries -- the new shots
-    // may not even correspond 1:1 to the old ones -- so cascading the
-    // delete is the correct behavior, not just a workaround, but it IS a
-    // real destructive side effect worth calling out: re-running casting
-    // on a project that already has generated media discards that media's
-    // records (the files themselves stay on disk, just orphaned) and any
-    // human review notes on those shots.
-    const oldShotIds = db
-      .prepare(`SELECT id FROM shots WHERE scene_id IN (SELECT id FROM scenes WHERE project_id = ?)`)
-      .all(project.id) as unknown as Array<{ id: string }>;
-    discardedShotCount = oldShotIds.length;
-    if (oldShotIds.length > 0) {
-      const placeholders = oldShotIds.map(() => "?").join(",");
-      const ids = oldShotIds.map((r) => r.id);
-      db.prepare(
-        `DELETE FROM cost_ledger_entries WHERE generation_attempt_id IN (SELECT id FROM generation_attempts WHERE shot_id IN (${placeholders}))`
-      ).run(...ids);
-      db.prepare(`DELETE FROM generation_attempts WHERE shot_id IN (${placeholders})`).run(...ids);
-      db.prepare(`DELETE FROM review_notes WHERE subject_type = 'shot' AND subject_id IN (${placeholders})`).run(...ids);
-      db.prepare(`DELETE FROM clips WHERE shot_id IN (${placeholders})`).run(...ids);
-    }
-    db.prepare(
-      `DELETE FROM shot_characters WHERE shot_id IN (SELECT id FROM shots WHERE scene_id IN (SELECT id FROM scenes WHERE project_id = ?))`
-    ).run(project.id);
-    db.prepare(`DELETE FROM shots WHERE scene_id IN (SELECT id FROM scenes WHERE project_id = ?)`).run(project.id);
-    db.prepare(
-      `DELETE FROM review_notes WHERE project_id = ? AND subject_type = 'project' AND source = 'qc' AND note LIKE 'Casting:%'`
-    ).run(project.id);
+    // Initial planning never deletes earlier decisions or generated media.
+    if (db.prepare("SELECT s.id FROM shots s JOIN scenes sc ON sc.id=s.scene_id WHERE sc.project_id=? LIMIT 1").get(projectId)) throw new Error("Another request saved shots while planning; review those shots before proceeding.");
 
     const insertShot = db.prepare(
       `INSERT INTO shots
@@ -362,46 +351,7 @@ export const runCasting: Stage = async (projectId) => {
     const updateScene = db.prepare(`UPDATE scenes SET reasoning = ?, lighting_continuity = ? WHERE id = ?`);
 
     for (const scene of scenes) {
-      const sceneStart = parseVerseRange(scene.verse_start).start;
-      const sceneEnd = parseVerseRange(scene.verse_end).end;
-      const sceneVerses = verses.filter((v) => v.verse >= sceneStart && v.verse <= sceneEnd);
-      const verseText = sceneVerses.map((v) => `${v.verse}. ${v.text}`).join(" ");
-
-      const attributedSpeakers = [
-        ...new Set(
-          dialogueSegments
-            .filter((s) => {
-              if (!s.verse_ref) return false;
-              const { start, end } = parseVerseRange(s.verse_ref);
-              return start <= sceneEnd && end >= sceneStart;
-            })
-            .map((s) => s.speaker_name)
-            .filter((n): n is string => n !== null)
-        )
-      ];
-
-      // Disciple-timeline gate: only offer Gemini a character who's
-      // actually part of the story by this scene -- see
-      // disciple-timeline.ts. Checked against the scene's END verse, not
-      // its start: a character can join PARTWAY through a scene (Matthew
-      // is called at Mark 2:14, inside scene 2's own Mark 2:13-17 span --
-      // checking against the scene's start verse (13) wrongly excluded
-      // him from the whole scene, including the shot where he's actually
-      // called, caught 2026-09-06 by Dan reviewing the real output).
-      // Using the end verse means "available somewhere in this scene,"
-      // and Gemini's own text-grounded shot planning (which already
-      // correctly identifies which shot depicts the calling) is trusted
-      // to place them in the right shots within it, same as it already
-      // handles blocking generally -- this isn't trying to achieve
-      // shot-level precision before shots even exist. Not-yet-joined
-      // disciples are simply absent from the list rather than flagged; a
-      // joined disciple stays available for every later scene
-      // automatically, this run and every future one, since it's a
-      // database fact, not a per-run instruction Gemini has to re-derive.
-      const sceneCanonCharacters = allCanonCharacters.filter((c) => hasJoinedByScene(c.joined_narrative_at, scene.verse_end));
-
-      const prompt = buildScenePrompt(project, scene, verseText, attributedSpeakers, sceneCanonCharacters);
-      const response = await generateJson<GeminiSceneResponse>(prompt, SHOT_RESPONSE_SCHEMA);
+      const response = responses.get(scene.id)!;
 
       response.shots.forEach((shot, index) => {
         const shotId = randomUUID();
@@ -548,9 +498,13 @@ export const runCasting: Stage = async (projectId) => {
     return { ok: false, reasoning: `Casting failed: ${(err as Error).message}` };
   }
 
+  let crew;
+  try { crew = await runProductionCrew(projectId, "planning"); }
+  catch (error) { return { ok: false, reasoning: `Initial shots saved. Crew review incomplete: ${(error as Error).message}` }; }
   return {
-    ok: true,
+    ok: crew.status === "approved",
     reasoning:
+      crew.summary + " " +
       `Cast and directed ${scenes.length} scene(s) for ${project.book} ${project.chapter}: ${totalShots} shots ` +
       `planned via Gemini, grounded in the English reference text, each with a framing/camera-movement decision ` +
       `and a lighting/continuity note set per scene.` +
@@ -565,12 +519,15 @@ export const runCasting: Stage = async (projectId) => {
       (coverageFlags.length > 0
         ? ` ${coverageFlags.length} shot(s) have dialogue too long for one generated clip and need covered-sequence ` +
           "coverage when stage 4/5 build them -- flagged in review_notes."
-        : "") +
-      (discardedShotCount > 0
-        ? ` NOTE: this re-plan discarded ${discardedShotCount} previous shot(s) and their generated media records ` +
-          "(generation_attempts, cost_ledger_entries, clips, review_notes) -- the old shot boundaries no longer " +
-          "exist, so anything generated against them is orphaned. The image/video files themselves are untouched " +
-          "on disk, just no longer linked to a shot; stage 4 will need to run again for the new shots."
         : "")
   };
+};
+
+// Prevent duplicate paid planning when the same request arrives twice.
+const activeCasting = new Set<string>();
+export const runCasting: Stage = async projectId => {
+  if (activeCasting.has(projectId)) return { ok: false, reasoning: "Storyboard creation is already running for this chapter." };
+  activeCasting.add(projectId);
+  try { return await buildCasting(projectId); }
+  finally { activeCasting.delete(projectId); }
 };
