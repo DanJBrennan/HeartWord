@@ -263,6 +263,19 @@ export const runMediaGeneration: Stage = async (projectId) => {
      WHERE shot_id = ? AND operation = 'generate' AND status = 'accepted'
      ORDER BY created_at DESC LIMIT 1`
   );
+  // Codex's review of this pipeline (2026-09-11) caught that a shot whose
+  // latest attempt was hold_for_review or escalate still got regenerated
+  // anyway -- findExistingAttempt above only checks for an 'accepted' row
+  // to REUSE, it never checked whether the latest attempt was a status
+  // that should stop automatic spending altogether. Reproduced: a 4th
+  // generation attempt after 3 had already resulted in a hold.
+  const findLatestAttempt = db.prepare(
+    `SELECT id, status FROM generation_attempts WHERE shot_id = ? AND operation = 'generate' ORDER BY created_at DESC LIMIT 1`
+  );
+  const findLatestUnresolvedNote = db.prepare(
+    `SELECT note FROM review_notes WHERE subject_type = 'shot' AND subject_id = ? AND source = 'qc' AND resolved = 0
+     ORDER BY created_at DESC LIMIT 1`
+  );
   const insertReviewNote = db.prepare(
     `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
      VALUES (?, ?, 'shot', ?, 'qc', ?, 0, ?)`
@@ -274,8 +287,10 @@ export const runMediaGeneration: Stage = async (projectId) => {
   let failed = 0;
   let heldForReview = 0;
   let reviewFailed = 0;
+  let awaitingHuman = 0;
   const failures: string[] = [];
   const heldShots: string[] = [];
+  const awaitingHumanShots: string[] = [];
 
   for (const shot of shots) {
     const existing = findExistingAttempt.get(shot.id) as { result_asset_path: string | null } | undefined;
@@ -285,6 +300,35 @@ export const runMediaGeneration: Stage = async (projectId) => {
     }
 
     const scene = sceneById.get(shot.scene_id) ?? { id: shot.scene_id, sequence: 0, lighting_continuity: null };
+
+    const latest = findLatestAttempt.get(shot.id) as { id: string; status: string } | undefined;
+    if (latest && (latest.status === "hold_for_review" || latest.status === "escalate")) {
+      const latestNote = findLatestUnresolvedNote.get(shot.id) as { note: string } | undefined;
+      const reviewIncomplete = latestNote?.note.startsWith("REVIEW STATUS: incomplete") ?? false;
+      if (!reviewIncomplete) {
+        // A real content-based hold/escalate -- a human needs to look,
+        // spending on another generation attempt would not resolve it.
+        awaitingHuman++;
+        awaitingHumanShots.push(`scene ${scene.sequence} shot ${shot.sequence} (${latest.status})`);
+        continue;
+      }
+      // The review infrastructure failed, not the image -- retry the
+      // review against the EXISTING file rather than spending on a new
+      // generation attempt. runShotReview's own lookup no longer requires
+      // an 'accepted' status, so it can re-review this attempt directly.
+      try {
+        const review = await runShotReview(shot.id);
+        if (review.decision.status !== "accepted") {
+          heldForReview++;
+          heldShots.push(`scene ${scene.sequence} shot ${shot.sequence} (${review.decision.status})`);
+        }
+      } catch {
+        // Still incomplete -- leave it held for the next run to retry
+        // again, rather than spending on a new generation attempt.
+        reviewFailed++;
+      }
+      continue;
+    }
     const shotCharacters = charStmt.all(shot.id) as unknown as ShotCharacterRow[];
     const characterRefs: CharacterRef[] = shotCharacters.map((c) => ({
       characterId: c.character_id,
@@ -344,7 +388,13 @@ export const runMediaGeneration: Stage = async (projectId) => {
             randomUUID(),
             project.id,
             shot.id,
-            `Automated QC review could not run for this shot after 2 attempts: ${reviewError?.message}. ` +
+            // "REVIEW STATUS: incomplete" (checked above, at the top of
+            // this loop) distinguishes this from a real content-based
+            // hold_for_review verdict -- both land on the same status
+            // column value, but only this one should ever be retried
+            // automatically against the existing image; a real content
+            // hold must wait for a human, full stop.
+            `REVIEW STATUS: incomplete\nAutomated QC review could not run for this shot after 2 attempts: ${reviewError?.message}. ` +
               `Attempt held for review rather than left as accepted, so it won't be silently reused unreviewed.`,
             Date.now()
           );
@@ -368,7 +418,13 @@ export const runMediaGeneration: Stage = async (projectId) => {
       `${heldForReview} flagged for regeneration or human review` +
       (heldShots.length > 0 ? ` (${heldShots.join(" | ")})` : "") +
       (reviewFailed > 0 ? `, ${reviewFailed} review(s) could not run (flagged in review_notes)` : "") +
-      ". Flagged shots will be regenerated automatically the next time this stage runs." +
+      (awaitingHuman > 0
+        ? `, ${awaitingHuman} shot(s) already held for a real content concern or escalated -- skipped rather than ` +
+          `spending on another generation attempt, awaiting a human decision` +
+          (awaitingHumanShots.length > 0 ? ` (${awaitingHumanShots.join(" | ")})` : "")
+        : "") +
+      ". A retry_modified shot will be regenerated automatically the next time this stage runs; a " +
+      "hold_for_review/escalate shot will not, until a human resolves it." +
       " Still images only (v1 scope) -- no video clips yet: a needs_lip_sync shot's keyframe becomes stage 5's " +
       "referenceFrame once LipSyncProvider is implemented, and turning a non-lip-sync shot's keyframe into an " +
       "actual video clip is a separate follow-up (VideoProvider.generateFinal not yet implemented)."

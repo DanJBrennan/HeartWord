@@ -10,6 +10,7 @@ import {
   prepareCoverageBeatBrief,
   type CoverageBeatBrief
 } from "../src/pipeline/media-generation/external-coverage-keyframes.js";
+import { recordCoverageBeatOverride } from "../src/pipeline/qc/director.js";
 
 const [command, ...args] = process.argv.slice(2);
 const db = getDb(),
@@ -47,10 +48,16 @@ if (command === "prepare" && args.length === 3) {
   console.log(JSON.stringify(acceptCoverageBeatKeyframe(db, args[0]!), null, 2));
 } else if (command === "status" && args.length === 1) {
   console.log(JSON.stringify(coverageBeatsNeedingKeyframes(db, args[0]!), null, 2));
+} else if (command === "override" && args.length === 2) {
+  // Scoped to this ONE beat only -- see director.ts's matchesBeatScope
+  // for why a coverage beat's overrides must never bleed into a sibling
+  // beat's review (a wide master and a tight cutaway can look nothing
+  // alike, so an exception for one is not evidence about the other).
+  console.log(JSON.stringify(recordCoverageBeatOverride(db, args[0]!, readFileSync(args[1]!, "utf8")), null, 2));
 } else {
   console.error(
     "Usage: npx tsx scripts/coverage-keyframes.ts prepare <beat-id> <prompt.txt> <rationale.md> | " +
-      "import <brief.json> <image.png> <review.md> | accept <beat-id> | status <project-id>"
+      "import <brief.json> <image.png> <review.md> | accept <beat-id> | override <beat-id> <note.md> | status <project-id>"
   );
   process.exitCode = 1;
 }

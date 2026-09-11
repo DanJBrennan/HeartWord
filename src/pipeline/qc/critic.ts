@@ -363,15 +363,25 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
 
   // A response with no parseable "SEVERITY: ..." line is retried once --
   // parseCriticSeverity's "moderate" fallback exists for a genuine
-  // formatting slip, not as a first resort, since silently guessing
-  // "moderate" on a malformed response (e.g. an unresolved grounding
-  // tool-call artifact leaking into the text instead of real findings)
-  // can trigger an unnecessary regeneration for a review that never
-  // actually happened.
+  // formatting slip in an otherwise-usable response, not as a stand-in
+  // for a review that never actually happened. If the retry ALSO comes
+  // back unparseable, throw rather than silently guess "moderate" --
+  // there is no evidence yet that the image needs changing, only that
+  // the review infrastructure failed twice. Callers already have to
+  // handle a thrown runCritic (a network error behaves the same way);
+  // media-generation/index.ts's per-shot handler treats this as an
+  // incomplete review, not a content verdict, and does not spend another
+  // generation call on it.
   const images = [...referenceImages, ...(precedingImage ? [precedingImage] : []), image];
   let result = await generateGroundedText(prompt, images);
   if (!SEVERITY_LINE.test(result.text)) {
     result = await generateGroundedText(prompt, images);
+    if (!SEVERITY_LINE.test(result.text)) {
+      throw new Error(
+        `Critic's grounded research call returned no parseable SEVERITY line twice in a row -- treating as an ` +
+          `incomplete review, not a content verdict. Last response: ${result.text.slice(0, 500)}`
+      );
+    }
   }
   const duplicateVerdict = await checkCrowdDuplicates(image);
   const duplicateSeverity = crowdDuplicateSeverity(duplicateVerdict.largestIdenticalGroup);

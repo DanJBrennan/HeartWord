@@ -51,6 +51,7 @@ import { checkCanonicalLikeness, isLikenessAligned } from "./canonical-likeness.
 import { checkSceneFidelity, isSceneFidelityAligned } from "./scene-fidelity.js";
 import { runCritic, type CriticCharacterReference, type CriticReport } from "./critic.js";
 import { decideGenerationStatus, type DirectorDecision } from "./director-verdict.js";
+import { matchesBeatScope, stripBeatTag } from "./beat-scope.js";
 
 // Same hardcoded Hatam Mark 2 source paths external-keyframes.ts and
 // external-coverage-keyframes.ts already use -- this whole pipeline is a
@@ -68,8 +69,23 @@ const SCRIPTURE_SOURCES = [
  * throwing when the verse ref doesn't parse or no source text is found --
  * the Critic still runs, just without this extra grounding.
  */
-function loadScriptureText(dataDir: string, verseRef: string | null): string | null {
+function loadScriptureText(db: ReturnType<typeof getDb>, dataDir: string, shotId: string, verseRef: string | null): string | null {
   if (!verseRef) return null;
+  // SCRIPTURE_SOURCES is hardcoded to Hatam Mark 2 (the same convention
+  // external-keyframes.ts/external-coverage-keyframes.ts use for their
+  // own single-chapter v1 pilot) -- reading it unconditionally for
+  // whatever project is actually being reviewed would silently hand the
+  // Critic the WRONG passage the moment a second project exists. Only
+  // load it when this shot really is Hatam Mark 2.
+  const project = db
+    .prepare(
+      `SELECT p.language, p.book, p.chapter FROM projects p JOIN scenes sc ON sc.project_id = p.id JOIN shots s ON s.scene_id = sc.id
+       WHERE s.id = ?`
+    )
+    .get(shotId) as { language: string; book: string; chapter: number } | undefined;
+  if (!project || project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || project.chapter !== 2) {
+    return null;
+  }
   let range: { start: number; end: number };
   try {
     range = parseVerseRange(verseRef);
@@ -127,14 +143,19 @@ function loadCanonDecisions(db: ReturnType<typeof getDb>, projectId: string): st
   ).map((r) => r.note);
 }
 
-function loadShotOverrides(db: ReturnType<typeof getDb>, shotId: string): string[] {
+// See beat-scope.ts for why this is a separate, DB-free module (and for
+// the full reasoning behind beat-scoped overrides/corrections).
+
+function loadShotOverrides(db: ReturnType<typeof getDb>, shotId: string, beatId?: string): string[] {
   return (
     db
       .prepare(
         `SELECT note FROM review_notes WHERE subject_type = 'shot' AND subject_id = ? AND source = 'human' AND resolved = 1 ORDER BY created_at`
       )
       .all(shotId) as Array<{ note: string }>
-  ).map((r) => r.note);
+  )
+    .filter((r) => matchesBeatScope(r.note, beatId))
+    .map((r) => stripBeatTag(r.note));
 }
 
 /**
@@ -151,6 +172,25 @@ export function recordCanonDecision(db: ReturnType<typeof getDb>, projectId: str
     `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
      VALUES (?, ?, 'project', ?, 'human', ?, 1, ?)`
   ).run(randomUUID(), projectId, projectId, decisionText.trim(), Date.now());
+}
+
+/**
+ * The coverage-beat-scoped counterpart to recordCanonDecision/
+ * external-keyframes.ts's recordProducerOverride: records a producer
+ * exception for exactly ONE beat's candidate, tagged "BEAT: <beat_id>"
+ * so loadShotOverrides never applies it to this shot's other beats (see
+ * matchesBeatScope above for why that matters).
+ */
+export function recordCoverageBeatOverride(db: ReturnType<typeof getDb>, beatId: string, overrideText: string): { beatId: string; shotId: string } {
+  if (!overrideText.trim()) throw new Error("A producer override explanation is required.");
+  const beat = db.prepare(`SELECT shot_id FROM coverage_beats WHERE id = ?`).get(beatId) as { shot_id: string } | undefined;
+  if (!beat) throw new Error(`Unknown coverage beat: ${beatId}`);
+  const projectId = getProjectIdForShot(db, beat.shot_id);
+  db.prepare(
+    `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
+     VALUES (?, ?, 'shot', ?, 'human', ?, 1, ?)`
+  ).run(randomUUID(), projectId, beat.shot_id, `BEAT: ${beatId}\n${overrideText.trim()}`, Date.now());
+  return { beatId, shotId: beat.shot_id };
 }
 
 const NEXT_ATTEMPT_FIX_LINE = /NEXT ATTEMPT SUGGESTED FIX:\s*(.+)/;
@@ -173,13 +213,19 @@ export interface SuggestedFix {
  * (severity was "none" for the shot's last review) -- callers should
  * build a normal prompt in that case, not treat null as an error.
  */
-export function loadSuggestedFix(db: ReturnType<typeof getDb>, shotId: string): SuggestedFix | null {
-  const row = db
+export function loadSuggestedFix(db: ReturnType<typeof getDb>, shotId: string, beatId?: string): SuggestedFix | null {
+  // Beat-scoped for the same reason loadShotOverrides is (see
+  // matchesBeatScope): runCoverageBeatCandidateReview writes its QC notes
+  // under this shot's subject_id too, one per beat, so the most-recent-
+  // unresolved-note query below can otherwise return a DIFFERENT beat's
+  // correction -- picking up beat 1's fix while regenerating beat 3.
+  const rows = db
     .prepare(
       `SELECT note FROM review_notes WHERE subject_type = 'shot' AND subject_id = ? AND source = 'qc' AND resolved = 0
-       ORDER BY created_at DESC LIMIT 1`
+       ORDER BY created_at DESC`
     )
-    .get(shotId) as { note: string } | undefined;
+    .all(shotId) as Array<{ note: string }>;
+  const row = rows.find((r) => matchesBeatScope(r.note, beatId));
   if (!row) return null;
   const fixMatch = row.note.match(NEXT_ATTEMPT_FIX_LINE);
   if (!fixMatch) return null;
@@ -234,6 +280,7 @@ interface ShotRow {
 }
 
 interface ShotCharacterRow {
+  character_id: string;
   character_name: string;
   reference_path: string | null;
 }
@@ -244,13 +291,23 @@ interface CandidateAttemptRow extends ShotRow {
 
 /**
  * Reviews one shot end-to-end: runs the Critic's grounded research pass,
- * the two existing automated checks against its current accepted
+ * the two existing automated checks against its current attempt's
  * keyframe, combines them via decideGenerationStatus, writes the result
  * to review_notes and generation_attempts.status, and returns a full
  * report. Does NOT itself trigger a regeneration -- that's
  * runMediaGeneration's job the next time it runs, the same
  * invalidate-then-regenerate handoff canonical-likeness.ts and
  * scene-fidelity.ts's own audits already use.
+ *
+ * Looks up the shot's MOST RECENT 'generate' attempt regardless of
+ * status, not only an 'accepted' one -- media-generation/index.ts needs
+ * to call this again for an attempt already downgraded to
+ * 'hold_for_review' because its first review never actually completed
+ * (a network error, an unparseable Critic response), to retry the review
+ * against the SAME existing image rather than spending on a new
+ * generation attempt. The normal caller (right after a fresh accepted
+ * generation) is unaffected, since that attempt's status is still
+ * 'accepted' at the point it calls this.
  */
 export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
   const db = getDb();
@@ -260,7 +317,7 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
     .prepare(
       `SELECT s.id, s.action, s.verse_ref, s.continuity_notes, ga.id AS generation_attempt_id, ga.result_asset_path AS generated_path
        FROM shots s
-       LEFT JOIN generation_attempts ga ON ga.shot_id = s.id AND ga.operation = 'generate' AND ga.status = 'accepted'
+       LEFT JOIN generation_attempts ga ON ga.shot_id = s.id AND ga.operation = 'generate'
        WHERE s.id = ?
        ORDER BY ga.created_at DESC LIMIT 1`
     )
@@ -280,7 +337,7 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
 
   const characters = db
     .prepare(
-      `SELECT c.name AS character_name, ref.path AS reference_path
+      `SELECT c.id AS character_id, c.name AS character_name, ref.path AS reference_path
        FROM shot_characters shc
        JOIN characters c ON c.id = shc.character_id
        JOIN character_versions cv ON cv.character_id = c.id AND cv.status = 'approved'
@@ -302,7 +359,7 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
     continuityNotes: shot.continuity_notes,
     crowdDensity: fidelityRow?.crowd_density ?? null,
     generatedImagePath: generatedAbsPath,
-    scriptureText: loadScriptureText(dataDir, shot.verse_ref),
+    scriptureText: loadScriptureText(db, dataDir, shotId, shot.verse_ref),
     characterReferences: toCriticReferences(dataDir, characters),
     canonDecisions: loadCanonDecisions(db, getProjectIdForShot(db, shotId)),
     shotOverrides: loadShotOverrides(db, shotId)
@@ -396,7 +453,7 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
     | undefined;
 
   const characters = db.prepare(
-    `SELECT c.name AS character_name, ref.path AS reference_path
+    `SELECT c.id AS character_id, c.name AS character_name, ref.path AS reference_path
      FROM shot_characters shc
      JOIN characters c ON c.id = shc.character_id
      JOIN character_versions cv ON cv.character_id = c.id AND cv.status = 'approved'
@@ -417,7 +474,7 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
     continuityNotes: candidate.continuity_notes,
     crowdDensity: fidelityRow?.crowd_density ?? null,
     generatedImagePath: generatedAbsPath,
-    scriptureText: loadScriptureText(dataDir, candidate.verse_ref),
+    scriptureText: loadScriptureText(db, dataDir, candidate.id, candidate.verse_ref),
     characterReferences: toCriticReferences(dataDir, characters),
     canonDecisions: loadCanonDecisions(db, getProjectIdForShot(db, candidate.id)),
     shotOverrides: loadShotOverrides(db, candidate.id)
@@ -523,7 +580,7 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
   if (candidate.beat_character_id) characterIds.add(candidate.beat_character_id);
 
   const characterRefQuery = db.prepare(
-    `SELECT c.name AS character_name, ref.path AS reference_path
+    `SELECT c.id AS character_id, c.name AS character_name, ref.path AS reference_path
      FROM characters c
      JOIN character_versions cv ON cv.character_id = c.id AND cv.status = 'approved'
      LEFT JOIN (
@@ -536,7 +593,31 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
      ) ref ON ref.character_version_id = cv.id AND ref.rn = 1
      WHERE c.id = ?`
   );
-  const characters = [...characterIds].map((id) => characterRefQuery.get(id) as ShotCharacterRow);
+  const characters = [...characterIds]
+    .map((id) => characterRefQuery.get(id) as ShotCharacterRow | undefined)
+    .filter((c): c is ShotCharacterRow => c !== undefined);
+
+  // The preceding beat's own candidate keyframe (if it has one yet),
+  // for the Critic's coverage-beat-continuity check (item 9 in its
+  // prompt) -- runCritic already supports this via
+  // precedingCoverageFrame, but this review path never actually supplied
+  // it, so that check silently never ran for any coverage beat.
+  const precedingBeatRow =
+    candidate.beat_sequence > 1
+      ? (db
+          .prepare(`SELECT beat_type, notes, keyframe_asset_path FROM coverage_beats WHERE shot_id = ? AND sequence = ?`)
+          .get(candidate.shot_id, candidate.beat_sequence - 1) as
+          | { beat_type: string; notes: string | null; keyframe_asset_path: string | null }
+          | undefined)
+      : undefined;
+  const precedingCoverageFrame =
+    precedingBeatRow?.keyframe_asset_path && existsSync(assetPath(dataDir, precedingBeatRow.keyframe_asset_path))
+      ? {
+          label: `beat ${candidate.beat_sequence - 1} (${precedingBeatRow.beat_type})`,
+          imagePath: assetPath(dataDir, precedingBeatRow.keyframe_asset_path),
+          description: precedingBeatRow.notes ?? ""
+        }
+      : undefined;
 
   // Tell the Critic this is one beat of a covered sequence, not a normal
   // single_clip shot -- without this it has no way to know a cutaway/insert
@@ -550,41 +631,66 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
     continuityNotes: candidate.continuity_notes,
     crowdDensity: candidate.crowd_density,
     generatedImagePath: generatedAbsPath,
-    scriptureText: loadScriptureText(dataDir, candidate.verse_ref),
+    scriptureText: loadScriptureText(db, dataDir, candidate.shot_id, candidate.verse_ref),
     characterReferences: toCriticReferences(dataDir, characters),
     canonDecisions: loadCanonDecisions(db, getProjectIdForShot(db, candidate.shot_id)),
-    // Scoped to the PARENT shot, not this individual beat -- same
-    // subject_id review_notes already uses for every QC note this
-    // function writes below, so a producer decision made about one beat
-    // is at least visible to (though still worth reviewing for) that
-    // shot's other beats, rather than being invisible entirely.
-    shotOverrides: loadShotOverrides(db, candidate.shot_id),
+    // Beat-scoped: an exception recorded for one beat's candidate (e.g.
+    // "the missing debris here is fine, people obscure the floor") must
+    // not silently excuse a DIFFERENT beat where the same thing is
+    // clearly, unambiguously visible. See matchesBeatScope.
+    shotOverrides: loadShotOverrides(db, candidate.shot_id, candidate.beat_id),
+    precedingCoverageFrame,
     coverageBeat: { sequence: candidate.beat_sequence, type: candidate.beat_type, notes: candidate.beat_notes ?? "" }
   });
 
+  // Which character(s) this SPECIFIC beat actually requires to be
+  // visible and checkable -- NOT the full shot cast used for the
+  // Critic's references above. A lip_sync_insert or a cutaway with a
+  // chosen reaction subject mandates exactly that one character
+  // (coverage_beats.character_id); a master (or any beat with no
+  // character_id set) mandates none -- per schema.sql's own comment,
+  // character_id is "NULL for a master/cutaway until a human or Codex
+  // picks the reaction subject," i.e. there is no single figure this
+  // wide/establishing beat is required to hold identity-consistent for.
+  // Running the shot's FULL cast through this check (as before) meant a
+  // scribe-only cutaway failed likeness because Jesus -- deliberately
+  // off-screen -- couldn't be found: reproduced and confirmed wrong.
   let likenessAligned = true;
   const likenessNotes: string[] = [];
-  for (const character of characters) {
-    if (!character.reference_path) {
+  const requiredCharacter = candidate.beat_character_id
+    ? characters.find((c) => c.character_id === candidate.beat_character_id)
+    : undefined;
+  if (requiredCharacter) {
+    if (!requiredCharacter.reference_path) {
       likenessAligned = false;
-      likenessNotes.push(`${character.character_name} has no approved comparison asset`);
-      continue;
-    }
-    const referenceAbsPath = join(dataDir, "assets", character.reference_path);
-    if (!existsSync(referenceAbsPath)) {
-      likenessAligned = false;
-      likenessNotes.push(`${character.character_name}'s approved comparison asset is missing`);
-      continue;
-    }
-    const verdict = await checkCanonicalLikeness(character.character_name, referenceAbsPath, generatedAbsPath);
-    if (!isLikenessAligned(verdict.score, undefined, verdict.instanceCount)) {
-      likenessAligned = false;
-      likenessNotes.push(`${character.character_name}: ${verdict.score}/100, ${verdict.instanceCount} instance(s) — ${verdict.notes}`);
+      likenessNotes.push(`${requiredCharacter.character_name} has no approved comparison asset`);
+    } else {
+      const referenceAbsPath = join(dataDir, "assets", requiredCharacter.reference_path);
+      if (!existsSync(referenceAbsPath)) {
+        likenessAligned = false;
+        likenessNotes.push(`${requiredCharacter.character_name}'s approved comparison asset is missing`);
+      } else {
+        const verdict = await checkCanonicalLikeness(requiredCharacter.character_name, referenceAbsPath, generatedAbsPath);
+        if (!isLikenessAligned(verdict.score, undefined, verdict.instanceCount)) {
+          likenessAligned = false;
+          likenessNotes.push(
+            `${requiredCharacter.character_name}: ${verdict.score}/100, ${verdict.instanceCount} instance(s) — ${verdict.notes}`
+          );
+        }
+      }
     }
   }
 
-  const fidelityVerdict = await checkSceneFidelity(generatedAbsPath, candidate.action,
-    candidate.crowd_density, candidate.continuity_notes);
+  // Same reasoning as the action passed to runCritic above -- this
+  // beat's own purpose (e.g. "brief reaction/cutaway while dialogue
+  // continues") is what the frame should actually show, not the parent
+  // shot's whole action, which a narrow beat only depicts a slice of.
+  const fidelityVerdict = await checkSceneFidelity(
+    generatedAbsPath,
+    candidate.beat_notes || candidate.action,
+    candidate.crowd_density,
+    candidate.continuity_notes
+  );
   const fidelityAligned = isSceneFidelityAligned(fidelityVerdict);
   const decision = decideGenerationStatus({
     criticSeverity: critic.severity,
@@ -608,7 +714,15 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
     `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
      SELECT ?, sc.project_id, 'shot', ?, 'qc', ?, 0, ?
      FROM shots s JOIN scenes sc ON sc.id=s.scene_id WHERE s.id=?`
-  ).run(randomUUID(), candidate.shot_id, `Coverage-beat candidate ${attemptId} composite QC\n${report}`, Date.now(), candidate.shot_id);
+  ).run(
+    randomUUID(),
+    candidate.shot_id,
+    // Tagged so loadSuggestedFix/loadShotOverrides never apply this
+    // beat's own note to a sibling beat's review -- see matchesBeatScope.
+    `BEAT: ${candidate.beat_id}\nCoverage-beat candidate ${attemptId} composite QC\n${report}`,
+    Date.now(),
+    candidate.shot_id
+  );
   return { shotId: candidate.shot_id, decision, critic, likenessAligned, fidelityAligned, report };
 }
 
