@@ -26,8 +26,9 @@ const shot = {
   characters: [PRINCIPAL_SCRIBE],
   prompt: `${CASTING_ANCHOR}
 
-Shot: tight close-up on the Principal Scribe's face, static camera, eye level, shallow depth of field -- his face fills most of the frame, other scribes and the crowd reduced to a soft out-of-focus blur behind him.
+Shot: tight close-up on the Principal Scribe's face and shoulders, static camera, eye level, shallow depth of field -- his face fills most of the frame, other scribes and the crowd reduced to a soft out-of-focus blur behind him.
 Roof/ceiling: a FLAT mud-and-reed roof low overhead, matching the rest of this interior scene -- not visible in this tight a frame except perhaps a soft blur at the very top edge.
+Garment (must match his reference image exactly even at this tight crop): black robe with a black mantle draped diagonally over one shoulder, the mantle's leading edge trimmed with a maroon/burgundy stripe and a tasseled (tzitzit) corner hanging visible at his shoulder/chest; a maroon vertical clavus stripe runs down the tunic where visible. Do not simplify this to a plain, unadorned black tunic -- the draped mantle, maroon trim, and tassels must be visible at his shoulder within this crop.
 Action: The Principal Scribe sits still, listening, his brow furrowed in private suspicion and disapproval -- lips pressed together, NOT moving, NOT speaking aloud (he is questioning Jesus silently in his own heart, per the text). His eyes narrow slightly, calculating, offended by what he has just heard, but he says nothing out loud and makes no gesture toward speaking.
 Population/crowd: other scribes and onlookers blurred in the background only, not the focus.
 Characters visible: Principal Scribe (matching his reference image), in tight close-up, mouth closed and still.`

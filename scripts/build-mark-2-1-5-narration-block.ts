@@ -58,14 +58,24 @@ async function run() {
     // Reordered (2026-09-10, Dan): the close-up digging insert now plays
     // BEFORE the wide establishing digging shot (tight-then-pull-back).
     { sourceAbsPath: join(dataDir, "assets", "generated/video/friends-roof-digging.mp4"), durationMs: 4000, label: "friends-roof-digging" },
-    { sourceAbsPath: join(dataDir, "assets", shot3.result_asset_path), durationMs: shot3.dur, label: "shot3-digging-extended" },
+    // Reordered (2026-09-10, Dan: "clip at 1474 should move to 1282"): the
+    // crowd's indoor reaction to falling dust now plays BEFORE the
+    // extended digging shot, not after it.
     { sourceAbsPath: join(dataDir, "assets", "generated/video/crowd-indoor-reaction-to-dust-falling.mp4"), durationMs: 8000, label: "crowd-indoor-reaction-to-dust-falling" },
+    // Reordered (2026-09-11, Dan: "clip at 1666 moves to 1474"): friends
+    // watching from the roof aperture now plays BEFORE the extended
+    // digging shot, not after it.
     { sourceAbsPath: join(dataDir, "assets", "generated/video/friends-watching-from-roof-aperture.mp4"), durationMs: 4000, label: "friends-watching-from-roof-aperture" },
-    // New (2026-09-10, Dan): "the lowering...clip is too soon" -- more
-    // roof-opening material (readying the ropes) plays before Shot 4.
+    // Reordered (2026-09-11, Dan: "clip at 1762 should be moved to
+    // 1570"): friends readying the ropes now plays BEFORE the extended
+    // digging shot, not after it.
     { sourceAbsPath: join(dataDir, "assets", "generated/video/friends-ready-ropes-at-opening.mp4"), durationMs: 4000, label: "friends-ready-ropes-at-opening" },
-    { sourceAbsPath: join(dataDir, "assets", shot4.result_asset_path), durationMs: shot4.dur, label: "shot4-lowering-extended" },
+    { sourceAbsPath: join(dataDir, "assets", shot3.result_asset_path), durationMs: shot3.dur, label: "shot3-digging-extended" },
+    // Reordered (2026-09-10, Dan): the overhead recast angle (same beat
+    // as the lowering, per its own name) now plays BEFORE the main
+    // lowering shot instead of after it.
     { sourceAbsPath: join(dataDir, "assets", "generated/video/pilot-shot004-recast.mp4"), durationMs: 4000, label: "pilot-shot004-recast" },
+    { sourceAbsPath: join(dataDir, "assets", shot4.result_asset_path), durationMs: shot4.dur, label: "shot4-lowering-extended" },
     // No longer freeze-padded: enough real coverage now exists that the
     // group runs slightly LONGER than the real narration on its own --
     // buildNarrationAudioBlock pads the audio with trailing silence

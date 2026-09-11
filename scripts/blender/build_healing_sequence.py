@@ -19,6 +19,12 @@ Reads the real ordered clip list (scripts/extract-healing-sequence.ts
     mid-word just because the picture cuts to a new angle underneath it
   - Channel 4: Ambient / room tone (left EMPTY on purpose)
   - Channel 5: Music (left EMPTY on purpose)
+  - Channel 6: Hatam + speaker-name caption (pre-rendered, one image per
+    word-highlight state -- see render-caption-images.py; Blender's
+    Sequencer has no native karaoke/rich-text feature, so each distinct
+    highlighted-word frame is its own Image strip, cut in at that word's
+    real start time)
+  - Channel 7: English reference caption (same mechanism)
 
 This mirrors the `tracks` table's own kind enum already sitting unused
 in HeartWord's schema.sql (narration/dialogue/music/sfx) -- the same
@@ -31,7 +37,8 @@ import os
 import bpy
 
 DATA_JSON = r"C:\Users\danbr\AppData\Local\Temp\claude\C--Users-danbr-OneDrive-Documents-HeartWord\901bfa2e-5a77-42fc-b8fc-cfc6ad988300\scratchpad\healing-sequence.json"
-OUT_BLEND = r"C:\Users\danbr\HeartWordData\assets\generated\editor\mark-2-healing-sequence.blend"
+CAPTION_MANIFEST_JSON = r"C:\Users\danbr\AppData\Local\Temp\claude\C--Users-danbr-OneDrive-Documents-HeartWord\901bfa2e-5a77-42fc-b8fc-cfc6ad988300\scratchpad\caption-manifest.json"
+OUT_BLEND = r"C:\Users\danbr\HeartWordData\assets\generated\editor\mark-2-full-chapter.blend"
 FPS = 24
 
 VIDEO_CHANNEL = 1
@@ -39,6 +46,8 @@ DIALOGUE_CHANNEL = 2
 NARRATION_BED_CHANNEL = 3
 AMBIENT_CHANNEL = 4
 MUSIC_CHANNEL = 5
+HATAM_CAPTION_CHANNEL = 6
+ENGLISH_CAPTION_CHANNEL = 7
 
 
 def ms_to_frame(ms: float) -> int:
@@ -118,6 +127,41 @@ def main():
         print(f"{bed['label']} | {timeline_start} | {timeline_start + duration_frames} | source_offset={bed['sourceStartMs']}ms")
         total_frames = max(total_frames, timeline_start + duration_frames)
 
+    # Name channels 6/7 so their built-in per-channel mute checkbox (in the
+    # Sequencer's Channels sidebar, N-panel) reads as an obvious on/off
+    # toggle for each caption track -- no custom UI needed, this is a real
+    # native Blender control already wired to hide/show every strip on
+    # that channel during playback and render.
+    se.channels[HATAM_CAPTION_CHANNEL].name = "Hatam Captions"
+    se.channels[ENGLISH_CAPTION_CHANNEL].name = "English Captions"
+
+    if os.path.exists(CAPTION_MANIFEST_JSON):
+        with open(CAPTION_MANIFEST_JSON, "r", encoding="utf-8") as f:
+            caption_manifest = json.load(f)
+        channel_by_track = {"hatam": HATAM_CAPTION_CHANNEL, "english": ENGLISH_CAPTION_CHANNEL}
+        caption_count = 0
+        for cue in caption_manifest:
+            channel = channel_by_track.get(cue["track"])
+            if channel is None:
+                continue
+            start_frame = ms_to_frame(cue["startMs"])
+            end_frame = ms_to_frame(cue["endMs"])
+            if end_frame <= start_frame:
+                end_frame = start_frame + 1
+            img_strip = se.strips.new_image(
+                name=f"{cue['track']}-{cue['wordIndex']}"[:60],
+                filepath=cue["absPath"],
+                channel=channel,
+                frame_start=start_frame,
+            )
+            img_strip.frame_final_end = end_frame
+            img_strip.blend_type = "ALPHA_OVER"
+            caption_count += 1
+            total_frames = max(total_frames, end_frame)
+        print(f"\ncaptions: {caption_count} image strips placed on channels {HATAM_CAPTION_CHANNEL} (Hatam) and {ENGLISH_CAPTION_CHANNEL} (English)")
+    else:
+        print(f"\nNo caption manifest found at {CAPTION_MANIFEST_JSON} -- skipping caption tracks.")
+
     scene.frame_start = 0
     scene.frame_end = total_frames
 
@@ -125,7 +169,7 @@ def main():
     bpy.ops.wm.save_as_mainfile(filepath=OUT_BLEND)
     print(f"\nSaved: {OUT_BLEND}")
     print(f"Total: {total_frames} frames ({total_frames / FPS:.1f}s)")
-    print("Channels: 1=Video 2=Dialogue 3=Narration-bed 4=Ambient(empty) 5=Music(empty)")
+    print("Channels: 1=Video 2=Dialogue 3=Narration-bed 4=Ambient(empty) 5=Music(empty) 6=Hatam-caption 7=English-caption")
 
 
 main()

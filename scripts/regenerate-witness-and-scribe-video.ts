@@ -39,7 +39,9 @@ async function runOne(job: (typeof jobs)[number]) {
 }
 
 async function run() {
-  for (const job of jobs) {
+  const only = process.argv.slice(2);
+  const toRun = only.length > 0 ? jobs.filter((j) => only.includes(j.shotId)) : jobs;
+  for (const job of toRun) {
     await runOne(job);
   }
 }

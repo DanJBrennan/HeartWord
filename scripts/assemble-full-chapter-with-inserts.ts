@@ -346,13 +346,23 @@ const timeline: Segment[] = [
   // gable roof with a skylight, contradicting the flat roof established
   // by the digging shots -- replaced with a corrected flat-roof take.
   RAW("generated/video/kling-927152808813142035.mp4", "paralytic-astonishment-flatroof", AI_GENERATED_INSERT),
+  // Reordered (2026-09-10, Dan: "clip at 4585 should move to 4174"): the
+  // gratitude beat now plays BEFORE Shot 9 (stands, rolls bed, walks
+  // out), not after the exit/celebration beats.
+  RAW("generated/video/kling-926838984880947236.mp4", "paralytic-gratitude", AI_GENERATED_INSERT),
+  // Reordered (2026-09-11, Dan: "clip at 4803 moves to 4296"): the crowd
+  // spokesperson's amazed line now plays right after gratitude, BEFORE
+  // friends' happy glance and Shot 9, instead of after all the exit/
+  // celebration beats.
+  SHOT("27416798-3186-468a-978d-35b74297ea2f"), // Scene1 Shot10
+  // Reordered (2026-09-11, Dan: "clip at 4707 moves to 4296"): friends'
+  // happy glance now plays right after gratitude, BEFORE Shot 9, not
+  // after the exit/celebration beats.
+  RAW("generated/video/friends-happy-glance.mp4", "friends-happy-glance", AI_GENERATED_INSERT),
   SHOT("e84e957d-de28-4d44-9bf9-9e84cd83a2ec"), // Scene1 Shot9
   RAW("generated/video/kling-926868332358275129.mp4", "paralytic-exits-house", AI_GENERATED_INSERT),
   RAW("generated/video/mark-2-paralytic-rear-heel-click-veo.mp4", "paralytic-heel-click-celebration", AI_GENERATED_INSERT),
   RAW("generated/video/mark-2-paralytic-walks-away-applause-veo.mp4", "paralytic-walks-away-applause", AI_GENERATED_INSERT),
-  RAW("generated/video/kling-926838984880947236.mp4", "paralytic-gratitude", AI_GENERATED_INSERT),
-  RAW("generated/video/friends-happy-glance.mp4", "friends-happy-glance", AI_GENERATED_INSERT),
-  SHOT("27416798-3186-468a-978d-35b74297ea2f"), // Scene1 Shot10
   RAW("generated/video/scribe-unhappy-amid-celebration.mp4", "scribe-unhappy-amid-celebration", AI_GENERATED_INSERT),
   SHOT("81f67f72-22b0-4ca7-84cd-addd7b42115b"), // Scene2 Shot1
   SHOT("26d03459-0d6a-4f1d-b9e3-5239014539bf"), // Scene2 Shot2

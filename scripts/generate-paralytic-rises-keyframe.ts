@@ -25,7 +25,7 @@ const shot = {
 
 Shot: medium shot, static camera, low eye-level angle looking slightly up at him, INTERIOR of the crowded house room where the healing just took place -- rough dark basalt stone walls, low wood beam ceiling, a shaft of daylight falling from the torn roof opening above, dim ambient light, blurred crowd filling the background on all sides.
 Action: The paralytic is caught mid-motion pushing himself up off the woven mat with both arms, torso lifted halfway, one knee bent underneath him as he rises -- NOT yet fully standing, NOT still lying down. His face shows strain mixed with disbelief as he feels his own legs and back working for the first time. The blanket/mat is still partially beneath him. This is the physical midpoint between lying down and standing up.
-Population/crowd: dense but out-of-focus crowd filling the background, indoors, reacting.
+Population/crowd: dense but out-of-focus crowd filling the background, indoors, each reacting in their OWN distinct way rather than all together -- some with both hands clasped over their open mouths, some gaping with jaws dropped, some craning and shifting position to get a clearer view past others, some with one or both hands raised, some leaning toward a neighbor wide-eyed. No two nearby figures share the same pose or gesture.
 Characters visible: Healed paralytic (matching his reference image), mid-rise from the mat, not yet upright.`
 };
 

@@ -11,7 +11,7 @@ const job = {
   shotId: "paralytic-rises-from-mat",
   keyframe: "generated/keyframes/paralytic-rises-from-mat.png",
   prompt:
-    "The paralytic continues pushing himself up off the mat, planting his feet and straightening his legs, rising the rest of the way to standing over the course of the shot -- his motion is shaky and disbelieving at first, then steadies as he reaches full height. The crowd around him leans in, reacting with growing astonishment. No speech."
+    "The paralytic continues pushing himself up off the mat, planting his feet and straightening his legs, rising the rest of the way to standing over the course of the shot -- his motion is shaky and disbelieving at first, then steadies as he reaches full height. The surrounding crowd reacts in astonishment, but each person differently and independently, not in unison: some clap both hands over their open mouths, some just gape with jaws dropped and frozen still, some shift and crane their necks to see past the people in front of them, some throw one or both hands up, some turn to grab a neighbor's arm in shock. No speech."
 };
 
 async function run() {

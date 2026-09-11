@@ -129,14 +129,24 @@ const sequence: Seg[] = [
   // BEFORE the wide establishing digging shot (tight-then-pull-back),
   // not after it.
   RAW("generated/video/friends-roof-digging.mp4", "friends-roof-digging (insert)"),
-  SHOT("b18da4bb-4f23-42c9-bbd1-b02f04cceb67", "Mark 2:3-4 -- friends dig through the roof (extended)"),
+  // Reordered (2026-09-10, Dan: "clip at 1474 should move to 1282"): the
+  // crowd's indoor reaction to falling dust now plays BEFORE the
+  // extended digging shot, not after it.
   RAW("generated/video/crowd-indoor-reaction-to-dust-falling.mp4", "crowd-indoor-reaction-to-dust-falling"),
+  // Reordered (2026-09-11, Dan: "clip at 1666 moves to 1474"): friends
+  // watching from the roof aperture now plays BEFORE the extended
+  // digging shot, not after it.
   RAW("generated/video/friends-watching-from-roof-aperture.mp4", "friends-watching-from-roof-aperture"),
-  // New (2026-09-10, Dan): "the lowering...clip is too soon" -- more
-  // roof-opening material (readying the ropes) plays before Shot 4.
+  // Reordered (2026-09-11, Dan: "clip at 1762 should be moved to 1570"):
+  // friends readying the ropes now plays BEFORE the extended digging
+  // shot, not after it.
   RAW("generated/video/friends-ready-ropes-at-opening.mp4", "friends-ready-ropes-at-opening"),
-  SHOT("b6edbb4d-4643-40c0-8f16-ed5eb9730df1", "Mark 2:4 -- lower the paralytic through the roof (extended)"),
+  SHOT("b18da4bb-4f23-42c9-bbd1-b02f04cceb67", "Mark 2:3-4 -- friends dig through the roof (extended)"),
+  // Reordered (2026-09-10, Dan): the overhead recast angle (same beat as
+  // the lowering, per its own name) now plays BEFORE the main lowering
+  // shot instead of after it.
   RAW("generated/video/pilot-shot004-recast.mp4", "pilot-shot004-recast"),
+  SHOT("b6edbb4d-4643-40c0-8f16-ed5eb9730df1", "Mark 2:4 -- lower the paralytic through the roof (extended)"),
   // No longer freeze-padded (2026-09-10): enough real coverage now
   // exists (3 new inserts + Shot 1 at full length) that this group runs
   // slightly LONGER than the real 68955ms "Mark 2:1-5 (narration)" bed
@@ -170,14 +180,59 @@ const sequence: Seg[] = [
   // gable roof with a skylight, contradicting the flat roof established
   // by the digging shots -- replaced with a corrected flat-roof take.
   RAW("generated/video/kling-927152808813142035.mp4", "paralytic-astonishment (flat roof)"),
+  // Reordered (2026-09-10, Dan: "clip at 4585 should move to 4174"): the
+  // gratitude beat now plays BEFORE Shot 9 (stands, rolls bed, walks
+  // out), not after the exit/celebration beats.
+  RAW("generated/video/kling-926838984880947236.mp4", "paralytic-gratitude"),
+  // Reordered (2026-09-11, Dan: "clip at 4803 moves to 4296"): the crowd
+  // spokesperson's amazed line now plays right after gratitude, BEFORE
+  // friends' happy glance and Shot 9, instead of after all the exit/
+  // celebration beats.
+  SHOT("27416798-3186-468a-978d-35b74297ea2f", "Mark 2:12 -- crowd spokesperson amazed"),
+  // Reordered (2026-09-11, Dan: "clip at 4707 moves to 4296"): friends'
+  // happy glance now plays right after gratitude, BEFORE Shot 9 (stands,
+  // rolls bed, walks out), not after the exit/celebration beats.
+  RAW("generated/video/friends-happy-glance.mp4", "friends-happy-glance"),
   SHOT("e84e957d-de28-4d44-9bf9-9e84cd83a2ec", "Mark 2:12 -- stands, rolls bed, walks out"),
   RAW("generated/video/kling-926868332358275129.mp4", "paralytic-exits-house"),
   RAW("generated/video/mark-2-paralytic-rear-heel-click-veo.mp4", "paralytic-heel-click-celebration"),
   RAW("generated/video/mark-2-paralytic-walks-away-applause-veo.mp4", "paralytic-walks-away-applause"),
-  RAW("generated/video/kling-926838984880947236.mp4", "paralytic-gratitude"),
-  RAW("generated/video/friends-happy-glance.mp4", "friends-happy-glance"),
-  SHOT("27416798-3186-468a-978d-35b74297ea2f", "Mark 2:12 -- crowd spokesperson amazed"),
-  RAW("generated/video/scribe-unhappy-amid-celebration.mp4", "scribe-unhappy-amid-celebration")
+  RAW("generated/video/scribe-unhappy-amid-celebration.mp4", "scribe-unhappy-amid-celebration"),
+
+  // Scenes 2-4 (2026-09-11, Dan: "load the rest of Mark 2 in blender"):
+  // same narrative order as assemble-full-chapter-with-inserts.ts's
+  // master timeline. Gap-filler RAW inserts here carry no narration or
+  // dialogue audio (per that script's AI_GENERATED_INSERT convention --
+  // that stretch is meant for a music bed later, not narration), so they
+  // stay muteOwnAudio=true (RAW's own default).
+  SHOT("81f67f72-22b0-4ca7-84cd-addd7b42115b", "Mark 2:13 -- Jesus teaches by the sea"),
+  SHOT("26d03459-0d6a-4f1d-b9e3-5239014539bf", "Mark 2:14 -- Jesus sees Matthew at the tax booth"),
+  SHOT("ce87d971-d15f-4a75-b636-1c9dcb52a1fb", "Mark 2:14 -- Jesus calls Matthew"),
+  RAW("generated/video/matthew-hesitates-at-his-coins-before-choosing-to-follow.mp4", "matthew-hesitates-at-his-coins-before-choosing-to-follow"),
+  SHOT("097de51b-95bd-485d-952f-10e84160e13a", "Mark 2:14 -- Matthew follows Jesus"),
+  SHOT("19997eba-627e-46e4-ac5b-946265fe57dc", "Mark 2:15 -- dinner at Levi's house"),
+  RAW("generated/video/kling-926905441325154362.mp4", "matthew-serving-bread-and-drink-to-jesus-and-guests"),
+  RAW("generated/video/disciples-observe-scribes-murmuring-at-doorway.mp4", "disciples-observe-scribes-murmuring-at-doorway"),
+  SHOT("9101333a-d2ef-4067-ae4d-c47fc0d398d2", "Mark 2:16 -- scribes watch with disapproval"),
+  SHOT("462acce5-2fd3-41df-a38f-872e29a891f3", "Mark 2:16 -- scribe questions the disciples"),
+  SHOT("cb1856ec-2e9f-4ba7-804c-a758da8c20d5", "Mark 2:17 -- Jesus answers the scribes"),
+  RAW("generated/video/matthew-and-disciples-reacting-at-table.mp4", "matthew-and-disciples-reacting-at-table"),
+  SHOT("8afd8f47-6a49-43ee-8b97-74598a000331", "Mark 2:18 -- questioners approach about fasting"),
+  RAW("generated/video/scribes-observing-near-doorway.mp4", "scribes-observing-near-doorway"),
+  SHOT("f26b7be7-3801-4b47-8d38-a8ada38aa981", "Mark 2:18 -- spokesperson asks about fasting"),
+  SHOT("9a1b2acb-6da9-4291-a4e1-5cbd78629e2c", "Mark 2:19 -- Jesus answers about the bridegroom"),
+  RAW("generated/video/disciples-react-warmly-to-jesus-wedding-analogy.mp4", "disciples-react-warmly-to-jesus-wedding-analogy"),
+  RAW("generated/video/questioners-processing-jesus-counter-question.mp4", "questioners-processing-jesus-counter-question"),
+  SHOT("9c291cdd-389e-45db-b737-866543d730c6", "Mark 2:20 -- the bridegroom taken away"),
+  SHOT("44009342-73b8-4b8a-ad46-085d64253258", "Mark 2:21 -- parable of the unshrunk cloth"),
+  SHOT("8209a47b-eaa0-4dcd-9a43-e3a9afd2e369", "Mark 2:22 -- parable of new wine"),
+  SHOT("7b719b16-ee4d-4d6a-90ff-3c22327f1a86", "Mark 2:23 -- disciples pluck grain in the field"),
+  RAW("generated/video/close-up-of-peter-rubbing-grain-and-chaff.mp4", "close-up-of-peter-rubbing-grain-and-chaff"),
+  RAW("generated/video/scribes-watch-in-silent-disapproval.mp4", "scribes-watch-in-silent-disapproval"),
+  SHOT("94a721a3-1fc6-44d1-a9e2-9021e26ec408", "Mark 2:24 -- scribe questions the Sabbath act"),
+  SHOT("cef5e711-3d67-4b5c-aff1-4315587c6e23", "Mark 2:25-26 -- David and the bread of the Presence"),
+  SHOT("96199814-0884-4a4a-bd95-b84950fce4fd", "Mark 2:27-28 -- the Sabbath was made for man"),
+  RAW("generated/video/kling-926911320539140170.mp4", "peter-s-reverent-reflection")
 ];
 
 // Real continuous audio that spans multiple video segments above,
