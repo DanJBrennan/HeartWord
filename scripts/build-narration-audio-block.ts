@@ -127,6 +127,17 @@ export function buildNarrationAudioBlock(
 
     mkdirSync(join(outAbsPath, ".."), { recursive: true });
     const targetFrames = Math.round((totalVideoMs / 1000) * TARGET_FPS);
+    // When the real video (all real content, no invented padding) already
+    // runs LONGER than the real narration audio, do NOT let -shortest
+    // silently truncate the tail of the last clip to match the shorter
+    // audio -- that throws away real generated content. Instead pad the
+    // audio with trailing silence so the video plays out in full; a brief
+    // silent tail before the next dialogue-bearing shot is normal pacing,
+    // not a defect (found 2026-09-10 after adding enough real coverage
+    // that this span no longer needed freeze-frame padding at all).
+    const audioPadSec = Math.max(0, (totalVideoMs - realAudioMs) / 1000);
+    const audioFilter =
+      audioPadSec > 0 ? `apad=pad_dur=${audioPadSec.toFixed(3)}` : "anull";
     execFileSync(
       "ffmpeg",
       [
@@ -141,6 +152,8 @@ export function buildNarrationAudioBlock(
         (totalVideoMs / 1000).toFixed(3),
         "-frames:v",
         String(targetFrames),
+        "-af",
+        audioFilter,
         "-c:v",
         "libx264",
         "-preset",
@@ -157,7 +170,6 @@ export function buildNarrationAudioBlock(
         "0:v:0",
         "-map",
         "1:a:0",
-        "-shortest",
         outAbsPath
       ],
       { stdio: ["ignore", "ignore", "pipe"] }
@@ -177,23 +189,20 @@ async function run() {
     .prepare(`SELECT source_path, start_ms, end_ms FROM audio_segments WHERE verse_ref = 'Mark 2:5-8 (narration)'`)
     .get() as { source_path: string; start_ms: number; end_ms: number };
 
-  const shot6Clip = db
-    .prepare(
-      `SELECT ga.result_asset_path, cl.timeline_end_ms - cl.timeline_start_ms AS dur FROM clips cl
-       JOIN generation_attempts ga ON ga.id = cl.generation_attempt_id
-       WHERE cl.shot_id = 'fe9886dc-0510-4cdb-afdc-ed9c22d14084' AND ga.operation = 'assemble_shot' AND ga.status = 'accepted'
-       ORDER BY ga.created_at DESC LIMIT 1`
-    )
-    .get() as { result_asset_path: string; dur: number };
-
   // friends-watching-from-roof-aperture REMOVED from this group (2026-09-10,
   // Dan): repositioned to the digging beat -- "the moment the hole finally
   // opens" -- so it now lives in the Mark 2:1-5 narration block instead
-  // (see build-mark-2-1-5-narration-block.ts). Removing it here increases
-  // this block's freeze-frame padding from 3083ms to match.
+  // (see build-mark-2-1-5-narration-block.ts).
+  //
+  // Both remaining clips reshot (2026-09-10, Dan): crowd-witness-
+  // breathless-reaction had an arched/gable roof (even in its own
+  // keyframe) contradicting the flat roof established elsewhere; the
+  // DB-tracked scribe shot (fe9886dc) was a wide group shot with no
+  // clear focal point under real narration -- replaced with a tight
+  // close-up on the Principal Scribe, mouth closed/still.
   const segments: AudioBlockSegment[] = [
-    { sourceAbsPath: join(dataDir, "assets", "generated/video/crowd-witness-breathless-reaction.mp4"), durationMs: 4000, label: "crowd-witness-breathless-reaction" },
-    { sourceAbsPath: join(dataDir, "assets", shot6Clip.result_asset_path), durationMs: shot6Clip.dur, label: "scribes-question-in-heart" }
+    { sourceAbsPath: join(dataDir, "assets", "generated/video/crowd-witness-breathless-reaction-flatroof.mp4"), durationMs: 4000, label: "crowd-witness-breathless-reaction" },
+    { sourceAbsPath: join(dataDir, "assets", "generated/video/scribe-questions-in-heart-closeup.mp4"), durationMs: 4000, label: "scribe-questions-in-heart-closeup" }
   ];
 
   const outRelPath = "generated/chapter/blocks/mark-2-5-8-narration-block.mp4";

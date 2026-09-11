@@ -43,16 +43,33 @@ async function run() {
 
   const segments: AudioBlockSegment[] = [
     { sourceAbsPath: join(dataDir, "assets", "generated/video/kling-927123598505017405.mp4"), durationMs: 2926, label: "jesus-and-disciples-enter-house" },
-    { sourceAbsPath: join(dataDir, "assets", shot1.result_asset_path), durationMs: 1593, label: "crowd-gathers-at-doorway" },
+    // New (2026-09-10, Dan): a gradually growing crowd plays first --
+    // Shot 1 (fully packed, doorway blocked) now makes sense as the
+    // payoff after this build-up, so it plays at its full native length
+    // instead of being trimmed to the bare recorded-pause duration.
+    { sourceAbsPath: join(dataDir, "assets", "generated/video/crowd-gathers-at-doorway.mp4"), durationMs: 4000, label: "crowd-gathers-at-doorway" },
+    { sourceAbsPath: join(dataDir, "assets", shot1.result_asset_path), durationMs: shot1.dur, label: "shot1-crowd-blocks-doorway" },
     { sourceAbsPath: join(dataDir, "assets", "generated/video/shot2-jesus-preaches-over-shoulder.mp4"), durationMs: 4000, label: "shot2-over-shoulder" },
     { sourceAbsPath: join(dataDir, "assets", "generated/video/friends-carrying-to-house.mp4"), durationMs: 4000, label: "friends-carrying-to-house" },
+    // New (2026-09-10, Dan): "We need a clip where the four friends are
+    // approaching the stairs" -- bridges street level and the rooftop.
+    { sourceAbsPath: join(dataDir, "assets", "generated/video/friends-approach-stairs.mp4"), durationMs: 4000, label: "friends-approach-stairs" },
     { sourceAbsPath: join(dataDir, "assets", "generated/video/friends-roof-arrival.mp4"), durationMs: 4000, label: "friends-roof-arrival" },
-    { sourceAbsPath: join(dataDir, "assets", shot3.result_asset_path), durationMs: shot3.dur, label: "shot3-digging-extended" },
+    // Reordered (2026-09-10, Dan): the close-up digging insert now plays
+    // BEFORE the wide establishing digging shot (tight-then-pull-back).
     { sourceAbsPath: join(dataDir, "assets", "generated/video/friends-roof-digging.mp4"), durationMs: 4000, label: "friends-roof-digging" },
+    { sourceAbsPath: join(dataDir, "assets", shot3.result_asset_path), durationMs: shot3.dur, label: "shot3-digging-extended" },
     { sourceAbsPath: join(dataDir, "assets", "generated/video/crowd-indoor-reaction-to-dust-falling.mp4"), durationMs: 8000, label: "crowd-indoor-reaction-to-dust-falling" },
     { sourceAbsPath: join(dataDir, "assets", "generated/video/friends-watching-from-roof-aperture.mp4"), durationMs: 4000, label: "friends-watching-from-roof-aperture" },
+    // New (2026-09-10, Dan): "the lowering...clip is too soon" -- more
+    // roof-opening material (readying the ropes) plays before Shot 4.
+    { sourceAbsPath: join(dataDir, "assets", "generated/video/friends-ready-ropes-at-opening.mp4"), durationMs: 4000, label: "friends-ready-ropes-at-opening" },
     { sourceAbsPath: join(dataDir, "assets", shot4.result_asset_path), durationMs: shot4.dur, label: "shot4-lowering-extended" },
     { sourceAbsPath: join(dataDir, "assets", "generated/video/pilot-shot004-recast.mp4"), durationMs: 4000, label: "pilot-shot004-recast" },
+    // No longer freeze-padded: enough real coverage now exists that the
+    // group runs slightly LONGER than the real narration on its own --
+    // buildNarrationAudioBlock pads the audio with trailing silence
+    // instead of truncating this clip's tail (see its 2026-09-10 fix).
     { sourceAbsPath: join(dataDir, "assets", "generated/video/paralytic-s-tearful-hope-and-crowd-silence.mp4"), durationMs: 8000, label: "paralytic-s-tearful-hope-and-crowd-silence" }
   ];
 

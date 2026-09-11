@@ -101,45 +101,75 @@ const sequence: Seg[] = [
   // vocals.mp3, via ffmpeg silencedetect -- the cut to the next clip
   // lands exactly where the real recorded pause begins.
   RAW("generated/video/kling-927123598505017405.mp4", "jesus-and-disciples-enter-house", false, 2926),
-  // Reused as the "people start to gather, curious" beat (Dan's clip 4)
-  // during the real ~1.6s recorded pause -- trimmed to 1593ms (measured
-  // pause: 2.926s-4.519s) so the cut to Shot 2 lands exactly when verse
-  // narration resumes.
-  SHOT("f6386c84-b0b0-404d-b080-faa644443f72", "Mark 2:1-2 -- crowd blocks the doorway", 1593),
+  // New (2026-09-10, Dan): a gradually growing crowd plays first, during
+  // the real recorded pause -- Shot 1 (fully packed, doorway blocked)
+  // now makes sense as the payoff after this build-up, so it plays at
+  // its full native length instead of being trimmed to the bare pause
+  // duration ("The clip of the crowd outside the house is now too
+  // short... it should be a few seconds longer").
+  RAW("generated/video/crowd-gathers-at-doorway.mp4", "crowd-gathers-at-doorway"),
+  SHOT("f6386c84-b0b0-404d-b080-faa644443f72", "Mark 2:1-2 -- crowd blocks the doorway"),
   // Reshoot (2026-09-10): the original Shot 2 take showed Jesus's face/
   // lips directly, which doesn't work now that this beat plays under
   // real narration (not lip-synced dialogue) rather than his own
   // dialogue -- replaced with an over-the-shoulder take that never shows
   // his mouth. Ad-hoc insert; the DB-tracked shots.8d9ac62b record and
   // the ffmpeg chapter-assembly pipeline are untouched.
-  RAW("generated/video/shot2-jesus-preaches-over-shoulder.mp4", "Mark 2:2 -- Jesus preaches to the crowd (over-the-shoulder)", false),
+  // muteOwnAudio=true (Dan caught, 2026-09-10): Veo generated real
+  // (English) speech audio for this clip despite Jesus's mouth being
+  // off-camera -- must stay muted since the real Hatam narration bed
+  // already covers this beat; leaving it unmuted doubled the audio.
+  RAW("generated/video/shot2-jesus-preaches-over-shoulder.mp4", "Mark 2:2 -- Jesus preaches to the crowd (over-the-shoulder)"),
   RAW("generated/video/friends-carrying-to-house.mp4", "friends-carrying-to-house"),
+  // New (2026-09-10, Dan): "We need a clip where the four friends are
+  // approaching the stairs" -- bridges street level and the rooftop.
+  RAW("generated/video/friends-approach-stairs.mp4", "friends-approach-stairs"),
   RAW("generated/video/friends-roof-arrival.mp4", "friends-roof-arrival"),
-  SHOT("b18da4bb-4f23-42c9-bbd1-b02f04cceb67", "Mark 2:3-4 -- friends dig through the roof (extended)"),
+  // Reordered (2026-09-10, Dan): the close-up digging insert now plays
+  // BEFORE the wide establishing digging shot (tight-then-pull-back),
+  // not after it.
   RAW("generated/video/friends-roof-digging.mp4", "friends-roof-digging (insert)"),
+  SHOT("b18da4bb-4f23-42c9-bbd1-b02f04cceb67", "Mark 2:3-4 -- friends dig through the roof (extended)"),
   RAW("generated/video/crowd-indoor-reaction-to-dust-falling.mp4", "crowd-indoor-reaction-to-dust-falling"),
   RAW("generated/video/friends-watching-from-roof-aperture.mp4", "friends-watching-from-roof-aperture"),
+  // New (2026-09-10, Dan): "the lowering...clip is too soon" -- more
+  // roof-opening material (readying the ropes) plays before Shot 4.
+  RAW("generated/video/friends-ready-ropes-at-opening.mp4", "friends-ready-ropes-at-opening"),
   SHOT("b6edbb4d-4643-40c0-8f16-ed5eb9730df1", "Mark 2:4 -- lower the paralytic through the roof (extended)"),
   RAW("generated/video/pilot-shot004-recast.mp4", "pilot-shot004-recast"),
-  // Freeze-padded +8436ms (scripts/pad-clip-freeze-frame.ts) so this
-  // group's total video exactly matches the real 68955ms "Mark 2:1-5
-  // (narration)" bed below -- without this, Shot 5's own dialogue starts
-  // 8436ms too early and overlaps the still-playing narration bed. Found
-  // 2026-09-10 after Dan caught the same underlying bug in the ffmpeg
-  // pipeline (see build-mark-2-1-5-narration-block.ts).
-  RAW("generated/video/paralytic-s-tearful-hope-and-crowd-silence-padded.mp4", "paralytic-s-tearful-hope-and-crowd-silence"),
+  // No longer freeze-padded (2026-09-10): enough real coverage now
+  // exists (3 new inserts + Shot 1 at full length) that this group runs
+  // slightly LONGER than the real 68955ms "Mark 2:1-5 (narration)" bed
+  // on its own -- the bed simply finishes a little before Shot 5 begins,
+  // which is fine (a brief natural pause, not an overlap).
+  RAW("generated/video/paralytic-s-tearful-hope-and-crowd-silence.mp4", "paralytic-s-tearful-hope-and-crowd-silence"),
   SHOT("445d00de-7f66-494d-a104-d3e927d5dbdd", "Mark 2:5 -- Jesus forgives"),
-  RAW("generated/video/crowd-witness-breathless-reaction.mp4", "crowd-witness-breathless-reaction"),
-  // Freeze-padded +7083ms, same fix as above but for the "Mark 2:5-8
-  // (narration)" bed -- also needed once friends-watching-from-roof-
-  // aperture (originally part of this group) moved to the digging beat,
-  // which increased this group's own shortfall. Ad-hoc padded file, not
-  // the DB-tracked shots.fe9886dc record.
-  RAW("generated/video/shot6-scribe-questions-padded.mp4", "Mark 2:6-7 -- scribe questions in heart (extended)", false),
+  // Reshoot (2026-09-10, Dan: "arched roof"): the original take rendered
+  // a peaked gable roof (even in its own keyframe), contradicting the
+  // flat roof established everywhere else in this scene. Over-the-
+  // shoulder-on-Jesus framing, matching Shot 2's established pattern.
+  RAW("generated/video/crowd-witness-breathless-reaction-flatroof.mp4", "crowd-witness-breathless-reaction"),
+  // Reshoot (2026-09-10, Dan: "if it is our scribe, it should be a
+  // close-up, not a group shot"): the original take was a wide shot of
+  // several scribes with no clear focal point under real narration --
+  // replaced with a tight close-up on the Principal Scribe specifically,
+  // mouth closed/still since he questions Jesus silently in his heart.
+  // Freeze-padded +11083ms (native 4000ms) so this group's total still
+  // exactly matches the real 19083ms "Mark 2:5-8 (narration)" bed.
+  RAW("generated/video/scribe-questions-in-heart-closeup-padded.mp4", "Mark 2:6-7 -- scribe questions in heart (close-up)", false),
   SHOT("0d43887a-8c20-4271-a6d8-3cafad177558", "Mark 2:8-9 -- Jesus challenges scribes"),
   RAW("generated/video/paralytic-face-before-healing.mp4", "paralytic-face-before-healing"),
   SHOT("ea5e2ff9-c321-41f2-9c80-fd856c05d78d", "Mark 2:10-11 -- command to rise"),
-  RAW("generated/video/kling-926869751820460115.mp4", "paralytic-astonishment"),
+  // New (2026-09-10, Dan's review note: "instant stand, need a transition
+  // where he gets up"): bridges the cut from lying on the mat (end of
+  // Shot 8) directly to already-standing (the astonishment insert) --
+  // there was never a shot of the actual physical rising motion.
+  RAW("generated/video/paralytic-rises-from-mat.mp4", "paralytic-rises-from-mat"),
+  // Reshoot (2026-09-10, Dan's review note: "roof is now angled pitch"):
+  // the original take (kling-926869751820460115.mp4) rendered a peaked
+  // gable roof with a skylight, contradicting the flat roof established
+  // by the digging shots -- replaced with a corrected flat-roof take.
+  RAW("generated/video/kling-927152808813142035.mp4", "paralytic-astonishment (flat roof)"),
   SHOT("e84e957d-de28-4d44-9bf9-9e84cd83a2ec", "Mark 2:12 -- stands, rolls bed, walks out"),
   RAW("generated/video/kling-926868332358275129.mp4", "paralytic-exits-house"),
   RAW("generated/video/mark-2-paralytic-rear-heel-click-veo.mp4", "paralytic-heel-click-celebration"),
@@ -200,7 +230,21 @@ for (const seg of sequence) {
       continue;
     }
     absPath = join(dataDir, "assets", clip.result_asset_path);
-    durationMs = seg.durationMsOverride ?? clip.timeline_end_ms - clip.timeline_start_ms;
+    // Use the REAL file duration, not the DB's timeline_end_ms -
+    // timeline_start_ms -- found 2026-09-10 (Dan caught it by ear) that
+    // Shot 5 and Shot 10's accepted clips are genuinely only ~5.04s long
+    // (a shorter regenerated take) while the DB still recorded their
+    // original longer duration (7523ms / 7882ms). Trusting the stale DB
+    // value made both pipelines extend past the real content -- in
+    // Blender this freezes on the last frame in silence; in the ffmpeg
+    // pipeline `-t` on a too-short source just produces a shorter
+    // segment than intended, silently shifting everything after it.
+    const dbDurationMs = clip.timeline_end_ms - clip.timeline_start_ms;
+    const realDurationMs = ffprobeDurationMs(absPath);
+    if (Math.abs(dbDurationMs - realDurationMs) > 100 && !jsonMode) {
+      console.log(`  NOTE: ${seg.label} DB duration ${dbDurationMs}ms != real file duration ${realDurationMs}ms -- using real duration.`);
+    }
+    durationMs = seg.durationMsOverride ?? realDurationMs;
   } else {
     absPath = join(dataDir, "assets", seg.relPath);
     durationMs = seg.durationMsOverride ?? ffprobeDurationMs(absPath);

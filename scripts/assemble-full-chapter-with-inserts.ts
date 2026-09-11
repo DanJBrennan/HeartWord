@@ -336,7 +336,16 @@ const timeline: Segment[] = [
   SHOT("0d43887a-8c20-4271-a6d8-3cafad177558"), // Scene1 Shot7
   RAW("generated/video/paralytic-face-before-healing.mp4", "paralytic-face-before-healing", AI_GENERATED_INSERT),
   SHOT("ea5e2ff9-c321-41f2-9c80-fd856c05d78d"), // Scene1 Shot8
-  RAW("generated/video/kling-926869751820460115.mp4", "paralytic-astonishment", AI_GENERATED_INSERT),
+  // New (2026-09-10, Dan's review note: "instant stand, need a transition
+  // where he gets up"): bridges the cut from lying on the mat (end of
+  // Shot 8) directly to already-standing (the astonishment insert) --
+  // there was never a shot of the actual physical rising motion.
+  RAW("generated/video/paralytic-rises-from-mat.mp4", "paralytic-rises-from-mat", AI_GENERATED_INSERT),
+  // Reshoot (2026-09-10, Dan's review note: "roof is now angled pitch"):
+  // the original take (kling-926869751820460115.mp4) rendered a peaked
+  // gable roof with a skylight, contradicting the flat roof established
+  // by the digging shots -- replaced with a corrected flat-roof take.
+  RAW("generated/video/kling-927152808813142035.mp4", "paralytic-astonishment-flatroof", AI_GENERATED_INSERT),
   SHOT("e84e957d-de28-4d44-9bf9-9e84cd83a2ec"), // Scene1 Shot9
   RAW("generated/video/kling-926868332358275129.mp4", "paralytic-exits-house", AI_GENERATED_INSERT),
   RAW("generated/video/mark-2-paralytic-rear-heel-click-veo.mp4", "paralytic-heel-click-celebration", AI_GENERATED_INSERT),
@@ -395,7 +404,22 @@ function run() {
         const clip = byShotId.get(seg.shotId);
         if (!clip) throw new Error(`No assembled clip found for shot ${seg.shotId}`);
         sourceAbsPath = join(dataDir, "assets", clip.result_asset_path);
-        durationMs = seg.durationMsOverride ?? clip.timeline_end_ms - clip.timeline_start_ms;
+        // Use the REAL file duration, not the DB's timeline_end_ms -
+        // timeline_start_ms -- Shot 5 and Shot 10's accepted clips are
+        // genuinely only ~5.04s (a shorter regenerated take never
+        // reconciled back into the clips table). Trusting the stale DB
+        // value made `-t` request a longer trim than the source has,
+        // silently producing a shorter-than-intended segment and
+        // shifting everything after it (found 2026-09-10, Dan caught it
+        // by ear as "Jesus mouthing words in silence" / a frozen tail).
+        {
+          const dbDurationMs = clip.timeline_end_ms - clip.timeline_start_ms;
+          const realDurationMs = ffprobeDurationMs(sourceAbsPath);
+          if (Math.abs(dbDurationMs - realDurationMs) > 100) {
+            console.log(`  NOTE: shot ${seg.shotId} DB duration ${dbDurationMs}ms != real file duration ${realDurationMs}ms -- using real duration.`);
+          }
+          durationMs = seg.durationMsOverride ?? realDurationMs;
+        }
         label = seg.shotId;
         audioOverride = seg.audioOverride;
       } else {
