@@ -50,4 +50,29 @@ describe("decideGenerationStatus", () => {
     const decision = decideGenerationStatus({ criticSeverity: "none", likenessAligned: true, fidelityAligned: true });
     expect(decision.reasoning.length).toBeGreaterThan(0);
   });
+
+  it("keeps retrying a moderate concern below the automatic-retry limit", () => {
+    expect(
+      decideGenerationStatus({ criticSeverity: "moderate", likenessAligned: true, fidelityAligned: true, priorAttemptCount: 0 }).status
+    ).toBe("retry_modified");
+    expect(
+      decideGenerationStatus({ criticSeverity: "moderate", likenessAligned: true, fidelityAligned: true, priorAttemptCount: 1 }).status
+    ).toBe("retry_modified");
+  });
+
+  it("escalates to hold_for_review once a moderate concern has survived the retry limit", () => {
+    const decision = decideGenerationStatus({ criticSeverity: "moderate", likenessAligned: true, fidelityAligned: true, priorAttemptCount: 2 });
+    expect(decision.status).toBe("hold_for_review");
+    expect(decision.reasoning).toContain("2 prior attempt");
+  });
+
+  it("escalates a lone failing check to hold_for_review once it has survived the retry limit", () => {
+    const decision = decideGenerationStatus({ criticSeverity: "none", likenessAligned: false, fidelityAligned: true, priorAttemptCount: 3 });
+    expect(decision.status).toBe("hold_for_review");
+  });
+
+  it("defaults priorAttemptCount to 0 when omitted, matching every existing call site", () => {
+    const decision = decideGenerationStatus({ criticSeverity: "moderate", likenessAligned: true, fidelityAligned: true });
+    expect(decision.status).toBe("retry_modified");
+  });
 });

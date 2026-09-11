@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { crowdDuplicateSeverity, parseCriticSeverity } from "./critic.js";
+import { crowdDuplicateSeverity, parseCriticPreserve, parseCriticSeverity, parseCriticSuggestedFix } from "./critic.js";
 
 describe("parseCriticSeverity", () => {
   it("parses each known severity level", () => {
@@ -38,5 +38,41 @@ describe("crowdDuplicateSeverity", () => {
     expect(crowdDuplicateSeverity(2)).toBe("moderate");
     expect(crowdDuplicateSeverity(3)).toBe("severe");
     expect(crowdDuplicateSeverity(5)).toBe("severe");
+  });
+});
+
+describe("parseCriticSuggestedFix", () => {
+  it("extracts a concrete suggested fix", () => {
+    const findings = "The roof is pitched, not flat.\nSEVERITY: moderate\nSUGGESTED FIX: lower the roof pitch to flat construction\nPRESERVE: everything else";
+    expect(parseCriticSuggestedFix(findings)).toBe("lower the roof pitch to flat construction");
+  });
+
+  it("returns null when the model wrote 'none'", () => {
+    expect(parseCriticSuggestedFix("Looks good.\nSEVERITY: none\nSUGGESTED FIX: none\nPRESERVE: everything")).toBeNull();
+  });
+
+  it("returns null when no SUGGESTED FIX line is present", () => {
+    expect(parseCriticSuggestedFix("SEVERITY: minor")).toBeNull();
+  });
+
+  it("strips surrounding quotes the model sometimes adds", () => {
+    expect(parseCriticSuggestedFix('SUGGESTED FIX: "add scattered debris under the opening"')).toBe(
+      "add scattered debris under the opening"
+    );
+  });
+});
+
+describe("parseCriticPreserve", () => {
+  it("extracts what must not change", () => {
+    const findings = "SEVERITY: moderate\nSUGGESTED FIX: lower the roof pitch\nPRESERVE: keep the crowd composition and Jesus's pose exactly as-is";
+    expect(parseCriticPreserve(findings)).toBe("keep the crowd composition and Jesus's pose exactly as-is");
+  });
+
+  it("returns null when the model wrote 'everything'", () => {
+    expect(parseCriticPreserve("SEVERITY: none\nPRESERVE: everything")).toBeNull();
+  });
+
+  it("returns null when no PRESERVE line is present", () => {
+    expect(parseCriticPreserve("SEVERITY: severe")).toBeNull();
   });
 });

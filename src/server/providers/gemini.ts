@@ -109,11 +109,31 @@ export async function generateJsonWithImages<T>(
  * `responseSchema`/JSON mode don't reliably combine in one call, so the
  * critic asks for a structured verdict in a SEPARATE, ungrounded
  * generateJson call afterward, handing this research text in as context.
+ *
+ * Returns the real grounding provenance (`groundingMetadata`) alongside
+ * the text, not just the prose -- previously discarded entirely, so a
+ * research claim ("archaeological evidence shows...") had no attached
+ * source a producer could actually go check. `sources` are the cited web
+ * pages Gemini's search grounding actually retrieved; `searchQueries` are
+ * the literal queries it ran. Both default to an empty array rather than
+ * throwing when a response has no grounding metadata (e.g. the model
+ * answered from its own knowledge without needing to search).
  */
+export interface GroundingSource {
+  title: string;
+  uri: string;
+}
+
+export interface GroundedTextResult {
+  text: string;
+  sources: GroundingSource[];
+  searchQueries: string[];
+}
+
 export async function generateGroundedText(
   prompt: string,
   images: Array<{ mimeType: string; data: string }> = []
-): Promise<string> {
+): Promise<GroundedTextResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is not set. Add it to .env (see .env.example).");
@@ -137,11 +157,25 @@ export async function generateGroundedText(
   }
 
   const data = (await res.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    candidates?: Array<{
+      content?: { parts?: Array<{ text?: string }> };
+      groundingMetadata?: {
+        webSearchQueries?: string[];
+        groundingChunks?: Array<{ web?: { uri?: string; title?: string } }>;
+      };
+    }>;
   };
-  const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("");
+  const candidate = data.candidates?.[0];
+  const text = candidate?.content?.parts?.map((p) => p.text ?? "").join("");
   if (!text) {
     throw new Error(`Gemini's grounded search call returned no text: ${JSON.stringify(data).slice(0, 500)}`);
   }
-  return text;
+
+  const sources: GroundingSource[] = (candidate?.groundingMetadata?.groundingChunks ?? [])
+    .map((chunk) => chunk.web)
+    .filter((web): web is { uri: string; title?: string } => !!web?.uri)
+    .map((web) => ({ uri: web.uri, title: web.title ?? web.uri }));
+  const searchQueries = candidate?.groundingMetadata?.webSearchQueries ?? [];
+
+  return { text, sources, searchQueries };
 }
