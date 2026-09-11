@@ -51,7 +51,7 @@ import { checkCanonicalLikeness, isLikenessAligned } from "./canonical-likeness.
 import { checkSceneFidelity, isSceneFidelityAligned } from "./scene-fidelity.js";
 import { runCritic, type CriticCharacterReference, type CriticReport } from "./critic.js";
 import { decideGenerationStatus, type DirectorDecision } from "./director-verdict.js";
-import { matchesBeatScope, stripBeatTag } from "./beat-scope.js";
+import { matchesBeatScope, stripBeatTag, tagNote, type NoteScope } from "./beat-scope.js";
 
 // Same hardcoded Hatam Mark 2 source paths external-keyframes.ts and
 // external-coverage-keyframes.ts already use -- this whole pipeline is a
@@ -146,7 +146,7 @@ function loadCanonDecisions(db: ReturnType<typeof getDb>, projectId: string): st
 // See beat-scope.ts for why this is a separate, DB-free module (and for
 // the full reasoning behind beat-scoped overrides/corrections).
 
-function loadShotOverrides(db: ReturnType<typeof getDb>, shotId: string, beatId?: string): string[] {
+function loadShotOverrides(db: ReturnType<typeof getDb>, shotId: string, scope: NoteScope = {}): string[] {
   return (
     db
       .prepare(
@@ -154,7 +154,7 @@ function loadShotOverrides(db: ReturnType<typeof getDb>, shotId: string, beatId?
       )
       .all(shotId) as Array<{ note: string }>
   )
-    .filter((r) => matchesBeatScope(r.note, beatId))
+    .filter((r) => matchesBeatScope(r.note, scope))
     .map((r) => stripBeatTag(r.note));
 }
 
@@ -177,11 +177,26 @@ export function recordCanonDecision(db: ReturnType<typeof getDb>, projectId: str
 /**
  * The coverage-beat-scoped counterpart to recordCanonDecision/
  * external-keyframes.ts's recordProducerOverride: records a producer
- * exception for exactly ONE beat's candidate, tagged "BEAT: <beat_id>"
- * so loadShotOverrides never applies it to this shot's other beats (see
- * matchesBeatScope above for why that matters).
+ * exception tagged "BEAT: <beat_id>" so loadShotOverrides never applies
+ * it to this shot's other beats (see matchesBeatScope above for why that
+ * matters).
+ *
+ * `attemptId` (a coverage_keyframe_attempts.id) is optional and changes
+ * the exception's SCOPE, not just its bookkeeping -- Codex's second
+ * review (2026-09-11) pointed out that a beat's candidate images can
+ * differ completely from one regeneration to the next, so an exception
+ * about THIS specific candidate's obscured floor is not evidence about a
+ * different, later candidate's clearly-visible one:
+ *   - omitted: a deliberate STANDING decision for the whole beat --
+ *     applies to every future candidate of it.
+ *   - provided: scoped to that one candidate only.
  */
-export function recordCoverageBeatOverride(db: ReturnType<typeof getDb>, beatId: string, overrideText: string): { beatId: string; shotId: string } {
+export function recordCoverageBeatOverride(
+  db: ReturnType<typeof getDb>,
+  beatId: string,
+  overrideText: string,
+  attemptId?: string
+): { beatId: string; shotId: string } {
   if (!overrideText.trim()) throw new Error("A producer override explanation is required.");
   const beat = db.prepare(`SELECT shot_id FROM coverage_beats WHERE id = ?`).get(beatId) as { shot_id: string } | undefined;
   if (!beat) throw new Error(`Unknown coverage beat: ${beatId}`);
@@ -189,7 +204,7 @@ export function recordCoverageBeatOverride(db: ReturnType<typeof getDb>, beatId:
   db.prepare(
     `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
      VALUES (?, ?, 'shot', ?, 'human', ?, 1, ?)`
-  ).run(randomUUID(), projectId, beat.shot_id, `BEAT: ${beatId}\n${overrideText.trim()}`, Date.now());
+  ).run(randomUUID(), projectId, beat.shot_id, tagNote({ beatId, attemptId }, overrideText.trim()), Date.now());
   return { beatId, shotId: beat.shot_id };
 }
 
@@ -213,7 +228,7 @@ export interface SuggestedFix {
  * (severity was "none" for the shot's last review) -- callers should
  * build a normal prompt in that case, not treat null as an error.
  */
-export function loadSuggestedFix(db: ReturnType<typeof getDb>, shotId: string, beatId?: string): SuggestedFix | null {
+export function loadSuggestedFix(db: ReturnType<typeof getDb>, shotId: string, scope: NoteScope = {}): SuggestedFix | null {
   // Beat-scoped for the same reason loadShotOverrides is (see
   // matchesBeatScope): runCoverageBeatCandidateReview writes its QC notes
   // under this shot's subject_id too, one per beat, so the most-recent-
@@ -225,7 +240,7 @@ export function loadSuggestedFix(db: ReturnType<typeof getDb>, shotId: string, b
        ORDER BY created_at DESC`
     )
     .all(shotId) as Array<{ note: string }>;
-  const row = rows.find((r) => matchesBeatScope(r.note, beatId));
+  const row = rows.find((r) => matchesBeatScope(r.note, scope));
   if (!row) return null;
   const fixMatch = row.note.match(NEXT_ATTEMPT_FIX_LINE);
   if (!fixMatch) return null;
@@ -404,15 +419,31 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
       : "");
 
   const now = Date.now();
+  // A fresh review supersedes every earlier unresolved 'qc' note for this
+  // shot -- most importantly an earlier "REVIEW STATUS: incomplete" note
+  // from a review that previously failed to run. Without this, a
+  // SUCCESSFUL re-review left that older note sitting unresolved, so the
+  // next stage run's "is this shot's hold recoverable" check kept finding
+  // it and retrying forever, even after the attempt was already fixed and
+  // its own status already set to 'accepted' below. Reproduced by Codex
+  // (2026-09-11): a passing re-review followed by another review of the
+  // same image on the very next run.
+  db.prepare(`UPDATE review_notes SET resolved = 1 WHERE subject_type = 'shot' AND subject_id = ? AND source = 'qc' AND resolved = 0`).run(
+    shotId
+  );
   db.prepare(
     `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
      SELECT ?, sc.project_id, 'shot', ?, 'qc', ?, ?, ?
      FROM shots s JOIN scenes sc ON sc.id = s.scene_id WHERE s.id = ?`
   ).run(randomUUID(), shotId, report, decision.status === "accepted" ? 1 : 0, now, shotId);
 
-  if (decision.status !== "accepted") {
-    db.prepare(`UPDATE generation_attempts SET status = ? WHERE id = ?`).run(decision.status, shot.generation_attempt_id);
-  }
+  // Always write the verdict, including 'accepted' -- this review may be
+  // re-reviewing an attempt whose status is currently something OTHER
+  // than 'accepted' (a retry against an existing image after an earlier
+  // incomplete review, see media-generation/index.ts), and a successful
+  // verdict must actually clear that back to 'accepted' rather than
+  // leaving the row's status stuck at whatever it was downgraded to.
+  db.prepare(`UPDATE generation_attempts SET status = ? WHERE id = ?`).run(decision.status, shot.generation_attempt_id);
 
   return { shotId, decision, critic, likenessAligned, fidelityAligned, report };
 }
@@ -638,7 +669,7 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
     // "the missing debris here is fine, people obscure the floor") must
     // not silently excuse a DIFFERENT beat where the same thing is
     // clearly, unambiguously visible. See matchesBeatScope.
-    shotOverrides: loadShotOverrides(db, candidate.shot_id, candidate.beat_id),
+    shotOverrides: loadShotOverrides(db, candidate.shot_id, { beatId: candidate.beat_id, attemptId }),
     precedingCoverageFrame,
     coverageBeat: { sequence: candidate.beat_sequence, type: candidate.beat_type, notes: candidate.beat_notes ?? "" }
   });
@@ -657,11 +688,21 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
   // off-screen -- couldn't be found: reproduced and confirmed wrong.
   let likenessAligned = true;
   const likenessNotes: string[] = [];
-  const requiredCharacter = candidate.beat_character_id
-    ? characters.find((c) => c.character_id === candidate.beat_character_id)
-    : undefined;
-  if (requiredCharacter) {
-    if (!requiredCharacter.reference_path) {
+  // Distinguish "this beat has no selected subject" (beat_character_id is
+  // NULL -- skip, nothing to check, likenessAligned stays true) from "its
+  // selected subject has no usable approved reference" (beat_character_id
+  // IS set, but `characters` -- built from an inner join on an approved
+  // character_versions row -- doesn't contain it, because that character
+  // has no approved version at all). The two collapsed into the same
+  // "not found" shape before this fix, so the second case silently PASSED
+  // likeness instead of holding for review: reproduced by Codex
+  // (2026-09-11) as an accepted verdict with no likeness check performed.
+  if (candidate.beat_character_id) {
+    const requiredCharacter = characters.find((c) => c.character_id === candidate.beat_character_id);
+    if (!requiredCharacter) {
+      likenessAligned = false;
+      likenessNotes.push(`Required character (id ${candidate.beat_character_id}) has no approved version -- cannot verify identity.`);
+    } else if (!requiredCharacter.reference_path) {
       likenessAligned = false;
       likenessNotes.push(`${requiredCharacter.character_name} has no approved comparison asset`);
     } else {
@@ -717,9 +758,11 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
   ).run(
     randomUUID(),
     candidate.shot_id,
-    // Tagged so loadSuggestedFix/loadShotOverrides never apply this
-    // beat's own note to a sibling beat's review -- see matchesBeatScope.
-    `BEAT: ${candidate.beat_id}\nCoverage-beat candidate ${attemptId} composite QC\n${report}`,
+    // Beat-tagged (not attempt-tagged): loadSuggestedFix should hand its
+    // correction to the NEXT candidate of this same beat, so this note
+    // deliberately stays a standing per-beat record, not scoped to only
+    // the one attempt that just failed. See matchesBeatScope.
+    tagNote({ beatId: candidate.beat_id }, `Coverage-beat candidate ${attemptId} composite QC\n${report}`),
     Date.now(),
     candidate.shot_id
   );

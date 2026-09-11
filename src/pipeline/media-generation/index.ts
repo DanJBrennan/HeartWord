@@ -6,6 +6,7 @@ import { GeminiImageProvider } from "../../providers/gemini/index.js";
 import type { CharacterRef } from "../../providers/types.js";
 import type { ProjectRow } from "../ingestion/index.js";
 import { loadSuggestedFix, runShotReview, type SuggestedFix } from "../qc/director.js";
+import { matchesBeatScope, tagNote } from "../qc/beat-scope.js";
 import type { Stage } from "../types.js";
 
 interface ShotRow {
@@ -258,23 +259,31 @@ export const runMediaGeneration: Stage = async (projectId) => {
     `INSERT INTO cost_ledger_entries (id, project_id, generation_attempt_id, amount_usd, created_at) VALUES (?, ?, ?, ?, ?)`
   );
   const updateShotStatus = db.prepare(`UPDATE shots SET status = ? WHERE id = ?`);
-  const findExistingAttempt = db.prepare(
-    `SELECT result_asset_path FROM generation_attempts
-     WHERE shot_id = ? AND operation = 'generate' AND status = 'accepted'
-     ORDER BY created_at DESC LIMIT 1`
-  );
-  // Codex's review of this pipeline (2026-09-11) caught that a shot whose
-  // latest attempt was hold_for_review or escalate still got regenerated
-  // anyway -- findExistingAttempt above only checks for an 'accepted' row
-  // to REUSE, it never checked whether the latest attempt was a status
-  // that should stop automatic spending altogether. Reproduced: a 4th
-  // generation attempt after 3 had already resulted in a hold.
+  // Codex's review of this pipeline (2026-09-11, two passes) caught two
+  // related bugs in what used to be a separate "is there an accepted row
+  // to reuse" query run before checking anything else: (a) that query
+  // matches the newest row WITH status='accepted', not the shot's actual
+  // latest attempt -- if a NEWER attempt exists in a hold/escalate state
+  // while an OLDER one is still 'accepted', the older file kept getting
+  // reused forever and the newer hold was never even inspected; (b) a
+  // shot whose latest attempt was hold_for_review/escalate still got
+  // regenerated anyway, since nothing checked attempt status before
+  // spending (reproduced: a 4th generation attempt after 3 had already
+  // resulted in a hold). Fixed by querying the shot's single latest
+  // attempt FIRST and deciding reuse/hold/retry/regenerate from that one
+  // row, rather than two independent, inconsistent queries.
   const findLatestAttempt = db.prepare(
-    `SELECT id, status FROM generation_attempts WHERE shot_id = ? AND operation = 'generate' ORDER BY created_at DESC LIMIT 1`
+    `SELECT id, status, result_asset_path FROM generation_attempts WHERE shot_id = ? AND operation = 'generate' ORDER BY created_at DESC LIMIT 1`
   );
-  const findLatestUnresolvedNote = db.prepare(
-    `SELECT note FROM review_notes WHERE subject_type = 'shot' AND subject_id = ? AND source = 'qc' AND resolved = 0
-     ORDER BY created_at DESC LIMIT 1`
+  // Every unresolved 'qc' note for this shot, not just the newest -- a
+  // covered_sequence shot's coverage-beat reviews (runCoverageBeatCandidateReview)
+  // write their OWN 'qc' notes under this same shot_id, and a newer one of
+  // those must not mask an older single-clip "review status: incomplete"
+  // marker for a COMPLETELY different attempt. Matched by attempt id (via
+  // matchesBeatScope's ATTEMPT tag), not by recency, so this is scoped
+  // correctly regardless of what else has been reviewed on this shot.
+  const findUnresolvedNotes = db.prepare(
+    `SELECT note FROM review_notes WHERE subject_type = 'shot' AND subject_id = ? AND source = 'qc' AND resolved = 0`
   );
   const insertReviewNote = db.prepare(
     `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
@@ -293,18 +302,20 @@ export const runMediaGeneration: Stage = async (projectId) => {
   const awaitingHumanShots: string[] = [];
 
   for (const shot of shots) {
-    const existing = findExistingAttempt.get(shot.id) as { result_asset_path: string | null } | undefined;
-    if (existing?.result_asset_path && existsSync(join(dataDir, "assets", existing.result_asset_path))) {
+    const scene = sceneById.get(shot.scene_id) ?? { id: shot.scene_id, sequence: 0, lighting_continuity: null };
+
+    const latest = findLatestAttempt.get(shot.id) as { id: string; status: string; result_asset_path: string | null } | undefined;
+
+    if (latest?.status === "accepted" && latest.result_asset_path && existsSync(join(dataDir, "assets", latest.result_asset_path))) {
       reused++;
       continue;
     }
 
-    const scene = sceneById.get(shot.scene_id) ?? { id: shot.scene_id, sequence: 0, lighting_continuity: null };
-
-    const latest = findLatestAttempt.get(shot.id) as { id: string; status: string } | undefined;
     if (latest && (latest.status === "hold_for_review" || latest.status === "escalate")) {
-      const latestNote = findLatestUnresolvedNote.get(shot.id) as { note: string } | undefined;
-      const reviewIncomplete = latestNote?.note.startsWith("REVIEW STATUS: incomplete") ?? false;
+      const notes = findUnresolvedNotes.all(shot.id) as Array<{ note: string }>;
+      const reviewIncomplete = notes.some(
+        (n) => matchesBeatScope(n.note, { attemptId: latest.id }) && n.note.includes("REVIEW STATUS: incomplete")
+      );
       if (!reviewIncomplete) {
         // A real content-based hold/escalate -- a human needs to look,
         // spending on another generation attempt would not resolve it.
@@ -315,7 +326,10 @@ export const runMediaGeneration: Stage = async (projectId) => {
       // The review infrastructure failed, not the image -- retry the
       // review against the EXISTING file rather than spending on a new
       // generation attempt. runShotReview's own lookup no longer requires
-      // an 'accepted' status, so it can re-review this attempt directly.
+      // an 'accepted' status, so it can re-review this attempt directly,
+      // and now always persists its verdict (including back to
+      // 'accepted') and resolves this note, so a successful retry
+      // actually finishes instead of looping.
       try {
         const review = await runShotReview(shot.id);
         if (review.decision.status !== "accepted") {
@@ -393,9 +407,14 @@ export const runMediaGeneration: Stage = async (projectId) => {
             // hold_for_review verdict -- both land on the same status
             // column value, but only this one should ever be retried
             // automatically against the existing image; a real content
-            // hold must wait for a human, full stop.
-            `REVIEW STATUS: incomplete\nAutomated QC review could not run for this shot after 2 attempts: ${reviewError?.message}. ` +
-              `Attempt held for review rather than left as accepted, so it won't be silently reused unreviewed.`,
+            // hold must wait for a human, full stop. Tagged with THIS
+            // exact attempt's id (not just this shot) so a coverage-beat
+            // review's own newer, unrelated note can never mask it.
+            tagNote(
+              { attemptId },
+              `REVIEW STATUS: incomplete\nAutomated QC review could not run for this shot after 2 attempts: ${reviewError?.message}. ` +
+                `Attempt held for review rather than left as accepted, so it won't be silently reused unreviewed.`
+            ),
             Date.now()
           );
         }
