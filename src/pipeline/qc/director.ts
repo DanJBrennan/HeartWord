@@ -96,6 +96,71 @@ function toCriticReferences(dataDir: string, characters: ShotCharacterRow[]): Cr
     .map((c) => ({ name: c.character_name, imagePath: assetPath(dataDir, c.reference_path) }));
 }
 
+/**
+ * Two different scopes of "remembered decision," per Dan's 2026-09-11
+ * request that the Critic distinguish a one-shot exception from a
+ * standing canon decision:
+ *
+ * - loadCanonDecisions: production-wide calibrations (review_notes scoped
+ *   to the whole project, subject_type='project') that apply to EVERY
+ *   shot -- e.g. "a striped shawl on a scribe is an accepted stylistic
+ *   choice." Previously hardcoded directly into critic.ts's prompt as a
+ *   single example; now loaded live, so recordCanonDecision below can add
+ *   more without another code change.
+ * - loadShotOverrides: a decision scoped to exactly one shot_id (review_
+ *   notes scoped to that shot, subject_type='shot') -- e.g. "the missing
+ *   debris here is fine, people obscure the floor." Must NOT be reused
+ *   for any other shot, which is exactly why it's queried per-shot rather
+ *   than folded into the canon-decisions list.
+ *
+ * Both only read 'human'-sourced, resolved notes -- a 'qc' note is the
+ * Critic's OWN prior finding, not a producer decision, and re-feeding
+ * that back in would let the Critic talk itself out of its own concerns.
+ */
+function loadCanonDecisions(db: ReturnType<typeof getDb>, projectId: string): string[] {
+  return (
+    db
+      .prepare(
+        `SELECT note FROM review_notes WHERE subject_type = 'project' AND subject_id = ? AND source = 'human' AND resolved = 1 ORDER BY created_at`
+      )
+      .all(projectId) as Array<{ note: string }>
+  ).map((r) => r.note);
+}
+
+function loadShotOverrides(db: ReturnType<typeof getDb>, shotId: string): string[] {
+  return (
+    db
+      .prepare(
+        `SELECT note FROM review_notes WHERE subject_type = 'shot' AND subject_id = ? AND source = 'human' AND resolved = 1 ORDER BY created_at`
+      )
+      .all(shotId) as Array<{ note: string }>
+  ).map((r) => r.note);
+}
+
+/**
+ * Durably records a standing, production-wide canon decision -- the
+ * project-scoped counterpart to external-keyframes.ts's
+ * recordProducerOverride (which is scoped to one shot's candidate) and
+ * canon-critic.ts's recordProducerOverride (scoped to one character
+ * version). Every future Critic call for this project picks this up
+ * automatically via loadCanonDecisions -- no prompt edit required.
+ */
+export function recordCanonDecision(db: ReturnType<typeof getDb>, projectId: string, decisionText: string): void {
+  if (!decisionText.trim()) throw new Error("A canon decision's explanation is required.");
+  db.prepare(
+    `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
+     VALUES (?, ?, 'project', ?, 'human', ?, 1, ?)`
+  ).run(randomUUID(), projectId, projectId, decisionText.trim(), Date.now());
+}
+
+function getProjectIdForShot(db: ReturnType<typeof getDb>, shotId: string): string {
+  const row = db.prepare(`SELECT sc.project_id AS project_id FROM shots s JOIN scenes sc ON sc.id = s.scene_id WHERE s.id = ?`).get(shotId) as
+    | { project_id: string }
+    | undefined;
+  if (!row) throw new Error(`getProjectIdForShot: no shot found with id ${shotId}`);
+  return row.project_id;
+}
+
 export interface ShotReviewReport {
   shotId: string;
   decision: DirectorDecision;
@@ -186,7 +251,9 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
     crowdDensity: fidelityRow?.crowd_density ?? null,
     generatedImagePath: generatedAbsPath,
     scriptureText: loadScriptureText(dataDir, shot.verse_ref),
-    characterReferences: toCriticReferences(dataDir, characters)
+    characterReferences: toCriticReferences(dataDir, characters),
+    canonDecisions: loadCanonDecisions(db, getProjectIdForShot(db, shotId)),
+    shotOverrides: loadShotOverrides(db, shotId)
   });
 
   let likenessAligned = true;
@@ -287,7 +354,9 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
     crowdDensity: fidelityRow?.crowd_density ?? null,
     generatedImagePath: generatedAbsPath,
     scriptureText: loadScriptureText(dataDir, candidate.verse_ref),
-    characterReferences: toCriticReferences(dataDir, characters)
+    characterReferences: toCriticReferences(dataDir, characters),
+    canonDecisions: loadCanonDecisions(db, getProjectIdForShot(db, candidate.id)),
+    shotOverrides: loadShotOverrides(db, candidate.id)
   });
 
   let likenessAligned = true;
@@ -407,6 +476,13 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
     generatedImagePath: generatedAbsPath,
     scriptureText: loadScriptureText(dataDir, candidate.verse_ref),
     characterReferences: toCriticReferences(dataDir, characters),
+    canonDecisions: loadCanonDecisions(db, getProjectIdForShot(db, candidate.shot_id)),
+    // Scoped to the PARENT shot, not this individual beat -- same
+    // subject_id review_notes already uses for every QC note this
+    // function writes below, so a producer decision made about one beat
+    // is at least visible to (though still worth reviewing for) that
+    // shot's other beats, rather than being invisible entirely.
+    shotOverrides: loadShotOverrides(db, candidate.shot_id),
     coverageBeat: { sequence: candidate.beat_sequence, type: candidate.beat_type, notes: candidate.beat_notes ?? "" }
   });
 

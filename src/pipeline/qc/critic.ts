@@ -50,13 +50,18 @@
  * before wiring it in by default.
  */
 import { readFileSync } from "node:fs";
-import { generateGroundedText, generateJsonWithImages, type GeminiJsonSchema } from "../../server/providers/gemini.js";
+import { generateGroundedText, generateJsonWithImages, type GeminiJsonSchema, type GroundingSource } from "../../server/providers/gemini.js";
 
 export type CriticSeverity = "none" | "minor" | "moderate" | "severe";
 
 export interface CriticReport {
   severity: CriticSeverity;
   findings: string;
+  /** Real web sources Gemini's search grounding actually cited while
+   *  producing `findings` -- traceable provenance for a research claim
+   *  ("archaeological evidence shows...") rather than an unverifiable
+   *  assertion. May be empty when the model answered without searching. */
+  sources: GroundingSource[];
 }
 
 export interface CriticContinuityFrame {
@@ -96,6 +101,17 @@ export interface CriticInputs {
   /** Reference images for this shot's cast, so identity/costume rules can
    *  be checked against a real reference rather than a text description. */
   characterReferences?: CriticCharacterReference[];
+  /** Standing production-wide canon decisions (e.g. "a striped shawl on a
+   *  scribe is an accepted stylistic choice") -- apply to EVERY shot, not
+   *  just this one. Loaded by the caller from review_notes rows scoped to
+   *  the whole project, distinct from a one-shot exception below. */
+  canonDecisions?: string[];
+  /** Producer decisions already made for THIS specific shot (e.g. "the
+   *  missing debris here is fine, people obscure the floor"). Must NOT be
+   *  treated as generalizing to any other shot -- that's the difference
+   *  from canonDecisions above. Loaded by the caller from review_notes
+   *  rows scoped to this one shot_id. */
+  shotOverrides?: string[];
   precedingCoverageFrame?: CriticContinuityFrame;
   coverageBeat?: CriticCoverageBeat;
 }
@@ -177,6 +193,8 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
     generatedImagePath,
     scriptureText,
     characterReferences,
+    canonDecisions,
+    shotOverrides,
     precedingCoverageFrame,
     coverageBeat
   } = inputs;
@@ -276,8 +294,21 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
         `states an intervening action. Report an unexplained change such as Jesus standing in one beat and seated in the next as ` +
         `a staging continuity failure.\n\n`
       : ""}` +
-    `PRODUCTION CANON CALIBRATION: a white-and-black striped shawl on a scribe is a minor costume-canon violation. ` +
-    `Report it briefly, but do not rate it above minor or use it to make an otherwise usable keyframe fail.\n\n` +
+    `${canonDecisions?.length
+      ? `STANDING PRODUCTION CANON DECISIONS -- the production has explicitly reviewed and approved the following ` +
+        `deviations or calibrations as deliberate choices that apply ACROSS THE WHOLE PRODUCTION, not just one shot. ` +
+        `Do NOT flag anything already covered by these as an error, and do not rate it above minor even if it would ` +
+        `otherwise concern you:\n` +
+        canonDecisions.map((d) => `- ${d}`).join("\n") +
+        `\n\n`
+      : ""}` +
+    `${shotOverrides?.length
+      ? `PRODUCER DECISIONS ALREADY MADE FOR THIS SPECIFIC SHOT -- the producer has already reviewed a prior candidate ` +
+        `for THIS shot and explicitly accepted the following. Do NOT re-raise these same concerns for this shot. These ` +
+        `are scoped to this one shot only -- do not assume they apply to any other shot's review:\n` +
+        shotOverrides.map((o) => `- ${o}`).join("\n") +
+        `\n\n`
+      : ""}` +
     `List every real problem you find, citing research where relevant. If you genuinely find nothing wrong in any ` +
     `of these areas, say so plainly rather than inventing a concern.\n\n` +
     `End your response with exactly one line in this format: "SEVERITY: none" (nothing wrong), "SEVERITY: minor" ` +
@@ -293,15 +324,24 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
   // can trigger an unnecessary regeneration for a review that never
   // actually happened.
   const images = [...referenceImages, ...(precedingImage ? [precedingImage] : []), image];
-  let findings = await generateGroundedText(prompt, images);
-  if (!SEVERITY_LINE.test(findings)) {
-    findings = await generateGroundedText(prompt, images);
+  let result = await generateGroundedText(prompt, images);
+  if (!SEVERITY_LINE.test(result.text)) {
+    result = await generateGroundedText(prompt, images);
   }
   const duplicateVerdict = await checkCrowdDuplicates(image);
   const duplicateSeverity = crowdDuplicateSeverity(duplicateVerdict.largestIdenticalGroup);
-  const severity = higherSeverity(parseCriticSeverity(findings), duplicateSeverity);
+  const severity = higherSeverity(parseCriticSeverity(result.text), duplicateSeverity);
   const duplicateFinding = duplicateVerdict.largestIdenticalGroup > 1
     ? `Dedicated crowd-duplicate verifier: ${duplicateVerdict.largestIdenticalGroup} visually identical people at ${duplicateVerdict.location}. ${duplicateVerdict.explanation}`
     : "Dedicated crowd-duplicate verifier: no visually identical crowd members detected.";
-  return { severity, findings: `${findings}\n\n${duplicateFinding}\nSEVERITY: ${severity}` };
+  // dedupe by uri, since the model can cite the same source more than once
+  const sources = [...new Map(result.sources.map((s) => [s.uri, s])).values()];
+  const sourcesFinding = sources.length
+    ? `\n\nSources cited by the grounded research pass:\n${sources.map((s) => `- ${s.title} (${s.uri})`).join("\n")}`
+    : "";
+  return {
+    severity,
+    findings: `${result.text}\n\n${duplicateFinding}\nSEVERITY: ${severity}${sourcesFinding}`,
+    sources
+  };
 }

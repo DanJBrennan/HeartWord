@@ -3,7 +3,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir, getDb } from "../src/db/client.js";
 import { acceptKeyframe, assetPath, importKeyframe, keyframeStatus, prepareKeyframe, recordProducerOverride, type KeyframeBrief } from "../src/pipeline/media-generation/external-keyframes.js";
-import { runKeyframeCandidateReview } from "../src/pipeline/qc/director.js";
+import { recordCanonDecision, runKeyframeCandidateReview } from "../src/pipeline/qc/director.js";
 
 const [command, ...args] = process.argv.slice(2);
 const db = getDb(), dataDir = getDataDir();
@@ -29,7 +29,11 @@ if (command === "prepare" && args.length === 3) {
   console.log(JSON.stringify(recordProducerOverride(db, args[0]!, readFileSync(args[1]!, "utf8")), null, 2));
 } else if (command === "critique" && args.length === 1) {
   console.log(JSON.stringify(await runKeyframeCandidateReview(args[0]!), null, 2));
+} else if (command === "canon-decision" && args.length === 2) {
+  const [projectId, noteFile] = args as [string, string];
+  recordCanonDecision(db, projectId, readFileSync(noteFile, "utf8"));
+  console.log(`Canon decision recorded for project ${projectId} -- every future Critic call for this project will load it automatically.`);
 } else {
-  console.error("Usage: npx tsx scripts/keyframes.ts prepare <shot-id> <prompt.txt> <rationale.md> | import <brief.json> <image.png> <review.md> | critique <attempt-id> | accept <attempt-id> | override <attempt-id> <note.md> | status <project-id>");
+  console.error("Usage: npx tsx scripts/keyframes.ts prepare <shot-id> <prompt.txt> <rationale.md> | import <brief.json> <image.png> <review.md> | critique <attempt-id> | accept <attempt-id> | override <attempt-id> <note.md> | canon-decision <project-id> <note.md> | status <project-id>");
   process.exitCode = 1;
 }
