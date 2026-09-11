@@ -91,7 +91,11 @@ export async function runCanonGarmentCritic(
   const sourcesFinding = sources.length
     ? `\n\nSources cited by the grounded research pass:\n${sources.map((s) => `- ${s.title} (${s.uri})`).join("\n")}`
     : "";
-  return { severity, findings: `${result.text}${sourcesFinding}`, sources };
+  // suggestedFix/preserve are shot-regeneration concepts (critic.ts's
+  // runCritic asks for them explicitly) -- this garment review judges a
+  // locked reference design, not a shot, and doesn't ask its prompt for
+  // those trailer lines, so there's nothing real to parse out here.
+  return { severity, findings: `${result.text}${sourcesFinding}`, sources, suggestedFix: null, preserve: null };
 }
 
 interface CanonCharacterRow {

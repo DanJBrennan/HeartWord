@@ -153,6 +153,40 @@ export function recordCanonDecision(db: ReturnType<typeof getDb>, projectId: str
   ).run(randomUUID(), projectId, projectId, decisionText.trim(), Date.now());
 }
 
+const NEXT_ATTEMPT_FIX_LINE = /NEXT ATTEMPT SUGGESTED FIX:\s*(.+)/;
+const NEXT_ATTEMPT_PRESERVE_LINE = /NEXT ATTEMPT PRESERVE:\s*(.+)/;
+
+export interface SuggestedFix {
+  fix: string;
+  preserve: string;
+}
+
+/**
+ * Closes the loop Codex flagged: a retry_modified/hold_for_review verdict
+ * previously carried its Critic findings only as far as review_notes --
+ * nothing read them back out to inform the NEXT generation attempt, so a
+ * regeneration reused the exact prompt that just failed. Reads the most
+ * recent unresolved 'qc' note for this shot and extracts the "NEXT
+ * ATTEMPT SUGGESTED FIX"/"PRESERVE" pair runShotReview/
+ * runKeyframeCandidateReview/runCoverageBeatCandidateReview write above.
+ * Returns null when there's no unresolved note or it carries no fix
+ * (severity was "none" for the shot's last review) -- callers should
+ * build a normal prompt in that case, not treat null as an error.
+ */
+export function loadSuggestedFix(db: ReturnType<typeof getDb>, shotId: string): SuggestedFix | null {
+  const row = db
+    .prepare(
+      `SELECT note FROM review_notes WHERE subject_type = 'shot' AND subject_id = ? AND source = 'qc' AND resolved = 0
+       ORDER BY created_at DESC LIMIT 1`
+    )
+    .get(shotId) as { note: string } | undefined;
+  if (!row) return null;
+  const fixMatch = row.note.match(NEXT_ATTEMPT_FIX_LINE);
+  if (!fixMatch) return null;
+  const preserveMatch = row.note.match(NEXT_ATTEMPT_PRESERVE_LINE);
+  return { fix: fixMatch[1]!.trim(), preserve: preserveMatch?.[1]?.trim() ?? "everything else" };
+}
+
 function getProjectIdForShot(db: ReturnType<typeof getDb>, shotId: string): string {
   const row = db.prepare(`SELECT sc.project_id AS project_id FROM shots s JOIN scenes sc ON sc.id = s.scene_id WHERE s.id = ?`).get(shotId) as
     | { project_id: string }
@@ -170,6 +204,24 @@ export interface ShotReviewReport {
   /** Human-readable summary suitable for showing Dan directly ("reported
    *  to the producer") -- also written to review_notes. */
   report: string;
+}
+
+/** Prior 'generate' attempts for a shot, excluding the one just reviewed
+ *  (which is already inserted by the time review runs) -- see
+ *  director-verdict.ts's MAX_AUTOMATIC_RETRIES for why this matters. */
+function countPriorGenerateAttempts(db: ReturnType<typeof getDb>, shotId: string): number {
+  const row = db.prepare(`SELECT COUNT(*) AS n FROM generation_attempts WHERE shot_id = ? AND operation = 'generate'`).get(shotId) as {
+    n: number;
+  };
+  return Math.max(0, row.n - 1);
+}
+
+/** Same idea as countPriorGenerateAttempts, but per coverage BEAT rather
+ *  than per shot -- a covered_sequence shot's beats are regenerated
+ *  somewhat independently of each other. */
+function countPriorCoverageBeatAttempts(db: ReturnType<typeof getDb>, beatId: string): number {
+  const row = db.prepare(`SELECT COUNT(*) AS n FROM coverage_keyframe_attempts WHERE coverage_beat_id = ?`).get(beatId) as { n: number };
+  return Math.max(0, row.n - 1);
 }
 
 interface ShotRow {
@@ -275,12 +327,24 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
   );
   const fidelityAligned = isSceneFidelityAligned(fidelityVerdict);
 
-  const decision = decideGenerationStatus({ criticSeverity: critic.severity, likenessAligned, fidelityAligned });
+  const decision = decideGenerationStatus({
+    criticSeverity: critic.severity,
+    likenessAligned,
+    fidelityAligned,
+    priorAttemptCount: countPriorGenerateAttempts(db, shotId)
+  });
 
   const report =
     `Director decision for this shot: ${decision.status} -- ${decision.reasoning}\n\n` +
     `Critic (severity: ${critic.severity}):\n${critic.findings}\n\n` +
-    `Canonical likeness: ${likenessAligned ? "passed" : "FAILED"}. Scene fidelity: ${fidelityAligned ? "passed" : "FAILED"}.`;
+    `Canonical likeness: ${likenessAligned ? "passed" : "FAILED"}. Scene fidelity: ${fidelityAligned ? "passed" : "FAILED"}.` +
+    // Distinct labels from critic.ts's own "SUGGESTED FIX:"/"PRESERVE:" trailer lines (already embedded above via
+    // critic.findings) -- these are the FINAL, post-override values (see runCritic's crowd-duplicate override),
+    // which can differ from the model's own raw trailer line. A parser reading this note back must find these,
+    // not accidentally match the model's original (possibly superseded) line first.
+    (critic.suggestedFix
+      ? `\n\nNEXT ATTEMPT SUGGESTED FIX: ${critic.suggestedFix}\nNEXT ATTEMPT PRESERVE: ${critic.preserve ?? "everything else"}`
+      : "");
 
   const now = Date.now();
   db.prepare(
@@ -383,12 +447,24 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
   const fidelityVerdict = await checkSceneFidelity(generatedAbsPath, candidate.action,
     fidelityRow?.crowd_density ?? null, fidelityRow?.continuity_notes ?? null);
   const fidelityAligned = isSceneFidelityAligned(fidelityVerdict);
-  const decision = decideGenerationStatus({ criticSeverity: critic.severity, likenessAligned, fidelityAligned });
+  const decision = decideGenerationStatus({
+    criticSeverity: critic.severity,
+    likenessAligned,
+    fidelityAligned,
+    priorAttemptCount: countPriorGenerateAttempts(db, candidate.id)
+  });
   const report =
     `Candidate QC decision: ${decision.status} -- ${decision.reasoning}\n\n` +
     `Critic (severity: ${critic.severity}):\n${critic.findings}\n\n` +
     `Canonical likeness: ${likenessAligned ? "passed" : `FAILED. ${likenessNotes.join(" ")}`}\n` +
-    `Scene fidelity: ${fidelityAligned ? "passed" : `FAILED. ${fidelityVerdict.notes}`}`;
+    `Scene fidelity: ${fidelityAligned ? "passed" : `FAILED. ${fidelityVerdict.notes}`}` +
+    // Distinct labels from critic.ts's own "SUGGESTED FIX:"/"PRESERVE:" trailer lines (already embedded above via
+    // critic.findings) -- these are the FINAL, post-override values (see runCritic's crowd-duplicate override),
+    // which can differ from the model's own raw trailer line. A parser reading this note back must find these,
+    // not accidentally match the model's original (possibly superseded) line first.
+    (critic.suggestedFix
+      ? `\n\nNEXT ATTEMPT SUGGESTED FIX: ${critic.suggestedFix}\nNEXT ATTEMPT PRESERVE: ${critic.preserve ?? "everything else"}`
+      : "");
   db.prepare(
     `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
      SELECT ?, sc.project_id, 'shot', ?, 'qc', ?, 0, ?
@@ -510,12 +586,24 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
   const fidelityVerdict = await checkSceneFidelity(generatedAbsPath, candidate.action,
     candidate.crowd_density, candidate.continuity_notes);
   const fidelityAligned = isSceneFidelityAligned(fidelityVerdict);
-  const decision = decideGenerationStatus({ criticSeverity: critic.severity, likenessAligned, fidelityAligned });
+  const decision = decideGenerationStatus({
+    criticSeverity: critic.severity,
+    likenessAligned,
+    fidelityAligned,
+    priorAttemptCount: countPriorCoverageBeatAttempts(db, candidate.beat_id)
+  });
   const report =
     `Candidate QC decision (coverage beat ${candidate.beat_sequence}, ${candidate.beat_type}): ${decision.status} -- ${decision.reasoning}\n\n` +
     `Critic (severity: ${critic.severity}):\n${critic.findings}\n\n` +
     `Canonical likeness: ${likenessAligned ? "passed" : `FAILED. ${likenessNotes.join(" ")}`}\n` +
-    `Scene fidelity: ${fidelityAligned ? "passed" : `FAILED. ${fidelityVerdict.notes}`}`;
+    `Scene fidelity: ${fidelityAligned ? "passed" : `FAILED. ${fidelityVerdict.notes}`}` +
+    // Distinct labels from critic.ts's own "SUGGESTED FIX:"/"PRESERVE:" trailer lines (already embedded above via
+    // critic.findings) -- these are the FINAL, post-override values (see runCritic's crowd-duplicate override),
+    // which can differ from the model's own raw trailer line. A parser reading this note back must find these,
+    // not accidentally match the model's original (possibly superseded) line first.
+    (critic.suggestedFix
+      ? `\n\nNEXT ATTEMPT SUGGESTED FIX: ${critic.suggestedFix}\nNEXT ATTEMPT PRESERVE: ${critic.preserve ?? "everything else"}`
+      : "");
   db.prepare(
     `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
      SELECT ?, sc.project_id, 'shot', ?, 'qc', ?, 0, ?

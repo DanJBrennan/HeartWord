@@ -5,7 +5,7 @@ import { getDataDir, getDb } from "../../db/client.js";
 import { GeminiImageProvider } from "../../providers/gemini/index.js";
 import type { CharacterRef } from "../../providers/types.js";
 import type { ProjectRow } from "../ingestion/index.js";
-import { runShotReview } from "../qc/director.js";
+import { loadSuggestedFix, runShotReview, type SuggestedFix } from "../qc/director.js";
 import type { Stage } from "../types.js";
 
 interface ShotRow {
@@ -125,13 +125,27 @@ const CASTING_AND_SETTING_ANCHOR =
   "to continue. A pose already frozen at the action's end state (already standing, already turned, already " +
   "speaking with the gesture fully extended) gives a video generator nothing to animate and is a failure.";
 
-function buildShotPrompt(scene: SceneRow, shot: ShotRow, characterNames: string[]): string {
+function buildShotPrompt(scene: SceneRow, shot: ShotRow, characterNames: string[], suggestedFix: SuggestedFix | null = null): string {
   const framing = shot.framing ? (FRAMING_DESCRIPTIONS[shot.framing] ?? shot.framing) : "medium shot";
   const crowdInstruction = shot.crowd_density
     ? (CROWD_DENSITY_INSTRUCTIONS[shot.crowd_density] ?? CROWD_DENSITY_INSTRUCTIONS.moderate)
     : CROWD_DENSITY_INSTRUCTIONS.moderate;
 
-  return `${CASTING_AND_SETTING_ANCHOR}
+  // Closes the QC feedback loop (see qc/director.ts's loadSuggestedFix):
+  // a shot regenerated because its prior attempt was flagged gets the
+  // Critic's own smallest-fix instruction folded directly into THIS
+  // prompt, instead of blindly resubmitting the exact prompt that just
+  // failed. Placed right after the shared casting/setting anchor -- high
+  // enough to not get diluted by the rest of the shot-specific detail
+  // below, matching how CASTING_AND_SETTING_ANCHOR's own hard rules are
+  // stated first and forcefully.
+  const correctionBlock = suggestedFix
+    ? `\n\nCORRECTION FROM PRIOR REVIEW (this is a regeneration -- the previous attempt at this shot was flagged): ` +
+      `${suggestedFix.fix} Everything else about the prior composition that already worked should stay as it was, ` +
+      `specifically: ${suggestedFix.preserve}.`
+    : "";
+
+  return `${CASTING_AND_SETTING_ANCHOR}${correctionBlock}
 
 Scene setting: ${scene.lighting_continuity ?? "natural daylight, consistent with the rest of the scene"}.
 
@@ -277,7 +291,7 @@ export const runMediaGeneration: Stage = async (projectId) => {
       characterVersionId: c.character_version_id
     }));
 
-    const prompt = buildShotPrompt(scene, shot, shotCharacters.map((c) => c.name));
+    const prompt = buildShotPrompt(scene, shot, shotCharacters.map((c) => c.name), loadSuggestedFix(db, shot.id));
     const tier: "standard" | "pro" = shot.needs_lip_sync ? "pro" : "standard";
 
     try {

@@ -62,6 +62,15 @@ export interface CriticReport {
    *  ("archaeological evidence shows...") rather than an unverifiable
    *  assertion. May be empty when the model answered without searching. */
   sources: GroundingSource[];
+  /** The smallest concrete correction for the most severe finding, in a
+   *  form a regeneration prompt can use directly -- null when severity is
+   *  "none" or the model didn't provide a usable one. See
+   *  parseCriticSuggestedFix. */
+  suggestedFix: string | null;
+  /** What must NOT change if suggestedFix is applied -- null when
+   *  severity is "none". Always paired with suggestedFix: a caller should
+   *  not act on one without the other. See parseCriticPreserve. */
+  preserve: string | null;
 }
 
 export interface CriticContinuityFrame {
@@ -175,6 +184,34 @@ export function parseCriticSeverity(findings: string): CriticSeverity {
   const match = findings.match(SEVERITY_LINE);
   if (!match) return "moderate";
   return match[1].toLowerCase() as CriticSeverity;
+}
+
+const SUGGESTED_FIX_LINE = /SUGGESTED FIX:\s*(.+)/i;
+const PRESERVE_LINE = /PRESERVE:\s*(.+)/i;
+
+/**
+ * Extracts the Critic's proposed smallest correction, so a non-'accepted'
+ * verdict carries an actual instruction the NEXT generation attempt can
+ * use, instead of the retry silently reusing the exact prompt that just
+ * failed. Returns null (not a placeholder string) when absent or the
+ * model wrote "none" -- a caller should treat null as "no specific fix to
+ * apply," not as if the line were missing due to a parsing failure.
+ */
+export function parseCriticSuggestedFix(findings: string): string | null {
+  const match = findings.match(SUGGESTED_FIX_LINE);
+  if (!match) return null;
+  const fix = match[1]!.trim().replace(/^["']|["']$/g, "");
+  return /^none\.?$/i.test(fix) ? null : fix;
+}
+
+/** Extracts what the Critic says must NOT change if the suggested fix
+ *  above is applied -- paired with parseCriticSuggestedFix so a caller
+ *  never has one without the other. */
+export function parseCriticPreserve(findings: string): string | null {
+  const match = findings.match(PRESERVE_LINE);
+  if (!match) return null;
+  const preserve = match[1]!.trim().replace(/^["']|["']$/g, "");
+  return /^everything\.?$/i.test(preserve) ? null : preserve;
 }
 
 /**
@@ -311,10 +348,18 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
       : ""}` +
     `List every real problem you find, citing research where relevant. If you genuinely find nothing wrong in any ` +
     `of these areas, say so plainly rather than inventing a concern.\n\n` +
-    `End your response with exactly one line in this format: "SEVERITY: none" (nothing wrong), "SEVERITY: minor" ` +
-    `(a small, easily-overlooked detail), "SEVERITY: moderate" (worth fixing before this ships), or "SEVERITY: ` +
-    `severe" (a clear error a knowledgeable viewer would notice, or a starting frame the video generator likely ` +
-    `can't animate believably).`;
+    `End your response with exactly these three lines, in this order (each on its own line):\n` +
+    `"SEVERITY: none" (nothing wrong), "SEVERITY: minor" (a small, easily-overlooked detail), "SEVERITY: moderate" ` +
+    `(worth fixing before this ships), or "SEVERITY: severe" (a clear error a knowledgeable viewer would notice, ` +
+    `or a starting frame the video generator likely can't animate believably).\n` +
+    `"SUGGESTED FIX: <the single smallest concrete change that would resolve your MOST severe finding, written as ` +
+    `an instruction a prompt-writer could paste directly into the next generation attempt -- e.g. 'lower the roof ` +
+    `pitch to flat construction' or 'add scattered debris on the floor beneath the opening', not a vague 'improve ` +
+    `historical accuracy'. If severity is none, write 'none'.>"\n` +
+    `"PRESERVE: <what is already correct and must NOT change if this frame gets regenerated with the fix above -- ` +
+    `e.g. 'keep the crowd composition and Jesus's pose exactly as-is, only correct the roof'. This prevents a fix ` +
+    `for one problem from accidentally discarding everything that already works. If severity is none, write ` +
+    `'everything'.>"`;
 
   // A response with no parseable "SEVERITY: ..." line is retried once --
   // parseCriticSeverity's "moderate" fallback exists for a genuine
@@ -330,7 +375,8 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
   }
   const duplicateVerdict = await checkCrowdDuplicates(image);
   const duplicateSeverity = crowdDuplicateSeverity(duplicateVerdict.largestIdenticalGroup);
-  const severity = higherSeverity(parseCriticSeverity(result.text), duplicateSeverity);
+  const modelSeverity = parseCriticSeverity(result.text);
+  const severity = higherSeverity(modelSeverity, duplicateSeverity);
   const duplicateFinding = duplicateVerdict.largestIdenticalGroup > 1
     ? `Dedicated crowd-duplicate verifier: ${duplicateVerdict.largestIdenticalGroup} visually identical people at ${duplicateVerdict.location}. ${duplicateVerdict.explanation}`
     : "Dedicated crowd-duplicate verifier: no visually identical crowd members detected.";
@@ -339,9 +385,25 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
   const sourcesFinding = sources.length
     ? `\n\nSources cited by the grounded research pass:\n${sources.map((s) => `- ${s.title} (${s.uri})`).join("\n")}`
     : "";
+
+  let suggestedFix = parseCriticSuggestedFix(result.text);
+  let preserve = parseCriticPreserve(result.text);
+  // The dedicated crowd-duplicate verifier is a SEPARATE call from the
+  // model's own free-text pass, so its own SUGGESTED FIX line may not
+  // address duplicates at all if that wasn't what its own pass judged as
+  // most severe. When the duplicate check is the dominant finding,
+  // override with a fix that actually addresses it -- otherwise a
+  // regeneration attempt would apply the wrong correction.
+  if (higherSeverity(duplicateSeverity, modelSeverity) === duplicateSeverity && duplicateSeverity !== modelSeverity) {
+    suggestedFix = `Regenerate with a genuinely distinct background crowd at ${duplicateVerdict.location} -- ${duplicateVerdict.explanation}`;
+    preserve = preserve ?? "everything else in the frame; only vary the duplicated background people's faces, hair, beards, and clothing";
+  }
+
   return {
     severity,
     findings: `${result.text}\n\n${duplicateFinding}\nSEVERITY: ${severity}${sourcesFinding}`,
-    sources
+    sources,
+    suggestedFix,
+    preserve
   };
 }
