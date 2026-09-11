@@ -44,10 +44,57 @@ import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
+import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
+import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
+import { assetPath } from "../media-generation/external-keyframes.js";
 import { checkCanonicalLikeness, isLikenessAligned } from "./canonical-likeness.js";
 import { checkSceneFidelity, isSceneFidelityAligned } from "./scene-fidelity.js";
-import { runCritic, type CriticReport } from "./critic.js";
+import { runCritic, type CriticCharacterReference, type CriticReport } from "./critic.js";
 import { decideGenerationStatus, type DirectorDecision } from "./director-verdict.js";
+
+// Same hardcoded Hatam Mark 2 source paths external-keyframes.ts and
+// external-coverage-keyframes.ts already use -- this whole pipeline is a
+// single-chapter v1 pilot (see AGENTS.md), not yet parameterized by
+// project/book/chapter.
+const SCRIPTURE_SOURCES = [
+  { role: "Hatam (verified source)", path: "source/hatam/mark-2/mark-2-text.docx" },
+  { role: "English (reference)", path: "reference/english/mark-2/mark-2-text.docx" }
+];
+
+/**
+ * Loads the verified scripture text for a shot's verse range, so the
+ * Critic can judge "scriptural accuracy" against the actual passage
+ * instead of only a one-line action paraphrase. Returns null rather than
+ * throwing when the verse ref doesn't parse or no source text is found --
+ * the Critic still runs, just without this extra grounding.
+ */
+function loadScriptureText(dataDir: string, verseRef: string | null): string | null {
+  if (!verseRef) return null;
+  let range: { start: number; end: number };
+  try {
+    range = parseVerseRange(verseRef);
+  } catch {
+    return null;
+  }
+  const parts: string[] = [];
+  for (const source of SCRIPTURE_SOURCES) {
+    const absPath = assetPath(dataDir, source.path);
+    if (!existsSync(absPath)) continue;
+    const verses = parseSourceTextByVerse(absPath).filter((v) => v.verse >= range.start && v.verse <= range.end);
+    if (!verses.length) continue;
+    parts.push(`${source.role}:\n${verses.map((v) => `${v.verse}. ${v.text}`).join("\n")}`);
+  }
+  return parts.length ? parts.join("\n\n") : null;
+}
+
+/** Turns the same shot-cast rows used by the likeness check into Critic
+ *  reference images, so the identity/costume hard rule can be judged
+ *  against a real approved reference instead of a text description. */
+function toCriticReferences(dataDir: string, characters: ShotCharacterRow[]): CriticCharacterReference[] {
+  return characters
+    .filter((c): c is ShotCharacterRow & { reference_path: string } => !!c.reference_path && existsSync(assetPath(dataDir, c.reference_path)))
+    .map((c) => ({ name: c.character_name, imagePath: assetPath(dataDir, c.reference_path) }));
+}
 
 export interface ShotReviewReport {
   shotId: string;
@@ -114,14 +161,6 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
     | { crowd_density: string | null; continuity_notes: string | null }
     | undefined;
 
-  const critic = await runCritic(
-    shot.action,
-    shot.verse_ref,
-    shot.continuity_notes,
-    fidelityRow?.crowd_density ?? null,
-    generatedAbsPath
-  );
-
   const characters = db
     .prepare(
       `SELECT c.name AS character_name, ref.path AS reference_path
@@ -139,6 +178,16 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
        WHERE shc.shot_id = ?`
     )
     .all(shotId) as ShotCharacterRow[];
+
+  const critic = await runCritic({
+    action: shot.action,
+    verseRef: shot.verse_ref,
+    continuityNotes: shot.continuity_notes,
+    crowdDensity: fidelityRow?.crowd_density ?? null,
+    generatedImagePath: generatedAbsPath,
+    scriptureText: loadScriptureText(dataDir, shot.verse_ref),
+    characterReferences: toCriticReferences(dataDir, characters)
+  });
 
   let likenessAligned = true;
   for (const character of characters) {
@@ -214,8 +263,6 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
   const fidelityRow = db.prepare(`SELECT crowd_density, continuity_notes FROM shots WHERE id = ?`).get(candidate.id) as
     | { crowd_density: string | null; continuity_notes: string | null }
     | undefined;
-  const critic = await runCritic(candidate.action, candidate.verse_ref, candidate.continuity_notes,
-    fidelityRow?.crowd_density ?? null, generatedAbsPath);
 
   const characters = db.prepare(
     `SELECT c.name AS character_name, ref.path AS reference_path
@@ -232,6 +279,16 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
      ) ref ON ref.character_version_id = cv.id AND ref.rn = 1
      WHERE shc.shot_id = ?`
   ).all(candidate.id) as ShotCharacterRow[];
+
+  const critic = await runCritic({
+    action: candidate.action,
+    verseRef: candidate.verse_ref,
+    continuityNotes: candidate.continuity_notes,
+    crowdDensity: fidelityRow?.crowd_density ?? null,
+    generatedImagePath: generatedAbsPath,
+    scriptureText: loadScriptureText(dataDir, candidate.verse_ref),
+    characterReferences: toCriticReferences(dataDir, characters)
+  });
 
   let likenessAligned = true;
   const likenessNotes: string[] = [];
@@ -310,16 +367,6 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
   const generatedAbsPath = join(dataDir, "assets", candidate.result_asset_path);
   if (!existsSync(generatedAbsPath)) throw new Error(`Candidate asset is missing: ${candidate.result_asset_path}`);
 
-  // Tell the Critic this is one beat of a covered sequence, not a normal
-  // single_clip shot -- without this it has no way to know a cutaway/insert
-  // may deliberately omit the shot's own action subject (e.g. an
-  // over-the-shoulder framing that doesn't show Jesus's face), and would
-  // otherwise judge it against the whole shot's action text instead of this
-  // beat's own narrower purpose.
-  const critic = await runCritic(candidate.action, candidate.verse_ref, candidate.continuity_notes,
-    candidate.crowd_density, generatedAbsPath, undefined,
-    { sequence: candidate.beat_sequence, type: candidate.beat_type, notes: candidate.beat_notes ?? "" });
-
   // Same reference set the parent shot's own review uses, plus this beat's
   // own character_id when set -- a cutaway or lip-sync insert can name an
   // approved supporting character not on the shot's own cast list (see
@@ -345,6 +392,23 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
      WHERE c.id = ?`
   );
   const characters = [...characterIds].map((id) => characterRefQuery.get(id) as ShotCharacterRow);
+
+  // Tell the Critic this is one beat of a covered sequence, not a normal
+  // single_clip shot -- without this it has no way to know a cutaway/insert
+  // may deliberately omit the shot's own action subject (e.g. an
+  // over-the-shoulder framing that doesn't show Jesus's face), and would
+  // otherwise judge it against the whole shot's action text instead of this
+  // beat's own narrower purpose.
+  const critic = await runCritic({
+    action: candidate.action,
+    verseRef: candidate.verse_ref,
+    continuityNotes: candidate.continuity_notes,
+    crowdDensity: candidate.crowd_density,
+    generatedImagePath: generatedAbsPath,
+    scriptureText: loadScriptureText(dataDir, candidate.verse_ref),
+    characterReferences: toCriticReferences(dataDir, characters),
+    coverageBeat: { sequence: candidate.beat_sequence, type: candidate.beat_type, notes: candidate.beat_notes ?? "" }
+  });
 
   let likenessAligned = true;
   const likenessNotes: string[] = [];
