@@ -253,6 +253,7 @@ export const runMediaGeneration: Stage = async (projectId) => {
     `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
      VALUES (?, ?, 'shot', ?, 'qc', ?, 0, ?)`
   );
+  const downgradeAttemptStatus = db.prepare(`UPDATE generation_attempts SET status = 'hold_for_review' WHERE id = ?`);
 
   let generated = 0;
   let reused = 0;
@@ -299,20 +300,38 @@ export const runMediaGeneration: Stage = async (projectId) => {
       generated++;
 
       if (result.status === "accepted" && result.media?.path) {
-        try {
-          const review = await runShotReview(shot.id);
+        // A review that throws (network error, unparseable response, etc.)
+        // must never leave this attempt's status silently 'accepted' --
+        // the reuse-if-exists check above only trusts an 'accepted' row,
+        // so an image that never actually finished QC would otherwise be
+        // reused forever as if it had passed. Retry once (transient
+        // failures are the common case), and if it still fails, downgrade
+        // the attempt to 'hold_for_review' so it surfaces for a human
+        // instead of silently passing as reviewed.
+        let review;
+        let reviewError: Error | undefined;
+        for (let attempt = 0; attempt < 2 && !review; attempt++) {
+          try {
+            review = await runShotReview(shot.id);
+          } catch (err) {
+            reviewError = err as Error;
+          }
+        }
+
+        if (review) {
           if (review.decision.status !== "accepted") {
             heldForReview++;
             heldShots.push(`scene ${scene.sequence} shot ${shot.sequence} (${review.decision.status})`);
           }
-        } catch (reviewErr) {
+        } else {
           reviewFailed++;
-          const message = (reviewErr as Error).message;
+          downgradeAttemptStatus.run(attemptId);
           insertReviewNote.run(
             randomUUID(),
             project.id,
             shot.id,
-            `Automated QC review could not run for this shot: ${message}`,
+            `Automated QC review could not run for this shot after 2 attempts: ${reviewError?.message}. ` +
+              `Attempt held for review rather than left as accepted, so it won't be silently reused unreviewed.`,
             Date.now()
           );
         }

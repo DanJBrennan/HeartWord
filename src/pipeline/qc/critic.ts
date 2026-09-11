@@ -219,7 +219,18 @@ export async function runCritic(
     `severe" (a clear error a knowledgeable viewer would notice, or a starting frame the video generator likely ` +
     `can't animate believably).`;
 
-  const findings = await generateGroundedText(prompt, precedingImage ? [precedingImage, image] : [image]);
+  // A response with no parseable "SEVERITY: ..." line is retried once --
+  // parseCriticSeverity's "moderate" fallback exists for a genuine
+  // formatting slip, not as a first resort, since silently guessing
+  // "moderate" on a malformed response (e.g. an unresolved grounding
+  // tool-call artifact leaking into the text instead of real findings)
+  // can trigger an unnecessary regeneration for a review that never
+  // actually happened.
+  const images = precedingImage ? [precedingImage, image] : [image];
+  let findings = await generateGroundedText(prompt, images);
+  if (!SEVERITY_LINE.test(findings)) {
+    findings = await generateGroundedText(prompt, images);
+  }
   const duplicateVerdict = await checkCrowdDuplicates(image);
   const duplicateSeverity = crowdDuplicateSeverity(duplicateVerdict.largestIdenticalGroup);
   const severity = higherSeverity(parseCriticSeverity(findings), duplicateSeverity);
