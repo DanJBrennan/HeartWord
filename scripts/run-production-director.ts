@@ -47,7 +47,7 @@ async function run() {
   }
 
   console.log(`\nProduction Director: implementing approved ideas...`);
-  const result = await implementApprovedIdeas(db, outcome.approvedIdeas);
+  const result = await implementApprovedIdeas(db, PROJECT_ID, outcome.approvedIdeas);
 
   for (const shot of result.newShots) {
     console.log(`  BUILT ${shot.label}: keyframe=${shot.keyframePath}, video=${shot.videoPath} (tier=${shot.videoTier}, $${shot.costUsd.toFixed(2)})`);

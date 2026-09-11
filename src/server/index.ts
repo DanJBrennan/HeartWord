@@ -7,6 +7,7 @@ import { getDataDir, getDb } from "../db/client.js";
 import { projectsRouter } from "./routes/projects.js";
 import { charactersRouter } from "./routes/characters.js";
 import { voicesRouter } from "./routes/voices.js";
+import { productionRouter } from "./routes/production.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -21,6 +22,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/projects", projectsRouter);
+app.use("/api/projects/:projectId/production", productionRouter);
 app.use("/api/characters", charactersRouter);
 app.use("/api/voices", voicesRouter);
 

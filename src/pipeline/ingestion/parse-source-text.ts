@@ -50,7 +50,10 @@ function xmlToParagraphLines(xml: string): string[] {
  * formatted chapter file may need this adjusted (see "Known limitations"
  * in docs/ARCHITECTURE.md's ingestion section).
  */
-const VERSE_MARKER = /(\d{1,3})\s?(?=[A-ZÀ-Ÿ"“'])/g;
+// A verse may continue the previous sentence: the approved English Mark 2
+// reference writes "26how ...". Accept lowercase immediately after a
+// number, without also treating ordinary prose such as "40 days" as a verse.
+const VERSE_MARKER = /(\d{1,3})(?:\s?(?=[A-ZÀ-Ÿ"“'])|(?=[a-zà-ÿ]))/g;
 
 /**
  * Splits one paragraph's text into its verse(s). A paragraph normally

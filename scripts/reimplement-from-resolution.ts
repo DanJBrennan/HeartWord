@@ -19,13 +19,13 @@ async function run() {
   const db = getDb();
   const row = db
     .prepare(
-      `SELECT approved_ideas_json FROM director_resolutions WHERE narration_span_verse_ref = ? ORDER BY created_at DESC LIMIT 1`
+      `SELECT project_id, approved_ideas_json FROM director_resolutions WHERE narration_span_verse_ref = ? ORDER BY created_at DESC LIMIT 1`
     )
-    .get(verseRefArg) as { approved_ideas_json: string } | undefined;
+    .get(verseRefArg) as { project_id: string; approved_ideas_json: string } | undefined;
   if (!row) throw new Error(`No director_resolutions row found for ${verseRefArg}`);
   const approvedIdeas: GapFillIdea[] = JSON.parse(row.approved_ideas_json);
 
-  const result = await implementApprovedIdeas(db, approvedIdeas);
+  const result = await implementApprovedIdeas(db, row.project_id, approvedIdeas);
   for (const shot of result.newShots) {
     console.log(`  BUILT ${shot.label}: keyframe=${shot.keyframePath}, video=${shot.videoPath} (tier=${shot.videoTier}, $${shot.costUsd.toFixed(2)})`);
   }

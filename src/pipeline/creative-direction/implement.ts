@@ -1,175 +1,122 @@
-/**
- * Implements the Production Director's approved ideas (see
- * production-director.ts) -- the "includes the authority to generate
- * keyframes and video clips" half of Dan's instruction. Only ever
- * called with ideas that already cleared the negotiation loop.
- *
- * new_shot: generates a real keyframe (Nano Banana Pro, same tier this
- * project uses for canon-critical multi-character shots) using the
- * project's established casting/setting anchor, then real video from
- * that keyframe (generateFinalVideoWithFallback, the same 3-tier Veo/
- * Kling/draft chain every other supplementary shot this session used).
- *
- * reorder_existing/extend_existing are NOT generated here -- they're
- * timeline edits (a splice-order change, or a longer trim/regeneration
- * of an existing shot's own clip), which this project manages as direct
- * edits to the chapter assembly script rather than a database-driven
- * timeline yet (see scripts/assemble-full-chapter-with-inserts.ts).
- * implementApprovedIdeas reports these back as explicit instructions for
- * that manual step instead of silently no-op'ing them.
- */
+/** Gap ideas join the same reviewed shot/attempt/clip pipeline as the chapter. */
+import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
-import { GeminiImageProvider, GeminiDraftVideoProvider, GeminiVideoProvider } from "../../providers/gemini/index.js";
+import { getDataDir } from "../../db/client.js";
+import { GeminiVideoProvider, GeminiDraftVideoProvider } from "../../providers/gemini/index.js";
 import { KlingVideoProvider } from "../../providers/kling/index.js";
 import { generateFinalVideoWithFallback } from "../media-generation/generate-final-with-fallback.js";
+import { generateJsonWithImages } from "../../server/providers/gemini.js";
+import { runMediaGeneration } from "../media-generation/index.js";
+import { assembleSingleShot } from "../assembly/assemble-single-shot.js";
+import { mediaDurationMs } from "../assembly/finishing.js";
+import { loadCrewBrief, productionAssetPath } from "./crew-context.js";
+import { directionsFromRun, requireCurrentPlan, runProductionCrew } from "./crew-store.js";
+import type { CrewBrief } from "./crew-types.js";
 import type { GapFillIdea } from "./index.js";
-import type { CharacterRef } from "../../providers/types.js";
 
-const CASTING_ANCHOR =
-  "Photorealistic still frame from a Scripture video production (true photographic realism, not stylized/cartoon/3D). " +
-  "CASTING: every person's face, skin tone, and build reads as Hatam/Papuan (Melanesian Arfak highland) -- match the " +
-  "attached reference images exactly for any named character. SETTING: first-century Judea/Galilee -- buildings from " +
-  "rough dark basalt fieldstone with flat timber/reed/mud roofs, simple first-century tunics, leather sandals. No " +
-  "Melanesian/Pacific Islander tribal dress, no modern objects, no text or labels anywhere in the image.";
+export interface ImplementedNewShot { ideaId: string; label: string; keyframePath: string; videoPath: string; videoTier: string; costUsd: number }
+export interface TimelineEditInstruction { ideaId: string; operation: "reorder_existing" | "extend_existing"; targetShotVerseRef: string; instruction: string }
+export interface ImplementationResult { newShots: ImplementedNewShot[]; timelineEdits: TimelineEditInstruction[]; failures: Array<{ ideaId: string; label: string; error: string }> }
 
-export interface ImplementedNewShot {
-  ideaId: string;
-  label: string;
-  keyframePath: string;
-  videoPath: string;
-  videoTier: string;
-  costUsd: number;
-}
-
-export interface TimelineEditInstruction {
-  ideaId: string;
-  operation: "reorder_existing" | "extend_existing";
-  targetShotVerseRef: string;
-  instruction: string;
-}
-
-export interface ImplementationResult {
-  newShots: ImplementedNewShot[];
-  timelineEdits: TimelineEditInstruction[];
-  failures: Array<{ ideaId: string; label: string; error: string }>;
-}
-
-function resolveCharacterRefs(db: DatabaseSync, names: string[]): CharacterRef[] {
-  const refs: CharacterRef[] = [];
-  for (const name of names) {
-    const row = db
-      .prepare(
-        `SELECT c.id AS characterId, cv.id AS characterVersionId FROM characters c
-         JOIN character_versions cv ON cv.character_id = c.id
-         WHERE c.name = ? AND cv.status = 'approved'
-         ORDER BY cv.created_at DESC LIMIT 1`
-      )
-      .get(name) as { characterId: string; characterVersionId: string } | undefined;
-    if (row) refs.push(row);
-    // A name the LLM used that doesn't match this project's canon exactly
-    // is silently skipped rather than thrown -- crowd/group phrasing
-    // drift is common and the shot still generates with whichever named
-    // characters DID resolve.
+export function materializeGapIdea(db: DatabaseSync, brief: CrewBrief, idea: GapFillIdea): string {
+  if (typeof idea.id !== "string" || !/^[a-zA-Z0-9_-]{1,80}$/.test(idea.id)) throw new Error("A stable, file-safe idea ID is required.");
+  if (idea.operation !== "new_shot") throw new Error("Only new-shot ideas create footage.");
+  if (!Number.isFinite(idea.estimatedDurationSec) || idea.estimatedDurationSec <= 0 || idea.estimatedDurationSec > 8) throw new Error("Split this idea into shots of at most eight seconds before generation.");
+  const anchor = brief.shots.find(s => s.id === idea.targetShotId);
+  if (!anchor) throw new Error("A specific shot in this chapter must anchor the new idea; review an older unscoped proposal again.");
+  const characters = idea.charactersInvolved.map(name => {
+    const matches = brief.canon.filter(c => c.name === name);
+    if (matches.length !== 1) throw new Error(`No unique approved chapter character named ${name}.`);
+    return matches[0]!;
+  });
+  const action = `${idea.description}\nSetting: ${idea.setting}\nEditorial anchor: ${anchor.id}. Purpose: ${idea.decorumRationale}`;
+  const existing = db.prepare("SELECT s.action,sc.project_id FROM shots s JOIN scenes sc ON sc.id=s.scene_id WHERE s.id=?").get(idea.id);
+  if (existing) {
+    if (existing.project_id !== brief.project.id || existing.action !== action) throw new Error("The idea changed after implementation; use a newly reviewed idea ID.");
+    return idea.id;
   }
-  return refs;
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const seq = Number(db.prepare("SELECT COALESCE(MAX(sequence),0)+1 AS n FROM shots WHERE scene_id=?").get(anchor.sceneId)!.n);
+    db.prepare(`INSERT INTO shots (id,scene_id,sequence,action,verse_ref,framing,camera_movement,needs_lip_sync,continuity_notes,created_at)
+      VALUES (?,?,?,?,?,?,?,0,?,?)`).run(idea.id, anchor.sceneId, seq, action, anchor.verseRef, idea.framing, idea.cameraMovement,
+        `Supplementary silent coverage anchored to ${anchor.id}; the Picture Editor decides its final position. ${anchor.continuity ?? ""}`, Date.now());
+    for (const c of characters) db.prepare("INSERT INTO shot_characters (shot_id,character_id) VALUES (?,?)").run(idea.id, c.id);
+    db.exec("COMMIT");
+  } catch (error) { db.exec("ROLLBACK"); throw error; }
+  return idea.id;
 }
 
-/**
- * Generates real keyframes/video for every approved new_shot idea, and
- * returns plain-language instructions for every approved reorder/extend
- * idea instead of applying them automatically.
- */
-export async function implementApprovedIdeas(db: DatabaseSync, approvedIdeas: GapFillIdea[]): Promise<ImplementationResult> {
-  const newShots: ImplementedNewShot[] = [];
-  const timelineEdits: TimelineEditInstruction[] = [];
-  const failures: Array<{ ideaId: string; label: string; error: string }> = [];
-
-  const imageProvider = new GeminiImageProvider();
-
+export async function implementApprovedIdeas(db: DatabaseSync, projectId: string, approvedIdeas: GapFillIdea[]): Promise<ImplementationResult> {
+  const output: ImplementationResult = { newShots: [], timelineEdits: [], failures: [] };
+  const dataDir = getDataDir();
+  const brief = loadCrewBrief(db, dataDir, projectId, "planning");
+  const newIdeas: GapFillIdea[] = [];
   for (const idea of approvedIdeas) {
-    if (idea.operation !== "new_shot") {
-      // Defensive check even though the Creative Director's own prompt
-      // now forbids this (confirmed live: it proposed extending a
-      // lip-synced shot before that guard existed) -- a lip-synced
-      // shot's length is locked to its real dialogue audio, so
-      // "extending" it would desync the mouth from the line.
-      if (idea.operation === "extend_existing") {
-        const candidates = db
-          .prepare(`SELECT needs_lip_sync FROM shots WHERE verse_ref = ?`)
-          .all(idea.targetShotVerseRef) as Array<{ needs_lip_sync: number }>;
-        // Multiple shots can share one verse_ref label -- if ANY of them
-        // is lip-synced, treat the target as ambiguous/risky rather than
-        // guess which one was meant.
-        if (candidates.some((c) => c.needs_lip_sync)) {
-          failures.push({
-            ideaId: idea.id,
-            label: idea.label,
-            error: `Refused: a shot at ${idea.targetShotVerseRef} is lip-synced -- extending it (or an ambiguous same-labeled shot) risks desyncing dialogue audio. Skipped rather than applied.`
-          });
-          continue;
-        }
-      }
-      timelineEdits.push({
-        ideaId: idea.id,
-        operation: idea.operation,
-        targetShotVerseRef: idea.targetShotVerseRef,
-        instruction:
-          idea.operation === "extend_existing"
-            ? `Extend the shot at ${idea.targetShotVerseRef} by ~${idea.estimatedDurationSec}s: ${idea.description}`
-            : `Reorder the shot at ${idea.targetShotVerseRef}: ${idea.description}`
-      });
-      continue;
-    }
-
     try {
-      // The Creative Director doesn't reliably return `label` as the
-      // kebab-case slug its own type asks for (confirmed live: "Friends
-      // Watching from Roof Aperture" came back title-case with spaces) --
-      // every other shotId in this project's generated/ tree is a plain
-      // kebab-case slug, and a raw label would land the file at a path
-      // with spaces in it, so this is sanitized here rather than trusted.
-      const shotId = idea.label
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
-      const characters = resolveCharacterRefs(db, idea.charactersInvolved);
-      const prompt =
-        `${CASTING_ANCHOR}\n\nShot: ${idea.framing || "medium"}, ${idea.cameraMovement || "static"} camera.\n` +
-        `Setting: ${idea.setting || "match the established location of the surrounding action"}.\n` +
-        `Action: ${idea.description}\n` +
-        `Characters visible: ${idea.charactersInvolved.join(", ") || "as described"} (each exactly once, matching their reference images where named).`;
-
-      const keyframeResult = await imageProvider.generate({ shotId, prompt, characters }, { tier: "pro" });
-      if (keyframeResult.status !== "accepted" || !keyframeResult.media?.path) {
-        throw new Error(`Keyframe generation did not produce an accepted result (status: ${keyframeResult.status}).`);
+      if (idea.operation === "new_shot") { materializeGapIdea(db, brief, idea); newIdeas.push(idea); continue; }
+      const target = brief.shots.find(s => s.id === idea.targetShotId);
+      if (!target || (idea.operation === "extend_existing" && target.needsLipSync)) throw new Error("An exact chapter shot is required; lip-synced speech cannot be extended.");
+      const instruction = `${idea.operation}: ${idea.description}; target ${target.id}; additional duration ${idea.estimatedDurationSec}s. Request new coverage if the current clip is too short.`;
+      // The editor sees the request, rather than an unaudited script splice.
+      db.prepare(`INSERT OR IGNORE INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at)
+        VALUES (?,?,'shot',?,'qc',?,0,?)`).run(`director-idea:${idea.id}`, projectId, target.id, `Production Director approved edit: ${instruction}`, Date.now());
+      output.timelineEdits.push({ ideaId: idea.id, operation: idea.operation, targetShotVerseRef: target.verseRef, instruction });
+    } catch (error) { output.failures.push({ ideaId: idea.id, label: idea.label, error: (error as Error).message }); }
+  }
+  if (!newIdeas.length) return output;
+  let plan;
+  try { plan = requireCurrentPlan(db, dataDir, projectId); }
+  catch { const result = await runProductionCrew(projectId, "planning"); if (result.status === "approved") plan = requireCurrentPlan(db, dataDir, projectId); }
+  if (!plan) {
+    for (const idea of newIdeas) output.failures.push({ ideaId: idea.id, label: idea.label, error: "New shots are saved. Resolve the crew's findings before media generation." });
+    return output;
+  }
+  await runMediaGeneration(projectId, newIdeas.map(i => i.id));
+  for (const idea of newIdeas) {
+    try {
+      const job = db.prepare("SELECT * FROM directed_video_jobs WHERE shot_id=? AND project_id=?").get(idea.id, projectId);
+      if (job) {
+        if (job.status !== "accepted") throw new Error(`Previous video request is ${job.status}; review it before another paid attempt.`);
+        output.newShots.push(JSON.parse(String(job.result_json))); continue;
       }
-
-      const videoProvider = new GeminiVideoProvider();
-      const klingSceneProvider = new KlingVideoProvider();
-      const draftProvider = new GeminiDraftVideoProvider();
-      const videoResult = await generateFinalVideoWithFallback(
-        videoProvider,
-        klingSceneProvider,
-        draftProvider,
-        { shotId, prompt: idea.description, characters: [] },
-        { resolution: "720p", startFrame: { path: keyframeResult.media.path }, durationSeconds: Math.min(8, Math.max(4, Math.round(idea.estimatedDurationSec))) }
-      );
-      if (!videoResult.media?.path) {
-        throw new Error("Video generation did not produce a result.");
-      }
-
-      newShots.push({
-        ideaId: idea.id,
-        label: shotId,
-        keyframePath: keyframeResult.media.path,
-        videoPath: videoResult.media.path,
-        videoTier: videoResult.tier,
-        costUsd: (keyframeResult.cost?.usd ?? 0) + (videoResult.cost?.usd ?? 0)
-      });
-    } catch (err) {
-      failures.push({ ideaId: idea.id, label: idea.label, error: (err as Error).message });
+      const keyframe = db.prepare("SELECT result_asset_path,status,cost_usd FROM generation_attempts WHERE shot_id=? AND operation='generate' ORDER BY created_at DESC,rowid DESC LIMIT 1").get(idea.id);
+      if (keyframe?.status !== "accepted" || !keyframe.result_asset_path) throw new Error("Keyframe must pass Critic review before video generation.");
+      const current = requireCurrentPlan(db, dataDir, projectId);
+      const prompt = idea.description + directionsFromRun(current, idea.id);
+      db.prepare("INSERT INTO directed_video_jobs (shot_id,project_id,status,created_at) VALUES (?,?,'running',?)").run(idea.id, projectId, Date.now());
+      const video = await generateFinalVideoWithFallback(new GeminiVideoProvider(), new KlingVideoProvider(), new GeminiDraftVideoProvider(), { shotId: idea.id, prompt, characters: [] },
+        { resolution: "720p", startFrame: { path: String(keyframe.result_asset_path) }, durationSeconds: idea.estimatedDurationSec <= 4 ? 4 : 8 });
+      const attemptId = randomUUID();
+      db.prepare(`INSERT INTO generation_attempts (id,shot_id,provider,model,operation,resolution,prompt,status,result_asset_path,cost_usd,created_at)
+        VALUES (?,?,?,?,'generate_directed_video','720p',?,'hold_for_review',?,?,?)`).run(attemptId, idea.id, video.provenance.provider, video.provenance.model, prompt, video.media?.path ?? null, video.cost.usd, Date.now());
+      db.prepare("INSERT INTO cost_ledger_entries (id,project_id,generation_attempt_id,amount_usd,created_at) VALUES (?,?,?,?,?)")
+        .run(randomUUID(), projectId, attemptId, video.cost.usd, Date.now());
+      if (video.status !== "accepted" || !video.media) throw new Error("Video provider did not return usable footage.");
+      const bytes = readFileSync(productionAssetPath(dataDir, video.media.path));
+      if (bytes.length > 18 * 1024 * 1024) throw new Error("Video needs a smaller review proxy before acceptance.");
+      const verdict = await generateJsonWithImages<{ pass: boolean; confidence: number; reason: string }>(
+        `Independently watch this silent supplementary shot against its approved keyframe direction: ${prompt}. Check motion, continuity, physical action, source fidelity and unwanted text. Do not approve uncertain evidence.`,
+        [{ mimeType: "video/mp4", data: bytes.toString("base64") }, { mimeType: "image/png", data: readFileSync(productionAssetPath(dataDir, String(keyframe.result_asset_path))).toString("base64") }],
+        { type: "object", properties: { pass: { type: "boolean" }, confidence: { type: "number" }, reason: { type: "string" } }, required: ["pass", "confidence", "reason"] });
+      db.prepare(`INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'qc',?,0,?)`)
+        .run(randomUUID(), projectId, idea.id, `ATTEMPT: ${attemptId}\nDirected video review: ${JSON.stringify(verdict)}`, Date.now());
+      if (verdict.pass !== true || !Number.isFinite(verdict.confidence) || verdict.confidence < 80 || verdict.confidence > 100 || !verdict.reason?.trim()) throw new Error("Directed video is held by its viewing review.");
+      if (requireCurrentPlan(db, dataDir, projectId).id !== current.id) throw new Error("Direction changed while video was generated; review the saved candidate.");
+      const durationMs = mediaDurationMs(productionAssetPath(dataDir, video.media.path));
+      if (durationMs + 50 < idea.estimatedDurationSec * 1000) throw new Error("Video is too short; request additional coverage instead of freezing its last frame.");
+      db.prepare("UPDATE generation_attempts SET status='accepted' WHERE id=?").run(attemptId);
+      db.prepare("INSERT INTO clips (id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at) VALUES (?,?,?,0,?,?)").run(randomUUID(), idea.id, attemptId, Math.round(idea.estimatedDurationSec * 1000), Date.now());
+      const assembled = assembleSingleShot(db, idea.id);
+      const built = { ideaId: idea.id, label: idea.label, keyframePath: String(keyframe.result_asset_path), videoPath: assembled.assembledVideoPath,
+        videoTier: video.tier, costUsd: Number(keyframe.cost_usd) + video.cost.usd };
+      db.prepare("UPDATE directed_video_jobs SET status='accepted',result_json=? WHERE shot_id=?").run(JSON.stringify(built), idea.id);
+      output.newShots.push(built);
+    } catch (error) {
+      db.prepare("UPDATE directed_video_jobs SET status='incomplete',error=? WHERE shot_id=? AND status='running'").run((error as Error).message, idea.id);
+      output.failures.push({ ideaId: idea.id, label: idea.label, error: (error as Error).message });
     }
   }
-
-  return { newShots, timelineEdits, failures };
+  return output;
 }

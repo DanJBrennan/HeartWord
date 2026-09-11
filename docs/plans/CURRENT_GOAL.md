@@ -1,6 +1,96 @@
 # Current Goal
 
-## Active status: Codex keyframe handoff, Hatam Mark 2 (2026-09-08)
+## Active status: Mark 2 timing integration (2026-09-11)
+
+Implementation handoff: Dan prefers Sonnet 5 at Medium for the next coding
+work to conserve usage. The bounded starting task and branch details
+are in [MARK_2_AUDIO_IMPLEMENTATION_HANDOFF.md](MARK_2_AUDIO_IMPLEMENTATION_HANDOFF.md).
+
+Dan agreed to connect the crew to the existing Mark 2 edit before a soundtrack
+trial. Recovered 62 source-clip placements in the saved film, separately
+exported the newer Blender edit, and compared all 24 aligned source intervals.
+The observed timing and findings are now in the production edit history and
+crew brief/UI. See [the timing audit](../production/hatam-mark-2/TIMING_AUDIT_2026-09-11.md).
+
+The film cannot yet receive an approved completeness manifest: five narration
+intervals totaling 120.891 seconds have no matches; the healing narration is
+partial; the forgiveness line begins in the original voice before its dub;
+and the crowd/Mark 2:19–22 audio requires source-version reconciliation.
+The two apparently missing assemblies exist with accepted attempt records,
+but their clip links are absent. The newer Blender edit differs from the
+saved film, so its timing was not misapplied to that film.
+
+The import now distinguishes observed incomplete timing from verified full
+coverage. Observations enable specific crew review without allowing approval,
+soundtrack generation or automatic finishing; file/source changes invalidate
+them. Existing film and Blender hashes are unchanged. No paid calls were made.
+All 206 tests plus three Python waveform tests pass; frontend build/typecheck
+pass, and the 21 pre-existing server type errors remain unchanged.
+
+Next production step: prepare a separate corrected cut using the newer edit,
+restore/reconcile the complete audio before score generation, and explicitly
+plan the extra picture coverage needed to fit narration without overlapping
+dialogue. This audit preserves existing media rather than silently rebuilding
+or claiming that timing metadata repairs the film.
+
+## Active status: coordinated filmmaking roles (2026-09-11)
+
+Dan authorized design and implementation of the Creative/Production Director
+and filmmaking-role improvements, then clarified the music/audio behavior:
+retain the FCBH performance and ElevenLabs character voices, allow breathing
+room and opening context views, and have a Composer direct Google-generated
+instrumental music. ElevenLabs supplies the initial sound-effects adapter.
+
+Implemented on `codex/film-role-workflow`, incorporating the existing Critic
+fix branch (including `23f3d05` and its subsequent fixes). See
+[`docs/design/production-crew.md`](../design/production-crew.md) for role
+ownership, shared context, budgets, review gates, provider choices and limits.
+
+- Separate specialist calls share exact source/reference text, measured
+  audio, approved canon, the chapter shot plan and scoped producer guidance.
+  A Production Director resolves disagreements through a bounded revision
+  pass; unresolved findings and malformed reviews cannot become approval.
+- Existing storyboard reruns preserve shot IDs, accepted takes and history.
+  Approved directions feed keyframe handoffs and directed new-shot generation;
+  changed plans invalidate prepared handoffs. New gap ideas use exact shot and
+  character identities and the normal Critic/attempt/clip path.
+- Picture editing protects source duration/order while allowing deliberate
+  introductory and reaction pauses. Cut review actually views/listens to an
+  audiovisual proxy. Typed color and soundtrack plans create new renders.
+- Composer and Sound Designer requests reserve paid attempts, retain
+  provider usage and failures, independently review generated audio, and reuse
+  completed requests. Revised mixes start from the clean base film.
+- The producer panel shows the current cut, role exchanges, findings,
+  timed cue requests, audio previews, generation history and saved guidance.
+  It can recover a review whose worker has stopped and import timing from
+  an existing hand edit.
+
+Validation: all 202 tests pass, including deterministic providers, temporary SQLite/assets, real FFmpeg
+audio/timing checks, an isolated browser fixture and a read-only snapshot of
+the real Mark 2 data. No paid generation calls or production render changes
+were made during implementation. The snapshot loads all 28 shots and 23
+approved canon identities, resolves the saved group-spokesperson relationship,
+and preserves three otherwise unassigned intervals of the original recording.
+The frontend build and frontend typecheck pass. Full server typechecking still
+reports the pre-existing script/QC/casting errors; no new implementation file
+appears in that error set.
+
+Production adoption limit: the current hand-edited Mark 2 film has no saved
+source-to-production timing map, and only 26 of its planned shots currently
+have accepted assembled clips in the database. Its supplementary footage
+also lives in the manual editor/scripts. Review is available; automatic
+finishing requires timing import, and its picture edit stays in that editor
+until the supplementary footage is represented. This work does not claim a
+new rendered chapter or completion of the older generic voice/lip-sync stub.
+Full Critic evidence weighting and an approved/rejected image benchmark are
+still the separate evaluation work deferred in the earlier review.
+
+Goal Guardian acceptance: this extends existing stages and preserves Dan's
+watch–correct–rerun workflow, approved canon and the complete source
+performance. It introduces no new narrative, translation, provider-generated
+speech or replacement editor. Current production state remains intact.
+
+## Previous status: Codex keyframe handoff, Hatam Mark 2 (2026-09-08)
 
 Dan asked Codex to take over keyframe generation, beginning with Scene 1,
 Shot 1, and to retain production status/prompts for continued work. The

@@ -32,15 +32,16 @@ export interface OrchestratorRunResult {
 }
 
 /**
- * Runs every stage in order for a project, starting from its current
- * `stage` column, stopping at the first stage that doesn't succeed (none
- * do yet — every stage is currently a stub, see src/pipeline/*\/index.ts).
+ * Runs stages in order and stops at a review hold or unfinished stage.
+ * Existing shot plans resume after ingestion and scene breakdown.
  */
 export async function runPipeline(projectId: string): Promise<OrchestratorRunResult> {
   const db = getDb();
   const results: OrchestratorRunResult["results"] = [];
 
-  for (const stage of STAGES) {
+  // Resuming must preserve the storyboard, takes and manual edits beneath it.
+  const hasShots = db.prepare(`SELECT s.id FROM shots s JOIN scenes sc ON sc.id = s.scene_id WHERE sc.project_id = ? LIMIT 1`).get(projectId);
+  for (const stage of hasShots ? STAGES.slice(2) : STAGES) {
     const result = await stage.run(projectId);
     results.push({ stage: stage.name, ...result });
 

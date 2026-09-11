@@ -19,6 +19,7 @@ import { execFileSync } from "node:child_process";
 import { constants, copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
+import { latestCrewRun, requireCurrentPlan, directionsFromRun, validateHandoffPlan } from "../creative-direction/crew-store.js";
 import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
 import { assetPath, readLandscapePng, referenceBoardFilter, sha256 } from "./external-keyframes.js";
 
@@ -61,6 +62,7 @@ export interface CoverageBeatContext {
 }
 
 export interface CoverageBeatBrief {
+  productionRunId?: string;
   schemaVersion: 1;
   id: string;
   createdAt: number;
@@ -217,6 +219,9 @@ export function prepareCoverageBeatBrief(
   if (!prompt.trim() || !rationale.trim()) throw new Error("Prompt and production rationale are required.");
   if (!/16\s*:\s*9/.test(prompt)) throw new Error("Explicit 16:9 framing is required.");
   const context = getCoverageBeatContext(db, dataDir, beatId);
+  if (latestCrewRun(db, context.project.id, "planning")) {
+    prompt += directionsFromRun(requireCurrentPlan(db, dataDir, context.project.id), context.shot.id, beatId);
+  }
   if (context.beat.status !== "planned" && context.beat.status !== "generated") {
     throw new Error(`Beat ${beatId} is already '${context.beat.status}' -- only a planned or unaccepted generated beat can be prepared.`);
   }
@@ -261,6 +266,7 @@ export function prepareCoverageBeatBrief(
 
   return {
     schemaVersion: 1,
+    productionRunId: latestCrewRun(db, context.project.id, "planning")?.id,
     id,
     createdAt: Date.now(),
     context,
@@ -294,6 +300,7 @@ export function importCoverageBeatKeyframe(
     throw new Error("Brief changed after preparation. Prepare a new brief.");
   }
   const current = getCoverageBeatContext(db, dataDir, brief.context.beat.id);
+  validateHandoffPlan(db, dataDir, current.project.id, brief.productionRunId);
   if (sha256(JSON.stringify(current)) !== brief.contextHash) {
     throw new Error("Beat/shot/canon changed after preparation. Prepare a new brief.");
   }

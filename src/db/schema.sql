@@ -6,6 +6,41 @@
 
 PRAGMA foreign_keys = ON;
 
+-- Immutable filmmaking briefs/results and append-only role exchanges.
+CREATE TABLE IF NOT EXISTS production_runs (
+  id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
+  phase TEXT NOT NULL CHECK (phase IN ('planning','editing','finishing')),
+  brief_hash TEXT NOT NULL, brief_json TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('running','approved','awaiting_assets','held','incomplete')),
+  result_json TEXT, created_at INTEGER NOT NULL, completed_at INTEGER, worker_pid INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_production_runs_project ON production_runs(project_id, created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_one_running_crew ON production_runs(project_id) WHERE status='running';
+CREATE TABLE IF NOT EXISTS production_events (
+  id TEXT PRIMARY KEY, run_id TEXT NOT NULL REFERENCES production_runs(id),
+  sequence INTEGER NOT NULL, role TEXT NOT NULL, round INTEGER NOT NULL,
+  prompt TEXT NOT NULL, output_json TEXT, error TEXT, model TEXT NOT NULL,
+  cost_usd REAL, created_at INTEGER NOT NULL, UNIQUE(run_id, sequence)
+);
+CREATE TABLE IF NOT EXISTS production_audio_assets (
+  id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
+  kind TEXT NOT NULL CHECK (kind IN ('music','sfx')), description TEXT NOT NULL,
+  path TEXT NOT NULL, sha256 TEXT NOT NULL, duration_ms INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS soundtrack_attempts (
+  id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
+  run_id TEXT NOT NULL REFERENCES production_runs(id), request_key TEXT NOT NULL UNIQUE,
+  kind TEXT NOT NULL, request_json TEXT NOT NULL, status TEXT NOT NULL,
+  provider TEXT, model TEXT, path TEXT, usage_json TEXT, cost_usd REAL,
+  review_json TEXT, error TEXT, created_at INTEGER NOT NULL
+);
+-- The timeline and audio provenance used by a particular immutable render.
+CREATE TABLE IF NOT EXISTS chapter_render_manifests (
+  render_id TEXT PRIMARY KEY REFERENCES chapter_renders(id),
+  timeline_json TEXT NOT NULL, source_audio_json TEXT NOT NULL
+);
+
 -- One row per (language, book, chapter) production — the unit the
 -- language/book/chapter navigation in docs/design/timeline.md selects.
 CREATE TABLE IF NOT EXISTS projects (
@@ -377,10 +412,22 @@ CREATE TABLE IF NOT EXISTS creative_direction_proposals (
   narration_span_verse_ref TEXT NOT NULL,
   gap_ms INTEGER NOT NULL,
   ideas_json TEXT NOT NULL,  -- JSON array of GapFillIdea (see index.ts)
+  context_json TEXT,
   model TEXT NOT NULL,
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_creative_direction_proposals_project ON creative_direction_proposals(project_id);
+
+-- Reserves a paid directed-video request before sending it. An interrupted or
+-- rejected request remains visible and never silently triggers another bill.
+CREATE TABLE IF NOT EXISTS directed_video_jobs (
+  shot_id TEXT PRIMARY KEY REFERENCES shots(id),
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  status TEXT NOT NULL CHECK (status IN ('running','accepted','held','incomplete')),
+  result_json TEXT,
+  error TEXT,
+  created_at INTEGER NOT NULL
+);
 
 -- Production Director agent (src/pipeline/creative-direction/
 -- production-director.ts), added 2026-09-10 at Dan's request. NOT the

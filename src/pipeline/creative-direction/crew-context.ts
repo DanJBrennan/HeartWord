@@ -1,0 +1,144 @@
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { isAbsolute, relative, resolve } from "node:path";
+import type { DatabaseSync } from "node:sqlite";
+import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
+import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
+import type { CrewBrief, CrewPhase, CrewShot } from "./crew-types.js";
+import { readCutTimingAudit } from "../assembly/cut-timing-audit.js";
+
+export const digest = (value: string | Buffer): string => createHash("sha256").update(value).digest("hex");
+export function productionAssetPath(dataDir: string, path: string): string {
+  const root = resolve(dataDir, "assets");
+  const absolute = resolve(root, path);
+  const rel = relative(root, absolute);
+  if (!rel || rel === ".." || rel.startsWith("..\\") || rel.startsWith("../") || isAbsolute(rel)) throw new Error("Asset must be inside HeartWord's assets directory.");
+  return absolute;
+}
+export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: string, phase: CrewPhase): CrewBrief {
+  const project = db.prepare("SELECT id, language, book, chapter FROM projects WHERE id = ?").get(projectId) as CrewBrief["project"] | undefined;
+  if (!project) throw new Error("Project not found.");
+  if (project.language.toLowerCase() !== "hatam") throw new Error("Configure and approve a regional production canon before planning another language.");
+  const stem = `${project.book}-${project.chapter}`;
+  const sourcePaths = [`source/${project.language}/${stem}/${stem}-text.docx`, `reference/english/${stem}/${stem}-text.docx`];
+  const sources = sourcePaths.map(p => productionAssetPath(dataDir, p));
+  const source: CrewBrief["source"] = { text: parseSourceTextByVerse(sources[0]!), reference: parseSourceTextByVerse(sources[1]!), hashes: sources.map(p => digest(readFileSync(p))) };
+  if (!source.text.length || !source.reference.length) throw new Error("Both source and reference Scripture text are required.");
+  const normalizeBook = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const checkRef = (value: string | null) => {
+    const match = value?.match(/^(.+?)\s+(\d+):\d+/);
+    if (!match || normalizeBook(match[1]!) !== normalizeBook(project.book) || Number(match[2]) !== project.chapter) throw new Error("A verse reference belongs to another book or chapter.");
+  };
+  const sourceVerses = source.text.map(v => v.verse).join(",");
+  if (sourceVerses !== source.reference.map(v => v.verse).join(",")) throw new Error("Source and reference verse coverage differ; review source material first.");
+  const alignedAudio = db.prepare(`SELECT id, start_ms AS startMs, end_ms AS endMs, verse_ref AS verseRef,
+    speaker_character_id AS speakerId, source_path AS path, confidence FROM audio_segments
+    WHERE project_id = ? AND layer = 'original_reading' ORDER BY start_ms, id`).all(projectId) as unknown as CrewBrief["audio"];
+  if (!alignedAudio.length) throw new Error("Ingest and align the source audio before role planning.");
+  const audio: CrewBrief["audio"] = [];
+  let end = 0;
+  for (const segment of alignedAudio) {
+    checkRef(segment.verseRef);
+    if (!Number.isFinite(segment.startMs) || !Number.isFinite(segment.endMs) || segment.startMs < end || segment.endMs <= segment.startMs) throw new Error("Source audio intervals have an overlap or invalid duration.");
+    if (segment.startMs > end) {
+      const previous = audio.at(-1);
+      if (!previous || previous.path !== segment.path) throw new Error("Source audio intervals have a gap without an unambiguous source recording.");
+      // Retain samples between aligned lines; never discard a breath or infer
+      // silence/speaker identity from the absence of a database segment.
+      audio.push({ id: `source-gap:${previous.id}:${segment.id}`, startMs: end, endMs: segment.startMs,
+        verseRef: previous.verseRef, speakerId: null, path: segment.path, confidence: null, provenance: "unassigned_source_interval" });
+    }
+    audio.push(segment);
+    end = segment.endMs;
+  }
+  for (const segment of audio) if (segment.speakerId) {
+    const original = db.prepare("SELECT canon_status, group_id FROM characters WHERE id=?").get(segment.speakerId);
+    if (original?.canon_status === "rejected" && original.group_id) {
+      const spokespeople = db.prepare("SELECT id FROM characters WHERE group_id=? AND is_spokesperson=1 AND canon_status='approved'").all(original.group_id);
+      if (spokespeople.length === 1) {
+        segment.sourceSpeakerId = segment.speakerId;
+        segment.speakerId = String(spokespeople[0]!.id);
+      }
+    }
+  }
+  for (const path of [...new Set(audio.map(a => a.path))]) source.hashes.push(digest(readFileSync(productionAssetPath(dataDir, path))));
+  if (phase !== "planning") {
+    const castMaster = db.prepare(`SELECT id,source_path,start_ms,end_ms,speaker_character_id,verse_ref FROM audio_segments
+      WHERE project_id=? AND layer='composite_cast_master' ORDER BY id`).all(projectId);
+    source.hashes.push(digest(JSON.stringify(castMaster)));
+    for (const row of castMaster) source.hashes.push(digest(readFileSync(productionAssetPath(dataDir, String(row.source_path)))));
+  }
+  const shots = db.prepare(`SELECT s.id, s.scene_id AS sceneId, sc.sequence AS sceneSequence, s.sequence,
+    s.verse_ref AS verseRef, s.action, s.framing, s.camera_movement AS cameraMovement,
+    s.continuity_notes AS continuity, sc.lighting_continuity AS lighting, s.needs_lip_sync AS needsLipSync,
+    s.dialogue_character_id AS dialogueCharacterId FROM shots s JOIN scenes sc ON sc.id = s.scene_id
+    WHERE sc.project_id = ? ORDER BY sc.sequence, s.sequence`).all(projectId) as unknown as CrewShot[];
+  if (!shots.length) throw new Error("Create the initial shot plan before running the production crew.");
+  for (const shot of shots) {
+    checkRef(shot.verseRef);
+    const ref = parseVerseRange(shot.verseRef);
+    if (!source.reference.some(v => v.verse === ref.start) || !source.reference.some(v => v.verse === ref.end)) throw new Error(`Shot ${shot.id} has no matching Scripture range.`);
+    shot.needsLipSync = Boolean(shot.needsLipSync);
+    shot.characterIds = (db.prepare("SELECT character_id AS id FROM shot_characters WHERE shot_id = ? ORDER BY character_id").all(shot.id) as Array<{ id: string }>).map(c => c.id);
+    if (shot.needsLipSync && (!shot.dialogueCharacterId || !shot.characterIds.includes(shot.dialogueCharacterId))) throw new Error(`Shot ${shot.id} has no approved visible dialogue character.`);
+    shot.beats = db.prepare(`SELECT id, sequence, notes, character_id AS characterId,
+      audio_start_ms AS startMs, audio_end_ms AS endMs FROM coverage_beats WHERE shot_id = ? ORDER BY sequence`).all(shot.id) as unknown as CrewShot["beats"];
+    shot.clip = (db.prepare(`SELECT ga.id, ga.result_asset_path AS path,
+      cl.timeline_end_ms - cl.timeline_start_ms AS durationMs FROM clips cl
+      JOIN generation_attempts ga ON ga.id = cl.generation_attempt_id
+      WHERE cl.shot_id = ? AND ga.operation = 'assemble_shot' AND ga.status = 'accepted'
+      ORDER BY ga.created_at DESC, ga.id DESC LIMIT 1`).get(shot.id) as CrewShot["clip"]) ?? null;
+    if (phase !== "planning" && shot.clip) source.hashes.push(digest(readFileSync(productionAssetPath(dataDir, shot.clip.path))));
+  }
+  const canon: CrewBrief["canon"] = [];
+  const characterIds = [...new Set([...shots.flatMap(s => [...s.characterIds, ...s.beats.flatMap(b => b.characterId ? [b.characterId] : [])]), ...audio.flatMap(a => a.speakerId ? [a.speakerId] : [])])].sort();
+  for (const id of characterIds) {
+    const character = db.prepare(`SELECT id, name, (SELECT notes FROM character_versions WHERE character_id = characters.id AND status = 'approved' LIMIT 1) AS notes, joined_narrative_at AS joinedAt FROM characters WHERE id = ?
+      AND canon_status = 'approved' AND region = 'Papuan' AND (scope_kind = 'global' OR
+      (lower(scope_book) = lower(?) AND (scope_kind = 'book' OR scope_chapter = ?)))`).get(id, project.book, project.chapter) as Omit<CrewBrief["canon"][number], "versionId"> | undefined;
+    const versions = db.prepare("SELECT id FROM character_versions WHERE character_id = ? AND status = 'approved'").all(id) as Array<{ id: string }>;
+    if (!character || versions.length !== 1) throw new Error(`Character ${id} needs one approved, project-appropriate Papuan canon version.`);
+    const assets = db.prepare("SELECT path, content_hash FROM character_assets WHERE character_version_id = ? ORDER BY path").all(versions[0]!.id) as Array<{ path: string; content_hash: string | null }>;
+    if (!assets.length) throw new Error(`Missing approved reference assets for ${character.name}.`);
+    for (const asset of assets) {
+      const hash = digest(readFileSync(productionAssetPath(dataDir, asset.path)));
+      if (asset.content_hash && asset.content_hash.toLowerCase() !== hash) throw new Error(`Canon file changed: ${character.name}.`);
+      source.hashes.push(hash);
+    }
+    canon.push({ ...character, versionId: versions[0]!.id });
+  }
+  const producerNotes = db.prepare(`SELECT id, subject_id AS subjectId, note FROM review_notes
+    WHERE project_id = ? AND (source = 'human' OR (source = 'qc' AND note LIKE 'Production Director approved edit:%')) ORDER BY created_at, id`).all(projectId) as CrewBrief["producerNotes"];
+  const spentUsd = Number(db.prepare("SELECT COALESCE(SUM(amount_usd), 0) AS total FROM cost_ledger_entries WHERE project_id = ?").get(projectId)!.total);
+  const audioAssets = db.prepare(`SELECT id, kind, description, path, sha256, duration_ms AS durationMs
+    FROM production_audio_assets WHERE project_id = ? ORDER BY id`).all(projectId) as CrewBrief["audioAssets"];
+  for (const asset of audioAssets) if (digest(readFileSync(productionAssetPath(dataDir, asset.path))) !== asset.sha256) throw new Error(`Approved audio asset changed: ${asset.description}.`);
+  let render: CrewBrief["render"] = null;
+  if (phase === "finishing") {
+    const row = db.prepare(`SELECT r.id, r.result_asset_path AS path, r.total_duration_ms AS durationMs,
+      m.timeline_json AS timeline, m.source_audio_json AS audioMap FROM chapter_renders r LEFT JOIN chapter_render_manifests m ON m.render_id = r.id
+      WHERE r.project_id = ? ORDER BY r.created_at DESC, r.id DESC LIMIT 1`).get(projectId) as { id: string; path: string; durationMs: number; timeline: string | null; audioMap: string | null } | undefined;
+    if (!row) throw new Error("Assemble a chapter before finishing review.");
+    const audioMap = row.audioMap ? JSON.parse(row.audioMap) : undefined;
+    render = { id: row.id, path: row.path, durationMs: row.durationMs, timeline: row.timeline ? JSON.parse(row.timeline) : [],
+      audioMap: Array.isArray(audioMap) ? audioMap : undefined, sha256: digest(readFileSync(productionAssetPath(dataDir, row.path))) };
+    const audit = readCutTimingAudit(db, projectId, row.id);
+    if (audit?.renderSha256 === render.sha256 && JSON.stringify(audit.sourceHashes) === JSON.stringify(source.hashes)) render.timingAudit = audit;
+    const applied = db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='apply_finishing' AND json_extract(payload,'$.renderId')=? LIMIT 1").get(projectId, row.id);
+    if (applied) {
+      const payload = JSON.parse(String(applied.payload));
+      const baseId = payload.baseRenderId ?? payload.parentRenderId;
+      const base = db.prepare("SELECT result_asset_path AS path FROM chapter_renders WHERE id=? AND project_id=?").get(baseId, projectId);
+      const reviewed = db.prepare("SELECT result_json FROM production_runs WHERE id=? AND project_id=?").get(payload.runId, projectId);
+      if (!base || !reviewed) throw new Error("Finishing provenance is incomplete; preserve the existing cut and resolve its base render first.");
+      render.finishing = { baseRenderId: baseId, basePath: String(base.path), baseSha256: digest(readFileSync(productionAssetPath(dataDir, String(base.path)))), previousDecisions: JSON.parse(String(reviewed.result_json)).contributions };
+    }
+  }
+  return { project, source, audio, canon, shots, producerNotes, spentUsd, audioAssets, render };
+}
+
+/** Spend, output clips and soundtrack additions do not invalidate visual planning. */
+export function crewBriefHash(brief: CrewBrief, phase: CrewPhase): string {
+  if (phase !== "planning") return digest(JSON.stringify(brief));
+  return digest(JSON.stringify({ ...brief, spentUsd: 0, audioAssets: [], render: null, shots: brief.shots.map(s => ({ ...s, clip: null })) }));
+}

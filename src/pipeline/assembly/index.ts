@@ -1,23 +1,21 @@
 import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
 import type { Stage } from "../types.js";
-import { assembleChapter } from "./assemble-chapter.js";
+import { runProductionCrew } from "../creative-direction/crew-store.js";
+import { assertEditorialRebuildable, renderEditorialCut } from "./render-editorial-cut.js";
 
-/** Stage 6: Assembly & timeline — combine every shot's own already-
- *  assembled clip into one continuous chapter video. See
- *  docs/design/timeline.md and assemble-chapter.ts's header for the
- *  real v1 scope (hard cuts only -- no spaced_production editorial gaps
- *  yet, since that layer doesn't exist). */
+/** Stage 6: a reviewed Picture Editor cut with protected source performance. */
 export const runAssembly: Stage = async (projectId) => {
   const db = getDb();
   try {
-    const result = assembleChapter(db, projectId);
+    assertEditorialRebuildable(db, projectId);
+    const review = await runProductionCrew(projectId, "editing", { maxCalls: 12 });
+    if (review.status !== "approved") return { ok: false, reasoning: review.summary };
+    const result = renderEditorialCut(db, getDataDir(), projectId, review.runId);
     return {
       ok: true,
       reasoning:
-        `Chapter assembly for project ${projectId}: concatenated ${result.shotCount} shot(s) into one ` +
-        `${(result.totalDurationMs / 1000).toFixed(1)}s video at ${join(getDataDir(), "assets", result.assembledVideoPath)}. ` +
-        `Hard cuts only -- no spaced_production editorial gaps between shots yet.`
+        `Picture Editor cut saved at ${join(getDataDir(), "assets", result.path)}. Source performance is preserved with the planned editorial pauses.`
     };
   } catch (err) {
     return { ok: false, reasoning: `Chapter assembly failed for project ${projectId}: ${(err as Error).message}` };
