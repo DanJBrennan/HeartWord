@@ -1,0 +1,10 @@
+Use case: precise-object-edit
+Asset type: 16:9 keyframe for the Mark 2:20 opening wide master coverage beat
+Primary request: Edit the supplied current master keyframe. Preserve the entire composition, Jesus's approved Papuan/Hatam facial likeness, cream linen tunic with woven blue clavi, serious speaking pose, weather, warm courtyard lighting, dark basalt-and-plaster village architecture, and the audience arrangement. Change only the two similar-looking adult men at the far left of the crowd: give each a clearly distinct Papuan/Hatam face, age, hair or beard shape, headwear, and earth-toned garment. They must not share a face, patterned headband, beard trim, or clothing silhouette with one another or any other visible listener.
+Scene/backdrop: first-century Galilean village courtyard in daylight, dark basalt and plaster masonry, simple timber shade
+Subject: Jesus speaks soberly once to an attentive, thoughtful moderate audience; this is a wide establishing master that plays under the opening real dialogue
+Style/medium: photorealistic cinematic still
+Composition/framing: retain exact 16:9 wide master geography; Jesus centered and full-body; 12-14 distinct listeners in a semicircle
+Lighting/mood: natural warm daylight; quiet, reflective, restrained
+Constraints: retain Jesus exactly once and exclusively in his cream-and-blue canon color-block; every visible crowd face must be individually distinct; mouths and postures should look naturally attentive to a speaking Jesus; no narrative future event is depicted
+Avoid: cloned or repeated faces, matching headbands, repeated beards, repeated clothing, blue garments on listeners, halo, text, watermark, arrest, crucifixion, funeral, literal bridegroom, modern object, theatrical tableau

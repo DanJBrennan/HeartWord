@@ -1,0 +1,10 @@
+Use case: precise-object-edit
+Asset type: 16:9 keyframe for the Mark 2:20 opening coverage beat
+Primary request: Regenerate the supplied master as a tighter medium-wide composition centered on Jesus. Jesus is visible from around mid-thigh upward, filling the central third of the frame; his approved Papuan/Hatam face, sober reflective speaking expression, and naturally parted mouth are clear and prominent. His cream linen tunic with woven blue clavi remains unique.
+Scene/backdrop: retain the same first-century Galilean courtyard, dark basalt and plaster walls, timber shade, and warm daylight.
+Subject: Jesus speaks once about the days when the bridegroom will be taken away; portray no future event. A moderate attentive audience remains visible around him to establish public teaching geography.
+Style/medium: photorealistic cinematic still
+Composition/framing: exact 16:9 landscape, tighter medium-wide master; Jesus centered and mid-thigh-up; his face is the visual focus. Include 8-10 distinct listeners at the frame edges and behind him, all looking toward him; do not use an extreme close-up or crop out the setting.
+Lighting/mood: quiet, sober, reflective natural daylight.
+Constraints: every listener must have a distinct Papuan/Hatam face, age, hair or beard shape, headwear, and earth-toned clothing. Preserve the clear spatial staging, period authenticity, Jesus's unique cream-and-blue canon color-block, and the natural speaking pose.
+Avoid: cloned faces, matching headbands, duplicated beards, blue garments on listeners, halo, text, watermark, modern objects, arrest, crucifixion, funeral, literal bridegroom, theatrical tableau.
