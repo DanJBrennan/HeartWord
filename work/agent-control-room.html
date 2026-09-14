@@ -1468,9 +1468,11 @@
       const map = root.querySelector('.hw-map');
       const dialog = root.querySelector('#portrait-dialog');
       const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-      // Add only a visually approved local asset here. No candidate is active
-      // yet, so every card currently remains static by design.
-      const clips = [];
+      // Only visually approved local assets belong here. Every other card keeps
+      // its static portrait fallback.
+      const clips = [
+        { name:'Rufus', src:'../docs/assets/control-room/idle-motion/rufus.mp4' }
+      ];
       const failed = new Set();
       let timer;
       let active;
