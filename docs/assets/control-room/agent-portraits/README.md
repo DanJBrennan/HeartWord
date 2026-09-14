@@ -37,3 +37,7 @@ portraits. The four discarded variants were intentionally not preserved here:
 `exec-67aae40e-6824-48a2-a17a-0c2df46b8397.png`,
 `exec-eaf96e4a-1633-45b3-9064-b59160feeaee.png`, and
 `exec-d01688dc-1042-49a4-baf9-dbcf2fc38ad9.png`.
+
+The optional, generated private idle-motion MP4s are documented separately in
+[`../idle-motion/README.md`](../idle-motion/README.md). They preserve this
+static portrait set as the fallback and do not represent active agents.

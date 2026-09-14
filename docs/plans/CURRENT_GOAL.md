@@ -1766,6 +1766,27 @@ is open, preserving the full presentation space for the portrait and proposed
 responsibilities. Its white source canvas blends into the stage background, so
 only the HeartWord AI mark is visible.
 
+## Private control-room idle motion (2026-09-14)
+
+The cast-only Agent Control Room now has an optional local-MP4 idle-motion
+scheduler, but no clip is active until it passes visual review. The provider
+refused the first equally constrained Mabel request; the first Rufus output was
+technically valid but rejected because it reframed the portrait and cropped his
+eyes/head. All original static portraits therefore remain the honest fallback.
+When an approved clip is added, the browser plays at most one short clip at a
+time at irregular intervals and removes the overlay during reduced-motion
+preference, background-tab, portrait-dialog, and cast-focus states. It neither
+plays audio nor reads/writes production data.
+
+`scripts/generate-control-room-idle-motion.ts` is the deliberately bounded
+generation path: it uses the already configured Gemini Omni image-to-video
+capability only for the named private Rufus portrait, then strips audio and
+writes a review-candidate 360p H.264 MP4 under
+`docs/assets/control-room/idle-motion/`. It has no database, pipeline, or
+server access; each optional draft is estimated at roughly $0.10. This is
+presentation decoration only, not runtime agent activity, Scripture-video
+media, canon, or source audio.
+
 The proposed-responsibility list in the expanded cast portrait now uses larger,
 more comfortably spaced type. This makes deliberate use of the existing dialog
 whitespace while keeping the portrait, responsibility wording, card geometry,
