@@ -472,3 +472,65 @@ CREATE TABLE IF NOT EXISTS director_resolutions (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_director_resolutions_project ON director_resolutions(project_id);
+
+-- Presentation-only voice casting for the private control-room personas.
+-- This is deliberately separate from characters/character_versions: those
+-- tables are the source-language Scripture-video canon and its approved
+-- dialogue voices. These profiles cannot dispatch work or influence any
+-- production decision; they only make staged control-room exchanges
+-- recognizable to the producer.
+CREATE TABLE IF NOT EXISTS control_room_voice_profiles (
+  agent_name TEXT PRIMARY KEY,
+  role TEXT NOT NULL,
+  tier_status TEXT NOT NULL,
+  voice_provider TEXT NOT NULL,
+  voice_id TEXT NOT NULL,
+  delivery_instructions TEXT NOT NULL,
+  presentation_only INTEGER NOT NULL DEFAULT 1 CHECK (presentation_only = 1),
+  source_reference TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+-- Producer-approved humorous demonstration library. This is deliberately
+-- separate from production conversations, project records, and agent runtime.
+CREATE TABLE IF NOT EXISTS control_room_presentation_items (
+  id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL CHECK (kind IN ('utterance', 'exchange')),
+  category TEXT,
+  cue TEXT,
+  callback_group TEXT,
+  callback_note TEXT,
+  agents_json TEXT NOT NULL,
+  source_workbook TEXT NOT NULL,
+  source_sheet TEXT NOT NULL,
+  source_row INTEGER NOT NULL,
+  presentation_only INTEGER NOT NULL DEFAULT 1 CHECK (presentation_only = 1),
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS control_room_presentation_lines (
+  id TEXT PRIMARY KEY,
+  item_id TEXT NOT NULL REFERENCES control_room_presentation_items(id),
+  line_number INTEGER NOT NULL,
+  speaker_name TEXT NOT NULL,
+  text TEXT NOT NULL,
+  UNIQUE(item_id, line_number)
+);
+CREATE INDEX IF NOT EXISTS idx_control_room_presentation_item_kind ON control_room_presentation_items(kind);
+
+-- Read-only, dated context snapshots for the private control-room demo.
+-- They are not production status, runtime-agent memory, or a substitute for
+-- the evidence ledger. Each brief names the design documents it was drawn from.
+CREATE TABLE IF NOT EXISTS control_room_presentation_briefs (
+  id TEXT PRIMARY KEY,
+  agent_name TEXT NOT NULL REFERENCES control_room_voice_profiles(agent_name),
+  title TEXT NOT NULL,
+  context TEXT NOT NULL,
+  source_references_json TEXT NOT NULL,
+  snapshot_date TEXT NOT NULL,
+  presentation_only INTEGER NOT NULL DEFAULT 1 CHECK (presentation_only = 1),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  UNIQUE(agent_name, title)
+);
+CREATE INDEX IF NOT EXISTS idx_control_room_presentation_brief_agent ON control_room_presentation_briefs(agent_name);
