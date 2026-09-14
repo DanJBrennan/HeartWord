@@ -1039,7 +1039,9 @@
         'Gene Siskel': ['Gene Siskel', 'Siskel'],
         'Roger Ebert': ['Roger Ebert', 'Ebert']
       };
-      const listenerBase = location.port === '5173' ? 'http://127.0.0.1:4000/api/control-room' : '/api/control-room';
+      // Keep the standalone file usable, while Vite-hosted presentation uses
+      // its same-origin proxy so browser requests are not blocked by CORS.
+      const listenerBase = location.protocol === 'file:' ? 'http://127.0.0.1:4000/api/control-room' : '/api/control-room';
       let presentationAudioContext;
       // 2026-09-14 EBU R128 calibration: target -22 LUFS from one neutral
       // line rendered through each saved provider configuration. Only voices

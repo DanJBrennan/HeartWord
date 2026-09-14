@@ -1883,3 +1883,12 @@ The local Vite Control Room server was observed listening only on IPv6 loopback
 paths use IPv4 loopback. Vite now binds dual-stack (`::`) on the same local
 development port so both `http://localhost:5173/` and
 `http://127.0.0.1:5173/` reach the UI and its existing local API bridge.
+
+The standalone, presentation-only Agent Control Room artifact is now also
+served during Vite development at the producer's exact local URL,
+`http://127.0.0.1:5173/work/agent-control-room.html`. A narrowly scoped Vite
+middleware serves only that HTML artifact and its existing `docs/assets`
+portrait/branding/media files; it does not move the artifact, expose unrelated
+repository files, or alter the normal React app. When opened through Vite, the
+artifact uses the existing same-origin `/api` proxy rather than a cross-origin
+port-4000 request; direct `file:` opening retains its prior local API base.
