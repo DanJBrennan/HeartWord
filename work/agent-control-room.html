@@ -96,7 +96,7 @@
     #heartword-agent-control .showtime select { min-width:min(100%,390px); flex:1 1 260px; }
     #heartword-agent-control .showtime button { cursor:pointer; }
     #heartword-agent-control .showtime-status { display:block; min-height:1.2em; margin-top:6px; color:light-dark(#7a386f,#eea8dd); font-size:.76rem; }
-    #heartword-agent-control .node:focus-visible, #heartword-agent-control .portrait-close:focus-visible, #heartword-agent-control .portrait-next:focus-visible, #heartword-agent-control .map-resize-handle:focus-visible { outline:3px solid light-dark(#155e75,#7dd3fc); outline-offset:3px; }
+    #heartword-agent-control .node:focus-visible, #heartword-agent-control .portrait-close:focus-visible, #heartword-agent-control .portrait-previous:focus-visible, #heartword-agent-control .portrait-next:focus-visible, #heartword-agent-control .map-resize-handle:focus-visible { outline:3px solid light-dark(#155e75,#7dd3fc); outline-offset:3px; }
     #heartword-agent-control .supervisor { top:calc(54px * var(--map-scale)); left:calc(50% - 102.5px * var(--map-scale)); }
     #heartword-agent-control .director { top:calc(164px * var(--map-scale)); left:calc(38px * var(--map-scale)); }
     #heartword-agent-control .planner { top:calc(164px * var(--map-scale)); right:calc(38px * var(--map-scale)); }
@@ -147,7 +147,10 @@
     #heartword-agent-control .portrait-responsibilities { display:grid; gap:12px; margin:0; padding-left:22px; font-size:1.28rem; line-height:1.45; }
     #heartword-agent-control .portrait-loading { color:light-dark(#71665a,#bdb1a2); font-size:1.1rem; }
     #heartword-agent-control .portrait-close { position:absolute; top:20px; right:20px; border:0; border-radius:50%; width:32px; height:32px; cursor:pointer; background:light-dark(#fffdf8,#23211d); color:inherit; font-size:1.2rem; }
-    #heartword-agent-control .portrait-next { position:absolute; top:20px; right:60px; display:grid; place-items:center; border:0; border-radius:50%; width:32px; height:32px; cursor:pointer; background:light-dark(#fffdf8,#23211d); color:inherit; }
+    #heartword-agent-control .portrait-previous, #heartword-agent-control .portrait-next { position:absolute; top:20px; display:grid; place-items:center; border:0; border-radius:50%; width:32px; height:32px; cursor:pointer; background:light-dark(#fffdf8,#23211d); color:inherit; }
+    #heartword-agent-control .portrait-previous { right:100px; }
+    #heartword-agent-control .portrait-next { right:60px; }
+    #heartword-agent-control .portrait-previous::after { content:''; width:8px; height:8px; border-bottom:2px solid currentColor; border-left:2px solid currentColor; transform:rotate(45deg); }
     #heartword-agent-control .portrait-next::after { content:''; width:8px; height:8px; border-top:2px solid currentColor; border-right:2px solid currentColor; transform:rotate(45deg); }
     @media (max-width:720px) { #heartword-agent-control .portrait-frame { grid-template-columns:1fr; gap:14px; padding:16px; } #heartword-agent-control .portrait-frame img { max-height:42vh; } #heartword-agent-control .portrait-details { padding:0; } }
     #heartword-agent-control .supporting-crew { margin-top:16px; }
@@ -540,7 +543,7 @@
         <div class="msg"><small>Creative director -> Shot planner - completed</small><p>Keep the action simple and preserve the established character identity.</p></div>
       </div></div>
     </div>
-    <dialog class="portrait-dialog" id="portrait-dialog" aria-labelledby="portrait-name"><div class="portrait-frame"><button class="portrait-close" type="button" aria-label="Close agent profile">x</button><button class="portrait-next" id="portrait-next" type="button" aria-label="Open next agent profile"></button><img id="portrait-image" alt=""><section class="portrait-details"><p class="portrait-proposed">Proposed HeartWord responsibilities</p><h2 id="portrait-name"></h2><p class="portrait-role" id="portrait-role"></p><ul class="portrait-responsibilities" id="portrait-responsibilities"><li class="portrait-loading">Loading proposed responsibilities…</li></ul></section></div></dialog>
+    <dialog class="portrait-dialog" id="portrait-dialog" aria-labelledby="portrait-name"><div class="portrait-frame"><button class="portrait-close" type="button" aria-label="Close agent profile">x</button><button class="portrait-previous" id="portrait-previous" type="button" aria-label="Open previous agent profile"></button><button class="portrait-next" id="portrait-next" type="button" aria-label="Open next agent profile"></button><img id="portrait-image" alt=""><section class="portrait-details"><p class="portrait-proposed">Proposed HeartWord responsibilities</p><h2 id="portrait-name"></h2><p class="portrait-role" id="portrait-role"></p><ul class="portrait-responsibilities" id="portrait-responsibilities"><li class="portrait-loading">Loading proposed responsibilities…</li></ul></section></div></dialog>
     <div class="hw-foot"><div class="hw-mini"><b>Run state</b><span>One active route; one agent waiting on inputs.</span></div><div class="hw-mini"><b>Agent radio</b><span>One assigned voice per agent; queued speech prevents everyone talking at once.</span></div><div class="hw-mini"><b>Traceability</b><span>Every message is attached to its route, job, and resulting asset.</span></div></div>
     <section class="review-layer" aria-labelledby="review-layer-title"><div class="review-head"><div><h3 id="review-layer-title">Review and Challenge Layer</h3><div class="hw-sub">Declared gate reviewers. Dashed paths are planned review handoffs, not live runtime conversations.</div></div><span class="review-status">planned review gates</span></div><div class="review-grid">
       <button class="review-card has-portrait" data-portrait="../docs/assets/control-room/agent-portraits/vera-inspector.png" data-portrait-name="Vera - Quality Critic / Inspector" type="button" aria-label="Vera, Quality Critic and Inspector. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/vera-inspector.png" alt="Vera portrait"><span><strong>Vera</strong><span>Quality Critic / Inspector</span><span>asset review evidence</span></span></button>
@@ -572,15 +575,26 @@
       const portraitName = root.querySelector('#portrait-name');
       const portraitRole = root.querySelector('#portrait-role');
       const responsibilities = root.querySelector('#portrait-responsibilities');
+      const previousProfile = root.querySelector('#portrait-previous');
       const nextProfile = root.querySelector('#portrait-next');
       const profileApi = location.port === '5173' ? 'http://127.0.0.1:4000/api/control-room' : '/api/control-room';
       const rosterCards = () => [...root.querySelectorAll('.hw-map .node, .hw-map .supporting-map-card')];
       const agentName = card => card?.dataset.addressName || card?.dataset.portraitName?.split(' - ')[0] || '';
       let currentProfileCard;
       let profileRequest = 0;
-      const updateNextProfile = () => {
+      const adjacentProfileCard = direction => {
         const cards = rosterCards();
-        const nextCard = cards.length ? cards[(cards.indexOf(currentProfileCard) + 1 + cards.length) % cards.length] : null;
+        if (!cards.length) return null;
+        const currentIndex = Math.max(cards.indexOf(currentProfileCard), 0);
+        return cards[(currentIndex + direction + cards.length) % cards.length];
+      };
+      const updateProfileNavigation = () => {
+        const previousCard = adjacentProfileCard(-1);
+        const previousAgent = agentName(previousCard);
+        previousProfile.disabled = !previousAgent;
+        previousProfile.setAttribute('aria-label', previousAgent ? `Open ${previousAgent}'s profile` : 'No previous agent profile');
+        previousProfile.title = previousAgent ? `Open ${previousAgent}'s profile` : '';
+        const nextCard = adjacentProfileCard(1);
         const nextAgent = agentName(nextCard);
         nextProfile.disabled = !nextAgent;
         nextProfile.setAttribute('aria-label', nextAgent ? `Open ${nextAgent}'s profile` : 'No next agent profile');
@@ -595,7 +609,7 @@
         portraitName.textContent = agent;
         portraitRole.textContent = 'Loading proposed role…';
         responsibilities.replaceChildren(Object.assign(document.createElement('li'), { className:'portrait-loading', textContent:'Loading proposed responsibilities…' }));
-        updateNextProfile();
+        updateProfileNavigation();
         if (!dialog.open) dialog.showModal();
         try {
           const response = await fetch(`${profileApi}/responsibilities/${encodeURIComponent(agent)}`);
@@ -611,11 +625,13 @@
           responsibilities.replaceChildren(Object.assign(document.createElement('li'), { className:'portrait-loading', textContent:'This proposed responsibility profile is unavailable right now.' }));
         }
       };
+      previousProfile.addEventListener('click', () => {
+        const previousCard = adjacentProfileCard(-1);
+        if (previousCard) openProposedProfile(previousCard);
+      });
       nextProfile.addEventListener('click', () => {
-        const cards = rosterCards();
-        if (!cards.length) return;
-        const nextCard = cards[(cards.indexOf(currentProfileCard) + 1 + cards.length) % cards.length];
-        openProposedProfile(nextCard);
+        const nextCard = adjacentProfileCard(1);
+        if (nextCard) openProposedProfile(nextCard);
       });
       document.addEventListener('click', event => {
         const card = event.target.closest('.node, .supporting-card, .review-card.has-portrait');
