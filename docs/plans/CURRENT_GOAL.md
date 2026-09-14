@@ -1788,6 +1788,15 @@ makes no retry or provider-switch decision. This is presentation decoration
 only, not runtime agent activity, Scripture-video media, canon, or source
 audio.
 
+The subsequent Rufus loop-closure iteration added an optional Veo 3.1
+first/last-frame request path and sent one eight-second locked-camera request
+with `rufus-motion-safe-source-v1.png` as both frames. The provider filtered
+the request during audio processing and returned no video. The request was not
+retried, no provider changed, and the existing approved `rufus.mp4` remains
+active; therefore no browser boundary replacement review was possible. The
+new helper and standalone script remain presentation-only and do not alter the
+production pipeline.
+
 The proposed-responsibility list in the expanded cast portrait now uses larger,
 more comfortably spaced type. This makes deliberate use of the existing dialog
 whitespace while keeping the portrait, responsibility wording, card geometry,

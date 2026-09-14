@@ -14,6 +14,15 @@ intentionally remains static. The original Rufus attempt was rejected because
 it reframed the portrait and cropped his eyes/head; that output was removed.
 No substitute or invented animation is used.
 
+On 2026-09-14, the bounded Veo 3.1 loop-closure attempt supplied
+`rufus-motion-safe-source-v1.png` as both the first and last frame for an
+eight-second, silent, locked-camera Rufus candidate. Veo's audio processing
+filtered that single request before it produced any video. No retry was made,
+no provider was changed, and `rufus.mp4` remains the active approved fallback.
+`scripts/generate-rufus-loop-closure.ts` preserves that policy: it can only
+write a separately named candidate for visual review and has no pipeline,
+database, or server access.
+
 To make a candidate for visual review, use the configured Gemini key locally:
 
 ```powershell
