@@ -5,6 +5,7 @@ import { getDataDir } from "../../db/client.js";
 import { getDb } from "../../db/client.js";
 import { createControlRoomRealtimeSession } from "../control-room-listener.js";
 import { proposedResponsibilitiesFor } from "../control-room-responsibilities.js";
+import { redTeamFindingsFor, redTeamQuestionFor, redTeamReviewResponse, redTeamReviewerForAgent } from "../control-room-red-team-findings.js";
 
 export const controlRoomRouter = Router();
 
@@ -12,6 +13,8 @@ const CONTROL_ROOM_MAP_AGENT_NAMES = new Set([
   "Mabel", "Rufus", "Pippa", "Gus", "Vera", "Orion", "June", "Leon",
   "Tessa", "Arlo", "Nell", "Sam", "Miriam", "Dottie", "Kit", "Benny"
 ]);
+const CONTROL_ROOM_PROFILE_ALIASES: Record<string, string> = { Ada: "Ada Rowe", Theo: "Theo Maren", Cora: "Cora Bellamy" };
+const controlRoomProfileName = (agent: string) => CONTROL_ROOM_PROFILE_ALIASES[agent] ?? agent;
 
 type ResearchSource = { title: string; url: string };
 
@@ -129,6 +132,12 @@ controlRoomRouter.get("/responsibilities/:agent", (req, res) => {
   res.json({ ...profile, proposed:true });
 });
 
+controlRoomRouter.get("/red-team-findings/:reviewer", (req, res) => {
+  const reviewer = redTeamReviewerForAgent(req.params.reviewer);
+  if (!reviewer) { res.status(404).json({ error:"No Red Team reviewer is available." }); return; }
+  res.json({ reviewer, presentationOnly:true, findings:redTeamFindingsFor(getDb(), reviewer) });
+});
+
 controlRoomRouter.post("/voice-auditions/:id", async (req, res) => {
   const audition = CONTROL_ROOM_VOICE_AUDITIONS.find(candidate => candidate.id === req.params.id);
   if (!audition) { res.status(404).json({ error:"That voice audition is unavailable." }); return; }
@@ -151,7 +160,7 @@ controlRoomRouter.get("/staged-replies/mabel-how-are-you", (_req, res) => {
 
 controlRoomRouter.post("/purpose-reply", async (req, res) => {
   const agent = typeof req.body?.agent === "string" ? req.body.agent.trim() : "";
-  const profile = getDb().prepare("SELECT voice_provider, voice_id, delivery_instructions FROM control_room_voice_profiles WHERE agent_name = ?").get(agent) as { voice_provider?: string; voice_id?: string; delivery_instructions?: string } | undefined;
+  const profile = getDb().prepare("SELECT voice_provider, voice_id, delivery_instructions FROM control_room_voice_profiles WHERE agent_name = ?").get(controlRoomProfileName(agent)) as { voice_provider?: string; voice_id?: string; delivery_instructions?: string } | undefined;
   const line = getDb().prepare(`SELECT l.text FROM control_room_presentation_lines l JOIN control_room_presentation_items i ON i.id=l.item_id WHERE i.kind='utterance' AND l.speaker_name=? ORDER BY RANDOM() LIMIT 1`).get(agent) as { text?: string } | undefined;
   if (!profile?.voice_id || !profile.delivery_instructions || !line?.text) { res.status(404).json({ error: "No staged purpose reply is available." }); return; }
   try {
@@ -205,7 +214,7 @@ controlRoomRouter.post("/presentation-speech", async (req, res) => {
   const agent = typeof req.body?.agent === "string" ? req.body.agent.trim() : "";
   const text = typeof req.body?.text === "string" ? req.body.text.trim().replace(/\s+/g, " ") : "";
   if (!agent || !text || text.length > 500) { res.status(400).json({ error:"An agent and a short staged line are required." }); return; }
-  const profile = getDb().prepare("SELECT voice_provider, voice_id, delivery_instructions FROM control_room_voice_profiles WHERE agent_name = ? AND presentation_only = 1").get(agent) as { voice_provider?: string; voice_id?: string; delivery_instructions?: string } | undefined;
+  const profile = getDb().prepare("SELECT voice_provider, voice_id, delivery_instructions FROM control_room_voice_profiles WHERE agent_name = ? AND presentation_only = 1").get(controlRoomProfileName(agent)) as { voice_provider?: string; voice_id?: string; delivery_instructions?: string } | undefined;
   if (!profile?.voice_id || !profile.delivery_instructions) { res.status(404).json({ error:"No presentation voice is available for that agent." }); return; }
   try {
     const response = await renderPresentationSpeech(profile.voice_provider ?? "openai", profile.voice_id, `${profile.delivery_instructions} ${CONTROL_ROOM_BANTER_STYLE}`, text);
@@ -221,9 +230,25 @@ controlRoomRouter.post("/live-research-reply", async (req, res) => {
   const agent = typeof req.body?.agent === "string" ? req.body.agent.trim() : "";
   const question = typeof req.body?.question === "string" ? req.body.question.trim().replace(/\s+/g, " ") : "";
   if (!agent || !question || question.length > 500) { res.status(400).json({ error:"An agent and a short question are required." }); return; }
+  const profileAgent = controlRoomProfileName(agent);
+  const reviewer = redTeamReviewerForAgent(agent);
+  const redTeamQuestion = redTeamQuestionFor(question);
+  if (reviewer && redTeamQuestion) {
+    const db = getDb();
+    const profile = db.prepare("SELECT voice_provider, voice_id, delivery_instructions FROM control_room_voice_profiles WHERE agent_name = ? AND presentation_only = 1").get(profileAgent) as { voice_provider?: string; voice_id?: string; delivery_instructions?: string } | undefined;
+    if (!profile?.voice_id || !profile.delivery_instructions) { res.status(404).json({ error:"No Red Team presentation voice is available." }); return; }
+    const answer = redTeamReviewResponse(db, reviewer, redTeamQuestion);
+    try {
+      const speech = await renderPresentationSpeech(profile.voice_provider ?? "openai", profile.voice_id, profile.delivery_instructions, answer);
+      if (!speech.ok) throw new Error("speech failed");
+      res.setHeader("X-Control-Room-Red-Team-Answer", Buffer.from(answer, "utf8").toString("base64url"));
+      res.type("audio/mpeg").send(Buffer.from(await speech.arrayBuffer()));
+    } catch { res.status(502).json({ error:"The Red Team review could not be spoken." }); }
+    return;
+  }
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) { res.status(503).json({ error:"OpenAI is not configured for live research." }); return; }
-  const profile = getDb().prepare("SELECT role, voice_provider, voice_id, delivery_instructions FROM control_room_voice_profiles WHERE agent_name = ? AND presentation_only = 1").get(agent) as { role?: string; voice_provider?: string; voice_id?: string; delivery_instructions?: string } | undefined;
+  const profile = getDb().prepare("SELECT role, voice_provider, voice_id, delivery_instructions FROM control_room_voice_profiles WHERE agent_name = ? AND presentation_only = 1").get(profileAgent) as { role?: string; voice_provider?: string; voice_id?: string; delivery_instructions?: string } | undefined;
   if (!profile?.role || !profile.voice_id || !profile.delivery_instructions) { res.status(404).json({ error:"No presentation profile is available for that agent." }); return; }
   const brief = getDb().prepare("SELECT context FROM control_room_presentation_briefs WHERE agent_name = ? AND presentation_only = 1 ORDER BY updated_at DESC LIMIT 1").get(agent) as { context?: string } | undefined;
   const projectContext = brief?.context ? `Read-only HeartWord presentation snapshot: ${brief.context}` : "No agent-specific project snapshot is available. Do not invent private project facts or status.";
