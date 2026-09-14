@@ -1818,3 +1818,7 @@ The proposed-responsibility list in the expanded cast portrait now uses larger,
 more comfortably spaced type. This makes deliberate use of the existing dialog
 whitespace while keeping the portrait, responsibility wording, card geometry,
 and presentation-only boundary unchanged.
+
+The expanded proposed-responsibilities heading, role/detail line, loading
+message, and responsibility list now each use two visible 0.10rem type-scale
+steps. Compact map cards and unrelated modal typography remain unchanged.
