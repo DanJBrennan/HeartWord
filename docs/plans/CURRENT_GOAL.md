@@ -1768,24 +1768,25 @@ only the HeartWord AI mark is visible.
 
 ## Private control-room idle motion (2026-09-14)
 
-The cast-only Agent Control Room now has an optional local-MP4 idle-motion
-scheduler, but no clip is active until it passes visual review. The provider
-refused the first equally constrained Mabel request; the first Rufus output was
-technically valid but rejected because it reframed the portrait and cropped his
-eyes/head. All original static portraits therefore remain the honest fallback.
-When an approved clip is added, the browser plays at most one short clip at a
-time at irregular intervals and removes the overlay during reduced-motion
+The cast-only Agent Control Room now plays one approved local-MP4 idle-motion
+clip for Rufus. It was generated from the new wide, motion-safe source frame
+and passed visual review for identity, head/shoulder room, stable framing, and
+unchanged props. Mabel's matching source was refused once by the provider, so
+she remains static rather than receiving a substitute. Every other card also
+keeps its original static portrait. The browser plays at most one short clip at
+a time at irregular intervals and removes the overlay during reduced-motion
 preference, background-tab, portrait-dialog, and cast-focus states. It neither
 plays audio nor reads/writes production data.
 
 `scripts/generate-control-room-idle-motion.ts` is the deliberately bounded
 generation path: it uses the already configured Gemini Omni image-to-video
-capability only for the named private Rufus portrait, then strips audio and
-writes a review-candidate 360p H.264 MP4 under
+capability only for the two supplied private source frames, then strips audio
+and writes review-candidate 360p H.264 MP4s under
 `docs/assets/control-room/idle-motion/`. It has no database, pipeline, or
-server access; each optional draft is estimated at roughly $0.10. This is
-presentation decoration only, not runtime agent activity, Scripture-video
-media, canon, or source audio.
+server access; each optional draft is estimated at roughly $0.10. The script
+makes no retry or provider-switch decision. This is presentation decoration
+only, not runtime agent activity, Scripture-video media, canon, or source
+audio.
 
 The proposed-responsibility list in the expanded cast portrait now uses larger,
 more comfortably spaced type. This makes deliberate use of the existing dialog
