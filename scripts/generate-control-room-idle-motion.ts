@@ -6,9 +6,8 @@
  * It sends one explicitly named portrait to Gemini Omni's existing image-to-
  * video API, then strips any generated audio and writes a web-friendly MP4.
  *
- * Usage: npx tsx scripts/generate-control-room-idle-motion.ts [mabel|rufus|pippa ...]
- * Omitting names generates the two approved retry candidates. Each Omni draft is
- * estimated at about $0.10; run only when a replacement clip is actually wanted.
+ * Usage: npx tsx scripts/generate-control-room-idle-motion.ts [name ...]
+ * Each named draft is one non-retrying Omni request, estimated at about $0.10.
  */
 import "dotenv/config";
 import { execFileSync } from "node:child_process";
@@ -22,14 +21,30 @@ if (!apiKey) throw new Error("GEMINI_API_KEY is not set (see .env.example).");
 const root = resolve(import.meta.dirname, "..");
 const outputDirectory = join(root, "docs", "assets", "control-room", "idle-motion");
 const casts = {
-  mabel: { source:"mabel-motion-safe-source-v1.png", output:"mabel-motion-safe-candidate-v1.mp4", name:"Mabel" },
-  rufus: { source:"rufus-motion-safe-source-v1.png", output:"rufus-motion-safe-candidate-v1.mp4", name:"Rufus" },
-  pippa: { source:"pippa-motion-safe-source-v1.png", output:"pippa-omni-loop-closure-candidate-v1.mp4", name:"Pippa" }
+  mabel: { source:"mabel-motion-safe-source-v1.png", output:"mabel-omni-loop-closure-candidate-v1.mp4", name:"Mabel", loopClosure:true },
+  rufus: { source:"rufus-motion-safe-source-v1.png", output:"rufus-motion-safe-candidate-v1.mp4", name:"Rufus", loopClosure:false },
+  pippa: { source:"pippa-motion-safe-source-v1.png", output:"pippa-omni-loop-closure-candidate-v1.mp4", name:"Pippa", loopClosure:true },
+  gus: { source:"gus-motion-safe-source-v1.png", output:"gus-omni-loop-closure-candidate-v1.mp4", name:"Gus", loopClosure:true },
+  vera: { source:"vera-motion-safe-source-v1.png", output:"vera-omni-loop-closure-candidate-v1.mp4", name:"Vera", loopClosure:true },
+  orion: { source:"orion-motion-safe-source-v1.png", output:"orion-omni-loop-closure-candidate-v1.mp4", name:"Orion", loopClosure:true },
+  june: { source:"june-motion-safe-source-v1.png", output:"june-omni-loop-closure-candidate-v1.mp4", name:"June", loopClosure:true },
+  leon: { source:"leon-motion-safe-source-v1.png", output:"leon-omni-loop-closure-candidate-v1.mp4", name:"Leon", loopClosure:true },
+  tessa: { source:"tessa-motion-safe-source-v1.png", output:"tessa-omni-loop-closure-candidate-v1.mp4", name:"Tessa", loopClosure:true },
+  arlo: { source:"arlo-motion-safe-source-v1.png", output:"arlo-omni-loop-closure-candidate-v1.mp4", name:"Arlo", loopClosure:true },
+  nell: { source:"nell-motion-safe-source-v1.png", output:"nell-omni-loop-closure-candidate-v1.mp4", name:"Nell", loopClosure:true },
+  sam: { source:"sam-motion-safe-source-v1.png", output:"sam-omni-loop-closure-candidate-v1.mp4", name:"Sam", loopClosure:true },
+  miriam: { source:"miriam-motion-safe-source-v1.png", output:"miriam-omni-loop-closure-candidate-v1.mp4", name:"Miriam", loopClosure:true },
+  dottie: { source:"dottie-motion-safe-source-v1.png", output:"dottie-omni-loop-closure-candidate-v1.mp4", name:"Dottie", loopClosure:true },
+  kit: { source:"kit-motion-safe-source-v1.png", output:"kit-omni-loop-closure-candidate-v1.mp4", name:"Kit", loopClosure:true },
+  benny: { source:"benny-motion-safe-source-v1.png", output:"benny-omni-loop-closure-candidate-v1.mp4", name:"Benny", loopClosure:true },
+  ada: { source:"ada-motion-safe-source-v1.png", output:"ada-omni-loop-closure-candidate-v1.mp4", name:"Ada", loopClosure:true },
+  theo: { source:"theo-motion-safe-source-v1.png", output:"theo-omni-loop-closure-candidate-v1.mp4", name:"Theo", loopClosure:true },
+  cora: { source:"cora-motion-safe-source-v1.png", output:"cora-omni-loop-closure-candidate-v1.mp4", name:"Cora", loopClosure:true }
 } as const;
 type CastName = keyof typeof casts;
 
 const requested = process.argv.slice(2);
-const selected = (requested.length ? requested : ["mabel", "rufus"]).map(name => {
+const selected = (requested.length ? requested : []).map(name => {
   if (!(name in casts)) throw new Error(`Unknown private control-room cast member "${name}". Choose: ${Object.keys(casts).join(", ")}.`);
   return name as CastName;
 });
@@ -49,7 +64,7 @@ async function generate(name: CastName) {
   const sourcePath = join(outputDirectory, cast.source);
   if (!existsSync(sourcePath)) throw new Error(`Missing approved private portrait: ${sourcePath}`);
   const sourceImage = { type:"image" as const, mime_type:"image/png", data:readFileSync(sourcePath).toString("base64") };
-  const isPippaLoopClosure = name === "pippa";
+  const isLoopClosure = cast.loopClosure;
   const response = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions?key=" + apiKey, {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
@@ -57,8 +72,8 @@ async function generate(name: CastName) {
       model:"gemini-omni-1.1-flash",
       input:[{ type:"user_input", content:[
         sourceImage,
-        ...(isPippaLoopClosure ? [sourceImage] : []),
-        { type:"text", text:isPippaLoopClosure ? `<FIRST_FRAME> <LAST_FRAME> ${prompt(cast.name, true)}` : prompt(cast.name) }
+        ...(isLoopClosure ? [sourceImage] : []),
+        { type:"text", text:isLoopClosure ? `<FIRST_FRAME> <LAST_FRAME> ${prompt(cast.name, true)}` : prompt(cast.name) }
       ] }],
       response_format:{ type:"video", resolution:"360p", aspect_ratio:"16:9", delivery:"inline" }
     })

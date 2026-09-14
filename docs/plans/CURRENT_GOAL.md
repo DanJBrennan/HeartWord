@@ -1781,6 +1781,17 @@ irregular intervals and removes the overlay during reduced-motion preference,
 background-tab, portrait-dialog, and cast-focus states. It neither plays audio
 nor reads/writes production data.
 
+The later producer-authorized Omni batch added approved 360p loop-closure
+clips for Gus, Vera, Orion, June, Leon, Tessa, Arlo, Nell, Sam, Miriam,
+Dottie, Kit, Benny, Ada, Theo, and Cora. Every approved clip was generated
+once from a non-destructive landscape source used as both Omni first and final
+frame, then reviewed for identity, composition, and paired loop boundary
+before being added to the existing one-at-a-time scheduler. Mabel, Gene Siskel,
+and Roger Ebert each received their one authorized batch attempt but Omni
+blocked it; they remain static and received no retry or substitute. The
+presentation-only batch ledger is at
+`docs/assets/control-room/idle-motion/batch-ledger.json`.
+
 `scripts/generate-control-room-idle-motion.ts` is the deliberately bounded
 generation path: it uses the already configured Gemini Omni image-to-video
 capability only for supplied private source frames, then strips audio and
