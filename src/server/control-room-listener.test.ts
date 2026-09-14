@@ -109,6 +109,17 @@ describe("control-room presentation start", () => {
   });
 });
 
+describe("control-room Vite presentation serving", () => {
+  it("serves the standalone control-room artifact and its portraits at the producer's local URL", () => {
+    const page = readFileSync(resolve(process.cwd(), "work/agent-control-room.html"), "utf8");
+    const vite = readFileSync(resolve(process.cwd(), "vite.config.ts"), "utf8");
+    expect(vite).toContain('CONTROL_ROOM_PATH = "/work/agent-control-room.html"');
+    expect(vite).toContain('CONTROL_ROOM_ASSET_PREFIX = "/docs/assets/"');
+    expect(vite).toContain("controlRoomPresentationPlugin()");
+    expect(page).toContain("location.protocol === 'file:' ? 'http://127.0.0.1:4000/api/control-room' : '/api/control-room'");
+  });
+});
+
 describe("control-room reply interruption", () => {
   it("cancels speech generation and playback when the producer starts speaking", () => {
     const page = readFileSync(resolve(process.cwd(), "work/agent-control-room.html"), "utf8");
