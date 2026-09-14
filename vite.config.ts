@@ -13,6 +13,10 @@ export default defineConfig({
     emptyOutDir: true
   },
   server: {
+    // Bind dual-stack so both localhost resolution paths (::1 and 127.0.0.1)
+    // reach the Control Room. The presentation page itself uses 127.0.0.1
+    // for its local API bridge.
+    host: "::",
     port: 5173,
     proxy: {
       "/api": {

@@ -1875,3 +1875,11 @@ remains deterministic, local, and non-researching. If research is unavailable
 or produces no attributable sources, each reviewer instead states that clearly
 and returns the saved evidence-backed improvement priorities; no response is
 stored and no production record, authority, or gate changes.
+
+## Local Control Room IPv4/IPv6 recovery (2026-09-14)
+
+The local Vite Control Room server was observed listening only on IPv6 loopback
+(`::1:5173`), while the presentation page and some browser localhost resolution
+paths use IPv4 loopback. Vite now binds dual-stack (`::`) on the same local
+development port so both `http://localhost:5173/` and
+`http://127.0.0.1:5173/` reach the UI and its existing local API bridge.
