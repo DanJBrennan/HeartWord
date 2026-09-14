@@ -6,7 +6,7 @@
  * It sends one explicitly named portrait to Gemini Omni's existing image-to-
  * video API, then strips any generated audio and writes a web-friendly MP4.
  *
- * Usage: npx tsx scripts/generate-control-room-idle-motion.ts [mabel|rufus ...]
+ * Usage: npx tsx scripts/generate-control-room-idle-motion.ts [mabel|rufus|pippa ...]
  * Omitting names generates the two approved retry candidates. Each Omni draft is
  * estimated at about $0.10; run only when a replacement clip is actually wanted.
  */
@@ -23,7 +23,8 @@ const root = resolve(import.meta.dirname, "..");
 const outputDirectory = join(root, "docs", "assets", "control-room", "idle-motion");
 const casts = {
   mabel: { source:"mabel-motion-safe-source-v1.png", output:"mabel-motion-safe-candidate-v1.mp4", name:"Mabel" },
-  rufus: { source:"rufus-motion-safe-source-v1.png", output:"rufus-motion-safe-candidate-v1.mp4", name:"Rufus" }
+  rufus: { source:"rufus-motion-safe-source-v1.png", output:"rufus-motion-safe-candidate-v1.mp4", name:"Rufus" },
+  pippa: { source:"pippa-motion-safe-source-v1.png", output:"pippa-omni-loop-closure-candidate-v1.mp4", name:"Pippa" }
 } as const;
 type CastName = keyof typeof casts;
 
@@ -33,25 +34,31 @@ const selected = (requested.length ? requested : ["mabel", "rufus"]).map(name =>
   return name as CastName;
 });
 
-const prompt = (name: string) =>
+const prompt = (name: string, closesLoop = false) =>
   `Animate this exact private HeartWord control-room portrait of ${name} as a quiet, nearly still three-second locked-camera loop. ` +
   `Preserve the exact person, illustrated identity, face, headroom, shoulders, composition, framing, crop, pose, wardrobe, props, lighting, and background. ` +
+  (name === "Pippa" ? `Preserve Pippa's identity, illustrated style, face, hair and pencil, shirt and skirt, blueprint and ruler, office setting, composition, and lighting exactly. ` : "") +
   `Do not move the camera, reframe, crop, zoom, pan, tilt, change the face, change the pose, change wardrobe or props, add text, speech, other people, or audio. ` +
   `The only motion is natural breathing, one gentle blink, and one very small gaze shift. Do not move hands, do not touch the face or nose, do not make overt gestures, and do not move the mouth. ` +
-  `Return naturally to the opening neutral pose so the three-second clip can loop.`;
+  (closesLoop
+    ? `The first supplied image is the exact first frame and the second supplied image is the exact final frame; settle precisely back to that first pose so the clip can loop.`
+    : `Return naturally to the opening neutral pose so the three-second clip can loop.`);
 
 async function generate(name: CastName) {
   const cast = casts[name];
   const sourcePath = join(outputDirectory, cast.source);
   if (!existsSync(sourcePath)) throw new Error(`Missing approved private portrait: ${sourcePath}`);
+  const sourceImage = { type:"image" as const, mime_type:"image/png", data:readFileSync(sourcePath).toString("base64") };
+  const isPippaLoopClosure = name === "pippa";
   const response = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions?key=" + apiKey, {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({
       model:"gemini-omni-1.1-flash",
       input:[{ type:"user_input", content:[
-        { type:"image", mime_type:"image/png", data:readFileSync(sourcePath).toString("base64") },
-        { type:"text", text:prompt(cast.name) }
+        sourceImage,
+        ...(isPippaLoopClosure ? [sourceImage] : []),
+        { type:"text", text:isPippaLoopClosure ? `<FIRST_FRAME> <LAST_FRAME> ${prompt(cast.name, true)}` : prompt(cast.name) }
       ] }],
       response_format:{ type:"video", resolution:"360p", aspect_ratio:"16:9", delivery:"inline" }
     })
