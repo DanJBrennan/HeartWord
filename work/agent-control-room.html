@@ -1506,7 +1506,7 @@
       const schedule = () => {
         clearTimeout(timer);
         if (!isAvailable()) return;
-        const pause = 14000 + Math.round(Math.random() * 19000);
+        const pause = 3000 + Math.round(Math.random() * 5000);
         timer = setTimeout(playOne, pause);
       };
       const finish = () => { stop(); schedule(); };

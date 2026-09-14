@@ -1776,8 +1776,9 @@ approved wide source as both first and final frame; it passed identity/framing
 inspection and repeated control-room browser-loop QA without a visible boundary
 jump. Mabel's matching source was refused by the provider, so she remains
 static rather than receiving a substitute. Every other card also keeps its
-original static portrait. The browser plays at most one short clip at a time at
-irregular intervals and removes the overlay during reduced-motion preference,
+original static portrait. The browser plays at most one short clip at a time,
+with a randomized three-to-eight-second pause before the next approved overlay,
+and removes the overlay during reduced-motion preference,
 background-tab, portrait-dialog, and cast-focus states. It neither plays audio
 nor reads/writes production data.
 
