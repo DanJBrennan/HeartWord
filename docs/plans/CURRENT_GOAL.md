@@ -1455,3 +1455,318 @@ structured visual duplicate pass that counts the largest same-face group and rai
 the final severity deterministically: two is moderate; three or more is severe.
 A rerun on Scene 1, Shot 8, Beat 5 found a six-person matching background cluster
 and therefore rated the candidate severe. The full suite passes (115 tests).
+
+## Production-crew interaction map (2026-09-13)
+
+The project view now has a compact, expandable Production Crew map that makes the
+chapter's actual production path inspectable without claiming the planned
+multi-agent shot-planning network is already running. It shows the deterministic
+supervisor separately from creative roles, highlights the department associated
+with the chapter's current pipeline stage, and groups the documented specialist
+roles by department. Every specialist is labelled implemented, planned, or mixed.
+
+The view reads real project state and the persisted Creative Director / Production
+Director negotiation transcript from `director_negotiation_log`. When no transcript
+exists, it explicitly says so; declared paths are not presented as a live
+conversation. This preserves the producer's current project workflow while making
+the intended role-agent architecture and its currently implemented bounded
+coverage-gap negotiation legible for future decisions.
+
+## Future whole-film audience review pair (2026-09-13)
+
+The approved future design now reserves a two-house whole-film review gate for
+the assembled rough cut: a Story Critic for first-time-viewer clarity, emotional
+movement, and engagement, and a Film Critic for filmmaking craft. They review
+independently before a short producer-visible discussion, with one strongest
+success, up to three evidence-based timestamped concerns, and a ready/revise/hold
+recommendation. The pair is an original HeartWord format, not a use or imitation
+of real critic identities. It stays separate from Scripture and cultural review,
+runs on the first rough cut and after major revisions, and is explicitly planned
+rather than implemented.
+
+## Control-room reference portraits preserved (2026-09-13)
+
+Nineteen producer-approved original portraits for the private future control-room
+cast are preserved under `docs/assets/control-room/agent-portraits/`, with an
+adjacent role and provenance manifest. They are project-reference art only: they
+are not Scripture-video canon, do not claim runtime agents, and are deliberately
+not wired into the pipeline. The standalone interaction-diagram prototype uses
+only its six visible core roles as portrait references; its map remains a
+prototype rather than runtime orchestration. The prototype now supports
+pointer- and keyboard-resizing of the map, live-boundary connector routing with
+proportionally scaled head-safe core portraits, and a clearly non-live
+supporting-crew portrait gallery; none changes production behavior.
+It also includes a local-only Producer Address recognizer: typed names (and
+browser voice recognition when available) glow matching reference cards without
+sending a message, starting an agent, or changing pipeline state.
+
+## Future production-crew communication protocol (2026-09-13)
+
+The producer-approved future operating contract for all sixteen control-room
+roles is recorded in `docs/design/production-crew-communication.md`. It makes
+Scripture/source audio controlling, Mabel the sole deterministic execution
+authority, and the producer the resolution point for material holds. The
+declared gates and interaction edges are design contracts only: they do not
+activate runtime agents, change the pipeline, or make the prototype's
+supporting crew live.
+
+The approved future protocol also includes a three-member independent Red Team:
+Scripture Fidelity, Dramatic Impact, and Production Feasibility Challengers.
+They are evidence-scoped adversarial reviewers at declared gates, not
+production-chain authorities. The standalone control-room prototype represents
+them only inside a dashed, explicitly planned Review and Challenge Layer.
+
+## Control-room presentation personalities (2026-09-13)
+
+The private control-room prototype now has an opt-in, clearly labelled staged
+banter layer based on Dan's populated cast-personality and sample-exchange
+workbooks. It spotlights the participating portrait/name/title cards at three
+times normal size during an exchange, then clears that local display state five
+seconds after the final line. The presentation layer is expressly separate from
+the production pipeline: it cannot dispatch work, alter agent authority, change
+evidence or reviews, or activate any planned crew/reviewer role.
+
+## Control-room voice casting persisted (2026-09-13)
+
+The producer-approved presentation voice cast is now persisted in the local
+`control_room_voice_profiles` table: all nineteen named control-room personas
+have an OpenAI TTS base voice and a delivery instruction derived from the
+personality workbook. It is structurally separate from Bible-video canon
+characters and their source-language voice mappings, and its database
+constraint fixes every row as presentation-only. The idempotent seed command
+preserves future producer edits by adding only missing profiles.
+
+## Supporting crew visible in the interaction map (2026-09-13)
+
+The standalone control-room prototype now includes all ten supporting crew
+portraits in a separate dashed reference band within the interaction map. The
+band makes the full cast visible at a glance while retaining the distinction
+between the six core map nodes and the supporting crew: its cards have no
+active routes, dispatch power, or production authority. The detailed gallery
+remains below the map for portrait inspection.
+
+## Map-first control-room presentation (2026-09-13)
+
+The standalone control-room prototype now opens in a map-first view, with the
+full interaction map occupying the primary page area. Presentation-only view
+buttons switch locally among the map, staged conversation panel, planned review
+layer, and portrait gallery. The switcher changes no production data, agent
+authority, runtime state, or pipeline behavior.
+
+## Producer-address microphone clarity (2026-09-13)
+
+The presentation-only control-room recognizer now reports the specific browser
+speech-recognition outcome instead of leaving the Mic action ambiguous. It also
+maps common phonetic spellings of Mabel, including “Bable,” to Mabel's reference
+card when a browser transcript is available. The browser recognizer remains
+separate from the Codex live-voice transcript and cannot affect the production
+pipeline, dispatch work, or start an agent.
+
+## Separate presentation voice listener (2026-09-13)
+
+With producer approval, the control-room prototype now offers a separate
+browser-microphone WebRTC listener for card highlighting. Its local server
+brokers only the WebRTC setup using the configured OpenAI account; the API key
+is never exposed to the page. The listener has cast-name transcription guidance,
+does not request model responses, saves no transcript, and never calls a
+production, review, or database endpoint. It is a separate microphone source,
+not an integration with the Codex voice-call transcript.
+
+## Presentation-only full-cast map (2026-09-13)
+
+The control-room mockup now presents its sixteen current cast cards as equal,
+compact cards in one circular map. The presentation circle deliberately hides
+the old route arrows and treats neither the card positions nor card selection
+as pipeline state, authority, or a production workflow change.
+
+The presentation map also lets Dan drag cards into a preferred arrangement.
+Those browser-local positions are retained for the next page load and remain
+strictly visual: they are not saved to HeartWord production data.
+
+When the separate presentation listener recognizes an addressed cast member,
+the matching map card now retains its arranged position while receiving a
+three-times visual spotlight and a glowing outline. This is a display-only
+selection state and does not activate an agent or alter any pipeline record.
+
+For staged agent-to-agent banter, both participating cards use that same
+large glowing focus treatment. Every nonparticipating card becomes an
+unlabelled half-size portrait thumbnail in an even surrounding cluster; the
+saved producer layout is restored when the focus view clears.
+
+An unmatched presentation question can now use a server-only live-research
+fallback. It sends only the addressed agent name and producer question to the
+Responses API with web search, asks for a short persona-consistent answer,
+returns up to three public sources, and renders the answer in the existing
+presentation voice. It is opt-in by spoken question, uses API credits only at
+that time, stores no response state, and has no production or pipeline access.
+
+Two dated, read-only presentation briefs now give Mabel and Dottie grounded
+HeartWord context from the current goal, architecture, and crew-design
+documents. They are stored separately from production records and do not scan,
+infer, or persist live project status. Live presentation replies are limited to
+one short paragraph, suppress URLs and citations, and are restricted to
+HeartWord's project and filmmaking context; unrelated questions receive a
+brief redirect instead of an open-ended research response.
+
+Dottie's presentation profile now uses the feminine-presenting Shimmer voice
+with casting-director delivery guidance. This voice assignment remains private
+control-room presentation data and does not affect any Scripture-video voice.
+
+Kit's presentation profile now uses the feminine-presenting Nova voice while
+retaining her precise lip-sync-specialist delivery guidance. Every control-room
+persona now also has a dated, read-only, source-traceable project brief. The
+briefs supply bounded presentation context only; they are neither live-status
+scans nor runtime-agent memory, and they cannot change HeartWord records.
+
+All control-room TTS replies now use a shared conversational pacing direction
+and a modest 1.15x speech speed. This affects only the private presentation
+layer, preserving each agent's character-specific delivery and leaving all
+source-language, narration, and production audio untouched.
+
+The presentation listener now treats new producer speech as a barge-in: it
+stops any currently playing agent reply and aborts a pending reply request, so
+only the latest completed question can receive a spoken response. This is a
+local presentation control and stores no transcript or production state.
+
+The Presentation Exchanges player now renders each cast member's staged line
+in that character's saved presentation voice, while producer lines remain
+on-screen. This is an opt-in local demonstration and has no production access,
+recording, or authority.
+
+The twelve remaining main-map control-room cards now use new identity-preserved,
+near-square, face-forward close-up portraits for readability. Their original
+portrait files remain the click-to-enlarge source, preserving the existing
+full-body or square inspection view. These private presentation assets are
+separate from Scripture-video canon and do not affect the production pipeline.
+
+The normal map cards now crop each square portrait into a compact square image
+area with a shallow neutral first-name caption band underneath; job titles
+remain available in the enlarged focus view. This is presentation-only styling.
+When a card is focused, the surrounding thumbnail names remain visibly placed
+outside the circle rather than being clipped by the compact normal-card frame.
+The bottom group has extra label clearance and is lifted slightly so its names
+do not overlap its portraits.
+Focused cards explicitly restore their second-line role titles, so core and
+supporting crew members present the same identifying information in focus.
+The focused supporting-card rule also overrides the compact gray caption style,
+keeping its name and role on separate, readable lines.
+Focused names use a visibly larger type size than their role lines.
+
+The spoken presentation cue “any issues?” now selects one random, saved,
+two-person exchange involving the currently addressed agent and spotlights both
+participants. It reads only producer-approved staged banter from the separate
+presentation library and never reports or changes live project status.
+Selections are limited to the sixteen main-map personas so both exchange
+participants have a visible focus card.
+
+During a staged exchange, the current speaker receives a pulsing highlight,
+visible “Speaking” badge, and directional cue toward the dimmed listener.
+This makes turn-taking legible without changing any production behavior.
+
+Ada, Theo, and Cora now appear as a visually distinct Red Team group on the
+presentation map, completing the visible cast of nineteen. They remain
+review-only and are deliberately excluded from the random “any issues?” cue,
+although their approved staged exchanges remain available from the presentation
+library.
+Their default map positions form a bottom row—Ada, Theo, then Cora—while still
+honoring any producer drag-and-drop placement saved afterward.
+Their normal red outline is two pixels wide for a clearer Red Team distinction.
+The map now draws a separate red frame around their actual saved locations with
+a centered “Red Team” label underneath; it follows later producer repositioning
+and stays out of the focused presentation view.
+
+The normal presentation map now uses a compact, centered 6–6–4–3 arrangement
+for all nineteen cards, with the Red Team grouped on the bottom row. The row
+interval is thirteen percent of map height—tighter than the original layout but
+wide enough to keep caption bands separate—and the arrangement is saved as the
+new drag-editable layout without affecting production work.
+
+Every normal map card now displays its first name and role on separate visible
+caption lines. The original core-card dash-form labels were normalized to match
+the supporting crew and Red Team cards.
+
+Red Team map captions now show only each critic's role, without the redundant
+group prefix or special dash character; focused Red Team cards retain the full
+Red Team role name.
+
+The private control-room presentation now includes a separately framed Film
+Critics pair, Gene Siskel and Roger Ebert. Their illustrated portraits are
+based on producer-supplied public reference photos; their stock TTS voices and
+role briefs capture distinct review emphases without imitating their real
+voices. They remain presentation-only and have no production authority.
+Their Film Critics group sits beside the Red Team on the same bottom map row.
+Together, the two review groups are horizontally centered as a single five-card row.
+Their frames have a deliberate center gap so the two teams remain visually distinct.
+The sixteen standard cast cards are framed together as the Production Crew across
+the top three map rows, with the separate Red Team and Film Critics groups below.
+The presentation shell clips only accidental horizontal frame overhang, and the
+group-frame padding is tightened so no horizontal scrollbar is introduced.
+The two review groups sit roughly 50 pixels closer to the Production Crew
+frame, reducing vertical dead space while keeping the group labels legible.
+
+The default control-room view is now a cast-only presentation stage: Production
+Crew, Red Team, and Film Critics remain visible with a single microphone icon.
+The address bar, exchange player, view controls, and other utility panels stay
+available in the page implementation but do not occupy the presentation view.
+The cast-only layout uses the available viewport for larger, non-overlapping
+portrait cards: three broadly spaced Production Crew rows and a clearly
+separated Red Team and Film Critics row beneath them.
+Following presentation review, the Production Crew now uses two eight-card rows
+with larger portraits, allowing the images to use the stage more effectively
+while keeping both review groups visible in the same viewport.
+The Red Team and Film Critics now shift left together as a single bottom-row
+group so their combined visual weight is centered beneath Production Crew.
+The staged-exchange speaking direction cue is now a CSS chevron rather than a
+text arrow, preventing character-encoding artifacts in the presentation view.
+Two-person focus now uses balanced centered lead cards with the remaining cast
+in dedicated top and bottom rows, eliminating the former thumbnail overlap.
+Focused portraits explicitly center within their cards, preventing a crew
+portrait from touching the focus-card edge.
+Focused portraits now share the same rounded-corner crop regardless of whether
+the agent belongs to the core cast or supporting crew.
+Focused portraits now fill the full height of the focus card, maximizing the
+animation-ready image area while keeping a uniform rounded crop.
+The focus transition now also explicitly replaces stored normal-map thumbnail
+dimensions, so supporting-crew portraits such as Leon and Benny use that same
+full-height focus treatment.
+
+An ElevenLabs audition palette now offers six temporary, gender-aligned voice
+samples for representative presentation characters. It is opened by saying
+“voice auditions,” never changes a saved cast assignment, and remains wholly
+separate from source-language audio and production work. Staged exchanges now
+add a bounded, playfully sarcastic delivery direction: sharper creative
+disagreement without personal abuse.
+The audition phrase is handled both directly in the realtime transcript and
+in the shared recognition path, so a recognized voice command cannot fall
+through to ordinary agent addressing.
+Following producer approval, the six audition winners are now the active
+presentation voices for Mabel, Rufus, Gus, Vera, Dottie, and Gene Siskel.
+All other agents retain their prior OpenAI presentation voices. This affects
+only staged control-room dialogue, never source narration or production audio.
+The audition palette’s second round now includes five newly added catalog
+voices, paired temporarily with Leon, Pippa, Tessa, Sam, and Arlo. These are
+auditions only; no second-round assignment is saved until Dan hears and
+approves the choices.
+Dan approved the full second round. Those five ElevenLabs assignments are now
+active for presentation dialogue alongside the original six approved voices;
+all remaining personas retain their existing OpenAI assignments.
+Starting the presentation listener with the microphone icon now uses that
+producer click as Chrome’s required full-screen gesture, so the cast-only
+control room enters true browser full screen when it starts.
+
+The control room now has a canonical proposed responsibility matrix for all
+21 personas. Every item is bounded as advisory or review work and explicitly
+preserves producer approval, verified Scripture, canon safety, and source-audio
+integrity. Clicking a presentation card opens the original full-size portrait
+alongside its name, role, and six inherited proposed responsibilities.
+
+The cast-only presentation stage now uses the approved HeartWord AI mark as a
+discreet lower-right signature. It steps out of view while a focused agent card
+is open, preserving the full presentation space for the portrait and proposed
+responsibilities. Its white source canvas blends into the stage background, so
+only the HeartWord AI mark is visible.
+
+The proposed-responsibility list in the expanded cast portrait now uses larger,
+more comfortably spaced type. This makes deliberate use of the existing dialog
+whitespace while keeping the portrait, responsibility wording, card geometry,
+and presentation-only boundary unchanged.

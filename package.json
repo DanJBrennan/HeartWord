@@ -11,13 +11,18 @@
     "build:web": "vite build",
     "typecheck": "tsc -p src/server/tsconfig.json --noEmit && tsc -p src/web/tsconfig.json --noEmit",
     "db:seed-characters": "tsx src/db/seed-characters.ts",
+    "db:seed-control-room-voices": "tsx scripts/seed-control-room-voice-profiles.ts",
+    "db:seed-control-room-briefs": "tsx scripts/seed-control-room-presentation-briefs.ts",
+    "db:recast-control-room-voices": "tsx scripts/recast-control-room-voices.ts",
+    "db:import-control-room-presentation": "python scripts/import-control-room-presentation-library.py C:\\Users\\danbr\\Downloads\\HeartWord_New_Sample_Exchanges.xlsx",
     "test": "vitest run"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "dotenv": "^16.4.5"
+    "vosk-browser": "^0.0.5"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

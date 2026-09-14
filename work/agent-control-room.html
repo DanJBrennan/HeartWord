@@ -1,34 +1,117 @@
-<section id="heartword-agent-control" aria-label="HeartWord agent control room mockup">
+<section id="heartword-agent-control" class="presentation-clean" aria-label="HeartWord agent control room mockup" data-view="map">
   <style>
     #heartword-agent-control { color: var(--foreground); font-family: inherit; }
-    #heartword-agent-control .hw-shell { background: light-dark(#f7f3eb,#181714); color: light-dark(#26211d,#f6efe3); padding: 18px; border-radius: 18px; }
+    #heartword-agent-control .hw-shell { background: light-dark(#f7f3eb,#181714); color: light-dark(#26211d,#f6efe3); padding: 18px; border-radius: 18px; overflow-x:clip; }
+    /* The default is a cast-only presentation stage. The production controls remain
+       available in the markup for the local demo, but do not compete with the map. */
+    #heartword-agent-control.presentation-clean .hw-shell { position:relative; min-height:calc(100dvh - 16px); box-sizing:border-box; padding:0; border-radius:0; }
+    #heartword-agent-control.presentation-clean .hw-top,
+    #heartword-agent-control.presentation-clean .view-switcher,
+    #heartword-agent-control.presentation-clean .showtime,
+    #heartword-agent-control.presentation-clean .hw-conv,
+    #heartword-agent-control.presentation-clean .hw-foot,
+    #heartword-agent-control.presentation-clean .review-layer,
+    #heartword-agent-control.presentation-clean .supporting-crew { display:none; }
+    #heartword-agent-control.presentation-clean .control-tools { position:absolute; z-index:20; top:14px; right:14px; margin:0; }
+    #heartword-agent-control.presentation-clean .producer-address { display:block; width:auto; margin:0; padding:0; border:0; border-radius:0; background:transparent; }
+    #heartword-agent-control.presentation-clean .producer-address label,
+    #heartword-agent-control.presentation-clean .producer-address input,
+    #heartword-agent-control.presentation-clean .producer-address-status { display:none; }
+    #heartword-agent-control.presentation-clean #producer-address-mic { width:48px; min-width:48px; height:48px; padding:0; border-radius:50%; font-size:0; background:light-dark(#fffdf8,#2a2722); box-shadow:0 2px 10px color-mix(in srgb, #000 14%, transparent); }
+    #heartword-agent-control.presentation-clean #producer-address-mic::before { content:"\1F399"; font-size:1.35rem; line-height:1; }
+    #heartword-agent-control.presentation-clean .hw-grid { grid-template-columns:1fr; }
+    #heartword-agent-control.presentation-clean .hw-map { width:100% !important; min-height:calc(100dvh - 16px) !important; height:calc(100dvh - 16px); padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
+    #heartword-agent-control .heartword-studio-mark { position:absolute; z-index:7; right:20px; bottom:20px; width:clamp(88px,7vw,112px); height:auto; opacity:.92; pointer-events:none; mix-blend-mode:multiply; }
+    #heartword-agent-control .hw-map.cast-focus-active .heartword-studio-mark { display:none; }
+    #heartword-agent-control.presentation-clean .hw-map:not(.cast-focus-active) .node,
+    #heartword-agent-control.presentation-clean .hw-map:not(.cast-focus-active) .supporting-map-card { width:170px; min-height:220px; grid-template-rows:170px 50px; }
+    #heartword-agent-control.presentation-clean .hw-map:not(.cast-focus-active) .node img,
+    #heartword-agent-control.presentation-clean .hw-map:not(.cast-focus-active) .supporting-map-card img { width:170px; height:170px; }
+    #heartword-agent-control.presentation-clean .hw-map > h3,
+    #heartword-agent-control.presentation-clean .hw-map > .hw-sub,
+    #heartword-agent-control.presentation-clean .hw-map > .hw-legend,
+    #heartword-agent-control.presentation-clean .map-resize-handle { display:none; }
+    #heartword-agent-control .voice-audition { display:none; }
+    #heartword-agent-control.voice-audition-active .voice-audition { display:grid; position:absolute; z-index:30; top:74px; right:14px; width:min(360px,calc(100vw - 28px)); gap:7px; padding:13px; border:1px solid light-dark(#a58242,#e2c478); border-radius:14px; background:light-dark(#fffdf8,#2a2722); box-shadow:0 10px 28px color-mix(in srgb, #000 20%, transparent); }
+    #heartword-agent-control .voice-audition h3 { font-size:.95rem; }
+    #heartword-agent-control .voice-audition p { margin:0; font-size:.75rem; color:light-dark(#71665a,#bdb1a2); }
+    #heartword-agent-control .voice-audition button { display:grid; grid-template-columns:1fr auto; gap:6px; text-align:left; padding:8px 10px; border:1px solid light-dark(#ded6ca,#514b41); border-radius:9px; color:inherit; background:transparent; cursor:pointer; font:inherit; }
+    #heartword-agent-control .voice-audition button span { color:light-dark(#71665a,#bdb1a2); font-size:.75rem; }
     #heartword-agent-control .hw-top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
+    #heartword-agent-control .producer-address { display:grid; grid-template-columns:auto minmax(180px,330px) auto; align-items:center; gap:8px; width:min(100%,560px); margin:0 0 16px; padding:8px; border:1px solid light-dark(#ded6ca,#3f3a32); border-radius:12px; background:light-dark(#fffdf8,#23211d); }
+    #heartword-agent-control .control-tools { display:flex; align-items:flex-start; gap:10px; margin-bottom:12px; }
+    #heartword-agent-control .control-tools .showtime, #heartword-agent-control .control-tools .producer-address { margin:0; flex:1 1 0; }
+    #heartword-agent-control .producer-address label { font-size:.8rem; font-weight:500; }
+    #heartword-agent-control .producer-address input { min-width:0; border:1px solid light-dark(#b8aa9a,#625a50); border-radius:8px; padding:7px 9px; color:inherit; background:light-dark(#fffdf8,#2a2722); font:inherit; }
+    #heartword-agent-control .producer-address button { border:1px solid light-dark(#b8aa9a,#625a50); border-radius:8px; padding:7px 10px; color:inherit; background:light-dark(#fffdf8,#2a2722); cursor:pointer; font:inherit; }
+    #heartword-agent-control .producer-address button:disabled { cursor:not-allowed; opacity:.6; }
+    #heartword-agent-control .producer-address-status { grid-column:2 / -1; color:light-dark(#71665a,#bdb1a2); font-size:.74rem; }
+    #heartword-agent-control .producer-address.showtime-active { border-color:light-dark(#8b3f8f,#e89cff); box-shadow:0 0 0 3px color-mix(in srgb, light-dark(#8b3f8f,#e89cff) 26%, transparent), 0 0 18px color-mix(in srgb, light-dark(#8b3f8f,#e89cff) 48%, transparent); }
+    #heartword-agent-control .producer-address input:focus-visible, #heartword-agent-control .producer-address button:focus-visible { outline:3px solid light-dark(#155e75,#7dd3fc); outline-offset:2px; }
     #heartword-agent-control h2, #heartword-agent-control h3 { margin:0; font-weight:500; }
     #heartword-agent-control h2 { font-size:1.1rem; }
     #heartword-agent-control h3 { font-size:.9rem; }
     #heartword-agent-control .hw-sub { color: light-dark(#71665a,#bdb1a2); font-size:.82rem; margin-top:3px; }
+    #heartword-agent-control .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
     #heartword-agent-control .hw-live { display:flex; gap:7px; align-items:center; font-size:.82rem; color:light-dark(#176945,#76d8a5); }
     #heartword-agent-control .hw-dot { width:9px; height:9px; border-radius:50%; background:light-dark(#199658,#5fc990); box-shadow:0 0 0 5px color-mix(in srgb, light-dark(#199658,#5fc990) 15%, transparent); }
-    #heartword-agent-control .hw-grid { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(270px,.85fr); gap:16px; }
+    #heartword-agent-control .hw-grid { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(270px,.85fr); gap:16px; align-items:start; }
+    #heartword-agent-control .hw-grid.map-wide { grid-template-columns:1fr; }
+    #heartword-agent-control .view-switcher { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px; padding:8px; border:1px solid light-dark(#ded6ca,#3f3a32); border-radius:12px; background:light-dark(#fffdf8,#23211d); }
+    #heartword-agent-control .view-switcher button { border:1px solid light-dark(#b8aa9a,#625a50); border-radius:8px; padding:7px 10px; color:inherit; background:transparent; cursor:pointer; font:inherit; font-size:.8rem; }
+    #heartword-agent-control .view-switcher button[aria-pressed="true"] { color:light-dark(#fff,#172b35); background:light-dark(#155e75,#7dd3fc); border-color:light-dark(#155e75,#7dd3fc); }
+    #heartword-agent-control .view-switcher button:focus-visible { outline:3px solid light-dark(#155e75,#7dd3fc); outline-offset:2px; }
+    #heartword-agent-control[data-view="map"] .hw-grid { grid-template-columns:1fr; }
+    #heartword-agent-control[data-view="map"] .hw-conv, #heartword-agent-control[data-view="map"] .hw-foot, #heartword-agent-control[data-view="map"] .review-layer, #heartword-agent-control[data-view="map"] .supporting-crew { display:none; }
+    #heartword-agent-control[data-view="map"] .hw-map { width:100% !important; }
+    #heartword-agent-control[data-view="conversation"] .hw-map, #heartword-agent-control[data-view="conversation"] .hw-foot, #heartword-agent-control[data-view="conversation"] .review-layer, #heartword-agent-control[data-view="conversation"] .supporting-crew { display:none; }
+    #heartword-agent-control[data-view="conversation"] .hw-grid { grid-template-columns:1fr; }
+    #heartword-agent-control[data-view="review"] .hw-grid, #heartword-agent-control[data-view="review"] .hw-foot, #heartword-agent-control[data-view="review"] .supporting-crew { display:none; }
+    #heartword-agent-control[data-view="gallery"] .hw-grid, #heartword-agent-control[data-view="gallery"] .hw-foot, #heartword-agent-control[data-view="gallery"] .review-layer { display:none; }
     #heartword-agent-control .hw-panel { background:light-dark(#fffdf8,#23211d); border:1px solid light-dark(#ded6ca,#3f3a32); border-radius:14px; padding:14px; }
-    #heartword-agent-control .hw-map { position:relative; min-height:390px; overflow:hidden; }
+    #heartword-agent-control .hw-map { --map-scale:.35; position:relative; min-width:480px; min-height:900px !important; overflow:visible; }
+    #heartword-agent-control .map-resize-handle { position:absolute; z-index:4; right:6px; bottom:6px; width:30px; height:30px; border:1px solid light-dark(#b8aa9a,#625a50); border-radius:7px; background:light-dark(#fffdf8,#2a2722); color:inherit; cursor:nwse-resize; font-size:1rem; line-height:1; touch-action:none; }
+    #heartword-agent-control .map-resize-handle::after { content:""; position:absolute; right:5px; bottom:5px; width:9px; height:9px; border-right:2px solid currentColor; border-bottom:2px solid currentColor; }
     #heartword-agent-control .hw-legend { display:flex; flex-wrap:wrap; gap:12px; color:light-dark(#71665a,#bdb1a2); font-size:.76rem; margin-top:8px; }
     #heartword-agent-control .hw-key { display:flex; align-items:center; gap:5px; }
     #heartword-agent-control .hw-key i { width:18px; border-top:2px solid; display:inline-block; }
-    #heartword-agent-control svg { position:absolute; inset:45px 0 0; width:100%; height:320px; overflow:visible; }
+    #heartword-agent-control svg { position:absolute; inset:0; z-index:1; width:100%; height:100%; overflow:visible; pointer-events:none; }
     #heartword-agent-control .edge { stroke:light-dark(#bdb3a5,#70695f); stroke-width:2; fill:none; }
     #heartword-agent-control .edge.active { stroke:light-dark(#d0672f,#ffac75); stroke-width:3.5; filter:drop-shadow(0 0 5px color-mix(in srgb, light-dark(#d0672f,#ffac75) 62%, transparent)); }
     #heartword-agent-control .edge-label { fill:light-dark(#71665a,#c3b8aa); font-size:11px; }
-    #heartword-agent-control .node { position:absolute; z-index:2; border:1px solid light-dark(#d7ccbd,#514b41); background:light-dark(#fefbf5,#2a2722); color:inherit; border-radius:12px; padding:8px 10px; min-width:104px; text-align:left; cursor:pointer; font:inherit; }
-    #heartword-agent-control .node strong { display:block; font-size:.8rem; font-weight:500; }
-    #heartword-agent-control .node span { display:block; font-size:.69rem; color:light-dark(#71665a,#bdb1a2); margin-top:2px; }
+    #heartword-agent-control .node { position:absolute; z-index:2; width:calc(205px * var(--map-scale)); border:1px solid light-dark(#d7ccbd,#514b41); background:light-dark(#fefbf5,#2a2722); color:inherit; border-radius:calc(12px * var(--map-scale)); padding:calc(7px * var(--map-scale)) calc(9px * var(--map-scale)); text-align:left; cursor:pointer; font:inherit; display:grid; grid-template-columns:calc(64px * var(--map-scale)) 1fr; gap:calc(8px * var(--map-scale)); align-items:center; }
+    #heartword-agent-control .node img { width:calc(64px * var(--map-scale)); height:calc(86px * var(--map-scale)); border-radius:calc(8px * var(--map-scale)); object-fit:contain; object-position:center top; background:light-dark(#e8dfd2,#171512); border:1px solid light-dark(#b8aa9a,#625a50); grid-row:span 2; }
+    #heartword-agent-control .node strong { display:block; font-size:calc(.8rem * var(--map-scale)); font-weight:500; }
+    #heartword-agent-control .node span { display:block; font-size:calc(.69rem * var(--map-scale)); color:light-dark(#71665a,#bdb1a2); margin-top:calc(2px * var(--map-scale)); }
     #heartword-agent-control .node.active { border-color:light-dark(#d0672f,#ffac75); box-shadow:0 0 0 3px color-mix(in srgb, light-dark(#d0672f,#ffac75) 18%, transparent); }
-    #heartword-agent-control .supervisor { top:54px; left:calc(50% - 59px); }
-    #heartword-agent-control .director { top:154px; left:8%; }
-    #heartword-agent-control .planner { top:154px; right:8%; }
-    #heartword-agent-control .generator { top:270px; left:9%; }
-    #heartword-agent-control .critic { top:270px; right:9%; }
-    #heartword-agent-control .gemini { bottom:10px; left:calc(50% - 59px); }
+    #heartword-agent-control .producer-addressed { border-color:light-dark(#155e75,#7dd3fc) !important; box-shadow:0 0 0 3px color-mix(in srgb, light-dark(#155e75,#7dd3fc) 35%, transparent), 0 0 16px color-mix(in srgb, light-dark(#155e75,#7dd3fc) 55%, transparent) !important; }
+    #heartword-agent-control .conversation-spotlight { position:relative; z-index:8 !important; transform:scale(3); transform-origin:center; border-color:light-dark(#8b3f8f,#e89cff) !important; box-shadow:0 0 0 4px color-mix(in srgb, light-dark(#8b3f8f,#e89cff) 38%, transparent), 0 0 30px color-mix(in srgb, light-dark(#8b3f8f,#e89cff) 64%, transparent) !important; transition:transform .24s ease, box-shadow .24s ease; }
+    #heartword-agent-control .node, #heartword-agent-control .review-card, #heartword-agent-control .supporting-card { transition:transform .24s ease, box-shadow .24s ease; }
+    #heartword-agent-control .hw-map .node, #heartword-agent-control .hw-map .supporting-map-card { scale:.5; transform-origin:top left; }
+    #heartword-agent-control .showtime { margin:0 0 16px; padding:8px; border:1px solid light-dark(#d8c3dc,#5e4665); border-radius:12px; background:light-dark(#fff8ff,#28212b); }
+    #heartword-agent-control .showtime-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    #heartword-agent-control .showtime p, #heartword-agent-control .showtime-head .review-status { display:none; }
+    #heartword-agent-control .showtime-controls { display:flex; flex-wrap:wrap; gap:8px; }
+    #heartword-agent-control .showtime select, #heartword-agent-control .showtime button { border:1px solid light-dark(#b8aa9a,#625a50); border-radius:8px; padding:7px 9px; color:inherit; background:light-dark(#fffdf8,#2a2722); font:inherit; }
+    #heartword-agent-control .showtime select { min-width:min(100%,390px); flex:1 1 260px; }
+    #heartword-agent-control .showtime button { cursor:pointer; }
+    #heartword-agent-control .showtime-status { display:block; min-height:1.2em; margin-top:6px; color:light-dark(#7a386f,#eea8dd); font-size:.76rem; }
+    #heartword-agent-control .node:focus-visible, #heartword-agent-control .portrait-close:focus-visible, #heartword-agent-control .map-resize-handle:focus-visible { outline:3px solid light-dark(#155e75,#7dd3fc); outline-offset:3px; }
+    #heartword-agent-control .supervisor { top:calc(54px * var(--map-scale)); left:calc(50% - 102.5px * var(--map-scale)); }
+    #heartword-agent-control .director { top:calc(164px * var(--map-scale)); left:calc(38px * var(--map-scale)); }
+    #heartword-agent-control .planner { top:calc(164px * var(--map-scale)); right:calc(38px * var(--map-scale)); }
+    #heartword-agent-control .generator { top:calc(280px * var(--map-scale)); left:calc(43px * var(--map-scale)); }
+    #heartword-agent-control .critic { top:calc(280px * var(--map-scale)); right:calc(43px * var(--map-scale)); }
+    #heartword-agent-control .gemini { top:calc(396px * var(--map-scale)); left:calc(50% - 102.5px * var(--map-scale)); }
+    #heartword-agent-control .supporting-map-band { position:absolute; z-index:2; top:calc(430px * var(--map-scale)); left:14px; right:14px; padding:0; background:transparent; }
+    #heartword-agent-control .supporting-map-band > h3, #heartword-agent-control .supporting-map-band > p, #heartword-agent-control .supporting-reporting { display:none; }
+    #heartword-agent-control .supporting-map-grid { display:grid; grid-template-columns:repeat(4,calc(205px * var(--map-scale))); justify-content:space-around; gap:10px; }
+    #heartword-agent-control .supporting-map-card { width:calc(205px * var(--map-scale)); min-height:0; grid-template-columns:calc(64px * var(--map-scale)) 1fr; gap:calc(8px * var(--map-scale)); border-radius:calc(12px * var(--map-scale)); padding:calc(7px * var(--map-scale)) calc(9px * var(--map-scale)); }
+    #heartword-agent-control .supporting-map-card img { width:calc(64px * var(--map-scale)); height:calc(86px * var(--map-scale)); border-radius:calc(8px * var(--map-scale)); }
+    #heartword-agent-control .supporting-map-card { min-height:74px; grid-template-columns:46px 1fr; gap:6px; padding:6px; }
+    #heartword-agent-control .supporting-map-card img { width:46px; height:60px; }
+    #heartword-agent-control .supporting-map-card strong { font-size:.74rem; }
+    #heartword-agent-control .supporting-map-card span { font-size:.65rem; margin-top:1px; }
     #heartword-agent-control .hw-conv { display:flex; flex-direction:column; min-height:390px; }
     #heartword-agent-control .hw-stream { margin-top:12px; display:flex; flex-direction:column; gap:10px; flex:1; }
     #heartword-agent-control .msg { border-left:3px solid light-dark(#c1b5a6,#625a50); padding:7px 9px; background:light-dark(#faf6ee,#2a2722); font-size:.81rem; }
@@ -39,35 +122,1324 @@
     #heartword-agent-control .hw-mini { padding:10px; background:light-dark(#efe8dc,#2a2722); border-radius:10px; }
     #heartword-agent-control .hw-mini b { display:block; font-weight:500; font-size:.78rem; }
     #heartword-agent-control .hw-mini span { display:block; margin-top:3px; color:light-dark(#71665a,#bdb1a2); font-size:.76rem; }
-    @media (max-width:620px) { #heartword-agent-control .hw-grid { grid-template-columns:1fr; } #heartword-agent-control .hw-foot { grid-template-columns:1fr; } }
+    #heartword-agent-control .review-layer { margin-top:16px; border:1px dashed light-dark(#8b7a68,#887d71); border-radius:14px; padding:14px; background:light-dark(#faf6ee,#27241f); }
+    #heartword-agent-control .review-head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
+    #heartword-agent-control .review-status { border:1px dashed currentColor; border-radius:999px; padding:3px 7px; font-size:.69rem; color:light-dark(#71665a,#c3b8aa); }
+    #heartword-agent-control .review-grid { display:grid; grid-template-columns:repeat(3,minmax(180px,1fr)); gap:10px; margin-top:12px; }
+    #heartword-agent-control .review-card { min-height:108px; border:1px dashed light-dark(#a99a8a,#71685d); border-radius:10px; padding:9px; background:light-dark(#fffdf8,#2a2722); color:inherit; text-align:left; font:inherit; }
+    #heartword-agent-control .review-card.has-portrait { display:grid; grid-template-columns:66px 1fr; gap:9px; align-items:center; cursor:pointer; }
+    #heartword-agent-control .review-card img { width:66px; height:90px; border-radius:8px; object-fit:contain; object-position:center top; background:light-dark(#e8dfd2,#171512); border:1px solid light-dark(#b8aa9a,#625a50); }
+    #heartword-agent-control .review-card strong { display:block; font-size:.81rem; font-weight:500; }
+    #heartword-agent-control .review-card span { display:block; margin-top:3px; font-size:.72rem; color:light-dark(#71665a,#bdb1a2); }
+    #heartword-agent-control .review-card .planned-tag { color:light-dark(#815a32,#e4b58a); font-size:.67rem; text-transform:uppercase; letter-spacing:.04em; }
+    #heartword-agent-control .review-card:focus-visible { outline:3px solid light-dark(#155e75,#7dd3fc); outline-offset:3px; }
+    #heartword-agent-control .review-routes { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    #heartword-agent-control .review-route { display:flex; align-items:center; gap:7px; border-top:1px dashed light-dark(#8b7a68,#887d71); padding-top:7px; font-size:.72rem; color:light-dark(#71665a,#c3b8aa); }
+    #heartword-agent-control .review-route i { width:20px; border-top:1px dashed currentColor; display:inline-block; }
+    #heartword-agent-control .portrait-dialog { border:0; background:transparent; padding:0; width:min(94vw,1060px); max-width:1060px; }
+    #heartword-agent-control .portrait-dialog::backdrop { background:rgba(18,15,12,.74); }
+    #heartword-agent-control .portrait-frame { position:relative; display:grid; grid-template-columns:minmax(260px,.8fr) minmax(340px,1.2fr); gap:24px; align-items:start; background:light-dark(#fffdf8,#23211d); color:inherit; border-radius:18px; padding:22px; }
+    #heartword-agent-control .portrait-frame img { display:block; width:100%; max-height:76vh; object-fit:contain; border-radius:14px; background:#181714; }
+    #heartword-agent-control .portrait-details { min-width:0; padding:8px 24px 8px 0; }
+    #heartword-agent-control .portrait-proposed { margin:0 0 5px; color:light-dark(#8b5d15,#e2c478); font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+    #heartword-agent-control .portrait-details h2 { margin:0; font-size:2rem; line-height:1.1; }
+    #heartword-agent-control .portrait-role { margin:5px 0 16px; color:light-dark(#71665a,#bdb1a2); font-size:1.05rem; }
+    #heartword-agent-control .portrait-responsibilities { display:grid; gap:12px; margin:0; padding-left:22px; font-size:1.08rem; line-height:1.45; }
+    #heartword-agent-control .portrait-loading { color:light-dark(#71665a,#bdb1a2); font-size:.9rem; }
+    #heartword-agent-control .portrait-close { position:absolute; top:20px; right:20px; border:0; border-radius:50%; width:32px; height:32px; cursor:pointer; background:light-dark(#fffdf8,#23211d); color:inherit; font-size:1.2rem; }
+    @media (max-width:720px) { #heartword-agent-control .portrait-frame { grid-template-columns:1fr; gap:14px; padding:16px; } #heartword-agent-control .portrait-frame img { max-height:42vh; } #heartword-agent-control .portrait-details { padding:0; } }
+    #heartword-agent-control .supporting-crew { margin-top:16px; }
+    #heartword-agent-control .supporting-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:10px; }
+    #heartword-agent-control .supporting-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; }
+    #heartword-agent-control .supporting-card { display:grid; grid-template-columns:72px 1fr; gap:9px; align-items:center; min-height:108px; border:1px solid light-dark(#ded6ca,#3f3a32); border-radius:10px; padding:8px; background:light-dark(#fffdf8,#23211d); color:inherit; cursor:pointer; text-align:left; font:inherit; }
+    #heartword-agent-control .supporting-card img { width:72px; height:92px; border-radius:8px; object-fit:contain; object-position:center top; background:light-dark(#e8dfd2,#171512); border:1px solid light-dark(#b8aa9a,#625a50); }
+    /* Main-map crew cards deliberately match core-node proportions. This
+       override follows the gallery-card rules above so it wins specificity. */
+    #heartword-agent-control .supporting-map-band .supporting-map-card { box-sizing:border-box; width:calc(205px * var(--map-scale)); min-height:0; grid-template-columns:calc(64px * var(--map-scale)) 1fr; gap:calc(8px * var(--map-scale)); border-radius:calc(12px * var(--map-scale)); padding:calc(7px * var(--map-scale)) calc(9px * var(--map-scale)); }
+    #heartword-agent-control .supporting-map-band .supporting-map-card img { width:calc(64px * var(--map-scale)); height:calc(86px * var(--map-scale)); border-radius:calc(8px * var(--map-scale)); }
+    #heartword-agent-control .supporting-card strong { display:block; font-size:.83rem; font-weight:500; }
+    #heartword-agent-control .supporting-card span { display:block; margin-top:3px; font-size:.73rem; color:light-dark(#71665a,#bdb1a2); }
+    #heartword-agent-control .supporting-card:focus-visible { outline:3px solid light-dark(#155e75,#7dd3fc); outline-offset:3px; }
+    @media (max-width:760px) { #heartword-agent-control .producer-address { grid-template-columns:1fr auto; } #heartword-agent-control .producer-address label, #heartword-agent-control .producer-address input { grid-column:1 / -1; } #heartword-agent-control .producer-address-status { grid-column:1 / -1; } #heartword-agent-control .review-grid { grid-template-columns:1fr 1fr; } }
+    @media (max-width:620px) { #heartword-agent-control .hw-grid { grid-template-columns:1fr; } #heartword-agent-control .hw-map { min-width:0; } #heartword-agent-control .hw-foot, #heartword-agent-control .review-grid { grid-template-columns:1fr; } #heartword-agent-control .node { width:calc(164px * var(--map-scale)); grid-template-columns:calc(56px * var(--map-scale)) 1fr; } #heartword-agent-control .node img { width:calc(56px * var(--map-scale)); height:calc(78px * var(--map-scale)); } #heartword-agent-control .supervisor, #heartword-agent-control .gemini { left:calc(50% - 82px * var(--map-scale)); } }
+    /* Presentation map: every role is a peer card on one uncluttered circle.
+       These final rules intentionally override the earlier core/crew layouts. */
+    #heartword-agent-control:not(.presentation-clean) .hw-map { min-height:1100px !important; }
+    #heartword-agent-control .hw-map > svg { display:none; }
+    #heartword-agent-control .hw-map .supporting-map-band,
+    #heartword-agent-control .hw-map .supporting-map-grid { display:contents; }
+    #heartword-agent-control .hw-map .supporting-map-band > h3,
+    #heartword-agent-control .hw-map .supporting-map-band > p { display:none; }
+    #heartword-agent-control .hw-map .node,
+    #heartword-agent-control .hw-map .supporting-map-band .supporting-map-card {
+      position:absolute;
+      z-index:2;
+      box-sizing:border-box;
+      width:132px;
+      min-height:182px;
+      margin:0;
+      padding:0;
+      display:grid;
+      grid-template-columns:1fr;
+      grid-template-rows:132px 50px;
+      gap:0;
+      align-items:center;
+      overflow:hidden;
+      border-radius:18px;
+      transform:translate(-50%,-50%);
+      transform-origin:center;
+      scale:1;
+      cursor:grab;
+    }
+    #heartword-agent-control .hw-map .node:active,
+    #heartword-agent-control .hw-map .supporting-map-band .supporting-map-card:active { cursor:grabbing; }
+    #heartword-agent-control .hw-map .node img,
+    #heartword-agent-control .hw-map .supporting-map-band .supporting-map-card img {
+      box-sizing:border-box;
+      width:132px;
+      height:132px;
+      border:0;
+      border-radius:0;
+      object-fit:cover;
+      object-position:center top;
+      background:transparent;
+      grid-row:auto;
+    }
+    #heartword-agent-control .hw-map .node strong,
+    #heartword-agent-control .hw-map .supporting-map-band .supporting-map-card strong { font-size:.92rem; line-height:1.1; }
+    #heartword-agent-control .hw-map .node span,
+    #heartword-agent-control .hw-map .supporting-map-band .supporting-map-card span { font-size:.92rem; line-height:1.1; margin:0; }
+    #heartword-agent-control .hw-map .node > span,
+    #heartword-agent-control .hw-map .supporting-map-band .supporting-map-card > span {
+      display:flex;
+      width:100%;
+      height:50px;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:0 6px;
+      box-sizing:border-box;
+      background:light-dark(#e8dfd2,#171512);
+      text-align:center;
+    }
+    #heartword-agent-control .hw-map .node > span > span,
+    #heartword-agent-control .hw-map .supporting-map-band .supporting-map-card > span > span {
+      display:block;
+      margin-top:2px;
+      color:light-dark(#71665a,#bdb1a2);
+      font-size:.66rem;
+      font-weight:500;
+      line-height:1.08;
+    }
+    #heartword-agent-control .hw-map .node > span > strong,
+    #heartword-agent-control .hw-map .supporting-map-band .supporting-map-card > span > strong { font-weight:600; }
+    #heartword-agent-control .hw-map .red-team-map-card { border:2px solid light-dark(#ad4940,#ff9a91); }
+    #heartword-agent-control .hw-map .red-team-map-card > span { background:light-dark(#f2ddd7,#3a2220); }
+    #heartword-agent-control .hw-map .red-team-group {
+      position:absolute;
+      z-index:1;
+      box-sizing:border-box;
+      border:2px solid light-dark(#ad4940,#ff9a91);
+      border-radius:22px;
+      pointer-events:none;
+      transition:left .18s ease, top .18s ease, width .18s ease, height .18s ease;
+    }
+    #heartword-agent-control .hw-map .red-team-group::after {
+      content:"Red Team";
+      position:absolute;
+      top:calc(100% + 9px);
+      left:50%;
+      transform:translateX(-50%);
+      padding:2px 9px;
+      border-radius:999px;
+      background:light-dark(#f7f3eb,#181714);
+      color:light-dark(#9b352f,#ffb0a8);
+      font-size:.82rem;
+      font-weight:700;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+    #heartword-agent-control .hw-map .film-critics-map-card { border:2px solid light-dark(#426f9f,#9acaff); }
+    #heartword-agent-control .hw-map .film-critics-map-card > span { background:light-dark(#dde9f4,#1d2a38); }
+    #heartword-agent-control .hw-map .film-critics-group {
+      position:absolute;
+      z-index:1;
+      box-sizing:border-box;
+      border:2px solid light-dark(#426f9f,#9acaff);
+      border-radius:22px;
+      pointer-events:none;
+      transition:left .18s ease, top .18s ease, width .18s ease, height .18s ease;
+    }
+    #heartword-agent-control .hw-map .film-critics-group::after {
+      content:"Film Critics";
+      position:absolute;
+      top:calc(100% + 9px);
+      left:50%;
+      transform:translateX(-50%);
+      padding:2px 9px;
+      border-radius:999px;
+      background:light-dark(#f7f3eb,#181714);
+      color:light-dark(#315d8b,#afd5ff);
+      font-size:.82rem;
+      font-weight:700;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+    #heartword-agent-control .hw-map .production-crew-group {
+      position:absolute;
+      z-index:1;
+      box-sizing:border-box;
+      border:2px solid light-dark(#9a7541,#d6b779);
+      border-radius:22px;
+      pointer-events:none;
+      transition:left .18s ease, top .18s ease, width .18s ease, height .18s ease;
+    }
+    #heartword-agent-control .hw-map .production-crew-group::after {
+      content:"Production Crew";
+      position:absolute;
+      top:calc(100% + 9px);
+      left:50%;
+      transform:translateX(-50%);
+      padding:2px 9px;
+      border-radius:999px;
+      background:light-dark(#f7f3eb,#181714);
+      color:light-dark(#765526,#d6b779);
+      font-size:.82rem;
+      font-weight:700;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+    #heartword-agent-control .hw-map .conversation-spotlight { transform:translate(-50%,-50%) scale(1.35); }
+    #heartword-agent-control .hw-map .voice-selected {
+      position:absolute;
+      z-index:8 !important;
+      box-sizing:border-box;
+      width:420px !important;
+      height:260px;
+      min-height:260px;
+      padding:0 20px 0 0;
+      display:grid;
+      grid-template-columns:170px minmax(0,1fr);
+      grid-template-rows:auto;
+      gap:20px;
+      align-items:center;
+      overflow:visible;
+      border-radius:27px;
+      transform:translate(-50%,-50%) scale(1.15);
+      transform-origin:center;
+      scale:1 !important;
+      border-color:light-dark(#8b3f8f,#e89cff) !important;
+      box-shadow:0 0 0 5px color-mix(in srgb, light-dark(#8b3f8f,#e89cff) 42%, transparent), 0 0 38px color-mix(in srgb, light-dark(#8b3f8f,#e89cff) 70%, transparent) !important;
+      transition:transform .24s ease, box-shadow .24s ease;
+    }
+    #heartword-agent-control .hw-map .voice-selected img {
+      width:170px !important;
+      height:260px !important;
+      border-radius:18px !important;
+      align-self:stretch;
+      grid-row:auto !important;
+      margin:0 !important;
+    }
+    #heartword-agent-control .hw-map .node.voice-selected strong,
+    #heartword-agent-control .hw-map .supporting-map-band .supporting-map-card.voice-selected strong {
+      display:block;
+      font-size:1.98rem !important;
+      line-height:1.15;
+    }
+    #heartword-agent-control .hw-map .voice-selected span { font-size:1.68rem; line-height:1.15; margin-top:3px; }
+    #heartword-agent-control .hw-map .node.voice-selected > span,
+    #heartword-agent-control .hw-map .supporting-map-band .supporting-map-card.voice-selected > span {
+      display:block !important;
+      width:auto !important;
+      height:auto !important;
+      padding:0 !important;
+      background:transparent !important;
+      text-align:left !important;
+    }
+    #heartword-agent-control .hw-map .node.voice-selected > span > span,
+    #heartword-agent-control .hw-map .supporting-map-band .supporting-map-card.voice-selected > span > span {
+      display:block !important;
+      visibility:visible !important;
+      margin-top:6px;
+      font-size:1.18rem !important;
+      line-height:1.2;
+    }
+    @keyframes heartword-speaking-pulse {
+      0%,100% { box-shadow:0 0 0 5px color-mix(in srgb, light-dark(#d0672f,#ffac75) 42%, transparent), 0 0 30px color-mix(in srgb, light-dark(#d0672f,#ffac75) 66%, transparent); }
+      50% { box-shadow:0 0 0 9px color-mix(in srgb, light-dark(#d0672f,#ffac75) 28%, transparent), 0 0 48px color-mix(in srgb, light-dark(#d0672f,#ffac75) 82%, transparent); }
+    }
+    #heartword-agent-control .hw-map .voice-selected.exchange-speaking {
+      opacity:1;
+      border-color:light-dark(#d0672f,#ffac75) !important;
+      animation:heartword-speaking-pulse 1.1s ease-in-out infinite;
+    }
+    #heartword-agent-control .hw-map .voice-selected.exchange-speaking::after {
+      content:"Speaking";
+      position:absolute;
+      top:-32px;
+      left:50%;
+      transform:translateX(-50%);
+      padding:5px 10px;
+      border-radius:999px;
+      background:light-dark(#d0672f,#ffac75);
+      color:light-dark(#fffdf8,#25190d);
+      font-size:.78rem;
+      font-weight:700;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+    #heartword-agent-control .hw-map .voice-selected.exchange-listening { opacity:.68; filter:saturate(.72); }
+    #heartword-agent-control .hw-map .voice-selected.exchange-speaking::before {
+      content:"";
+      position:absolute;
+      top:50%;
+      z-index:2;
+      color:light-dark(#d0672f,#ffac75);
+      width:14px;
+      height:14px;
+      border-top:3px solid currentColor;
+      border-right:3px solid currentColor;
+      background:transparent;
+    }
+    #heartword-agent-control .hw-map .voice-selected.exchange-speaking.speech-cue-right::before { right:-46px; transform:translateY(-50%) rotate(45deg); }
+    #heartword-agent-control .hw-map .voice-selected.exchange-speaking.speech-cue-left::before { left:-46px; transform:translateY(-50%) rotate(-135deg); }
+    #heartword-agent-control .hw-map.cast-focus-active .node:not(.voice-selected),
+    #heartword-agent-control .hw-map.cast-focus-active .supporting-map-card:not(.voice-selected),
+    #heartword-agent-control .hw-map .voice-thumbnail {
+      width:88px;
+      min-height:132px;
+      height:132px;
+      padding:0;
+      display:grid;
+      grid-template-columns:88px;
+      justify-content:center;
+      border:0;
+      border-radius:0;
+      overflow:visible;
+      background:transparent;
+      box-shadow:none !important;
+      opacity:.9;
+    }
+    #heartword-agent-control .hw-map.cast-focus-active .node:not(.voice-selected) > span,
+    #heartword-agent-control .hw-map.cast-focus-active .supporting-map-card:not(.voice-selected) > span,
+    #heartword-agent-control .hw-map .voice-thumbnail > span { display:none; }
+    #heartword-agent-control .hw-map.cast-focus-active .node:not(.voice-selected) img,
+    #heartword-agent-control .hw-map.cast-focus-active .supporting-map-card:not(.voice-selected) img,
+    #heartword-agent-control .hw-map .voice-thumbnail img {
+      width:88px;
+      height:132px;
+      grid-row:auto;
+      justify-self:center;
+    }
+    #heartword-agent-control .hw-map.cast-focus-active .voice-thumbnail::after {
+      content:attr(data-address-name);
+      position:absolute;
+      color:light-dark(#4e4338,#f0dfcc);
+      font-size:.78rem;
+      font-weight:600;
+      line-height:1;
+      white-space:nowrap;
+      text-shadow:0 1px 3px light-dark(rgba(255,253,248,.92),rgba(0,0,0,.75));
+    }
+    #heartword-agent-control .hw-map.cast-focus-active .thumbnail-label-left::after { right:calc(100% + 9px); top:50%; transform:translateY(-50%); }
+    #heartword-agent-control .hw-map.cast-focus-active .thumbnail-label-right::after { left:calc(100% + 9px); top:50%; transform:translateY(-50%); }
+    #heartword-agent-control .hw-map.cast-focus-active .thumbnail-label-top::after { left:50%; bottom:calc(100% + 9px); transform:translateX(-50%); }
+    #heartword-agent-control .hw-map.cast-focus-active .thumbnail-label-bottom::after { left:50%; top:calc(100% + 20px); transform:translateX(-50%); }
+    #heartword-agent-control .hw-map.cast-focus-active {
+      position:fixed;
+      inset:0;
+      z-index:50;
+      width:100vw !important;
+      height:100vh;
+      min-width:0;
+      min-height:100vh !important;
+      margin:0;
+      padding:0;
+      overflow:hidden;
+      border:0;
+      border-radius:0;
+      background:light-dark(#fffdf8,#23211d);
+    }
+    #heartword-agent-control .hw-map.cast-focus-active .red-team-group,
+    #heartword-agent-control .hw-map.cast-focus-active .film-critics-group,
+    #heartword-agent-control .hw-map.cast-focus-active .production-crew-group { display:none; }
+    #heartword-agent-control .hw-map.cast-focus-active > h3,
+    #heartword-agent-control .hw-map.cast-focus-active > .hw-sub,
+    #heartword-agent-control .hw-map.cast-focus-active > .hw-legend,
+    #heartword-agent-control .hw-map.cast-focus-active > .map-resize-handle { display:none; }
   </style>
+  <script src="http://127.0.0.1:4000/control-room-vosk/vosk.js"></script>
   <div class="hw-shell">
-    <div class="hw-top"><div><h2>HeartWord · production control</h2><div class="hw-sub">Mark 3 · supervised run</div></div><div class="hw-live"><span class="hw-dot"></span>Supervisor running</div></div>
+    <div class="hw-top"><div><h2>HeartWord - production control</h2><div class="hw-sub">Mark 3 - supervised run</div></div><div class="hw-live"><span class="hw-dot"></span>Supervisor running</div></div>
+    <nav class="view-switcher" aria-label="Control-room views"><button type="button" data-view-button="map" aria-pressed="true">Interaction map</button><button type="button" data-view-button="conversation" aria-pressed="false">Conversation</button><button type="button" data-view-button="review" aria-pressed="false">Review layer</button><button type="button" data-view-button="gallery" aria-pressed="false">Portrait gallery</button></nav>
+    <div class="control-tools"><section class="showtime" aria-labelledby="showtime-title"><div class="showtime-head"><h3 id="showtime-title">Presentation exchanges</h3><span class="review-status">show layer only</span></div><p>Humorous, staged banter from the cast. It never sends work, changes agent authority, alters a review, or affects this supervised run.</p><div class="showtime-controls"><label class="sr-only" for="showtime-select">Choose a staged exchange</label><select id="showtime-select"><option value="producer-rufus">Producer and Rufus: Tuesday's dawn</option><option value="vera-dottie">Vera and Dottie: likeness drift</option><option value="orion-tessa">Orion and Tessa: freeze-pad</option><option value="ada-rufus">Ada and Rufus: evidence, please</option><option value="sam-producer">Producer and Sam: sounds like lunch</option></select><button id="showtime-play" type="button">Play exchange</button></div><span class="showtime-status" id="showtime-status" aria-live="polite">Choose an exchange to spotlight its participants at three times their normal size.</span></section><form class="producer-address" id="producer-address-form" aria-describedby="producer-address-status"><label for="producer-address-input">Producer Address</label><input id="producer-address-input" type="text" autocomplete="off" placeholder="Type or say an agent's name" aria-label="Type or say an agent's name"><button id="producer-address-mic" type="button" aria-label="Recognize an agent name with browser voice recognition">Mic</button><span class="producer-address-status" id="producer-address-status" aria-live="polite">Recognition only: this does not send a message or start an agent.</span></form></div>
+    <section class="voice-audition" id="voice-audition" aria-live="polite"><h3>ElevenLabs voice auditions</h3><p>Temporary samples only — no cast voice is changed until you approve it.</p><button data-voice-audition="mabel-matilda" type="button">Mabel <span>Measured authority</span></button><button data-voice-audition="dottie-laura" type="button">Dottie <span>Playful bite</span></button><button data-voice-audition="rufus-callum" type="button">Rufus <span>Dry trickster</span></button><button data-voice-audition="gus-adam" type="button">Gus <span>Brash confidence</span></button><button data-voice-audition="vera-bella" type="button">Vera <span>Cool clarity</span></button><button data-voice-audition="siskel-medraut" type="button">Gene Siskel <span>Theatrical skeptic</span></button><button data-voice-audition="leon-jonathan" type="button">Leon <span>Sophisticated visual poet</span></button><button data-voice-audition="pippa-emily" type="button">Pippa <span>Imaginative planner</span></button><button data-voice-audition="tessa-lyra" type="button">Tessa <span>Warm kinetic guide</span></button><button data-voice-audition="sam-ziggy" type="button">Sam <span>Quirky sound spark</span></button><button data-voice-audition="arlo-chris" type="button">Arlo <span>Grounded practical edge</span></button></section>
     <div class="hw-grid">
-      <div class="hw-panel hw-map"><h3>Agent interaction map</h3><div class="hw-sub">Select an agent or an active route to inspect its conversation.</div>
-        <svg viewBox="0 0 600 340" role="img" aria-label="Agent interaction map with supervisor coordinating six agents"><defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
-          <path class="edge" data-route="supervisor-director" d="M290 45 C210 85 160 95 135 125" marker-start="url(#arrow)" marker-end="url(#arrow)"/><path class="edge" data-route="supervisor-planner" d="M310 45 C390 85 440 95 465 125" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
-          <path class="edge active" data-route="planner-generator" d="M465 165 C410 215 240 215 145 243" marker-start="url(#arrow)" marker-end="url(#arrow)"/><path class="edge" data-route="generator-critic" d="M165 270 C265 230 350 230 445 270" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
-          <path class="edge" data-route="critic-gemini" d="M450 280 C425 313 365 320 315 320" marker-start="url(#arrow)" marker-end="url(#arrow)"/><path class="edge" data-route="gemini-supervisor" d="M300 306 C585 283 575 47 320 38" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
-          <text class="edge-label" x="275" y="202">shot request</text><text class="edge-label" x="285" y="247">clip review</text></svg>
-        <button class="node supervisor" data-agent="Supervisor" type="button"><strong>Supervisor</strong><span>deterministic coordinator</span></button>
-        <button class="node director" data-agent="Creative director" type="button"><strong>Creative director</strong><span>proposes direction</span></button>
-        <button class="node planner active" data-agent="Shot planner" type="button"><strong>Shot planner</strong><span>writing now</span></button>
-        <button class="node generator" data-agent="Media generator" type="button"><strong>Media generator</strong><span>waiting</span></button>
-        <button class="node critic" data-agent="Critic" type="button"><strong>Critic</strong><span>idle</span></button>
-        <button class="node gemini" data-agent="Gemini video critic" type="button"><strong>Gemini critic</strong><span>video QA</span></button>
+      <div class="hw-panel hw-map"><img class="heartword-studio-mark" src="../docs/assets/branding/heartword-ai-logo.png" alt="HeartWord AI"><h3>Full cast map</h3><div class="hw-sub">Drag any presentation-only card to arrange the cast. Select a card without dragging to inspect its portrait.</div>
+        <svg role="img" aria-label="Agent interaction map with supervisor coordinating six agents"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+          <path class="edge" data-route="supervisor-director" data-from="supervisor" data-to="director" data-bend="-18" marker-start="url(#arrow)" marker-end="url(#arrow)"/><path class="edge" data-route="supervisor-planner" data-from="supervisor" data-to="planner" data-bend="18" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+          <path class="edge active" data-route="planner-generator" data-from="planner" data-to="generator" data-bend="18" marker-start="url(#arrow)" marker-end="url(#arrow)"/><path class="edge" data-route="generator-critic" data-from="generator" data-to="critic" data-bend="28" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+          <path class="edge" data-route="critic-gemini" data-from="critic" data-to="gemini" data-bend="-18" marker-start="url(#arrow)" marker-end="url(#arrow)"/><path class="edge" data-route="gemini-supervisor" data-from="gemini" data-to="supervisor" data-bend="110" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+          <text class="edge-label" data-label-for="planner-generator">shot request</text><text class="edge-label" data-label-for="generator-critic">clip review</text></svg>
+        <button class="node supervisor" data-agent="Supervisor" data-portrait="../docs/assets/control-room/agent-portraits/mabel-control-supervisor.png" data-portrait-name="Mabel - Deterministic Supervisor" type="button" aria-label="Mabel, deterministic supervisor. Open portrait and inspect conversation."><img src="../docs/assets/control-room/agent-portraits/mabel-control-supervisor.png" alt="Mabel portrait"><span><strong>Mabel</strong><span>Supervisor</span></span></button>
+        <button class="node director" data-agent="Creative director" data-portrait="../docs/assets/control-room/agent-portraits/rufus-creative-director.png" data-portrait-name="Rufus - Creative Director" type="button" aria-label="Rufus, creative director. Open portrait and inspect conversation."><img src="../docs/assets/control-room/agent-portraits/rufus-creative-director.png" alt="Rufus portrait"><span><strong>Rufus</strong><span>Creative Director</span></span></button>
+        <button class="node planner active" data-agent="Shot planner" data-portrait="../docs/assets/control-room/agent-portraits/pippa-shot-planner.png" data-portrait-name="Pippa - Shot Planner" type="button" aria-label="Pippa, shot planner. Open portrait and inspect conversation."><img src="../docs/assets/control-room/agent-portraits/pippa-shot-planner.png" alt="Pippa portrait"><span><strong>Pippa</strong><span>Shot Planner</span></span></button>
+        <button class="node generator" data-agent="Media generator" data-portrait="../docs/assets/control-room/agent-portraits/gus-media-generator.png" data-portrait-name="Gus - Media Generator / Projectionist" type="button" aria-label="Gus, media generator and projectionist. Open portrait and inspect conversation."><img src="../docs/assets/control-room/agent-portraits/gus-media-generator.png" alt="Gus portrait"><span><strong>Gus</strong><span>Media Generator</span></span></button>
+        <button class="node critic" data-agent="Critic" data-portrait="../docs/assets/control-room/agent-portraits/vera-inspector.png" data-portrait-name="Vera - Quality Critic / Inspector" type="button" aria-label="Vera, quality critic and inspector. Open portrait and inspect conversation."><img src="../docs/assets/control-room/agent-portraits/vera-inspector-closeup.png" alt="Vera portrait"><span><strong>Vera</strong><span>Quality Critic</span></span></button>
+        <button class="node gemini" data-agent="Gemini video analyzer" data-portrait="../docs/assets/control-room/agent-portraits/orion-gemini-video-analyzer.png" data-portrait-name="Orion - Gemini Video Analyzer / Timekeeper" type="button" aria-label="Orion, Gemini video analyzer and timekeeper. Open portrait and inspect conversation."><img src="../docs/assets/control-room/agent-portraits/orion-gemini-video-analyzer-closeup.png" alt="Orion portrait"><span><strong>Orion</strong><span>Gemini Analyzer</span></span></button>
+        <section class="supporting-map-band" aria-labelledby="supporting-map-title"><h3 id="supporting-map-title">Full control-room cast</h3><p>Presentation-only crew cards.</p><div class="supporting-map-grid">
+          <button class="supporting-card supporting-map-card" data-portrait="../docs/assets/control-room/agent-portraits/june-production-director.png" data-portrait-name="June - Production Director" type="button" aria-label="June, Production Director. Reference-only map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/june-production-director-closeup.png" alt="June portrait"><span><strong>June</strong><span>Production Director</span></span></button>
+          <button class="supporting-card supporting-map-card" data-portrait="../docs/assets/control-room/agent-portraits/leon-cinematographer.png" data-portrait-name="Leon - Cinematographer" type="button" aria-label="Leon, Cinematographer. Reference-only map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/leon-cinematographer-closeup.png" alt="Leon portrait"><span><strong>Leon</strong><span>Cinematographer</span></span></button>
+          <button class="supporting-card supporting-map-card" data-portrait="../docs/assets/control-room/agent-portraits/tessa-choreography.png" data-portrait-name="Tessa - Choreographer" type="button" aria-label="Tessa, Choreographer. Reference-only map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/tessa-choreography-closeup.png" alt="Tessa portrait"><span><strong>Tessa</strong><span>Choreographer</span></span></button>
+          <button class="supporting-card supporting-map-card" data-portrait="../docs/assets/control-room/agent-portraits/arlo-staging.png" data-portrait-name="Arlo - Staging Director" type="button" aria-label="Arlo, Staging Director. Reference-only map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/arlo-staging-closeup.png" alt="Arlo portrait"><span><strong>Arlo</strong><span>Staging Director</span></span></button>
+          <button class="supporting-card supporting-map-card" data-portrait="../docs/assets/control-room/agent-portraits/nell-editor.png" data-portrait-name="Nell - Editor" type="button" aria-label="Nell, Editor. Reference-only map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/nell-editor-closeup.png" alt="Nell portrait"><span><strong>Nell</strong><span>Editor</span></span></button>
+          <button class="supporting-card supporting-map-card" data-portrait="../docs/assets/control-room/agent-portraits/sam-sound-director.png" data-portrait-name="Sam - Sound Director" type="button" aria-label="Sam, Sound Director. Reference-only map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/sam-sound-director-closeup.png" alt="Sam portrait"><span><strong>Sam</strong><span>Sound Director</span></span></button>
+          <button class="supporting-card supporting-map-card" data-portrait="../docs/assets/control-room/agent-portraits/miriam-scripture-reviewer.png" data-portrait-name="Miriam - Scripture Reviewer" type="button" aria-label="Miriam, Scripture Reviewer. Reference-only map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/miriam-scripture-reviewer-closeup.png" alt="Miriam portrait"><span><strong>Miriam</strong><span>Scripture Reviewer</span></span></button>
+          <button class="supporting-card supporting-map-card" data-portrait="../docs/assets/control-room/agent-portraits/dottie-casting-director.png" data-portrait-name="Dottie - Casting Director" type="button" aria-label="Dottie, Casting Director. Reference-only map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/dottie-casting-director-closeup.png" alt="Dottie portrait"><span><strong>Dottie</strong><span>Casting Director</span></span></button>
+          <button class="supporting-card supporting-map-card" data-portrait="../docs/assets/control-room/agent-portraits/kit-lip-sync-specialist.png" data-portrait-name="Kit - Lip-Sync Specialist" type="button" aria-label="Kit, Lip-Sync Specialist. Reference-only map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/kit-lip-sync-specialist-closeup.png" alt="Kit portrait"><span><strong>Kit</strong><span>Lip-Sync Specialist</span></span></button>
+          <button class="supporting-card supporting-map-card" data-portrait="../docs/assets/control-room/agent-portraits/benny-assembly-lead.png" data-portrait-name="Benny - Assembly Lead" type="button" aria-label="Benny, Assembly Lead. Reference-only map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/benny-assembly-lead-closeup.png" alt="Benny portrait"><span><strong>Benny</strong><span>Assembly Lead</span></span></button>
+          <button class="supporting-card supporting-map-card red-team-map-card" data-map-slot="Ada" data-portrait="../docs/assets/control-room/agent-portraits/ada-scripture-fidelity-challenger.png" data-portrait-name="Ada - Red Team Scripture Fidelity Challenger" type="button" aria-label="Ada, Red Team Scripture Fidelity Challenger. Presentation-only review map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/ada-scripture-fidelity-challenger.png" alt="Ada portrait"><span><strong>Ada</strong><span>Scripture Fidelity Challenger</span></span></button>
+          <button class="supporting-card supporting-map-card red-team-map-card" data-map-slot="Theo" data-portrait="../docs/assets/control-room/agent-portraits/theo-dramatic-impact-challenger.png" data-portrait-name="Theo - Red Team Dramatic Impact Challenger" type="button" aria-label="Theo, Red Team Dramatic Impact Challenger. Presentation-only review map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/theo-dramatic-impact-challenger.png" alt="Theo portrait"><span><strong>Theo</strong><span>Dramatic Impact Challenger</span></span></button>
+          <button class="supporting-card supporting-map-card red-team-map-card" data-map-slot="Cora" data-portrait="../docs/assets/control-room/agent-portraits/cora-production-feasibility-challenger.png" data-portrait-name="Cora - Red Team Production Feasibility Challenger" type="button" aria-label="Cora, Red Team Production Feasibility Challenger. Presentation-only review map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/cora-production-feasibility-challenger.png" alt="Cora portrait"><span><strong>Cora</strong><span>Production Feasibility Challenger</span></span></button>
+          <button class="supporting-card supporting-map-card film-critics-map-card" data-map-slot="Gene Siskel" data-portrait="../docs/assets/control-room/agent-portraits/gene-siskel-film-critic.png" data-portrait-name="Gene Siskel - Film Critic" type="button" aria-label="Gene Siskel, Film Critic. Presentation-only Film Critics card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/gene-siskel-film-critic.png" alt="Gene Siskel portrait"><span><strong>Gene Siskel</strong><span>Film Critic</span></span></button>
+          <button class="supporting-card supporting-map-card film-critics-map-card" data-map-slot="Roger Ebert" data-portrait="../docs/assets/control-room/agent-portraits/roger-ebert-film-critic.png" data-portrait-name="Roger Ebert - Film Critic" type="button" aria-label="Roger Ebert, Film Critic. Presentation-only Film Critics card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/roger-ebert-film-critic.png" alt="Roger Ebert portrait"><span><strong>Roger Ebert</strong><span>Film Critic</span></span></button>
+        </div></section>
+        <button class="map-resize-handle" id="map-resize-handle" type="button" aria-label="Resize agent interaction map. Drag to resize, or use arrow keys; Shift plus arrow resizes faster." aria-describedby="map-resize-status"></button><span id="map-resize-status" class="sr-only" aria-live="polite"></span>
         <div class="hw-legend"><span class="hw-key"><i style="color:light-dark(#d0672f,#ffac75)"></i>active conversation</span><span class="hw-key"><i style="color:light-dark(#bdb3a5,#70695f)"></i>allowed route</span><span>arrows indicate two-way exchange</span></div>
       </div>
-      <div class="hw-panel hw-conv"><h3 id="stream-title">Live conversation · Shot planner ↔ Media generator</h3><div class="hw-sub" id="stream-sub">Current route is highlighted on the map.</div><div class="hw-legend" aria-label="Agent radio controls"><span class="hw-key"><i style="color:light-dark(#d0672f,#ffac75)"></i>Agent radio on</span><button class="btn btn-ghost" id="radio-toggle" type="button" aria-pressed="true">Mute</button></div><div class="hw-stream" id="stream" aria-live="polite">
-        <div class="msg active"><small>Shot planner → Media generator · now</small><p>Send shot intent: Jesus invites Levi; Levi rises, then follows behind Jesus.</p></div>
-        <div class="msg active"><small>Media generator → Shot planner · now</small><p>Accepted. Waiting for approved keyframe and character constraints.</p></div>
-        <div class="msg"><small>Supervisor → Gemini critic · completed</small><p>Queue the resulting clip for motion, identity, and intent checks.</p></div>
-        <div class="msg"><small>Creative director → Shot planner · completed</small><p>Keep the action simple and preserve the established character identity.</p></div>
+      <div class="hw-panel hw-conv"><h3 id="stream-title">Live conversation - Shot planner <-> Media generator</h3><div class="hw-sub" id="stream-sub">Current route is highlighted on the map.</div><div class="hw-legend" aria-label="Agent radio controls"><span class="hw-key"><i style="color:light-dark(#d0672f,#ffac75)"></i>Agent radio on</span><button class="btn btn-ghost" id="radio-toggle" type="button" aria-pressed="true">Mute</button></div><div class="hw-stream" id="stream" aria-live="polite">
+        <div class="msg active"><small>Shot planner -> Media generator - now</small><p>Send shot intent: Jesus invites Levi; Levi rises, then follows behind Jesus.</p></div>
+        <div class="msg active"><small>Media generator -> Shot planner - now</small><p>Accepted. Waiting for approved keyframe and character constraints.</p></div>
+        <div class="msg"><small>Supervisor -> Gemini video analyzer - completed</small><p>Queue the resulting clip for motion, identity, and intent checks.</p></div>
+        <div class="msg"><small>Creative director -> Shot planner - completed</small><p>Keep the action simple and preserve the established character identity.</p></div>
       </div></div>
     </div>
+    <dialog class="portrait-dialog" id="portrait-dialog" aria-labelledby="portrait-name"><div class="portrait-frame"><button class="portrait-close" type="button" aria-label="Close agent profile">x</button><img id="portrait-image" alt=""><section class="portrait-details"><p class="portrait-proposed">Proposed HeartWord responsibilities</p><h2 id="portrait-name"></h2><p class="portrait-role" id="portrait-role"></p><ul class="portrait-responsibilities" id="portrait-responsibilities"><li class="portrait-loading">Loading proposed responsibilities…</li></ul></section></div></dialog>
     <div class="hw-foot"><div class="hw-mini"><b>Run state</b><span>One active route; one agent waiting on inputs.</span></div><div class="hw-mini"><b>Agent radio</b><span>One assigned voice per agent; queued speech prevents everyone talking at once.</span></div><div class="hw-mini"><b>Traceability</b><span>Every message is attached to its route, job, and resulting asset.</span></div></div>
+    <section class="review-layer" aria-labelledby="review-layer-title"><div class="review-head"><div><h3 id="review-layer-title">Review and Challenge Layer</h3><div class="hw-sub">Declared gate reviewers. Dashed paths are planned review handoffs, not live runtime conversations.</div></div><span class="review-status">planned review gates</span></div><div class="review-grid">
+      <button class="review-card has-portrait" data-portrait="../docs/assets/control-room/agent-portraits/vera-inspector.png" data-portrait-name="Vera - Quality Critic / Inspector" type="button" aria-label="Vera, Quality Critic and Inspector. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/vera-inspector.png" alt="Vera portrait"><span><strong>Vera</strong><span>Quality Critic / Inspector</span><span>asset review evidence</span></span></button>
+      <button class="review-card has-portrait" data-portrait="../docs/assets/control-room/agent-portraits/orion-gemini-video-analyzer.png" data-portrait-name="Orion - Gemini Video Analyzer / Timekeeper" type="button" aria-label="Orion, Gemini Video Analyzer and Timekeeper. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/orion-gemini-video-analyzer.png" alt="Orion portrait"><span><strong>Orion</strong><span>Gemini Video Analyzer / Timekeeper</span><span>independent clip findings</span></span></button>
+      <button class="review-card has-portrait" data-portrait="../docs/assets/control-room/agent-portraits/miriam-scripture-reviewer.png" data-portrait-name="Miriam - Scripture Reviewer" type="button" aria-label="Miriam, Scripture Reviewer. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/miriam-scripture-reviewer.png" alt="Miriam portrait"><span><strong>Miriam</strong><span>Scripture Reviewer</span><span>cited fidelity review</span></span></button>
+      <button class="review-card has-portrait" data-portrait="../docs/assets/control-room/agent-portraits/ada-scripture-fidelity-challenger.png" data-portrait-name="Ada Rowe - Scripture Fidelity Challenger" type="button" aria-label="Ada Rowe, Scripture Fidelity Challenger. Planned review role. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/ada-scripture-fidelity-challenger.png" alt="Ada Rowe portrait"><span><span class="planned-tag">planned review role</span><strong>Ada Rowe</strong><span>Scripture Fidelity Challenger</span><span>Adversarial check for added, distorted, or causally omitted meaning.</span></span></button>
+      <button class="review-card has-portrait" data-portrait="../docs/assets/control-room/agent-portraits/theo-dramatic-impact-challenger.png" data-portrait-name="Theo Maren - Dramatic Impact Challenger" type="button" aria-label="Theo Maren, Dramatic Impact Challenger. Planned review role. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/theo-dramatic-impact-challenger.png" alt="Theo Maren portrait"><span><span class="planned-tag">planned review role</span><strong>Theo Maren</strong><span>Dramatic Impact Challenger</span><span>Tests viewer clarity, narrative movement, and communicative visual intent.</span></span></button>
+      <button class="review-card has-portrait" data-portrait="../docs/assets/control-room/agent-portraits/cora-production-feasibility-challenger.png" data-portrait-name="Cora Bellamy - Production Feasibility Challenger" type="button" aria-label="Cora Bellamy, Production Feasibility Challenger. Planned review role. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/cora-production-feasibility-challenger.png" alt="Cora Bellamy portrait"><span><span class="planned-tag">planned review role</span><strong>Cora Bellamy</strong><span>Production Feasibility Challenger</span><span>Tests generation risk, continuity fragility, and cost or schedule exposure.</span></span></button>
+    </div><div class="review-routes" aria-label="Declared review gate paths"><span class="review-route"><i></i>Treatment and scene proposal: all three challengers -> Mabel</span><span class="review-route"><i></i>Changed shot or high-risk clip: relevant challenger -> Mabel and owner</span><span class="review-route"><i></i>Rough cut: all three challengers -> Mabel -> producer hold if unresolved</span></div></section>
+    <section class="supporting-crew" aria-labelledby="supporting-crew-title"><div class="supporting-head"><div><h3 id="supporting-crew-title">Supporting Production Crew</h3><div class="hw-sub">Portrait references only. These ten roles are not active nodes or live conversation routes in this prototype.</div></div></div><div class="supporting-grid">
+      <button class="supporting-card" data-portrait="../docs/assets/control-room/agent-portraits/june-production-director.png" data-portrait-name="June - Production Director" type="button" aria-label="June, Production Director. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/june-production-director.png" alt="June portrait"><span><strong>June</strong><span>Production Director</span></span></button>
+      <button class="supporting-card" data-portrait="../docs/assets/control-room/agent-portraits/leon-cinematographer.png" data-portrait-name="Leon - Cinematographer" type="button" aria-label="Leon, Cinematographer. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/leon-cinematographer.png" alt="Leon portrait"><span><strong>Leon</strong><span>Cinematographer</span></span></button>
+      <button class="supporting-card" data-portrait="../docs/assets/control-room/agent-portraits/tessa-choreography.png" data-portrait-name="Tessa - Choreographer" type="button" aria-label="Tessa, Choreographer. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/tessa-choreography.png" alt="Tessa portrait"><span><strong>Tessa</strong><span>Choreographer</span></span></button>
+      <button class="supporting-card" data-portrait="../docs/assets/control-room/agent-portraits/arlo-staging.png" data-portrait-name="Arlo - Staging Director" type="button" aria-label="Arlo, Staging Director. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/arlo-staging.png" alt="Arlo portrait"><span><strong>Arlo</strong><span>Staging Director</span></span></button>
+      <button class="supporting-card" data-portrait="../docs/assets/control-room/agent-portraits/nell-editor.png" data-portrait-name="Nell - Editor" type="button" aria-label="Nell, Editor. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/nell-editor.png" alt="Nell portrait"><span><strong>Nell</strong><span>Editor</span></span></button>
+      <button class="supporting-card" data-portrait="../docs/assets/control-room/agent-portraits/sam-sound-director.png" data-portrait-name="Sam - Sound Director" type="button" aria-label="Sam, Sound Director. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/sam-sound-director.png" alt="Sam portrait"><span><strong>Sam</strong><span>Sound Director</span></span></button>
+      <button class="supporting-card" data-portrait="../docs/assets/control-room/agent-portraits/miriam-scripture-reviewer.png" data-portrait-name="Miriam - Scripture Reviewer" type="button" aria-label="Miriam, Scripture Reviewer. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/miriam-scripture-reviewer.png" alt="Miriam portrait"><span><strong>Miriam</strong><span>Scripture Reviewer</span></span></button>
+      <button class="supporting-card" data-portrait="../docs/assets/control-room/agent-portraits/dottie-casting-director.png" data-portrait-name="Dottie - Casting Director" type="button" aria-label="Dottie, Casting Director. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/dottie-casting-director.png" alt="Dottie portrait"><span><strong>Dottie</strong><span>Casting Director</span></span></button>
+      <button class="supporting-card" data-portrait="../docs/assets/control-room/agent-portraits/kit-lip-sync-specialist.png" data-portrait-name="Kit - Lip-Sync Specialist" type="button" aria-label="Kit, Lip-Sync Specialist. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/kit-lip-sync-specialist.png" alt="Kit portrait"><span><strong>Kit</strong><span>Lip-Sync Specialist</span></span></button>
+      <button class="supporting-card" data-portrait="../docs/assets/control-room/agent-portraits/benny-assembly-lead.png" data-portrait-name="Benny - Assembly Lead" type="button" aria-label="Benny, Assembly Lead. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/benny-assembly-lead.png" alt="Benny portrait"><span><strong>Benny</strong><span>Assembly Lead</span></span></button>
+    </div></section>
   </div>
   <script>
-    (() => { const root=document.getElementById('heartword-agent-control'); const title=root.querySelector('#stream-title'); const sub=root.querySelector('#stream-sub'); const stream=root.querySelector('#stream'); const nodes=root.querySelectorAll('.node'); const edges=root.querySelectorAll('.edge'); const radio=root.querySelector('#radio-toggle'); const samples={Supervisor:['Supervisor','This agent is the deterministic authority for run state, retries, gates, and escalation.'], 'Creative director':['Creative director','This agent proposes creative direction and never applies unrestricted edits.'], 'Shot planner':['Shot planner ↔ Media generator','The current route carries a structured shot request and the generator response.'], 'Media generator':['Media generator ↔ Critic','Generated media is sent to the critic with its exact intended action and constraints.'], 'Critic':['Critic ↔ Gemini video critic','The critic requests an independent video pass with timestamped findings.'], 'Gemini video critic':['Gemini video critic ↔ Supervisor','The reviewer returns a pass or fail, issues by timestamp, and suggested repairs.']}; radio.addEventListener('click',()=>{const on=radio.getAttribute('aria-pressed')==='true';radio.setAttribute('aria-pressed',String(!on));radio.textContent=on?'Unmute':'Mute';}); nodes.forEach(n=>n.addEventListener('click',()=>{nodes.forEach(x=>x.classList.remove('active')); n.classList.add('active'); edges.forEach(x=>x.classList.remove('active')); const [heading,detail]=samples[n.dataset.agent]; title.textContent='Conversation focus · '+heading; sub.textContent=detail; stream.querySelectorAll('.msg').forEach((m,i)=>m.classList.toggle('active',i<2));})); })();
+    (() => { const root=document.getElementById('heartword-agent-control'); const grid=root.querySelector('.hw-grid'); const map=root.querySelector('.hw-map'); const resizeHandle=root.querySelector('#map-resize-handle'); const resizeStatus=root.querySelector('#map-resize-status'); const title=root.querySelector('#stream-title'); const sub=root.querySelector('#stream-sub'); const stream=root.querySelector('#stream'); const nodes=root.querySelectorAll('.node'); const edges=root.querySelectorAll('.edge'); const radio=root.querySelector('#radio-toggle'); const dialog=root.querySelector('#portrait-dialog'); const portrait=root.querySelector('#portrait-image'); const caption=root.querySelector('#portrait-caption'); const close=root.querySelector('.portrait-close'); const samples={Supervisor:['Supervisor','This agent is the deterministic authority for run state, retries, gates, and escalation.'], 'Creative director':['Creative director','This agent proposes creative direction and never applies unrestricted edits.'], 'Shot planner':['Shot planner <-> Media generator','The current route carries a structured shot request and the generator response.'], 'Media generator':['Media generator <-> Critic','Generated media is sent to the critic with its exact intended action and constraints.'], 'Critic':['Critic <-> Gemini video analyzer','The critic requests an independent video pass with timestamped findings.'], 'Gemini video analyzer':['Gemini video analyzer <-> Supervisor','The reviewer returns a pass or fail, issues by timestamp, and suggested repairs.']}; const clamp=(value,min,max)=>Math.max(min,Math.min(max,value)); const resizeMap=(requestedWidth,requestedHeight)=>{const minWidth=480,minHeight=390,maxWidth=Math.max(minWidth,grid.clientWidth),maxHeight=Math.max(minHeight,window.innerHeight-96);const width=clamp(requestedWidth,minWidth,maxWidth),height=clamp(requestedHeight,minHeight,maxHeight),wide=width>=maxWidth-8;map.style.minHeight=height+'px';grid.classList.toggle('map-wide',wide);if(wide){map.style.width='100%';grid.style.gridTemplateColumns='1fr';}else{map.style.width=width+'px';grid.style.gridTemplateColumns=width+'px minmax(270px,1fr)';}const label=`Agent interaction map ${Math.round(width)} by ${Math.round(height)} pixels${wide?', expanded across the control room':''}.`;resizeStatus.textContent=label;};const openPortrait=trigger=>{portrait.src=trigger.dataset.portrait;portrait.alt=trigger.dataset.portraitName+' portrait';caption.textContent=trigger.dataset.portraitName;dialog.showModal();};let resizeStart;resizeHandle.addEventListener('pointerdown',event=>{event.preventDefault();const box=map.getBoundingClientRect();resizeStart={x:event.clientX,y:event.clientY,width:box.width,height:box.height};resizeHandle.setPointerCapture(event.pointerId);});resizeHandle.addEventListener('pointermove',event=>{if(!resizeStart)return;resizeMap(resizeStart.width+event.clientX-resizeStart.x,resizeStart.height+event.clientY-resizeStart.y);});resizeHandle.addEventListener('pointerup',event=>{resizeStart=null;resizeHandle.releasePointerCapture(event.pointerId);});resizeHandle.addEventListener('pointercancel',()=>{resizeStart=null;});resizeHandle.addEventListener('keydown',event=>{const step=event.shiftKey?100:40;const box=map.getBoundingClientRect();let width=box.width,height=box.height;if(event.key==='ArrowRight')width+=step;else if(event.key==='ArrowLeft')width-=step;else if(event.key==='ArrowDown')height+=step;else if(event.key==='ArrowUp')height-=step;else return;event.preventDefault();resizeMap(width,height);});radio.addEventListener('click',()=>{const on=radio.getAttribute('aria-pressed')==='true';radio.setAttribute('aria-pressed',String(!on));radio.textContent=on?'Unmute':'Mute';});close.addEventListener('click',()=>dialog.close());dialog.addEventListener('click',event=>{if(event.target===dialog) dialog.close();});nodes.forEach(n=>n.addEventListener('click',()=>{nodes.forEach(x=>x.classList.remove('active'));n.classList.add('active');edges.forEach(x=>x.classList.remove('active'));const [heading,detail]=samples[n.dataset.agent];title.textContent='Conversation focus - '+heading;sub.textContent=detail;stream.querySelectorAll('.msg').forEach((m,i)=>m.classList.toggle('active',i<2));openPortrait(n);}));root.querySelectorAll('.supporting-card').forEach(card=>card.addEventListener('click',()=>openPortrait(card))); })();
+    (() => {
+      const root = document.getElementById('heartword-agent-control');
+      const dialog = root.querySelector('#portrait-dialog');
+      const portrait = root.querySelector('#portrait-image');
+      const portraitName = root.querySelector('#portrait-name');
+      const portraitRole = root.querySelector('#portrait-role');
+      const responsibilities = root.querySelector('#portrait-responsibilities');
+      const profileApi = location.port === '5173' ? 'http://127.0.0.1:4000/api/control-room' : '/api/control-room';
+      const openProposedProfile = async card => {
+        const agent = card.dataset.addressName || card.dataset.portraitName?.split(' - ')[0] || '';
+        portrait.src = card.dataset.portrait;
+        portrait.alt = `${card.dataset.portraitName || agent} portrait`;
+        portraitName.textContent = agent;
+        portraitRole.textContent = 'Loading proposed role…';
+        responsibilities.replaceChildren(Object.assign(document.createElement('li'), { className:'portrait-loading', textContent:'Loading proposed responsibilities…' }));
+        dialog.showModal();
+        try {
+          const response = await fetch(`${profileApi}/responsibilities/${encodeURIComponent(agent)}`);
+          if (!response.ok) throw new Error('profile unavailable');
+          const profile = await response.json();
+          portraitName.textContent = profile.agentName;
+          portraitRole.textContent = profile.role;
+          responsibilities.replaceChildren(...profile.responsibilities.map(item => Object.assign(document.createElement('li'), { textContent:item })));
+        } catch {
+          portraitRole.textContent = 'Proposed HeartWord role';
+          responsibilities.replaceChildren(Object.assign(document.createElement('li'), { className:'portrait-loading', textContent:'This proposed responsibility profile is unavailable right now.' }));
+        }
+      };
+      document.addEventListener('click', event => {
+        const card = event.target.closest('.node, .supporting-card, .review-card.has-portrait');
+        if (!card || !root.contains(card)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        openProposedProfile(card);
+      }, true);
+    })();
+    (() => {
+      const root = document.getElementById('heartword-agent-control');
+      const map = root.querySelector('.hw-map');
+      const cards = [...map.querySelectorAll('.node, .supporting-map-card')];
+      const redTeamPositions = { Ada:{ x:31.5, y:72.5 }, Theo:{ x:38.5, y:72.5 }, Cora:{ x:45.5, y:72.5 } };
+      const placeCards = () => {
+        const box = map.getBoundingClientRect();
+        if (!box.width || !box.height) return;
+        const centerX = 50;
+        const centerY = 53;
+        const radius = Math.max(180, Math.min(box.width, box.height) * .47);
+        cards.forEach((card, index) => {
+          if (card.dataset.manualPosition === 'true' || card.dataset.focusRestore === 'true') return;
+          const redTeamPosition = redTeamPositions[card.dataset.mapSlot];
+          if (redTeamPosition) {
+            card.style.left = `${redTeamPosition.x}%`;
+            card.style.top = `${redTeamPosition.y}%`;
+            card.style.right = 'auto';
+            return;
+          }
+          const angle = -Math.PI / 2 + (index / cards.length) * Math.PI * 2;
+          card.style.left = `${centerX + Math.cos(angle) * radius / box.width * 100}%`;
+          card.style.top = `${centerY + Math.sin(angle) * radius / box.height * 100}%`;
+          card.style.right = 'auto';
+        });
+      };
+      new ResizeObserver(placeCards).observe(map);
+      requestAnimationFrame(placeCards);
+    })();
+    (() => {
+      const root = document.getElementById('heartword-agent-control');
+      const map = root.querySelector('.hw-map');
+      const cards = [...map.querySelectorAll('.node, .supporting-map-card')];
+      const storageKey = 'heartword-control-room-card-positions-v1';
+      let savedPositions = {};
+      try { savedPositions = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { savedPositions = {}; }
+      const identityFor = card => card.dataset.portraitName || card.getAttribute('aria-label');
+      const persist = () => localStorage.setItem(storageKey, JSON.stringify(savedPositions));
+      const applyPosition = (card, position) => {
+        card.style.left = `${position.x}%`;
+        card.style.top = `${position.y}%`;
+        card.style.right = 'auto';
+        card.dataset.manualPosition = 'true';
+      };
+      cards.forEach(card => {
+        const saved = savedPositions[identityFor(card)];
+        if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) applyPosition(card, saved);
+        let drag = null;
+        card.addEventListener('pointerdown', event => {
+          if (event.button !== 0) return;
+          drag = { startX:event.clientX, startY:event.clientY, moved:false };
+          card.setPointerCapture(event.pointerId);
+        });
+        card.addEventListener('pointermove', event => {
+          if (!drag) return;
+          if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 4) drag.moved = true;
+          if (!drag.moved) return;
+          event.preventDefault();
+          const box = map.getBoundingClientRect();
+          const position = {
+            x: Math.max(4, Math.min(96, (event.clientX - box.left) / box.width * 100)),
+            y: Math.max(4, Math.min(96, (event.clientY - box.top) / box.height * 100))
+          };
+          applyPosition(card, position);
+          savedPositions[identityFor(card)] = position;
+        });
+        card.addEventListener('pointerup', event => {
+          if (!drag) return;
+          const moved = drag.moved;
+          drag = null;
+          if (card.hasPointerCapture(event.pointerId)) card.releasePointerCapture(event.pointerId);
+          if (moved) {
+            persist();
+            card.dataset.dragged = 'true';
+          }
+        });
+        card.addEventListener('pointercancel', () => { drag = null; });
+        card.addEventListener('click', event => {
+          if (card.dataset.dragged !== 'true') return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          delete card.dataset.dragged;
+        }, true);
+      });
+      const compactLayoutVersion = 'heartword-control-room-compact-grid-v3';
+      const compactRows = [
+        ['Mabel', 'Rufus', 'Pippa', 'Gus', 'Vera', 'Orion'],
+        ['June', 'Leon', 'Tessa', 'Arlo', 'Nell', 'Sam'],
+        ['Miriam', 'Dottie', 'Kit', 'Benny'],
+        ['Ada', 'Theo', 'Cora']
+      ];
+      const applyCompactLayout = () => {
+        if (localStorage.getItem(compactLayoutVersion) === 'done') return;
+        const box = map.getBoundingClientRect();
+        if (!box.width || !box.height) return;
+        compactRows.forEach((row, rowIndex) => row.forEach((name, columnIndex) => {
+          const card = cards.find(candidate => candidate.dataset.addressName === name);
+          if (!card) return;
+          const position = {
+            x: 50 + (columnIndex - (row.length - 1) / 2) * 7,
+            y: 30.5 + rowIndex * 13
+          };
+          applyPosition(card, position);
+          savedPositions[identityFor(card)] = position;
+        }));
+        persist();
+        localStorage.setItem(compactLayoutVersion, 'done');
+        root.dispatchEvent(new Event('heartword:refresh-connectors'));
+      };
+      const addFilmCriticsToSavedLayout = () => {
+        const defaults = { 'Gene Siskel': { x:61.5, y:72.5 }, 'Roger Ebert': { x:68.5, y:72.5 } };
+        let changed = false;
+        Object.entries(defaults).forEach(([name, position]) => {
+          const card = cards.find(candidate => candidate.dataset.addressName === name);
+          if (!card || savedPositions[identityFor(card)]) return;
+          applyPosition(card, position);
+          savedPositions[identityFor(card)] = position;
+          changed = true;
+        });
+        if (changed) {
+          persist();
+          root.dispatchEvent(new Event('heartword:refresh-connectors'));
+        }
+      };
+      const filmCriticsLayoutVersion = 'heartword-control-room-production-crew-frame-v3';
+      const placeFilmCriticsAlongsideRedTeam = () => {
+        if (localStorage.getItem(filmCriticsLayoutVersion) === 'done') return;
+        const positions = { Ada: { x:31.5, y:72.5 }, Theo: { x:38.5, y:72.5 }, Cora: { x:45.5, y:72.5 }, 'Gene Siskel': { x:61.5, y:72.5 }, 'Roger Ebert': { x:68.5, y:72.5 } };
+        Object.entries(positions).forEach(([name, position]) => {
+          const card = cards.find(candidate => candidate.dataset.addressName === name);
+          if (!card) return;
+          applyPosition(card, position);
+          savedPositions[identityFor(card)] = position;
+        });
+        persist();
+        localStorage.setItem(filmCriticsLayoutVersion, 'done');
+        root.dispatchEvent(new Event('heartword:refresh-connectors'));
+      };
+      const castOnlyLayoutVersion = 'heartword-control-room-cast-only-grid-v4';
+      const castOnlyRows = [
+        { y:18, names:['Mabel', 'Rufus', 'Pippa', 'Gus', 'Vera', 'Orion', 'June', 'Leon'], start:15, step:10 },
+        { y:50, names:['Tessa', 'Arlo', 'Nell', 'Sam', 'Miriam', 'Dottie', 'Kit', 'Benny'], start:15, step:10 },
+        { y:82, names:['Ada', 'Theo', 'Cora'], start:29, step:10 },
+        { y:82, names:['Gene Siskel', 'Roger Ebert'], start:62, step:10 }
+      ];
+      const applyCastOnlyLayout = () => {
+        if (!root.classList.contains('presentation-clean') || localStorage.getItem(castOnlyLayoutVersion) === 'done') return;
+        castOnlyRows.forEach(({ y, names, start, step }) => names.forEach((name, index) => {
+          const card = cards.find(candidate => candidate.dataset.addressName === name);
+          if (!card) return;
+          const position = { x:start + index * step, y };
+          applyPosition(card, position);
+          savedPositions[identityFor(card)] = position;
+        }));
+        persist();
+        localStorage.setItem(castOnlyLayoutVersion, 'done');
+        root.dispatchEvent(new Event('heartword:refresh-connectors'));
+      };
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        applyCompactLayout();
+        addFilmCriticsToSavedLayout();
+        placeFilmCriticsAlongsideRedTeam();
+        applyCastOnlyLayout();
+      }));
+    })();
+    (() => {
+      const root = document.getElementById('heartword-agent-control');
+      const map = root.querySelector('.hw-map');
+      const cards = [...map.querySelectorAll('.node, .supporting-map-card')]
+        .filter(card => !card.classList.contains('red-team-map-card') && !card.classList.contains('film-critics-map-card'));
+      const group = document.createElement('div');
+      group.className = 'production-crew-group';
+      group.setAttribute('aria-label', 'Production Crew group');
+      map.append(group);
+      const refreshGroup = () => {
+        if (map.classList.contains('cast-focus-active')) return;
+        const mapBox = map.getBoundingClientRect();
+        const boxes = cards.map(card => card.getBoundingClientRect()).filter(box => box.width && box.height);
+        if (!boxes.length || !mapBox.width || !mapBox.height) return;
+        const padding = 10;
+        const left = Math.min(...boxes.map(box => box.left)) - mapBox.left - padding;
+        const top = Math.min(...boxes.map(box => box.top)) - mapBox.top - padding;
+        const right = Math.max(...boxes.map(box => box.right)) - mapBox.left + padding;
+        const bottom = Math.max(...boxes.map(box => box.bottom)) - mapBox.top + padding;
+        group.style.left = `${Math.max(0, left)}px`;
+        group.style.top = `${Math.max(0, top)}px`;
+        group.style.width = `${Math.min(mapBox.width, right) - Math.max(0, left)}px`;
+        group.style.height = `${Math.min(mapBox.height, bottom) - Math.max(0, top)}px`;
+      };
+      let pending = false;
+      const schedule = () => {
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(() => { pending = false; refreshGroup(); });
+      };
+      new ResizeObserver(schedule).observe(map);
+      map.addEventListener('pointermove', schedule);
+      map.addEventListener('pointerup', schedule);
+      root.addEventListener('heartword:refresh-connectors', schedule);
+      window.addEventListener('heartword:focus-cast', schedule);
+      window.addEventListener('heartword:clear-cast-focus', () => setTimeout(schedule, 120));
+      requestAnimationFrame(schedule);
+    })();
+    (() => {
+      const root = document.getElementById('heartword-agent-control');
+      const map = root.querySelector('.hw-map');
+      const cards = [...map.querySelectorAll('.red-team-map-card')];
+      const group = document.createElement('div');
+      group.className = 'red-team-group';
+      group.setAttribute('aria-label', 'Red Team group');
+      map.append(group);
+      const refreshGroup = () => {
+        if (map.classList.contains('cast-focus-active')) return;
+        const mapBox = map.getBoundingClientRect();
+        const boxes = cards.map(card => card.getBoundingClientRect()).filter(box => box.width && box.height);
+        if (!boxes.length || !mapBox.width || !mapBox.height) return;
+        const padding = 10;
+        const left = Math.min(...boxes.map(box => box.left)) - mapBox.left - padding;
+        const top = Math.min(...boxes.map(box => box.top)) - mapBox.top - padding;
+        const right = Math.max(...boxes.map(box => box.right)) - mapBox.left + padding;
+        const bottom = Math.max(...boxes.map(box => box.bottom)) - mapBox.top + padding;
+        group.style.left = `${Math.max(0, left)}px`;
+        group.style.top = `${Math.max(0, top)}px`;
+        group.style.width = `${Math.min(mapBox.width, right) - Math.max(0, left)}px`;
+        group.style.height = `${Math.min(mapBox.height, bottom) - Math.max(0, top)}px`;
+      };
+      let pending = false;
+      const schedule = () => {
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(() => { pending = false; refreshGroup(); });
+      };
+      new ResizeObserver(schedule).observe(map);
+      map.addEventListener('pointermove', schedule);
+      map.addEventListener('pointerup', schedule);
+      root.addEventListener('heartword:refresh-connectors', schedule);
+      window.addEventListener('heartword:focus-cast', schedule);
+      window.addEventListener('heartword:clear-cast-focus', () => setTimeout(schedule, 120));
+      requestAnimationFrame(schedule);
+    })();
+    (() => {
+      const root = document.getElementById('heartword-agent-control');
+      const map = root.querySelector('.hw-map');
+      const cards = [...map.querySelectorAll('.film-critics-map-card')];
+      const group = document.createElement('div');
+      group.className = 'film-critics-group';
+      group.setAttribute('aria-label', 'Film Critics group');
+      map.append(group);
+      const refreshGroup = () => {
+        if (map.classList.contains('cast-focus-active')) return;
+        const mapBox = map.getBoundingClientRect();
+        const boxes = cards.map(card => card.getBoundingClientRect()).filter(box => box.width && box.height);
+        if (!boxes.length || !mapBox.width || !mapBox.height) return;
+        const padding = 10;
+        const left = Math.min(...boxes.map(box => box.left)) - mapBox.left - padding;
+        const top = Math.min(...boxes.map(box => box.top)) - mapBox.top - padding;
+        const right = Math.max(...boxes.map(box => box.right)) - mapBox.left + padding;
+        const bottom = Math.max(...boxes.map(box => box.bottom)) - mapBox.top + padding;
+        group.style.left = `${Math.max(0, left)}px`;
+        group.style.top = `${Math.max(0, top)}px`;
+        group.style.width = `${Math.min(mapBox.width, right) - Math.max(0, left)}px`;
+        group.style.height = `${Math.min(mapBox.height, bottom) - Math.max(0, top)}px`;
+      };
+      let pending = false;
+      const schedule = () => {
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(() => { pending = false; refreshGroup(); });
+      };
+      new ResizeObserver(schedule).observe(map);
+      map.addEventListener('pointermove', schedule);
+      map.addEventListener('pointerup', schedule);
+      root.addEventListener('heartword:refresh-connectors', schedule);
+      window.addEventListener('heartword:focus-cast', schedule);
+      window.addEventListener('heartword:clear-cast-focus', () => setTimeout(schedule, 120));
+      requestAnimationFrame(schedule);
+    })();
+    (() => {
+      const root = document.getElementById('heartword-agent-control');
+      const grid = root.querySelector('.hw-grid');
+      const map = root.querySelector('.hw-map');
+      const svg = map.querySelector('svg');
+      const edgePoints = (from, to) => {
+        const fromCenter = { x: from.x + from.width / 2, y: from.y + from.height / 2 };
+        const toCenter = { x: to.x + to.width / 2, y: to.y + to.height / 2 };
+        const dx = toCenter.x - fromCenter.x;
+        const dy = toCenter.y - fromCenter.y;
+        const boundaryPoint = (rect, center, directionX, directionY) => {
+          const scale = 1 / Math.max(Math.abs(directionX) / (rect.width / 2), Math.abs(directionY) / (rect.height / 2));
+          return { x: center.x + directionX * scale, y: center.y + directionY * scale };
+        };
+        return {
+          start: boundaryPoint(from, fromCenter, dx, dy),
+          end: boundaryPoint(to, toCenter, -dx, -dy)
+        };
+      };
+      const cubicPoint = (start, firstControl, secondControl, end) => {
+        const at = .5;
+        const inverse = 1 - at;
+        return {
+          x: inverse ** 3 * start.x + 3 * inverse ** 2 * at * firstControl.x + 3 * inverse * at ** 2 * secondControl.x + at ** 3 * end.x,
+          y: inverse ** 3 * start.y + 3 * inverse ** 2 * at * firstControl.y + 3 * inverse * at ** 2 * secondControl.y + at ** 3 * end.y
+        };
+      };
+      const refreshConnectors = () => {
+        let mapBox = map.getBoundingClientRect();
+        if (map.classList.contains('cast-focus-active')) {
+          svg.setAttribute('viewBox', `0 0 ${mapBox.width} ${mapBox.height}`);
+          return;
+        }
+        const rootBox = root.getBoundingClientRect();
+        if (!grid.classList.contains('map-wide') && mapBox.width >= rootBox.width * .72) {
+          grid.classList.add('map-wide');
+          grid.style.gridTemplateColumns = '1fr';
+          map.style.width = '100%';
+          mapBox = map.getBoundingClientRect();
+        }
+        if (grid.classList.contains('map-wide') && !root.classList.contains('presentation-clean')) {
+          const wideScale = Math.max(1, Math.sqrt(mapBox.width / 600));
+          const targetMinHeight = 900 * wideScale;
+          if (mapBox.height < targetMinHeight) {
+            map.style.setProperty('min-height', `${targetMinHeight}px`, 'important');
+            mapBox = map.getBoundingClientRect();
+          }
+        }
+        const scale = Math.max(1, Math.min(mapBox.width / 600, mapBox.height / 480));
+        map.style.setProperty('--map-scale', scale.toFixed(3));
+        svg.setAttribute('viewBox', `0 0 ${mapBox.width} ${mapBox.height}`);
+        root.querySelectorAll('.edge').forEach(edge => {
+          const fromNode = map.querySelector('.' + edge.dataset.from);
+          const toNode = map.querySelector('.' + edge.dataset.to);
+          if (!fromNode || !toNode) return;
+          const fromBox = fromNode.getBoundingClientRect();
+          const toBox = toNode.getBoundingClientRect();
+          const from = { x: fromBox.left - mapBox.left, y: fromBox.top - mapBox.top, width: fromBox.width, height: fromBox.height };
+          const to = { x: toBox.left - mapBox.left, y: toBox.top - mapBox.top, width: toBox.width, height: toBox.height };
+          const { start, end } = edgePoints(from, to);
+          const dx = end.x - start.x;
+          const dy = end.y - start.y;
+          const length = Math.hypot(dx, dy) || 1;
+          const bend = Number(edge.dataset.bend || 0);
+          const normal = { x: -dy / length * bend, y: dx / length * bend };
+          const firstControl = { x: start.x + dx * .36 + normal.x, y: start.y + dy * .36 + normal.y };
+          const secondControl = { x: start.x + dx * .64 + normal.x, y: start.y + dy * .64 + normal.y };
+          edge.setAttribute('d', `M ${start.x} ${start.y} C ${firstControl.x} ${firstControl.y} ${secondControl.x} ${secondControl.y} ${end.x} ${end.y}`);
+          const label = svg.querySelector(`[data-label-for="${edge.dataset.route}"]`);
+          if (label) {
+            const midpoint = cubicPoint(start, firstControl, secondControl, end);
+            label.setAttribute('x', midpoint.x);
+            label.setAttribute('y', midpoint.y - 7);
+            label.setAttribute('text-anchor', 'middle');
+          }
+        });
+      };
+      let pendingRefresh = false;
+      const scheduleRefresh = () => {
+        if (pendingRefresh) return;
+        pendingRefresh = true;
+        requestAnimationFrame(() => { pendingRefresh = false; refreshConnectors(); });
+      };
+      new ResizeObserver(scheduleRefresh).observe(map);
+      window.addEventListener('resize', scheduleRefresh);
+      root.addEventListener('heartword:refresh-connectors', scheduleRefresh);
+      scheduleRefresh();
+    })();
+    (() => {
+      const root = document.getElementById('heartword-agent-control');
+      const dialog = root.querySelector('#portrait-dialog');
+      const portrait = root.querySelector('#portrait-image');
+      const caption = root.querySelector('#portrait-caption');
+      root.querySelectorAll('.review-card.has-portrait').forEach(card => card.addEventListener('click', () => {
+        portrait.src = card.dataset.portrait;
+        portrait.alt = card.dataset.portraitName + ' portrait';
+        caption.textContent = card.dataset.portraitName;
+        dialog.showModal();
+      }));
+    })();
+    (() => {
+      const root = document.getElementById('heartword-agent-control');
+      const form = root.querySelector('#producer-address-form');
+      const input = root.querySelector('#producer-address-input');
+      const mic = root.querySelector('#producer-address-mic');
+      const status = root.querySelector('#producer-address-status');
+      const voiceAuditionPanel = root.querySelector('#voice-audition');
+      const names = ['Mabel', 'Rufus', 'Pippa', 'Gus', 'Vera', 'Orion', 'June', 'Leon', 'Tessa', 'Arlo', 'Nell', 'Sam', 'Miriam', 'Dottie', 'Kit', 'Benny', 'Ada', 'Theo', 'Cora', 'Gene Siskel', 'Roger Ebert'];
+      const cards = [...root.querySelectorAll('.node, .review-card.has-portrait, .supporting-card')].map(card => {
+        const identity = card.dataset.portraitName || card.textContent;
+        const name = names.find(candidate => new RegExp(`\\b${candidate}\\b`, 'i').test(identity));
+        if (name) card.dataset.addressName = name;
+        return card;
+      }).filter(card => card.dataset.addressName);
+      // Voice transcription may spell Mabel phonetically.  Treat these as display
+      // aliases only; they still highlight the same reference card and never send work.
+      const addressAliases = {
+        Mabel: ['Mabel', 'Mable', 'Bable', 'Babel'],
+        'Gene Siskel': ['Gene Siskel', 'Siskel'],
+        'Roger Ebert': ['Roger Ebert', 'Ebert']
+      };
+      const listenerBase = location.port === '5173' ? 'http://127.0.0.1:4000/api/control-room' : '/api/control-room';
+      let presentationAudioContext;
+      let activeVoiceNames = [];
+      let activeReplySource;
+      let activeReplyAbort;
+      let replySequence = 0;
+      const map = root.querySelector('.hw-map');
+      const mapCards = [...map.querySelectorAll('.node, .supporting-map-card')];
+      let focusSnapshot;
+      let focusMapMinHeight;
+      let focusMapMinHeightPriority;
+      const restoreVoiceFocus = () => {
+        if (focusSnapshot) focusSnapshot.forEach(({ card, left, top, right, focusStyles, portraitStyles }) => {
+          card.style.left = left;
+          card.style.top = top;
+          card.style.right = right;
+          card.dataset.focusRestore = 'true';
+          focusStyles.forEach(({ property, value, priority }) => {
+            if (value) card.style.setProperty(property, value, priority);
+            else card.style.removeProperty(property);
+          });
+          const portrait = card.querySelector('img');
+          portraitStyles.forEach(({ property, value, priority }) => {
+            if (value) portrait?.style.setProperty(property, value, priority);
+            else portrait?.style.removeProperty(property);
+          });
+        });
+        focusSnapshot = undefined;
+        if (focusMapMinHeight) map.style.setProperty('min-height', focusMapMinHeight, focusMapMinHeightPriority);
+        else map.style.removeProperty('min-height');
+        focusMapMinHeight = undefined;
+        focusMapMinHeightPriority = undefined;
+        map.classList.remove('cast-focus-active');
+        mapCards.filter(card => card.classList.contains('red-team-map-card')).forEach(card => {
+          const role = card.querySelector(':scope > span > span');
+          if (role?.dataset.normalRole) role.textContent = role.dataset.normalRole;
+        });
+        mapCards.forEach(card => card.classList.remove('voice-selected', 'voice-thumbnail', 'thumbnail-label-left', 'thumbnail-label-right', 'thumbnail-label-top', 'thumbnail-label-bottom'));
+        setTimeout(() => mapCards.forEach(card => delete card.dataset.focusRestore), 100);
+      };
+      const arrangeVoiceFocus = names => {
+        const selected = mapCards.filter(card => names.includes(card.dataset.addressName));
+        if (!selected.length) return restoreVoiceFocus();
+        if (!focusSnapshot) {
+          const focusProperties = ['width', 'min-height', 'height', 'padding', 'grid-template-columns', 'gap', 'scale', 'transform'];
+          const portraitProperties = ['width', 'height'];
+          focusSnapshot = mapCards.map(card => ({
+            card,
+            left:card.style.left,
+            top:card.style.top,
+            right:card.style.right,
+            focusStyles:focusProperties.map(property => ({ property, value:card.style.getPropertyValue(property), priority:card.style.getPropertyPriority(property) })),
+            portraitStyles:portraitProperties.map(property => ({ property, value:card.querySelector('img')?.style.getPropertyValue(property) || '', priority:card.querySelector('img')?.style.getPropertyPriority(property) || '' }))
+          }));
+          focusMapMinHeight = map.style.getPropertyValue('min-height');
+          focusMapMinHeightPriority = map.style.getPropertyPriority('min-height');
+        }
+        const enteringFocus = !map.classList.contains('cast-focus-active');
+        map.classList.add('cast-focus-active');
+        map.style.setProperty('min-height', '100vh', 'important');
+        if (enteringFocus) {
+          requestAnimationFrame(() => arrangeVoiceFocus(names));
+          return;
+        }
+        const others = mapCards.filter(card => !selected.includes(card));
+        const selectedCenters = selected.length === 1 ? [{ x:50, y:50 }] : [{ x:34, y:50 }, { x:66, y:50 }];
+        mapCards.filter(card => card.classList.contains('red-team-map-card')).forEach(card => {
+          const role = card.querySelector(':scope > span > span');
+          if (!role) return;
+          role.dataset.normalRole ||= role.textContent.trim();
+          role.textContent = selected.includes(card) ? `Red Team - ${role.dataset.normalRole}` : role.dataset.normalRole;
+        });
+        selected.forEach((card, index) => {
+          const center = selectedCenters[index] || selectedCenters[selectedCenters.length - 1];
+          card.style.left = `${center.x}%`;
+          card.style.top = `${center.y}%`;
+          card.style.right = 'auto';
+          card.style.setProperty('width', '420px', 'important');
+          card.style.setProperty('min-height', '260px', 'important');
+          card.style.setProperty('height', '260px', 'important');
+          card.style.setProperty('padding', '0 20px 0 0', 'important');
+          card.style.setProperty('grid-template-columns', '170px minmax(0, 1fr)', 'important');
+          card.style.setProperty('gap', '20px', 'important');
+          card.style.setProperty('scale', '1', 'important');
+          card.style.setProperty('transform', 'translate(-50%, -50%) scale(1.15)', 'important');
+          const portrait = card.querySelector('img');
+          portrait?.style.setProperty('width', '170px', 'important');
+          portrait?.style.setProperty('height', '260px', 'important');
+          card.classList.add('voice-selected');
+          card.classList.remove('voice-thumbnail');
+        });
+        const box = map.getBoundingClientRect();
+        const topRowCount = Math.ceil(others.length / 2);
+        others.forEach((card, index) => {
+          const isTopRow = index < topRowCount;
+          const rowIndex = isTopRow ? index : index - topRowCount;
+          const rowCount = isTopRow ? topRowCount : others.length - topRowCount;
+          const x = rowCount === 1 ? 50 : 8 + rowIndex / (rowCount - 1) * 84;
+          const direction = isTopRow ? 'top' : 'bottom';
+          card.style.left = `${x}%`;
+          card.style.top = `${isTopRow ? 14 : 84}%`;
+          card.style.right = 'auto';
+          card.style.setProperty('width', '88px', 'important');
+          card.style.setProperty('min-height', '132px', 'important');
+          card.style.setProperty('height', '132px', 'important');
+          card.style.setProperty('padding', '0', 'important');
+          card.style.setProperty('grid-template-columns', '88px', 'important');
+          card.style.setProperty('gap', '0', 'important');
+          card.style.setProperty('scale', '1', 'important');
+          card.style.setProperty('transform', 'translate(-50%, -50%)', 'important');
+          const portrait = card.querySelector('img');
+          portrait?.style.setProperty('width', '88px', 'important');
+          portrait?.style.setProperty('height', '132px', 'important');
+          card.classList.remove('voice-selected');
+          card.classList.add('voice-thumbnail');
+          card.classList.remove('thumbnail-label-left', 'thumbnail-label-right', 'thumbnail-label-top', 'thumbnail-label-bottom');
+          card.classList.add(`thumbnail-label-${direction}`);
+        });
+      };
+      window.addEventListener('heartword:focus-cast', event => arrangeVoiceFocus(event.detail?.names || []));
+      window.addEventListener('heartword:clear-cast-focus', restoreVoiceFocus);
+      const interruptPresentationReply = () => {
+        replySequence += 1;
+        activeReplyAbort?.abort(); activeReplyAbort = undefined;
+        if (activeReplySource) {
+          try { activeReplySource.stop(); } catch { /* It may have already ended. */ }
+          activeReplySource = undefined;
+        }
+      };
+      const openVoiceAuditions = () => {
+        root.classList.add('voice-audition-active');
+        voiceAuditionPanel?.querySelector('button')?.focus();
+        status.textContent = 'ElevenLabs voice auditions are open. Choose a temporary sample; no cast voice changes until you approve it.';
+      };
+      const playVoiceAudition = async auditionId => {
+        presentationAudioContext ||= new AudioContext();
+        await presentationAudioContext.resume();
+        interruptPresentationReply();
+        const sequence = replySequence;
+        const abort = new AbortController();
+        activeReplyAbort = abort;
+        try {
+          const response = await fetch(`${listenerBase}/voice-auditions/${encodeURIComponent(auditionId)}`, { method:'POST', signal:abort.signal });
+          if (!response.ok) throw new Error('voice audition unavailable');
+          const audio = await presentationAudioContext.decodeAudioData(await (await response.blob()).arrayBuffer());
+          if (sequence !== replySequence || abort.signal.aborted) return;
+          const source = presentationAudioContext.createBufferSource();
+          source.buffer = audio; source.connect(presentationAudioContext.destination); activeReplySource = source;
+          source.addEventListener('ended', () => { if (activeReplySource === source) activeReplySource = undefined; });
+          source.start();
+          status.textContent = 'Playing a temporary ElevenLabs audition. The saved cast voices are unchanged.';
+        } catch {
+          if (!abort.signal.aborted) status.textContent = 'That ElevenLabs audition could not play.';
+        } finally { if (activeReplyAbort === abort) activeReplyAbort = undefined; }
+      };
+      root.querySelectorAll('[data-voice-audition]').forEach(button => button.addEventListener('click', () => playVoiceAudition(button.dataset.voiceAudition)));
+      const playPurposeReply = async (value, names) => {
+        if (!names.length || !presentationAudioContext) return;
+        const stagedReply = /\bhow\s+are\s+you\b/i.test(value);
+        const isQuestion = /[?]|\b(?:who|what|when|where|why|how|can|could|would|will|is|are|do|does|did|tell me|explain)\b/i.test(value);
+        if (!stagedReply && !isQuestion) return;
+        interruptPresentationReply();
+        const sequence = replySequence;
+        const abort = new AbortController();
+        activeReplyAbort = abort;
+        try {
+          const response = await fetch(`${listenerBase}/${stagedReply ? 'purpose-reply' : 'live-research-reply'}`, { method:'POST', headers:{'Content-Type':'application/json'}, signal:abort.signal, body:JSON.stringify(stagedReply ? { agent:names[0] } : { agent:names[0], question:value }) });
+          if (!response.ok) throw new Error('staged reply unavailable');
+          const audio = await presentationAudioContext.decodeAudioData(await (await response.blob()).arrayBuffer());
+          if (sequence !== replySequence || abort.signal.aborted) return;
+          const source = presentationAudioContext.createBufferSource();
+          source.buffer = audio; source.connect(presentationAudioContext.destination); activeReplySource = source;
+          source.addEventListener('ended', () => { if (activeReplySource === source) activeReplySource = undefined; });
+          source.start();
+          if (stagedReply) status.textContent = `${names[0]} is responding with a staged presentation reply. Nothing is sent to HeartWord.`;
+          else {
+            status.textContent = `${names[0]} is responding with a concise live-research reply. No HeartWord data is changed.`;
+          }
+        } catch (error) {
+          if (!abort.signal.aborted) status.textContent = `${names[0]} was recognized, but the presentation reply could not play.`;
+        } finally { if (activeReplyAbort === abort) activeReplyAbort = undefined; }
+      };
+      window.heartwordPlayExchangeVoice = async (speaker, text) => {
+        if (speaker === 'Producer') return;
+        presentationAudioContext ||= new AudioContext();
+        await presentationAudioContext.resume();
+        const response = await fetch(`${listenerBase}/presentation-speech`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ agent:speaker, text }) });
+        if (!response.ok) throw new Error('exchange voice unavailable');
+        const audio = await presentationAudioContext.decodeAudioData(await (await response.blob()).arrayBuffer());
+        const source = presentationAudioContext.createBufferSource();
+        source.buffer = audio; source.connect(presentationAudioContext.destination);
+        await new Promise(resolve => { source.addEventListener('ended', resolve, { once:true }); source.start(); });
+      };
+      const playIssueExchange = async agent => {
+        interruptPresentationReply();
+        try {
+          const response = await fetch(`${listenerBase}/issue-exchange`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ agent }) });
+          if (!response.ok) throw new Error('no staged exchange');
+          const exchange = await response.json();
+          if (!Array.isArray(exchange.people) || exchange.people.length !== 2 || !Array.isArray(exchange.lines)) throw new Error('invalid staged exchange');
+          window.dispatchEvent(new CustomEvent('heartword:play-issue-exchange', { detail:exchange }));
+        } catch {
+          status.textContent = `${agent} has no saved two-person “any issues?” exchange to play.`;
+        }
+      };
+      const recognize = (value, { continueVoiceAddress = false, voiceSelection = false } = {}) => {
+        if (/\b(?:voice|eleven\s*labs)\s+auditions?\b/i.test(value)) {
+          openVoiceAuditions();
+          return [];
+        }
+        const namedMatches = names.filter(name => (addressAliases[name] || [name]).some(alias => new RegExp(`\\b${alias}\\b`, 'i').test(value)));
+        const matches = namedMatches.length ? namedMatches : (continueVoiceAddress ? activeVoiceNames : []);
+        if (namedMatches.length) activeVoiceNames = namedMatches;
+        cards.forEach(card => card.classList.toggle('producer-addressed', matches.includes(card.dataset.addressName)));
+        if (voiceSelection) arrangeVoiceFocus(matches);
+        if (!value.trim()) {
+          status.textContent = 'Recognition only: this does not send a message or start an agent.';
+        } else if (matches.length) {
+          status.textContent = `${namedMatches.length ? 'Recognized' : 'Continuing with'} ${matches.join(', ')}. Matching reference card${matches.length === 1 ? '' : 's'} highlighted; no message was sent.`;
+        } else {
+          status.textContent = 'No named agent recognized. No cards highlighted and no message was sent.';
+        }
+        return matches;
+      };
+      form.addEventListener('submit', event => { event.preventDefault(); recognize(input.value); });
+      input.addEventListener('input', () => recognize(input.value));
+      let stream, peerConnection, eventChannel;
+      const listenerApi = location.port === '5173' ? 'http://127.0.0.1:4000/api/control-room/realtime-call' : '/api/control-room/realtime-call';
+      const stopListener = reason => {
+        interruptPresentationReply();
+        eventChannel?.close(); eventChannel = undefined;
+        peerConnection?.close(); peerConnection = undefined;
+        stream?.getTracks().forEach(track => track.stop()); stream = undefined;
+        activeVoiceNames = [];
+        restoreVoiceFocus();
+        mic.disabled = false; mic.textContent = 'Mic';
+        if (reason?.includes('stopped')) window.dispatchEvent(new Event('heartword:restart-wake-word'));
+        if (reason) status.textContent = reason;
+      };
+      const waitForIce = pc => new Promise(resolve => {
+        if (pc.iceGatheringState === 'complete') return resolve();
+        pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') resolve(); }, { once:false });
+      });
+      const enterPresentationFullscreen = () => {
+        if (document.fullscreenElement || !document.documentElement.requestFullscreen) return;
+        document.documentElement.requestFullscreen().catch(() => {
+          status.textContent = 'The presentation listener is starting. Chrome kept this window in normal view.';
+        });
+      };
+      const startListener = async () => {
+        if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) {
+          status.textContent = 'This browser cannot start the presentation listener. Type an agent name instead.'; return;
+        }
+        mic.disabled = true;
+        let stage = 'microphone';
+        status.textContent = 'Requesting this browser microphone for the presentation listener.';
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+          stage = 'connection';
+          peerConnection = new RTCPeerConnection();
+          stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+          eventChannel = peerConnection.createDataChannel('oai-events');
+          eventChannel.addEventListener('open', () => {
+            mic.disabled = false; mic.textContent = 'Stop mic';
+            status.textContent = 'Presentation listener connected. Say an agent name to highlight that reference card; nothing is sent to HeartWord.';
+          });
+          eventChannel.addEventListener('message', event => {
+            try {
+              const message = JSON.parse(event.data);
+              if (message.type === 'input_audio_buffer.speech_started') {
+                interruptPresentationReply();
+                return;
+              }
+              if (message.type === 'conversation.item.input_audio_transcription.completed' && typeof message.transcript === 'string') {
+                if (/\bthat(?:'s| is) enough\b/i.test(message.transcript)) {
+                  stopListener('Presentation listener stopped by “That’s enough.” No transcript was saved.');
+                  return;
+                }
+                if (/\b(?:voice|eleven\s*labs)\s+auditions?\b/i.test(message.transcript)) {
+                  openVoiceAuditions();
+                  return;
+                }
+                input.value = message.transcript;
+                const addressedNames = recognize(input.value, { continueVoiceAddress:true, voiceSelection:true });
+                if (/\bany\s+issues\b/i.test(input.value) && addressedNames.length === 1) playIssueExchange(addressedNames[0]);
+                else playPurposeReply(input.value, addressedNames);
+              }
+              if (message.type === 'error') stopListener('The presentation listener stopped before transcription. Type an agent name instead.');
+            } catch { /* Ignore a non-JSON transport message. */ }
+          });
+          eventChannel.addEventListener('close', () => { if (peerConnection) stopListener('The presentation listener disconnected. Type an agent name instead.'); });
+          peerConnection.addEventListener('connectionstatechange', () => {
+            if (['failed', 'disconnected', 'closed'].includes(peerConnection.connectionState)) stopListener('The presentation listener disconnected. Type an agent name instead.');
+          });
+          await peerConnection.setLocalDescription(await peerConnection.createOffer());
+          await waitForIce(peerConnection);
+          const response = await fetch(listenerApi, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ sdp:peerConnection.localDescription.sdp }) });
+          if (!response.ok) throw new Error(`listener unavailable (${response.status})`);
+          await peerConnection.setRemoteDescription({ type:'answer', sdp:await response.text() });
+        } catch (error) {
+          const name = error?.name;
+          const detail = String(error?.message || '');
+          const reason = name === 'NotAllowedError' ? 'Chrome did not grant the control room microphone access.'
+            : name === 'NotFoundError' ? 'Chrome could not find a usable microphone.'
+            : name === 'NotReadableError' ? 'Another application is currently holding the microphone.'
+            : detail.includes('listener unavailable (502)') ? 'The local listener server could not start its transcription session.'
+            : stage === 'connection' ? 'The presentation-listener connection could not be established.'
+            : 'The presentation listener could not start.';
+          stopListener(`${reason} Type an agent name instead, or resolve that specific browser issue and try Mic again.`);
+        } finally { if (peerConnection) mic.disabled = false; }
+      };
+      mic.addEventListener('click', () => {
+        window.dispatchEvent(new Event('heartword:enable-wake-audio'));
+        if (peerConnection) stopListener('Presentation listener stopped. No transcript was saved.');
+        else {
+          enterPresentationFullscreen();
+          presentationAudioContext ||= new AudioContext();
+          presentationAudioContext.resume().then(startListener);
+        }
+      });
+    })();
+    (() => {
+      // Local, offline wake phrase. It is deliberately limited to starting
+      // the presentation microphone; no transcript leaves this browser.
+      const mic = document.getElementById('producer-address-mic');
+      const status = document.getElementById('producer-address-status');
+      const wake = async () => {
+        if (!window.Vosk || !navigator.mediaDevices?.getUserMedia) return;
+        try {
+          status.textContent = 'Loading local “Hello cast” wake word…';
+          const model = await window.Vosk.createModel('http://127.0.0.1:4000/control-room-models/vosk-model-small-en-us-0.15.tar.gz');
+          const recognizer = new model.KaldiRecognizer();
+          const stream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:true, noiseSuppression:true, channelCount:1, sampleRate:16000 } });
+          const context = new AudioContext();
+          window.addEventListener('heartword:enable-wake-audio', () => context.resume());
+          const source = context.createMediaStreamSource(stream);
+          const node = context.createScriptProcessor(4096, 1, 1);
+          const quiet = context.createGain(); quiet.gain.value = 0;
+          source.connect(node); node.connect(quiet); quiet.connect(context.destination);
+          let woken = false;
+          const hearWakePhrase = text => {
+            if (/\bhello cast\b/i.test(text || '') && !woken) {
+              woken = true;
+              status.textContent = '“Hello cast” recognized locally. Starting the presentation listener.';
+              mic.click();
+            }
+          };
+          recognizer.on('result', message => hearWakePhrase(message.result.text));
+          recognizer.on('partialresult', message => hearWakePhrase(message.result.partial));
+          window.addEventListener('heartword:restart-wake-word', () => { woken = false; status.textContent = 'Listening locally for “Hello cast.” No audio is sent to HeartWord or OpenAI.'; });
+          node.onaudioprocess = event => recognizer.acceptWaveform(event.inputBuffer);
+          status.textContent = 'Listening locally for “Hello cast.” No audio is sent to HeartWord or OpenAI.';
+        } catch {
+          status.textContent = 'The local wake word could not start. Use Mic to start the presentation listener.';
+        }
+      };
+      window.addEventListener('heartword:restart-wake-word', wake);
+      wake();
+    })();
+    (() => {
+      const root = document.getElementById('heartword-agent-control');
+      const select = root.querySelector('#showtime-select');
+      const play = root.querySelector('#showtime-play');
+      const status = root.querySelector('#showtime-status');
+      const stream = root.querySelector('#stream');
+      const title = root.querySelector('#stream-title');
+      const sub = root.querySelector('#stream-sub');
+      const producerAddress = root.querySelector('#producer-address-form');
+      const exchanges = {
+        'producer-rufus': { people:['Producer','Rufus'], title:'Presentation exchange - Producer <-> Rufus', lines:[['Producer','Morning, Rufus.'],['Rufus','Ah, but what if it\'s not morning — what if it\'s the DAWN OF SOMETHING NEW.'],['Producer','It\'s Tuesday, Rufus.'],['Rufus','Every day is someone\'s dawn.']] },
+        'vera-dottie': { people:['Vera','Dottie'], title:'Presentation exchange - Vera <-> Dottie', lines:[['Vera','Severe finding. Jesus has drifted from the approved likeness.'],['Dottie','Absolutely not. Not on my watch.'],['Vera','It\'s not on your watch, Dottie. It\'s on the render.'],['Dottie','Same thing to me.']] },
+        'orion-tessa': { people:['Orion','Tessa'], title:'Presentation exchange - Orion <-> Tessa', lines:[['Orion','The freeze-pad ran 11.0 seconds against a 5.1-second beat.'],['Tessa','Eleven seconds frozen? Honey, that\'s not a pause, that\'s rigor mortis.'],['Orion','Noting that as a technical term.']] },
+        'ada-rufus': { people:['Ada','Rufus'], title:'Presentation exchange - Ada <-> Rufus', lines:[['Ada','Show me the verse where Jesus takes a bread break mid-parable.'],['Rufus','It\'s implied! Emotionally!'],['Ada','Emotion isn\'t a citation, Rufus.']] },
+        'sam-producer': { people:['Sam','Producer'], title:'Presentation exchange - Producer <-> Sam', lines:[['Sam','Depends what it sounds like.'],['Producer','I asked if lunch is ready.'],['Sam','...still depends what it sounds like.']] }
+      };
+      let lineTimer, cleanupTimer;
+      const cardFor = name => {
+        const candidates = [...root.querySelectorAll('[data-address-name], .node, .review-card.has-portrait, .supporting-card')].filter(card => {
+          const identity = card.dataset.addressName || card.dataset.portraitName || card.textContent;
+          return new RegExp(`\\b${name}\\b`, 'i').test(identity);
+        });
+        return candidates.find(card => card.classList.contains('node')) || candidates.find(card => card.classList.contains('supporting-map-card')) || candidates.find(card => card.classList.contains('review-card')) || candidates[0];
+      };
+      const refresh = () => root.dispatchEvent(new Event('heartword:refresh-connectors'));
+      const clearSpotlight = () => {
+        clearTimeout(lineTimer); clearTimeout(cleanupTimer);
+        root.querySelectorAll('.conversation-spotlight').forEach(card => card.classList.remove('conversation-spotlight', 'exchange-speaking', 'exchange-listening', 'speech-cue-left', 'speech-cue-right'));
+        window.dispatchEvent(new Event('heartword:clear-cast-focus'));
+        producerAddress.classList.remove('showtime-active');
+        refresh();
+      };
+      const renderLine = (speaker, text, index, count) => {
+        const message = document.createElement('article');
+        message.className = 'msg active';
+        message.innerHTML = `<small>${speaker} — staged presentation line ${index + 1} of ${count}</small><p></p>`;
+        message.querySelector('p').textContent = text;
+        stream.prepend(message);
+      };
+      const playExchange = async exchange => {
+        clearSpotlight();
+        const agentNames = exchange.people.filter(name => name !== 'Producer');
+        const cards = agentNames.map(cardFor).filter(Boolean);
+        cards.forEach(card => card.classList.add('conversation-spotlight'));
+        window.dispatchEvent(new CustomEvent('heartword:focus-cast', { detail:{ names:agentNames } }));
+        if (exchange.people.includes('Producer')) producerAddress.classList.add('showtime-active');
+        title.textContent = exchange.title;
+        sub.textContent = 'Presentation-only dialogue. The highlighted cast cards are enlarged; no workflow action is being taken.';
+        status.textContent = `Playing staged dialogue. ${agentNames.join(' and ')} ${agentNames.length === 1 ? 'is' : 'are'} spotlighted at three times normal size.`;
+        refresh();
+        const markSpeaker = speaker => {
+          cards.forEach(card => card.classList.remove('exchange-speaking', 'exchange-listening', 'speech-cue-left', 'speech-cue-right'));
+          const speakerCard = cards.find(card => card.dataset.addressName === speaker);
+          if (!speakerCard) {
+            cards.forEach(card => card.classList.add('exchange-listening'));
+            status.textContent = `${speaker} is speaking. The cast is listening; this remains staged presentation-only dialogue.`;
+            return;
+          }
+          speakerCard.classList.add('exchange-speaking');
+          const listeningCard = cards.find(card => card !== speakerCard);
+          if (listeningCard) {
+            listeningCard.classList.add('exchange-listening');
+            const speakerLeft = Number.parseFloat(speakerCard.style.left || '50') < Number.parseFloat(listeningCard.style.left || '50');
+            speakerCard.classList.add(speakerLeft ? 'speech-cue-right' : 'speech-cue-left');
+          }
+          status.textContent = `${speaker} is speaking. The other highlighted agent is listening; this is staged presentation-only dialogue.`;
+        };
+        let next = 0;
+        const advance = async () => {
+          const [speaker, text] = exchange.lines[next];
+          markSpeaker(speaker);
+          renderLine(speaker, text, next, exchange.lines.length);
+          try { await window.heartwordPlayExchangeVoice(speaker, text); }
+          catch { status.textContent = `${speaker}'s staged line could not play. The written exchange remains presentation-only.`; }
+          next += 1;
+          if (next < exchange.lines.length) {
+            lineTimer = setTimeout(advance, 250);
+          } else {
+            status.textContent = 'Exchange finished. Spotlight remains for five seconds, then returns to normal. No production state changed.';
+            cleanupTimer = setTimeout(() => {
+              clearSpotlight();
+              status.textContent = 'Presentation exchange cleared. All cards are back to normal; the supervised run is unchanged.';
+            }, 5000);
+          }
+        };
+        advance();
+      };
+      play.addEventListener('click', () => playExchange(exchanges[select.value]));
+      window.addEventListener('heartword:play-issue-exchange', event => {
+        const exchange = event.detail;
+        if (exchange && Array.isArray(exchange.people) && exchange.people.length === 2 && Array.isArray(exchange.lines)) playExchange(exchange);
+      });
+      select.addEventListener('change', () => { clearSpotlight(); status.textContent = 'Ready to play the selected staged exchange. It is presentation-only.'; });
+    })();
+    (() => {
+      const root = document.getElementById('heartword-agent-control');
+      const buttons = [...root.querySelectorAll('[data-view-button]')];
+      const selectView = view => {
+        root.dataset.view = view;
+        buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.viewButton === view)));
+        root.dispatchEvent(new Event('heartword:refresh-connectors'));
+      };
+      buttons.forEach(button => button.addEventListener('click', () => selectView(button.dataset.viewButton)));
+      selectView('map');
+    })();
   </script>
 </section>
