@@ -1822,3 +1822,8 @@ and presentation-only boundary unchanged.
 The expanded proposed-responsibilities heading, role/detail line, loading
 message, and responsibility list now each use two visible 0.10rem type-scale
 steps. Compact map cards and unrelated modal typography remain unchanged.
+
+Every expanded cast profile now includes a modest, keyboard-accessible next
+arrow. It advances through the displayed map roster with wraparound while
+naming its destination for assistive technology; it remains presentation-only
+and leaves compact cards and the close control unchanged.
