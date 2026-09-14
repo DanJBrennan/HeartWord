@@ -1,12 +1,16 @@
 # Control-room idle motion
 
-`rufus.mp4` is the one active, short, silent, private presentation asset for
-the standalone Agent Control Room. It was generated from
+`rufus.mp4` and `pippa.mp4` are the active, short, silent, private presentation
+assets for the standalone Agent Control Room. Rufus was generated from
 `rufus-motion-safe-source-v1.png`, then passed visual review for stable wide
 framing, full head/shoulder clearance, preserved illustrated identity, and
 unchanged props. These assets are not HeartWord Films media, Scripture-video
 canon, source audio, runtime-agent output, or production records. Every other
-card remains a static portrait.
+card remains a static portrait. Pippa was generated at 360p with Gemini Omni
+1.1's two-image interpolation request, using
+`pippa-motion-safe-source-v1.png` as both first and final frame. It passed
+identity/framing inspection and repeated control-room browser-loop review with
+no visible boundary jump.
 
 The existing provider refused Mabel's first constrained image-to-video request
 and its one permitted retry from `mabel-motion-safe-source-v1.png`, so Mabel
