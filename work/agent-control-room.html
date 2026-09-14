@@ -1041,6 +1041,23 @@
       };
       const listenerBase = location.port === '5173' ? 'http://127.0.0.1:4000/api/control-room' : '/api/control-room';
       let presentationAudioContext;
+      // Presentation-only calibration. Keep agent gains here so an approved
+      // adjustment cannot affect source-language or production audio.
+      const presentationPlaybackGains = { Miriam:{ gainDb:8, limiterThresholdDb:-1 } };
+      const connectPresentationAudio = (source, agent) => {
+        const calibration = presentationPlaybackGains[agent];
+        if (!calibration) { source.connect(presentationAudioContext.destination); return; }
+        const gain = presentationAudioContext.createGain();
+        gain.gain.value = Math.pow(10, calibration.gainDb / 20);
+        // Limit only the boosted reply's peaks before they reach the speakers.
+        const limiter = presentationAudioContext.createDynamicsCompressor();
+        limiter.threshold.value = calibration.limiterThresholdDb;
+        limiter.knee.value = 0;
+        limiter.ratio.value = 20;
+        limiter.attack.value = .003;
+        limiter.release.value = .15;
+        source.connect(gain); gain.connect(limiter); limiter.connect(presentationAudioContext.destination);
+      };
       let activeVoiceNames = [];
       let activeReplySource;
       let activeReplyAbort;
@@ -1186,7 +1203,7 @@
           const audio = await presentationAudioContext.decodeAudioData(await (await response.blob()).arrayBuffer());
           if (sequence !== replySequence || abort.signal.aborted) return;
           const source = presentationAudioContext.createBufferSource();
-          source.buffer = audio; source.connect(presentationAudioContext.destination); activeReplySource = source;
+          source.buffer = audio; connectPresentationAudio(source); activeReplySource = source;
           source.addEventListener('ended', () => { if (activeReplySource === source) activeReplySource = undefined; });
           source.start();
           status.textContent = 'Playing a temporary ElevenLabs audition. The saved cast voices are unchanged.';
@@ -1210,7 +1227,7 @@
           const audio = await presentationAudioContext.decodeAudioData(await (await response.blob()).arrayBuffer());
           if (sequence !== replySequence || abort.signal.aborted) return;
           const source = presentationAudioContext.createBufferSource();
-          source.buffer = audio; source.connect(presentationAudioContext.destination); activeReplySource = source;
+          source.buffer = audio; connectPresentationAudio(source, names[0]); activeReplySource = source;
           source.addEventListener('ended', () => { if (activeReplySource === source) activeReplySource = undefined; });
           source.start();
           if (stagedReply) status.textContent = `${names[0]} is responding with a staged presentation reply. Nothing is sent to HeartWord.`;
@@ -1229,7 +1246,7 @@
         if (!response.ok) throw new Error('exchange voice unavailable');
         const audio = await presentationAudioContext.decodeAudioData(await (await response.blob()).arrayBuffer());
         const source = presentationAudioContext.createBufferSource();
-        source.buffer = audio; source.connect(presentationAudioContext.destination);
+        source.buffer = audio; connectPresentationAudio(source, speaker);
         await new Promise(resolve => { source.addEventListener('ended', resolve, { once:true }); source.start(); });
       };
       const playIssueExchange = async agent => {

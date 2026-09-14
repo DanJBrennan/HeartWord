@@ -1831,3 +1831,8 @@ and leaves compact cards and the close control unchanged.
 The expanded profile now pairs that control with a matching accessible back
 arrow. It moves through the same roster in reverse, including Mabel back to
 Roger Ebert, while preserving the open presentation detail view.
+
+Miriam's retained OpenAI Sage presentation voice now receives a private +8 dB
+(about 2.5× amplitude) browser playback calibration. A per-reply limiter
+protects its boosted peaks; no provider assignment, source-language audio, or
+production audio changes.
