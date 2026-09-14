@@ -1832,7 +1832,14 @@ The expanded profile now pairs that control with a matching accessible back
 arrow. It moves through the same roster in reverse, including Mabel back to
 Roger Ebert, while preserving the open presentation detail view.
 
-Miriam's retained OpenAI Sage presentation voice now receives a private +8 dB
-(about 2.5× amplitude) browser playback calibration. A per-reply limiter
-protects its boosted peaks; no provider assignment, source-language audio, or
-production audio changes.
+One-time full-cast presentation-voice calibration (2026-09-14) rendered the
+same neutral line through every saved provider configuration and measured EBU
+R128 integrated loudness and true peak with FFmpeg. It chose -22 LUFS as the
+reference, applied rounded gains only to voices at least 1 dB quieter, and
+left the louder eight voices unchanged. Boosted profiles are Mabel +2, Rufus +4,
+Pippa +3, Ada Rowe +10.5, Cora Bellamy +2.5, Gene Siskel +2.5, Roger Ebert +2.5,
+Leon +7, Tessa +6, Nell +6.5, Sam +1, Miriam +12, and Dottie +2 dB. Each
+boosted reply passes through a -1 dB peak limiter. The reproducible
+temporary-file workflow is `scripts/calibrate-control-room-presentation-loudness.ts`; it
+deletes generated samples and does not affect any provider assignment,
+source-language audio, or production audio.

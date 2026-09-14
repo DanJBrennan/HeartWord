@@ -67,9 +67,17 @@ describe("control-room presentation speech pacing", () => {
 });
 
 describe("control-room presentation playback calibration", () => {
-  it("gives Miriam an isolated, peak-limited playback boost", () => {
+  it("uses the temporary-file loudness workflow and applies only measured boosts", () => {
     const page = readFileSync(resolve(process.cwd(), "work/agent-control-room.html"), "utf8");
-    expect(page).toContain("Miriam:{ gainDb:8, limiterThresholdDb:-1 }");
+    const calibrationScript = readFileSync(resolve(process.cwd(), "scripts/calibrate-control-room-presentation-loudness.ts"), "utf8");
+    expect(calibrationScript).toContain("ebur128=peak=true");
+    expect(calibrationScript).toContain("mkdtemp");
+    expect(calibrationScript).toContain("await rm(directory, { recursive: true, force: true })");
+    expect(calibrationScript).toContain("targetIntegratedLufs: TARGET_INTEGRATED_LUFS");
+    expect(page).toContain("Miriam:{ gainDb:12 }");
+    expect(page).toContain("Nell:{ gainDb:6.5 }");
+    expect(page).toContain("'Cora Bellamy':{ gainDb:2.5 }");
+    expect(page).toContain("presentationBoostLimiterThresholdDb = -1");
     expect(page).toContain("Math.pow(10, calibration.gainDb / 20)");
     expect(page).toContain("createDynamicsCompressor()");
     expect(page).toContain("connectPresentationAudio(source, names[0])");
