@@ -501,6 +501,105 @@ interface VeoOperationResponse {
   };
 }
 
+export interface VeoFrameGenerationRequest {
+  prompt: string;
+  startFramePath: string;
+  /** Veo 3.1's optional closing-frame interpolation constraint. */
+  endFramePath?: string;
+  resolution: "720p" | "1080p";
+  durationSeconds: 4 | 8;
+  context: string;
+}
+
+export function buildVeoFrameRequestBody(
+  prompt: string,
+  startImageBase64: string,
+  endImageBase64: string | undefined,
+  resolution: "720p" | "1080p",
+  durationSeconds: 4 | 8
+) {
+  return {
+    instances: [
+      {
+        prompt,
+        image: { bytesBase64Encoded: startImageBase64, mimeType: "image/png" },
+        ...(endImageBase64 ? { lastFrame: { bytesBase64Encoded: endImageBase64, mimeType: "image/png" } } : {})
+      }
+    ],
+    // Veo 3.1 Lite does not accept generateAudio:false. Callers that need
+    // silence must remove the generated track after download.
+    parameters: { aspectRatio: "16:9", durationSeconds, resolution }
+  };
+}
+
+/**
+ * Runs one Veo 3.1 image-to-video operation from local frame files. This is a
+ * narrow adapter primitive for the private control-room presentation script,
+ * so it can send the documented `lastFrame` request shape without database or
+ * production-pipeline access.
+ */
+export async function generateVeoFromFrames(request: VeoFrameGenerationRequest): Promise<Buffer> {
+  const apiKey = requireApiKey();
+  if (!existsSync(request.startFramePath)) {
+    throw new Error(`Veo start frame for ${request.context} is missing: ${request.startFramePath}`);
+  }
+  if (request.endFramePath && !existsSync(request.endFramePath)) {
+    throw new Error(`Veo end frame for ${request.context} is missing: ${request.endFramePath}`);
+  }
+  const startImageBase64 = readFileSync(request.startFramePath).toString("base64");
+  const endImageBase64 = request.endFramePath ? readFileSync(request.endFramePath).toString("base64") : undefined;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${VEO_MODEL}:predictLongRunning?key=${apiKey}`;
+  const submitRes = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(
+      buildVeoFrameRequestBody(
+        request.prompt,
+        startImageBase64,
+        endImageBase64,
+        request.resolution,
+        request.durationSeconds
+      )
+    )
+  });
+  if (!submitRes.ok) {
+    const body = await submitRes.text().catch(() => "");
+    throw new Error(`Veo predictLongRunning failed for ${request.context}: ${submitRes.status} ${submitRes.statusText} -- ${body}`);
+  }
+  const submitData = (await submitRes.json()) as VeoOperationResponse;
+  const operationName = submitData.name;
+  if (!operationName) {
+    throw new Error(`Veo returned no operation name for ${request.context}: ${JSON.stringify(submitData).slice(0, 500)}`);
+  }
+  const pollUrl = `https://generativelanguage.googleapis.com/v1beta/${operationName}?key=${apiKey}`;
+  const deadline = Date.now() + 15 * 60 * 1000;
+  let finalStatus: VeoOperationResponse | undefined;
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 15000));
+    const pollRes = await fetch(pollUrl);
+    if (!pollRes.ok) {
+      const body = await pollRes.text().catch(() => "");
+      throw new Error(`Veo operation poll failed for ${request.context}: ${pollRes.status} -- ${body}`);
+    }
+    const pollData = (await pollRes.json()) as VeoOperationResponse;
+    if (pollData.done) {
+      finalStatus = pollData;
+      break;
+    }
+  }
+  if (!finalStatus) throw new Error(`Veo operation for ${request.context} did not finish within 15 minutes.`);
+  if (finalStatus.error) throw new Error(`Veo operation failed for ${request.context}: ${finalStatus.error.message ?? "unknown error"}`);
+  const sample = finalStatus.response?.generateVideoResponse?.generatedSamples?.[0];
+  if (!sample?.video) {
+    throw new Error(`Veo operation for ${request.context} finished with no video sample: ${JSON.stringify(finalStatus).slice(0, 500)}`);
+  }
+  if (sample.video.bytesBase64Encoded) return Buffer.from(sample.video.bytesBase64Encoded, "base64");
+  if (!sample.video.uri) throw new Error(`Veo video sample for ${request.context} has neither bytesBase64Encoded nor uri.`);
+  const fileRes = await fetch(sample.video.uri, { headers: { "x-goog-api-key": apiKey } });
+  if (!fileRes.ok) throw new Error(`Failed downloading Veo output for ${request.context}: ${fileRes.status} ${fileRes.statusText}`);
+  return Buffer.from(await fileRes.arrayBuffer());
+}
+
 export class GeminiVideoProvider implements VideoProvider {
   async generateFinal(
     request: ShotRequest,
