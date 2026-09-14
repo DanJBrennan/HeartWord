@@ -1051,9 +1051,12 @@
         'Roger Ebert':{ gainDb:2.5 }, Leon:{ gainDb:7 }, Tessa:{ gainDb:6 },
         Nell:{ gainDb:6.5 }, Sam:{ gainDb:1 }, Miriam:{ gainDb:12 }, Dottie:{ gainDb:2 }
       };
+      // Map the on-screen Red Team labels to their saved presentation voices.
+      // This affects only browser playback calibration, never production audio.
+      const presentationPlaybackAgentAliases = { Ada:'Ada Rowe', Theo:'Theo Maren', Cora:'Cora Bellamy' };
       const presentationBoostLimiterThresholdDb = -1;
       const connectPresentationAudio = (source, agent) => {
-        const calibration = presentationPlaybackGains[agent];
+        const calibration = presentationPlaybackGains[presentationPlaybackAgentAliases[agent] || agent];
         if (!calibration) { source.connect(presentationAudioContext.destination); return; }
         const gain = presentationAudioContext.createGain();
         gain.gain.value = Math.pow(10, calibration.gainDb / 20);
@@ -1232,6 +1235,7 @@
         try {
           const response = await fetch(`${listenerBase}/${stagedReply ? 'purpose-reply' : 'live-research-reply'}`, { method:'POST', headers:{'Content-Type':'application/json'}, signal:abort.signal, body:JSON.stringify(stagedReply ? { agent:names[0] } : { agent:names[0], question:value }) });
           if (!response.ok) throw new Error('staged reply unavailable');
+          const encodedRedTeamAnswer = response.headers.get('X-Control-Room-Red-Team-Answer');
           const audio = await presentationAudioContext.decodeAudioData(await (await response.blob()).arrayBuffer());
           if (sequence !== replySequence || abort.signal.aborted) return;
           const source = presentationAudioContext.createBufferSource();
@@ -1239,6 +1243,12 @@
           source.addEventListener('ended', () => { if (activeReplySource === source) activeReplySource = undefined; });
           source.start();
           if (stagedReply) status.textContent = `${names[0]} is responding with a staged presentation reply. Nothing is sent to HeartWord.`;
+          else if (encodedRedTeamAnswer) {
+            const base64 = encodedRedTeamAnswer.replace(/-/g, '+').replace(/_/g, '/');
+            const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+            const bytes = Uint8Array.from(atob(padded), character => character.charCodeAt(0));
+            status.textContent = new TextDecoder().decode(bytes);
+          }
           else {
             status.textContent = `${names[0]} is responding with a concise live-research reply. No HeartWord data is changed.`;
           }

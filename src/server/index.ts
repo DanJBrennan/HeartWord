@@ -10,12 +10,14 @@ import { voicesRouter } from "./routes/voices.js";
 import { productionRouter } from "./routes/production.js";
 import { controlRoomRouter } from "./routes/control-room.js";
 import { seedControlRoomPresentationBriefs } from "./control-room-presentation-briefs.js";
+import { seedControlRoomRedTeamFindings } from "./control-room-red-team-findings.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Ensure the DB (and schema) is ready before the server accepts requests.
 const db = getDb();
 seedControlRoomPresentationBriefs(db);
+seedControlRoomRedTeamFindings(db);
 
 const app = express();
 app.use(express.json());

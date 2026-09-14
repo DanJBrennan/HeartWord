@@ -1843,3 +1843,22 @@ boosted reply passes through a -1 dB peak limiter. The reproducible
 temporary-file workflow is `scripts/calibrate-control-room-presentation-loudness.ts`; it
 deletes generated samples and does not affect any provider assignment,
 source-language audio, or production audio.
+
+## Evidence-backed Red Team control-room review (2026-09-14)
+
+The presentation-only Agent Control Room now seeds durable, DB-backed audit
+findings for Ada (Scripture/source safeguards), Theo (viewer clarity), and
+Cora (production feasibility). Each finding records a review area, concrete
+finding, evidence, source reference(s), severity, and a producer-oriented
+recommendation. The saved audit is grounded in the current Mark 2 timing and
+coverage status, actual unresolved QC data, the present architecture/design
+contracts, and the fresh typecheck result. It explicitly marks documented
+intentional scope or policy choices as decisions rather than defects.
+
+When one of the three Red Team members receives “What did we do wrong in this
+project?” or a reasonable problem/improvement variant, the existing
+presentation response path retrieves and speaks its structured saved findings
+instead of performing generic web research. The browser also displays that
+evidence-backed answer while it plays. This adds no production permission,
+workflow trigger, or runtime review gate: the Red Team remains planned
+presentation context, and the producer retains every decision.

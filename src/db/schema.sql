@@ -534,3 +534,21 @@ CREATE TABLE IF NOT EXISTS control_room_presentation_briefs (
   UNIQUE(agent_name, title)
 );
 CREATE INDEX IF NOT EXISTS idx_control_room_presentation_brief_agent ON control_room_presentation_briefs(agent_name);
+
+-- Evidence-backed, presentation-only project-audit findings for the future
+-- Red Team. These are read-only review context, never live production gates.
+CREATE TABLE IF NOT EXISTS control_room_red_team_findings (
+  id TEXT PRIMARY KEY,
+  reviewer TEXT NOT NULL CHECK (reviewer IN ('Ada', 'Theo', 'Cora')),
+  review_area TEXT NOT NULL,
+  finding TEXT NOT NULL,
+  evidence TEXT NOT NULL,
+  severity TEXT NOT NULL CHECK (severity IN ('high', 'medium', 'low')),
+  recommendation TEXT NOT NULL,
+  source_references_json TEXT NOT NULL,
+  audit_scope TEXT NOT NULL,
+  presentation_only INTEGER NOT NULL DEFAULT 1 CHECK (presentation_only = 1),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_control_room_red_team_reviewer ON control_room_red_team_findings(reviewer, severity);
