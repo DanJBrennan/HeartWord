@@ -66,6 +66,17 @@ describe("control-room presentation speech pacing", () => {
   });
 });
 
+describe("control-room presentation playback calibration", () => {
+  it("gives Miriam an isolated, peak-limited playback boost", () => {
+    const page = readFileSync(resolve(process.cwd(), "work/agent-control-room.html"), "utf8");
+    expect(page).toContain("Miriam:{ gainDb:8, limiterThresholdDb:-1 }");
+    expect(page).toContain("Math.pow(10, calibration.gainDb / 20)");
+    expect(page).toContain("createDynamicsCompressor()");
+    expect(page).toContain("connectPresentationAudio(source, names[0])");
+    expect(page).toContain("connectPresentationAudio(source, speaker)");
+  });
+});
+
 describe("control-room ElevenLabs auditions", () => {
   it("keeps a small, fixed presentation-only audition palette and sharper staged banter", () => {
     const page = readFileSync(resolve(process.cwd(), "work/agent-control-room.html"), "utf8");
