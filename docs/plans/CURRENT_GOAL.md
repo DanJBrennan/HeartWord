@@ -1780,7 +1780,9 @@ original static portrait. The browser plays at most one short clip at a time,
 with a randomized three-to-eight-second pause before the next approved overlay,
 and removes the overlay during reduced-motion preference,
 background-tab, portrait-dialog, and cast-focus states. It neither plays audio
-nor reads/writes production data.
+nor reads/writes production data. Before every new scheduled overlay, it also
+removes every residual idle-motion element and active marker, preventing a
+stale presentation preview from overlapping the next card.
 
 The later producer-authorized Omni batch added approved 360p loop-closure
 clips for Gus, Vera, Orion, June, Leon, Tessa, Arlo, Nell, Sam, Miriam,

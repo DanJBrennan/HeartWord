@@ -55,4 +55,6 @@ approved.
 The browser-side scheduler is ready for approved local assets and bounds them
 to one card at a time, at irregular intervals. It does not load or play clips
 when the user requests reduced motion, the tab is hidden, a portrait dialog is
-open, or a cast-focus presentation is active.
+open, or a cast-focus presentation is active. Before beginning each new clip,
+it removes every residual idle-motion overlay and active marker, so a stale
+presentation preview cannot overlap a scheduled card.
