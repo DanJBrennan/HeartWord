@@ -205,6 +205,26 @@
       background:transparent;
       grid-row:auto;
     }
+    /* Short, local-only image-to-video overlays. The underlying portrait remains
+       in place as the fallback, and the video never receives pointer events. */
+    #heartword-agent-control .hw-map .idle-motion {
+      position:absolute;
+      z-index:3;
+      inset:0 auto auto 0;
+      width:100%;
+      height:calc(100% - 50px);
+      object-fit:cover;
+      object-position:center top;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .35s ease;
+    }
+    #heartword-agent-control .hw-map .idle-motion.is-playing { opacity:1; }
+    #heartword-agent-control .hw-map.cast-focus-active .idle-motion,
+    #heartword-agent-control .hw-map .voice-selected .idle-motion { display:none; }
+    @media (prefers-reduced-motion: reduce) {
+      #heartword-agent-control .hw-map .idle-motion { display:none !important; }
+    }
     #heartword-agent-control .hw-map .node strong,
     #heartword-agent-control .hw-map .supporting-map-band .supporting-map-card strong { font-size:.92rem; line-height:1.1; }
     #heartword-agent-control .hw-map .node span,
@@ -1440,6 +1460,72 @@
       };
       buttons.forEach(button => button.addEventListener('click', () => selectView(button.dataset.viewButton)));
       selectView('map');
+    })();
+    (() => {
+      // Private presentation decoration only: it reads pre-rendered local MP4s,
+      // never calls a provider, API, production record, or runtime agent.
+      const root = document.getElementById('heartword-agent-control');
+      const map = root.querySelector('.hw-map');
+      const dialog = root.querySelector('#portrait-dialog');
+      const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+      // Add only a visually approved local asset here. No candidate is active
+      // yet, so every card currently remains static by design.
+      const clips = [];
+      const failed = new Set();
+      let timer;
+      let active;
+      let lastName = '';
+      const isAvailable = () => !reducedMotion.matches && !document.hidden && !map.classList.contains('cast-focus-active') && !dialog.open && (root.classList.contains('presentation-clean') || root.dataset.view === 'map');
+      const stop = () => {
+        clearTimeout(timer);
+        if (!active) return;
+        active.video.pause();
+        active.video.remove();
+        active.card.classList.remove('idle-motion-active');
+        active = undefined;
+      };
+      const schedule = () => {
+        clearTimeout(timer);
+        if (!isAvailable()) return;
+        const pause = 14000 + Math.round(Math.random() * 19000);
+        timer = setTimeout(playOne, pause);
+      };
+      const finish = () => { stop(); schedule(); };
+      const playOne = () => {
+        if (!isAvailable() || active) return schedule();
+        const available = clips.filter(clip => !failed.has(clip.name) && clip.name !== lastName);
+        const options = available.length ? available : clips.filter(clip => !failed.has(clip.name));
+        const clip = options[Math.floor(Math.random() * options.length)];
+        const card = clip && [...map.querySelectorAll('.node, .supporting-map-card')].find(item => item.dataset.addressName === clip.name);
+        if (!clip || !card) return schedule();
+        const video = document.createElement('video');
+        video.className = 'idle-motion';
+        video.src = clip.src;
+        video.muted = true;
+        video.defaultMuted = true;
+        video.loop = true;
+        video.playsInline = true;
+        video.preload = 'metadata';
+        video.tabIndex = -1;
+        video.setAttribute('aria-hidden', 'true');
+        video.setAttribute('disablepictureinpicture', '');
+        video.addEventListener('playing', () => video.classList.add('is-playing'), { once:true });
+        video.addEventListener('error', () => { failed.add(clip.name); finish(); }, { once:true });
+        card.append(video);
+        active = { card, video };
+        card.classList.add('idle-motion-active');
+        lastName = clip.name;
+        video.play().then(() => {
+          const displayMs = 7000 + Math.round(Math.random() * 5000);
+          timer = setTimeout(finish, displayMs);
+        }).catch(() => { failed.add(clip.name); finish(); });
+      };
+      reducedMotion.addEventListener('change', () => { stop(); schedule(); });
+      document.addEventListener('visibilitychange', () => { stop(); schedule(); });
+      dialog.addEventListener('close', schedule);
+      window.addEventListener('heartword:focus-cast', stop);
+      window.addEventListener('heartword:clear-cast-focus', schedule);
+      schedule();
     })();
   </script>
 </section>
