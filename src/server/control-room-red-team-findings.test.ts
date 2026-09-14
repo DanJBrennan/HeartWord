@@ -5,11 +5,15 @@ import { describe, expect, it } from "vitest";
 import {
   CONTROL_ROOM_RED_TEAM_FINDINGS,
   redTeamFindingsFor,
+  redTeamImprovementFallback,
+  redTeamImprovementResearchBrief,
   redTeamQuestionFor,
   redTeamReviewResponse,
+  redTeamResponseModeFor,
   redTeamReviewerForAgent,
   seedControlRoomRedTeamFindings
 } from "./control-room-red-team-findings.js";
+import { researchRedTeamImprovements } from "./routes/control-room.js";
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 type SqliteDatabase = import("node:sqlite").DatabaseSync;
@@ -66,7 +70,61 @@ describe("Control Room Red Team project audit", () => {
   it("keeps the presentation reply path visibly evidence-backed and calibrated for short Red Team labels", () => {
     const page = readFileSync(resolve(process.cwd(), "work/agent-control-room.html"), "utf8");
     expect(page).toContain("X-Control-Room-Red-Team-Answer");
+    expect(page).toContain("X-Control-Room-Research-Sources");
+    expect(page).toContain("showRedTeamAnswer");
+    expect(page).toContain("External sources:");
     expect(page).toContain("presentationPlaybackAgentAliases");
     expect(page).toContain("Ada:'Ada Rowe'");
+  });
+
+  it("routes each Red Team improvement query through bounded, role-specific web research", async () => {
+    const db = reviewDb();
+    seedControlRoomRedTeamFindings(db);
+    const requests: Array<{ reviewer: string; instructions: string }> = [];
+    const request: typeof fetch = async (_url, init) => {
+      const payload = JSON.parse(String(init?.body)) as { instructions: string };
+      requests.push({ reviewer: /reviewer for (Ada|Theo|Cora)/.exec(payload.instructions)?.[1] ?? "", instructions:payload.instructions });
+      return new Response(JSON.stringify({
+        output: [
+          { type:"web_search_call", action:{ sources:[{ title:"Authoritative source", url:"https://example.com/guidance" }] } },
+          { type:"message", content:[{ type:"output_text", text:"Project-derived observations: resolve the saved priority. External, current recommendations: use a documented verification checkpoint." }] }
+        ]
+      }), { status:200, headers:{ "Content-Type":"application/json" } });
+    };
+
+    for (const reviewer of ["Ada", "Theo", "Cora"] as const) {
+      expect(redTeamResponseModeFor(reviewer, "How can we improve this project?")).toEqual({ reviewer, mode:"improvement_research" });
+      const projectContext = redTeamImprovementResearchBrief(db, reviewer);
+      const result = await researchRedTeamImprovements({ apiKey:"test", agent:reviewer, reviewer, question:"How can we improve this project?", projectContext }, request);
+      expect(result.sources).toEqual([{ title:"Authoritative source", url:"https://example.com/guidance" }]);
+      expect(result.answer).toContain("External, current recommendations");
+      expect(projectContext).toContain("Saved project-derived observations");
+    }
+
+    expect(requests.map(request => request.reviewer)).toEqual(["Ada", "Theo", "Cora"]);
+    expect(requests[0]?.instructions).toContain("source-language and translated-text alignment");
+    expect(requests[1]?.instructions).toContain("Dramatic impact, narrative clarity");
+    expect(requests[2]?.instructions).toContain("Production feasibility, workflow reliability");
+    expect(requests.every(request => request.instructions.includes("Prioritize primary, authoritative sources"))).toBe(true);
+  });
+
+  it("keeps wrong-question and non-Red-Team routing local, with an honest saved-finding fallback", async () => {
+    const db = reviewDb();
+    seedControlRoomRedTeamFindings(db);
+    expect(redTeamResponseModeFor("Ada", "What did we do wrong in this project?")).toEqual({ reviewer:"Ada", mode:"local_audit" });
+    expect(redTeamResponseModeFor("Mabel", "How can we improve this project?")).toBeUndefined();
+    expect(redTeamImprovementFallback(db, "Ada")).toContain("External research was unavailable");
+    expect(redTeamImprovementFallback(db, "Ada")).toContain("120.891 seconds");
+    await expect(researchRedTeamImprovements({
+      apiKey:"test", agent:"Ada", reviewer:"Ada", question:"How can we improve this project?",
+      projectContext:redTeamImprovementResearchBrief(db, "Ada")
+    }, async () => new Response(JSON.stringify({ output:[{ type:"message", content:[{ type:"output_text", text:"Unattributed advice" }] }] }), { status:200 }))).rejects.toThrow("no attributable recommendation");
+    await expect(researchRedTeamImprovements({
+      apiKey:"test", agent:"Ada", reviewer:"Ada", question:"How can we improve this project?",
+      projectContext:redTeamImprovementResearchBrief(db, "Ada")
+    }, async () => new Response(JSON.stringify({ output:[
+      { type:"web_search_call", action:{ sources:[{ title:"Source", url:"https://example.com" }] } },
+      { type:"message", content:[{ type:"output_text", text:"One generic recommendation." }] }
+    ] }), { status:200 }))).rejects.toThrow("did not distinguish project and external");
   });
 });

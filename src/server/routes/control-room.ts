@@ -5,7 +5,7 @@ import { getDataDir } from "../../db/client.js";
 import { getDb } from "../../db/client.js";
 import { createControlRoomRealtimeSession } from "../control-room-listener.js";
 import { proposedResponsibilitiesFor } from "../control-room-responsibilities.js";
-import { redTeamFindingsFor, redTeamQuestionFor, redTeamReviewResponse, redTeamReviewerForAgent } from "../control-room-red-team-findings.js";
+import { redTeamFindingsFor, redTeamImprovementFallback, redTeamImprovementResearchBrief, redTeamResponseModeFor, redTeamReviewResponse, redTeamReviewerForAgent, type RedTeamReviewer } from "../control-room-red-team-findings.js";
 
 export const controlRoomRouter = Router();
 
@@ -17,6 +17,14 @@ const CONTROL_ROOM_PROFILE_ALIASES: Record<string, string> = { Ada: "Ada Rowe", 
 const controlRoomProfileName = (agent: string) => CONTROL_ROOM_PROFILE_ALIASES[agent] ?? agent;
 
 type ResearchSource = { title: string; url: string };
+type RedTeamImprovementResearchInput = {
+  apiKey: string;
+  agent: string;
+  reviewer: RedTeamReviewer;
+  question: string;
+  projectContext: string;
+};
+type RedTeamImprovementResearchResult = { answer: string; sources: ResearchSource[] };
 
 // Presentation voices are intentionally distinct from source-language audio.
 // This shared direction keeps their staged replies brisk and conversational
@@ -82,6 +90,34 @@ export function sanitizeResearchSpeech(text: string): string {
     .replace(/\s+/g, " ")
     .trim();
   return withoutLinks.split(" ").slice(0, 55).join(" ");
+}
+
+export function redTeamImprovementResearchInstructions(input: RedTeamImprovementResearchInput): string {
+  return `You are ${input.agent}, the presentation-only HeartWord Red Team reviewer for ${input.reviewer}. Your specialist scope and a deliberately bounded saved project audit follow. Answer only this improvement question: ${input.question}\n\n${input.projectContext}\n\nUse web search for current, external recommendations that fit this reviewer's scope. Prioritize primary, authoritative sources such as original research, recognized standards bodies, or official guidance; do not rely on blogs when a primary source is available. Return a concise answer of at most 90 words with two labelled parts: "Project-derived observations" (one sentence, based only on the saved audit) and "External, current recommendations" (one or two practical bullets, based on web research). Do not invent project facts, sources, or citations. Do not include URLs or citation markup in the answer: verified source links are displayed separately. This is presentation-only advice; do not claim to control HeartWord, change data, dispatch work, approve work, or override the producer.`;
+}
+
+export async function researchRedTeamImprovements(input: RedTeamImprovementResearchInput, request: typeof fetch = fetch): Promise<RedTeamImprovementResearchResult> {
+  const research = await request("https://api.openai.com/v1/responses", {
+    method:"POST",
+    headers:{ Authorization:`Bearer ${input.apiKey}`, "Content-Type":"application/json" },
+    body:JSON.stringify({
+      model:"gpt-5.4-nano",
+      store:false,
+      tools:[{ type:"web_search", search_context_size:"low" }],
+      include:["web_search_call.action.sources"],
+      instructions:redTeamImprovementResearchInstructions(input),
+      input:input.question
+    })
+  });
+  if (!research.ok) throw new Error(`research failed (${research.status})`);
+  const researchBody = await research.json();
+  const answer = responseOutputText(researchBody);
+  const sources = responseResearchSources(researchBody);
+  if (!answer || !sources.length) throw new Error("research returned no attributable recommendation");
+  if (!/project-derived observations/i.test(answer) || !/external,? current recommendations/i.test(answer)) {
+    throw new Error("research did not distinguish project and external recommendations");
+  }
+  return { answer, sources };
 }
 
 async function renderOpenAIPresentationSpeech(voice: string, instructions: string, text: string): Promise<Response> {
@@ -231,19 +267,47 @@ controlRoomRouter.post("/live-research-reply", async (req, res) => {
   const question = typeof req.body?.question === "string" ? req.body.question.trim().replace(/\s+/g, " ") : "";
   if (!agent || !question || question.length > 500) { res.status(400).json({ error:"An agent and a short question are required." }); return; }
   const profileAgent = controlRoomProfileName(agent);
-  const reviewer = redTeamReviewerForAgent(agent);
-  const redTeamQuestion = redTeamQuestionFor(question);
-  if (reviewer && redTeamQuestion) {
+  const redTeamResponse = redTeamResponseModeFor(agent, question);
+  if (redTeamResponse) {
     const db = getDb();
     const profile = db.prepare("SELECT voice_provider, voice_id, delivery_instructions FROM control_room_voice_profiles WHERE agent_name = ? AND presentation_only = 1").get(profileAgent) as { voice_provider?: string; voice_id?: string; delivery_instructions?: string } | undefined;
     if (!profile?.voice_id || !profile.delivery_instructions) { res.status(404).json({ error:"No Red Team presentation voice is available." }); return; }
-    const answer = redTeamReviewResponse(db, reviewer, redTeamQuestion);
-    try {
-      const speech = await renderPresentationSpeech(profile.voice_provider ?? "openai", profile.voice_id, profile.delivery_instructions, answer);
+    const voiceProvider = profile.voice_provider ?? "openai";
+    const voiceId = profile.voice_id;
+    const deliveryInstructions = profile.delivery_instructions;
+    const sendRedTeamAnswer = async (answer: string, sources: ResearchSource[] = [], mode = "local-audit", spokenAnswer = answer) => {
+      const speech = await renderPresentationSpeech(voiceProvider, voiceId, deliveryInstructions, spokenAnswer);
       if (!speech.ok) throw new Error("speech failed");
       res.setHeader("X-Control-Room-Red-Team-Answer", Buffer.from(answer, "utf8").toString("base64url"));
+      res.setHeader("X-Control-Room-Red-Team-Mode", mode);
+      if (sources.length) res.setHeader("X-Control-Room-Research-Sources", Buffer.from(JSON.stringify(sources)).toString("base64url"));
       res.type("audio/mpeg").send(Buffer.from(await speech.arrayBuffer()));
-    } catch { res.status(502).json({ error:"The Red Team review could not be spoken." }); }
+    };
+    if (redTeamResponse.mode === "local_audit") {
+      try { await sendRedTeamAnswer(redTeamReviewResponse(db, redTeamResponse.reviewer, "what_went_wrong")); }
+      catch { res.status(502).json({ error:"The Red Team review could not be spoken." }); }
+      return;
+    }
+    const fallback = redTeamImprovementFallback(db, redTeamResponse.reviewer);
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      try { await sendRedTeamAnswer(fallback, [], "local-fallback"); }
+      catch { res.status(502).json({ error:"The Red Team improvement fallback could not be spoken." }); }
+      return;
+    }
+    try {
+      const researched = await researchRedTeamImprovements({
+        apiKey,
+        agent,
+        reviewer:redTeamResponse.reviewer,
+        question,
+        projectContext:redTeamImprovementResearchBrief(db, redTeamResponse.reviewer)
+      });
+      await sendRedTeamAnswer(researched.answer, researched.sources, "external-research", sanitizeResearchSpeech(researched.answer));
+    } catch {
+      try { await sendRedTeamAnswer(fallback, [], "local-fallback"); }
+      catch { res.status(502).json({ error:"The Red Team improvement fallback could not be spoken." }); }
+    }
     return;
   }
   const apiKey = process.env.OPENAI_API_KEY;

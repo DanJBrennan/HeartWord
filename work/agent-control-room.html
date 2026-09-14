@@ -45,7 +45,7 @@
     #heartword-agent-control .producer-address input { min-width:0; border:1px solid light-dark(#b8aa9a,#625a50); border-radius:8px; padding:7px 9px; color:inherit; background:light-dark(#fffdf8,#2a2722); font:inherit; }
     #heartword-agent-control .producer-address button { border:1px solid light-dark(#b8aa9a,#625a50); border-radius:8px; padding:7px 10px; color:inherit; background:light-dark(#fffdf8,#2a2722); cursor:pointer; font:inherit; }
     #heartword-agent-control .producer-address button:disabled { cursor:not-allowed; opacity:.6; }
-    #heartword-agent-control .producer-address-status { grid-column:2 / -1; color:light-dark(#71665a,#bdb1a2); font-size:.74rem; }
+    #heartword-agent-control .producer-address-status { grid-column:2 / -1; color:light-dark(#71665a,#bdb1a2); font-size:.74rem; white-space:pre-wrap; }
     #heartword-agent-control .producer-address.showtime-active { border-color:light-dark(#8b3f8f,#e89cff); box-shadow:0 0 0 3px color-mix(in srgb, light-dark(#8b3f8f,#e89cff) 26%, transparent), 0 0 18px color-mix(in srgb, light-dark(#8b3f8f,#e89cff) 48%, transparent); }
     #heartword-agent-control .producer-address input:focus-visible, #heartword-agent-control .producer-address button:focus-visible { outline:3px solid light-dark(#155e75,#7dd3fc); outline-offset:2px; }
     #heartword-agent-control h2, #heartword-agent-control h3 { margin:0; font-weight:500; }
@@ -1069,6 +1069,27 @@
         limiter.release.value = .15;
         source.connect(gain); gain.connect(limiter); limiter.connect(presentationAudioContext.destination);
       };
+      const decodePresentationHeader = encoded => {
+        if (!encoded) return '';
+        const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+        const bytes = Uint8Array.from(atob(padded), character => character.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
+      };
+      const showRedTeamAnswer = (answer, sources) => {
+        status.replaceChildren(document.createTextNode(answer));
+        const safeSources = Array.isArray(sources) ? sources.filter(source => source && typeof source.title === 'string' && typeof source.url === 'string' && source.url.startsWith('https://')) : [];
+        if (!safeSources.length) return;
+        const citations = document.createElement('span');
+        citations.textContent = '\nExternal sources: ';
+        safeSources.forEach((source, index) => {
+          if (index) citations.append(', ');
+          const link = document.createElement('a');
+          link.href = source.url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = source.title;
+          citations.append(link);
+        });
+        status.append(citations);
+      };
       let activeVoiceNames = [];
       let activeReplySource;
       let activeReplyAbort;
@@ -1236,6 +1257,7 @@
           const response = await fetch(`${listenerBase}/${stagedReply ? 'purpose-reply' : 'live-research-reply'}`, { method:'POST', headers:{'Content-Type':'application/json'}, signal:abort.signal, body:JSON.stringify(stagedReply ? { agent:names[0] } : { agent:names[0], question:value }) });
           if (!response.ok) throw new Error('staged reply unavailable');
           const encodedRedTeamAnswer = response.headers.get('X-Control-Room-Red-Team-Answer');
+          const encodedResearchSources = response.headers.get('X-Control-Room-Research-Sources');
           const audio = await presentationAudioContext.decodeAudioData(await (await response.blob()).arrayBuffer());
           if (sequence !== replySequence || abort.signal.aborted) return;
           const source = presentationAudioContext.createBufferSource();
@@ -1244,10 +1266,9 @@
           source.start();
           if (stagedReply) status.textContent = `${names[0]} is responding with a staged presentation reply. Nothing is sent to HeartWord.`;
           else if (encodedRedTeamAnswer) {
-            const base64 = encodedRedTeamAnswer.replace(/-/g, '+').replace(/_/g, '/');
-            const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
-            const bytes = Uint8Array.from(atob(padded), character => character.charCodeAt(0));
-            status.textContent = new TextDecoder().decode(bytes);
+            let sources = [];
+            try { sources = JSON.parse(decodePresentationHeader(encodedResearchSources)); } catch { /* Source links remain absent when unavailable. */ }
+            showRedTeamAnswer(decodePresentationHeader(encodedRedTeamAnswer), sources);
           }
           else {
             status.textContent = `${names[0]} is responding with a concise live-research reply. No HeartWord data is changed.`;
