@@ -2,6 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 
 export type RedTeamReviewer = "Ada" | "Theo" | "Cora";
 export type RedTeamQuestion = "what_went_wrong" | "how_to_improve";
+export type RedTeamResponseMode = "local_audit" | "improvement_research";
 
 export interface RedTeamFinding {
   id: string;
@@ -89,6 +90,12 @@ const REVIEWER_ALIASES: Record<string, RedTeamReviewer> = {
   ada: "Ada", "ada rowe": "Ada", theo: "Theo", "theo maren": "Theo", cora: "Cora", "cora bellamy": "Cora"
 };
 
+const REVIEWER_RESEARCH_SCOPES: Record<RedTeamReviewer, string> = {
+  Ada: "Scripture fidelity, source-language and translated-text alignment, and review safeguards. Seek authoritative guidance on traceable source review, translation/alignment verification, and human sign-off for ambiguous source material.",
+  Theo: "Dramatic impact, narrative clarity, and viewer/emotional effectiveness. Seek authoritative filmmaking or audience-research guidance on testing comprehension, coverage, pacing, and emotional continuity in an edited narrative.",
+  Cora: "Production feasibility, workflow reliability, scope, cost, and practical execution. Seek authoritative engineering or production guidance on release readiness, reproducible quality gates, risk triage, and cost-aware automation."
+};
+
 export function redTeamReviewerForAgent(agent: string): RedTeamReviewer | undefined {
   return REVIEWER_ALIASES[agent.trim().toLowerCase()];
 }
@@ -98,6 +105,13 @@ export function redTeamQuestionFor(text: string): RedTeamQuestion | undefined {
   if (/\bwhat\b.*\b(wrong|problems?|issues?|risks?|failed|weakness(?:es)?)\b|\bwhat went wrong\b/.test(question)) return "what_went_wrong";
   if (/\b(how|what|where|ways?)\b.*\b(improv\w*|better|strengthen\w*|fix\w*)\b/.test(question)) return "how_to_improve";
   return undefined;
+}
+
+export function redTeamResponseModeFor(agent: string, question: string): { reviewer: RedTeamReviewer; mode: RedTeamResponseMode } | undefined {
+  const reviewer = redTeamReviewerForAgent(agent);
+  const redTeamQuestion = redTeamQuestionFor(question);
+  if (!reviewer || !redTeamQuestion) return undefined;
+  return { reviewer, mode: redTeamQuestion === "what_went_wrong" ? "local_audit" : "improvement_research" };
 }
 
 export function redTeamFindingsFor(db: DatabaseSync, reviewer: RedTeamReviewer): RedTeamFinding[] {
@@ -117,6 +131,21 @@ export function redTeamReviewResponse(db: DatabaseSync, reviewer: RedTeamReviewe
     ? `${index + 1}. [${finding.severity}] ${finding.finding} Evidence: ${finding.evidence} References: ${finding.sourceReferences.join(", ")}. Improve: ${finding.recommendation}`
     : `${index + 1}. [${finding.severity}] Improve: ${finding.recommendation} Why: ${finding.finding} Evidence: ${finding.evidence} References: ${finding.sourceReferences.join(", ")}.`);
   return `${opening}\n${items.join("\n")}\nScope: This is saved, presentation-only project-audit context. The producer retains every decision.`;
+}
+
+// This is the only project context sent with a Red Team web-research request.
+// It is derived from the saved presentation audit, excludes raw records and
+// personal data, and is explicitly not external evidence.
+export function redTeamImprovementResearchBrief(db: DatabaseSync, reviewer: RedTeamReviewer): string {
+  const findings = redTeamFindingsFor(db, reviewer);
+  const observations = findings.map(finding =>
+    `- [${finding.severity}] ${finding.finding} Local next step: ${finding.recommendation}`
+  );
+  return `Reviewer scope: ${REVIEWER_RESEARCH_SCOPES[reviewer]}\nSaved project-derived observations (not external evidence; presentation-only):\n${observations.join("\n")}`;
+}
+
+export function redTeamImprovementFallback(db: DatabaseSync, reviewer: RedTeamReviewer): string {
+  return `${redTeamReviewResponse(db, reviewer, "how_to_improve")}\nExternal research was unavailable, so these are saved project-derived improvements only.`;
 }
 
 export function seedControlRoomRedTeamFindings(db: DatabaseSync, now = Date.now()): number {

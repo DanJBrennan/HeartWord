@@ -1862,3 +1862,16 @@ instead of performing generic web research. The browser also displays that
 evidence-backed answer while it plays. This adds no production permission,
 workflow trigger, or runtime review gate: the Red Team remains planned
 presentation context, and the producer retains every decision.
+
+For Red Team improvement questions only, the presentation path now makes the
+same bounded, server-only live web-research call used by the existing Control
+Room fallback. Ada receives only saved Scripture/source-safeguard observations,
+Theo only saved clarity/impact observations, and Cora only saved
+feasibility/reliability observations. The request asks for concise current
+recommendations from primary or authoritative sources, labels project-derived
+observations separately from external recommendations, and returns verified
+public source links for the on-screen response. “What did we do wrong?”
+remains deterministic, local, and non-researching. If research is unavailable
+or produces no attributable sources, each reviewer instead states that clearly
+and returns the saved evidence-backed improvement priorities; no response is
+stored and no production record, authority, or gate changes.
