@@ -1041,9 +1041,17 @@
       };
       const listenerBase = location.port === '5173' ? 'http://127.0.0.1:4000/api/control-room' : '/api/control-room';
       let presentationAudioContext;
-      // Presentation-only calibration. Keep agent gains here so an approved
-      // adjustment cannot affect source-language or production audio.
-      const presentationPlaybackGains = { Miriam:{ gainDb:8, limiterThresholdDb:-1 } };
+      // 2026-09-14 EBU R128 calibration: target -22 LUFS from one neutral
+      // line rendered through each saved provider configuration. Only voices
+      // at least 1 dB below target are raised; louder voices stay unchanged.
+      // This presentation-only mapping never affects source or production audio.
+      const presentationPlaybackGains = {
+        Mabel:{ gainDb:2 }, Rufus:{ gainDb:4 }, Pippa:{ gainDb:3 },
+        'Ada Rowe':{ gainDb:10.5 }, 'Cora Bellamy':{ gainDb:2.5 }, 'Gene Siskel':{ gainDb:2.5 },
+        'Roger Ebert':{ gainDb:2.5 }, Leon:{ gainDb:7 }, Tessa:{ gainDb:6 },
+        Nell:{ gainDb:6.5 }, Sam:{ gainDb:1 }, Miriam:{ gainDb:12 }, Dottie:{ gainDb:2 }
+      };
+      const presentationBoostLimiterThresholdDb = -1;
       const connectPresentationAudio = (source, agent) => {
         const calibration = presentationPlaybackGains[agent];
         if (!calibration) { source.connect(presentationAudioContext.destination); return; }
@@ -1051,7 +1059,7 @@
         gain.gain.value = Math.pow(10, calibration.gainDb / 20);
         // Limit only the boosted reply's peaks before they reach the speakers.
         const limiter = presentationAudioContext.createDynamicsCompressor();
-        limiter.threshold.value = calibration.limiterThresholdDb;
+        limiter.threshold.value = presentationBoostLimiterThresholdDb;
         limiter.knee.value = 0;
         limiter.ratio.value = 20;
         limiter.attack.value = .003;
