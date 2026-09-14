@@ -1827,3 +1827,7 @@ Every expanded cast profile now includes a modest, keyboard-accessible next
 arrow. It advances through the displayed map roster with wraparound while
 naming its destination for assistive technology; it remains presentation-only
 and leaves compact cards and the close control unchanged.
+
+The expanded profile now pairs that control with a matching accessible back
+arrow. It moves through the same roster in reverse, including Mabel back to
+Roger Ebert, while preserving the open presentation detail view.
