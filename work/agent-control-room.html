@@ -1497,10 +1497,11 @@
       const isAvailable = () => !reducedMotion.matches && !document.hidden && !map.classList.contains('cast-focus-active') && !dialog.open && (root.classList.contains('presentation-clean') || root.dataset.view === 'map');
       const stop = () => {
         clearTimeout(timer);
-        if (!active) return;
-        active.video.pause();
-        active.video.remove();
-        active.card.classList.remove('idle-motion-active');
+        map.querySelectorAll('.idle-motion').forEach(video => {
+          video.pause();
+          video.remove();
+        });
+        map.querySelectorAll('.idle-motion-active').forEach(card => card.classList.remove('idle-motion-active'));
         active = undefined;
       };
       const schedule = () => {
@@ -1511,7 +1512,9 @@
       };
       const finish = () => { stop(); schedule(); };
       const playOne = () => {
-        if (!isAvailable() || active) return schedule();
+        // A preview or abandoned overlay must never survive into the next turn.
+        stop();
+        if (!isAvailable()) return schedule();
         const available = clips.filter(clip => !failed.has(clip.name) && clip.name !== lastName);
         const options = available.length ? available : clips.filter(clip => !failed.has(clip.name));
         const clip = options[Math.floor(Math.random() * options.length)];
