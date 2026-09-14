@@ -1,0 +1,28 @@
+{
+  "scope": "Private control-room presentation only; never HeartWord production, Scripture media, or source audio.",
+  "provider": "gemini-omni-1.1-flash",
+  "mode": "360p two-image first/last-frame interpolation; one generation attempt per persona",
+  "records": [
+    { "name": "Rufus", "status": "approved", "source": "rufus-motion-safe-source-v1.png", "clip": "rufus.mp4", "reason": "Previously approved; not regenerated." },
+    { "name": "Pippa", "status": "approved", "source": "pippa-motion-safe-source-v1.png", "clip": "pippa.mp4", "reason": "First/last-frame candidate passed identity, framing, and browser loop QA." },
+    { "name": "Mabel", "status": "rejected", "source": "mabel-motion-safe-source-v1.png", "clip": null, "reason": "Omni HTTP 400 prohibited-content block; no retry." },
+    { "name": "Gus", "status": "approved", "source": "gus-motion-safe-source-v1.png", "clip": "gus.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Vera", "status": "approved", "source": "vera-motion-safe-source-v1.png", "clip": "vera.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Orion", "status": "approved", "source": "orion-motion-safe-source-v1.png", "clip": "orion.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "June", "status": "approved", "source": "june-motion-safe-source-v1.png", "clip": "june.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Leon", "status": "approved", "source": "leon-motion-safe-source-v1.png", "clip": "leon.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Tessa", "status": "approved", "source": "tessa-motion-safe-source-v1.png", "clip": "tessa.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Arlo", "status": "approved", "source": "arlo-motion-safe-source-v1.png", "clip": "arlo.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Nell", "status": "approved", "source": "nell-motion-safe-source-v1.png", "clip": "nell.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Sam", "status": "approved", "source": "sam-motion-safe-source-v1.png", "clip": "sam.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Miriam", "status": "approved", "source": "miriam-motion-safe-source-v1.png", "clip": "miriam.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Dottie", "status": "approved", "source": "dottie-motion-safe-source-v1.png", "clip": "dottie.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Kit", "status": "approved", "source": "kit-motion-safe-source-v1.png", "clip": "kit.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Benny", "status": "approved", "source": "benny-motion-safe-source-v1.png", "clip": "benny.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Ada", "status": "approved", "source": "ada-motion-safe-source-v1.png", "clip": "ada.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Theo", "status": "approved", "source": "theo-motion-safe-source-v1.png", "clip": "theo.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Cora", "status": "approved", "source": "cora-motion-safe-source-v1.png", "clip": "cora.mp4", "reason": "Passed identity/composition and paired loop-boundary review." },
+    { "name": "Gene Siskel", "status": "rejected", "source": null, "clip": null, "reason": "Omni blocked real-person likeness; no retry." },
+    { "name": "Roger Ebert", "status": "rejected", "source": null, "clip": null, "reason": "Omni blocked real-person likeness; no retry." }
+  ]
+}

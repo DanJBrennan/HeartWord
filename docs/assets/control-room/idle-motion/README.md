@@ -12,6 +12,15 @@ card remains a static portrait. Pippa was generated at 360p with Gemini Omni
 identity/framing inspection and repeated control-room browser-loop review with
 no visible boundary jump.
 
+The producer-authorized Omni batch subsequently approved matching 360p,
+same-first-and-last-frame clips for Gus, Vera, Orion, June, Leon, Tessa, Arlo,
+Nell, Sam, Miriam, Dottie, Kit, Benny, Ada, Theo, and Cora. Each has a
+non-destructive wide source, one silent locked-camera Omni attempt, and paired
+first/last-frame review before entering the same one-at-a-time scheduler.
+Mabel, Gene Siskel, and Roger Ebert remain static: their one batch attempt was
+blocked by the provider, with no retry or substitute. The durable per-person
+record is [`batch-ledger.json`](batch-ledger.json).
+
 The existing provider refused Mabel's first constrained image-to-video request
 and its one permitted retry from `mabel-motion-safe-source-v1.png`, so Mabel
 intentionally remains static. The original Rufus attempt was rejected because
