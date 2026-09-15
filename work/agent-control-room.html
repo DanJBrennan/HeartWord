@@ -1248,7 +1248,7 @@
       root.querySelectorAll('[data-voice-audition]').forEach(button => button.addEventListener('click', () => playVoiceAudition(button.dataset.voiceAudition)));
       const playPurposeReply = async (value, names) => {
         if (!names.length || !presentationAudioContext) return;
-        const stagedReply = /\bhow\s+are\s+you\b/i.test(value);
+        const stagedReply = /\b(?:how\s+are\s+you|what\s+inspires\s+you\s+to\s+work\s+here)\b/i.test(value);
         const isQuestion = /[?]|\b(?:who|what|when|where|why|how|can|could|would|will|is|are|do|does|did|tell me|explain)\b/i.test(value);
         if (!stagedReply && !isQuestion) return;
         interruptPresentationReply();
