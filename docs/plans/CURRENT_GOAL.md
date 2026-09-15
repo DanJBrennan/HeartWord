@@ -1892,3 +1892,8 @@ portrait/branding/media files; it does not move the artifact, expose unrelated
 repository files, or alter the normal React app. When opened through Vite, the
 artifact uses the existing same-origin `/api` proxy rather than a cross-origin
 port-4000 request; direct `file:` opening retains its prior local API base.
+
+The existing local “How are you?” presentation cue also recognizes “What
+inspires you to work here?” and returns the same saved, addressed-agent reply.
+It remains a presentation-only interaction and does not send a production
+message, alter agent authority, or access project data.
