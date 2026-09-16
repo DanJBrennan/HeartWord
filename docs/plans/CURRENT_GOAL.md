@@ -1,13 +1,5 @@
 # Current Goal
 
-## Architecture roster amendment (2026-09-16)
-
-Dan approved the canonical 19-role production roster, three independent milestone challengers, and optional presentation-only critics. The role map is now recorded in `src/server/production-crew.ts`; the control-room responsibility/voice metadata calls Mabel the Production Coordinator, June the Source and Alignment Specialist, Orion the Script Supervisor / Continuity Reviewer, and Benny historical-only. `docs/design/production-crew-communication.md` now states the shared immutable brief, scoped ownership, proposal/objection/revision/resolution record, bounded cost/retry/idempotency rules, independent milestone review, and producer/human release holds.
-
-This is deliberately honest about runtime: the existing crew has bounded specialist planning/editing/finishing calls, persisted logs, validation and timing/cost gates; the full named roster and milestone routing are a declared contract until individually wired. No paid calls, source changes, canon substitutions, or production renders were made. Goal Guardian check: the change extends the independent stage workflow and preserves Dan's review/correct/rerun authority, source performance, canon, and manual edits; it does not create a second pipeline or imply human language/field approval.
-
-Validation in this isolated checkout remains pending dependency installation: the checkout has no local `node_modules`, so `npm run build:web` cannot find Vite and Vitest cannot load its configured package. The saved checkout's pre-existing server typecheck baseline must also be rechecked separately; no claim of a clean full typecheck is made here.
-
 ## Active status: Mark 2 timing integration (2026-09-11)
 
 Implementation handoff: Dan prefers Sonnet 5 at Medium for the next coding
@@ -1905,3 +1897,49 @@ The existing local “How are you?” presentation cue also recognizes “What
 inspires you to work here?” and returns the same saved, addressed-agent reply.
 It remains a presentation-only interaction and does not send a production
 message, alter agent authority, or access project data.
+
+## Mabel portrait candidate (2026-09-16)
+
+A non-destructive Mabel control-room portrait candidate was created at
+`docs/assets/control-room/agent-portraits/mabel-control-supervisor-candidate-v2.png`.
+It preserves the approved Mabel identity and remains private presentation
+reference art only; it is not approved, wired into the control-room UI, or used
+as a HeartWord production or Scripture-media asset.
+
+Following producer feedback that the earlier phone-operator visual did not
+represent Mabel's supervisory role, the active
+`mabel-control-supervisor.png` was replaced with a coordinator portrait. The
+replacement depicts review and delegation through a planning board, handoff
+cards, portfolio, and pen, and deliberately removes the headset and phone
+operator cues. The former active portrait remains retained as
+`mabel-control-supervisor-operator-legacy.png`; neither asset is Scripture
+media or a production record.
+
+Mabel's presentation-only ElevenLabs voice was recast from Matilda to Lily
+(2026-09-16). Lily's warm, confident, middle-aged British delivery better
+matches the redesigned senior supervisor portrait and gives Mabel a distinct
+control-room presence. The assignment applies only to staged control-room
+speech, never source narration, canon-character voices, or production actions.
+The producer listened to the supervisory sample and approved Lily as Mabel's
+active presentation voice.
+
+## Forestdale science companion archived (2026-09-16)
+
+The producer retired the standalone science-demo companion. Its HTML and a
+short archive record are retained under `docs/archive/` for reference only;
+the served route, voice endpoint, and associated tests were removed so it has
+no runtime connection to HeartWord.
+
+## Strict TypeScript repair checkpoint (2026-09-16)
+
+Before the approved architecture restructuring, the full strict server and
+frontend TypeScript check was repaired from 22 reported errors to zero without
+changing pipeline or production semantics. The repair validates SQLite query
+rows at their boundaries rather than using unsafe row casts, handles unchecked
+CLI and regular-expression values explicitly, and corrects the canonical-
+likeness regeneration lookup to use the SQL field `character_name`. A focused
+regression test confirms a failed character row can be found for recheck.
+
+Validation after the repair: `npm run typecheck`, `npm test` (241 tests), and
+`npm run build:web` all pass. This is a bounded reliability cleanup only; it
+does not implement the separate agent-role architecture work.

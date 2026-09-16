@@ -149,6 +149,15 @@ interface OldAssetRow {
   path: string;
 }
 
+function readOldAssets(rows: Record<string, unknown>[]): OldAssetRow[] {
+  return rows.map((row) => {
+    if (typeof row.id !== "string" || typeof row.category !== "string" || typeof row.path !== "string") {
+      throw new Error("Expected character asset rows with string id, category, and path.");
+    }
+    return { id: row.id, category: row.category, path: row.path };
+  });
+}
+
 async function main() {
   const db = getDb();
   const now = Date.now();
@@ -178,9 +187,9 @@ async function main() {
       continue;
     }
 
-    const oldAssets = db
+    const oldAssets = readOldAssets(db
       .prepare(`SELECT id, category, path FROM character_assets WHERE character_version_id = ?`)
-      .all(oldVersion.id) as OldAssetRow[];
+      .all(oldVersion.id));
 
     const relPath = `characters/${promo.characterSlug}/turnaround/${promo.newFilename}`;
     const absPath = path.join(dataDir, "assets", relPath);

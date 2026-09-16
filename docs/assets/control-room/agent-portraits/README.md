@@ -9,7 +9,7 @@ orchestration.
 
 | Asset | Agent | Responsibility | Preserved source |
 | --- | --- | --- | --- |
-| `mabel-control-supervisor.png` | Mabel | Deterministic Supervisor | `exec-63d65cd5-eb1b-47c8-898d-e3f4e7c8735d.png` |
+| `mabel-control-supervisor.png` | Mabel | Deterministic Supervisor | 2026-09-16 replacement: senior control-room coordinator, generated from the previous Mabel portrait as identity reference |
 | `rufus-creative-director.png` | Rufus | Creative Director | `exec-b1695305-4929-4d31-a13b-e9fdb6d7758c.png` |
 | `pippa-shot-planner.png` | Pippa | Shot Planner | `exec-fe45a31e-e33d-4675-a4ab-fa47c73f9fd9.png` |
 | `gus-media-generator.png` | Gus | Media Generator / Projectionist | `exec-14f19d03-e09f-4501-ab62-85165aad7bc6.png` |
@@ -37,6 +37,10 @@ portraits. The four discarded variants were intentionally not preserved here:
 `exec-67aae40e-6824-48a2-a17a-0c2df46b8397.png`,
 `exec-eaf96e4a-1633-45b3-9064-b59160feeaee.png`, and
 `exec-d01688dc-1042-49a4-baf9-dbcf2fc38ad9.png`.
+
+The prior Mabel phone-operator portrait is retained non-destructively as
+`mabel-control-supervisor-operator-legacy.png`. It is not used by the
+control-room presentation.
 
 The optional, generated private idle-motion MP4s are documented separately in
 [`../idle-motion/README.md`](../idle-motion/README.md). They preserve this

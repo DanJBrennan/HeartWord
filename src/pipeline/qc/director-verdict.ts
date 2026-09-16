@@ -32,7 +32,20 @@ export interface DirectorInputs {
   /** true if the scene-fidelity check passed (or wasn't applicable);
    *  false if it failed. */
   fidelityAligned: boolean;
+  /** How many prior 'generate' attempts this shot already has (before the
+   *  one just reviewed) -- defaults to 0. Without this, a shot stuck on
+   *  the same real, unfixed problem loops retry_modified forever: each
+   *  attempt looks identical to the Director in isolation, since severity
+   *  and the two checks say nothing about whether this is the 1st or 8th
+   *  try. See MAX_AUTOMATIC_RETRIES below. */
+  priorAttemptCount?: number;
 }
+
+/** A shot that would still only earn retry_modified after this many prior
+ *  attempts escalates to hold_for_review instead -- repeated automatic
+ *  retries aren't resolving it, so a human should look rather than spend
+ *  another generation call on the same likely outcome. */
+export const MAX_AUTOMATIC_RETRIES = 2;
 
 export interface DirectorDecision {
   status: GenerationStatus;
@@ -52,7 +65,7 @@ export interface DirectorDecision {
  * another blind automatic retry.
  */
 export function decideGenerationStatus(inputs: DirectorInputs): DirectorDecision {
-  const { criticSeverity, likenessAligned, fidelityAligned } = inputs;
+  const { criticSeverity, likenessAligned, fidelityAligned, priorAttemptCount = 0 } = inputs;
   const failedChecks = (likenessAligned ? 0 : 1) + (fidelityAligned ? 0 : 1);
 
   if (criticSeverity === "severe" && failedChecks > 0) {
@@ -76,13 +89,19 @@ export function decideGenerationStatus(inputs: DirectorInputs): DirectorDecision
     };
   }
   if (criticSeverity === "moderate" || failedChecks === 1) {
-    return {
-      status: "retry_modified",
-      reasoning:
-        criticSeverity === "moderate"
-          ? "Critic raised a moderate concern -- worth a regeneration attempt with a modified prompt."
-          : "One automated check failed -- worth a regeneration attempt with a modified prompt."
-    };
+    const baseReasoning =
+      criticSeverity === "moderate"
+        ? "Critic raised a moderate concern -- worth a regeneration attempt with a modified prompt."
+        : "One automated check failed -- worth a regeneration attempt with a modified prompt.";
+    if (priorAttemptCount >= MAX_AUTOMATIC_RETRIES) {
+      return {
+        status: "hold_for_review",
+        reasoning:
+          `${baseReasoning} But this shot already has ${priorAttemptCount} prior attempt(s) -- another automatic ` +
+          `retry is unlikely to resolve a problem that survived that many already; a human should look instead.`
+      };
+    }
+    return { status: "retry_modified", reasoning: baseReasoning };
   }
   return {
     status: "accepted",

@@ -85,9 +85,17 @@ export async function runCanonGarmentCritic(
     `(a small, easily-overlooked detail), "SEVERITY: moderate" (worth fixing before this design ships further), or ` +
     `"SEVERITY: severe" (a clear, well-documented error that would visibly repeat across every future shot).`;
 
-  const findings = await generateGroundedText(prompt, referenceImages);
-  const severity = parseCriticSeverity(findings);
-  return { severity, findings };
+  const result = await generateGroundedText(prompt, referenceImages);
+  const severity = parseCriticSeverity(result.text);
+  const sources = [...new Map(result.sources.map((s) => [s.uri, s] as const)).values()];
+  const sourcesFinding = sources.length
+    ? `\n\nSources cited by the grounded research pass:\n${sources.map((s) => `- ${s.title} (${s.uri})`).join("\n")}`
+    : "";
+  // suggestedFix/preserve are shot-regeneration concepts (critic.ts's
+  // runCritic asks for them explicitly) -- this garment review judges a
+  // locked reference design, not a shot, and doesn't ask its prompt for
+  // those trailer lines, so there's nothing real to parse out here.
+  return { severity, findings: `${result.text}${sourcesFinding}`, sources, suggestedFix: null, preserve: null };
 }
 
 interface CanonCharacterRow {
@@ -99,6 +107,24 @@ interface CanonCharacterRow {
 interface CanonAssetRow {
   path: string;
   category: string;
+}
+
+function readCanonCharacters(rows: Record<string, unknown>[]): CanonCharacterRow[] {
+  return rows.map((row) => {
+    if (typeof row.character_id !== "string" || typeof row.character_version_id !== "string" || typeof row.character_name !== "string") {
+      throw new Error("Expected canon character rows with string character and version identifiers.");
+    }
+    return { character_id: row.character_id, character_version_id: row.character_version_id, character_name: row.character_name };
+  });
+}
+
+function readCanonAssets(rows: Record<string, unknown>[]): CanonAssetRow[] {
+  return rows.map((row) => {
+    if (typeof row.path !== "string" || typeof row.category !== "string") {
+      throw new Error("Expected canon asset rows with string path and category.");
+    }
+    return { path: row.path, category: row.category };
+  });
 }
 
 export interface CanonGarmentAuditEntry {
@@ -122,7 +148,7 @@ export async function auditCanonGarments(projectId: string): Promise<CanonGarmen
   const db = getDb();
   const dataDir = getDataDir();
 
-  const characters = db
+  const characters = readCanonCharacters(db
     .prepare(
       `SELECT c.id AS character_id, cv.id AS character_version_id, c.name AS character_name
        FROM characters c
@@ -130,7 +156,7 @@ export async function auditCanonGarments(projectId: string): Promise<CanonGarmen
        WHERE c.canon_status = 'approved'
        ORDER BY c.name`
     )
-    .all() as CanonCharacterRow[];
+    .all());
 
   const assetStmt = db.prepare(
     `SELECT path, category FROM character_assets WHERE character_version_id = ?
@@ -141,10 +167,19 @@ export async function auditCanonGarments(projectId: string): Promise<CanonGarmen
     `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
      VALUES (?, ?, 'character_version', ?, 'qc', ?, ?, ?)`
   );
+  // The prior gap this closes: recordProducerOverride below writes a
+  // durable, resolved 'human' review_notes row for a character version,
+  // but this audit never read it back -- so a producer-approved deviation
+  // (e.g. the scribes' solid-black garments, see recordProducerOverride's
+  // docstring) got re-flagged as an unresolved error on every subsequent
+  // audit run, forever, even though the decision had already been made.
+  const loadOverrides = db.prepare(
+    `SELECT note FROM review_notes WHERE subject_type = 'character_version' AND subject_id = ? AND source = 'human' ORDER BY created_at`
+  );
 
   const results: CanonGarmentAuditEntry[] = [];
   for (const character of characters) {
-    const assets = assetStmt.all(character.character_version_id) as CanonAssetRow[];
+    const assets = readCanonAssets(assetStmt.all(character.character_version_id));
     const images: Array<{ mimeType: string; data: string }> = [];
     for (const asset of assets) {
       if (images.length >= 2) break;
@@ -154,7 +189,12 @@ export async function auditCanonGarments(projectId: string): Promise<CanonGarmen
     }
     if (images.length === 0) continue;
 
-    const critic = await runCanonGarmentCritic(character.character_name, images);
+    const overrides = (loadOverrides.all(character.character_version_id) as Array<{ note: string }>).map((r) =>
+      // Strip the "Producer override: " prefix recordProducerOverride writes, so the bullet list handed to the
+      // Critic reads as a clean list of decisions rather than repeating that label on every line.
+      r.note.replace(/^Producer override:\s*/, "")
+    );
+    const critic = await runCanonGarmentCritic(character.character_name, images, overrides);
     results.push({
       characterId: character.character_id,
       characterVersionId: character.character_version_id,

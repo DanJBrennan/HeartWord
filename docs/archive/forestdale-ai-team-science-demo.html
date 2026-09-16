@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Forestdale AI Team Science Mission</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color:#28231d; background:#f7f1e5; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-width:320px; background:radial-gradient(circle at 90% 0,#f7d89e 0,transparent 27%),#f7f1e5; }
+    main { width:min(1560px,100%); margin:auto; padding:24px; }
+    .top { display:flex; justify-content:space-between; gap:20px; align-items:start; border-bottom:2px solid #d9b46c; padding-bottom:18px; }
+    h1 { font-size:clamp(1.6rem,4vw,2.6rem); margin:0; letter-spacing:-.04em; }
+    h2 { margin:0; font-size:1.1rem; }
+    .eyebrow { color:#875320; font-size:.8rem; font-weight:800; letter-spacing:.09em; text-transform:uppercase; margin:0 0 8px; }
+    .tag { max-width:300px; background:#fff7e8; border:1px solid #d9b46c; border-radius:999px; padding:10px 14px; font-size:.88rem; font-weight:650; }
+    .mission { margin:22px 0; display:grid; grid-template-columns:1.2fr .8fr; gap:18px; }
+    .card { background:rgba(255,252,246,.84); border:1px solid #ded0bb; box-shadow:0 12px 28px #4c321116; border-radius:18px; padding:20px; }
+    .mission h2 { font-size:1.4rem; margin:0 0 8px; }
+    .mission p { line-height:1.5; margin:8px 0; }
+    .skills { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin-top:14px; }
+    .skill { border-radius:10px; padding:10px; background:#e7f0e8; font-size:.88rem; font-weight:700; }
+    .skill:nth-child(2n) { background:#f7e7d0; }
+    .flow { display:grid; grid-template-columns:minmax(210px,.5fr) minmax(620px,1.7fr); gap:18px; }
+    .commands { display:grid; gap:10px; margin-top:14px; }
+    button { font:inherit; cursor:pointer; }
+    .command { width:100%; text-align:left; border:1px solid #b78953; border-radius:12px; background:#fffaf0; padding:13px; color:#3e2918; transition:transform .14s,background .14s; }
+    .command:hover,.command:focus-visible { background:#f7e1b8; transform:translateY(-1px); outline:3px solid #8b5a2b55; }
+    .command[aria-current="true"] { background:#b96d35; color:#fff; border-color:#8a4a20; }
+    .command small { display:block; font-size:.76rem; opacity:.8; margin-top:4px; }
+    .mic { margin-top:13px; display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+    .mic button { background:#234d5a; color:white; border:0; border-radius:9px; padding:10px 13px; font-weight:750; }
+    .mic span { font-size:.83rem; color:#5c5145; }
+    .presentation { margin-top:13px; border:1px solid #234d5a; color:#173e47; background:#e8f0f4; border-radius:9px; padding:10px 13px; font-weight:750; }
+    .mission-count { color:#875320; font-size:.8rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    .mission-state { background:#173e47; color:#f9eee0; border-radius:15px; padding:16px; margin-bottom:16px; }
+    .mission-state p { margin:5px 0 0; line-height:1.45; }
+    .team { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+    .agent { text-align:center; border:1px solid #decdb4; border-radius:13px; padding:10px 7px; background:#fffaf2; opacity:.48; transition:.2s; }
+    .agent.active { opacity:1; border:2px solid #bb6d34; background:#fff0d2; box-shadow:0 6px 16px #9e572420; }
+    .agent img { width:184px; height:184px; object-fit:cover; border-radius:50%; display:block; margin:0 auto 8px; }
+    .agent[data-agent="Vera"] img { object-position:center top; }
+    .agent strong,.agent span { display:block; }
+    .agent span { font-size:.75rem; line-height:1.2; color:#66594e; margin-top:3px; }
+    .flow > section.card { display:flex; flex-direction:column; min-height:0; }
+    .conversation { margin-top:18px; height:clamp(330px,48vh,520px); overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; display:grid; gap:11px; align-content:start; padding-right:6px; scroll-behavior:smooth; }
+    .line { display:grid; grid-template-columns:110px 1fr; gap:11px; padding:12px; border-radius:12px; background:#f5eee2; border-left:5px solid #b26b34; animation:arrive .32s ease-out; }
+    .play-reply { margin-top:9px; padding:7px 10px; border:1px solid #7e4d2a; border-radius:999px; background:#fff8ed; color:#5a3219; font:700 .78rem/1 system-ui,sans-serif; cursor:pointer; }
+    .line.teacher { border-left-color:#355f79; background:#e8f0f4; }
+    .line .speaker { font-weight:800; color:#5d371d; }
+    .line.teacher .speaker { color:#234d5a; }
+    .line p { margin:0; line-height:1.45; }
+    .lesson { margin-top:18px; background:#e7f0e8; border:1px solid #b6d1bb; border-radius:14px; padding:15px; }
+    .lesson strong { display:block; margin-bottom:5px; }
+    .footer { margin-top:21px; color:#6d6053; font-size:.86rem; line-height:1.45; }
+    .reset { margin-top:14px; border:1px solid #82664a; background:transparent; border-radius:9px; padding:9px 12px; }
+    .mission-next { position:fixed; z-index:4; right:18px; top:50%; transform:translateY(-50%); width:64px; height:64px; border:2px solid #7e4d2a; border-radius:50%; background:#fff8ed; color:#5a3219; box-shadow:0 8px 22px #4c321136; font-size:2rem; font-weight:800; line-height:1; }
+    .mission-next:hover,.mission-next:focus-visible { background:#f7d89e; outline:3px solid #8b5a2b55; }
+    body.presentation-mode { overflow:hidden; }
+    body.presentation-mode main { width:100%; height:100vh; padding:16px 24px; display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; }
+    body.presentation-mode .mission { margin:12px 0; }
+    body.presentation-mode .flow { min-height:0; }
+    body.presentation-mode .conversation { height:auto; min-height:0; flex:1; }
+    body.presentation-mode .agent img { width:210px; height:210px; }
+    @keyframes arrive { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:none; } }
+    @media (max-width:1100px) { .flow { grid-template-columns:1fr; } }
+    @media (max-width:800px) { .top,.mission,.flow { grid-template-columns:1fr; display:grid; } .tag { max-width:none; } .team { grid-template-columns:repeat(2,1fr); } .agent img { width:108px; height:108px; } body.presentation-mode { overflow:auto; } body.presentation-mode main { height:auto; display:block; padding:16px; } body.presentation-mode .flow { min-height:auto; } body.presentation-mode .conversation { height:340px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="top">
+      <div><p class="eyebrow">Forestdale seventh-grade AI literacy demonstration</p><h1>Forestdale AI Team Science Mission</h1></div>
+      <div class="tag">A human-supervised simulation — the team suggests; the teacher decides.</div>
+    </header>
+
+    <section class="mission" aria-label="Mission and student skills">
+      <article class="card"><p class="eyebrow">Mission <span class="mission-count" id="mission-count">1 of 4</span></p><h2 id="mission-question">Why does a metal spoon feel colder than a wooden spoon in the same room?</h2><p id="mission-summary">Guide an AI team to create a clear scientific explanation for seventh graders. The goal is not to get a fast answer; it is to get an accurate, understandable one.</p></article>
+      <aside class="card"><p class="eyebrow">What students practice</p><div class="skills"><span class="skill">Frame the problem</span><span class="skill">Give constraints</span><span class="skill">Check evidence</span><span class="skill">Make the decision</span></div></aside>
+    </section>
+
+    <section class="flow" aria-label="Command demonstration">
+      <aside class="card"><p class="eyebrow">Teacher commands</p><h2>Run the demonstration</h2><p>Read each command aloud, then click it—or use the microphone button. Each step makes a different human skill visible.</p>
+        <div class="commands" id="commands">
+          <button class="command" data-step="0" type="button"><strong>“Mabel, start the mission.”</strong><small>Set a specific purpose and audience.</small></button>
+          <button class="command" data-step="1" type="button"><strong>“Team, propose the explanation.”</strong><small>Ask for ideas, not a final answer.</small></button>
+          <button class="command" data-step="2" type="button"><strong>“Vera, check the evidence.”</strong><small>Challenge a plausible mistake.</small></button>
+          <button class="command" data-step="3" type="button"><strong>“Mabel, finalize the plan.”</strong><small>Make and own the human decision.</small></button>
+        </div>
+        <div class="mic"><button id="mic" type="button">Use microphone</button><span id="mic-status">Optional browser recognition; nothing is sent or saved.</span></div>
+        <button class="presentation" id="presentation" type="button">Enter presentation mode</button>
+        <button class="reset" id="reset" type="button">Reset mission</button>
+      </aside>
+
+      <section class="card"><div class="mission-state"><p class="eyebrow">Current lesson</p><h2 id="state-title">A good AI task begins with a clear human goal.</h2><p id="state-note">The teacher chooses the audience, purpose, and what counts as a good result.</p></div>
+        <div class="team" aria-label="AI team">
+          <article class="agent" data-agent="Mabel"><img src="../docs/assets/control-room/agent-portraits/mabel-control-supervisor.png" alt="Mabel"><strong>Mabel</strong><span>Supervisor</span></article>
+          <article class="agent" data-agent="Rufus"><img src="../docs/assets/control-room/agent-portraits/rufus-creative-director.png" alt="Rufus"><strong>Rufus</strong><span>Explains the idea</span></article>
+          <article class="agent" data-agent="Pippa"><img src="../docs/assets/control-room/agent-portraits/pippa-shot-planner.png" alt="Pippa"><strong>Pippa</strong><span>Plans the sequence</span></article>
+          <article class="agent" data-agent="Vera"><img src="../docs/assets/control-room/agent-portraits/vera-inspector.png" alt="Vera"><strong>Vera</strong><span>Checks the claim</span></article>
+        </div>
+        <div class="conversation" id="conversation" aria-live="polite" tabindex="-1"><div class="line teacher"><div class="speaker">Teacher</div><p>We need a clear, accurate explanation for seventh graders. We will check the science before we use it.</p></div></div>
+        <div class="lesson" id="lesson"><strong>Notice:</strong> AI can offer language and options. It does not decide what matters, whether a claim is true, or whether the explanation is good enough.</div>
+      </section>
+    </section>
+
+    <button class="mission-next" id="mission-next" type="button" aria-label="Next science mission" title="Next science mission">→</button>
+
+    <p class="footer">Designed for recording as a classroom demonstration. This page is deliberately scripted and transparent; it does not dispatch real agents, access student information, or generate a science answer from a model.</p>
+  </main>
+  <script>
+    (() => {
+      const missions = [
+        { question:'Why does a metal spoon feel colder than a wooden spoon in the same room?', summary:'Guide an AI team to create a clear scientific explanation for seventh graders. The goal is not to get a fast answer; it is to get an accurate, understandable one.', steps:[
+          { title:'A good AI task begins with a clear human goal.', note:'The teacher chooses the audience, purpose, and what counts as a good result.', active:['Mabel'], lesson:'A useful instruction names the audience, purpose, and success criteria.', lines:[['Teacher','Mabel, start the mission. We need an accurate explanation for seventh graders.'],['Mabel','Mission recorded: explain why a metal spoon feels colder than a wooden spoon in the same room. We need a short explanation that is clear, accurate, and easy to test.','mabel-mission']] },
+          { title:'AI can offer options; people still shape the task.', note:'Different roles contribute different kinds of thinking.', active:['Rufus','Pippa'], lesson:'Ask for alternatives and constraints before accepting an answer.', lines:[['Teacher','Team, propose the explanation.'],['Rufus','A strong opening is: metal and wood can be in the same room at the same temperature, but they do not move heat the same way.','rufus-explanation'],['Pippa','Start with the hand touching each spoon, then show heat leaving the hand faster through metal. Keep temperature and heat flow separate.','pippa-sequence']] },
+          { title:'A fluent answer can still be wrong or incomplete.', note:'Vera identifies the misconception before it reaches the audience.', active:['Vera'], lesson:'Do not trust a claim because it sounds confident. Ask what evidence would check it.', lines:[['Teacher','Vera, check the evidence.'],['Vera','One thing to correct: metal is not automatically colder. At room temperature, the spoons can be equally warm. Metal feels colder because it transfers heat away from a hand more quickly. The explanation should say that clearly.','vera-evidence']] },
+          { title:'The final judgment belongs to a person.', note:'The teacher accepts the correction and sets the finished explanation.', active:['Mabel','Vera'], lesson:'The important skill is not getting an AI answer; it is making a responsible, evidence-based decision.', lines:[['Teacher','Mabel, finalize the plan. Use Vera’s correction.'],['Mabel','Final direction: the metal spoon and wooden spoon may be the same temperature. Metal feels colder because heat moves from your hand into metal faster.','mabel-final']] }
+        ] },
+        { question:'Why does sweat help cool you down?', summary:'Guide the team to explain evaporation using a simple, evidence-checked model for seventh graders.', steps:[
+          { title:'A clear goal keeps the explanation focused.', note:'The teacher defines the science idea and the learner audience.', active:['Mabel'], lesson:'Start by deciding what learners need to understand, not merely what words to repeat.', lines:[['Teacher','Mabel, start the mission. Explain why sweat helps cool you down.'],['Mabel','Mission recorded: explain why sweat helps cool a person down. Keep the explanation short, accurate, and ready for seventh graders.','mabel-sweat-mission']] },
+          { title:'The team proposes an explanation.', note:'Ideas are useful only when they stay connected to the goal.', active:['Rufus','Pippa'], lesson:'Ask for a clear analogy or sequence, then check whether it keeps the science intact.', lines:[['Teacher','Team, propose the explanation.'],['Rufus','The key idea is that sweat does not cool by simply sitting on skin. It cools when the water evaporates.','rufus-sweat-explanation'],['Pippa','Start with sweat on skin. Next, show some water particles leaving into the air. Then explain that they take heat energy with them, leaving skin cooler.','pippa-sweat-sequence']] },
+          { title:'Evidence checks a tempting shortcut.', note:'Vera tests whether the claim works in more than one situation.', active:['Vera'], lesson:'A good fact-check asks what condition could change the result.', lines:[['Teacher','Vera, check the evidence.'],['Vera','One thing to correct: sweat does not cool equally well in every condition. In humid air, sweat evaporates more slowly, so cooling is less effective. The explanation should connect cooling to evaporation.','vera-sweat-evidence']] },
+          { title:'The teacher makes the final decision.', note:'Mabel records the revised explanation.', active:['Mabel','Vera'], lesson:'People decide what to use after hearing suggestions and checking evidence.', lines:[['Teacher','Mabel, finalize the plan. Use Vera’s correction.'],['Mabel','Final direction: sweat helps cool you when it evaporates. Evaporation takes heat energy from your skin, so your skin becomes cooler.','mabel-sweat-final']] }
+        ] },
+        { question:'Why does a shadow change length during the day?', summary:'Guide the team to use a visible model of light, angle, and a changing shadow.', steps:[
+          { title:'A clear goal gives the team a shared target.', note:'The teacher requests an explanation that students can observe.', active:['Mabel'], lesson:'Good instructions name an audience and what a successful explanation should make visible.', lines:[['Teacher','Mabel, start the mission. Explain why a shadow changes length during the day.'],['Mabel','Mission recorded: explain why a shadow changes length during the day. We need an accurate explanation that seventh graders can picture.','mabel-shadow-mission']] },
+          { title:'The team offers a model and a sequence.', note:'Rufus gives the idea; Pippa makes it demonstrable.', active:['Rufus','Pippa'], lesson:'A model becomes stronger when learners can test it with ordinary objects.', lines:[['Teacher','Team, propose the explanation.'],['Rufus','A shadow is a map of where light is blocked. Change the angle of the light, and the map changes size.','rufus-shadow-explanation'],['Pippa','Use a flashlight and a pencil. Hold the flashlight low for a long shadow, then high for a short one. Connect that to the Sun appearing lower or higher in the sky.','pippa-shadow-sequence']] },
+          { title:'Evidence separates cause from appearance.', note:'Vera corrects a common misconception.', active:['Vera'], lesson:'Ask whether the thing itself changed, or whether the conditions around it changed.', lines:[['Teacher','Vera, check the evidence.'],['Vera','One thing to correct: the object is not growing and shrinking. The object stays the same size. The changing angle of sunlight changes the length of the shadow.','vera-shadow-evidence']] },
+          { title:'The teacher keeps the corrected claim.', note:'Mabel prepares the final classroom language.', active:['Mabel','Vera'], lesson:'The human decision includes choosing wording that stays both simple and true.', lines:[['Teacher','Mabel, finalize the plan. Use Vera’s correction.'],['Mabel','Final direction: a shadow changes length because sunlight reaches an object at different angles during the day. Lower-angle light makes a longer shadow.','mabel-shadow-final']] }
+        ] },
+        { question:'Why does an ice cube melt faster in warm water than in cold water?', summary:'Guide the team to explain heat transfer with a simple comparison students can test.', steps:[
+          { title:'The teacher frames a testable question.', note:'Mabel receives the audience and accuracy requirements.', active:['Mabel'], lesson:'A good prompt includes a question that can be checked with an observation.', lines:[['Teacher','Mabel, start the mission. Explain why an ice cube melts faster in warm water than in cold water.'],['Mabel','Mission recorded: explain why an ice cube melts faster in warm water than in cold water. We need a clear, testable explanation.','mabel-ice-mission']] },
+          { title:'The team proposes a testable explanation.', note:'One agent names the idea; another maps the demonstration.', active:['Rufus','Pippa'], lesson:'Useful answers connect a claim to an observation someone could repeat.', lines:[['Teacher','Team, propose the explanation.'],['Rufus','The ice cube does not decide to melt faster. The warmer water transfers more heat energy into it.','rufus-ice-explanation'],['Pippa','Show equal ice cubes in warm and cold water. Ask which water has more thermal energy to transfer. Then observe which cube changes first.','pippa-ice-sequence']] },
+          { title:'Evidence corrects a misleading explanation.', note:'Vera identifies the relevant difference.', active:['Vera'], lesson:'Fact-checking means distinguishing a related detail from the actual cause.', lines:[['Teacher','Vera, check the evidence.'],['Vera','One thing to correct: warm water does not melt ice because it is wetter. Both containers contain water. The important difference is that warm water transfers heat energy to the ice more quickly.','vera-ice-evidence']] },
+          { title:'The teacher approves the evidence-based conclusion.', note:'Mabel states the final explanation.', active:['Mabel','Vera'], lesson:'The final choice remains human: accept, revise, or reject what the team proposed.', lines:[['Teacher','Mabel, finalize the plan. Use Vera’s correction.'],['Mabel','Final direction: ice melts faster in warm water because heat moves from the warmer water into the ice more quickly.','mabel-ice-final']] }
+        ] }
+      ];
+      const buttons = [...document.querySelectorAll('[data-step]')], conversation = document.querySelector('#conversation'), title = document.querySelector('#state-title'), note = document.querySelector('#state-note'), lesson = document.querySelector('#lesson'), mic = document.querySelector('#mic'), micStatus = document.querySelector('#mic-status'), presentation = document.querySelector('#presentation'), nextMission = document.querySelector('#mission-next'), missionQuestion = document.querySelector('#mission-question'), missionSummary = document.querySelector('#mission-summary'), missionCount = document.querySelector('#mission-count');
+      let missionIndex = 0, steps = missions[missionIndex].steps, completed = -1, queuedAudio = Promise.resolve(), audioContext, fallbackPresentationMode = false;
+      const line = (speaker, text, voiceKey) => { const item = document.createElement('div'); item.className = `line${speaker === 'Teacher' ? ' teacher' : ''}`; item.innerHTML = `<div class="speaker">${speaker}</div><div><p>${text}</p>${voiceKey ? `<button class="play-reply" type="button">Play ${speaker}'s reply</button>` : ''}</div>`; if (voiceKey) item.querySelector('.play-reply').addEventListener('click', () => { micStatus.textContent = `Playing ${speaker}'s reply…`; playReply(voiceKey).catch(() => { micStatus.textContent = 'The written reply is ready, but its voice could not play.'; }); }); conversation.append(item); item.scrollIntoView({ block:'nearest', behavior:'smooth' }); };
+      const unlockAudio = () => { const AudioContext = window.AudioContext || window.webkitAudioContext; if (!AudioContext) return Promise.reject(new Error('audio unavailable')); audioContext ??= new AudioContext(); return audioContext.resume(); };
+      const playReply = async key => { await unlockAudio(); const response = await fetch(`/api/control-room/science-demo-replies/${encodeURIComponent(key)}`); if (!response.ok) throw new Error('voice unavailable'); const buffer = await audioContext.decodeAudioData(await response.arrayBuffer()); const source = audioContext.createBufferSource(); source.buffer = buffer; source.connect(audioContext.destination); source.start(); await new Promise(resolve => { source.onended = resolve; }); };
+      const queueReply = key => { queuedAudio = queuedAudio.then(() => playReply(key)).catch(() => { micStatus.textContent = 'The written reply is ready, but its voice could not play.'; }); };
+      const run = index => { if (index !== completed + 1) { micStatus.textContent = `Use the next displayed command: step ${completed + 2}.`; return false; } const step = steps[index]; title.textContent = step.title; note.textContent = step.note; lesson.innerHTML = `<strong>Notice:</strong> ${step.lesson}`; document.querySelectorAll('.agent').forEach(card => card.classList.toggle('active', step.active.includes(card.dataset.agent))); buttons[index].setAttribute('aria-current','true'); step.lines.forEach(([speaker,text,voiceKey]) => { line(speaker,text,voiceKey); if (voiceKey) queueReply(voiceKey); }); completed = index; conversation.scrollTo({ top:conversation.scrollHeight, behavior:'smooth' }); conversation.focus({ preventScroll:true }); return true; };
+      buttons.forEach(button => button.addEventListener('click', () => { unlockAudio().catch(() => {}); run(Number(button.dataset.step)); }));
+      const resetMission = () => { completed = -1; queuedAudio = Promise.resolve(); buttons.forEach(button => button.removeAttribute('aria-current')); document.querySelectorAll('.agent').forEach(card => card.classList.remove('active')); conversation.innerHTML = '<div class="line teacher"><div class="speaker">Teacher</div><p>We need a clear, accurate explanation for seventh graders. We will check the science before we use it.</p></div>'; conversation.scrollTop = 0; title.textContent="A good AI task begins with a clear human goal."; note.textContent='The teacher chooses the audience, purpose, and what counts as a good result.'; lesson.innerHTML='<strong>Notice:</strong> AI can offer language and options. It does not decide what matters, whether a claim is true, or whether the explanation is good enough.'; };
+      document.querySelector('#reset').addEventListener('click', resetMission);
+      nextMission.addEventListener('click', () => { missionIndex = (missionIndex + 1) % missions.length; const mission = missions[missionIndex]; steps = mission.steps; missionQuestion.textContent = mission.question; missionSummary.textContent = mission.summary; missionCount.textContent = `${missionIndex + 1} of ${missions.length}`; resetMission(); window.scrollTo({ top:0, behavior:'smooth' }); nextMission.title = missionIndex === missions.length - 1 ? 'Next science mission (returns to Mission 1 after this)' : 'Next science mission'; });
+      const updatePresentationMode = () => { const active = Boolean(document.fullscreenElement) || fallbackPresentationMode; document.body.classList.toggle('presentation-mode', active); presentation.textContent = active ? 'Exit presentation mode' : 'Enter presentation mode'; };
+      presentation.addEventListener('click', () => {
+        if (document.fullscreenElement || fallbackPresentationMode) {
+          fallbackPresentationMode = false;
+          if (document.fullscreenElement) document.exitFullscreen().catch(updatePresentationMode);
+          else updatePresentationMode();
+          return;
+        }
+        // Apply the recording layout immediately. A browser may refuse native full screen
+        // in an embedded presentation, but the demo still has a useful presentation mode.
+        fallbackPresentationMode = true;
+        updatePresentationMode();
+        if (!document.documentElement.requestFullscreen) {
+          micStatus.textContent = 'Presentation layout is on. Full screen is unavailable in this browser.';
+          return;
+        }
+        document.documentElement.requestFullscreen().then(() => {
+          fallbackPresentationMode = false;
+          updatePresentationMode();
+        }).catch(() => {
+          micStatus.textContent = 'Presentation layout is on. Full screen is unavailable in this browser.';
+          updatePresentationMode();
+        });
+      });
+      document.addEventListener('fullscreenchange', updatePresentationMode);
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Recognition) { mic.disabled = true; micStatus.textContent = 'Voice recognition is unavailable in this browser. Use the command buttons.'; return; }
+      const recognition = new Recognition(); recognition.lang = 'en-US'; recognition.continuous = false; recognition.interimResults = false; recognition.maxAlternatives = 1;
+      mic.addEventListener('click', () => { unlockAudio().catch(() => {}); micStatus.textContent = 'Listening for a mission command…'; recognition.start(); });
+      recognition.addEventListener('result', event => { recognition.stop(); const said = event.results[0][0].transcript.toLowerCase(); const index = /mabel.*start|start.*mission/.test(said) ? 0 : /team.*propose|propose.*explanation/.test(said) ? 1 : /vera.*check|check.*evidence/.test(said) ? 2 : /mabel.*final|finalize.*plan/.test(said) ? 3 : -1; if (index < 0) { micStatus.textContent = 'Say the next displayed command, then let the reply finish.'; return; } if (!run(index)) return; micStatus.textContent = `Recognized the mission command for step ${index + 1}. The reply is ready below.`; });
+      recognition.addEventListener('error', () => { micStatus.textContent = 'Recognition did not complete. Use the command buttons.'; });
+    })();
+  </script>
+</body>
+</html>

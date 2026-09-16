@@ -201,7 +201,7 @@ async function main() {
   const requestedSlug = process.argv[2];
   const candidatesToRun = requestedSlug
     ? CANDIDATES.filter((c) => c.slug === requestedSlug)
-    : [CANDIDATES[0]]; // "one at a time" default -- just the first
+    : CANDIDATES.slice(0, 1); // "one at a time" default -- just the first
   if (requestedSlug && candidatesToRun.length === 0) {
     throw new Error(
       `No candidate with slug "${requestedSlug}". Known slugs: ${CANDIDATES.map((c) => c.slug).join(", ")}`

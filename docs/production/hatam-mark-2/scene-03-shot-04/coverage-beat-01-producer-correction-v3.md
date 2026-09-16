@@ -1,0 +1,1 @@
+Producer correction: BEAT SCOPE. For this Mark 2:20 master beat, frame Jesus in a tighter medium-wide composition so his face and speaking expression are clearly prominent. Retain enough of the attentive crowd and courtyard to establish the public teaching geography. This correction applies only to this beat.

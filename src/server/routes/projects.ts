@@ -8,6 +8,7 @@ import { runCasting, resolveEnglishReferencePath } from "../../pipeline/casting/
 import { runMediaGeneration } from "../../pipeline/media-generation/index.js";
 import { parseSourceTextByVerse } from "../../pipeline/ingestion/parse-source-text.js";
 import { parseVerseRange } from "../../pipeline/scene-breakdown/build-scenes.js";
+import { buildProductionCrewView, type NegotiationLogEntry } from "../production-crew.js";
 
 export const projectsRouter = Router();
 
@@ -51,6 +52,30 @@ projectsRouter.post("/:id/run", async (req, res) => {
 
   const result = await runPipeline(req.params.id);
   res.json(result);
+});
+
+// A read-only projection for the producer-facing crew map. The specialist
+// network is declared in the UI; this endpoint only supplies actual project
+// state and the interaction transcript that the current implementation
+// persists (Creative Director <-> Production Director coverage negotiations).
+projectsRouter.get("/:id/production-crew", (req, res) => {
+  const db = getDb();
+  const project = db.prepare(`SELECT id, stage, status FROM projects WHERE id = ?`).get(req.params.id) as
+    | { id: string; stage: string; status: string }
+    | undefined;
+  if (!project) {
+    res.status(404).json({ error: "Project not found." });
+    return;
+  }
+
+  const interactionLog = db
+    .prepare(
+      `SELECT id, narration_span_verse_ref, idea_id, round, role, verdict, content, created_at
+       FROM director_negotiation_log WHERE project_id = ? ORDER BY created_at, round`
+    )
+    .all(req.params.id) as unknown as NegotiationLogEntry[];
+
+  res.json(buildProductionCrewView(project, interactionLog));
 });
 
 

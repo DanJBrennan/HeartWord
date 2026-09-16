@@ -23,7 +23,9 @@ function ffprobeStreamDurationMs(absPath: string, streamType: "v" | "a"): number
     { encoding: "utf-8" }
   ).trim();
   if (!out) return null;
-  return Math.round(parseFloat(out.split("\n")[0]) * 1000);
+  const duration = out.split("\n").at(0);
+  if (!duration) return null;
+  return Math.round(parseFloat(duration) * 1000);
 }
 
 async function run() {
