@@ -372,6 +372,16 @@ CREATE TABLE IF NOT EXISTS review_notes (
 );
 CREATE INDEX IF NOT EXISTS idx_review_notes_project ON review_notes(project_id);
 
+-- Durable, inspectable correction lessons. A correction remains scoped to its
+-- original chapter unless a producer explicitly promotes it; candidates never
+-- silently influence another chapter.
+CREATE TABLE IF NOT EXISTS production_lessons (
+  id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), scope_kind TEXT NOT NULL CHECK(scope_kind IN ('shot','scene','chapter','book','language','region','global')),
+  scope_value TEXT, subject_id TEXT, issue TEXT NOT NULL, requested_change TEXT NOT NULL, rationale TEXT, status TEXT NOT NULL CHECK(status IN ('candidate','active','disabled','superseded')),
+  source_note_id TEXT, supersedes_id TEXT REFERENCES production_lessons(id), created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_production_lessons_scope ON production_lessons(status,scope_kind,scope_value);
+
 -- Stage 6: one continuous chapter video, concatenating every shot's own
 -- already-assembled clip (see `clips` / a shot's `assemble_shot`
 -- generation_attempts row) in scene/shot order. v1 scope, per

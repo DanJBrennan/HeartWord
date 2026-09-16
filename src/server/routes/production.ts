@@ -10,6 +10,7 @@ import { runAssembly } from "../../pipeline/assembly/index.js";
 import { generateRequestedSoundtrack } from "../../pipeline/assembly/soundtrack.js";
 import { importCutManifest } from "../../pipeline/assembly/import-cut-manifest.js";
 import { readCutTimingAudit, recordCutTimingAudit } from "../../pipeline/assembly/cut-timing-audit.js";
+import { buildProductionMonitor, type NegotiationLogEntry, type ProductionMonitorEvent } from "../production-crew.js";
 
 export const productionRouter = Router({ mergeParams: true });
 const getProjectId = (req: Request): string => req.params.projectId!;
@@ -38,6 +39,17 @@ productionRouter.get("/runs/:runId", (req, res) => {
   if (!run) { res.status(404).json({ error: "Run not found." }); return; }
   const events = db.prepare("SELECT * FROM production_events WHERE run_id = ? ORDER BY sequence").all(req.params.runId!);
   res.json({ run, events });
+});
+productionRouter.get("/monitor", (req, res) => {
+  const db = getDb(); const projectId = getProjectId(req);
+  const crew = db.prepare(`SELECT e.id,e.role,e.round,e.output_json,e.error,e.created_at,r.status AS run_status
+    FROM production_events e JOIN production_runs r ON r.id=e.run_id WHERE r.project_id=? ORDER BY e.created_at DESC,e.sequence DESC LIMIT 100`).all(projectId) as Array<{id:string;role:string;round:number;output_json:string|null;error:string|null;created_at:number;run_status:string}>;
+  const negotiations = db.prepare(`SELECT id,narration_span_verse_ref,idea_id,round,role,verdict,content,created_at FROM director_negotiation_log WHERE project_id=? ORDER BY created_at DESC LIMIT 100`).all(projectId) as unknown as NegotiationLogEntry[];
+  const events: ProductionMonitorEvent[] = [
+    ...crew.map(event => { const output = event.output_json ? JSON.parse(event.output_json) as { summary?: string; findings?: Array<{severity?: string; requestedChange?: string; shotId?: string|null}> } : null; const blocking = output?.findings?.find(f => f.severity === "blocking"); return { id:event.id, kind:"crew_event" as const, sender:event.role, round:event.round, status:(event.error ? "error" : blocking ? "held" : event.run_status === "running" ? "active" : "completed") as ProductionMonitorEvent["status"], context:blocking?.shotId ?? "chapter", summary:event.error ?? blocking?.requestedChange ?? output?.summary ?? "Recorded role event", createdAt:event.created_at }; }),
+    ...negotiations.map(event => ({ id:event.id, kind:"negotiation" as const, sender:event.role, round:event.round, status:(event.verdict === "request_changes" || event.verdict === "forced_final" ? "held" : "completed") as ProductionMonitorEvent["status"], context:event.narration_span_verse_ref, summary:event.content, createdAt:event.created_at }))
+  ].sort((a,b) => b.createdAt-a.createdAt);
+  res.json(buildProductionMonitor(events));
 });
 productionRouter.post("/plan", async (req, res) => {
   const projectId = getProjectId(req);
@@ -84,10 +96,18 @@ productionRouter.post("/finish/:runId", (req, res) => {
 productionRouter.post("/guidance", (req, res) => {
   const note = req.body?.note;
   if (typeof note !== "string" || !note.trim() || note.length > 12000) { res.status(400).json({ error: "A production note of 1–12,000 characters is required." }); return; }
-  getDb().prepare(`INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
-    VALUES (?, ?, 'project', ?, 'human', ?, 1, ?)`).run(randomUUID(), getProjectId(req), getProjectId(req), `Production guidance: ${note.trim()}`, Date.now());
+  const db = getDb(); const noteId = randomUUID();
+  db.prepare(`INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
+    VALUES (?, ?, 'project', ?, 'human', ?, 1, ?)`).run(noteId, getProjectId(req), getProjectId(req), `Production guidance: ${note.trim()}`, Date.now());
+  if (req.body?.reusable === true) {
+    const scope = ["chapter","book","language","region","global"].includes(req.body?.scope) ? req.body.scope : "chapter";
+    db.prepare(`INSERT INTO production_lessons (id,project_id,scope_kind,scope_value,subject_id,issue,requested_change,rationale,status,source_note_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(randomUUID(),getProjectId(req),scope,scope === "book" ? req.body?.scopeValue ?? null : null,getProjectId(req),"Producer standing guidance",note.trim(),"Explicit producer direction","active",noteId,Date.now(),Date.now());
+  }
   res.status(201).json({ ok: true });
 });
+productionRouter.get("/lessons", (req,res) => res.json({ lessons:getDb().prepare("SELECT * FROM production_lessons WHERE project_id=? ORDER BY created_at DESC").all(getProjectId(req)) }));
+productionRouter.post("/lessons/:id/status", (req,res) => { const status=req.body?.status; if (!["active","disabled","superseded"].includes(status)) { res.status(400).json({error:"Invalid lesson status."}); return; } const result=getDb().prepare("UPDATE production_lessons SET status=?,updated_at=? WHERE id=? AND project_id=?").run(status,Date.now(),req.params.id,getProjectId(req)); if (!result.changes) {res.status(404).json({error:"Lesson not found."});return;} res.json({ok:true}); });
 productionRouter.post("/audio-assets", (req, res) => {
   const { path, kind, description } = req.body ?? {};
   if (typeof path !== "string" || typeof description !== "string" || !description.trim() || description.length > 2000 || !["music", "sfx"].includes(kind)) {

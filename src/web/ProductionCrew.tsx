@@ -7,6 +7,8 @@ import type { CutTimingAudit } from "../pipeline/assembly/cut-timing-audit";
 interface Asset { id: string; kind: string; description: string; path: string }
 interface Attempt { id: string; kind: string; status: string; path: string | null; error: string | null; cost_usd: number | null }
 interface Snapshot { runs: Run[]; assets: Asset[]; attempts: Attempt[]; render: { id: string; path: string } | null; timingAudit?: CutTimingAudit | null }
+interface MonitorEvent { id:string; kind:string; sender:string; round:number; status:"active"|"completed"|"held"|"error"; context:string; summary:string; createdAt:number }
+interface Monitor { events: MonitorEvent[]; outstanding: MonitorEvent[]; state:string; note:string }
 const mediaUrl = (path: string) => `/media/${path.replaceAll("\\", "/").split("/").map(encodeURIComponent).join("/")}`;
 async function request<T>(url: string, body?: unknown): Promise<T> {
   const response = await fetch(url, body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -24,14 +26,16 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
   const [selected, setSelected] = useState<string | null>(null), [busy, setBusy] = useState(false);
   const [error, setError] = useState(""), [notice, setNotice] = useState("");
   const [guidance, setGuidance] = useState("");
+  const [monitor, setMonitor] = useState<Monitor | null>(null);
   const [asset, setAsset] = useState({ path: "", kind: "music", description: "" });
   async function refresh() {
     const data = await request<Snapshot>(base);
     setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null);
+    setMonitor(await request<Monitor>(`${base}/monitor`));
   }
   useEffect(() => {
     let active = true;
-    const load = () => request<Snapshot>(base).then(data => { if (active) { setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); } }).catch(e => { if (active) setError(e.message); });
+    const load = () => Promise.all([request<Snapshot>(base), request<Monitor>(`${base}/monitor`)]).then(([data, monitor]) => { if (active) { setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setMonitor(monitor); } }).catch(e => { if (active) setError(e.message); });
     void load();
     const timer = window.setInterval(load, 5000);
     return () => { active = false; window.clearInterval(timer); };
@@ -60,6 +64,12 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
   return <section className="production-crew" aria-label="Production crew">
     <h2>Production crew</h2>
     <p>Plan the chapter together, review the assembled film, and inspect why each choice was made. Approved takes and the source recording are retained.</p>
+    <section className="production-monitor" aria-label="Production interaction monitor">
+      <h3>Chapter interaction monitor</h3>
+      <p>{monitor?.note ?? "Loading recorded workflow events…"}</p>
+      {monitor?.outstanding.length ? <><h4>Producer input needed</h4>{monitor.outstanding.map(event => <article key={`hold-${event.id}`}><strong>{event.sender.replaceAll("_", " ")} · {event.status}</strong><p>{event.context} — {event.summary}</p></article>)}</> : <p>No recorded producer decision is outstanding for this chapter.</p>}
+      <div className="monitor-stream" aria-live="polite">{monitor?.events.map(event => <article key={event.id} className={`monitor-event ${event.status}`}><small>{event.kind === "negotiation" ? "Recorded negotiation" : "Recorded role exchange"} · {event.sender.replaceAll("_", " ")} · pass {event.round} · {new Date(event.createdAt).toLocaleString()}</small><p><strong>{event.context}</strong> — {event.summary}</p><small>Open the matching run below for the full recorded structured contribution, directions, objections, requested changes, and resolution.</small></article>)}</div>
+    </section>
     {render && <video key={render.id} controls preload="metadata" src={mediaUrl(render.path)} aria-label="Current chapter cut" style={{ width: "100%", maxHeight: "30rem" }} />}
     {timingAudit && <details><summary>Recorded timing audit — source coverage needs review</summary>
       <p>{timingAudit.summary}</p><ul>{timingAudit.findings.map((f, i) => <li key={i}>{f}</li>)}</ul>
@@ -75,7 +85,7 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
     <p className="hint">Planning allows up to 24 role calls; cut review allows up to 16. Music uses Google Gemini; effects use ElevenLabs, with at most eight audio generations per request and an independent listening review. Provider charges apply. Unreported costs are not counted as free.</p>
     {error && <p role="alert" className="error">{error}</p>}
     {notice && <p role="status">{notice}</p>}
-    <label>Producer guidance<textarea value={guidance} onChange={e => setGuidance(e.target.value)} placeholder="A correction, creative preference, or decision for the next review" /></label>
+    <label>Producer guidance / decision<textarea value={guidance} onChange={e => setGuidance(e.target.value)} placeholder="A scoped correction, creative preference, or decision for the next review" /></label>
     <button disabled={running || !guidance.trim()} onClick={() => void act("guidance", { note: guidance }).then(saved => { if (saved) setGuidance(""); })}>Record guidance</button>
     <div className="crew-runs">{runs.map(run => {
       const result = run.result_json ? JSON.parse(run.result_json) as { summary: string } : null;

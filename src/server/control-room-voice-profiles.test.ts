@@ -4,7 +4,7 @@ import { CONTROL_ROOM_VOICE_PROFILES, recastControlRoomVoiceProfiles, seedContro
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 
-function database(): DatabaseSync {
+function database(): InstanceType<typeof DatabaseSync> {
   const db = new DatabaseSync(":memory:");
   db.exec(`CREATE TABLE control_room_voice_profiles (
     agent_name TEXT PRIMARY KEY, role TEXT NOT NULL, tier_status TEXT NOT NULL,
