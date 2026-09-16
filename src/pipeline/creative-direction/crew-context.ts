@@ -119,7 +119,7 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
     WHERE project_id = ? AND (source = 'human' OR (source = 'qc' AND note LIKE 'Production Director approved edit:%')) ORDER BY created_at, id`).all(projectId) as CrewBrief["producerNotes"];
   // A correction is local by default. Broader reuse requires an explicit scope
   // and matching value; never let a language/region label leak across contexts.
-  const appliedLessons: NonNullable<CrewBrief["appliedLessons"]> = db.prepare(`SELECT id, scope_kind AS scopeKind, requested_change AS requestedChange, rationale
+  const appliedLessons: NonNullable<CrewBrief["appliedLessons"]> = db.prepare(`SELECT id, subject_id AS subjectId, scope_kind AS scopeKind, requested_change AS requestedChange, rationale
     FROM production_lessons WHERE status='active' AND (
       (scope_kind='chapter' AND project_id=?) OR
       (scope_kind='shot' AND project_id=? AND subject_id IN (SELECT s.id FROM shots s JOIN scenes sc ON sc.id=s.scene_id WHERE sc.project_id=?)) OR
@@ -129,7 +129,7 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
       (scope_kind='region' AND lower(scope_value)=lower(?) AND lower(source_language)=lower(?)) OR
       scope_kind='global'
     ) ORDER BY created_at,id`).all(projectId, projectId, projectId, projectId, projectId, project.book, project.language, region, project.language, region, region, project.language) as NonNullable<CrewBrief["appliedLessons"]>;
-  producerNotes.push(...appliedLessons.map(lesson => ({ id: lesson.id, subjectId: projectId, note: `Reusable lesson (${lesson.scopeKind}): ${lesson.requestedChange}${lesson.rationale ? ` Rationale: ${lesson.rationale}` : ""}` })));
+  producerNotes.push(...appliedLessons.map(lesson => ({ id: lesson.id, subjectId: lesson.subjectId ?? projectId, note: `Reusable lesson (${lesson.scopeKind}): ${lesson.requestedChange}${lesson.rationale ? ` Rationale: ${lesson.rationale}` : ""}` })));
   const spentUsd = Number(db.prepare("SELECT COALESCE(SUM(amount_usd), 0) AS total FROM cost_ledger_entries WHERE project_id = ?").get(projectId)!.total);
   const audioAssets = db.prepare(`SELECT id, kind, description, path, sha256, duration_ms AS durationMs
     FROM production_audio_assets WHERE project_id = ? ORDER BY id`).all(projectId) as CrewBrief["audioAssets"];

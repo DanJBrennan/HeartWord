@@ -29,7 +29,7 @@ export interface CrewBrief {
   canon: Array<{ id: string; name: string; region: string; versionId: string; notes: string | null; joinedAt: string | null }>;
   shots: CrewShot[];
   producerNotes: Array<{ id: string; subjectId: string; note: string }>;
-  appliedLessons?: Array<{ id: string; scopeKind: string; requestedChange: string; rationale: string | null }>;
+  appliedLessons?: Array<{ id: string; subjectId: string | null; scopeKind: string; requestedChange: string; rationale: string | null }>;
   spentUsd: number;
   audioAssets: Array<{ id: string; kind: "music" | "sfx"; description: string; path: string;
     sha256: string; durationMs: number }>;

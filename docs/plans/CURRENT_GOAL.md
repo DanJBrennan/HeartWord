@@ -1973,3 +1973,12 @@ media calls.
 Validation: strict typecheck, web production build, and all 31 Vitest files
 (245 tests) pass. No live provider or production-media call was made during
 this implementation.
+
+Follow-up integrity review: scoped lesson targets now remain attached to their
+actual shot or scene when supplied to a brief; guidance validation completes
+before any persistent write, and related correction records are transactional.
+Editing a lesson creates a superseding record plus action history rather than
+rewriting the prior decision. The production monitor treats completed runs and
+superseded negotiation rounds as history. The control-room presentation and
+the production-crew communication contract now use the current Orion, June,
+and Benny roles without creating new unapproved presentation identities.

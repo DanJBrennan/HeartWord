@@ -42,13 +42,13 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
     const data = await request<Snapshot>(base);
     setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null);
     setMonitor(await request<Monitor>(`${base}/monitor`));
-    const lessonData = await request<{lessons:Lesson[]; potentialOverlaps:string[][]}>(`${base}/lessons`);
-    setLessons(lessonData.lessons); setPotentialOverlaps(lessonData.potentialOverlaps);
+    const lessonData = await request<{lessons:Lesson[]; potentialOverlaps?:string[][]}>(`${base}/lessons`);
+    setLessons(lessonData.lessons); setPotentialOverlaps(lessonData.potentialOverlaps ?? []);
     setRoster((await request<Roster>("/api/control-room/roster", undefined, "GET")).roster);
   }
   useEffect(() => {
     let active = true;
-    const load = () => Promise.all([request<Snapshot>(base), request<Monitor>(`${base}/monitor`), request<{lessons:Lesson[]; potentialOverlaps:string[][]}>(`${base}/lessons`), request<Roster>("/api/control-room/roster", undefined, "GET")]).then(([data, monitor, lessonData, rosterData]) => { if (active) { setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setMonitor(monitor); setLessons(lessonData.lessons); setPotentialOverlaps(lessonData.potentialOverlaps); setRoster(rosterData.roster); } }).catch(e => { if (active) setError(e.message); });
+    const load = () => Promise.all([request<Snapshot>(base), request<Monitor>(`${base}/monitor`), request<{lessons:Lesson[]; potentialOverlaps?:string[][]}>(`${base}/lessons`), request<Roster>("/api/control-room/roster", undefined, "GET")]).then(([data, monitor, lessonData, rosterData]) => { if (active) { setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setMonitor(monitor); setLessons(lessonData.lessons); setPotentialOverlaps(lessonData.potentialOverlaps ?? []); setRoster(rosterData.roster); } }).catch(e => { if (active) setError(e.message); });
     void load();
     const timer = window.setInterval(load, 5000);
     return () => { active = false; window.clearInterval(timer); };
@@ -106,13 +106,13 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
     <details><summary>Correction lessons ({lessons.length})</summary><p>HeartWord proposes a narrowly scoped candidate from each recorded correction. Inspect, edit, and activate it before it can guide matching work; disabled and superseded lessons remain history.</p>{potentialOverlaps.length > 0 && <p className="error">Potentially overlapping active lessons: {potentialOverlaps.map(pair => pair.join(" / ")).join(", ")}. Review their scopes and wording.</p>}{lessons.map(lesson => { const draft = lessonDrafts[lesson.id] ?? { principle: lesson.requested_change, rationale: lesson.rationale ?? "", scope: lesson.scope_kind }; return <article key={lesson.id}><strong>{lesson.status} · {lesson.scope_kind}</strong><p>{lesson.requested_change}</p>{lesson.rationale && <small>{lesson.rationale}</small>} {lesson.status === "candidate" && <><label>Reusable principle<input value={draft.principle} onChange={e => setLessonDrafts({ ...lessonDrafts, [lesson.id]: { ...draft, principle:e.target.value } })} /></label><label>Reason<input value={draft.rationale} onChange={e => setLessonDrafts({ ...lessonDrafts, [lesson.id]: { ...draft, rationale:e.target.value } })} /></label><label>Scope<select value={draft.scope} onChange={e => setLessonDrafts({ ...lessonDrafts, [lesson.id]: { ...draft, scope:e.target.value } })}><option value="chapter">This chapter</option><option value="book">Book</option><option value="language">Language</option><option value="region">Region</option><option value="global">Explicit global</option></select></label><button disabled={running || !draft.principle.trim()} onClick={() => void request(`${base}/lessons/${lesson.id}`, { requestedChange:draft.principle, rationale:draft.rationale, scope:draft.scope }, "PATCH").then(refresh).catch(e => setError(e.message))}>Activate reviewed principle</button></>} {lesson.status !== "disabled" && <button disabled={running} onClick={() => void act(`lessons/${lesson.id}/status`, { status:"disabled" })}>Disable</button>} {lesson.status === "active" && <button disabled={running} onClick={() => void act(`lessons/${lesson.id}/status`, { status:"superseded" })}>Supersede</button>}</article>; })}</details>
     <div className="crew-runs">{runs.map(run => {
       const result = run.result_json ? JSON.parse(run.result_json) as { summary: string } : null;
-      const appliedLessons = JSON.parse(run.brief_json).appliedLessons as Array<{ id:string; scopeKind:string; requestedChange:string }> | undefined;
+      const appliedLessons = JSON.parse(run.brief_json).appliedLessons as Array<{ id:string; subjectId:string|null; scopeKind:string; requestedChange:string }> | undefined;
       return <article key={run.id}>
         <button aria-expanded={selected === run.id} onClick={() => setSelected(selected === run.id ? null : run.id)}>
           {run.phase === "planning" ? "Storyboard" : run.phase === "editing" ? "Picture editing" : "Cut review"} · {run.status.replaceAll("_", " ")} · {run.calls} calls · {new Date(run.created_at).toLocaleString()}
         </button>
         {result && <p>{result.summary}</p>}
-        {appliedLessons?.length ? <p className="hint">Applied lessons: {appliedLessons.map(lesson => `${lesson.scopeKind}: ${lesson.requestedChange}`).join(" · ")}</p> : null}
+        {appliedLessons?.length ? <p className="hint">Applied lessons: {appliedLessons.map(lesson => `${lesson.scopeKind}${lesson.subjectId ? ` (${lesson.subjectId})` : ""}: ${lesson.requestedChange}`).join(" · ")}</p> : null}
         {run.status === "running" && <button disabled={busy} onClick={() => void act(`recover/${run.id}`)}>Recover interrupted review</button>}
         {selected === run.id && events.map(event => {
           const output = event.output_json ? JSON.parse(event.output_json) as Contribution : null;

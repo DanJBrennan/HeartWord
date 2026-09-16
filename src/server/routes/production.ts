@@ -69,8 +69,8 @@ productionRouter.get("/monitor", (req, res) => {
     FROM production_events e JOIN production_runs r ON r.id=e.run_id WHERE r.project_id=? ORDER BY e.created_at DESC,e.sequence DESC LIMIT 100`).all(projectId) as Array<{id:string;run_id:string;role:string;round:number;output_json:string|null;error:string|null;created_at:number;run_status:string}>;
   const negotiations = db.prepare(`SELECT id,narration_span_verse_ref,idea_id,round,role,verdict,content,created_at FROM director_negotiation_log WHERE project_id=? ORDER BY created_at DESC LIMIT 100`).all(projectId) as unknown as NegotiationLogEntry[];
   const events: ProductionMonitorEvent[] = [
-    ...crew.map(event => { const output = event.output_json ? JSON.parse(event.output_json) as { summary?: string; findings?: Array<{severity?: string; requestedChange?: string; shotId?: string|null}> } : null; const blocking = output?.findings?.find(f => f.severity === "blocking"); const current = event.run_id === currentRun?.id; return { id:event.id, runId:event.run_id, kind:"crew_event" as const, sender:event.role, round:event.round, current, status:(!current ? "completed" : event.error ? "error" : blocking ? "held" : event.run_status === "running" ? "active" : "completed") as ProductionMonitorEvent["status"], context:blocking?.shotId ?? "chapter", summary:event.error ?? blocking?.requestedChange ?? output?.summary ?? "Recorded role event", createdAt:event.created_at }; }),
-    ...negotiations.map(event => ({ id:event.id, kind:"negotiation" as const, sender:event.role, round:event.round, status:(event.verdict === "request_changes" || event.verdict === "forced_final" ? "held" : "completed") as ProductionMonitorEvent["status"], context:event.narration_span_verse_ref, summary:event.content, createdAt:event.created_at }))
+    ...crew.map(event => { const output = event.output_json ? JSON.parse(event.output_json) as { summary?: string; findings?: Array<{severity?: string; requestedChange?: string; shotId?: string|null}> } : null; const blocking = output?.findings?.find(f => f.severity === "blocking"); const current = event.run_id === currentRun?.id; const resolved = event.run_status === "approved" || event.run_status === "awaiting_assets"; return { id:event.id, runId:event.run_id, kind:"crew_event" as const, sender:event.role, round:event.round, current, status:(!current || resolved ? "completed" : event.error ? "error" : blocking ? "held" : event.run_status === "running" ? "active" : "completed") as ProductionMonitorEvent["status"], context:blocking?.shotId ?? "chapter", summary:event.error ?? blocking?.requestedChange ?? output?.summary ?? "Recorded role event", createdAt:event.created_at }; }),
+    ...negotiations.map(event => { const latest = negotiations.find(other => other.idea_id === event.idea_id); const current = latest?.id === event.id; return { id:event.id, kind:"negotiation" as const, sender:event.role, round:event.round, current, status:(current && (event.verdict === "request_changes" || event.verdict === "forced_final") ? "held" : "completed") as ProductionMonitorEvent["status"], context:event.narration_span_verse_ref, summary:event.content, createdAt:event.created_at }; })
   ].sort((a,b) => b.createdAt-a.createdAt);
   res.json(buildProductionMonitor(events));
 });
@@ -119,50 +119,78 @@ productionRouter.post("/finish/:runId", (req, res) => {
 productionRouter.post("/guidance", async (req, res) => {
   const note = req.body?.note;
   if (typeof note !== "string" || !note.trim() || note.length > 12000) { res.status(400).json({ error: "A production note of 1–12,000 characters is required." }); return; }
-  const db = getDb(); const noteId = randomUUID();
-  db.prepare(`INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
-    VALUES (?, ?, 'project', ?, 'human', ?, 1, ?)`).run(noteId, getProjectId(req), getProjectId(req), `Production guidance: ${note.trim()}`, Date.now());
-  const lessonId = randomUUID();
-  const context = projectLessonContext(getProjectId(req));
+  const projectId = getProjectId(req);
+  const reusable = req.body?.reusable === true;
+  const explicitScope = LESSON_SCOPES.includes(req.body?.scope) ? req.body.scope as LessonScope : "chapter";
+  const explicitPrinciple = req.body?.principle;
+  if (reusable && (typeof explicitPrinciple !== "string" || !explicitPrinciple.trim() || explicitPrinciple.trim() === note.trim() || explicitPrinciple.length > 12000)) { res.status(400).json({ error:"A distinct, bounded reusable principle is required; it cannot simply copy the raw correction." }); return; }
+  let context: ReturnType<typeof projectLessonContext>;
+  try { context = projectLessonContext(projectId); }
+  catch (error) { res.status(409).json({ error: (error as Error).message }); return; }
   let candidate: { principle: string; rationale: string; scope: LessonScope } | null = null;
   let synthesisError: string | null = null;
-  if (req.body?.reusable !== true) {
+  if (!reusable) {
     try { candidate = await proposeReusableLesson({ correction: note.trim(), ...context }); }
     catch (error) { synthesisError = (error as Error).message; }
   }
-  // The proposed lesson is inactive by default. A provider error is recorded
-  // as review context; it never triggers an invisible retry or an activation.
-  db.prepare(`INSERT INTO production_lessons (id,project_id,scope_kind,scope_value,subject_id,issue,requested_change,rationale,status,source_note_id,source_language,source_book,source_chapter,source_region,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-    .run(lessonId,getProjectId(req),candidate?.scope ?? "chapter",candidate ? lessonScopeValue(candidate.scope,context) : null,getProjectId(req),candidate ? "Model-proposed reusable lesson" : "Producer correction",candidate?.principle ?? note.trim(),candidate?.rationale ?? `Candidate synthesis unavailable: ${synthesisError ?? "not requested"}.`,"candidate",noteId,context.language,context.book,context.chapter,context.region,Date.now(),Date.now());
-  if (req.body?.reusable === true) {
-    const scope = LESSON_SCOPES.includes(req.body?.scope) ? req.body.scope as LessonScope : "chapter";
-    const principle = req.body?.principle;
-    if (typeof principle !== "string" || !principle.trim() || principle.trim() === note.trim() || principle.length > 12000) { res.status(400).json({ error:"A distinct, bounded reusable principle is required; it cannot simply copy the raw correction." }); return; }
-    const rationale = typeof req.body?.rationale === "string" && req.body.rationale.trim() ? req.body.rationale.trim() : "Explicit producer direction";
+  const db = getDb(); const noteId = randomUUID(); const lessonId = randomUUID(); const now = Date.now();
+  try {
+    db.exec("BEGIN IMMEDIATE");
+    db.prepare(`INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
+      VALUES (?, ?, 'project', ?, 'human', ?, 1, ?)`).run(noteId, projectId, projectId, `Production guidance: ${note.trim()}`, now);
     db.prepare(`INSERT INTO production_lessons (id,project_id,scope_kind,scope_value,subject_id,issue,requested_change,rationale,status,source_note_id,source_language,source_book,source_chapter,source_region,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(randomUUID(),getProjectId(req),scope,lessonScopeValue(scope,context),getProjectId(req),"Producer standing guidance",principle.trim(),rationale,"active",noteId,context.language,context.book,context.chapter,context.region,Date.now(),Date.now());
-  }
+      .run(lessonId,projectId,candidate?.scope ?? "chapter",candidate ? lessonScopeValue(candidate.scope,context) : null,projectId,candidate ? "Model-proposed reusable lesson" : "Producer correction",candidate?.principle ?? note.trim(),candidate?.rationale ?? `Candidate synthesis unavailable: ${synthesisError ?? "not requested"}.`,"candidate",noteId,context.language,context.book,context.chapter,context.region,now,now);
+    db.prepare("INSERT INTO production_lesson_events (id,lesson_id,action,detail,created_at) VALUES (?,?,?,?,?)").run(randomUUID(),lessonId,"candidate_created",candidate ? "Model-proposed candidate; producer review required." : `Synthesis unavailable: ${synthesisError ?? "not requested"}.`,now);
+    if (reusable) {
+      const rationale = typeof req.body?.rationale === "string" && req.body.rationale.trim() ? req.body.rationale.trim() : "Explicit producer direction";
+      const activeId = randomUUID();
+      db.prepare(`INSERT INTO production_lessons (id,project_id,scope_kind,scope_value,subject_id,issue,requested_change,rationale,status,source_note_id,source_language,source_book,source_chapter,source_region,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+        .run(activeId,projectId,explicitScope,lessonScopeValue(explicitScope,context),projectId,"Producer standing guidance",explicitPrinciple.trim(),rationale,"active",noteId,context.language,context.book,context.chapter,context.region,now,now);
+      db.prepare("INSERT INTO production_lesson_events (id,lesson_id,action,detail,created_at) VALUES (?,?,?,?,?)").run(randomUUID(),activeId,"activated","Explicit producer principle.",now);
+    }
+    db.exec("COMMIT");
+  } catch (error) { try { db.exec("ROLLBACK"); } catch {} res.status(500).json({ error: (error as Error).message }); return; }
   res.status(201).json({ ok: true, lessonId, synthesis: candidate ? "candidate_proposed" : "candidate_needs_review" });
 });
 productionRouter.get("/lessons", (req,res) => {
-  const lessons = getDb().prepare("SELECT * FROM production_lessons WHERE project_id=? ORDER BY created_at DESC").all(getProjectId(req));
-  const active = (lessons as Array<{ id: string; status: string; scope_kind: string; scope_value: string | null }>).filter(lesson => lesson.status === "active");
-  const overlaps = active.flatMap((lesson, index) => active.slice(index + 1).filter(other => other.scope_kind === lesson.scope_kind && other.scope_value === lesson.scope_value).map(other => [lesson.id, other.id]));
-  res.json({ lessons, potentialOverlaps: overlaps });
+  const projectId = getProjectId(req); const db = getDb();
+  let context: ReturnType<typeof projectLessonContext>;
+  try { context = projectLessonContext(projectId); } catch (error) { res.status(409).json({ error: (error as Error).message }); return; }
+  const lessons = db.prepare("SELECT * FROM production_lessons WHERE project_id=? ORDER BY created_at DESC").all(projectId);
+  const applicableLessons = db.prepare(`SELECT * FROM production_lessons WHERE status='active' AND (
+    (scope_kind='chapter' AND project_id=?) OR
+    (scope_kind='shot' AND project_id=? AND subject_id IN (SELECT s.id FROM shots s JOIN scenes sc ON sc.id=s.scene_id WHERE sc.project_id=?)) OR
+    (scope_kind='scene' AND project_id=? AND subject_id IN (SELECT id FROM scenes WHERE project_id=?)) OR
+    (scope_kind='book' AND lower(scope_value)=lower(?) AND lower(source_language)=lower(?) AND lower(source_region)=lower(?)) OR
+    (scope_kind='language' AND lower(scope_value)=lower(?) AND lower(source_region)=lower(?)) OR
+    (scope_kind='region' AND lower(scope_value)=lower(?) AND lower(source_language)=lower(?)) OR scope_kind='global') ORDER BY created_at,id`)
+    .all(projectId,projectId,projectId,projectId,projectId,context.book,context.language,context.region,context.language,context.region,context.region,context.language);
+  const ids = [...(lessons as Array<{id:string}>), ...(applicableLessons as Array<{id:string}>).filter(item => !(lessons as Array<{id:string}>).some(local => local.id === item.id))].map(item => item.id);
+  const placeholders = ids.map(() => "?").join(",");
+  const history = ids.length ? db.prepare(`SELECT * FROM production_lesson_events WHERE lesson_id IN (${placeholders}) ORDER BY created_at,id`).all(...ids) : [];
+  res.json({ lessons, applicableLessons, history });
 });
 productionRouter.patch("/lessons/:id", (req,res) => {
-  const db = getDb(); const existing = db.prepare("SELECT * FROM production_lessons WHERE id=? AND project_id=?").get(req.params.id,getProjectId(req)) as { requested_change: string; issue: string } | undefined;
+  const projectId = getProjectId(req); const db = getDb(); const existing = db.prepare("SELECT * FROM production_lessons WHERE id=? AND project_id=?").get(req.params.id,projectId) as { id:string; project_id:string; subject_id:string|null; issue:string; requested_change: string; source_note_id:string|null } | undefined;
   const principle = req.body?.requestedChange;
   if (!existing) { res.status(404).json({error:"Lesson not found."}); return; }
   if (typeof principle !== "string" || !principle.trim() || principle.length > 12000 || (principle.trim() === existing.requested_change.trim() && existing.issue !== "Model-proposed reusable lesson")) { res.status(400).json({error:"Edit the correction into a distinct reusable principle before activation."}); return; }
   const scope = LESSON_SCOPES.includes(req.body?.scope) ? req.body.scope as LessonScope : "chapter";
   const rationale = typeof req.body?.rationale === "string" && req.body.rationale.trim() ? req.body.rationale.trim() : null;
-  const context = projectLessonContext(getProjectId(req));
-  db.prepare(`UPDATE production_lessons SET requested_change=?,rationale=?,scope_kind=?,scope_value=?,status='active',source_language=?,source_book=?,source_chapter=?,source_region=?,updated_at=? WHERE id=? AND project_id=?`)
-    .run(principle.trim(),rationale,scope,lessonScopeValue(scope,context),context.language,context.book,context.chapter,context.region,Date.now(),req.params.id,getProjectId(req));
-  res.json({ok:true});
+  let context: ReturnType<typeof projectLessonContext>;
+  try { context = projectLessonContext(projectId); } catch (error) { res.status(409).json({ error: (error as Error).message }); return; }
+  const replacementId = randomUUID(); const now = Date.now();
+  try { db.exec("BEGIN IMMEDIATE");
+    db.prepare(`INSERT INTO production_lessons (id,project_id,scope_kind,scope_value,subject_id,issue,requested_change,rationale,status,source_note_id,supersedes_id,source_language,source_book,source_chapter,source_region,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(replacementId,projectId,scope,lessonScopeValue(scope,context),existing.subject_id,existing.issue,principle.trim(),rationale,"active",existing.source_note_id,existing.id,context.language,context.book,context.chapter,context.region,now,now);
+    db.prepare("UPDATE production_lessons SET status='superseded',updated_at=? WHERE id=? AND project_id=?").run(now,existing.id,projectId);
+    db.prepare("INSERT INTO production_lesson_events (id,lesson_id,action,detail,created_at) VALUES (?,?,?,?,?)").run(randomUUID(),existing.id,"superseded",`Revised as ${replacementId}.`,now);
+    db.prepare("INSERT INTO production_lesson_events (id,lesson_id,action,detail,created_at) VALUES (?,?,?,?,?)").run(randomUUID(),replacementId,"activated",`Revision of ${existing.id}.`,now);
+    db.exec("COMMIT");
+  } catch (error) { try { db.exec("ROLLBACK"); } catch {} res.status(500).json({error:(error as Error).message}); return; }
+  res.json({ok:true,lessonId:replacementId});
 });
-productionRouter.post("/lessons/:id/status", (req,res) => { const status=req.body?.status; if (!["disabled","superseded"].includes(status)) { res.status(400).json({error:"Only disabled or superseded are valid historical states; edit a candidate into a distinct principle before activating it."}); return; } const result=getDb().prepare("UPDATE production_lessons SET status=?,updated_at=? WHERE id=? AND project_id=?").run(status,Date.now(),req.params.id,getProjectId(req)); if (!result.changes) {res.status(404).json({error:"Lesson not found."});return;} res.json({ok:true}); });
+productionRouter.post("/lessons/:id/status", (req,res) => { const status=req.body?.status; if (!["disabled","superseded"].includes(status)) { res.status(400).json({error:"Only disabled or superseded are valid historical states; edit a candidate into a distinct principle before activating it."}); return; } const now=Date.now(),db=getDb(); const result=db.prepare("UPDATE production_lessons SET status=?,updated_at=? WHERE id=? AND project_id=?").run(status,now,req.params.id,getProjectId(req)); if (!result.changes) {res.status(404).json({error:"Lesson not found."});return;} db.prepare("INSERT INTO production_lesson_events (id,lesson_id,action,detail,created_at) VALUES (?,?,?,?,?)").run(randomUUID(),req.params.id,status,"Producer action.",now); res.json({ok:true}); });
 productionRouter.post("/audio-assets", (req, res) => {
   const { path, kind, description } = req.body ?? {};
   if (typeof path !== "string" || typeof description !== "string" || !description.trim() || description.length > 2000 || !["music", "sfx"].includes(kind)) {

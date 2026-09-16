@@ -383,6 +383,11 @@ CREATE TABLE IF NOT EXISTS production_lessons (
   created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_production_lessons_scope ON production_lessons(status,scope_kind,scope_value);
+CREATE TABLE IF NOT EXISTS production_lesson_events (
+  id TEXT PRIMARY KEY, lesson_id TEXT NOT NULL REFERENCES production_lessons(id), action TEXT NOT NULL,
+  detail TEXT, created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_production_lesson_events_lesson ON production_lesson_events(lesson_id, created_at);
 
 -- Stage 6: one continuous chapter video, concatenating every shot's own
 -- already-assembled clip (see `clips` / a shot's `assemble_shot`
