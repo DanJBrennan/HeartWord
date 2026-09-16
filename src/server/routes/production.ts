@@ -106,8 +106,10 @@ productionRouter.post("/guidance", (req, res) => {
     .run(lessonId,getProjectId(req),"chapter",null,getProjectId(req),"Producer correction",note.trim(),"Captured from producer guidance","candidate",noteId,Date.now(),Date.now());
   if (req.body?.reusable === true) {
     const scope = ["chapter","book","language","region","global"].includes(req.body?.scope) ? req.body.scope : "chapter";
+    const project = db.prepare("SELECT language,book FROM projects WHERE id=?").get(getProjectId(req)) as {language:string;book:string};
+    const scopeValue = scope === "book" ? project.book : scope === "language" ? project.language : scope === "region" ? "Papuan" : null;
     db.prepare(`INSERT INTO production_lessons (id,project_id,scope_kind,scope_value,subject_id,issue,requested_change,rationale,status,source_note_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(randomUUID(),getProjectId(req),scope,scope === "book" ? req.body?.scopeValue ?? null : null,getProjectId(req),"Producer standing guidance",note.trim(),"Explicit producer direction","active",noteId,Date.now(),Date.now());
+      .run(randomUUID(),getProjectId(req),scope,scopeValue,getProjectId(req),"Producer standing guidance",note.trim(),"Explicit producer direction","active",noteId,Date.now(),Date.now());
   }
   res.status(201).json({ ok: true, lessonId });
 });

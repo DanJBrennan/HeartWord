@@ -109,8 +109,16 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
   }
   const producerNotes = db.prepare(`SELECT id, subject_id AS subjectId, note FROM review_notes
     WHERE project_id = ? AND (source = 'human' OR (source = 'qc' AND note LIKE 'Production Director approved edit:%')) ORDER BY created_at, id`).all(projectId) as CrewBrief["producerNotes"];
+  // A correction is local by default. Broader reuse requires an explicit scope
+  // and matching value; never let a language/region label leak across contexts.
   const lessons = db.prepare(`SELECT id, subject_id AS subjectId, 'Reusable lesson (' || scope_kind || '): ' || requested_change || CASE WHEN rationale IS NULL THEN '' ELSE ' Rationale: ' || rationale END AS note
-    FROM production_lessons WHERE status='active' AND (project_id=? OR scope_kind IN ('language','region','global') OR (scope_kind='book' AND scope_value=?)) ORDER BY created_at,id`).all(projectId, project.book) as CrewBrief["producerNotes"];
+    FROM production_lessons WHERE status='active' AND (
+      (scope_kind='chapter' AND project_id=?) OR
+      (scope_kind='book' AND lower(scope_value)=lower(?)) OR
+      (scope_kind='language' AND lower(scope_value)=lower(?)) OR
+      (scope_kind='region' AND lower(scope_value)='papuan') OR
+      scope_kind='global'
+    ) ORDER BY created_at,id`).all(projectId, project.book, project.language) as CrewBrief["producerNotes"];
   producerNotes.push(...lessons);
   const spentUsd = Number(db.prepare("SELECT COALESCE(SUM(amount_usd), 0) AS total FROM cost_ledger_entries WHERE project_id = ?").get(projectId)!.total);
   const audioAssets = db.prepare(`SELECT id, kind, description, path, sha256, duration_ms AS durationMs
