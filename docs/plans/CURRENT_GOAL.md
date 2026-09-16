@@ -1978,7 +1978,10 @@ Follow-up integrity review: scoped lesson targets now remain attached to their
 actual shot or scene when supplied to a brief; guidance validation completes
 before any persistent write, and related correction records are transactional.
 Editing a lesson creates a superseding record plus action history rather than
-rewriting the prior decision. The production monitor treats completed runs and
-superseded negotiation rounds as history. The control-room presentation and
-the production-crew communication contract now use the current Orion, June,
-and Benny roles without creating new unapproved presentation identities.
+rewriting the prior decision. The producer dashboard now makes both currently
+applicable guidance and that decision history inspectable. The production
+monitor treats completed runs and superseded negotiation rounds as history.
+The control-room presentation and the production-crew communication contract
+now use the current Orion, June, and Benny roles; the four declared specialist
+roles remain visible as identity-free placeholders rather than invented
+portraits.

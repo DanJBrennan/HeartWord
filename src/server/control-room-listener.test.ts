@@ -260,7 +260,7 @@ describe("control-room normal card labels", () => {
     expect(page).toContain("grid-template-rows:132px 50px");
     expect(page).toContain('<strong>Mabel</strong><span>Supervisor</span>');
     expect(page).toContain('<strong>Rufus</strong><span>Creative Director</span>');
-    expect(page).toContain('<strong>June</strong><span>Production Director</span>');
+    expect(page).toContain('<strong>June</strong><span>Source &amp; Alignment</span>');
     expect(page).toContain("font-size:.66rem;");
   });
 });
