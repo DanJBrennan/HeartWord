@@ -1,5 +1,11 @@
 # Current Goal
 
+## Production interaction monitor and correction reuse (2026-09-16)
+
+The selected chapter's Production Crew panel now polls recorded production events and director negotiations, shows active/completed/held/error state, scoped verse/shot context, producer-input holds, and links each event to the existing expandable full structured role contribution. It is not presentation dialogue or hidden reasoning. Producer guidance remains durable; explicit reusable guidance can be stored as an active scoped lesson, while candidate/disabled/superseded states preserve history and prevent accidental broad reuse. Active lessons are supplied to future crew briefs only for the same project, matching book, or explicitly broad language/region/global scopes. This is inspectable application memory and adaptive guidance—not model training or a guarantee of automatic generalization.
+
+Runtime boundary: multi-role crew contributions and logs are implemented; full named-role dispatch, generic voice/lip-sync stage wiring, and universal milestone challenger dispatch remain declared work. Human language, field, and release approval remain mandatory where required.
+
 ## Active status: Mark 2 timing integration (2026-09-11)
 
 Implementation handoff: Dan prefers Sonnet 5 at Medium for the next coding
