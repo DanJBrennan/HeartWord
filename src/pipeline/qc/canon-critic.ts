@@ -109,6 +109,24 @@ interface CanonAssetRow {
   category: string;
 }
 
+function readCanonCharacters(rows: Record<string, unknown>[]): CanonCharacterRow[] {
+  return rows.map((row) => {
+    if (typeof row.character_id !== "string" || typeof row.character_version_id !== "string" || typeof row.character_name !== "string") {
+      throw new Error("Expected canon character rows with string character and version identifiers.");
+    }
+    return { character_id: row.character_id, character_version_id: row.character_version_id, character_name: row.character_name };
+  });
+}
+
+function readCanonAssets(rows: Record<string, unknown>[]): CanonAssetRow[] {
+  return rows.map((row) => {
+    if (typeof row.path !== "string" || typeof row.category !== "string") {
+      throw new Error("Expected canon asset rows with string path and category.");
+    }
+    return { path: row.path, category: row.category };
+  });
+}
+
 export interface CanonGarmentAuditEntry {
   characterId: string;
   characterVersionId: string;
@@ -130,7 +148,7 @@ export async function auditCanonGarments(projectId: string): Promise<CanonGarmen
   const db = getDb();
   const dataDir = getDataDir();
 
-  const characters = db
+  const characters = readCanonCharacters(db
     .prepare(
       `SELECT c.id AS character_id, cv.id AS character_version_id, c.name AS character_name
        FROM characters c
@@ -138,7 +156,7 @@ export async function auditCanonGarments(projectId: string): Promise<CanonGarmen
        WHERE c.canon_status = 'approved'
        ORDER BY c.name`
     )
-    .all() as CanonCharacterRow[];
+    .all());
 
   const assetStmt = db.prepare(
     `SELECT path, category FROM character_assets WHERE character_version_id = ?
@@ -161,7 +179,7 @@ export async function auditCanonGarments(projectId: string): Promise<CanonGarmen
 
   const results: CanonGarmentAuditEntry[] = [];
   for (const character of characters) {
-    const assets = assetStmt.all(character.character_version_id) as CanonAssetRow[];
+    const assets = readCanonAssets(assetStmt.all(character.character_version_id));
     const images: Array<{ mimeType: string; data: string }> = [];
     for (const asset of assets) {
       if (images.length >= 2) break;

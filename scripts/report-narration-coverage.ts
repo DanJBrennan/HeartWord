@@ -37,19 +37,37 @@ interface ShotRow {
   needs_lip_sync: number;
 }
 
-const narrationSegs = db
+function readNarrationSegments(rows: Record<string, unknown>[]): NarrationSeg[] {
+  return rows.map((row) => {
+    if (typeof row.verse_ref !== "string" || typeof row.start_ms !== "number" || typeof row.end_ms !== "number") {
+      throw new Error("Expected narration segment rows with verse_ref, start_ms, and end_ms.");
+    }
+    return { verse_ref: row.verse_ref, start_ms: row.start_ms, end_ms: row.end_ms };
+  });
+}
+
+function readShots(rows: Record<string, unknown>[]): ShotRow[] {
+  return rows.map((row) => {
+    if (typeof row.id !== "string" || typeof row.verse_ref !== "string" || typeof row.scene_seq !== "number" || typeof row.shot_seq !== "number" || typeof row.needs_lip_sync !== "number") {
+      throw new Error("Expected shot rows with id, verse_ref, sequence, and lip-sync fields.");
+    }
+    return { id: row.id, verse_ref: row.verse_ref, scene_seq: row.scene_seq, shot_seq: row.shot_seq, needs_lip_sync: row.needs_lip_sync };
+  });
+}
+
+const narrationSegs = readNarrationSegments(db
   .prepare(
     `SELECT verse_ref, start_ms, end_ms FROM audio_segments
      WHERE project_id = ? AND layer = 'original_reading' AND speaker_character_id IS NULL ORDER BY start_ms`
   )
-  .all(PROJECT_ID) as NarrationSeg[];
+  .all(PROJECT_ID));
 
-const shots = db
+const shots = readShots(db
   .prepare(
     `SELECT s.id, s.verse_ref, sc.sequence as scene_seq, s.sequence as shot_seq, s.needs_lip_sync
      FROM shots s JOIN scenes sc ON sc.id = s.scene_id WHERE sc.project_id = ? ORDER BY sc.sequence, s.sequence`
   )
-  .all(PROJECT_ID) as ShotRow[];
+  .all(PROJECT_ID));
 
 const shotDurations = db
   .prepare(

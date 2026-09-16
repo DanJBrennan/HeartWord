@@ -1929,3 +1929,17 @@ The producer retired the standalone science-demo companion. Its HTML and a
 short archive record are retained under `docs/archive/` for reference only;
 the served route, voice endpoint, and associated tests were removed so it has
 no runtime connection to HeartWord.
+
+## Strict TypeScript repair checkpoint (2026-09-16)
+
+Before the approved architecture restructuring, the full strict server and
+frontend TypeScript check was repaired from 22 reported errors to zero without
+changing pipeline or production semantics. The repair validates SQLite query
+rows at their boundaries rather than using unsafe row casts, handles unchecked
+CLI and regular-expression values explicitly, and corrects the canonical-
+likeness regeneration lookup to use the SQL field `character_name`. A focused
+regression test confirms a failed character row can be found for recheck.
+
+Validation after the repair: `npm run typecheck`, `npm test` (241 tests), and
+`npm run build:web` all pass. This is a bounded reliability cleanup only; it
+does not implement the separate agent-role architecture work.

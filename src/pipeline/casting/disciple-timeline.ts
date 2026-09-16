@@ -44,7 +44,11 @@ export function parseBookChapterVerse(ref: string): BookChapterVerse {
   if (!match) {
     throw new Error(`parseBookChapterVerse: could not parse "${ref}" as "Book chapter:verse"`);
   }
-  return { book: match[1].trim().toLowerCase(), chapter: Number(match[2]), verse: Number(match[3]) };
+  const [, book, chapter, verse] = match;
+  if (!book || !chapter || !verse) {
+    throw new Error(`parseBookChapterVerse: incomplete capture groups for "${ref}"`);
+  }
+  return { book: book.trim().toLowerCase(), chapter: Number(chapter), verse: Number(verse) };
 }
 
 /**

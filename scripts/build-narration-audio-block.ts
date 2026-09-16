@@ -32,7 +32,9 @@ function ffprobeFrameCount(absPath: string): number {
     ["-v", "error", "-select_streams", "v", "-count_frames", "-show_entries", "stream=nb_read_frames", "-of", "default=noprint_wrappers=1:nokey=1", absPath],
     { encoding: "utf-8" }
   );
-  return parseInt(out.trim().split("\n")[0], 10);
+  const frameCount = out.trim().split("\n").at(0);
+  if (!frameCount) throw new Error(`ffprobe returned no frame count for ${absPath}`);
+  return parseInt(frameCount, 10);
 }
 
 function normalizeSilent(sourcePath: string, durationMs: number, outPath: string): void {

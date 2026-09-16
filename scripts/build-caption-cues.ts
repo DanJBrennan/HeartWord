@@ -54,6 +54,7 @@ interface AlignmentSegment {
 }
 interface AlignmentFile {
   segments: AlignmentSegment[];
+  chapterDurationSec?: number;
 }
 const alignment: AlignmentFile = JSON.parse(readFileSync(alignmentPath, "utf-8"));
 const matchedSegments = alignment.segments

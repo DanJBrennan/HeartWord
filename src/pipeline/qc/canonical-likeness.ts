@@ -42,6 +42,7 @@ import { getDataDir, getDb } from "../../db/client.js";
 import { generateJsonWithImages, type GeminiJsonSchema } from "../../server/providers/gemini.js";
 import { runMediaGeneration } from "../media-generation/index.js";
 import { isLikenessAligned, LIKENESS_THRESHOLD, parseLikenessVerdict, type LikenessVerdict } from "./likeness-verdict.js";
+import { findFailedShotCharacterRow, type ShotCharacterCheckRow } from "./canonical-likeness-row.js";
 
 export { isLikenessAligned, LIKENESS_THRESHOLD, parseLikenessVerdict, type LikenessVerdict };
 
@@ -116,12 +117,25 @@ export async function checkCanonicalLikeness(
   return parseLikenessVerdict(verdict);
 }
 
-interface ShotCharacterCheckRow {
-  shot_id: string;
-  character_name: string;
-  reference_path: string | null;
-  generation_attempt_id: string;
-  generated_path: string;
+function readShotCharacterCheckRows(rows: Record<string, unknown>[]): ShotCharacterCheckRow[] {
+  return rows.map((row) => {
+    if (
+      typeof row.shot_id !== "string" ||
+      typeof row.character_name !== "string" ||
+      (row.reference_path !== null && typeof row.reference_path !== "string") ||
+      typeof row.generation_attempt_id !== "string" ||
+      typeof row.generated_path !== "string"
+    ) {
+      throw new Error("Expected canonical-likeness rows with valid shot, character, reference, and generation fields.");
+    }
+    return {
+      shot_id: row.shot_id,
+      character_name: row.character_name,
+      reference_path: row.reference_path,
+      generation_attempt_id: row.generation_attempt_id,
+      generated_path: row.generated_path
+    };
+  });
 }
 
 export interface CanonicalLikenessAuditResult {
@@ -152,7 +166,7 @@ export async function runCanonicalLikenessAudit(
   const db = getDb();
   const dataDir = getDataDir();
 
-  const rows = db
+  const rows = readShotCharacterCheckRows(db
     .prepare(
       `SELECT s.id AS shot_id, c.name AS character_name, ref.path AS reference_path,
               ga.id AS generation_attempt_id, ga.result_asset_path AS generated_path
@@ -173,7 +187,7 @@ export async function runCanonicalLikenessAudit(
        WHERE sc.project_id = ?
        ORDER BY s.sequence`
     )
-    .all(projectId) as unknown as ShotCharacterCheckRow[];
+    .all(projectId));
 
   const now = Date.now();
   const invalidateAttempt = db.prepare(`UPDATE generation_attempts SET status = 'retry_modified' WHERE id = ?`);
@@ -227,7 +241,7 @@ export async function runCanonicalLikenessAudit(
     // actually fixed it rather than assuming success.
     const stillFailing: CanonicalLikenessAuditResult["failures"] = [];
     for (const failure of failures) {
-      const row = rows.find((r) => r.shot_id === failure.shotId && r.characterName === failure.characterName);
+      const row = findFailedShotCharacterRow(rows, failure);
       if (!row?.reference_path) continue;
       const newAttempt = db
         .prepare(

@@ -183,7 +183,8 @@ const SEVERITY_LINE = /SEVERITY:\s*(none|minor|moderate|severe)/i;
 export function parseCriticSeverity(findings: string): CriticSeverity {
   const match = findings.match(SEVERITY_LINE);
   if (!match) return "moderate";
-  return match[1].toLowerCase() as CriticSeverity;
+  const severity = match[1]?.toLowerCase();
+  return severity === "none" || severity === "minor" || severity === "moderate" || severity === "severe" ? severity : "moderate";
 }
 
 const SUGGESTED_FIX_LINE = /SUGGESTED FIX:\s*(.+)/i;

@@ -300,6 +300,19 @@ interface ShotCharacterRow {
   reference_path: string | null;
 }
 
+function readShotCharacterRows(rows: Record<string, unknown>[]): ShotCharacterRow[] {
+  return rows.map((row) => {
+    if (
+      typeof row.character_id !== "string" ||
+      typeof row.character_name !== "string" ||
+      (row.reference_path !== null && typeof row.reference_path !== "string")
+    ) {
+      throw new Error("Expected shot-character rows with string identifiers and an optional reference path.");
+    }
+    return { character_id: row.character_id, character_name: row.character_name, reference_path: row.reference_path };
+  });
+}
+
 interface CandidateAttemptRow extends ShotRow {
   attempt_id: string;
 }
@@ -350,7 +363,7 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
     | { crowd_density: string | null; continuity_notes: string | null }
     | undefined;
 
-  const characters = db
+  const characters = readShotCharacterRows(db
     .prepare(
       `SELECT c.id AS character_id, c.name AS character_name, ref.path AS reference_path
        FROM shot_characters shc
@@ -366,7 +379,7 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
        ) ref ON ref.character_version_id = cv.id AND ref.rn = 1
        WHERE shc.shot_id = ?`
     )
-    .all(shotId) as ShotCharacterRow[];
+    .all(shotId));
 
   const critic = await runCritic({
     action: shot.action,
@@ -483,7 +496,7 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
     | { crowd_density: string | null; continuity_notes: string | null }
     | undefined;
 
-  const characters = db.prepare(
+  const characters = readShotCharacterRows(db.prepare(
     `SELECT c.id AS character_id, c.name AS character_name, ref.path AS reference_path
      FROM shot_characters shc
      JOIN characters c ON c.id = shc.character_id
@@ -497,7 +510,7 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
        FROM character_assets
      ) ref ON ref.character_version_id = cv.id AND ref.rn = 1
      WHERE shc.shot_id = ?`
-  ).all(candidate.id) as ShotCharacterRow[];
+  ).all(candidate.id));
 
   const critic = await runCritic({
     action: candidate.action,
