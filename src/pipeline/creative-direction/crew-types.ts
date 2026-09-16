@@ -26,9 +26,10 @@ export interface CrewBrief {
     hashes: string[] };
   audio: Array<{ id: string; startMs: number; endMs: number; verseRef: string | null;
     speakerId: string | null; path: string; confidence: number | null; provenance?: "unassigned_source_interval"; sourceSpeakerId?: string }>;
-  canon: Array<{ id: string; name: string; versionId: string; notes: string | null; joinedAt: string | null }>;
+  canon: Array<{ id: string; name: string; region: string; versionId: string; notes: string | null; joinedAt: string | null }>;
   shots: CrewShot[];
   producerNotes: Array<{ id: string; subjectId: string; note: string }>;
+  appliedLessons?: Array<{ id: string; scopeKind: string; requestedChange: string; rationale: string | null }>;
   spentUsd: number;
   audioAssets: Array<{ id: string; kind: "music" | "sfx"; description: string; path: string;
     sha256: string; durationMs: number }>;

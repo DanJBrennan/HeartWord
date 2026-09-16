@@ -86,6 +86,25 @@ describe("immutable project brief", () => {
     expect(b.canon).toMatchObject([{ id: "c", versionId: "v", notes: "Approved brown robe" }]);
     expect(b.audio[0]!.endMs).toBe(8000);
   });
+  it("supplies only active reusable lessons whose project, subject, language, book, and region match", () => {
+    const insert = db.prepare(`INSERT INTO production_lessons
+      (id,project_id,scope_kind,scope_value,subject_id,issue,requested_change,status,source_language,source_book,source_chapter,source_region,created_at,updated_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+    const values = (id: string, scope: string, value: string | null, subject: string, status = "active", language = "hatam", region = "Papuan") =>
+      insert.run(id, "p", scope, value, subject, "review", id, status, language, "mark", 2, region, 1, 1);
+    values("chapter-current", "chapter", null, "p");
+    values("shot-current", "shot", null, "shot");
+    values("foreign-shot", "shot", null, "a-shot-from-another-chapter");
+    values("book-current", "book", "mark", "p");
+    values("wrong-language", "book", "mark", "p", "active", "another-language");
+    values("wrong-region", "book", "mark", "p", "active", "hatam", "another-region");
+    values("candidate", "book", "mark", "p", "candidate");
+    values("disabled", "book", "mark", "p", "disabled");
+
+    expect(loadCrewBrief(db, directory, "p", "planning").appliedLessons?.map(lesson => lesson.id)).toEqual([
+      "book-current", "chapter-current", "shot-current"
+    ]);
+  });
   it("does not substitute Mark 2 reference text for another chapter", () => {
     db.exec("UPDATE projects SET chapter=3");
     expect(() => loadCrewBrief(db, directory, "p", "planning")).toThrow();

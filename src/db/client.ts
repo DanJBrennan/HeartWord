@@ -138,7 +138,11 @@ const COLUMN_MIGRATIONS: Array<{ table: string; column: string; ddl: string }> =
     table: "characters",
     column: "joined_narrative_at",
     ddl: "ALTER TABLE characters ADD COLUMN joined_narrative_at TEXT"
-  }
+  },
+  { table: "production_lessons", column: "source_language", ddl: "ALTER TABLE production_lessons ADD COLUMN source_language TEXT" },
+  { table: "production_lessons", column: "source_book", ddl: "ALTER TABLE production_lessons ADD COLUMN source_book TEXT" },
+  { table: "production_lessons", column: "source_chapter", ddl: "ALTER TABLE production_lessons ADD COLUMN source_chapter INTEGER" },
+  { table: "production_lessons", column: "source_region", ddl: "ALTER TABLE production_lessons ADD COLUMN source_region TEXT" }
 ];
 
 function applyColumnMigrations(db: DatabaseSync): void {

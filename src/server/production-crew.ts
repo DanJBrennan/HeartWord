@@ -29,11 +29,11 @@ export const PRODUCTION_CREW: readonly CrewRole[] = [
 ];
 export const STAGE_DEPARTMENTS: Record<string, string> = { ingestion:"source alignment", scene_breakdown:"planning", casting:"planning", media_generation:"generation", voice_lipsync:"dialogue and lip-sync", assembly:"picture and sound", qc:"quality" };
 export interface NegotiationLogEntry { id: string; narration_span_verse_ref: string; idea_id: string; round: number; role: "creative_director" | "production_director"; verdict: "approve" | "request_changes" | "reject" | "forced_final" | null; content: string; created_at: number; }
-export interface ProductionMonitorEvent { id: string; kind: "crew_event" | "negotiation"; sender: string; round: number; status: "active" | "completed" | "held" | "error"; context: string; summary: string; createdAt: number; }
+export interface ProductionMonitorEvent { id: string; runId?: string; kind: "crew_event" | "negotiation"; sender: string; round: number; status: "active" | "completed" | "held" | "error"; current?: boolean; context: string; summary: string; createdAt: number; }
 export function buildProductionCrewView(project: { id: string; stage: string; status: string }, interactionLog: NegotiationLogEntry[] = []) {
   return { project: { ...project, activeDepartment: STAGE_DEPARTMENTS[project.stage] ?? null }, roster: PRODUCTION_CREW, interactionLog, interactionLogState: interactionLog.length ? "persisted" : "No persisted production negotiation for this chapter yet.", note: "Runtime labels identify implemented calls only; declared roles describe the approved operating contract, not live autonomous agents." };
 }
 export function buildProductionMonitor(events: ProductionMonitorEvent[]) {
-  const outstanding = events.filter(event => event.status === "held" || event.status === "error");
+  const outstanding = events.filter(event => event.current !== false && (event.status === "held" || event.status === "error"));
   return { events, outstanding, state: events.some(event => event.status === "active") ? "active" : outstanding.length ? "needs_producer_input" : "idle", note: "Recorded workflow events only. This monitor never displays presentation dialogue or hidden model reasoning." };
 }

@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
 
-interface Run { id: string; phase: string; status: string; result_json: string | null; calls: number; created_at: number }
+interface Run { id: string; phase: string; status: string; result_json: string | null; brief_json: string; calls: number; created_at: number }
 interface Event { id: string; role: string; round: number; prompt: string; output_json: string | null; error: string | null }
 import type { CrewContribution as Contribution } from "../pipeline/creative-direction/crew-types";
 import type { CutTimingAudit } from "../pipeline/assembly/cut-timing-audit";
 interface Asset { id: string; kind: string; description: string; path: string }
 interface Attempt { id: string; kind: string; status: string; path: string | null; error: string | null; cost_usd: number | null }
 interface Snapshot { runs: Run[]; assets: Asset[]; attempts: Attempt[]; render: { id: string; path: string } | null; timingAudit?: CutTimingAudit | null }
-interface MonitorEvent { id:string; kind:string; sender:string; round:number; status:"active"|"completed"|"held"|"error"; context:string; summary:string; createdAt:number }
+interface MonitorEvent { id:string; runId?:string; kind:string; sender:string; round:number; status:"active"|"completed"|"held"|"error"; context:string; summary:string; createdAt:number }
 interface Monitor { events: MonitorEvent[]; outstanding: MonitorEvent[]; state:string; note:string }
 interface Lesson { id:string; scope_kind:string; requested_change:string; rationale:string|null; status:string }
+interface CrewRole { id:string; label:string; owner:string; authority:string; runtime:string; owns:string; cannot:string }
+interface Roster { roster: CrewRole[] }
 const mediaUrl = (path: string) => `/media/${path.replaceAll("\\", "/").split("/").map(encodeURIComponent).join("/")}`;
-async function request<T>(url: string, body?: unknown): Promise<T> {
-  const response = await fetch(url, body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+async function request<T>(url: string, body?: unknown, method = "POST"): Promise<T> {
+  const response = await fetch(url, body === undefined ? {} : { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? "Production request failed.");
   return data as T;
@@ -29,17 +31,24 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
   const [guidance, setGuidance] = useState("");
   const [monitor, setMonitor] = useState<Monitor | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [potentialOverlaps, setPotentialOverlaps] = useState<string[][]>([]);
   const [reusable, setReusable] = useState(false);
+  const [principle, setPrinciple] = useState("");
+  const [lessonScope, setLessonScope] = useState("chapter");
+  const [lessonDrafts, setLessonDrafts] = useState<Record<string, { principle: string; rationale: string; scope: string }>>({});
+  const [roster, setRoster] = useState<CrewRole[]>([]);
   const [asset, setAsset] = useState({ path: "", kind: "music", description: "" });
   async function refresh() {
     const data = await request<Snapshot>(base);
     setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null);
     setMonitor(await request<Monitor>(`${base}/monitor`));
-    setLessons((await request<{lessons:Lesson[]}>(`${base}/lessons`)).lessons);
+    const lessonData = await request<{lessons:Lesson[]; potentialOverlaps:string[][]}>(`${base}/lessons`);
+    setLessons(lessonData.lessons); setPotentialOverlaps(lessonData.potentialOverlaps);
+    setRoster((await request<Roster>("/api/control-room/roster", undefined, "GET")).roster);
   }
   useEffect(() => {
     let active = true;
-    const load = () => Promise.all([request<Snapshot>(base), request<Monitor>(`${base}/monitor`), request<{lessons:Lesson[]}>(`${base}/lessons`)]).then(([data, monitor, lessonData]) => { if (active) { setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setMonitor(monitor); setLessons(lessonData.lessons); } }).catch(e => { if (active) setError(e.message); });
+    const load = () => Promise.all([request<Snapshot>(base), request<Monitor>(`${base}/monitor`), request<{lessons:Lesson[]; potentialOverlaps:string[][]}>(`${base}/lessons`), request<Roster>("/api/control-room/roster", undefined, "GET")]).then(([data, monitor, lessonData, rosterData]) => { if (active) { setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setMonitor(monitor); setLessons(lessonData.lessons); setPotentialOverlaps(lessonData.potentialOverlaps); setRoster(rosterData.roster); } }).catch(e => { if (active) setError(e.message); });
     void load();
     const timer = window.setInterval(load, 5000);
     return () => { active = false; window.clearInterval(timer); };
@@ -68,11 +77,12 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
   return <section className="production-crew" aria-label="Production crew">
     <h2>Production crew</h2>
     <p>Plan the chapter together, review the assembled film, and inspect why each choice was made. Approved takes and the source recording are retained.</p>
+    <details className="crew-roster"><summary>Production roster ({roster.length} declared roles and reviewers)</summary><p>Implemented labels identify bounded recorded calls. Declared roles describe ownership and handoffs; they do not imply a live autonomous worker.</p><div className="crew-map">{roster.map(role => <article key={role.id} className="department-card"><strong>{role.label}</strong><p>{role.owner} · {role.authority.replaceAll("_", " ")} · {role.runtime}</p><p>Owns: {role.owns}</p><small>Cannot: {role.cannot}</small></article>)}</div></details>
     <section className="production-monitor" aria-label="Production interaction monitor">
       <h3>Chapter interaction monitor</h3>
       <p>{monitor?.note ?? "Loading recorded workflow events…"}</p>
-      {monitor?.outstanding.length ? <><h4>Producer input needed</h4>{monitor.outstanding.map(event => <article key={`hold-${event.id}`}><strong>{event.sender.replaceAll("_", " ")} · {event.status}</strong><p>{event.context} — {event.summary}</p></article>)}</> : <p>No recorded producer decision is outstanding for this chapter.</p>}
-      <div className="monitor-stream" aria-live="polite">{monitor?.events.map(event => <article key={event.id} className={`monitor-event ${event.status}`}><small>{event.kind === "negotiation" ? "Recorded negotiation" : "Recorded role exchange"} · {event.sender.replaceAll("_", " ")} · pass {event.round} · {new Date(event.createdAt).toLocaleString()}</small><p><strong>{event.context}</strong> — {event.summary}</p><small>Open the matching run below for the full recorded structured contribution, directions, objections, requested changes, and resolution.</small></article>)}</div>
+      {monitor?.outstanding.length ? <><h4>Producer input needed</h4>{monitor.outstanding.map(event => <article key={`hold-${event.id}`}><strong>{event.sender.replaceAll("_", " ")} · {event.status}</strong><p>{event.context} — {event.summary}</p>{event.runId && <button onClick={() => setSelected(event.runId!)}>Open recorded contribution</button>}</article>)}</> : <p>No recorded producer decision is outstanding for this chapter.</p>}
+      <div className="monitor-stream" aria-live="polite">{monitor?.events.map(event => <article key={event.id} className={`monitor-event ${event.status}`}><small>{event.kind === "negotiation" ? "Recorded negotiation" : "Recorded role exchange"} · {event.sender.replaceAll("_", " ")} · pass {event.round} · {new Date(event.createdAt).toLocaleString()}</small><p><strong>{event.context}</strong> — {event.summary}</p>{event.runId && <button onClick={() => setSelected(event.runId!)}>Open recorded contribution</button>}</article>)}</div>
     </section>
     {render && <video key={render.id} controls preload="metadata" src={mediaUrl(render.path)} aria-label="Current chapter cut" style={{ width: "100%", maxHeight: "30rem" }} />}
     {timingAudit && <details><summary>Recorded timing audit — source coverage needs review</summary>
@@ -90,16 +100,19 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
     {error && <p role="alert" className="error">{error}</p>}
     {notice && <p role="status">{notice}</p>}
     <label>Producer guidance / decision<textarea value={guidance} onChange={e => setGuidance(e.target.value)} placeholder="A scoped correction, creative preference, or decision for the next review" /></label>
-    <label><input type="checkbox" checked={reusable} onChange={e => setReusable(e.target.checked)} /> Promote this as standing chapter guidance</label>
-    <button disabled={running || !guidance.trim()} onClick={() => void act("guidance", { note: guidance, reusable }).then(saved => { if (saved) { setGuidance(""); setReusable(false); } })}>Record guidance</button>
-    <details><summary>Correction lessons ({lessons.length})</summary><p>Candidates are chapter-scoped until promoted. Active lessons are supplied to matching future briefs; disabled and superseded lessons remain as history.</p>{lessons.map(lesson => <article key={lesson.id}><strong>{lesson.status} · {lesson.scope_kind}</strong><p>{lesson.requested_change}</p>{lesson.rationale && <small>{lesson.rationale}</small>} {lesson.status !== "disabled" && <button disabled={running} onClick={() => void act(`lessons/${lesson.id}/status`, { status:"disabled" })}>Disable</button>} {lesson.status === "candidate" && <button disabled={running} onClick={() => void act(`lessons/${lesson.id}/status`, { status:"active" })}>Promote</button>} {lesson.status === "active" && <button disabled={running} onClick={() => void act(`lessons/${lesson.id}/status`, { status:"superseded" })}>Supersede</button>}</article>)}</details>
+    <label><input type="checkbox" checked={reusable} onChange={e => setReusable(e.target.checked)} /> Use my explicit reusable principle instead of a proposed candidate</label>
+    {reusable && <><label>Reusable principle<textarea value={principle} onChange={e => setPrinciple(e.target.value)} placeholder="State the generalized practice for matching work; do not copy the raw correction." /></label><label>Scope<select value={lessonScope} onChange={e => setLessonScope(e.target.value)}><option value="chapter">This chapter</option><option value="book">This book and matching language/region</option><option value="language">This language and matching region</option><option value="region">This region and matching language</option><option value="global">Explicit global directive</option></select></label></>}
+    <button disabled={running || !guidance.trim() || (reusable && !principle.trim())} onClick={() => void act("guidance", { note: guidance, reusable, principle, scope: lessonScope }).then(saved => { if (saved) { setGuidance(""); setReusable(false); setPrinciple(""); setLessonScope("chapter"); } })}>Record guidance</button>
+    <details><summary>Correction lessons ({lessons.length})</summary><p>HeartWord proposes a narrowly scoped candidate from each recorded correction. Inspect, edit, and activate it before it can guide matching work; disabled and superseded lessons remain history.</p>{potentialOverlaps.length > 0 && <p className="error">Potentially overlapping active lessons: {potentialOverlaps.map(pair => pair.join(" / ")).join(", ")}. Review their scopes and wording.</p>}{lessons.map(lesson => { const draft = lessonDrafts[lesson.id] ?? { principle: lesson.requested_change, rationale: lesson.rationale ?? "", scope: lesson.scope_kind }; return <article key={lesson.id}><strong>{lesson.status} · {lesson.scope_kind}</strong><p>{lesson.requested_change}</p>{lesson.rationale && <small>{lesson.rationale}</small>} {lesson.status === "candidate" && <><label>Reusable principle<input value={draft.principle} onChange={e => setLessonDrafts({ ...lessonDrafts, [lesson.id]: { ...draft, principle:e.target.value } })} /></label><label>Reason<input value={draft.rationale} onChange={e => setLessonDrafts({ ...lessonDrafts, [lesson.id]: { ...draft, rationale:e.target.value } })} /></label><label>Scope<select value={draft.scope} onChange={e => setLessonDrafts({ ...lessonDrafts, [lesson.id]: { ...draft, scope:e.target.value } })}><option value="chapter">This chapter</option><option value="book">Book</option><option value="language">Language</option><option value="region">Region</option><option value="global">Explicit global</option></select></label><button disabled={running || !draft.principle.trim()} onClick={() => void request(`${base}/lessons/${lesson.id}`, { requestedChange:draft.principle, rationale:draft.rationale, scope:draft.scope }, "PATCH").then(refresh).catch(e => setError(e.message))}>Activate reviewed principle</button></>} {lesson.status !== "disabled" && <button disabled={running} onClick={() => void act(`lessons/${lesson.id}/status`, { status:"disabled" })}>Disable</button>} {lesson.status === "active" && <button disabled={running} onClick={() => void act(`lessons/${lesson.id}/status`, { status:"superseded" })}>Supersede</button>}</article>; })}</details>
     <div className="crew-runs">{runs.map(run => {
       const result = run.result_json ? JSON.parse(run.result_json) as { summary: string } : null;
+      const appliedLessons = JSON.parse(run.brief_json).appliedLessons as Array<{ id:string; scopeKind:string; requestedChange:string }> | undefined;
       return <article key={run.id}>
         <button aria-expanded={selected === run.id} onClick={() => setSelected(selected === run.id ? null : run.id)}>
           {run.phase === "planning" ? "Storyboard" : run.phase === "editing" ? "Picture editing" : "Cut review"} · {run.status.replaceAll("_", " ")} · {run.calls} calls · {new Date(run.created_at).toLocaleString()}
         </button>
         {result && <p>{result.summary}</p>}
+        {appliedLessons?.length ? <p className="hint">Applied lessons: {appliedLessons.map(lesson => `${lesson.scopeKind}: ${lesson.requestedChange}`).join(" · ")}</p> : null}
         {run.status === "running" && <button disabled={busy} onClick={() => void act(`recover/${run.id}`)}>Recover interrupted review</button>}
         {selected === run.id && events.map(event => {
           const output = event.output_json ? JSON.parse(event.output_json) as Contribution : null;

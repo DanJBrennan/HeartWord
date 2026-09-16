@@ -19,6 +19,10 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
   const project = db.prepare("SELECT id, language, book, chapter FROM projects WHERE id = ?").get(projectId) as CrewBrief["project"] | undefined;
   if (!project) throw new Error("Project not found.");
   if (project.language.toLowerCase() !== "hatam") throw new Error("Configure and approve a regional production canon before planning another language.");
+  // The current production-corpus decision has one explicit language-to-canon
+  // authority. Lesson matching below uses the actual selected canon region,
+  // rather than treating this policy value as a universal regional default.
+  const approvedRegion = project.language.toLowerCase() === "hatam" ? "Papuan" : null;
   const stem = `${project.book}-${project.chapter}`;
   const sourcePaths = [`source/${project.language}/${stem}/${stem}-text.docx`, `reference/english/${stem}/${stem}-text.docx`];
   const sources = sourcePaths.map(p => productionAssetPath(dataDir, p));
@@ -93,9 +97,10 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
   const canon: CrewBrief["canon"] = [];
   const characterIds = [...new Set([...shots.flatMap(s => [...s.characterIds, ...s.beats.flatMap(b => b.characterId ? [b.characterId] : [])]), ...audio.flatMap(a => a.speakerId ? [a.speakerId] : [])])].sort();
   for (const id of characterIds) {
-    const character = db.prepare(`SELECT id, name, (SELECT notes FROM character_versions WHERE character_id = characters.id AND status = 'approved' LIMIT 1) AS notes, joined_narrative_at AS joinedAt FROM characters WHERE id = ?
-      AND canon_status = 'approved' AND region = 'Papuan' AND (scope_kind = 'global' OR
-      (lower(scope_book) = lower(?) AND (scope_kind = 'book' OR scope_chapter = ?)))`).get(id, project.book, project.chapter) as Omit<CrewBrief["canon"][number], "versionId"> | undefined;
+    const character = db.prepare(`SELECT id, name, region, (SELECT notes FROM character_versions WHERE character_id = characters.id AND status = 'approved' LIMIT 1) AS notes, joined_narrative_at AS joinedAt FROM characters WHERE id = ?
+      AND canon_status = 'approved' AND region = ? AND (scope_kind = 'global' OR
+      (lower(scope_book) = lower(?) AND (scope_kind = 'book' OR scope_chapter = ?)))`)
+      .get(id, approvedRegion, project.book, project.chapter) as Omit<CrewBrief["canon"][number], "versionId"> | undefined;
     const versions = db.prepare("SELECT id FROM character_versions WHERE character_id = ? AND status = 'approved'").all(id) as Array<{ id: string }>;
     if (!character || versions.length !== 1) throw new Error(`Character ${id} needs one approved, project-appropriate Papuan canon version.`);
     const assets = db.prepare("SELECT path, content_hash FROM character_assets WHERE character_version_id = ? ORDER BY path").all(versions[0]!.id) as Array<{ path: string; content_hash: string | null }>;
@@ -107,19 +112,24 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
     }
     canon.push({ ...character, versionId: versions[0]!.id });
   }
+  const regions = [...new Set(canon.map(character => character.region).filter(region => region.trim().length > 0))];
+  if (regions.length !== 1) throw new Error("A crew brief requires one approved regional canon context for its visible cast.");
+  const region = regions[0]!;
   const producerNotes = db.prepare(`SELECT id, subject_id AS subjectId, note FROM review_notes
     WHERE project_id = ? AND (source = 'human' OR (source = 'qc' AND note LIKE 'Production Director approved edit:%')) ORDER BY created_at, id`).all(projectId) as CrewBrief["producerNotes"];
   // A correction is local by default. Broader reuse requires an explicit scope
   // and matching value; never let a language/region label leak across contexts.
-  const lessons = db.prepare(`SELECT id, subject_id AS subjectId, 'Reusable lesson (' || scope_kind || '): ' || requested_change || CASE WHEN rationale IS NULL THEN '' ELSE ' Rationale: ' || rationale END AS note
+  const appliedLessons: NonNullable<CrewBrief["appliedLessons"]> = db.prepare(`SELECT id, scope_kind AS scopeKind, requested_change AS requestedChange, rationale
     FROM production_lessons WHERE status='active' AND (
       (scope_kind='chapter' AND project_id=?) OR
-      (scope_kind='book' AND lower(scope_value)=lower(?)) OR
-      (scope_kind='language' AND lower(scope_value)=lower(?)) OR
-      (scope_kind='region' AND lower(scope_value)='papuan') OR
+      (scope_kind='shot' AND project_id=? AND subject_id IN (SELECT s.id FROM shots s JOIN scenes sc ON sc.id=s.scene_id WHERE sc.project_id=?)) OR
+      (scope_kind='scene' AND project_id=? AND subject_id IN (SELECT id FROM scenes WHERE project_id=?)) OR
+      (scope_kind='book' AND lower(scope_value)=lower(?) AND lower(source_language)=lower(?) AND lower(source_region)=lower(?)) OR
+      (scope_kind='language' AND lower(scope_value)=lower(?) AND lower(source_region)=lower(?)) OR
+      (scope_kind='region' AND lower(scope_value)=lower(?) AND lower(source_language)=lower(?)) OR
       scope_kind='global'
-    ) ORDER BY created_at,id`).all(projectId, project.book, project.language) as CrewBrief["producerNotes"];
-  producerNotes.push(...lessons);
+    ) ORDER BY created_at,id`).all(projectId, projectId, projectId, projectId, projectId, project.book, project.language, region, project.language, region, region, project.language) as NonNullable<CrewBrief["appliedLessons"]>;
+  producerNotes.push(...appliedLessons.map(lesson => ({ id: lesson.id, subjectId: projectId, note: `Reusable lesson (${lesson.scopeKind}): ${lesson.requestedChange}${lesson.rationale ? ` Rationale: ${lesson.rationale}` : ""}` })));
   const spentUsd = Number(db.prepare("SELECT COALESCE(SUM(amount_usd), 0) AS total FROM cost_ledger_entries WHERE project_id = ?").get(projectId)!.total);
   const audioAssets = db.prepare(`SELECT id, kind, description, path, sha256, duration_ms AS durationMs
     FROM production_audio_assets WHERE project_id = ? ORDER BY id`).all(projectId) as CrewBrief["audioAssets"];
@@ -145,7 +155,7 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
       render.finishing = { baseRenderId: baseId, basePath: String(base.path), baseSha256: digest(readFileSync(productionAssetPath(dataDir, String(base.path)))), previousDecisions: JSON.parse(String(reviewed.result_json)).contributions };
     }
   }
-  return { project, source, audio, canon, shots, producerNotes, spentUsd, audioAssets, render };
+  return { project, source, audio, canon, shots, producerNotes, appliedLessons, spentUsd, audioAssets, render };
 }
 
 /** Spend, output clips and soundtrack additions do not invalidate visual planning. */

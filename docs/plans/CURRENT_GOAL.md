@@ -1949,3 +1949,27 @@ regression test confirms a failed character row can be found for recheck.
 Validation after the repair: `npm run typecheck`, `npm test` (241 tests), and
 `npm run build:web` all pass. This is a bounded reliability cleanup only; it
 does not implement the separate agent-role architecture work.
+
+## Production roster, recorded monitor, and correction learning (2026-09-16)
+
+The producer workflow now exposes the approved nineteen-role production roster,
+three independent milestone challengers, and optional presentation-only critics
+with explicit declared-versus-implemented labels. The chapter monitor shows
+only recorded role exchanges and negotiations, links an event directly to its
+full saved contribution, and treats held/error events from superseded runs as
+history rather than permanent current producer action.
+
+Recorded producer corrections now create a source- and canon-version-contextual
+candidate reusable lesson through one bounded text-model synthesis call. The
+candidate is inactive until the producer inspects, edits if needed, and
+activates it; synthesis failure records the candidate for review and does not
+retry. Active lessons are supplied to matching briefs only, with language,
+book, region, project, scene, and shot boundaries enforced. The saved run
+brief shows the accepted lessons actually supplied. Explicit producer-wide
+guidance can still be entered directly. This is application memory, not model
+retraining; it does not alter verified Scripture, source audio, canon, or make
+media calls.
+
+Validation: strict typecheck, web production build, and all 31 Vitest files
+(245 tests) pass. No live provider or production-media call was made during
+this implementation.
