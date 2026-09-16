@@ -73,6 +73,31 @@ event — see `docs/design/notifications.md`.
 - Scene action doesn't contradict the source text (guards against the "not
   free-form content generation" non-goal in `docs/NON_GOALS.md`).
 
+## Future audience-facing whole-film review pair
+
+After HeartWord assembles a first rough cut, a future two-house review pair
+will assess the chapter as a first-time viewer experiences it. This is an
+original HeartWord review format, inspired only by the usefulness of a
+conversational critic duo; it must not use any real critics' names,
+likenesses, voices, trademarks, or imitate any particular people.
+
+- The **Story Critic** assesses first-time-viewer clarity, emotional movement,
+  and engagement.
+- The **Film Critic** assesses filmmaking craft: shot choices, performances,
+  pacing, coverage, transitions, and sound.
+
+They first review the assembled rough cut independently, then produce a short,
+producer-visible discussion. Each review reports one strongest success, no more
+than three evidence-based concerns with timestamps, and one recommendation:
+**ready**, **revise**, or **hold**. The pair should not manufacture criticism
+when the cut is working.
+
+This is an audience-facing whole-film assessment, not a replacement for
+Scripture review, cultural review, source-fidelity checks, or producer judgment.
+It is planned to run once on the first rough cut and again after major
+revisions, before final approval. It is a future role/gate only: no current
+pipeline stage, provider call, or UI represents it as implemented.
+
 ## Open questions
 
 - Which checks are automatable now vs. need a human reviewer in the loop.

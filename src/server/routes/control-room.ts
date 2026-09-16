@@ -34,7 +34,7 @@ export const CONTROL_ROOM_PRESENTATION_SPEECH_STYLE = "Speak in connected, natur
 export const CONTROL_ROOM_BANTER_STYLE = "For this staged cartoon banter, be crisp, dry, and playfully sarcastic. Aim criticism at the creative work, never at a real person; do not use threats, slurs, or abusive language.";
 
 export const CONTROL_ROOM_VOICE_AUDITIONS = [
-  { id:"mabel-matilda", agent:"Mabel", label:"Measured authority", voiceId:"XrExE9yKIg1WjnnlVkGX", sample:"Let us not confuse enthusiasm with a plan. Bring me the next decision, and make it a useful one." },
+  { id:"mabel-lily", agent:"Mabel", label:"Composed command", voiceId:"pFZP5JQG7iQjIQuC4Bku", sample:"Let us not confuse enthusiasm with a plan. Bring me the next decision, and make it a useful one." },
   { id:"dottie-laura", agent:"Dottie", label:"Playful bite", voiceId:"FGY2WhTYpPnrIDTdsKH5", sample:"Darling, the casting idea is charming. The evidence for it, however, has yet to arrive." },
   { id:"rufus-callum", agent:"Rufus", label:"Dry trickster", voiceId:"N2lVS1w4EtoT3dr4eOWO", sample:"A bold choice. Let us make sure it is bold on purpose before we call it inspired." },
   { id:"gus-adam", agent:"Gus", label:"Brash confidence", voiceId:"pNInz6obpgDQGcFmaJgB", sample:"I can make the image sing. I cannot make an undecided brief become a masterpiece by staring at it." },

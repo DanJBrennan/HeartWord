@@ -1897,3 +1897,35 @@ The existing local “How are you?” presentation cue also recognizes “What
 inspires you to work here?” and returns the same saved, addressed-agent reply.
 It remains a presentation-only interaction and does not send a production
 message, alter agent authority, or access project data.
+
+## Mabel portrait candidate (2026-09-16)
+
+A non-destructive Mabel control-room portrait candidate was created at
+`docs/assets/control-room/agent-portraits/mabel-control-supervisor-candidate-v2.png`.
+It preserves the approved Mabel identity and remains private presentation
+reference art only; it is not approved, wired into the control-room UI, or used
+as a HeartWord production or Scripture-media asset.
+
+Following producer feedback that the earlier phone-operator visual did not
+represent Mabel's supervisory role, the active
+`mabel-control-supervisor.png` was replaced with a coordinator portrait. The
+replacement depicts review and delegation through a planning board, handoff
+cards, portfolio, and pen, and deliberately removes the headset and phone
+operator cues. The former active portrait remains retained as
+`mabel-control-supervisor-operator-legacy.png`; neither asset is Scripture
+media or a production record.
+
+Mabel's presentation-only ElevenLabs voice was recast from Matilda to Lily
+(2026-09-16). Lily's warm, confident, middle-aged British delivery better
+matches the redesigned senior supervisor portrait and gives Mabel a distinct
+control-room presence. The assignment applies only to staged control-room
+speech, never source narration, canon-character voices, or production actions.
+The producer listened to the supervisory sample and approved Lily as Mabel's
+active presentation voice.
+
+## Forestdale science companion archived (2026-09-16)
+
+The producer retired the standalone science-demo companion. Its HTML and a
+short archive record are retained under `docs/archive/` for reference only;
+the served route, voice endpoint, and associated tests were removed so it has
+no runtime connection to HeartWord.

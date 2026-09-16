@@ -1,6 +1,6 @@
 body {
   font-family: system-ui, sans-serif;
-  max-width: 720px;
+  max-width: 920px;
   margin: 2rem auto;
   padding: 0 1rem;
   color: #1a1a1a;
@@ -32,6 +32,29 @@ form {
 input {
   padding: 0.25rem 0.5rem;
 }
+
+.crew-heading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
+.crew-stage, .active-route { color: #155e75; background: #ecfeff; border-radius: 999px; font-size: 0.8rem; padding: 0.2rem 0.5rem; white-space: nowrap; }
+.supervisor-card, .department-card, .crew-log { border: 1px solid #d5d9df; border-radius: 8px; padding: 0.75rem; margin: 0.75rem 0; }
+.supervisor-card { border-left: 4px solid #155e75; }
+.supervisor-card p, .department-card > p { margin: 0.45rem 0; }
+.crew-map { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 0.65rem; }
+.department-card { margin: 0; }
+.department-card.active { border-color: #0891b2; box-shadow: 0 0 0 2px #cffafe; }
+.department-toggle { width: 100%; display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; align-items: center; background: transparent; border: 0; padding: 0; text-align: left; cursor: pointer; }
+.crew-badge { display: inline-block; border-radius: 999px; font-size: 0.72rem; font-weight: 600; margin-left: 0.35rem; padding: 0.12rem 0.4rem; text-transform: uppercase; }
+.crew-badge.implemented { background: #dcfce7; color: #166534; }
+.crew-badge.planned { background: #f3f4f6; color: #4b5563; }
+.crew-badge.mixed { background: #fef3c7; color: #92400e; }
+.department-details { border-top: 1px solid #e5e7eb; margin-top: 0.6rem; padding-top: 0.5rem; }
+.department-details ul { margin: 0; padding-left: 1.1rem; }
+.department-details li { margin: 0.45rem 0; }
+.department-details li span:last-child { display: block; margin-top: 0.15rem; }
+.allowed-paths { color: #4b5563; font-size: 0.88rem; margin-bottom: 0; }
+.crew-log summary { cursor: pointer; font-weight: 600; }
+.log-entry { border-top: 1px solid #e5e7eb; padding: 0.55rem 0; }
+.log-entry p { margin-bottom: 0; white-space: pre-wrap; }
+@media (max-width: 600px) { .crew-heading { display: block; } .crew-stage { display: inline-block; margin-top: 0.25rem; } }
 
 .hint {
   color: #555;

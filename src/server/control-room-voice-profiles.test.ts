@@ -16,6 +16,10 @@ function database(): DatabaseSync {
 }
 
 describe("control-room voice profiles", () => {
+  it("casts Pippa with the calmer OpenAI Marin voice for classroom planning", () => {
+    expect(CONTROL_ROOM_VOICE_PROFILES.find(profile => profile.agentName === "Pippa")).toMatchObject({ voiceProvider: "openai", voiceId: "marin" });
+  });
+
   it("preserves one presentation-only profile for every named control-room agent", () => {
     const db = database();
     expect(CONTROL_ROOM_VOICE_PROFILES).toHaveLength(21);
