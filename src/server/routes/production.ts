@@ -99,12 +99,17 @@ productionRouter.post("/guidance", (req, res) => {
   const db = getDb(); const noteId = randomUUID();
   db.prepare(`INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
     VALUES (?, ?, 'project', ?, 'human', ?, 1, ?)`).run(noteId, getProjectId(req), getProjectId(req), `Production guidance: ${note.trim()}`, Date.now());
+  // Every correction is retained as a reviewable chapter-scoped candidate.
+  // Only an explicit promotion below may affect another chapter.
+  const lessonId = randomUUID();
+  db.prepare(`INSERT INTO production_lessons (id,project_id,scope_kind,scope_value,subject_id,issue,requested_change,rationale,status,source_note_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(lessonId,getProjectId(req),"chapter",null,getProjectId(req),"Producer correction",note.trim(),"Captured from producer guidance","candidate",noteId,Date.now(),Date.now());
   if (req.body?.reusable === true) {
     const scope = ["chapter","book","language","region","global"].includes(req.body?.scope) ? req.body.scope : "chapter";
     db.prepare(`INSERT INTO production_lessons (id,project_id,scope_kind,scope_value,subject_id,issue,requested_change,rationale,status,source_note_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
       .run(randomUUID(),getProjectId(req),scope,scope === "book" ? req.body?.scopeValue ?? null : null,getProjectId(req),"Producer standing guidance",note.trim(),"Explicit producer direction","active",noteId,Date.now(),Date.now());
   }
-  res.status(201).json({ ok: true });
+  res.status(201).json({ ok: true, lessonId });
 });
 productionRouter.get("/lessons", (req,res) => res.json({ lessons:getDb().prepare("SELECT * FROM production_lessons WHERE project_id=? ORDER BY created_at DESC").all(getProjectId(req)) }));
 productionRouter.post("/lessons/:id/status", (req,res) => { const status=req.body?.status; if (!["active","disabled","superseded"].includes(status)) { res.status(400).json({error:"Invalid lesson status."}); return; } const result=getDb().prepare("UPDATE production_lessons SET status=?,updated_at=? WHERE id=? AND project_id=?").run(status,Date.now(),req.params.id,getProjectId(req)); if (!result.changes) {res.status(404).json({error:"Lesson not found."});return;} res.json({ok:true}); });

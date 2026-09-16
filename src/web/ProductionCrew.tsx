@@ -9,6 +9,7 @@ interface Attempt { id: string; kind: string; status: string; path: string | nul
 interface Snapshot { runs: Run[]; assets: Asset[]; attempts: Attempt[]; render: { id: string; path: string } | null; timingAudit?: CutTimingAudit | null }
 interface MonitorEvent { id:string; kind:string; sender:string; round:number; status:"active"|"completed"|"held"|"error"; context:string; summary:string; createdAt:number }
 interface Monitor { events: MonitorEvent[]; outstanding: MonitorEvent[]; state:string; note:string }
+interface Lesson { id:string; scope_kind:string; requested_change:string; rationale:string|null; status:string }
 const mediaUrl = (path: string) => `/media/${path.replaceAll("\\", "/").split("/").map(encodeURIComponent).join("/")}`;
 async function request<T>(url: string, body?: unknown): Promise<T> {
   const response = await fetch(url, body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -27,15 +28,18 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
   const [error, setError] = useState(""), [notice, setNotice] = useState("");
   const [guidance, setGuidance] = useState("");
   const [monitor, setMonitor] = useState<Monitor | null>(null);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [reusable, setReusable] = useState(false);
   const [asset, setAsset] = useState({ path: "", kind: "music", description: "" });
   async function refresh() {
     const data = await request<Snapshot>(base);
     setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null);
     setMonitor(await request<Monitor>(`${base}/monitor`));
+    setLessons((await request<{lessons:Lesson[]}>(`${base}/lessons`)).lessons);
   }
   useEffect(() => {
     let active = true;
-    const load = () => Promise.all([request<Snapshot>(base), request<Monitor>(`${base}/monitor`)]).then(([data, monitor]) => { if (active) { setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setMonitor(monitor); } }).catch(e => { if (active) setError(e.message); });
+    const load = () => Promise.all([request<Snapshot>(base), request<Monitor>(`${base}/monitor`), request<{lessons:Lesson[]}>(`${base}/lessons`)]).then(([data, monitor, lessonData]) => { if (active) { setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setMonitor(monitor); setLessons(lessonData.lessons); } }).catch(e => { if (active) setError(e.message); });
     void load();
     const timer = window.setInterval(load, 5000);
     return () => { active = false; window.clearInterval(timer); };
@@ -86,7 +90,9 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
     {error && <p role="alert" className="error">{error}</p>}
     {notice && <p role="status">{notice}</p>}
     <label>Producer guidance / decision<textarea value={guidance} onChange={e => setGuidance(e.target.value)} placeholder="A scoped correction, creative preference, or decision for the next review" /></label>
-    <button disabled={running || !guidance.trim()} onClick={() => void act("guidance", { note: guidance }).then(saved => { if (saved) setGuidance(""); })}>Record guidance</button>
+    <label><input type="checkbox" checked={reusable} onChange={e => setReusable(e.target.checked)} /> Promote this as standing chapter guidance</label>
+    <button disabled={running || !guidance.trim()} onClick={() => void act("guidance", { note: guidance, reusable }).then(saved => { if (saved) { setGuidance(""); setReusable(false); } })}>Record guidance</button>
+    <details><summary>Correction lessons ({lessons.length})</summary><p>Candidates are chapter-scoped until promoted. Active lessons are supplied to matching future briefs; disabled and superseded lessons remain as history.</p>{lessons.map(lesson => <article key={lesson.id}><strong>{lesson.status} · {lesson.scope_kind}</strong><p>{lesson.requested_change}</p>{lesson.rationale && <small>{lesson.rationale}</small>} {lesson.status !== "disabled" && <button disabled={running} onClick={() => void act(`lessons/${lesson.id}/status`, { status:"disabled" })}>Disable</button>} {lesson.status === "candidate" && <button disabled={running} onClick={() => void act(`lessons/${lesson.id}/status`, { status:"active" })}>Promote</button>} {lesson.status === "active" && <button disabled={running} onClick={() => void act(`lessons/${lesson.id}/status`, { status:"superseded" })}>Supersede</button>}</article>)}</details>
     <div className="crew-runs">{runs.map(run => {
       const result = run.result_json ? JSON.parse(run.result_json) as { summary: string } : null;
       return <article key={run.id}>
