@@ -5,9 +5,15 @@ import { getDataDir } from "../../db/client.js";
 import { getDb } from "../../db/client.js";
 import { createControlRoomRealtimeSession } from "../control-room-listener.js";
 import { proposedResponsibilitiesFor } from "../control-room-responsibilities.js";
+import { PRODUCTION_CREW } from "../production-crew.js";
 import { redTeamFindingsFor, redTeamImprovementFallback, redTeamImprovementResearchBrief, redTeamResponseModeFor, redTeamReviewResponse, redTeamReviewerForAgent, type RedTeamReviewer } from "../control-room-red-team-findings.js";
 
 export const controlRoomRouter = Router();
+
+// Canonical declared roster for UI clients. This is metadata, not a worker
+// registry: `runtime` deliberately distinguishes implemented calls from role
+// contracts and staged presentation.
+controlRoomRouter.get("/roster", (_req, res) => res.json({ roster: PRODUCTION_CREW }));
 
 const CONTROL_ROOM_MAP_AGENT_NAMES = new Set([
   "Mabel", "Rufus", "Pippa", "Gus", "Vera", "Orion", "June", "Leon",

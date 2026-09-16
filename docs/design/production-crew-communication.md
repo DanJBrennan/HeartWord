@@ -1,5 +1,28 @@
 # Production Crew Communication Protocol
 
+## Approved roster amendment (2026-09-16)
+
+This amendment supersedes earlier descriptions of June as Production Director, Orion as Gemini Analyzer, and Benny as an active Assembly Lead. The production roster is **nineteen roles**: Mabel (Production Coordinator), Rufus (Creative Director), June (Source and Alignment Specialist), Miriam (Scripture and Cultural Reviewer), Dottie (Casting and Canon Steward), Pippa (Storyboard Planner), Leon (Cinematographer), Tessa (Choreographer), Arlo (Production and Staging Designer), Costume Designer, Lighting Designer, Orion (Script Supervisor / Continuity Reviewer), Gus (Generation Specialist), Vera (Media Quality Reviewer), Kit (Dialogue / Lip-Sync Specialist), Nell (Picture Editor), Sam (Sound Designer / Mixer), Composer, and Colorist. Costume, Lighting, Composer, and Colorist are role labels; no personal presentation identity is implied. Benny is retained only as historical presentation material; assembly, render, encode, and package are tools directed by Nell and Mabel.
+
+Ada, Theo, and Cora are independent milestone challengers, respectively for fidelity, audience clarity/dramatic impact, and feasibility/cost/scope. They do not participate in every operation. Gene Siskel and Roger Ebert remain optional presentation-only critics, outside production authority.
+
+### Operating flow and limits
+
+Every operation begins from one immutable, versioned chapter brief: verified source/reference text and hashes, measured source-audio intervals, approved canon/voice references, prior accepted assets and edits, scoped producer guidance, cost/retry budget, and prior findings. Roles may read the scoped brief and write only their proposal, review, or handoff; they may not mutate another role's work. A record always names its source/asset versions, verse/audio scope, rationale, evidence, status, and destination.
+
+1. Mabel verifies prerequisites and schedules a bounded run. June reports source completeness/alignment uncertainty; Miriam reports Scripture/cultural concerns; Dottie reports canon gaps. A missing source, unapproved canon/voice, or unresolved ambiguity is a hold, not a workaround.
+2. Rufus sets visual intent. Pippa turns it into speech-measured scene/shot coverage with Leon, Tessa, Arlo, Costume, Lighting, and Orion consulting. Rufus may resolve creative tradeoffs, but cannot overrule a fidelity, source, canon, cost, or continuity finding.
+3. At a meaningful treatment or changed-shot milestone, Ada, Theo, and/or Cora independently challenge the proposal. Mabel records proposal → objection → revision → resolution. Persistent blocking evidence goes to the producer; it is never smoothed over by a vote.
+4. Gus turns accepted work into provider-ready briefs. Provider execution is a tool under existing authorization, with reserved cost, idempotency key, provenance, and finite retry budget. A stale plan invalidates unspent work; a completed request reuses its result; failures do not cause silent paid retries.
+5. Vera reviews returned media independently; Orion checks continuity; Kit checks only approved speech treatment and sync while June retains source-alignment ownership. A repair packet goes to the accountable owner, not directly to a provider. High-risk/failed material can receive a milestone challenge.
+6. Nell assembles accepted coverage, preserving the entire source performance and producer edits; Sam mixes with speech priority; Composer and Colorist contribute only bounded reviewed parameters. The rough cut receives Miriam/Orion/Vera evidence and the three independent milestone reviews. Release, human language/field review, and distribution permission remain human/producer actions.
+
+Routine work may proceed under existing recorded authorization and budget; new canon, an unresolved source/cultural issue, a material creative tradeoff, a budget/retry breach, or any release decision pauses for the producer. This is autonomous staged production, not approval on every routine step. Results are resumable and idempotent: stale outputs cannot advance a gate, accepted earlier assets remain inspectable, and manual edits are never silently overwritten.
+
+### Runtime truth
+
+The current crew implementation has bounded specialist planning/editing/finishing calls, persisted contribution logs, source/canon validation, timing gates, and cost-aware audio generation. The full named 19-role roster, multi-role conversation routing, generic `voice-lipsync` stage entry point, and universal milestone-review dispatch are declared operating contracts, not claims that every card is a live runtime agent. No implementation here creates paid production calls or substitutes for human language/field/release approval.
+
 ## Status and scope
 
 **Status: approved future-design contract (2026-09-13).** This document

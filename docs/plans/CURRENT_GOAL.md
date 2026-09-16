@@ -1,5 +1,13 @@
 # Current Goal
 
+## Architecture roster amendment (2026-09-16)
+
+Dan approved the canonical 19-role production roster, three independent milestone challengers, and optional presentation-only critics. The role map is now recorded in `src/server/production-crew.ts`; the control-room responsibility/voice metadata calls Mabel the Production Coordinator, June the Source and Alignment Specialist, Orion the Script Supervisor / Continuity Reviewer, and Benny historical-only. `docs/design/production-crew-communication.md` now states the shared immutable brief, scoped ownership, proposal/objection/revision/resolution record, bounded cost/retry/idempotency rules, independent milestone review, and producer/human release holds.
+
+This is deliberately honest about runtime: the existing crew has bounded specialist planning/editing/finishing calls, persisted logs, validation and timing/cost gates; the full named roster and milestone routing are a declared contract until individually wired. No paid calls, source changes, canon substitutions, or production renders were made. Goal Guardian check: the change extends the independent stage workflow and preserves Dan's review/correct/rerun authority, source performance, canon, and manual edits; it does not create a second pipeline or imply human language/field approval.
+
+Validation in this isolated checkout remains pending dependency installation: the checkout has no local `node_modules`, so `npm run build:web` cannot find Vite and Vitest cannot load its configured package. The saved checkout's pre-existing server typecheck baseline must also be rechecked separately; no claim of a clean full typecheck is made here.
+
 ## Active status: Mark 2 timing integration (2026-09-11)
 
 Implementation handoff: Dan prefers Sonnet 5 at Medium for the next coding
