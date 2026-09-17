@@ -9,6 +9,9 @@ const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof
 let db: import("node:sqlite").DatabaseSync;
 let dataDir = "";
 vi.mock("../../src/db/client.js", () => ({ getDb: () => db, getDataDir: () => dataDir }));
+const sync = vi.fn();
+vi.mock("../../src/providers/kling/index.js", () => ({ KlingLipSyncProvider: class { sync = sync; } }));
+vi.mock("../../src/providers/elevenlabs.js", () => ({ reVoiceAudio: vi.fn(async (_voice: string, path: string) => ({ audioBuffer: readFileSync(path) })) }));
 
 const ffmpeg = spawnSync("ffmpeg", ["-version"], { stdio: "ignore" }).status === 0;
 const cleanup: string[] = [];
@@ -47,5 +50,32 @@ describe.skipIf(!ffmpeg)("durable production recovery", () => {
     const resumed = await runPipeline("p");
     expect(resumed.stoppedAt).toBeUndefined();
     expect(resumed.results.every(result => result.reasoning.startsWith("Reused valid"))).toBe(true);
+  }, 30000);
+
+  it("builds real cast-master intervals, never syncs narration, and resumes accepted exact utterances", async () => {
+    dataDir = mkdtempSync(join(tmpdir(), "heartword-speaking-")); cleanup.push(dataDir); mkdirSync(join(dataDir, "assets"));
+    db = new DatabaseSync(":memory:"); db.exec(readFileSync("src/db/schema.sql", "utf8"));
+    const assets = join(dataDir, "assets"); mkdirSync(join(assets, "source", "synthetic", "mark-1"), { recursive: true });
+    execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "lavfi", "-i", "sine=frequency=440:duration=3", "-c:a", "libmp3lame", join(assets, "source", "synthetic", "mark-1", "mark-1-fcbh-audio.mp3")]);
+    writeFileSync(join(assets, "key.png"), "synthetic keyframe"); video(join(assets, "returned.mp4"), "green");
+    sync.mockClear(); sync.mockResolvedValue({ media: { path: "returned.mp4" }, cost: { usd: 0 }, provenance: { provider: "mock-kling", model: "mock", prompt: "synthetic" } });
+    db.exec(`INSERT INTO projects (id,language,book,chapter,created_at,updated_at) VALUES ('p','synthetic','mark',1,1,1);
+      INSERT INTO scenes (id,project_id,sequence,verse_start,verse_end,created_at) VALUES ('s','p',1,'Mark 1:1','Mark 1:1',1);
+      INSERT INTO characters (id,name,scope_kind,canon_status,region,created_at,updated_at) VALUES ('speaker','Speaker','chapter','approved','Papuan',1,1);
+      INSERT INTO character_versions (id,character_id,version_label,status,voice_provider,voice_id,created_at) VALUES ('voice','speaker','approved','approved','elevenlabs','synthetic',1);
+      INSERT INTO shots (id,scene_id,sequence,action,needs_lip_sync,dialogue_character_id,created_at) VALUES ('narrator','s',1,'Narration',0,NULL,1),('a','s',2,'First exact line',1,'speaker',1),('b','s',3,'Second exact line',1,'speaker',1);
+      INSERT INTO shot_characters VALUES ('a','speaker'),('b','speaker');
+      INSERT INTO audio_segments (id,project_id,layer,source_path,start_ms,end_ms,speaker_character_id,verse_ref,created_at) VALUES ('n','p','original_reading','source/synthetic/mark-1/mark-1-fcbh-audio.mp3',0,500,NULL,'Mark 1:1',1),('a-src','p','original_reading','source/synthetic/mark-1/mark-1-fcbh-audio.mp3',500,1500,'speaker','Mark 1:1',1),('b-src','p','original_reading','source/synthetic/mark-1/mark-1-fcbh-audio.mp3',1500,2500,'speaker','Mark 1:1',1);
+      INSERT INTO generation_attempts (id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at) VALUES ('ka','a','fixture','fixture','generate','accepted','key.png',0,1),('kb','b','fixture','fixture','generate','accepted','key.png',0,1);`);
+    const { bindShotUtterance } = await import("../../src/pipeline/voice-lipsync/utterance-binding.js");
+    bindShotUtterance(db, { projectId: "p", shotId: "a", sourceSegmentId: "a-src", startMs: 500, endMs: 1500, characterVersionId: "voice", approvedBy: "producer" });
+    bindShotUtterance(db, { projectId: "p", shotId: "b", sourceSegmentId: "b-src", startMs: 1500, endMs: 2500, characterVersionId: "voice", approvedBy: "producer" });
+    const { runVoiceLipSync } = await import("../../src/pipeline/voice-lipsync/index.js");
+    expect((await runVoiceLipSync("p")).ok).toBe(false); expect(sync).toHaveBeenCalledTimes(2);
+    expect(db.prepare("SELECT COUNT(*) n FROM generation_attempts WHERE operation='lip_sync'").get()).toMatchObject({ n: 2 });
+    const { acceptLipSyncCandidate } = await import("../../src/pipeline/voice-lipsync/candidate-selection.js");
+    for (const row of db.prepare("SELECT id FROM generation_attempts WHERE operation='lip_sync'").all() as Array<{id:string}>) acceptLipSyncCandidate(db, "p", row.id);
+    expect((await runVoiceLipSync("p")).ok).toBe(true); expect(sync).toHaveBeenCalledTimes(2);
+    expect(db.prepare("SELECT COUNT(*) n FROM clips").get()).toMatchObject({ n: 2 });
   }, 30000);
 });
