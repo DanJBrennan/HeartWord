@@ -144,7 +144,13 @@ function buildShotPrompt(scene: SceneRow, shot: ShotRow, characterNames: string[
   const correctionBlock = suggestedFix
     ? `\n\nCORRECTION FROM PRIOR REVIEW (this is a regeneration -- the previous attempt at this shot was flagged): ` +
       `${suggestedFix.fix} Everything else about the prior composition that already worked should stay as it was, ` +
-      `specifically: ${suggestedFix.preserve}.`
+      `specifically: ${suggestedFix.preserve}.` +
+      (suggestedFix.criticFindings.length
+        ? `\n\nPER-FINDING REVIEW CONTEXT (uncalibrated advisory evidence only; do not treat confidence as a vote, authority, or permission to waive any source, canon, cost, or human-review constraint):\n` +
+          suggestedFix.criticFindings.map((finding) =>
+            `- ${finding.severity}: ${finding.finding}. Evidence: ${finding.evidence}. Confidence: ${finding.confidence}/100 (uncalibrated). Limitations: ${finding.limitations}. Requested action: ${finding.requestedAction}`
+          ).join("\n")
+        : `\n\nPER-FINDING REVIEW CONTEXT: confidence not reported in this legacy review; investigate the recorded evidence without inventing a score.`)
     : "";
 
   return `${CASTING_AND_SETTING_ANCHOR}${correctionBlock}

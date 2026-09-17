@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { crowdDuplicateSeverity, parseCriticPreserve, parseCriticSeverity, parseCriticSuggestedFix } from "./critic.js";
+import { crowdDuplicateSeverity, formatCriticFindings, parseCriticFindings, parseCriticPreserve, parseCriticSeverity, parseCriticSuggestedFix } from "./critic.js";
 
 describe("parseCriticSeverity", () => {
   it("parses each known severity level", () => {
@@ -74,5 +74,37 @@ describe("parseCriticPreserve", () => {
 
   it("returns null when no PRESERVE line is present", () => {
     expect(parseCriticPreserve("SEVERITY: severe")).toBeNull();
+  });
+});
+
+describe("parseCriticFindings", () => {
+  const finding = {
+    finding: "The roof is pitched.", evidence: "The visible roof line rises to a ridge.", severity: "moderate",
+    confidence: 0, limitations: "The rear wall is out of frame.", requestedAction: "Use a flat roof."
+  } as const;
+
+  it("keeps valid individual endpoint estimates, including 0 and 100", () => {
+    const zero = parseCriticFindings(`FINDINGS_JSON: ${JSON.stringify({ findings: [finding] })}`);
+    const hundred = parseCriticFindings(`FINDINGS_JSON: ${JSON.stringify({ findings: [{ ...finding, confidence: 100 }] })}`);
+    expect(zero[0]?.confidence).toBe(0);
+    expect(hundred[0]?.confidence).toBe(100);
+  });
+
+  it.each([-1, 101, Number.NaN, "90", undefined])("fails safe for malformed confidence %p", (confidence) => {
+    expect(() => parseCriticFindings(`FINDINGS_JSON: ${JSON.stringify({ findings: [{ ...finding, confidence }] })}`)).toThrow();
+  });
+
+  it("requires every new finding to carry evidence, limitations, and requested action", () => {
+    expect(() => parseCriticFindings('FINDINGS_JSON: {"findings":[{"finding":"bad roof","severity":"moderate","confidence":50}]}')).toThrow();
+  });
+
+  it("uses the persisted full payload when a report contains both model and augmented findings", () => {
+    const text = `FINDINGS_JSON: ${JSON.stringify({ findings: [finding] })}\nCRITIC_FINDINGS_JSON: ${JSON.stringify({ findings: [{ ...finding, confidence: 100 }] })}`;
+    expect(parseCriticFindings(text)[0]?.confidence).toBe(100);
+  });
+
+  it("formats confidence as advisory evidence, not a score that can decide the review", () => {
+    expect(formatCriticFindings([{ ...finding, confidence: 100 }])).toContain("never a vote, authority, or gate override");
+    expect(formatCriticFindings([{ ...finding, confidence: 100 }])).toContain("100/100 (uncalibrated)");
   });
 });

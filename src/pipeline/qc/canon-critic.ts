@@ -95,7 +95,9 @@ export async function runCanonGarmentCritic(
   // runCritic asks for them explicitly) -- this garment review judges a
   // locked reference design, not a shot, and doesn't ask its prompt for
   // those trailer lines, so there's nothing real to parse out here.
-  return { severity, findings: `${result.text}${sourcesFinding}`, sources, suggestedFix: null, preserve: null };
+  // This older canon-only review does not ask for structured confidence.
+  // Preserve that absence rather than manufacturing a numeric estimate.
+  return { severity, findings: `${result.text}${sourcesFinding}`, structuredFindings: [], sources, suggestedFix: null, preserve: null };
 }
 
 interface CanonCharacterRow {

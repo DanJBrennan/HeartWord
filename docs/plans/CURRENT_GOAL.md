@@ -2041,3 +2041,24 @@ legacy saved findings remain visibly “not reported.”
 The active Production Director negotiation log now also persists per-verdict
 uncalibrated confidence and limitations with its feedback; old text-only log
 rows remain unknown rather than assigned a synthetic score.
+
+## QC Critic confidence handoff (2026-09-16)
+
+The grounded image/video QC Critic now records each discrete concern with its
+own evidence, severity, uncalibrated 0–100 confidence estimate, limitation,
+and requested action in the same grounded response. The existing readable QC
+report shows that context beside the grounded narrative and source provenance;
+the saved review record also retains it for the next regeneration prompt.
+Malformed new structured findings, including missing, non-finite, or
+out-of-range confidence, are an incomplete review rather than an approval.
+
+Confidence is advisory evidence for investigation, never an overall score,
+vote, authority rank, or override of source, canon, cost, or producer holds.
+Existing legacy QC records have no fabricated score and are shown to receiving
+work as confidence not reported. The deterministic duplicate-face verifier is
+also represented as an individual finding when it reports a duplicate. This
+adds no calibration loop, analytics, provider call solely for scoring, or new
+production stage.
+
+Focused and full validation passed: strict typecheck, 35 Vitest files / 262
+tests, and the web production build. No live provider or media call was made.

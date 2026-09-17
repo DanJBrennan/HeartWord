@@ -49,7 +49,7 @@ import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
 import { assetPath } from "../media-generation/external-keyframes.js";
 import { checkCanonicalLikeness, isLikenessAligned } from "./canonical-likeness.js";
 import { checkSceneFidelity, isSceneFidelityAligned } from "./scene-fidelity.js";
-import { runCritic, type CriticCharacterReference, type CriticReport } from "./critic.js";
+import { formatCriticFindings, parseCriticFindings, runCritic, type CriticCharacterReference, type CriticFinding, type CriticReport } from "./critic.js";
 import { decideGenerationStatus, type DirectorDecision } from "./director-verdict.js";
 import { matchesBeatScope, stripBeatTag, tagNote, type NoteScope } from "./beat-scope.js";
 
@@ -214,6 +214,9 @@ const NEXT_ATTEMPT_PRESERVE_LINE = /NEXT ATTEMPT PRESERVE:\s*(.+)/;
 export interface SuggestedFix {
   fix: string;
   preserve: string;
+  /** Advisory evidence for the recipient of a regeneration prompt. It is
+   * deliberately not used by decideGenerationStatus. */
+  criticFindings: CriticFinding[];
 }
 
 /**
@@ -245,7 +248,24 @@ export function loadSuggestedFix(db: ReturnType<typeof getDb>, shotId: string, s
   const fixMatch = row.note.match(NEXT_ATTEMPT_FIX_LINE);
   if (!fixMatch) return null;
   const preserveMatch = row.note.match(NEXT_ATTEMPT_PRESERVE_LINE);
-  return { fix: fixMatch[1]!.trim(), preserve: preserveMatch?.[1]?.trim() ?? "everything else" };
+  let criticFindings: CriticFinding[] = [];
+  try {
+    // Legacy QC rows did not report confidence. They remain unknown rather
+    // than acquiring a made-up 0 or 100 score.
+    criticFindings = parseCriticFindings(row.note);
+  } catch {
+    criticFindings = [];
+  }
+  return { fix: fixMatch[1]!.trim(), preserve: preserveMatch?.[1]?.trim() ?? "everything else", criticFindings };
+}
+
+function criticRecord(report: CriticReport): string {
+  return `${formatCriticFindings(report.structuredFindings)}\n\n` +
+    `Grounded Critic narrative and source provenance:\n${report.findings}\n\n` +
+    // Kept as a machine-readable supplement to the visible prose above so
+    // existing review_notes can deliver the same per-finding context to a
+    // later retry without a second scoring call.
+    `CRITIC_FINDINGS_JSON: ${JSON.stringify({ findings: report.structuredFindings })}`;
 }
 
 function getProjectIdForShot(db: ReturnType<typeof getDb>, shotId: string): string {
@@ -421,7 +441,7 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
 
   const report =
     `Director decision for this shot: ${decision.status} -- ${decision.reasoning}\n\n` +
-    `Critic (severity: ${critic.severity}):\n${critic.findings}\n\n` +
+    `Critic (severity: ${critic.severity}):\n${criticRecord(critic)}\n\n` +
     `Canonical likeness: ${likenessAligned ? "passed" : "FAILED"}. Scene fidelity: ${fidelityAligned ? "passed" : "FAILED"}.` +
     // Distinct labels from critic.ts's own "SUGGESTED FIX:"/"PRESERVE:" trailer lines (already embedded above via
     // critic.findings) -- these are the FINAL, post-override values (see runCritic's crowd-duplicate override),
@@ -556,7 +576,7 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
   });
   const report =
     `Candidate QC decision: ${decision.status} -- ${decision.reasoning}\n\n` +
-    `Critic (severity: ${critic.severity}):\n${critic.findings}\n\n` +
+    `Critic (severity: ${critic.severity}):\n${criticRecord(critic)}\n\n` +
     `Canonical likeness: ${likenessAligned ? "passed" : `FAILED. ${likenessNotes.join(" ")}`}\n` +
     `Scene fidelity: ${fidelityAligned ? "passed" : `FAILED. ${fidelityVerdict.notes}`}` +
     // Distinct labels from critic.ts's own "SUGGESTED FIX:"/"PRESERVE:" trailer lines (already embedded above via
@@ -754,7 +774,7 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
   });
   const report =
     `Candidate QC decision (coverage beat ${candidate.beat_sequence}, ${candidate.beat_type}): ${decision.status} -- ${decision.reasoning}\n\n` +
-    `Critic (severity: ${critic.severity}):\n${critic.findings}\n\n` +
+    `Critic (severity: ${critic.severity}):\n${criticRecord(critic)}\n\n` +
     `Canonical likeness: ${likenessAligned ? "passed" : `FAILED. ${likenessNotes.join(" ")}`}\n` +
     `Scene fidelity: ${fidelityAligned ? "passed" : `FAILED. ${fidelityVerdict.notes}`}` +
     // Distinct labels from critic.ts's own "SUGGESTED FIX:"/"PRESERVE:" trailer lines (already embedded above via

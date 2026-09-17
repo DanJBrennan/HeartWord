@@ -57,6 +57,10 @@ export type CriticSeverity = "none" | "minor" | "moderate" | "severe";
 export interface CriticReport {
   severity: CriticSeverity;
   findings: string;
+  /** Individual claims from the grounded review.  Confidence is the
+   * Critic's uncalibrated estimate for this claim only; it never changes a
+   * severity, gate, or source/canon hold. */
+  structuredFindings: CriticFinding[];
   /** Real web sources Gemini's search grounding actually cited while
    *  producing `findings` -- traceable provenance for a research claim
    *  ("archaeological evidence shows...") rather than an unverifiable
@@ -129,6 +133,8 @@ interface CrowdDuplicateVerdict {
   largestIdenticalGroup: number;
   location: string;
   explanation: string;
+  confidence: number;
+  limitations: string;
 }
 
 const CROWD_DUPLICATE_SCHEMA: GeminiJsonSchema = {
@@ -139,9 +145,11 @@ const CROWD_DUPLICATE_SCHEMA: GeminiJsonSchema = {
       description: "Largest number of distinct visible people who are the same generated face and visual design. Return 1 when no duplicate exists."
     },
     location: { type: "string", description: "Where the largest same-face group appears, or 'none'." },
-    explanation: { type: "string", description: "Concrete comparison of face, hair, beard, garment and pose evidence." }
+    explanation: { type: "string", description: "Concrete comparison of face, hair, beard, garment and pose evidence." },
+    confidence: { type: "number", description: "Uncalibrated 0-100 certainty in this duplicate-face claim; use low confidence when faces are blurred or obscured." },
+    limitations: { type: "string", description: "What the image resolution, framing, or occlusion prevents you from determining." }
   },
-  required: ["largestIdenticalGroup", "location", "explanation"]
+  required: ["largestIdenticalGroup", "location", "explanation", "confidence", "limitations"]
 };
 
 /** Pure severity gate for the dedicated visual duplicate-crowd verifier. */
@@ -187,8 +195,65 @@ export function parseCriticSeverity(findings: string): CriticSeverity {
   return severity === "none" || severity === "minor" || severity === "moderate" || severity === "severe" ? severity : "moderate";
 }
 
+export interface CriticFinding {
+  finding: string;
+  evidence: string;
+  severity: CriticSeverity;
+  confidence: number;
+  limitations: string;
+  requestedAction: string;
+}
+
 const SUGGESTED_FIX_LINE = /SUGGESTED FIX:\s*(.+)/i;
 const PRESERVE_LINE = /PRESERVE:\s*(.+)/i;
+const FINDINGS_JSON_LINE = /^(?:CRITIC_)?FINDINGS_JSON:\s*(\{.*\})\s*$/gm;
+
+/**
+ * Reads the one structured payload embedded in the same grounded response.
+ * New Critic calls must provide it: a malformed confidence claim is an
+ * incomplete review, never a silent acceptance.  Stored legacy text is not
+ * parsed through this function, so it remains "not reported" in the UI.
+ */
+export function parseCriticFindings(text: string): CriticFinding[] {
+  const matches = [...text.matchAll(FINDINGS_JSON_LINE)];
+  const match = matches.at(-1);
+  if (!match) throw new Error("Critic response is missing FINDINGS_JSON structured findings.");
+  let payload: unknown;
+  try {
+    payload = JSON.parse(match[1]!);
+  } catch {
+    throw new Error("Critic FINDINGS_JSON is not valid JSON.");
+  }
+  if (!payload || typeof payload !== "object" || !Array.isArray((payload as { findings?: unknown }).findings)) {
+    throw new Error("Critic FINDINGS_JSON must contain a findings array.");
+  }
+  return (payload as { findings: unknown[] }).findings.map((item, index) => {
+    if (!item || typeof item !== "object") throw new Error(`Critic finding ${index + 1} must be an object.`);
+    const finding = item as Record<string, unknown>;
+    const severity = finding.severity;
+    if (
+      typeof finding.finding !== "string" || !finding.finding.trim() ||
+      typeof finding.evidence !== "string" || !finding.evidence.trim() ||
+      (severity !== "none" && severity !== "minor" && severity !== "moderate" && severity !== "severe") ||
+      typeof finding.confidence !== "number" || !Number.isFinite(finding.confidence) || finding.confidence < 0 || finding.confidence > 100 ||
+      typeof finding.limitations !== "string" || !finding.limitations.trim() ||
+      typeof finding.requestedAction !== "string" || !finding.requestedAction.trim()
+    ) throw new Error(`Critic finding ${index + 1} has malformed evidence, severity, confidence, limitations, or requested action.`);
+    return {
+      finding: finding.finding.trim(), evidence: finding.evidence.trim(), severity,
+      confidence: finding.confidence, limitations: finding.limitations.trim(), requestedAction: finding.requestedAction.trim()
+    };
+  });
+}
+
+/** Human-readable context for Dan and downstream prompt recipients. */
+export function formatCriticFindings(findings: CriticFinding[]): string {
+  if (!findings.length) return "Per-finding confidence: not applicable; the Critic reported no discrete concerns.";
+  return "Per-finding confidence (uncalibrated advisory evidence; never a vote, authority, or gate override):\n" +
+    findings.map((finding) =>
+      `- ${finding.severity}: ${finding.finding}\n  Evidence: ${finding.evidence}\n  Confidence: ${finding.confidence}/100 (uncalibrated). Limitations: ${finding.limitations}\n  Requested action: ${finding.requestedAction}`
+    ).join("\n");
+}
 
 /**
  * Extracts the Critic's proposed smallest correction, so a non-'accepted'
@@ -349,7 +414,7 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
       : ""}` +
     `List every real problem you find, citing research where relevant. If you genuinely find nothing wrong in any ` +
     `of these areas, say so plainly rather than inventing a concern.\n\n` +
-    `End your response with exactly these three lines, in this order (each on its own line):\n` +
+    `End your response with exactly these four lines, in this order (each on its own line):\n` +
     `"SEVERITY: none" (nothing wrong), "SEVERITY: minor" (a small, easily-overlooked detail), "SEVERITY: moderate" ` +
     `(worth fixing before this ships), or "SEVERITY: severe" (a clear error a knowledgeable viewer would notice, ` +
     `or a starting frame the video generator likely can't animate believably).\n` +
@@ -360,7 +425,8 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
     `"PRESERVE: <what is already correct and must NOT change if this frame gets regenerated with the fix above -- ` +
     `e.g. 'keep the crowd composition and Jesus's pose exactly as-is, only correct the roof'. This prevents a fix ` +
     `for one problem from accidentally discarding everything that already works. If severity is none, write ` +
-    `'everything'.>"`;
+    `'everything'.>"\n` +
+    `"FINDINGS_JSON: {\"findings\":[{\"finding\":\"short claim\",\"evidence\":\"what is visible or which grounded source supports it\",\"severity\":\"minor|moderate|severe\",\"confidence\":0-100,\"limitations\":\"what remains uncertain or out of frame\",\"requestedAction\":\"specific next investigation or correction\"}]}". Include every discrete concern, not a combined overall score. If there are no concerns, return exactly {\"findings\":[]}. Confidence is an uncalibrated estimate for that individual claim, advisory evidence only: it cannot waive source, canon, cost, or human-review gates and does not vote against other findings.`;
 
   // A response with no parseable "SEVERITY: ..." line is retried once --
   // parseCriticSeverity's "moderate" fallback exists for a genuine
@@ -383,6 +449,12 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
           `incomplete review, not a content verdict. Last response: ${result.text.slice(0, 500)}`
       );
     }
+  }
+  let structuredFindings: CriticFinding[];
+  try {
+    structuredFindings = parseCriticFindings(result.text);
+  } catch (error) {
+    throw new Error(`Critic's grounded research call returned malformed structured findings -- treating as an incomplete review, not a content verdict. ${(error as Error).message}`);
   }
   const duplicateVerdict = await checkCrowdDuplicates(image);
   const duplicateSeverity = crowdDuplicateSeverity(duplicateVerdict.largestIdenticalGroup);
@@ -409,10 +481,24 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
     suggestedFix = `Regenerate with a genuinely distinct background crowd at ${duplicateVerdict.location} -- ${duplicateVerdict.explanation}`;
     preserve = preserve ?? "everything else in the frame; only vary the duplicated background people's faces, hair, beards, and clothing";
   }
+  if (duplicateVerdict.largestIdenticalGroup > 1) {
+    if (!Number.isFinite(duplicateVerdict.confidence) || duplicateVerdict.confidence < 0 || duplicateVerdict.confidence > 100 || !duplicateVerdict.limitations.trim()) {
+      throw new Error("Crowd-duplicate verifier returned malformed confidence or limitations -- treating as an incomplete review.");
+    }
+    structuredFindings.push({
+      finding: `${duplicateVerdict.largestIdenticalGroup} visually identical crowd members at ${duplicateVerdict.location}.`,
+      evidence: duplicateVerdict.explanation,
+      severity: duplicateSeverity,
+      confidence: duplicateVerdict.confidence,
+      limitations: duplicateVerdict.limitations.trim(),
+      requestedAction: `Regenerate with genuinely distinct background crowd members at ${duplicateVerdict.location}.`
+    });
+  }
 
   return {
     severity,
     findings: `${result.text}\n\n${duplicateFinding}\nSEVERITY: ${severity}${sourcesFinding}`,
+    structuredFindings,
     sources,
     suggestedFix,
     preserve

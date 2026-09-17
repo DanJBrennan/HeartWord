@@ -36,6 +36,13 @@ describe("decideGenerationStatus", () => {
     expect(decision.status).toBe("escalate");
   });
 
+  it("does not let a high-confidence advisory score waive a blocking source/canon-style check", () => {
+    // Confidence intentionally is not an input to this decision function:
+    // severity and deterministic failed checks remain authoritative.
+    const decision = decideGenerationStatus({ criticSeverity: "minor", likenessAligned: false, fidelityAligned: true });
+    expect(decision.status).toBe("retry_modified");
+  });
+
   it("holds for review when a severe critic concern coincides with a failing check", () => {
     const decision = decideGenerationStatus({ criticSeverity: "severe", likenessAligned: false, fidelityAligned: true });
     expect(decision.status).toBe("hold_for_review");
