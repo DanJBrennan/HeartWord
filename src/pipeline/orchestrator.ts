@@ -101,7 +101,7 @@ export function adoptRecoveredPipeline(projectId: string, adoptedBy: string): Or
     }
     const id = randomUUID();
     const attempt = (db.prepare(`SELECT COALESCE(MAX(attempt),0)+1 next FROM stage_executions WHERE project_id=? AND stage=?`).get(projectId, stage.name) as { next:number }).next;
-    db.prepare(`INSERT INTO stage_executions (id,project_id,stage,input_hash,dependency_hash,status,attempt,reason,output_json,started_at,completed_at,worker_token) VALUES (?,?,?,?,?,'completed',?,?,?, ?,?)`).run(id, projectId, stage.name, input, dependency, attempt, `Producer ${adoptedBy.trim()} adopted existing outputs after local validation.`, JSON.stringify({ adopted: true }), Date.now(), Date.now(), `adopted:${adoptedBy.trim()}`);
+    db.prepare(`INSERT INTO stage_executions (id,project_id,stage,input_hash,dependency_hash,status,attempt,reason,output_json,started_at,completed_at,worker_token) VALUES (?,?,?,?,?,'completed',?,?,?,?,?,?)`).run(id, projectId, stage.name, input, dependency, attempt, `Producer ${adoptedBy.trim()} adopted existing outputs after local validation.`, JSON.stringify({ adopted: true }), Date.now(), Date.now(), `adopted:${adoptedBy.trim()}`);
     results.push({ stage: stage.name, ok: true, reasoning: `Adopted current ${stage.name} output as execution ${id}; no provider call was made.` });
     dependency = hash([dependency, id, input]);
   }
