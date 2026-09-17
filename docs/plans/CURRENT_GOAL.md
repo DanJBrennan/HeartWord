@@ -2037,3 +2037,7 @@ Crew findings now carry a per-finding 0–100 agent confidence estimate and a
 declared limitation beside severity, evidence, and requested change. The UI
 labels it uncalibrated; it is not an authority, vote, or gate override, and
 legacy saved findings remain visibly “not reported.”
+
+The active Production Director negotiation log now also persists per-verdict
+uncalibrated confidence and limitations with its feedback; old text-only log
+rows remain unknown rather than assigned a synthetic score.

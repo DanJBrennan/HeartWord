@@ -62,6 +62,8 @@ interface DirectorVerdict {
   ideaId: string;
   verdict: "approve" | "request_changes" | "reject";
   feedback: string;
+  confidence: number;
+  limitations: string;
 }
 
 export interface NegotiationOutcome {
@@ -83,9 +85,11 @@ const VERDICT_SCHEMA: GeminiJsonSchema = {
         properties: {
           ideaId: { type: "string" },
           verdict: { type: "string", enum: ["approve", "request_changes", "reject"] },
-          feedback: { type: "string", description: "Required even on approve -- brief reasoning grounded in budget/time/film intent." }
+          feedback: { type: "string", description: "Required even on approve -- brief reasoning grounded in budget/time/film intent." },
+          confidence: { type: "number", description: "0-100 uncalibrated confidence in this specific verdict; never a severity or authority score." },
+          limitations: { type: "string", description: "Evidence limits or uncertainty for this verdict." }
         },
-        required: ["ideaId", "verdict", "feedback"]
+        required: ["ideaId", "verdict", "feedback", "confidence", "limitations"]
       }
     }
   },
@@ -183,7 +187,7 @@ export async function negotiateGapProposal(
     const verdicts = await runDirectorReview(reviewBatch, narrationSpanVerseRef, gapMs, approved, context);
     if (!Array.isArray(verdicts) || verdicts.length !== activeIdeas.length ||
         new Set(verdicts.map(v => v.ideaId)).size !== activeIdeas.length ||
-        verdicts.some(v => !activeIdeas.some(i => i.id === v.ideaId) || !["approve", "reject", "request_changes"].includes(v.verdict) || typeof v.feedback !== "string" || !v.feedback.trim())) {
+        verdicts.some(v => !activeIdeas.some(i => i.id === v.ideaId) || !["approve", "reject", "request_changes"].includes(v.verdict) || typeof v.feedback !== "string" || !v.feedback.trim() || !Number.isFinite(v.confidence) || v.confidence < 0 || v.confidence > 100 || typeof v.limitations !== "string" || !v.limitations.trim())) {
       throw new Error("Production Director returned incomplete or invalid idea verdicts; no automatic approval.");
     }
 
@@ -207,7 +211,7 @@ export async function negotiateGapProposal(
       const loggedVerdict = isFinalRound && verdict.verdict === "request_changes" ? "forced_final" : verdict.verdict;
       if (loggedVerdict === "forced_final") forcedFinalCount++;
 
-      logRound(db, projectId, narrationSpanVerseRef, idea.id, round, "production_director", loggedVerdict, verdict.feedback);
+      logRound(db, projectId, narrationSpanVerseRef, idea.id, round, "production_director", loggedVerdict, JSON.stringify({ feedback:verdict.feedback, confidence:verdict.confidence, limitations:verdict.limitations, confidenceKind:"agent_estimate_uncalibrated" }));
 
       if (effectiveVerdict === "approve") {
         const duration = idea.estimatedDurationSec;

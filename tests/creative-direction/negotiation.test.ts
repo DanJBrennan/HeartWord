@@ -14,7 +14,7 @@ afterEach(() => db.close());
 describe("Creative/Production Director negotiation", () => {
   it("rejects an unresolved conflict at the revision cap and retains context throughout", async () => {
     vi.mocked(generateJson).mockImplementation(async (_prompt, schema) => (schema.properties as Record<string, unknown>).verdicts
-      ? { verdicts: [{ ideaId: "idea", verdict: "request_changes", feedback: "Resolve continuity" }] }
+      ? { verdicts: [{ ideaId: "idea", verdict: "request_changes", feedback: "Resolve continuity", confidence: 70, limitations: "Needs producer visual review." }] }
       : { ideas: [idea] });
     const result = await negotiateGapProposal(db, "p", proposal);
     expect(result.approvedIdeas).toEqual([]); expect(result.rejectedIdeas).toEqual([idea]); expect(result.forcedFinalCount).toBe(1);
@@ -28,7 +28,7 @@ describe("Creative/Production Director negotiation", () => {
   });
   it("counts all approved ideas against the same measured gap", async () => {
     const ideas = [idea, { ...idea, id: "other" }];
-    vi.mocked(generateJson).mockResolvedValue({ verdicts: ideas.map(i => ({ ideaId: i.id, verdict: "approve", feedback: "Useful coverage" })) });
+    vi.mocked(generateJson).mockResolvedValue({ verdicts: ideas.map(i => ({ ideaId: i.id, verdict: "approve", feedback: "Useful coverage", confidence: 70, limitations: "Needs producer visual review." })) });
     const result = await negotiateGapProposal(db, "p", { ...proposal, ideas });
     expect(result.approvedIdeas).toHaveLength(1); expect(result.rejectedIdeas).toHaveLength(1);
   });

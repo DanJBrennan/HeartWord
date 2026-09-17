@@ -15,6 +15,13 @@ contribution records owner, input versions, verse/audio/shot scope, rationale,
 evidence, status, and destination. No role may alter verified Scripture,
 source performance, approved canon, producer holds, or another role's record.
 
+Each newly reported finding or production-director verdict also records an
+uncalibrated 0–100 agent confidence estimate and its limitations. This is
+specific to that claim, distinct from severity and evidence, and helps the
+next reviewer decide what to investigate. It is never a vote, an authority
+ranking, a calibrated probability, or a way to waive source/canon/cost/human
+gates. Legacy records without the fields remain “not reported.”
+
 ## Roster and authority
 
 The nineteen production roles are Mabel (Production Coordinator), Rufus
