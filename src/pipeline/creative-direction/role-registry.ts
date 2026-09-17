@@ -4,8 +4,21 @@
 export type RoleAuthority = "production" | "independent_review" | "presentation_only";
 export type RoleRuntime = "implemented" | "declared" | "presentation";
 export type RolePhase = "planning" | "editing" | "finishing";
-export interface ProductionRole { id: string; aliases: readonly string[]; label: string; owner: string; authority: RoleAuthority; runtime: RoleRuntime; phases: readonly RolePhase[]; owns: string; cannot: string; }
-const role = (id: string, owner: string, label: string, phases: readonly RolePhase[], runtime: RoleRuntime = "implemented", aliases: readonly string[] = []): ProductionRole => ({ id, owner, label, phases, runtime, aliases, authority: "production", owns: label, cannot: "override source, approved canon, human review, or release authority" });
+export interface ProductionRole { id: string; aliases: readonly string[]; label: string; owner: string; authority: RoleAuthority; runtime: RoleRuntime; phases: readonly RolePhase[]; owns: string; cannot: string; inputs: string; outputs: string; tools: readonly string[]; }
+const CONTRACTS: Record<string, Pick<ProductionRole, "owns" | "cannot" | "inputs" | "outputs" | "tools">> = {
+  coordinator:{owns:"dependencies, saved progress, budgets, gates and escalation",cannot:"make creative, source, canon, or release decisions",inputs:"durable run state and holds",outputs:"coordination state and escalation",tools:[]},
+  creative_director:{owns:"visual intent and bounded creative tradeoffs",cannot:"override fidelity findings, source, canon, cost gates, or producer holds",inputs:"immutable chapter brief",outputs:"creative directions/findings",tools:["structured model review"]},
+  source_alignment:{owns:"source completeness, quotations, speakers, audio alignment and uncertainty",cannot:"claim human linguistic approval or alter source performance",inputs:"approved source/audio",outputs:"alignment evidence and holds",tools:[]},
+  scripture_cultural_reviewer:{owns:"evidence-backed Scripture and cultural findings",cannot:"claim native-language or field approval",inputs:"immutable chapter brief",outputs:"findings",tools:["structured model review"]},
+  casting_canon:{owns:"approved identity/voice references and canon-gap packets",cannot:"invent or approve missing canon",inputs:"approved canon",outputs:"canon-gap evidence",tools:[]},
+  storyboard:{owns:"verse- and speech-measured scenes, shots and coverage",cannot:"authorize generation",inputs:"source/alignment",outputs:"shot plan",tools:[]},
+  script_supervisor:{owns:"cross-shot character, prop, costume and scene state",cannot:"act as automation QA or waive source findings",inputs:"brief and cut",outputs:"continuity findings",tools:["structured model review"]},
+  fidelity_challenger:{owns:"independent source-evidence challenge",cannot:"direct production or release",inputs:"immutable brief",outputs:"independent findings only",tools:["structured model review"]},
+  clarity_challenger:{owns:"independent viewer-clarity challenge",cannot:"trade meaning for spectacle or approve release",inputs:"immutable brief",outputs:"independent findings only",tools:["structured model review"]},
+  feasibility_challenger:{owns:"independent feasibility/cost/scope challenge",cannot:"schedule, spend, direct production or approve release",inputs:"immutable brief",outputs:"independent findings only",tools:["structured model review"]},
+  production_director:{owns:"bounded production decision after specialist evidence",cannot:"waive blocking findings, source, canon, cost or human gates",inputs:"all role contributions",outputs:"approve/revise/hold decision",tools:["structured model review"]}
+};
+const role = (id: string, owner: string, label: string, phases: readonly RolePhase[], runtime: RoleRuntime = "implemented", aliases: readonly string[] = []): ProductionRole => ({ id, owner, label, phases, runtime, aliases, authority: "production", ...(CONTRACTS[id] ?? { owns:label, cannot:"override source, approved canon, human review, or release authority", inputs:"immutable chapter brief", outputs:"bounded contribution", tools:runtime === "implemented" ? ["structured model review"] : [] }) });
 export const PRODUCTION_ROLE_REGISTRY = [
   role("coordinator", "Mabel", "Production Coordinator", [], "declared"),
   role("creative_director", "Rufus", "Creative Director", ["planning","editing"]),
