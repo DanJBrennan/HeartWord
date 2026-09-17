@@ -54,6 +54,15 @@ function validCompletion(projectId: string, stage: string, input: string, depend
 
 export async function runPipeline(projectId: string): Promise<OrchestratorRunResult> {
   const db = getDb(); const results: OrchestratorRunResult["results"] = []; let dependency = hash("root");
+  // Old projects predate the durable ledger.  Their scenes/shots can have
+  // accepted takes and hand edits, so never infer that re-running ingestion
+  // is safe merely because no stage_executions rows exist.
+  const ledgerCount = (db.prepare(`SELECT COUNT(*) count FROM stage_executions WHERE project_id=?`).get(projectId) as { count: number }).count;
+  const legacyShots = (db.prepare(`SELECT COUNT(*) count FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=?`).get(projectId) as { count: number }).count;
+  if (ledgerCount === 0 && legacyShots > 0) {
+    const reasoning = "Recovery hold: this existing chapter predates durable orchestration and has a saved shot plan. Adopt its verified stage history explicitly before a pipeline run; no ingestion, replanning, deletion, or provider call was made.";
+    return { projectId, results: [{ stage: "ingestion", ok: false, reasoning }], stoppedAt: "ingestion" };
+  }
   for (const stage of STAGES) {
     const input = inputSignature(projectId, stage.name); const done = validCompletion(projectId, stage.name, input, dependency);
     if (done) { results.push({ stage: stage.name, ok: true, reasoning: `Reused valid ${stage.name} execution ${done.id}; inputs and upstream outputs are unchanged.` }); dependency = hash([dependency, done.id, input]); continue; }
