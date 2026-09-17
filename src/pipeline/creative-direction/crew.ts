@@ -1,4 +1,4 @@
-import type { GeminiJsonSchema } from "../../server/providers/gemini.js";
+import type { GeminiJsonSchema } from "../../providers/gemini-text.js";
 import { planEditorialCut } from "../assembly/editorial-plan.js";
 import { EDITING_ROLES, FINISHING_ROLES, PLANNING_ROLES, type CrewBrief, type CrewContribution,
   type CrewEvent, type CrewPhase, type CrewResult, type CrewRole, type ReviewMedia } from "./crew-types.js";

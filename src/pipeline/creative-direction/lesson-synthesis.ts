@@ -1,4 +1,4 @@
-import { generateJson, type GeminiJsonSchema } from "../../server/providers/gemini.js";
+import { generateJson, type GeminiJsonSchema } from "../../providers/gemini-text.js";
 
 export type LessonScope = "chapter" | "book" | "language" | "region" | "global";
 export interface LessonCandidate {

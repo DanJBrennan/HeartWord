@@ -21,7 +21,7 @@ import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { getDataDir, getDb } from "../../db/client.js";
-import { generateGroundedText } from "../../server/providers/gemini.js";
+import { generateGroundedText } from "../../providers/gemini-text.js";
 import { parseCriticSeverity, type CriticReport } from "./critic.js";
 
 /**

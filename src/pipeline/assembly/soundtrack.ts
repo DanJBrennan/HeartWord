@@ -4,7 +4,7 @@ import { dirname } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { getDataDir, getDb } from "../../db/client.js";
 import { GeminiMusicProvider, ElevenLabsEffectsProvider, type SoundtrackProvider } from "../../providers/soundtrack.js";
-import { generateJsonWithImages } from "../../server/providers/gemini.js";
+import { generateJsonWithImages } from "../../providers/gemini-text.js";
 import { crewBriefHash, digest, loadCrewBrief, productionAssetPath } from "../creative-direction/crew-context.js";
 import { latestCrewRun } from "../creative-direction/crew-store.js";
 import type { CrewBrief, CrewResult } from "../creative-direction/crew-types.js";

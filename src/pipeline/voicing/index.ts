@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
-import { reVoiceAudio } from "../../server/providers/elevenlabs.js";
+import { reVoiceAudio } from "../../providers/elevenlabs.js";
 import { getAudioDurationMs } from "../ingestion/detect-silences.js";
 import type { ProjectRow } from "../ingestion/index.js";
 import { extractClip } from "./extract-clip.js";

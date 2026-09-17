@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
-import { generateJson, type GeminiJsonSchema } from "../../server/providers/gemini.js";
+import { generateJson, type GeminiJsonSchema } from "../../providers/gemini-text.js";
 import type { ProjectRow } from "../ingestion/index.js";
 import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";

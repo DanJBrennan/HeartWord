@@ -43,7 +43,7 @@
  */
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import { generateJson, type GeminiJsonSchema, GEMINI_TEXT_MODEL } from "../../server/providers/gemini.js";
+import { generateJson, type GeminiJsonSchema, GEMINI_TEXT_MODEL } from "../../providers/gemini-text.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
 import { getDataDir } from "../../db/client.js";
 import { loadCrewBrief } from "./crew-context.js";

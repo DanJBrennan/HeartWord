@@ -50,7 +50,7 @@
  * before wiring it in by default.
  */
 import { readFileSync } from "node:fs";
-import { generateGroundedText, generateJsonWithImages, type GeminiJsonSchema, type GroundingSource } from "../../server/providers/gemini.js";
+import { generateGroundedText, generateJsonWithImages, type GeminiJsonSchema, type GroundingSource } from "../../providers/gemini-text.js";
 
 export type CriticSeverity = "none" | "minor" | "moderate" | "severe";
 

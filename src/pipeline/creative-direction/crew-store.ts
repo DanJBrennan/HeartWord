@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { getDataDir, getDb } from "../../db/client.js";
-import { generateJsonWithImages, GEMINI_TEXT_MODEL } from "../../server/providers/gemini.js";
+import { generateJsonWithImages, GEMINI_TEXT_MODEL } from "../../providers/gemini-text.js";
 import { crewBriefHash, loadCrewBrief } from "./crew-context.js";
 import { runCrew, type CrewRunnerOptions } from "./crew.js";
 import type { CrewBrief, CrewPhase, CrewResult } from "./crew-types.js";

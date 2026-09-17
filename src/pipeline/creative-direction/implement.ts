@@ -6,7 +6,7 @@ import { getDataDir } from "../../db/client.js";
 import { GeminiVideoProvider, GeminiDraftVideoProvider } from "../../providers/gemini/index.js";
 import { KlingVideoProvider } from "../../providers/kling/index.js";
 import { generateFinalVideoWithFallback } from "../media-generation/generate-final-with-fallback.js";
-import { generateJsonWithImages } from "../../server/providers/gemini.js";
+import { generateJsonWithImages } from "../../providers/gemini-text.js";
 import { runMediaGeneration } from "../media-generation/index.js";
 import { assembleSingleShot } from "../assembly/assemble-single-shot.js";
 import { mediaDurationMs } from "../assembly/finishing.js";

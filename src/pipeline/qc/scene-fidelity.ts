@@ -41,7 +41,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
-import { generateJsonWithImages, type GeminiJsonSchema } from "../../server/providers/gemini.js";
+import { generateJsonWithImages, type GeminiJsonSchema } from "../../providers/gemini-text.js";
 import { runMediaGeneration } from "../media-generation/index.js";
 import {
   type FidelityVerdict,

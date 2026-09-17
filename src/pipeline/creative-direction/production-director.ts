@@ -38,7 +38,7 @@
  */
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import { generateJson, type GeminiJsonSchema } from "../../server/providers/gemini.js";
+import { generateJson, type GeminiJsonSchema } from "../../providers/gemini-text.js";
 import type { GapFillIdea, CreativeDirectorProposal } from "./index.js";
 import { reviseGapFillerIdeas } from "./index.js";
 import { getDataDir } from "../../db/client.js";
