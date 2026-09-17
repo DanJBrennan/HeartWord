@@ -143,7 +143,7 @@ export async function runCrew(options: CrewRunnerOptions): Promise<CrewResult> {
   const roles: CrewRole[] = [...(phase === "planning" ? PLANNING_ROLES : phase === "editing" ? EDITING_ROLES : FINISHING_ROLES), "production_director"];
   for (let round = 1; round <= 2; round++) {
     for (const role of roles) {
-      const registered = role === "production_director" ? undefined : PRODUCTION_ROLE_REGISTRY.find(entry => entry.id === role);
+      const registered = role === "production_director" ? undefined : PRODUCTION_ROLE_REGISTRY.find(entry => entry.id === role || entry.aliases.includes(role));
       if (role !== "production_director" && (!registered || registered.runtime !== "implemented")) {
         return { status: "incomplete", summary: `${role} is a declared role and has no executable handler.`, calls, contributions };
       }
