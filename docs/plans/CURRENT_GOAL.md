@@ -2141,3 +2141,10 @@ completion; it never issues a provider retry. Adoption refuses to overtake a
 running or uncertain worker, preserving its write authority. Isolated tests
 cover that live-lease hold and verified uncertain reconciliation before a
 normal no-work resume.
+
+At the media provider boundary, a thrown/lost keyframe response is now kept
+as a `submission_uncertain` held attempt with the exact submitted prompt and
+an explicit review note, rather than disappearing and causing an automatic
+repeat provider request. A concurrent local media-stage call receives a hold
+while the first provider Promise is active. These checks use isolated SQLite
+and mocked provider seams while executing the actual media stage.

@@ -440,6 +440,12 @@ const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Pro
       failed++;
       const message = (err as Error).message;
       failures.push(`scene ${scene.sequence} shot ${shot.sequence}: ${message}`);
+      // The provider boundary may have accepted a request before its response
+      // was lost. Retain the exact submitted prompt as an uncertain candidate
+      // and require reconciliation instead of blindly submitting again.
+      const attemptId = randomUUID(), now = Date.now();
+      insertAttempt.run(attemptId, shot.id, tier === "pro" ? "nano_banana_pro" : "nano_banana", "submission_uncertain", prompt, "hold_for_review", null, 0, now);
+      insertCostEntry.run(randomUUID(), project.id, attemptId, 0, now);
       insertReviewNote.run(randomUUID(), project.id, shot.id, `Media generation failed for this shot: ${message}`, Date.now());
     }
   }
