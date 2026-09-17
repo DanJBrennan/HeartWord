@@ -143,6 +143,7 @@ const COLUMN_MIGRATIONS: Array<{ table: string; column: string; ddl: string }> =
   { table: "production_lessons", column: "source_book", ddl: "ALTER TABLE production_lessons ADD COLUMN source_book TEXT" },
   { table: "production_lessons", column: "source_chapter", ddl: "ALTER TABLE production_lessons ADD COLUMN source_chapter INTEGER" },
   { table: "production_lessons", column: "source_region", ddl: "ALTER TABLE production_lessons ADD COLUMN source_region TEXT" }
+  ,{ table: "evaluation_predictions", column: "content_hash", ddl: "ALTER TABLE evaluation_predictions ADD COLUMN content_hash TEXT NOT NULL DEFAULT ''" }
 ];
 
 function applyColumnMigrations(db: DatabaseSync): void {

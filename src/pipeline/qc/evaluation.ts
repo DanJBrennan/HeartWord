@@ -1,5 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
+import { getDataDir } from "../../db/client.js";
 
 export type EvaluationLabel = "accept" | "reject" | "hold";
 export interface EvaluationPrediction { caseId: string; label: EvaluationLabel; confidence?: number; costUsd?: number; evidence: string; trainingCaseIds?: string[]; }
@@ -27,12 +30,26 @@ export function retainEvaluationCase(db: DatabaseSync, input: { projectId:string
   return id;
 }
 
+/** Producer-facing evidence selection: hashes the retained media bytes when
+ * available and snapshots relevant source/canon/lesson context. Callers never
+ * supply an arbitrary artifact hash. */
+export function adjudicateRetainedEvidence(db: DatabaseSync, input: Omit<Parameters<typeof retainEvaluationCase>[1], "artifactHash" | "evidence"> & { note:string }): string {
+  let path: string | null = null;
+  if (input.subjectType === "shot") path=(db.prepare("SELECT result_asset_path path FROM generation_attempts WHERE shot_id=? AND result_asset_path IS NOT NULL ORDER BY created_at DESC LIMIT 1").get(input.subjectId) as {path:string}|undefined)?.path ?? null;
+  if (input.subjectType === "clip") path=(db.prepare("SELECT ga.result_asset_path path FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE c.id=?").get(input.subjectId) as {path:string}|undefined)?.path ?? null;
+  if (input.subjectType === "audio_segment") path=(db.prepare("SELECT source_path path FROM audio_segments WHERE id=?").get(input.subjectId) as {path:string}|undefined)?.path ?? null;
+  const absolute=path ? join(getDataDir(),"assets",path) : null;
+  const artifactHash=absolute && existsSync(absolute) ? createHash("sha256").update(readFileSync(absolute)).digest("hex") : digest(db.prepare("SELECT * FROM review_notes WHERE id=?").get(input.subjectId) ?? {projectId:input.projectId,subjectId:input.subjectId});
+  const context={source:db.prepare("SELECT source_path,start_ms,end_ms,verse_ref,confidence FROM audio_segments WHERE project_id=? AND layer='original_reading' ORDER BY start_ms").all(input.projectId),canon:db.prepare("SELECT c.id,c.name,cv.id version_id FROM characters c JOIN character_versions cv ON cv.character_id=c.id WHERE cv.status='approved'").all(),lessons:db.prepare("SELECT id,requested_change,scope_kind FROM production_lessons WHERE status='active'").all()};
+  return retainEvaluationCase(db,{...input,artifactHash,evidence:{producerNote:input.note,artifactPath:path,context}});
+}
+
 function validatePrediction(db: DatabaseSync, p: EvaluationPrediction): void {
   if (!p.caseId || !labels.has(p.label) || !p.evidence?.trim()) throw new Error("Malformed evaluation prediction.");
   if (p.confidence !== undefined && (!Number.isFinite(p.confidence) || p.confidence < 0 || p.confidence > 100)) throw new Error("Prediction confidence must be 0..100.");
   if (p.costUsd !== undefined && (!Number.isFinite(p.costUsd) || p.costUsd < 0)) throw new Error("Prediction cost must be non-negative.");
   if (!db.prepare("SELECT id FROM evaluation_cases WHERE id=?").get(p.caseId)) throw new Error("Prediction references an unknown evaluation case.");
-  if (p.trainingCaseIds?.some(id => !db.prepare("SELECT id FROM evaluation_cases WHERE id=?").get(id))) throw new Error("Training provenance references an unknown evaluation case.");
+  if (p.trainingCaseIds !== undefined && (!Array.isArray(p.trainingCaseIds) || p.trainingCaseIds.some(id => typeof id !== "string" || !id || !db.prepare("SELECT id FROM evaluation_cases WHERE id=?").get(id)))) throw new Error("Training provenance references an unknown evaluation case.");
 }
 
 /** Validate the entire file first, then atomically retain a versioned prediction set. */
@@ -43,8 +60,8 @@ export function importEvaluationPredictions(db: DatabaseSync, version: string, p
   const ordered = predictions.map(p => ({...p, trainingCaseIds:[...(p.trainingCaseIds ?? [])].sort()})).sort((a,b)=>a.caseId.localeCompare(b.caseId));
   db.exec("BEGIN IMMEDIATE");
   try {
-    const insert=db.prepare("INSERT INTO evaluation_predictions (id,evaluation_case_id,version,label,confidence,cost_usd,evidence,training_case_ids_json,created_at) VALUES (?,?,?,?,?,?,?,?,?)");
-    for (const p of ordered) insert.run(randomUUID(),p.caseId,version,p.label,p.confidence ?? null,p.costUsd ?? null,p.evidence,JSON.stringify(p.trainingCaseIds),Date.now());
+    const insert=db.prepare("INSERT INTO evaluation_predictions (id,evaluation_case_id,version,label,confidence,cost_usd,evidence,training_case_ids_json,created_at,content_hash) VALUES (?,?,?,?,?,?,?,?,?,?)");
+    for (const p of ordered) insert.run(randomUUID(),p.caseId,version,p.label,p.confidence ?? null,p.costUsd ?? null,p.evidence,JSON.stringify(p.trainingCaseIds),Date.now(),digest({version,p}));
     db.exec("COMMIT");
   } catch (error) { db.exec("ROLLBACK"); throw error; }
   return { imported:ordered.length, digest:digest({version,predictions:ordered}) };
@@ -62,13 +79,18 @@ export function compareEvaluation(db: DatabaseSync, input: { baselineVersion:str
   const baseline=new Map(exportEvaluationPredictions(db,input.baselineVersion).predictions.map(p=>[p.caseId,p]));
   const candidate=new Map(exportEvaluationPredictions(db,input.candidateVersion).predictions.map(p=>[p.caseId,p]));
   const heldOut=new Set(cases.filter(c=>c.project_id===input.heldOutProjectId).map(c=>c.id));
-  const scored=cases.filter(c=>baseline.has(c.id)&&candidate.has(c.id)&&c.project_id!==input.heldOutProjectId);
+  // A named chapter is the unseen evaluation set. It must be scored, while
+  // training/application provenance from that chapter is prohibited.
+  const pool=input.heldOutProjectId ? cases.filter(c=>c.project_id===input.heldOutProjectId) : cases;
+  const scored=pool.filter(c=>baseline.has(c.id)&&candidate.has(c.id));
   const leakage=scored.some(c=>(candidate.get(c.id)!.trainingCaseIds ?? []).some(id=>heldOut.has(id)));
   const accuracy=(set:Map<string,EvaluationPrediction>)=>scored.length ? scored.filter(c=>set.get(c.id)!.label===c.label).length/scored.length : null;
   const protectedRegression=scored.some(c=>c.protected&&candidate.get(c.id)!.label!==c.label);
   const factual=scored.filter(c=>c.factual&&candidate.get(c.id)!.confidence!==undefined);
-  const confidenceCalibration=factual.length<5 ? {sampleCount:factual.length,insufficient:true} : {sampleCount:factual.length,meanConfidence:factual.reduce((n,c)=>n+candidate.get(c.id)!.confidence!,0)/factual.length,accuracy:factual.filter(c=>candidate.get(c.id)!.label===c.label).length/factual.length};
-  const result={caseCount:scored.length,excludedUnadjudicated:true,excludedSynthetic:true,baselineVersion:input.baselineVersion,candidateVersion:input.candidateVersion,heldOutProjectId:input.heldOutProjectId ?? null,leakage,protectedRegression,baselineAccuracy:accuracy(baseline),candidateAccuracy:accuracy(candidate),confidenceCalibration,perCase:scored.map(c=>({caseId:c.id,label:c.label,baseline:baseline.get(c.id)!,candidate:candidate.get(c.id)!}))};
+  const confidenceCalibration=factual.length<5 ? {sampleCount:factual.length,insufficient:true} : {sampleCount:factual.length,brier:factual.reduce((n,c)=>{const p=candidate.get(c.id)!; return n+((p.confidence!/100)-(p.label===c.label?1:0))**2;},0)/factual.length,bins:[0,1,2,3,4].map(bin=>{const rows=factual.filter(c=>Math.min(4,Math.floor(candidate.get(c.id)!.confidence!/20))===bin); return {from:bin*20,to:bin===4?100:bin*20+19,sampleCount:rows.length,meanConfidence:rows.length?rows.reduce((n,c)=>n+candidate.get(c.id)!.confidence!,0)/rows.length:null,accuracy:rows.length?rows.filter(c=>candidate.get(c.id)!.label===c.label).length/rows.length:null};})};
+  const falsePositive=scored.filter(c=>c.label!=="accept"&&candidate.get(c.id)!.label==="accept").length, falseNegative=scored.filter(c=>c.label==="accept"&&candidate.get(c.id)!.label!=="accept").length, holdPredictions=scored.filter(c=>candidate.get(c.id)!.label==="hold").length;
+  const costs=scored.map(c=>candidate.get(c.id)!.costUsd).filter((v):v is number=>v!==undefined);
+  const result={caseCount:scored.length,excludedUnadjudicated:true,excludedSynthetic:true,baselineVersion:input.baselineVersion,candidateVersion:input.candidateVersion,heldOutProjectId:input.heldOutProjectId ?? null,leakage,protectedRegression,baselineAccuracy:accuracy(baseline),candidateAccuracy:accuracy(candidate),falsePositive,falseNegative,holdPredictions,knownCostCount:costs.length,totalKnownCostUsd:costs.reduce((a,b)=>a+b,0),confidenceCalibration,perCase:scored.map(c=>({caseId:c.id,label:c.label,baseline:baseline.get(c.id)!,candidate:candidate.get(c.id)!}))};
   const recommendation=protectedRegression||leakage ? "do_not_adopt" : scored.length<5 ? "insufficient_evidence" : "eligible_for_producer_review";
   const id=randomUUID(); db.prepare("INSERT INTO evaluation_runs (id,baseline_version,candidate_version,case_ids_json,held_out_project_id,result_json,recommendation,created_at) VALUES (?,?,?,?,?,?,?,?)").run(id,input.baselineVersion,input.candidateVersion,JSON.stringify(scored.map(c=>c.id)),input.heldOutProjectId ?? null,JSON.stringify(result),recommendation,Date.now());
   return {id,recommendation,resultHash:digest(result),...result};

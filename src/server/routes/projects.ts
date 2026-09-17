@@ -10,6 +10,7 @@ import { parseSourceTextByVerse } from "../../pipeline/ingestion/parse-source-te
 import { parseVerseRange } from "../../pipeline/scene-breakdown/build-scenes.js";
 import { buildProductionCrewView, type NegotiationLogEntry } from "../production-crew.js";
 import { createReuseCandidate, extractLibraryFrame, registerGeneratedMediaLibraryItems } from "../../pipeline/media-generation/media-library.js";
+import { bindShotUtterance } from "../../pipeline/voice-lipsync/utterance-binding.js";
 
 export const projectsRouter = Router();
 
@@ -145,6 +146,15 @@ projectsRouter.post("/:id/voicing", async (req, res) => {
   } catch (err) {
     res.status(502).json({ error: (err as Error).message });
   }
+});
+
+// Explicit producer binding for a speaking shot; this is intentionally
+// separate from casting because a verse can contain multiple utterances.
+projectsRouter.post("/:id/shots/:shotId/utterance-binding", (req,res) => {
+  try {
+    const body=req.body ?? {};
+    res.status(201).json(bindShotUtterance(getDb(),{projectId:req.params.id,shotId:req.params.shotId,sourceSegmentId:body.sourceSegmentId,startMs:body.startMs,endMs:body.endMs,characterVersionId:body.characterVersionId,approvedBy:typeof body.approvedBy === "string" ? body.approvedBy : ""}));
+  } catch (error) { res.status(400).json({error:(error as Error).message}); }
 });
 
 

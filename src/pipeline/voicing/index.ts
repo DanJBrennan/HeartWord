@@ -1,5 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
 import { reVoiceAudio } from "../../providers/elevenlabs.js";
@@ -18,6 +18,7 @@ interface OriginalSegmentRow {
 
 interface VoiceAssignmentRow {
   characterId: string;
+  versionId: string;
   voiceProvider: string;
   voiceId: string;
 }
@@ -90,7 +91,7 @@ export async function runVoicing(projectId: string, opts: { force?: boolean } = 
 
   const voiceRows = db
     .prepare(
-      `SELECT c.id AS characterId, cv.voice_provider AS voiceProvider, cv.voice_id AS voiceId
+      `SELECT c.id AS characterId, cv.id AS versionId, cv.voice_provider AS voiceProvider, cv.voice_id AS voiceId
        FROM characters c
        JOIN character_versions cv ON cv.character_id = c.id
        WHERE cv.status = 'approved' AND cv.voice_provider IS NOT NULL AND cv.voice_id IS NOT NULL`
@@ -115,6 +116,9 @@ export async function runVoicing(projectId: string, opts: { force?: boolean } = 
     durationMs: number;
     speakerCharacterId: string | null;
     verseRef: string | null;
+    originalSegmentId: string;
+    sourceHash: string;
+    voiceVersionId: string | null;
   }> = [];
 
   for (const [i, seg] of segments.entries()) {
@@ -153,12 +157,14 @@ export async function runVoicing(projectId: string, opts: { force?: boolean } = 
       durationMs,
       speakerCharacterId: seg.speaker_character_id,
       verseRef: seg.verse_ref
+      ,originalSegmentId:seg.id, sourceHash:createHash("sha256").update(readFileSync(absSourcePath)).digest("hex"), voiceVersionId:assignment?.versionId ?? null
     });
   }
 
   const now = Date.now();
   db.exec("BEGIN TRANSACTION");
   try {
+    db.prepare(`DELETE FROM composite_audio_source_map WHERE composite_segment_id IN (SELECT id FROM audio_segments WHERE project_id=? AND layer='composite_cast_master')`).run(project.id);
     db.prepare(`DELETE FROM audio_segments WHERE project_id = ? AND layer = 'composite_cast_master'`).run(project.id);
     const insert = db.prepare(
       `INSERT INTO audio_segments
@@ -167,6 +173,7 @@ export async function runVoicing(projectId: string, opts: { force?: boolean } = 
     );
     for (const row of newRows) {
       insert.run(row.id, project.id, row.sourcePathRel, row.durationMs, row.speakerCharacterId, row.verseRef, now);
+      db.prepare(`INSERT INTO composite_audio_source_map (composite_segment_id,original_segment_id,source_hash,voice_version_id,created_at) VALUES (?,?,?,?,?)`).run(row.id,row.originalSegmentId,row.sourceHash,row.voiceVersionId,now);
     }
 
     db.prepare(

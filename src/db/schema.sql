@@ -236,6 +236,19 @@ CREATE TABLE IF NOT EXISTS shots (
 );
 CREATE INDEX IF NOT EXISTS idx_shots_scene ON shots(scene_id);
 
+-- Producer-confirmed speech identity for an on-camera speaking shot. A verse
+-- is intentionally insufficient: one speaker may have several utterances in
+-- it. The bound source interval is immutable evidence for voicing, lip sync
+-- and assembly; changing it creates a new binding rather than guessing.
+CREATE TABLE IF NOT EXISTS shot_utterance_bindings (
+  id TEXT PRIMARY KEY, shot_id TEXT NOT NULL UNIQUE REFERENCES shots(id),
+  source_audio_segment_id TEXT NOT NULL REFERENCES audio_segments(id),
+  source_start_ms INTEGER NOT NULL, source_end_ms INTEGER NOT NULL,
+  character_version_id TEXT NOT NULL REFERENCES character_versions(id),
+  source_hash TEXT NOT NULL, approved_at INTEGER NOT NULL, approved_by TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_shot_utterance_source ON shot_utterance_bindings(source_audio_segment_id);
+
 CREATE TABLE IF NOT EXISTS shot_characters (
   shot_id TEXT NOT NULL REFERENCES shots(id),
   character_id TEXT NOT NULL REFERENCES characters(id),
@@ -378,6 +391,15 @@ CREATE TABLE IF NOT EXISTS audio_segments (
 );
 CREATE INDEX IF NOT EXISTS idx_audio_segments_project ON audio_segments(project_id);
 
+-- Maps a current composite clip back to the exact original interval it
+-- preserved. This avoids ambiguous speaker/verse lookup during lip sync.
+CREATE TABLE IF NOT EXISTS composite_audio_source_map (
+  composite_segment_id TEXT PRIMARY KEY REFERENCES audio_segments(id),
+  original_segment_id TEXT NOT NULL REFERENCES audio_segments(id),
+  source_hash TEXT NOT NULL, voice_version_id TEXT REFERENCES character_versions(id),
+  created_at INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS tracks (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL REFERENCES projects(id),
@@ -444,6 +466,7 @@ CREATE TABLE IF NOT EXISTS evaluation_predictions (
   version TEXT NOT NULL, label TEXT NOT NULL CHECK(label IN ('accept','reject','hold')),
   confidence REAL, cost_usd REAL, evidence TEXT NOT NULL,
   training_case_ids_json TEXT NOT NULL DEFAULT '[]', created_at INTEGER NOT NULL,
+  content_hash TEXT NOT NULL,
   UNIQUE(evaluation_case_id, version)
 );
 CREATE INDEX IF NOT EXISTS idx_evaluation_predictions_version ON evaluation_predictions(version);
@@ -451,6 +474,10 @@ CREATE TRIGGER IF NOT EXISTS evaluation_cases_no_update
 BEFORE UPDATE ON evaluation_cases BEGIN SELECT RAISE(ABORT, 'evaluation cases are immutable'); END;
 CREATE TRIGGER IF NOT EXISTS evaluation_cases_no_delete
 BEFORE DELETE ON evaluation_cases BEGIN SELECT RAISE(ABORT, 'evaluation cases are immutable'); END;
+CREATE TRIGGER IF NOT EXISTS evaluation_predictions_no_update
+BEFORE UPDATE ON evaluation_predictions BEGIN SELECT RAISE(ABORT, 'evaluation predictions are immutable'); END;
+CREATE TRIGGER IF NOT EXISTS evaluation_predictions_no_delete
+BEFORE DELETE ON evaluation_predictions BEGIN SELECT RAISE(ABORT, 'evaluation predictions are immutable'); END;
 
 -- Durable, inspectable correction lessons. A correction remains scoped to its
 -- original chapter unless a producer explicitly promotes it; candidates never

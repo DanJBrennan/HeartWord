@@ -6,7 +6,7 @@
  */
 import { readFileSync } from "node:fs";
 import { getDb } from "../src/db/client.js";
-import { compareEvaluation, exportEvaluationPredictions, importEvaluationPredictions, type EvaluationPrediction } from "../src/pipeline/qc/evaluation.js";
+import { adjudicateRetainedEvidence, compareEvaluation, exportEvaluationPredictions, importEvaluationPredictions, type EvaluationLabel, type EvaluationPrediction } from "../src/pipeline/qc/evaluation.js";
 
 const [command, first, second, heldOutProjectId] = process.argv.slice(2);
 if (command === "export" && first) {
@@ -17,6 +17,12 @@ if (command === "export" && first) {
   console.log(JSON.stringify(importEvaluationPredictions(getDb(), first, parsed.predictions ?? []), null, 2));
 } else if (command === "compare" && first && second) {
   console.log(JSON.stringify(compareEvaluation(getDb(), { baselineVersion:first, candidateVersion:second, heldOutProjectId }), null, 2));
+} else if (command === "list-cases" && first) {
+  console.log(JSON.stringify(getDb().prepare("SELECT id,subject_type,subject_id,label,protected,synthetic,created_at FROM evaluation_cases WHERE project_id=? ORDER BY created_at").all(first), null, 2));
+} else if (command === "adjudicate" && first && second) {
+  const [projectId, subjectType, subjectId, label, note] = process.argv.slice(4);
+  if (!["project","shot","clip","audio_segment","review_note"].includes(subjectType ?? "") || !["accept","reject","hold"].includes(label ?? "") || !note) throw new Error("adjudicate needs <projectId> <subjectType> <subjectId> <accept|reject|hold> <note>");
+  console.log(JSON.stringify({ id:adjudicateRetainedEvidence(getDb(),{projectId:projectId!,subjectType:subjectType as "project"|"shot"|"clip"|"audio_segment"|"review_note",subjectId:subjectId!,label:label as EvaluationLabel,note,protected:false,factual:false,synthetic:false}) }, null, 2));
 } else {
-  throw new Error("Usage: export <version> | import <version> <json-file> | compare <baseline> <candidate> [held-out-project-id]");
+  throw new Error("Usage: list-cases <project> | adjudicate <project> <subject-type> <id> <label> <note> | export <version> | import <version> <json-file> | compare <baseline> <candidate> [held-out-project-id]");
 }

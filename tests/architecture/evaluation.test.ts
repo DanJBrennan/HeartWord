@@ -27,8 +27,8 @@ describe("reviewed evidence evaluation", () => {
       const b=retainEvaluationCase(db,{projectId:"p2",subjectType:"shot",subjectId:"shot-p2",artifactHash:"bbbbbb",evidence:{human:true},label:"accept"});
       expect(() => importEvaluationPredictions(db,"bad",[{caseId:a,label:"accept",evidence:"ok"},{caseId:"missing",label:"accept",evidence:"bad"}])).toThrow("unknown");
       expect(exportEvaluationPredictions(db,"bad").predictions).toHaveLength(0);
-      importEvaluationPredictions(db,"base",[{caseId:a,label:"accept",evidence:"base"}]);
-      importEvaluationPredictions(db,"candidate",[{caseId:a,label:"accept",evidence:"candidate",trainingCaseIds:[b]}]);
+      importEvaluationPredictions(db,"base",[{caseId:a,label:"accept",evidence:"base"},{caseId:b,label:"accept",evidence:"held-out baseline"}]);
+      importEvaluationPredictions(db,"candidate",[{caseId:a,label:"accept",evidence:"candidate"},{caseId:b,label:"accept",evidence:"candidate leaked",trainingCaseIds:[b]}]);
       expect(compareEvaluation(db,{baselineVersion:"base",candidateVersion:"candidate",heldOutProjectId:"p2"}).recommendation).toBe("do_not_adopt");
     } finally { db.close(); }
   });
