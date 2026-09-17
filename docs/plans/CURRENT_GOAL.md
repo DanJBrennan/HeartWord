@@ -1,5 +1,25 @@
 # Current Goal
 
+## Durable recovery hardening (2026-09-16)
+
+Completed executions are now reused only when their stage outputs still exist:
+source-review evidence, planned scenes/shots, accepted media/clip records, and
+referenced files are checked. Signatures include the approved canon
+assets/versions and approved speaking voice/binding identity; a signature
+query error is surfaced rather than becoming a reusable cache key. An
+exception after work begins is retained as `uncertain`, and only the current
+lease owner may update project state.
+
+`POST /api/projects/:id/adopt-recovered-pipeline` is a producer-named recovery
+action for old/manual chapters. It records only locally validated persisted
+outputs, does not call a provider, and cannot approve candidates. Ingestion
+and scene breakdown now hold rather than delete producer source reviews,
+utterance bindings, accepted clips, or human review records.
+
+This is not a claim that a chapter can proceed without human source approval:
+unresolved alignment evidence remains a truthful hold. The isolated real-media
+fresh-chapter proof and evidence evaluation remain open verification work.
+
 ## Architecture overhaul in progress (2026-09-16)
 
 The chapter runner now records durable stage executions with input and upstream
