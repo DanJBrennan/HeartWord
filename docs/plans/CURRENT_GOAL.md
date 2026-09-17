@@ -2024,3 +2024,11 @@ for the unique project identity, while a new chapter remains empty and does
 not inherit media, timing, or source work. Async shot/audio loads discard late
 responses for a no-longer-selected workspace. This enables preparing a Mark 4
 workspace without initiating its pipeline or asserting its source readiness.
+
+Navigation acceptance tests now verify that opening/creating a normalized
+Hatam Mark 4 workspace leaves Mark 2 shots and retained takes untouched,
+creates no inherited chapter data, opens duplicate identity requests
+idempotently, rejects invalid chapter ranges before writing, and treats Acts
+as a distinct supported navigation identity. The navigation book range is a
+UI identity guard only; it is not a claim that source or production approval
+exists for any particular language/book/chapter.
