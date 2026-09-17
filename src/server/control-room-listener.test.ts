@@ -40,7 +40,9 @@ describe("control-room presentation briefs", () => {
 
 describe("control-room proposed responsibility profiles", () => {
   it("keeps six bounded, reviewable responsibilities for every presentation persona", () => {
-    const page = readFileSync(resolve(process.cwd(), "work/agent-control-room.html"), "utf8");
+    // The checked-out artifact may use CRLF on Windows; the assertion is
+    // about the guarded recognition branch, not the checkout line ending.
+    const page = readFileSync(resolve(process.cwd(), "work/agent-control-room.html"), "utf8").replace(/\r\n/g, "\n");
     expect(PROPOSED_CONTROL_ROOM_RESPONSIBILITIES).toHaveLength(21);
     expect(PROPOSED_CONTROL_ROOM_RESPONSIBILITIES.every(profile => profile.responsibilities.length === 6)).toBe(true);
     expect(PROPOSED_CONTROL_ROOM_RESPONSIBILITIES.find(profile => profile.agentName === "Mabel")?.responsibilities.join(" ")).toContain("producer");
@@ -87,7 +89,7 @@ describe("control-room presentation playback calibration", () => {
 
 describe("control-room ElevenLabs auditions", () => {
   it("keeps a small, fixed presentation-only audition palette and sharper staged banter", () => {
-    const page = readFileSync(resolve(process.cwd(), "work/agent-control-room.html"), "utf8");
+    const page = readFileSync(resolve(process.cwd(), "work/agent-control-room.html"), "utf8").replace(/\r\n/g, "\n");
     expect(CONTROL_ROOM_VOICE_AUDITIONS).toHaveLength(11);
     expect(CONTROL_ROOM_VOICE_AUDITIONS.map(candidate => candidate.agent)).toEqual(["Mabel", "Dottie", "Rufus", "Gus", "Vera", "Gene Siskel", "Leon", "Pippa", "Tessa", "Sam", "Arlo"]);
     expect(CONTROL_ROOM_BANTER_STYLE).toContain("playfully sarcastic");

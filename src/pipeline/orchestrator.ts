@@ -2,7 +2,10 @@
  * project at a time; stage_executions is a recovery ledger, not a second
  * pipeline or distributed queue. */
 import { createHash, randomUUID } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { getDb } from "../db/client.js";
+import { getDataDir } from "../db/client.js";
 import { runAssembly } from "./assembly/index.js";
 import { runCasting } from "./casting/index.js";
 import { runIngestion } from "./ingestion/index.js";
@@ -21,6 +24,17 @@ const hash = (v: unknown) => createHash("sha256").update(JSON.stringify(v)).dige
 
 /** Sign persisted inputs rather than timestamps, so status updates cannot rerun paid work. */
 function inputSignature(projectId: string, stage: string): string {
+  if (stage === "ingestion") {
+    const project = getDb().prepare(`SELECT language,book,chapter FROM projects WHERE id=?`).get(projectId) as { language: string; book: string; chapter: number } | undefined;
+    if (!project) return hash({ projectId, missingProject: true });
+    const base = join(getDataDir(), "assets", "source", project.language, `${project.book}-${project.chapter}`);
+    const files = [`${project.book}-${project.chapter}-text.docx`, `${project.book}-${project.chapter}-fcbh-audio.mp3`];
+    // A content hash makes a changed source recording/text invalidate stage 1
+    // and every dependent stage; a missing prerequisite has a distinct hash.
+    return hash({ project, files: files.map(file => {
+      const path = join(base, file); return existsSync(path) ? hash(readFileSync(path)) : `missing:${file}`;
+    }) });
+  }
   const sql: Record<string, string> = {
     ingestion: `SELECT language,book,chapter FROM projects WHERE id=?`,
     // Ingestion owns source files; its durable completion is the dependency
@@ -43,11 +57,20 @@ export async function runPipeline(projectId: string): Promise<OrchestratorRunRes
   for (const stage of STAGES) {
     const input = inputSignature(projectId, stage.name); const done = validCompletion(projectId, stage.name, input, dependency);
     if (done) { results.push({ stage: stage.name, ok: true, reasoning: `Reused valid ${stage.name} execution ${done.id}; inputs and upstream outputs are unchanged.` }); dependency = hash([dependency, done.id, input]); continue; }
-    const active = db.prepare(`SELECT id,status FROM stage_executions WHERE project_id=? AND stage=? AND status IN ('running','uncertain') ORDER BY started_at DESC LIMIT 1`).get(projectId, stage.name) as { id: string; status: string } | undefined;
+    const id = randomUUID(), worker = randomUUID(); let active: { id: string; status: string } | undefined;
+    // The check and lease insert must be one SQLite critical section.  A
+    // second desktop process therefore observes the lease before it can call
+    // a provider, rather than racing through two independent SELECTs.
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      active = db.prepare(`SELECT id,status FROM stage_executions WHERE project_id=? AND stage=? AND status IN ('running','uncertain') ORDER BY started_at DESC LIMIT 1`).get(projectId, stage.name) as { id: string; status: string } | undefined;
+      if (!active) {
+        const attempt = (db.prepare(`SELECT COALESCE(MAX(attempt),0)+1 next FROM stage_executions WHERE project_id=? AND stage=?`).get(projectId, stage.name) as { next: number }).next;
+        db.prepare(`INSERT INTO stage_executions (id,project_id,stage,input_hash,dependency_hash,status,attempt,reason,started_at,worker_token) VALUES (?,?,?,?,?,'running',?,'Started by local producer.',?,?)`).run(id, projectId, stage.name, input, dependency, attempt, Date.now(), worker);
+      }
+      db.exec("COMMIT");
+    } catch (error) { try { db.exec("ROLLBACK"); } catch { /* no transaction to roll back */ } throw error; }
     if (active) { const reasoning = `Recovery hold: ${stage.name} execution ${active.id} is ${active.status}; reconcile its provider/result evidence before retrying, so no duplicate request is sent.`; results.push({ stage: stage.name, ok: false, reasoning }); return { projectId, results, stoppedAt: stage.name }; }
-    const attempt = (db.prepare(`SELECT COALESCE(MAX(attempt),0)+1 next FROM stage_executions WHERE project_id=? AND stage=?`).get(projectId, stage.name) as { next: number }).next;
-    const id = randomUUID(), worker = randomUUID();
-    db.prepare(`INSERT INTO stage_executions (id,project_id,stage,input_hash,dependency_hash,status,attempt,reason,started_at,worker_token) VALUES (?,?,?,?,?,'running',?,'Started by local producer.',?,?)`).run(id, projectId, stage.name, input, dependency, attempt, Date.now(), worker);
     let result: StageResult;
     try { result = await stage.run(projectId); } catch (error) { result = { ok: false, reasoning: `Stage threw before a final result: ${(error as Error).message}` }; }
     db.prepare(`UPDATE stage_executions SET status=?,reason=?,output_json=?,completed_at=? WHERE id=? AND worker_token=? AND status='running'`).run(result.ok ? "completed" : "held", result.reasoning, JSON.stringify(result), Date.now(), id, worker);
