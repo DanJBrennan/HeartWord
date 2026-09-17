@@ -423,6 +423,21 @@ CREATE TABLE IF NOT EXISTS review_notes (
 );
 CREATE INDEX IF NOT EXISTS idx_review_notes_project ON review_notes(project_id);
 
+-- Producer-adjudicated evaluation evidence. Cases retain a hash/address of
+-- the reviewed artifact; variants are compared but never deployed here.
+CREATE TABLE IF NOT EXISTS evaluation_cases (
+  id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), subject_type TEXT NOT NULL,
+  subject_id TEXT NOT NULL, artifact_hash TEXT NOT NULL, evidence_json TEXT NOT NULL,
+  label TEXT NOT NULL CHECK(label IN ('accept','reject','hold')), factual INTEGER NOT NULL DEFAULT 0,
+  protected INTEGER NOT NULL DEFAULT 0, synthetic INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL,
+  UNIQUE(project_id, subject_type, subject_id, artifact_hash)
+);
+CREATE TABLE IF NOT EXISTS evaluation_runs (
+  id TEXT PRIMARY KEY, baseline_version TEXT NOT NULL, candidate_version TEXT NOT NULL,
+  case_ids_json TEXT NOT NULL, held_out_project_id TEXT, result_json TEXT NOT NULL,
+  recommendation TEXT NOT NULL CHECK(recommendation IN ('insufficient_evidence','do_not_adopt','eligible_for_producer_review')), created_at INTEGER NOT NULL
+);
+
 -- Durable, inspectable correction lessons. A correction remains scoped to its
 -- original chapter unless a producer explicitly promotes it; candidates never
 -- silently influence another chapter.

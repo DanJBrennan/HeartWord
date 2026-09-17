@@ -1,0 +1,6 @@
+import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+import { compareEvaluation, retainEvaluationCase } from "../../src/pipeline/qc/evaluation.js";
+const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
+describe("reviewed evidence evaluation", () => { it("retains immutable labels and blocks protected regressions", () => { const db=new DatabaseSync(":memory:"); try { db.exec(readFileSync("src/db/schema.sql","utf8")); db.exec("INSERT INTO projects (id,language,book,chapter,created_at,updated_at) VALUES ('p','hatam','mark',2,1,1)"); const id=retainEvaluationCase(db,{projectId:"p",subjectType:"shot",subjectId:"s",artifactHash:"hash",evidence:{review:"producer"},label:"reject",factual:true,protected:true}); const run=compareEvaluation(db,{baselineVersion:"v1",candidateVersion:"v2",predictions:[{caseId:id,label:"accept",confidence:90,evidence:"wrong"}]}); expect(run.recommendation).toBe("do_not_adopt"); expect(run.confidenceCalibration).toMatchObject({insufficient:true}); expect(db.prepare("SELECT artifact_hash FROM evaluation_cases").get()).toMatchObject({artifact_hash:"hash"}); } finally { db.close(); } }); });
