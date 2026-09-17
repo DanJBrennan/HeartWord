@@ -55,6 +55,26 @@ CREATE TABLE IF NOT EXISTS projects (
   UNIQUE (language, book, chapter)
 );
 
+-- Durable orchestration ledger.  This is deliberately local and single-worker:
+-- it records exactly what was started before a provider call can be made, so an
+-- interrupted desktop run can be reconciled instead of blindly repeated.
+CREATE TABLE IF NOT EXISTS stage_executions (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  stage TEXT NOT NULL,
+  input_hash TEXT NOT NULL,
+  dependency_hash TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('running','completed','held','failed','uncertain')),
+  attempt INTEGER NOT NULL,
+  reason TEXT NOT NULL,
+  output_json TEXT,
+  started_at INTEGER NOT NULL,
+  completed_at INTEGER,
+  worker_token TEXT NOT NULL,
+  UNIQUE(project_id, stage, attempt)
+);
+CREATE INDEX IF NOT EXISTS idx_stage_executions_lookup ON stage_executions(project_id, stage, status, started_at);
+
 -- A reusable set of 4+ visually distinct character designs meant to be
 -- cast (and repeated/"cloned") together to fill out a crowd, rather than
 -- named individuals in their own right -- e.g. "Mark Pharisees and

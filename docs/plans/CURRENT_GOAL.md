@@ -1,5 +1,22 @@
 # Current Goal
 
+## Architecture overhaul in progress (2026-09-16)
+
+The chapter runner now records durable stage executions with input and upstream
+dependency hashes, attempts, worker tokens, outputs, and explicit recovery
+holds. It reuses a valid completed stage, scopes reruns to changed inputs and
+their downstream dependencies, and refuses to blindly retry a running or
+uncertain execution. This remains a single-machine, single-producer workflow;
+it does not add a queue or alter accepted takes, manual edits, source audio,
+or provider billing records.
+
+Stage 5 now calls the existing composite cast-master work and only submits
+Kling lip-sync for planned on-camera dialogue with an accepted keyframe,
+approved cast voice, and aligned cast-master speech. Narration is explicitly
+excluded. Missing prerequisites create a producer-reviewable hold before any
+new provider request. This implementation has not been run against Mark 2 or
+Mark 4 and has made no paid call.
+
 ## Production interaction monitor and correction reuse (2026-09-16)
 
 The selected chapter's Production Crew panel now polls recorded production events and director negotiations, shows active/completed/held/error state, scoped verse/shot context, producer-input holds, and links each event to the existing expandable full structured role contribution. It is not presentation dialogue or hidden reasoning. Producer guidance remains durable; explicit reusable guidance can be stored as an active scoped lesson, while candidate/disabled/superseded states preserve history and prevent accidental broad reuse. Active lessons are supplied to future crew briefs only for the same project, matching book, or explicitly broad language/region/global scopes. This is inspectable application memory and adaptive guidance—not model training or a guarantee of automatic generalization.
