@@ -93,6 +93,13 @@ export function adoptRecoveredPipeline(projectId: string, adoptedBy: string): Or
   const db = getDb(); const results: OrchestratorRunResult["results"] = []; let dependency = hash("root");
   for (const stage of STAGES) {
     const input = inputSignature(projectId, stage.name);
+    // Adoption is evidence reconciliation, not a way to seize an active
+    // worker's lease.  That worker may still be crossing a provider boundary.
+    const active = db.prepare(`SELECT id,status FROM stage_executions WHERE project_id=? AND stage=? AND status IN ('running','uncertain') ORDER BY started_at DESC LIMIT 1`).get(projectId, stage.name) as {id:string;status:string}|undefined;
+    if (active) {
+      const reasoning = `Recovery hold: ${stage.name} execution ${active.id} is ${active.status}; it must be explicitly reconciled before adoption can continue.`;
+      results.push({ stage: stage.name, ok: false, reasoning }); return { projectId, results, stoppedAt: stage.name };
+    }
     const current = validCompletion(projectId, stage.name, input, dependency);
     if (current) { results.push({ stage: stage.name, ok: true, reasoning: `Existing execution ${current.id} is still valid.` }); dependency = hash([dependency, current.id, input]); continue; }
     if (!outputIsStillUsable(projectId, stage.name)) {
@@ -107,6 +114,32 @@ export function adoptRecoveredPipeline(projectId: string, adoptedBy: string): Or
   }
   db.prepare("UPDATE projects SET stage=?,status='in_progress',updated_at=? WHERE id=?").run(STAGES.at(-1)!.name, Date.now(), projectId);
   return { projectId, results };
+}
+
+/**
+ * Explicit, local reconciliation of an uncertain request.  It never retries a
+ * provider call: a named producer may only close the lease after the current
+ * retained outputs pass the same file checks as ordinary reuse.  The returned
+ * completion remains bound to the original signed inputs and dependency chain.
+ */
+export function reconcileUncertainExecution(projectId: string, executionId: string, reconciledBy: string): void {
+  if (!reconciledBy.trim()) throw new Error("A named producer must reconcile uncertain work.");
+  const db = getDb();
+  const execution = db.prepare("SELECT id,stage,input_hash,dependency_hash,status FROM stage_executions WHERE id=? AND project_id=?").get(executionId, projectId) as {id:string;stage:string;input_hash:string;dependency_hash:string;status:string}|undefined;
+  if (!execution || execution.status !== "uncertain") throw new Error("Only an uncertain execution can be reconciled.");
+  if (!STAGES.some(s => s.name === execution.stage)) throw new Error("Unknown pipeline stage cannot be reconciled.");
+  let dependency = hash("root");
+  for (const stage of STAGES) {
+    if (stage.name === execution.stage) break;
+    const input = inputSignature(projectId, stage.name), prior = validCompletion(projectId, stage.name, input, dependency);
+    if (!prior) throw new Error("An upstream output is missing or stale; reconciliation cannot approve downstream work.");
+    dependency = hash([dependency, prior.id, input]);
+  }
+  if (execution.dependency_hash !== dependency || execution.input_hash !== inputSignature(projectId, execution.stage) || !outputIsStillUsable(projectId, execution.stage)) throw new Error("Retained outputs are missing or stale; reconciliation cannot approve them.");
+  const updated = db.prepare("UPDATE stage_executions SET status='completed',reason=?,output_json=?,completed_at=? WHERE id=? AND status='uncertain'").run(
+    `Producer ${reconciledBy.trim()} reconciled verified retained outputs; no provider retry was made.`, JSON.stringify({ reconciled:true }), Date.now(), execution.id);
+  if (updated.changes !== 1) throw new Error("The uncertain execution changed before reconciliation completed.");
+  db.prepare("UPDATE projects SET stage=?,status='in_progress',updated_at=? WHERE id=?").run(execution.stage, Date.now(), projectId);
 }
 function validCompletion(projectId: string, stage: string, input: string, dependency: string): Execution | undefined {
   const row = getDb().prepare(`SELECT id,input_hash,dependency_hash,attempt FROM stage_executions WHERE project_id=? AND stage=? AND status='completed' AND input_hash=? AND dependency_hash=? ORDER BY attempt DESC LIMIT 1`).get(projectId, stage, input, dependency) as Execution | undefined;

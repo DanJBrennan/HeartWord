@@ -70,13 +70,24 @@ describe.skipIf(!ffmpeg)("durable production recovery", () => {
       INSERT INTO clips VALUES ('cn','n','vn',0,1000,1),('cd','d','vd',0,1000,1);
       INSERT INTO chapter_renders VALUES ('r','p','chapter.mp4',1000,2,1);
       INSERT INTO stage_executions (id,project_id,stage,input_hash,dependency_hash,status,attempt,reason,started_at,completed_at,worker_token) VALUES ('old-qc','p','qc','old','old','completed',1,'synthetic independently reviewed QC',1,1,'old');`);
-    const { adoptRecoveredPipeline, runPipeline } = await import("../../src/pipeline/orchestrator.js");
+    const { adoptRecoveredPipeline, reconcileUncertainExecution, runPipeline } = await import("../../src/pipeline/orchestrator.js");
     const adopted = adoptRecoveredPipeline("p", "Synthetic producer");
     expect(adopted.stoppedAt).toBeUndefined(); expect(adopted.results).toHaveLength(7);
     expect(db.prepare("SELECT COUNT(*) n FROM stage_executions WHERE project_id='p' AND reason LIKE 'Producer Synthetic producer%'").get()).toMatchObject({ n: 7 });
     const resumed = await runPipeline("p");
     expect(resumed.stoppedAt).toBeUndefined();
     expect(resumed.results.every(result => result.reasoning.startsWith("Reused valid"))).toBe(true);
+    // A live lease cannot be silently adopted over, even when a prior result
+    // exists.  This preserves the active worker's authority and prevents a
+    // second producer from creating a competing completion record.
+    db.exec("INSERT INTO stage_executions (id,project_id,stage,input_hash,dependency_hash,status,attempt,reason,started_at,worker_token) VALUES ('live','p','qc','live','live','running',9,'provider request in flight',9,'live-worker')");
+    expect(adoptRecoveredPipeline("p", "Another producer")).toMatchObject({ stoppedAt:"qc" });
+    expect(db.prepare("SELECT status FROM stage_executions WHERE id='live'").get()).toMatchObject({status:"running"});
+    const reconciled = db.prepare("SELECT input_hash,dependency_hash FROM stage_executions WHERE project_id='p' AND stage='qc' AND status='completed' ORDER BY attempt DESC LIMIT 1").get() as {input_hash:string;dependency_hash:string};
+    db.prepare("UPDATE stage_executions SET status='uncertain',input_hash=?,dependency_hash=? WHERE id='live'").run(reconciled.input_hash,reconciled.dependency_hash);
+    reconcileUncertainExecution("p", "live", "Synthetic producer");
+    expect(db.prepare("SELECT status,reason FROM stage_executions WHERE id='live'").get()).toMatchObject({status:"completed",reason:expect.stringContaining("no provider retry")});
+    await expect(runPipeline("p").then(result => result.results.at(-1))).resolves.toMatchObject({stage:"qc",ok:true});
   }, 30000);
 
   it("builds real cast-master intervals, never syncs narration, and resumes accepted exact utterances", async () => {

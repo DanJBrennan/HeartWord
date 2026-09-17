@@ -2133,3 +2133,11 @@ creating an evaluation case; when available, a shot case records the exact
 selected generation attempt and its review state. This preserves evaluation as
 human-reviewed retained evidence rather than synthetic provenance. No live
 provider, production media, or Mark 4 work was performed.
+
+The recovery ledger now also has an explicit producer reconciliation action
+for an `uncertain` lease. It validates the current signed inputs, the complete
+upstream dependency chain, and durable output/file checks before recording a
+completion; it never issues a provider retry. Adoption refuses to overtake a
+running or uncertain worker, preserving its write authority. Isolated tests
+cover that live-lease hold and verified uncertain reconciliation before a
+normal no-work resume.
