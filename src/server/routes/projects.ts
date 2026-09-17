@@ -27,12 +27,13 @@ projectsRouter.get("/media-library", (req, res) => {
   registerGeneratedMediaLibraryItems(db, getDataDir());
   const kind = typeof req.query.kind === "string" ? req.query.kind : null;
   const status = typeof req.query.status === "string" ? req.query.status : null;
+  const selection = typeof req.query.selection === "string" ? req.query.selection : null;
   const search = typeof req.query.search === "string" ? req.query.search.trim().toLowerCase() : "";
   const rows = db.prepare(`SELECT li.*,ga.provider,ga.model,ga.operation,ga.prompt,ga.status AS review_status,p.language,p.book,p.chapter,s.action,s.verse_ref,
       CASE WHEN EXISTS(SELECT 1 FROM clips c WHERE c.generation_attempt_id=li.generation_attempt_id) THEN 'selected_in_origin' ELSE 'not_selected_in_origin' END AS origin_selection,
       (SELECT GROUP_CONCAT(rn.note, '\n') FROM review_notes rn WHERE rn.subject_type='shot' AND rn.subject_id=li.shot_id AND rn.resolved=0) AS unresolved_review_notes
     FROM media_library_items li LEFT JOIN generation_attempts ga ON ga.id=li.generation_attempt_id JOIN projects p ON p.id=li.project_id JOIN shots s ON s.id=li.shot_id
-    WHERE (? IS NULL OR li.kind=?) AND (? IS NULL OR ga.status=?) AND (''=? OR lower(coalesce(s.action,'') || ' ' || coalesce(s.verse_ref,'') || ' ' || coalesce(ga.prompt,'')) LIKE '%' || ? || '%') ORDER BY li.created_at DESC`).all(kind,kind,status,status,search,search);
+    WHERE (? IS NULL OR li.kind=?) AND (? IS NULL OR ga.status=?) AND (? IS NULL OR (CASE WHEN EXISTS(SELECT 1 FROM clips c WHERE c.generation_attempt_id=li.generation_attempt_id) THEN 'selected_in_origin' ELSE 'not_selected_in_origin' END)=?) AND (''=? OR lower(coalesce(p.book,'') || ' ' || p.chapter || ' ' || coalesce(s.action,'') || ' ' || coalesce(s.verse_ref,'') || ' ' || coalesce(ga.prompt,'')) LIKE '%' || ? || '%') ORDER BY li.created_at DESC`).all(kind,kind,status,status,selection,selection,search,search);
   res.json({ items: rows, note:"Library records retain original review context. A reuse selection is only a target-shot candidate until the normal reviewed generation workflow approves a result." });
 });
 
@@ -42,11 +43,14 @@ projectsRouter.post("/media-library/:itemId/frame", (req,res) => {
 });
 
 projectsRouter.post("/", (req, res) => {
-  const { language, book, chapter } = req.body ?? {};
-  if (!language || !book || !Number.isInteger(chapter)) {
+  const raw = req.body ?? {};
+  if (typeof raw.language !== "string" || typeof raw.book !== "string" || !Number.isInteger(raw.chapter)) {
     res.status(400).json({ error: "language, book, and chapter (integer) are required." });
     return;
   }
+  const language = raw.language.trim().toLowerCase(), book = raw.book.trim().toLowerCase(), chapter = raw.chapter as number;
+  const chapterCounts: Record<string, number> = { mark:16, acts:28, genesis:50 };
+  if (!language || !book || !chapterCounts[book] || chapter < 1 || chapter > chapterCounts[book]) { res.status(400).json({error:"Use a supported book and a chapter within its canonical range."}); return; }
 
   const db = getDb();
   const existing = db.prepare("SELECT * FROM projects WHERE lower(language)=lower(?) AND lower(book)=lower(?) AND chapter=?").get(language, book, chapter);
