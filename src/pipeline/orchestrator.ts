@@ -181,6 +181,12 @@ export async function runPipeline(projectId: string): Promise<OrchestratorRunRes
       // the evidence, preventing a blind paid retry.
       uncertain = true; result = { ok: false, reasoning: `Stage outcome is uncertain after an exception: ${(error as Error).message}. Reconcile retained provider evidence before retrying.` };
     }
+    // A stage may have written valid candidate rows while an independent
+    // source/QC gate remains unresolved.  Do not advance downstream merely
+    // because its implementation returned successfully.
+    if (result.ok && !outputIsStillUsable(projectId, stage.name)) {
+      result = { ok: false, reasoning: `${result.reasoning} Durable hold: ${stage.name} output remains incomplete or awaits its required review.` };
+    }
     const update = db.prepare(`UPDATE stage_executions SET status=?,reason=?,output_json=?,completed_at=? WHERE id=? AND worker_token=? AND status='running'`).run(uncertain ? "uncertain" : result.ok ? "completed" : "held", result.reasoning, JSON.stringify(result), Date.now(), id, worker);
     // A stale worker may never advance project state after it lost its lease.
     if (update.changes === 1) db.prepare(`UPDATE projects SET stage=?,status=?,updated_at=? WHERE id=?`).run(stage.name, result.ok ? "in_progress" : "held", Date.now(), projectId);

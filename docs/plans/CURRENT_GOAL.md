@@ -2148,3 +2148,10 @@ an explicit review note, rather than disappearing and causing an automatic
 repeat provider request. A concurrent local media-stage call receives a hold
 while the first provider Promise is active. These checks use isolated SQLite
 and mocked provider seams while executing the actual media stage.
+
+Fresh-chapter acceptance now uses a new Hatam Mark 3 project with a generated
+DOCX and real FFmpeg audio under the normal source path. It executes actual
+ingestion and proves project isolation; because the synthetic source has no
+published pericope headings, actual scene breakdown holds rather than
+inventing a scene plan. This is a deliberate readiness gate, not seeded stage
+success or an assertion that the fresh chapter is production-ready.
