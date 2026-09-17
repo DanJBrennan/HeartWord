@@ -163,6 +163,11 @@ export async function runPipeline(projectId: string): Promise<OrchestratorRunRes
   for (const stage of STAGES) {
     const input = inputSignature(projectId, stage.name); const done = validCompletion(projectId, stage.name, input, dependency);
     if (done) { results.push({ stage: stage.name, ok: true, reasoning: `Reused valid ${stage.name} execution ${done.id}; inputs and upstream outputs are unchanged.` }); dependency = hash([dependency, done.id, input]); continue; }
+    const reviewReleased = db.prepare("SELECT id,attempt FROM stage_executions WHERE project_id=? AND stage=? AND status='held' AND input_hash=? AND dependency_hash=? ORDER BY attempt DESC LIMIT 1").get(projectId,stage.name,input,dependency) as Execution|undefined;
+    if (reviewReleased && outputIsStillUsable(projectId,stage.name)) {
+      db.prepare("UPDATE stage_executions SET status='completed',reason=?,completed_at=? WHERE id=? AND status='held'").run("Required retained review is now current; reused without rerunning the stage.",Date.now(),reviewReleased.id);
+      results.push({stage:stage.name,ok:true,reasoning:`Reused review-released ${stage.name} execution ${reviewReleased.id}; no stage/provider call was made.`}); dependency=hash([dependency,reviewReleased.id,input]); continue;
+    }
     const id = randomUUID(), worker = randomUUID(); let active: { id: string; status: string } | undefined;
     // The check and lease insert must be one SQLite critical section.  A
     // second desktop process therefore observes the lease before it can call
