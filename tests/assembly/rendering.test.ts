@@ -73,6 +73,15 @@ it.skipIf(!ffmpegAvailable)("renders real pauses and cast speech, then applies a
     db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('finish2','p','finishing',?,?,'approved',?,3)").run(crewBriefHash(revisedBrief, "finishing"), JSON.stringify(revisedBrief), JSON.stringify(finish));
     const revised = applyFinishing(db, directory, "p", "finish2");
     const pcm = (path: string) => execFileSync("ffmpeg", ["-v", "error", "-i", join(assets, path), "-f", "s16le", "-ac", "1", "-ar", "8000", "pipe:1"]);
-    expect(pcm(revised.path).equals(pcm(finished.path))).toBe(true);
+    const first = pcm(finished.path), second = pcm(revised.path);
+    const firstSamples = new Int16Array(first.buffer, first.byteOffset, first.byteLength / 2), secondSamples = new Int16Array(second.buffer, second.byteOffset, second.byteLength / 2);
+    expect(firstSamples.length).toBe(secondSamples.length);
+    let maxDelta = 0, squaredError = 0;
+    for (let index = 0; index < firstSamples.length; index++) { const delta = Math.abs(firstSamples[index]! - secondSamples[index]!); maxDelta = Math.max(maxDelta, delta); squaredError += delta ** 2; }
+    // AAC produces occasional one-unit PCM rounding differences between otherwise
+    // identical renders. Keep the assertion at decoded signal level: any changed
+    // cue, duplicate score, or timing shift exceeds this one-unit bound.
+    expect(maxDelta).toBeLessThanOrEqual(1);
+    expect(Math.sqrt(squaredError / firstSamples.length)).toBeLessThanOrEqual(0.1);
   } finally { db.close(); if (relative(tmpdir(), directory).startsWith("heartword-render-test-")) rmSync(directory, { recursive: true, force: true }); }
 }, 30000);

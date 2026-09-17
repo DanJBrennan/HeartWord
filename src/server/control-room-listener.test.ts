@@ -275,9 +275,12 @@ describe("control-room cast-only presentation stage", () => {
     expect(page).toContain("#producer-address-mic::before");
     expect(page).toContain('content:"\\1F399"');
     expect(page).toContain("min-height:calc(100dvh - 16px)");
-    expect(page).toContain("heartword-control-room-cast-only-grid-v4");
+    expect(page).toContain("heartword-control-room-cast-only-grid-v5");
     expect(page).toContain("width:170px; min-height:220px");
     expect(page).toContain("{ y:18, names:['Mabel', 'Rufus', 'Pippa', 'Gus', 'Vera', 'Orion', 'June', 'Leon'], start:15, step:10 }");
+    expect(page).toContain("{ y:66, names:['Costume Designer', 'Lighting Designer', 'Composer', 'Colorist'], start:35, step:10 }");
+    expect(page).toContain('class="supporting-map-card role-only-map-card"');
+    expect(page).toContain('historical-map-card');
     expect(page).toContain("{ y:82, names:['Ada', 'Theo', 'Cora'], start:29, step:10 }");
   });
 

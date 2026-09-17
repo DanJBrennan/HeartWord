@@ -1985,3 +1985,12 @@ The control-room presentation and the production-crew communication contract
 now use the current Orion, June, and Benny roles; the four declared specialist
 roles remain visible as identity-free placeholders rather than invented
 portraits.
+
+Final verification replaced an unstable byte-for-byte comparison of two
+independently AAC-encoded but semantically identical finishing renders with a
+strict decoded-PCM equivalence check: exact sample length, maximum one-unit
+16-bit rounding difference, and at most 0.1 RMS sample error. This retains the
+test's duplicate-score and timing protection while excluding encoder rounding
+noise. The four identity-free specialist cards are also included in the
+default cast-only layout; Benny is explicitly outside its active production
+crew frame. Full typecheck, web build, and all 245 tests pass.
