@@ -96,6 +96,14 @@ export const runSceneBreakdown: Stage = async (projectId) => {
   const now = Date.now();
   const SCENE_BREAKDOWN_NOTE_PREFIX = "Scene breakdown:";
 
+  // A replacement scene plan cascades into shots, candidates, accepted clips
+  // and human review.  Never use an idempotent planner shortcut to erase
+  // those producer decisions; a changed source must be adopted explicitly.
+  const protectedWork = db.prepare(`SELECT
+    (SELECT COUNT(*) FROM clips c JOIN shots sh ON sh.id=c.shot_id JOIN scenes s ON s.id=sh.scene_id WHERE s.project_id=?) clips,
+    (SELECT COUNT(*) FROM review_notes WHERE project_id=? AND source='human' AND subject_type IN ('shot','clip')) reviews`).get(project.id, project.id) as { clips:number; reviews:number };
+  if (protectedWork.clips || protectedWork.reviews) return { ok:false, reasoning:"Scene breakdown is held: this chapter has accepted timeline clips or producer shot/clip review. No scenes, shots, candidates, or review evidence were deleted; explicitly adopt a replacement plan first." };
+
   db.exec("BEGIN TRANSACTION");
   try {
     // Idempotent re-run: replace this project's previous scenes and this

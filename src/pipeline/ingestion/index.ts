@@ -92,6 +92,17 @@ export const runIngestion: Stage = async (projectId) => {
     return { ok: false, reasoning: `Ingestion failed: ${(err as Error).message}` };
   }
 
+  // Replacing source intervals would orphan an approved utterance binding or
+  // make a producer's source review point at a deleted row.  The durable
+  // orchestrator normally reuses stage 1; this guard also protects a direct
+  // stage invocation from silently destroying review evidence.
+  const protectedWork = db.prepare(`SELECT
+      (SELECT COUNT(*) FROM shot_utterance_bindings b JOIN audio_segments a ON a.id=b.source_audio_segment_id WHERE a.project_id=?) bindings,
+      (SELECT COUNT(*) FROM review_notes WHERE project_id=? AND source='human' AND subject_type='audio_segment') source_reviews`).get(projectId, projectId) as { bindings: number; source_reviews: number };
+  if (protectedWork.bindings || protectedWork.source_reviews) {
+    return { ok: false, reasoning: "Ingestion is held: this chapter has producer-reviewed source segments or approved utterance bindings. Adopt/reconcile a new source version explicitly; no original-reading rows or review evidence were deleted." };
+  }
+
   if (project.language === "hatam" && project.book === "mark" && project.chapter === 2) {
     const vocalsPath = join(getDataDir(), "assets/source/hatam/mark-2/separated/vocals.mp3");
     if (existsSync(vocalsPath)) {

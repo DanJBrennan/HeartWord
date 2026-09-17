@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { Router } from "express";
 import { getDataDir, getDb } from "../../db/client.js";
-import { runPipeline } from "../../pipeline/orchestrator.js";
+import { adoptRecoveredPipeline, runPipeline } from "../../pipeline/orchestrator.js";
 import { runVoicing } from "../../pipeline/voicing/index.js";
 import { runCasting, resolveEnglishReferencePath } from "../../pipeline/casting/index.js";
 import { runMediaGeneration } from "../../pipeline/media-generation/index.js";
@@ -86,6 +86,16 @@ projectsRouter.post("/:id/run", async (req, res) => {
 
   const result = await runPipeline(req.params.id);
   res.json(result);
+});
+
+// Recovery is deliberately a separate, named producer action. It validates
+// persisted outputs and writes ledger evidence, but cannot make a candidate
+// accepted or cause a provider request.
+projectsRouter.post("/:id/adopt-recovered-pipeline", (req, res) => {
+  const project = getDb().prepare("SELECT id FROM projects WHERE id=?").get(req.params.id);
+  if (!project) { res.status(404).json({ error: "Project not found." }); return; }
+  try { res.json(adoptRecoveredPipeline(req.params.id, typeof req.body?.adoptedBy === "string" ? req.body.adoptedBy : "")); }
+  catch (error) { res.status(400).json({ error: (error as Error).message }); }
 });
 
 // A read-only projection for the producer-facing crew map. The specialist

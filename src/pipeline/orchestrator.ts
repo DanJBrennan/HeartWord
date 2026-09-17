@@ -40,16 +40,74 @@ function inputSignature(projectId: string, stage: string): string {
     // Ingestion owns source files; its durable completion is the dependency
     // below.  The project identity is the scene-breakdown's local input.
     scene_breakdown: `SELECT language,book,chapter FROM projects WHERE id=?`,
-    casting: `SELECT sequence,verse_start,verse_end,summary FROM scenes WHERE project_id=? ORDER BY sequence`,
-    media_generation: `SELECT sh.id,sh.action,sh.framing,sh.camera_movement,sh.needs_lip_sync,sh.continuity_notes,group_concat(sc.character_id) characters FROM shots sh JOIN scenes s ON s.id=sh.scene_id LEFT JOIN shot_characters sc ON sc.shot_id=sh.id WHERE s.project_id=? GROUP BY sh.id ORDER BY s.sequence,sh.sequence`,
-    voice_lipsync: `SELECT id,source_path,start_ms,end_ms,speaker_character_id,verse_ref FROM audio_segments WHERE project_id=? AND layer='original_reading' ORDER BY start_ms`,
+    casting: `SELECT sc.sequence,sc.verse_start,sc.verse_end,sc.summary,c.id character_id,c.updated_at,cv.id version_id,cv.status,cv.voice_id FROM scenes sc LEFT JOIN characters c ON c.canon_status='approved' LEFT JOIN character_versions cv ON cv.character_id=c.id WHERE sc.project_id=? ORDER BY sc.sequence,c.id,cv.id`,
+    media_generation: `SELECT sh.id,sh.action,sh.framing,sh.camera_movement,sh.needs_lip_sync,sh.continuity_notes,sc.character_id,cv.id version_id,cv.status,ca.path,ca.content_hash FROM shots sh JOIN scenes s ON s.id=sh.scene_id LEFT JOIN shot_characters sc ON sc.shot_id=sh.id LEFT JOIN character_versions cv ON cv.character_id=sc.character_id AND cv.status='approved' LEFT JOIN character_assets ca ON ca.character_version_id=cv.id WHERE s.project_id=? ORDER BY s.sequence,sh.sequence,sc.character_id,ca.id`,
+    voice_lipsync: `SELECT a.id,a.source_path,a.start_ms,a.end_ms,a.speaker_character_id,a.verse_ref,ub.source_audio_segment_id,ub.source_start_ms,ub.source_end_ms,ub.source_hash,ub.character_version_id,cv.status,cv.voice_id FROM audio_segments a LEFT JOIN shot_utterance_bindings ub ON ub.source_audio_segment_id=a.id LEFT JOIN character_versions cv ON cv.id=ub.character_version_id WHERE a.project_id=? AND a.layer='original_reading' ORDER BY a.start_ms,ub.id`,
     assembly: `SELECT c.id,c.shot_id,c.generation_attempt_id,c.timeline_start_ms,c.timeline_end_ms FROM clips c JOIN shots sh ON sh.id=c.shot_id JOIN scenes s ON s.id=sh.scene_id WHERE s.project_id=? ORDER BY s.sequence,sh.sequence,c.timeline_start_ms`,
     qc: `SELECT id,result_asset_path,total_duration_ms FROM chapter_renders WHERE project_id=? ORDER BY created_at DESC LIMIT 1`
   };
-  try { return hash(getDb().prepare(sql[stage]!).all(projectId)); } catch { return hash({ projectId, stage, unavailable: true }); }
+  // Do not turn a failed signature query into a stable cache key: that would
+  // make an unavailable dependency look safely reusable. Surface the error
+  // to the caller, which leaves the run without a completed lease.
+  return hash(getDb().prepare(sql[stage]!).all(projectId));
+}
+function outputIsStillUsable(projectId: string, stage: string): boolean {
+  const db = getDb();
+  const file = (path: string | null) => !!path && existsSync(join(getDataDir(), "assets", path));
+  switch (stage) {
+    case "ingestion": {
+      const segments = (db.prepare("SELECT COUNT(*) count FROM audio_segments WHERE project_id=? AND layer='original_reading'").get(projectId) as { count: number }).count;
+      const unresolved = (db.prepare("SELECT COUNT(*) count FROM review_notes WHERE project_id=? AND source='qc' AND subject_type IN ('audio_segment','project') AND resolved=0").get(projectId) as { count: number }).count;
+      return segments > 0 && unresolved === 0;
+    }
+    case "scene_breakdown": return (db.prepare("SELECT COUNT(*) count FROM scenes WHERE project_id=?").get(projectId) as { count: number }).count > 0;
+    case "casting": return (db.prepare("SELECT COUNT(*) count FROM shots sh JOIN scenes s ON s.id=sh.scene_id WHERE s.project_id=?").get(projectId) as { count: number }).count > 0;
+    case "media_generation": {
+      const missing = db.prepare(`SELECT COUNT(*) count FROM shots sh JOIN scenes s ON s.id=sh.scene_id
+        WHERE s.project_id=? AND (NOT EXISTS (SELECT 1 FROM generation_attempts ga WHERE ga.shot_id=sh.id AND ga.operation='generate' AND ga.status='accepted' AND ga.result_asset_path IS NOT NULL)
+        OR (sh.needs_lip_sync=0 AND NOT EXISTS (SELECT 1 FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE c.shot_id=sh.id AND ga.operation='generate_final_video' AND ga.status='accepted' AND ga.result_asset_path IS NOT NULL)))`).get(projectId) as { count: number };
+      if (missing.count) return false;
+      return (db.prepare(`SELECT result_asset_path FROM generation_attempts ga JOIN shots sh ON sh.id=ga.shot_id JOIN scenes s ON s.id=sh.scene_id WHERE s.project_id=? AND ga.status='accepted' AND ga.result_asset_path IS NOT NULL`).all(projectId) as Array<{ result_asset_path: string }>).every(row => file(row.result_asset_path));
+    }
+    case "voice_lipsync": {
+      const missing = db.prepare(`SELECT COUNT(*) count FROM shots sh JOIN scenes s ON s.id=sh.scene_id WHERE s.project_id=? AND sh.needs_lip_sync=1 AND NOT EXISTS (SELECT 1 FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE c.shot_id=sh.id AND ga.operation='lip_sync' AND ga.status='accepted' AND ga.result_asset_path IS NOT NULL)`).get(projectId) as { count: number };
+      return missing.count === 0;
+    }
+    case "assembly": return (db.prepare("SELECT result_asset_path FROM chapter_renders WHERE project_id=? ORDER BY created_at DESC LIMIT 1").all(projectId) as Array<{ result_asset_path: string }>).some(row => file(row.result_asset_path));
+    case "qc": return outputIsStillUsable(projectId, "assembly");
+    default: return false;
+  }
+}
+
+/**
+ * Explicit producer recovery action for chapters created before the ledger,
+ * or after a deliberate human reconciliation. It records only stages whose
+ * currently persisted outputs satisfy the same checks used for normal reuse;
+ * it never manufactures media, changes source rows, or approves candidates.
+ */
+export function adoptRecoveredPipeline(projectId: string, adoptedBy: string): OrchestratorRunResult {
+  if (!adoptedBy.trim()) throw new Error("A named producer must adopt recovered work.");
+  const db = getDb(); const results: OrchestratorRunResult["results"] = []; let dependency = hash("root");
+  for (const stage of STAGES) {
+    const input = inputSignature(projectId, stage.name);
+    const current = validCompletion(projectId, stage.name, input, dependency);
+    if (current) { results.push({ stage: stage.name, ok: true, reasoning: `Existing execution ${current.id} is still valid.` }); dependency = hash([dependency, current.id, input]); continue; }
+    if (!outputIsStillUsable(projectId, stage.name)) {
+      const reasoning = `Recovery hold: ${stage.name} has no complete current output (or still has unresolved source/QC evidence). It was not adopted and no work was changed.`;
+      results.push({ stage: stage.name, ok: false, reasoning }); return { projectId, results, stoppedAt: stage.name };
+    }
+    const id = randomUUID();
+    const attempt = (db.prepare(`SELECT COALESCE(MAX(attempt),0)+1 next FROM stage_executions WHERE project_id=? AND stage=?`).get(projectId, stage.name) as { next:number }).next;
+    db.prepare(`INSERT INTO stage_executions (id,project_id,stage,input_hash,dependency_hash,status,attempt,reason,output_json,started_at,completed_at,worker_token) VALUES (?,?,?,?,?,'completed',?,?,?, ?,?)`).run(id, projectId, stage.name, input, dependency, attempt, `Producer ${adoptedBy.trim()} adopted existing outputs after local validation.`, JSON.stringify({ adopted: true }), Date.now(), Date.now(), `adopted:${adoptedBy.trim()}`);
+    results.push({ stage: stage.name, ok: true, reasoning: `Adopted current ${stage.name} output as execution ${id}; no provider call was made.` });
+    dependency = hash([dependency, id, input]);
+  }
+  db.prepare("UPDATE projects SET stage=?,status='in_progress',updated_at=? WHERE id=?").run(STAGES.at(-1)!.name, Date.now(), projectId);
+  return { projectId, results };
 }
 function validCompletion(projectId: string, stage: string, input: string, dependency: string): Execution | undefined {
-  return getDb().prepare(`SELECT id,input_hash,dependency_hash,attempt FROM stage_executions WHERE project_id=? AND stage=? AND status='completed' AND input_hash=? AND dependency_hash=? ORDER BY attempt DESC LIMIT 1`).get(projectId, stage, input, dependency) as Execution | undefined;
+  const row = getDb().prepare(`SELECT id,input_hash,dependency_hash,attempt FROM stage_executions WHERE project_id=? AND stage=? AND status='completed' AND input_hash=? AND dependency_hash=? ORDER BY attempt DESC LIMIT 1`).get(projectId, stage, input, dependency) as Execution | undefined;
+  return row && outputIsStillUsable(projectId, stage) ? row : undefined;
 }
 
 export async function runPipeline(projectId: string): Promise<OrchestratorRunResult> {
@@ -80,10 +138,16 @@ export async function runPipeline(projectId: string): Promise<OrchestratorRunRes
       db.exec("COMMIT");
     } catch (error) { try { db.exec("ROLLBACK"); } catch { /* no transaction to roll back */ } throw error; }
     if (active) { const reasoning = `Recovery hold: ${stage.name} execution ${active.id} is ${active.status}; reconcile its provider/result evidence before retrying, so no duplicate request is sent.`; results.push({ stage: stage.name, ok: false, reasoning }); return { projectId, results, stoppedAt: stage.name }; }
-    let result: StageResult;
-    try { result = await stage.run(projectId); } catch (error) { result = { ok: false, reasoning: `Stage threw before a final result: ${(error as Error).message}` }; }
-    db.prepare(`UPDATE stage_executions SET status=?,reason=?,output_json=?,completed_at=? WHERE id=? AND worker_token=? AND status='running'`).run(result.ok ? "completed" : "held", result.reasoning, JSON.stringify(result), Date.now(), id, worker);
-    db.prepare(`UPDATE projects SET stage=?,status=?,updated_at=? WHERE id=?`).run(stage.name, result.ok ? "in_progress" : "held", Date.now(), projectId);
+    let result: StageResult; let uncertain = false;
+    try { result = await stage.run(projectId); } catch (error) {
+      // A thrown stage can have crossed a provider boundary.  It is not a
+      // normal safe hold: retain it as uncertain until a producer reconciles
+      // the evidence, preventing a blind paid retry.
+      uncertain = true; result = { ok: false, reasoning: `Stage outcome is uncertain after an exception: ${(error as Error).message}. Reconcile retained provider evidence before retrying.` };
+    }
+    const update = db.prepare(`UPDATE stage_executions SET status=?,reason=?,output_json=?,completed_at=? WHERE id=? AND worker_token=? AND status='running'`).run(uncertain ? "uncertain" : result.ok ? "completed" : "held", result.reasoning, JSON.stringify(result), Date.now(), id, worker);
+    // A stale worker may never advance project state after it lost its lease.
+    if (update.changes === 1) db.prepare(`UPDATE projects SET stage=?,status=?,updated_at=? WHERE id=?`).run(stage.name, result.ok ? "in_progress" : "held", Date.now(), projectId);
     results.push({ stage: stage.name, ...result }); if (!result.ok) return { projectId, results, stoppedAt: stage.name };
     dependency = hash([dependency, id, input]);
   }
