@@ -61,6 +61,14 @@ combination has its own independent timeline and edit history, even though
 several combinations may share the same underlying Scripture passage, audio
 alignment, and character canon.
 
+Opening a chapter restores only that project's persisted scenes, shots, takes,
+clip/timeline records, review notes, crew history, and applicable lessons.
+Creating the same identity again opens the existing workspace idempotently;
+creating a new identity starts an honest empty workspace and never copies a
+different chapter's media, timing, or source assignment. Reusable-library
+items remain cross-chapter discovery candidates with their donor provenance,
+not timeline content, until reviewed for the target shot.
+
 ## Edit History, Undo/Redo, and Persistence
 
 Edits are preserved as they're made — there is no separate manual "save"

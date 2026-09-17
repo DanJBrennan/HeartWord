@@ -2002,3 +2002,25 @@ nothing; a valid correction becomes a candidate; review creates an immutable
 active successor and history; and only that matching book/language/region
 lesson reaches a different chapter's brief, excluding disabled and
 wrong-language records.
+
+## Retained media library and candidate reuse (2026-09-16)
+
+HeartWord now projects existing immutable generation attempts with verifiable
+files into an idempotent retained-media library. The producer can browse image,
+video, and extracted-frame records with their original project, shot, verse,
+prompt, provider/model, review status, unselected-versus-origin-selected state,
+and unresolved review context. A reuse action creates only a guarded target
+shot candidate; it never replaces donor or target media, transfers approval,
+or makes a provider call. Matching language and one approved regional canon
+context are required. Video-frame extraction records immutable parent/timecode
+lineage. This creates retrievable metadata for a future assistant without
+implementing autonomous creative selection. Benny was removed from visible
+control-room roster, selection, and idle presentation schedules; historical
+records and files remain retained.
+
+Chapter navigation now opens a selected persisted language/book/chapter
+workspace rather than assuming the first project. Create-or-open is idempotent
+for the unique project identity, while a new chapter remains empty and does
+not inherit media, timing, or source work. Async shot/audio loads discard late
+responses for a no-longer-selected workspace. This enables preparing a Mark 4
+workspace without initiating its pipeline or asserting its source readiness.

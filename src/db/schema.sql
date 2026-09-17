@@ -241,6 +241,37 @@ CREATE TABLE IF NOT EXISTS generation_attempts (
 );
 CREATE INDEX IF NOT EXISTS idx_generation_attempts_shot ON generation_attempts(shot_id);
 
+-- A durable, non-destructive browse/retrieval projection over generated takes.
+-- The original generation_attempts row and its file remain the authority;
+-- this table only adds stable discovery, optional extracted-frame lineage, and
+-- a snapshot of the provenance that a later retrieval agent may inspect.
+CREATE TABLE IF NOT EXISTS media_library_items (
+  id TEXT PRIMARY KEY,
+  generation_attempt_id TEXT UNIQUE REFERENCES generation_attempts(id),
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  shot_id TEXT NOT NULL REFERENCES shots(id),
+  kind TEXT NOT NULL CHECK (kind IN ('image','video','frame')),
+  asset_path TEXT NOT NULL UNIQUE,
+  parent_item_id TEXT REFERENCES media_library_items(id),
+  parent_time_ms INTEGER,
+  provenance_json TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_media_library_items_lookup ON media_library_items(kind, project_id, shot_id, created_at);
+
+-- Selecting a library item never replaces the donor or target take. It is a
+-- reviewable reference candidate for an existing target shot.
+CREATE TABLE IF NOT EXISTS media_reuse_candidates (
+  id TEXT PRIMARY KEY,
+  library_item_id TEXT NOT NULL REFERENCES media_library_items(id),
+  target_shot_id TEXT NOT NULL REFERENCES shots(id),
+  status TEXT NOT NULL CHECK (status IN ('candidate','dismissed','approved_for_generation')) DEFAULT 'candidate',
+  note TEXT,
+  created_at INTEGER NOT NULL,
+  UNIQUE (library_item_id, target_shot_id)
+);
+CREATE INDEX IF NOT EXISTS idx_media_reuse_candidates_target ON media_reuse_candidates(target_shot_id, status);
+
 -- A planned (not yet generated) piece of a covered_sequence shot's L-cut
 -- coverage map -- see src/pipeline/casting/coverage-manifest.ts. Distinct
 -- from `clips`: a clip is an ACCEPTED result already placed on the

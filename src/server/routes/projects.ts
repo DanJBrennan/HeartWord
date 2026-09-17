@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { Router } from "express";
-import { getDb } from "../../db/client.js";
+import { getDataDir, getDb } from "../../db/client.js";
 import { runPipeline } from "../../pipeline/orchestrator.js";
 import { runVoicing } from "../../pipeline/voicing/index.js";
 import { runCasting, resolveEnglishReferencePath } from "../../pipeline/casting/index.js";
@@ -9,6 +9,7 @@ import { runMediaGeneration } from "../../pipeline/media-generation/index.js";
 import { parseSourceTextByVerse } from "../../pipeline/ingestion/parse-source-text.js";
 import { parseVerseRange } from "../../pipeline/scene-breakdown/build-scenes.js";
 import { buildProductionCrewView, type NegotiationLogEntry } from "../production-crew.js";
+import { createReuseCandidate, extractLibraryFrame, registerGeneratedMediaLibraryItems } from "../../pipeline/media-generation/media-library.js";
 
 export const projectsRouter = Router();
 
@@ -16,6 +17,28 @@ projectsRouter.get("/", (_req, res) => {
   const db = getDb();
   const projects = db.prepare(`SELECT * FROM projects ORDER BY created_at DESC`).all();
   res.json({ projects });
+});
+
+// Global, read-only discovery projection over retained generation attempts.
+// It does not make a selected library item approved for any new shot.
+projectsRouter.get("/media-library", (req, res) => {
+  const db = getDb();
+  // registration is metadata-only and idempotent; it never moves or regenerates a file.
+  registerGeneratedMediaLibraryItems(db, getDataDir());
+  const kind = typeof req.query.kind === "string" ? req.query.kind : null;
+  const status = typeof req.query.status === "string" ? req.query.status : null;
+  const search = typeof req.query.search === "string" ? req.query.search.trim().toLowerCase() : "";
+  const rows = db.prepare(`SELECT li.*,ga.provider,ga.model,ga.operation,ga.prompt,ga.status AS review_status,p.language,p.book,p.chapter,s.action,s.verse_ref,
+      CASE WHEN EXISTS(SELECT 1 FROM clips c WHERE c.generation_attempt_id=li.generation_attempt_id) THEN 'selected_in_origin' ELSE 'not_selected_in_origin' END AS origin_selection,
+      (SELECT GROUP_CONCAT(rn.note, '\n') FROM review_notes rn WHERE rn.subject_type='shot' AND rn.subject_id=li.shot_id AND rn.resolved=0) AS unresolved_review_notes
+    FROM media_library_items li LEFT JOIN generation_attempts ga ON ga.id=li.generation_attempt_id JOIN projects p ON p.id=li.project_id JOIN shots s ON s.id=li.shot_id
+    WHERE (? IS NULL OR li.kind=?) AND (? IS NULL OR ga.status=?) AND (''=? OR lower(coalesce(s.action,'') || ' ' || coalesce(s.verse_ref,'') || ' ' || coalesce(ga.prompt,'')) LIKE '%' || ? || '%') ORDER BY li.created_at DESC`).all(kind,kind,status,status,search,search);
+  res.json({ items: rows, note:"Library records retain original review context. A reuse selection is only a target-shot candidate until the normal reviewed generation workflow approves a result." });
+});
+
+projectsRouter.post("/media-library/:itemId/frame", (req,res) => {
+  try { res.status(201).json(extractLibraryFrame(getDb(), getDataDir(), req.params.itemId, req.body?.timeMs)); }
+  catch (error) { res.status(400).json({ error:(error as Error).message }); }
 });
 
 projectsRouter.post("/", (req, res) => {
@@ -26,6 +49,8 @@ projectsRouter.post("/", (req, res) => {
   }
 
   const db = getDb();
+  const existing = db.prepare("SELECT * FROM projects WHERE lower(language)=lower(?) AND lower(book)=lower(?) AND chapter=?").get(language, book, chapter);
+  if (existing) { res.json({ project: existing, created: false }); return; }
   const id = randomUUID();
   const now = Date.now();
   try {
@@ -39,7 +64,7 @@ projectsRouter.post("/", (req, res) => {
   }
 
   const project = db.prepare(`SELECT * FROM projects WHERE id = ?`).get(id);
-  res.status(201).json({ project });
+  res.status(201).json({ project, created: true });
 });
 
 projectsRouter.post("/:id/run", async (req, res) => {
@@ -224,6 +249,7 @@ projectsRouter.get("/:id/shots", (req, res) => {
             (SELECT ga.status FROM generation_attempts ga
              WHERE ga.shot_id = s.id AND ga.operation = 'generate'
              ORDER BY ga.created_at DESC LIMIT 1) AS latest_generation_status
+            ,(SELECT GROUP_CONCAT(mrc.note, '\n') FROM media_reuse_candidates mrc WHERE mrc.target_shot_id=s.id AND mrc.status='candidate') AS reuse_candidate_notes
      FROM shots s
      LEFT JOIN characters dc ON dc.id = s.dialogue_character_id
      WHERE s.scene_id = ? ORDER BY s.sequence`
@@ -253,6 +279,14 @@ projectsRouter.get("/:id/shots", (req, res) => {
   });
 
   res.json({ scenes: scenesWithShots });
+});
+
+projectsRouter.post("/:id/shots/:shotId/reuse-candidates", (req,res) => {
+  const db=getDb(); const target = db.prepare(`SELECT s.id FROM shots s JOIN scenes sc ON sc.id=s.scene_id WHERE s.id=? AND sc.project_id=?`).get(req.params.shotId,req.params.id);
+  if (!target) { res.status(404).json({error:"Target shot not found in this project."}); return; }
+  if (typeof req.body?.libraryItemId !== "string") { res.status(400).json({error:"A library item is required."}); return; }
+  try { res.status(201).json(createReuseCandidate(db,getDataDir(),req.body.libraryItemId,req.params.shotId,typeof req.body?.note === "string" ? req.body.note.trim() || null : null)); }
+  catch (error) { res.status(409).json({error:(error as Error).message}); }
 });
 
 // Records Dan's own review decision on a shot's current keyframe --

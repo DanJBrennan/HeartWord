@@ -530,7 +530,6 @@
           <button class="supporting-card supporting-map-card" data-portrait="../docs/assets/control-room/agent-portraits/miriam-scripture-reviewer.png" data-portrait-name="Miriam - Scripture Reviewer" type="button" aria-label="Miriam, Scripture Reviewer. Reference-only map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/miriam-scripture-reviewer-closeup.png" alt="Miriam portrait"><span><strong>Miriam</strong><span>Scripture Reviewer</span></span></button>
           <button class="supporting-card supporting-map-card" data-portrait="../docs/assets/control-room/agent-portraits/dottie-casting-director.png" data-portrait-name="Dottie - Casting Director" type="button" aria-label="Dottie, Casting Director. Reference-only map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/dottie-casting-director-closeup.png" alt="Dottie portrait"><span><strong>Dottie</strong><span>Casting Director</span></span></button>
           <button class="supporting-card supporting-map-card" data-portrait="../docs/assets/control-room/agent-portraits/kit-lip-sync-specialist.png" data-portrait-name="Kit - Lip-Sync Specialist" type="button" aria-label="Kit, Lip-Sync Specialist. Reference-only map card; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/kit-lip-sync-specialist-closeup.png" alt="Kit portrait"><span><strong>Kit</strong><span>Lip-Sync Specialist</span></span></button>
-          <button class="supporting-card supporting-map-card historical-map-card" data-portrait="../docs/assets/control-room/agent-portraits/benny-assembly-lead.png" data-portrait-name="Benny - Historical Assembly Lead" type="button" aria-label="Benny, historical assembly lead. No active production authority; open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/benny-assembly-lead-closeup.png" alt="Benny portrait"><span><strong>Benny</strong><span>Historical only</span></span></button>
           <div class="supporting-map-card role-only-map-card" data-address-name="Costume Designer" aria-label="Costume Designer — declared specialist role with no assigned presentation identity."><span><strong>Costume Designer</strong><span>Role only</span></span></div>
           <div class="supporting-map-card role-only-map-card" data-address-name="Lighting Designer" aria-label="Lighting Designer — declared specialist role with no assigned presentation identity."><span><strong>Lighting Designer</strong><span>Role only</span></span></div>
           <div class="supporting-map-card role-only-map-card" data-address-name="Composer" aria-label="Composer — declared specialist role with no assigned presentation identity."><span><strong>Composer</strong><span>Role only</span></span></div>
@@ -571,7 +570,6 @@
       <button class="supporting-card" data-portrait="../docs/assets/control-room/agent-portraits/miriam-scripture-reviewer.png" data-portrait-name="Miriam - Scripture and Cultural Reviewer" type="button" aria-label="Miriam, Scripture and Cultural Reviewer. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/miriam-scripture-reviewer.png" alt="Miriam portrait"><span><strong>Miriam</strong><span>Scripture &amp; Cultural Review</span></span></button>
       <button class="supporting-card" data-portrait="../docs/assets/control-room/agent-portraits/dottie-casting-director.png" data-portrait-name="Dottie - Casting and Canon Steward" type="button" aria-label="Dottie, Casting and Canon Steward. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/dottie-casting-director.png" alt="Dottie portrait"><span><strong>Dottie</strong><span>Casting &amp; Canon Steward</span></span></button>
       <button class="supporting-card" data-portrait="../docs/assets/control-room/agent-portraits/kit-lip-sync-specialist.png" data-portrait-name="Kit - Dialogue / Lip-Sync Specialist" type="button" aria-label="Kit, Dialogue and Lip-Sync Specialist. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/kit-lip-sync-specialist.png" alt="Kit portrait"><span><strong>Kit</strong><span>Dialogue / Lip-Sync</span></span></button>
-      <button class="supporting-card" data-portrait="../docs/assets/control-room/agent-portraits/benny-assembly-lead.png" data-portrait-name="Benny - Historical only" type="button" aria-label="Benny, historical reference only with no active production authority. Open full-size portrait."><img src="../docs/assets/control-room/agent-portraits/benny-assembly-lead.png" alt="Benny portrait"><span><strong>Benny</strong><span>Historical only</span></span></button>
       <div class="role-only-card"><strong>Costume Designer</strong><span>Declared specialist role — no assigned presentation identity.</span></div>
       <div class="role-only-card"><strong>Lighting Designer</strong><span>Declared specialist role — no assigned presentation identity.</span></div>
       <div class="role-only-card"><strong>Composer</strong><span>Declared specialist role — no assigned presentation identity.</span></div>
@@ -741,7 +739,7 @@
       const compactRows = [
         ['Mabel', 'Rufus', 'Pippa', 'Gus', 'Vera', 'Orion'],
         ['June', 'Leon', 'Tessa', 'Arlo', 'Nell', 'Sam'],
-        ['Miriam', 'Dottie', 'Kit', 'Benny'],
+        ['Miriam', 'Dottie', 'Kit'],
         ['Ada', 'Theo', 'Cora']
       ];
       const applyCompactLayout = () => {
@@ -794,7 +792,7 @@
       const castOnlyLayoutVersion = 'heartword-control-room-cast-only-grid-v5';
       const castOnlyRows = [
         { y:18, names:['Mabel', 'Rufus', 'Pippa', 'Gus', 'Vera', 'Orion', 'June', 'Leon'], start:15, step:10 },
-        { y:50, names:['Tessa', 'Arlo', 'Nell', 'Sam', 'Miriam', 'Dottie', 'Kit', 'Benny'], start:15, step:10 },
+        { y:50, names:['Tessa', 'Arlo', 'Nell', 'Sam', 'Miriam', 'Dottie', 'Kit'], start:20, step:10 },
         { y:66, names:['Costume Designer', 'Lighting Designer', 'Composer', 'Colorist'], start:35, step:10 },
         { y:82, names:['Ada', 'Theo', 'Cora'], start:29, step:10 },
         { y:82, names:['Gene Siskel', 'Roger Ebert'], start:62, step:10 }
@@ -1038,7 +1036,7 @@
       const mic = root.querySelector('#producer-address-mic');
       const status = root.querySelector('#producer-address-status');
       const voiceAuditionPanel = root.querySelector('#voice-audition');
-      const names = ['Mabel', 'Rufus', 'Pippa', 'Gus', 'Vera', 'Orion', 'June', 'Leon', 'Tessa', 'Arlo', 'Nell', 'Sam', 'Miriam', 'Dottie', 'Kit', 'Benny', 'Ada', 'Theo', 'Cora', 'Gene Siskel', 'Roger Ebert'];
+      const names = ['Mabel', 'Rufus', 'Pippa', 'Gus', 'Vera', 'Orion', 'June', 'Leon', 'Tessa', 'Arlo', 'Nell', 'Sam', 'Miriam', 'Dottie', 'Kit', 'Ada', 'Theo', 'Cora', 'Gene Siskel', 'Roger Ebert'];
       const cards = [...root.querySelectorAll('.node, .review-card.has-portrait, .supporting-card')].map(card => {
         const identity = card.dataset.portraitName || card.textContent;
         const name = names.find(candidate => new RegExp(`\\b${candidate}\\b`, 'i').test(identity));
@@ -1598,7 +1596,6 @@
         { name:'Miriam', src:'../docs/assets/control-room/idle-motion/miriam.mp4' },
         { name:'Dottie', src:'../docs/assets/control-room/idle-motion/dottie.mp4' },
         { name:'Kit', src:'../docs/assets/control-room/idle-motion/kit.mp4' },
-        { name:'Benny', src:'../docs/assets/control-room/idle-motion/benny.mp4' },
         { name:'Ada', src:'../docs/assets/control-room/idle-motion/ada.mp4' },
         { name:'Theo', src:'../docs/assets/control-room/idle-motion/theo.mp4' },
         { name:'Cora', src:'../docs/assets/control-room/idle-motion/cora.mp4' }

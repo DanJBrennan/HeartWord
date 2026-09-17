@@ -17,7 +17,7 @@ controlRoomRouter.get("/roster", (_req, res) => res.json({ roster: PRODUCTION_CR
 
 const CONTROL_ROOM_MAP_AGENT_NAMES = new Set([
   "Mabel", "Rufus", "Pippa", "Gus", "Vera", "Orion", "June", "Leon",
-  "Tessa", "Arlo", "Nell", "Sam", "Miriam", "Dottie", "Kit", "Benny"
+  "Tessa", "Arlo", "Nell", "Sam", "Miriam", "Dottie", "Kit"
 ]);
 const CONTROL_ROOM_PROFILE_ALIASES: Record<string, string> = { Ada: "Ada Rowe", Theo: "Theo Maren", Cora: "Cora Bellamy" };
 const controlRoomProfileName = (agent: string) => CONTROL_ROOM_PROFILE_ALIASES[agent] ?? agent;

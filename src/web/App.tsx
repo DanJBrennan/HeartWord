@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ProductionCrew } from "./ProductionCrew";
+import { MediaLibrary } from "./MediaLibrary";
 
 interface Project {
   id: string;
@@ -79,6 +80,7 @@ interface Shot {
   latest_qc_note: string | null;
   latest_qc_created_at: number | null;
   latest_generation_status: string | null;
+  reuse_candidate_notes?: string | null;
 }
 
 interface SceneWithShots {
@@ -118,6 +120,8 @@ export default function App() {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ language: "hatam", book: "mark", chapter: 2 });
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const selectedProjectRef = useRef<string | null>(null);
 
   const [voices, setVoices] = useState<Voice[]>([]);
   const [voicesError, setVoicesError] = useState<string | null>(null);
@@ -148,6 +152,7 @@ export default function App() {
         api<{ characters: Character[] }>("/characters")
       ]);
       setProjects(projects);
+      if (!selectedProjectRef.current || !projects.some((project) => project.id === selectedProjectRef.current)) { selectedProjectRef.current = projects[0]?.id ?? null; setSelectedProjectId(selectedProjectRef.current); }
       setCharacters(characters);
       setError(null);
     } catch (err) {
@@ -180,8 +185,9 @@ export default function App() {
   async function createProject(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await api("/projects", { method: "POST", body: JSON.stringify(form) });
+      const { project } = await api<{project:Project}>("/projects", { method: "POST", body: JSON.stringify(form) });
       await refresh();
+      selectProject(project.id);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -199,14 +205,15 @@ export default function App() {
     }
   }
 
-  const activeProject = projects[0] ?? null;
+  const activeProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0] ?? null;
+  function selectProject(id: string) { selectedProjectRef.current = id; setSelectedProjectId(id); setScenesWithShots([]); setCastMasterSegments([]); setReviewDrafts({}); setReviewError(null); }
 
   async function loadCastMaster(projectId: string) {
     try {
       const { segments } = await api<{ segments: CastMasterSegment[] }>(
         `/projects/${projectId}/audio-segments?layer=composite_cast_master`
       );
-      setCastMasterSegments(segments);
+      if (selectedProjectRef.current === projectId) setCastMasterSegments(segments);
     } catch (err) {
       setCastMasterError((err as Error).message);
     }
@@ -241,7 +248,7 @@ export default function App() {
   async function loadShots(projectId: string) {
     try {
       const { scenes } = await api<{ scenes: SceneWithShots[] }>(`/projects/${projectId}/shots`);
-      setScenesWithShots(scenes);
+      if (selectedProjectRef.current === projectId) setScenesWithShots(scenes);
     } catch (err) {
       setCastingError((err as Error).message);
     }
@@ -329,7 +336,7 @@ export default function App() {
         <ul>
           {projects.map((p) => (
             <li key={p.id}>
-              {p.language} / {p.book} {p.chapter} — stage: {p.stage}, status: {p.status}
+              <button type="button" onClick={() => selectProject(p.id)} aria-pressed={activeProject?.id === p.id}>Open {p.language} / {p.book} {p.chapter}</button> — stage: {p.stage}, status: {p.status}
             </li>
           ))}
           {projects.length === 0 && <li className="empty">No projects yet.</li>}
@@ -352,8 +359,9 @@ export default function App() {
             value={form.chapter}
             onChange={(e) => setForm({ ...form, chapter: Number(e.target.value) })}
           />
-          <button type="submit">New project</button>
+          <button type="submit">Create or open chapter workspace</button>
         </form>
+        {activeProject && <p className="hint">Open workspace: {activeProject.language} / {activeProject.book} {activeProject.chapter}. A new chapter begins empty and never inherits another chapter’s shots, takes, timing, or provider work.</p>}
       </section>
 
       <section>
@@ -415,6 +423,7 @@ export default function App() {
                       {shot.coverage_plan === "covered_sequence" && (
                         <p className="hint">Needs covered-sequence coverage: {shot.coverage_notes}</p>
                       )}
+                      {shot.reuse_candidate_notes && <p className="hint">Reusable media candidate: {shot.reuse_candidate_notes}</p>}
                       {shot.keyframe_path && (
                         <div className="keyframe-review">
                           <img
@@ -503,6 +512,8 @@ export default function App() {
           </>
         )}
       </section>
+
+      <MediaLibrary projectId={activeProject?.id ?? null} targets={scenesWithShots.flatMap(scene => scene.shots.map(shot => ({ id:shot.id, sequence:shot.sequence, action:shot.action })))} />
 
       <section>
         <h2>Voice casting</h2>

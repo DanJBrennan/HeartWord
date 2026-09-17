@@ -29,6 +29,33 @@ Rendered visual content per scene, ready to receive lip-synced speech (see
 `docs/design/audio-and-speakers.md`) and be placed on the timeline (see
 `docs/design/timeline.md`).
 
+## Retained-take library
+
+Every verifiable generated image or video remains at its immutable original
+path, whether it was selected for its origin shot, held for review, escalated,
+or simply not selected for that origin timeline. `generation_attempts` remains
+the authority for provider, model, prompt, review status, and cost; the media
+library is an idempotent discovery projection over those records, not a second
+asset store or a cleanup process. Missing files are reported by omission rather
+than reconstructed as invented provenance.
+
+The producer can browse original media with origin chapter/shot/verse, prompt,
+provider, model, review status, unresolved review context, and whether it was
+selected on its origin timeline. “Not selected” is strictly an editorial fact;
+it never means a take is fit for another shot. A chosen item becomes only a
+reviewable target-shot candidate. It does not replace the donor, alter the
+target’s accepted media, transfer the donor’s approval, or authorize a provider
+call. Target language and the single approved regional canon context must match
+before the candidate is recorded. Gus prepares a candidate reference; Vera and
+Orion assess target fitness, Dottie checks canon, and Nell decides editorial
+use through the existing reviewed workflow.
+
+For retained video, the producer may extract a still at a requested timecode.
+Extraction creates a new immutable frame file with parent video and timecode
+provenance; it never edits the original video or calls a media provider. The
+stable library metadata is intentionally suitable for later retrieval agents,
+but automatic creative selection is not implemented or implied by this design.
+
 ## Draft Room and Cost-Tiered Generation
 
 Gemini Omni 1.1 Flash (Google, released 2026) is a concrete example of the
