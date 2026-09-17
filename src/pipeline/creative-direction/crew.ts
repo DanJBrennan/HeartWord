@@ -1,8 +1,8 @@
 import type { GeminiJsonSchema } from "../../providers/gemini-text.js";
 import { planEditorialCut } from "../assembly/editorial-plan.js";
-import { PRODUCTION_ROLE_REGISTRY } from "./role-registry.js";
-import { EDITING_ROLES, FINISHING_ROLES, PLANNING_ROLES, type CrewBrief, type CrewContribution,
-  type CrewEvent, type CrewPhase, type CrewResult, type CrewRole, type ReviewMedia } from "./crew-types.js";
+import { PRODUCTION_ROLE_REGISTRY, executableProductionRolesFor } from "./role-registry.js";
+import { type CrewBrief, type CrewContribution, type CrewEvent, type CrewPhase, type CrewResult,
+  type CrewRole, type ReviewMedia } from "./crew-types.js";
 
 const DUTIES: Record<CrewRole, string> = {
   creative_director: "Establish the chapter's emotional progression and each shot's purpose from the actual passage. Human reactions may deepen an implied moment; do not invent theological claims, dialogue or narrative events. Avoid applying a celebratory mood to unrelated passages.",
@@ -143,7 +143,10 @@ export async function runCrew(options: CrewRunnerOptions): Promise<CrewResult> {
   if (phase === "finishing" && (!brief.render || !options.media?.length)) {
     return { status: "incomplete", summary: "Finishing review requires the actual assembled cut, including its audio.", calls, contributions };
   }
-  const productionRoles: CrewRole[] = [...(phase === "planning" ? PLANNING_ROLES : phase === "editing" ? EDITING_ROLES : FINISHING_ROLES), "production_director"];
+  // The registry is the only executable roster.  The exported phase arrays in
+  // crew-types remain compatibility descriptions for older callers/tests, but
+  // must not quietly become a second source of authority.
+  const productionRoles: CrewRole[] = [...executableProductionRolesFor(phase).filter(role => role !== "production_director") as CrewRole[], "production_director"];
   for (let round = 1; round <= 2; round++) {
     const roles: CrewRole[] = round === 1 ? [...productionRoles.filter(role => role !== "production_director"), "fidelity_challenger", "clarity_challenger", "feasibility_challenger", "production_director"] : productionRoles;
     for (const role of roles) {

@@ -16,6 +16,7 @@
     "db:seed-control-room-red-team": "tsx scripts/seed-control-room-red-team-findings.ts",
     "db:recast-control-room-voices": "tsx scripts/recast-control-room-voices.ts",
     "calibrate:control-room-loudness": "tsx scripts/calibrate-control-room-presentation-loudness.ts",
+    "evaluate:reviewed-evidence": "tsx scripts/evaluate-reviewed-evidence.ts",
     "db:import-control-room-presentation": "python scripts/import-control-room-presentation-library.py C:\\Users\\danbr\\Downloads\\HeartWord_New_Sample_Exchanges.xlsx",
     "test": "vitest run"
   },

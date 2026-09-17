@@ -14,8 +14,22 @@ Stage 5 now calls the existing composite cast-master work and only submits
 Kling lip-sync for planned on-camera dialogue with an accepted keyframe,
 approved cast voice, and aligned cast-master speech. Narration is explicitly
 excluded. Missing prerequisites create a producer-reviewable hold before any
-new provider request. This implementation has not been run against Mark 2 or
-Mark 4 and has made no paid call.
+new provider request. A completed provider response is now retained as a
+costed `hold_for_review` candidate, never automatically marked accepted or
+placed into a clip; a same-character/same-verse ambiguity is held until an
+exact utterance interval is persisted. This implementation has not been run
+against Mark 2 or Mark 4 and has made no paid call.
+
+The executable crew dispatcher now derives its production roster from the
+single role registry, while independent challengers remain explicitly outside
+production-direction authority. The evaluation ledger now links immutable
+human-adjudicated evidence to retained records, imports/exports versioned
+predictions atomically, detects protected regressions and held-out training
+leakage, and reports small factual samples as insufficient. The documented
+CLI is `npm run evaluate:reviewed-evidence --`. It cannot deploy a model or
+change anyone's authority. Remaining architecture work includes persisting a
+per-shot utterance binding, complete non-speaking video generation through the
+ordinary stage, and end-to-end isolated fresh-chapter resume testing.
 
 ## Production interaction monitor and correction reuse (2026-09-16)
 

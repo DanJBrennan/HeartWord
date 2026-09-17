@@ -6,6 +6,7 @@ import { crewBriefHash } from "../../src/pipeline/creative-direction/crew-contex
 import { directionsFromRun, runProductionCrew } from "../../src/pipeline/creative-direction/crew-store.js";
 import { finishingRecipe, structuralCutFindings } from "../../src/pipeline/assembly/finishing.js";
 import { FINISHING_ROLES, PLANNING_ROLES, type CrewBrief, type CrewContribution, type CrewEvent, type CrewRole, type CrewResult } from "../../src/pipeline/creative-direction/crew-types.js";
+import { executableProductionRolesFor } from "../../src/pipeline/creative-direction/role-registry.js";
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 function brief(): CrewBrief {
@@ -51,7 +52,7 @@ describe("coordinated filmmaking", () => {
     const call = vi.fn(async (prompt: string) => response(roleFromPrompt(prompt)));
     const result = await runCrew({ phase: "planning", brief: brief(), call, log: e => events.push(e) });
     expect(result.status).toBe("approved");
-    expect(events.map(e => e.role)).toEqual([...PLANNING_ROLES.filter(role => role !== "production_director"), "fidelity_challenger", "clarity_challenger", "feasibility_challenger", "production_director"]);
+    expect(events.map(e => e.role)).toEqual([...executableProductionRolesFor("planning").filter(role => role !== "production_director"), "fidelity_challenger", "clarity_challenger", "feasibility_challenger", "production_director"]);
     expect(events[1]!.prompt).toContain("creative_director checked the evidence");
     for (const event of events) for (const text of ["Exact reference words", "Original words", "Roof intact", "Roof is opened", "8000", "Approved robe", "Preserve the approved wardrobe"]) expect(event.prompt).toContain(text);
   });
@@ -72,8 +73,8 @@ describe("coordinated filmmaking", () => {
       return out;
     } });
     expect(result.status).toBe("held");
-    expect(result.calls).toBe(25);
-    expect(events[14]!.prompt).toContain("Resolve the eyeline mismatch");
+    expect(result.calls).toBe(23);
+    expect(events[13]!.prompt).toContain("Resolve the eyeline mismatch");
   });
   it("stops at the overall call budget with an incomplete result", async () => {
     const call = vi.fn(async (prompt: string) => response(roleFromPrompt(prompt)));
@@ -117,7 +118,7 @@ describe("coordinated filmmaking", () => {
     expect(missing.status).toBe("incomplete"); expect(call).not.toHaveBeenCalled();
     const media = [{ mimeType: "video/mp4", data: "test-video-with-audio" }];
     const done = await runCrew({ phase: "finishing", brief: brief(), media, call, log: () => {} });
-    expect(done.status).toBe("approved"); expect(done.calls).toBe(FINISHING_ROLES.length + 4);
+    expect(done.status).toBe("approved"); expect(done.calls).toBe(executableProductionRolesFor("finishing").filter(role => role !== "production_director").length + 4);
     expect(call).toHaveBeenLastCalledWith(expect.any(String), expect.any(Object), media);
   });
   it("invalidates source, canon and producer changes without invalidating planning when a clip is produced", () => {

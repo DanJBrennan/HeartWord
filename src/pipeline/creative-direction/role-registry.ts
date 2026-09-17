@@ -39,3 +39,6 @@ export const PRODUCTION_ROLE_REGISTRY = [
 export type ExecutableRole = Extract<typeof PRODUCTION_ROLE_REGISTRY[number], { runtime: "implemented" }> ["id"] | "production_director";
 export function resolveRoleId(id: string): string | undefined { return PRODUCTION_ROLE_REGISTRY.find(r => r.id === id || r.aliases.includes(id))?.id; }
 export function executableRolesFor(phase: RolePhase): string[] { return PRODUCTION_ROLE_REGISTRY.filter(r => r.runtime === "implemented" && r.phases.includes(phase)).map(r => r.id); }
+/** Independent reviewers are dispatched explicitly after the production pass;
+ * they must not be mistaken for production-direction authority. */
+export function executableProductionRolesFor(phase: RolePhase): string[] { return PRODUCTION_ROLE_REGISTRY.filter(r => r.runtime === "implemented" && r.authority === "production" && r.phases.includes(phase)).map(r => r.id); }

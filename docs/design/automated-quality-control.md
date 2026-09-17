@@ -98,6 +98,24 @@ It is planned to run once on the first rough cut and again after major
 revisions, before final approval. It is a future role/gate only: no current
 pipeline stage, provider call, or UI represents it as implemented.
 
+## Reviewed-evidence evaluation
+
+Evaluation cases are producer-adjudicated links to retained project records
+(shot, clip, audio segment, review note, or project) and an immutable artifact
+hash. They are not inferred from a model verdict. Cases and their human labels
+are append-only; synthetic fixtures are explicitly excluded from comparisons.
+
+Use `npm run evaluate:reviewed-evidence -- export <version>` to export a
+versioned prediction baseline, `... -- import <version> <json-file>` to add a
+validated candidate, and `... -- compare <baseline> <candidate> [held-out-project-id]`
+to persist a reproducible comparison. Each prediction must include case ID,
+label, evidence, optional confidence/cost, and any training-case provenance.
+The comparison reports honest sample counts and insufficient calibration below
+five factual cases. Protected source/canon/producer-hold regressions or use of
+a held-out chapter in training provenance result in `do_not_adopt`; a passing
+comparison only makes a candidate eligible for producer review, never deploys
+it or changes authority.
+
 ## Open questions
 
 - Which checks are automatable now vs. need a human reviewer in the loop.

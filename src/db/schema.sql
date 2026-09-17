@@ -437,6 +437,20 @@ CREATE TABLE IF NOT EXISTS evaluation_runs (
   case_ids_json TEXT NOT NULL, held_out_project_id TEXT, result_json TEXT NOT NULL,
   recommendation TEXT NOT NULL CHECK(recommendation IN ('insufficient_evidence','do_not_adopt','eligible_for_producer_review')), created_at INTEGER NOT NULL
 );
+-- A versioned prediction is evidence for comparison, never an adjudication.
+-- Keeping it separate from evaluation_cases makes the human label immutable.
+CREATE TABLE IF NOT EXISTS evaluation_predictions (
+  id TEXT PRIMARY KEY, evaluation_case_id TEXT NOT NULL REFERENCES evaluation_cases(id),
+  version TEXT NOT NULL, label TEXT NOT NULL CHECK(label IN ('accept','reject','hold')),
+  confidence REAL, cost_usd REAL, evidence TEXT NOT NULL,
+  training_case_ids_json TEXT NOT NULL DEFAULT '[]', created_at INTEGER NOT NULL,
+  UNIQUE(evaluation_case_id, version)
+);
+CREATE INDEX IF NOT EXISTS idx_evaluation_predictions_version ON evaluation_predictions(version);
+CREATE TRIGGER IF NOT EXISTS evaluation_cases_no_update
+BEFORE UPDATE ON evaluation_cases BEGIN SELECT RAISE(ABORT, 'evaluation cases are immutable'); END;
+CREATE TRIGGER IF NOT EXISTS evaluation_cases_no_delete
+BEFORE DELETE ON evaluation_cases BEGIN SELECT RAISE(ABORT, 'evaluation cases are immutable'); END;
 
 -- Durable, inspectable correction lessons. A correction remains scoped to its
 -- original chapter unless a producer explicitly promotes it; candidates never
