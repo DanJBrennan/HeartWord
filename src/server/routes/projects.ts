@@ -11,6 +11,7 @@ import { parseVerseRange } from "../../pipeline/scene-breakdown/build-scenes.js"
 import { buildProductionCrewView, type NegotiationLogEntry } from "../production-crew.js";
 import { createReuseCandidate, extractLibraryFrame, registerGeneratedMediaLibraryItems } from "../../pipeline/media-generation/media-library.js";
 import { bindShotUtterance } from "../../pipeline/voice-lipsync/utterance-binding.js";
+import { acceptLipSyncCandidate } from "../../pipeline/voice-lipsync/candidate-selection.js";
 
 export const projectsRouter = Router();
 
@@ -155,6 +156,10 @@ projectsRouter.post("/:id/shots/:shotId/utterance-binding", (req,res) => {
     const body=req.body ?? {};
     res.status(201).json(bindShotUtterance(getDb(),{projectId:req.params.id,shotId:req.params.shotId,sourceSegmentId:body.sourceSegmentId,startMs:body.startMs,endMs:body.endMs,characterVersionId:body.characterVersionId,approvedBy:typeof body.approvedBy === "string" ? body.approvedBy : ""}));
   } catch (error) { res.status(400).json({error:(error as Error).message}); }
+});
+projectsRouter.post("/:id/lip-sync-candidates/:attemptId/accept", (req,res) => {
+  try { res.status(201).json(acceptLipSyncCandidate(getDb(),req.params.id,req.params.attemptId)); }
+  catch (error) { res.status(400).json({error:(error as Error).message}); }
 });
 
 

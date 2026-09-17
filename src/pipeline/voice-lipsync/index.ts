@@ -10,18 +10,20 @@ import type { Stage } from "../types.js";
 type ReadyShot = { id: string; verse_ref: string | null; dialogue_character_id: string; keyframe: string | null; voice_id: string | null; version_id: string | null; binding_id:string|null; source_segment_id:string|null; start_ms:number|null; end_ms:number|null; source_hash:string|null };
 export const runVoiceLipSync: Stage = async (projectId) => {
   const db = getDb();
-  // Source performance and composite master stay explicit, immutable layers.
-  const master = await runVoicing(projectId);
-  if (!master.ok) return master;
   const shots = db.prepare(`SELECT sh.id,sh.verse_ref,sh.dialogue_character_id,
     (SELECT result_asset_path FROM generation_attempts WHERE shot_id=sh.id AND operation='generate' AND status='accepted' ORDER BY created_at DESC LIMIT 1) keyframe,
     (SELECT cv.voice_id FROM character_versions cv WHERE cv.character_id=sh.dialogue_character_id AND cv.status='approved' LIMIT 1) voice_id,
     (SELECT cv.id FROM character_versions cv WHERE cv.character_id=sh.dialogue_character_id AND cv.status='approved' LIMIT 1) version_id,
     ub.id binding_id,ub.source_audio_segment_id source_segment_id,ub.source_start_ms start_ms,ub.source_end_ms end_ms,ub.source_hash source_hash
-    FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=? AND sh.needs_lip_sync=1`).all(projectId) as unknown as ReadyShot[];
-  if (!shots.length) return { ok: true, reasoning: `${master.reasoning} No on-camera speech is planned; narration remains unsynchronised as required.` };
+    FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id LEFT JOIN shot_utterance_bindings ub ON ub.shot_id=sh.id
+    WHERE sc.project_id=? AND sh.needs_lip_sync=1`).all(projectId) as unknown as ReadyShot[];
+  if (!shots.length) return { ok: true, reasoning: "No on-camera speech is planned; narration remains unsynchronised as required." };
   const missing = shots.filter(s => !s.keyframe || !s.voice_id || !s.version_id || !s.binding_id || !s.source_segment_id || s.start_ms===null || s.end_ms===null);
-  if (missing.length) return { ok: false, reasoning: `${master.reasoning} Voice/lip-sync is held for ${missing.length} speaking shot(s): each needs an accepted keyframe and an approved speaking voice. No provider request was sent.` };
+  if (missing.length) return { ok: false, reasoning: `Voice/lip-sync is held for ${missing.length} speaking shot(s): each needs an accepted keyframe, approved speaking voice, and producer-approved exact utterance binding. Voicing and provider calls were not started.` };
+  // Only after every speaking shot has safe, explicit source identity may the
+  // stage build/reuse the cast master (which can involve paid re-voicing).
+  const master = await runVoicing(projectId);
+  if (!master.ok) return master;
   const sync = new KlingLipSyncProvider(); let made = 0;
   for (const shot of shots) {
     const visible = (db.prepare(`SELECT COUNT(*) count FROM shot_characters WHERE shot_id=?`).get(shot.id) as { count: number }).count;
