@@ -12,6 +12,9 @@ import { buildProductionCrewView, type NegotiationLogEntry } from "../production
 import { createReuseCandidate, extractLibraryFrame, registerGeneratedMediaLibraryItems } from "../../pipeline/media-generation/media-library.js";
 import { bindShotUtterance } from "../../pipeline/voice-lipsync/utterance-binding.js";
 import { acceptLipSyncCandidate } from "../../pipeline/voice-lipsync/candidate-selection.js";
+import { acceptFinalVideoCandidate, generateNonSpeakingVideoCandidate } from "../../pipeline/media-generation/final-video.js";
+import { GeminiDraftVideoProvider, GeminiVideoProvider } from "../../providers/gemini/index.js";
+import { KlingVideoProvider } from "../../providers/kling/index.js";
 
 export const projectsRouter = Router();
 
@@ -159,6 +162,14 @@ projectsRouter.post("/:id/shots/:shotId/utterance-binding", (req,res) => {
 });
 projectsRouter.post("/:id/lip-sync-candidates/:attemptId/accept", (req,res) => {
   try { res.status(201).json(acceptLipSyncCandidate(getDb(),req.params.id,req.params.attemptId)); }
+  catch (error) { res.status(400).json({error:(error as Error).message}); }
+});
+projectsRouter.post("/:id/shots/:shotId/final-video", async (req,res) => {
+  try { res.status(201).json(await generateNonSpeakingVideoCandidate(getDb(),req.params.id,req.params.shotId,{veo:new GeminiVideoProvider(),kling:new KlingVideoProvider(),draft:new GeminiDraftVideoProvider()})); }
+  catch (error) { res.status(400).json({error:(error as Error).message}); }
+});
+projectsRouter.post("/:id/final-video-candidates/:attemptId/accept", (req,res) => {
+  try { res.status(201).json(acceptFinalVideoCandidate(getDb(),req.params.id,req.params.attemptId,req.body?.durationMs)); }
   catch (error) { res.status(400).json({error:(error as Error).message}); }
 });
 

@@ -1,0 +1,32 @@
+import { randomUUID } from "node:crypto";
+import type { DatabaseSync } from "node:sqlite";
+import type { DraftVideoProvider, VideoProvider } from "../../providers/types.js";
+import { generateFinalVideoWithFallback } from "./generate-final-with-fallback.js";
+
+export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, projectId:string, shotId:string, providers:{veo:VideoProvider;kling:VideoProvider;draft:DraftVideoProvider}) {
+  const shot=db.prepare(`SELECT sh.id,sh.action FROM shots sh JOIN scenes s ON s.id=sh.scene_id WHERE sh.id=? AND s.project_id=? AND sh.needs_lip_sync=0`).get(shotId,projectId) as {id:string;action:string}|undefined;
+  if (!shot) throw new Error("Only a non-speaking shot in this project can receive ordinary final video.");
+  const selected=db.prepare("SELECT c.id FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE c.shot_id=? AND ga.status='accepted'").get(shotId) as {id:string}|undefined;
+  if (selected) return {status:"reused" as const,clipId:selected.id};
+  const prior=db.prepare("SELECT id,status,result_asset_path FROM generation_attempts WHERE shot_id=? AND operation='generate_final_video' ORDER BY created_at DESC LIMIT 1").get(shotId) as {id:string;status:string;result_asset_path:string|null}|undefined;
+  if (prior) return {status:"held" as const,attemptId:prior.id,reason:`Existing final-video candidate is ${prior.status}; reconcile or review it before another request.`};
+  const keyframe=db.prepare("SELECT result_asset_path,prompt FROM generation_attempts WHERE shot_id=? AND operation='generate' AND status='accepted' AND result_asset_path IS NOT NULL ORDER BY created_at DESC LIMIT 1").get(shotId) as {result_asset_path:string;prompt:string|null}|undefined;
+  if (!keyframe) throw new Error("Final video is held: this shot needs an accepted reviewed keyframe.");
+  const characters=db.prepare("SELECT sc.character_id characterId,cv.id characterVersionId FROM shot_characters sc JOIN character_versions cv ON cv.character_id=sc.character_id AND cv.status='approved' WHERE sc.shot_id=?").all(shotId) as Array<{characterId:string;characterVersionId:string}>;
+  if (!characters.length && /character|person|jesus/i.test(shot.action)) throw new Error("Final video is held: visible canon characters need approved versions.");
+  const result=await generateFinalVideoWithFallback(providers.veo,providers.kling,providers.draft,{shotId,prompt:keyframe.prompt ?? shot.action,characters},{resolution:"720p",startFrame:{path:keyframe.result_asset_path},durationSeconds:8});
+  const id=randomUUID(), now=Date.now();
+  db.prepare("INSERT INTO generation_attempts (id,shot_id,provider,model,operation,resolution,prompt,status,result_asset_path,cost_usd,created_at) VALUES (?,?,?,?,?,'720p',?,'hold_for_review',?,?,?)").run(id,shotId,result.provenance.provider,result.provenance.model,"generate_final_video",result.provenance.prompt,result.media?.path ?? null,result.cost.usd,now);
+  db.prepare("INSERT INTO cost_ledger_entries (id,project_id,generation_attempt_id,amount_usd,created_at) VALUES (?,?,?,?,?)").run(randomUUID(),projectId,id,result.cost.usd,now);
+  db.prepare("INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'qc',?,0,?)").run(randomUUID(),projectId,shotId,`Final-video candidate ${id} (${result.tier}) requires producer review before timeline selection.`,now);
+  return {status:"candidate" as const,attemptId:id};
+}
+
+export function acceptFinalVideoCandidate(db:DatabaseSync, projectId:string, attemptId:string, durationMs:number) {
+  if (!Number.isInteger(durationMs)||durationMs<1) throw new Error("A verified positive video duration is required.");
+  const row=db.prepare(`SELECT ga.shot_id,ga.status,ga.result_asset_path FROM generation_attempts ga JOIN shots sh ON sh.id=ga.shot_id JOIN scenes s ON s.id=sh.scene_id WHERE ga.id=? AND s.project_id=? AND ga.operation='generate_final_video' AND sh.needs_lip_sync=0`).get(attemptId,projectId) as {shot_id:string;status:string;result_asset_path:string|null}|undefined;
+  if (!row?.result_asset_path) throw new Error("Final-video candidate is not retained in this project.");
+  const old=db.prepare("SELECT id FROM clips WHERE generation_attempt_id=?").get(attemptId) as {id:string}|undefined; if(old)return {clipId:old.id,reused:true};
+  if(row.status!=="hold_for_review"&&row.status!=="accepted")throw new Error("Only a held final-video candidate can be accepted.");
+  const id=randomUUID(); db.exec("BEGIN IMMEDIATE"); try { db.prepare("UPDATE generation_attempts SET status='accepted' WHERE id=? AND status='hold_for_review'").run(attemptId); db.prepare("INSERT INTO clips (id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at) VALUES (?,?,?,0,?,?)").run(id,row.shot_id,attemptId,durationMs,Date.now()); db.exec("COMMIT"); }catch(e){db.exec("ROLLBACK");throw e;} return {clipId:id,reused:false};
+}
