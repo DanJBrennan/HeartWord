@@ -1,8 +1,9 @@
+import { PRODUCTION_ROLE_REGISTRY } from "../pipeline/creative-direction/role-registry.js";
 /** Canonical roster metadata shared by the control room and producer-facing views.
  * It describes declared ownership; it does not dispatch a model or provider. */
 export type CrewAuthority = "production" | "independent_review" | "presentation_only";
 export interface CrewRole { id: string; label: string; owner: string; authority: CrewAuthority; runtime: "implemented" | "declared" | "presentation"; owns: string; cannot: string; }
-export const PRODUCTION_CREW: readonly CrewRole[] = [
+const LEGACY_PRODUCTION_CREW: readonly CrewRole[] = [
   { id:"coordinator", label:"Production Coordinator", owner:"Mabel", authority:"production", runtime:"declared", owns:"dependencies, saved progress, budgets, gates and escalation", cannot:"make creative, source, canon, or release decisions" },
   { id:"creative_director", label:"Creative Director", owner:"Rufus", authority:"production", runtime:"implemented", owns:"visual intent and bounded creative tradeoffs", cannot:"override fidelity findings, source, canon, cost gates, or producer holds" },
   { id:"source_alignment", label:"Source and Alignment Specialist", owner:"June", authority:"production", runtime:"declared", owns:"source completeness, quotations, speakers, audio alignment and uncertainty", cannot:"claim human linguistic approval or alter source performance" },
@@ -27,6 +28,9 @@ export const PRODUCTION_CREW: readonly CrewRole[] = [
   { id:"feasibility_challenger", label:"Feasibility / Cost / Scope Challenger", owner:"Cora", authority:"independent_review", runtime:"declared", owns:"independent feasibility challenge", cannot:"schedule or spend" },
   { id:"critics", label:"Optional presentation critics", owner:"Gene Siskel and Roger Ebert", authority:"presentation_only", runtime:"presentation", owns:"staged, non-authoritative commentary", cannot:"influence production" }
 ];
+// UI derives from the executable registry; retain the old literal only as
+// historical documentation while event aliases are migrated at read time.
+export const PRODUCTION_CREW: readonly CrewRole[] = PRODUCTION_ROLE_REGISTRY.map(role => ({ id: role.id, label: role.label, owner: role.owner, authority: role.authority, runtime: role.runtime, owns: role.owns, cannot: role.cannot }));
 export const STAGE_DEPARTMENTS: Record<string, string> = { ingestion:"source alignment", scene_breakdown:"planning", casting:"planning", media_generation:"generation", voice_lipsync:"dialogue and lip-sync", assembly:"picture and sound", qc:"quality" };
 export interface NegotiationLogEntry { id: string; narration_span_verse_ref: string; idea_id: string; round: number; role: "creative_director" | "production_director"; verdict: "approve" | "request_changes" | "reject" | "forced_final" | null; content: string; created_at: number; }
 export interface ProductionMonitorEvent { id: string; runId?: string; kind: "crew_event" | "negotiation"; sender: string; round: number; status: "active" | "completed" | "held" | "error"; current?: boolean; context: string; summary: string; createdAt: number; }
