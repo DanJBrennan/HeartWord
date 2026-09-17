@@ -15,6 +15,7 @@ import { acceptLipSyncCandidate } from "../../pipeline/voice-lipsync/candidate-s
 import { acceptFinalVideoCandidate, generateNonSpeakingVideoCandidate } from "../../pipeline/media-generation/final-video.js";
 import { GeminiDraftVideoProvider, GeminiVideoProvider } from "../../providers/gemini/index.js";
 import { KlingVideoProvider } from "../../providers/kling/index.js";
+import { attestSourceAlignment } from "../../pipeline/ingestion/source-review.js";
 
 export const projectsRouter = Router();
 
@@ -86,6 +87,14 @@ projectsRouter.post("/:id/run", async (req, res) => {
 
   const result = await runPipeline(req.params.id);
   res.json(result);
+});
+
+projectsRouter.post("/:id/source-alignment-review", (req,res) => {
+  const raw=req.body ?? {};
+  if (typeof raw.reviewerName!=="string" || typeof raw.attestation!=="string" || typeof raw.evidence!=="string" || raw.attestation.trim().toLowerCase() !== "confirm") { res.status(400).json({error:"reviewerName, evidence, and explicit attestation 'confirm' are required."}); return; }
+  if (!getDb().prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)) { res.status(404).json({error:"Project not found."}); return; }
+  try { res.status(201).json({reviewId:attestSourceAlignment(getDb(),{projectId:req.params.id,reviewerName:raw.reviewerName,attestation:raw.attestation,evidence:raw.evidence})}); }
+  catch(error) { res.status(400).json({error:(error as Error).message}); }
 });
 
 // Recovery is deliberately a separate, named producer action. It validates

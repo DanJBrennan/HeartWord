@@ -9,7 +9,8 @@ export function sourceReviewHashes(db:DatabaseSync, projectId:string) {
  const p=db.prepare("SELECT id,language,book,chapter FROM projects WHERE id=?").get(projectId) as ProjectRow|undefined; if(!p)throw new Error("Project not found.");
  const paths=resolveSourcePaths(p); const segments=db.prepare("SELECT source_path,start_ms,end_ms,speaker_character_id,verse_ref,confidence FROM audio_segments WHERE project_id=? AND layer='original_reading' ORDER BY start_ms,id").all(projectId);
  const reference=join(getDataDir(),"assets","reference","english",`${p.book}-${p.chapter}`,`${p.book}-${p.chapter}-text.docx`);
- return {sourceHash:hash([readFileSync(paths.docxPath),readFileSync(paths.audioPath),existsSync(reference)?readFileSync(reference):"missing-reference"]),alignmentHash:hash(segments)};
+ if (!existsSync(reference)) throw new Error("Required English reference source is unavailable for attestation.");
+ return {sourceHash:hash([readFileSync(paths.docxPath),readFileSync(paths.audioPath),readFileSync(reference)]),alignmentHash:hash(segments)};
 }
 export function attestSourceAlignment(db:DatabaseSync,input:{projectId:string;reviewerName:string;attestation:string;evidence:string}) {
  if(!input.reviewerName.trim()||!input.attestation.trim()||!input.evidence.trim())throw new Error("Named human attestation and evidence are required.");
