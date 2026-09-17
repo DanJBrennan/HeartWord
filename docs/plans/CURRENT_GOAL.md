@@ -2155,3 +2155,7 @@ ingestion and proves project isolation; because the synthetic source has no
 published pericope headings, actual scene breakdown holds rather than
 inventing a scene plan. This is a deliberate readiness gate, not seeded stage
 success or an assertion that the fresh chapter is production-ready.
+The same isolated suite also supplies the required published title, pericope
+heading, and parallel-reference structure, proving real ingestion and scene
+breakdown create a fresh Mark 3 scene from source structure rather than Mark
+2 data. It remains synthetic test evidence, not a source-language approval.
