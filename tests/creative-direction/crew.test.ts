@@ -58,7 +58,7 @@ describe("coordinated filmmaking", () => {
   it("cannot approve over an independent supervisor's blocking finding", async () => {
     const result = await runCrew({ phase: "planning", brief: brief(), log: () => {}, call: async prompt => {
       const role = roleFromPrompt(prompt), out = response(role);
-      if (role === "script_supervisor") out.findings.push({ shotId: "s1", severity: "blocking", evidence: "Roof opened too early", requestedChange: "Keep roof intact" });
+      if (role === "script_supervisor") out.findings.push({ shotId: "s1", severity: "blocking", evidence: "Roof opened too early", requestedChange: "Keep roof intact", confidence: 22, limitations: "The source requirement remains reviewable even though this visual inference is uncertain." });
       return out;
     } });
     expect(result.status).toBe("held");
@@ -96,6 +96,12 @@ describe("coordinated filmmaking", () => {
     expect(() => validateContribution({ ...out, directions: [out.directions[0], out.directions[0]] }, "creative_director", brief())).toThrow("Duplicate");
     expect(() => validateContribution({ ...out, colorAdjustments: [] }, "creative_director", brief())).toThrow("Unexpected");
     expect(() => validateContribution(out, "production_director", brief())).toThrow("decision");
+  });
+  it("requires bounded confidence and stated limits for each newly reported finding", () => {
+    const finding = { shotId:"s1", severity:"advisory", evidence:"Visible continuity mismatch", requestedChange:"Inspect the adjacent shots", confidence:65, limitations:"The compressed proxy cannot establish fine detail." };
+    expect(() => validateContribution({ ...response("creative_director"), findings:[{ ...finding, confidence:101 }] }, "creative_director", brief())).toThrow("Number outside");
+    expect(() => validateContribution({ ...response("creative_director"), findings:[{ ...finding, confidence:"65" }] }, "creative_director", brief())).toThrow("Number outside");
+    expect(validateContribution({ ...response("creative_director"), findings:[finding] }, "creative_director", brief()).findings[0]?.confidence).toBe(65);
   });
   it("treats missing coverage as blocking even if the Director approves", async () => {
     const result = await runCrew({ phase: "planning", brief: brief(), log: () => {}, call: async prompt => {

@@ -2032,3 +2032,8 @@ idempotently, rejects invalid chapter ranges before writing, and treats Acts
 as a distinct supported navigation identity. The navigation book range is a
 UI identity guard only; it is not a claim that source or production approval
 exists for any particular language/book/chapter.
+
+Crew findings now carry a per-finding 0–100 agent confidence estimate and a
+declared limitation beside severity, evidence, and requested change. The UI
+labels it uncalibrated; it is not an authority, vote, or gate override, and
+legacy saved findings remain visibly “not reported.”

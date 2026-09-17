@@ -123,7 +123,7 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
             <summary>{event.role.replaceAll("_", " ")} · pass {event.round}{event.error ? " · incomplete" : ""}</summary>
             {event.error && <p className="error">{event.error}</p>}
             {output && <><p>{output.summary}</p>
-              {output.findings.map((f, i) => <p key={i}><strong>{f.severity}{f.shotId ? ` · ${f.shotId}` : ""}:</strong> {f.evidence}<br />Requested change: {f.requestedChange}</p>)}
+              {output.findings.map((f, i) => <p key={i}><strong>{f.severity}{f.shotId ? ` · ${f.shotId}` : ""}:</strong> {f.evidence}<br />Confidence: {typeof f.confidence === "number" ? `${f.confidence}/100 agent estimate (uncalibrated)` : "not reported (legacy record)"}<br />Limitations: {f.limitations ?? "not reported (legacy record)"}<br />Requested change: {f.requestedChange}</p>)}
               {output.coverageRequests?.map((c, i) => <p key={i}>Coverage needed: {(c.additionalMs / 1000).toFixed(1)}s · {c.description} · {c.reason}</p>)}
               {output.pauses?.map((p, i) => <p key={`pause-${i}`}>Breathing room: {p.durationMs / 1000}s · {p.reason}</p>)}
               {output.edits?.length ? <p>{output.edits.length} shots selected, {output.edits.reduce((sum, e) => sum + e.durationMs, 0) / 1000}s of footage.</p> : null}

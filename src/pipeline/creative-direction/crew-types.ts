@@ -41,6 +41,8 @@ export interface CrewBrief {
 export interface CrewFinding {
   shotId: string | null; severity: "blocking" | "advisory";
   evidence: string; requestedChange: string;
+  /** Agent estimate for this specific finding; uncalibrated, not severity or authority. */
+  confidence: number; limitations: string;
 }
 export interface CrewContribution {
   summary: string;
