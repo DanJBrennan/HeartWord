@@ -2113,3 +2113,23 @@ production stage.
 
 Focused and full validation passed: strict typecheck, 35 Vitest files / 262
 tests, and the web production build. No live provider or media call was made.
+
+## Durable assembly and retained-evidence integrity (2026-09-17)
+
+The isolated durable chapter acceptance fixture now continues through the
+actual editing crew runner, validated Ada/Theo/Cora/Production Director
+contributions, Picture Editor plan, and FFmpeg editorial renderer. It verifies
+that a source narrator interval plus two separately producer-bound speech
+intervals by the same speaker in the same verse remain in sequence, that the
+rendered file exists, and that no extra ElevenLabs or Kling call occurs after
+the selected candidates are reused. The defect exposed by this run was fixed:
+editorial validation and cast-master lookup now use the exact original audio
+segment identity, not an ambiguous `(speaker, verse)` match. Legacy
+cast-master rows remain usable only when their old lookup is unambiguous.
+
+Evaluation adjudication no longer hashes IDs or review rows when a retained
+media artifact is missing. It reports an explicit unavailable result without
+creating an evaluation case; when available, a shot case records the exact
+selected generation attempt and its review state. This preserves evaluation as
+human-reviewed retained evidence rather than synthetic provenance. No live
+provider, production media, or Mark 4 work was performed.

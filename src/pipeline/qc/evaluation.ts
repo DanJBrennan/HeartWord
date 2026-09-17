@@ -33,15 +33,36 @@ export function retainEvaluationCase(db: DatabaseSync, input: { projectId:string
 /** Producer-facing evidence selection: hashes the retained media bytes when
  * available and snapshots relevant source/canon/lesson context. Callers never
  * supply an arbitrary artifact hash. */
-export function adjudicateRetainedEvidence(db: DatabaseSync, input: Omit<Parameters<typeof retainEvaluationCase>[1], "artifactHash" | "evidence"> & { note:string }): string {
+export type RetainedEvidenceAdjudication =
+  | { status: "retained"; id: string }
+  | { status: "unavailable"; reason: string; attemptId?: string };
+
+/**
+ * An adjudication is only evidence of the specific retained bytes the producer
+ * could inspect.  A DB row or an ID hash is not a substitute for missing media.
+ * For a shot, callers may select a retained (including unselected) attempt,
+ * but it must belong to that shot and its file must still exist.
+ */
+export function adjudicateRetainedEvidence(db: DatabaseSync, input: Omit<Parameters<typeof retainEvaluationCase>[1], "artifactHash" | "evidence"> & { note:string; generationAttemptId?:string }): RetainedEvidenceAdjudication {
   let path: string | null = null;
-  if (input.subjectType === "shot") path=(db.prepare("SELECT result_asset_path path FROM generation_attempts WHERE shot_id=? AND result_asset_path IS NOT NULL ORDER BY created_at DESC LIMIT 1").get(input.subjectId) as {path:string}|undefined)?.path ?? null;
-  if (input.subjectType === "clip") path=(db.prepare("SELECT ga.result_asset_path path FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE c.id=?").get(input.subjectId) as {path:string}|undefined)?.path ?? null;
+  let attempt: { id:string; status:string; operation:string; created_at:number } | undefined;
+  if (input.subjectType === "shot") {
+    attempt = (input.generationAttemptId
+      ? db.prepare("SELECT id,status,operation,created_at,result_asset_path path FROM generation_attempts WHERE id=? AND shot_id=?").get(input.generationAttemptId, input.subjectId)
+      : db.prepare("SELECT id,status,operation,created_at,result_asset_path path FROM generation_attempts WHERE shot_id=? AND result_asset_path IS NOT NULL ORDER BY created_at DESC,id DESC LIMIT 1").get(input.subjectId)) as typeof attempt & { path?:string };
+    path = (attempt as (typeof attempt & {path?:string}) | undefined)?.path ?? null;
+  }
+  if (input.subjectType === "clip") {
+    attempt = db.prepare("SELECT ga.id,ga.status,ga.operation,ga.created_at,ga.result_asset_path path FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE c.id=?").get(input.subjectId) as typeof attempt & { path?:string };
+    path = (attempt as (typeof attempt & {path?:string}) | undefined)?.path ?? null;
+  }
   if (input.subjectType === "audio_segment") path=(db.prepare("SELECT source_path path FROM audio_segments WHERE id=?").get(input.subjectId) as {path:string}|undefined)?.path ?? null;
   const absolute=path ? join(getDataDir(),"assets",path) : null;
-  const artifactHash=absolute && existsSync(absolute) ? createHash("sha256").update(readFileSync(absolute)).digest("hex") : digest(db.prepare("SELECT * FROM review_notes WHERE id=?").get(input.subjectId) ?? {projectId:input.projectId,subjectId:input.subjectId});
+  if (!absolute || !existsSync(absolute)) return { status:"unavailable", attemptId:attempt?.id, reason:`Retained artifact is unavailable${path ? ` at ${path}` : ""}; no evaluation case was created.` };
+  const artifactHash=createHash("sha256").update(readFileSync(absolute)).digest("hex");
   const context={source:db.prepare("SELECT source_path,start_ms,end_ms,verse_ref,confidence FROM audio_segments WHERE project_id=? AND layer='original_reading' ORDER BY start_ms").all(input.projectId),canon:db.prepare("SELECT c.id,c.name,cv.id version_id FROM characters c JOIN character_versions cv ON cv.character_id=c.id WHERE cv.status='approved'").all(),lessons:db.prepare("SELECT id,requested_change,scope_kind FROM production_lessons WHERE status='active'").all()};
-  return retainEvaluationCase(db,{...input,artifactHash,evidence:{producerNote:input.note,artifactPath:path,context}});
+  const { generationAttemptId: _generationAttemptId, ...caseInput } = input;
+  return { status:"retained", id:retainEvaluationCase(db,{...caseInput,artifactHash,evidence:{producerNote:input.note,artifactPath:path,attempt:attempt ? {id:attempt.id,status:attempt.status,operation:attempt.operation,createdAt:attempt.created_at} : null,context}}) };
 }
 
 function validatePrediction(db: DatabaseSync, p: EvaluationPrediction): void {

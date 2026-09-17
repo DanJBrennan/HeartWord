@@ -16,6 +16,9 @@ export interface CrewShot {
   verseRef: string; action: string; framing: string | null; cameraMovement: string | null;
   continuity: string | null; lighting: string | null; needsLipSync: boolean;
   characterIds: string[]; dialogueCharacterId: string | null;
+  /** Approved utterance identity for an on-camera mouth; required to
+   * distinguish repeated speaker/verse lines during editorial timing. */
+  sourceSegmentId?: string | null;
   beats: Array<{ id: string; sequence: number; notes: string | null; characterId: string | null;
     startMs: number; endMs: number }>;
   clip: { id: string; path: string; durationMs: number } | null;

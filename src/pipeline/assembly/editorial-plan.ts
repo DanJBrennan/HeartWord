@@ -24,7 +24,9 @@ export function planEditorialCut(brief: CrewBrief, editor: CrewContribution): {
     if (shot.needsLipSync) {
       const matching = audioMap.filter(p => {
         const segment = brief.audio.find(a => a.id === p.segmentId)!;
-        return segment.speakerId === shot.dialogueCharacterId && segment.verseRef === shot.verseRef;
+        return shot.sourceSegmentId
+          ? segment.id === shot.sourceSegmentId
+          : segment.speakerId === shot.dialogueCharacterId && segment.verseRef === shot.verseRef;
       });
       if (matching.length !== 1 || Math.abs(startMs - edit.sourceStartMs - matching[0]!.startMs) > 50 || cursor > matching[0]!.endMs + 50) throw new Error("Edit would move a lip-synced mouth away from its actual dialogue.");
     }

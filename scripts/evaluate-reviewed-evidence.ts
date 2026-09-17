@@ -22,7 +22,7 @@ if (command === "export" && first) {
 } else if (command === "adjudicate" && first && second) {
   const [projectId, subjectType, subjectId, label, note] = process.argv.slice(4);
   if (!["project","shot","clip","audio_segment","review_note"].includes(subjectType ?? "") || !["accept","reject","hold"].includes(label ?? "") || !note) throw new Error("adjudicate needs <projectId> <subjectType> <subjectId> <accept|reject|hold> <note>");
-  console.log(JSON.stringify({ id:adjudicateRetainedEvidence(getDb(),{projectId:projectId!,subjectType:subjectType as "project"|"shot"|"clip"|"audio_segment"|"review_note",subjectId:subjectId!,label:label as EvaluationLabel,note,protected:false,factual:false,synthetic:false}) }, null, 2));
+  console.log(JSON.stringify(adjudicateRetainedEvidence(getDb(),{projectId:projectId!,subjectType:subjectType as "project"|"shot"|"clip"|"audio_segment"|"review_note",subjectId:subjectId!,label:label as EvaluationLabel,note,protected:false,factual:false,synthetic:false}), null, 2));
 } else {
   throw new Error("Usage: list-cases <project> | adjudicate <project> <subject-type> <id> <label> <note> | export <version> | import <version> <json-file> | compare <baseline> <candidate> [held-out-project-id]");
 }

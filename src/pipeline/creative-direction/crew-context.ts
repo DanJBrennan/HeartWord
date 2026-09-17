@@ -75,7 +75,8 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
   const shots = db.prepare(`SELECT s.id, s.scene_id AS sceneId, sc.sequence AS sceneSequence, s.sequence,
     s.verse_ref AS verseRef, s.action, s.framing, s.camera_movement AS cameraMovement,
     s.continuity_notes AS continuity, sc.lighting_continuity AS lighting, s.needs_lip_sync AS needsLipSync,
-    s.dialogue_character_id AS dialogueCharacterId FROM shots s JOIN scenes sc ON sc.id = s.scene_id
+    s.dialogue_character_id AS dialogueCharacterId,
+    (SELECT source_audio_segment_id FROM shot_utterance_bindings ub WHERE ub.shot_id=s.id) AS sourceSegmentId FROM shots s JOIN scenes sc ON sc.id = s.scene_id
     WHERE sc.project_id = ? ORDER BY sc.sequence, s.sequence`).all(projectId) as unknown as CrewShot[];
   if (!shots.length) throw new Error("Create the initial shot plan before running the production crew.");
   for (const shot of shots) {

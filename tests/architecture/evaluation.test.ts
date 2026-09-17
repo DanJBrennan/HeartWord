@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { compareEvaluation, exportEvaluationPredictions, importEvaluationPredictions, retainEvaluationCase } from "../../src/pipeline/qc/evaluation.js";
+import { adjudicateRetainedEvidence, compareEvaluation, exportEvaluationPredictions, importEvaluationPredictions, retainEvaluationCase } from "../../src/pipeline/qc/evaluation.js";
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 
 describe("reviewed evidence evaluation", () => {
@@ -30,6 +30,14 @@ describe("reviewed evidence evaluation", () => {
       importEvaluationPredictions(db,"base",[{caseId:a,label:"accept",evidence:"base"},{caseId:b,label:"accept",evidence:"held-out baseline"}]);
       importEvaluationPredictions(db,"candidate",[{caseId:a,label:"accept",evidence:"candidate"},{caseId:b,label:"accept",evidence:"candidate leaked",trainingCaseIds:[b]}]);
       expect(compareEvaluation(db,{baselineVersion:"base",candidateVersion:"candidate",heldOutProjectId:"p2"}).recommendation).toBe("do_not_adopt");
+    } finally { db.close(); }
+  });
+  it("does not turn a missing retained artifact into fabricated provenance", () => {
+    const db=new DatabaseSync(":memory:"); try {
+      db.exec(readFileSync("src/db/schema.sql","utf8"));
+      db.exec("INSERT INTO projects (id,language,book,chapter,created_at,updated_at) VALUES ('p','hatam','mark',2,1,1); INSERT INTO scenes (id,project_id,sequence,verse_start,verse_end,created_at) VALUES ('s','p',1,'Mark 2:1','Mark 2:1',1); INSERT INTO shots (id,scene_id,sequence,action,created_at) VALUES ('shot','s',1,'action',1); INSERT INTO generation_attempts (id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at) VALUES ('kept','shot','fixture','fixture','generate','hold_for_review','missing.mp4',0,1)");
+      expect(adjudicateRetainedEvidence(db,{projectId:"p",subjectType:"shot",subjectId:"shot",generationAttemptId:"kept",label:"hold",note:"Producer could not open it"})).toMatchObject({status:"unavailable",attemptId:"kept"});
+      expect(db.prepare("SELECT COUNT(*) n FROM evaluation_cases").get()).toMatchObject({n:0});
     } finally { db.close(); }
   });
 });

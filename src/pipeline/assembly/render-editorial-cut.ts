@@ -61,8 +61,11 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
       let path = segment.path, startMs = segment.startMs;
       const durationMs = segment.endMs - segment.startMs;
       if (segment.speakerId) {
-        const versions = db.prepare(`SELECT source_path AS path, start_ms AS startMs, end_ms AS endMs FROM audio_segments
-          WHERE project_id = ? AND layer = 'composite_cast_master' AND speaker_character_id = ? AND verse_ref = ?`).all(projectId, segment.sourceSpeakerId ?? segment.speakerId, segment.verseRef) as Array<{ path: string; startMs: number; endMs: number }>;
+        const versions = db.prepare(`SELECT a.source_path AS path, a.start_ms AS startMs, a.end_ms AS endMs FROM audio_segments a
+          LEFT JOIN composite_audio_source_map m ON m.composite_segment_id=a.id
+          WHERE a.project_id = ? AND a.layer = 'composite_cast_master' AND a.speaker_character_id = ? AND a.verse_ref = ?
+            AND (m.original_segment_id = ? OR m.composite_segment_id IS NULL)`)
+          .all(projectId, segment.sourceSpeakerId ?? segment.speakerId, segment.verseRef, segment.id) as Array<{ path: string; startMs: number; endMs: number }>;
         if (versions.length !== 1 || Math.abs(versions[0]!.endMs - versions[0]!.startMs - durationMs) > 50) throw new Error(`A duration-matched approved cast-master segment is required for ${segment.verseRef}.`);
         path = versions[0]!.path; startMs = versions[0]!.startMs;
       }
