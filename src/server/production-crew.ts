@@ -30,7 +30,7 @@ const LEGACY_PRODUCTION_CREW: readonly CrewRole[] = [
 ];
 // UI derives from the executable registry; retain the old literal only as
 // historical documentation while event aliases are migrated at read time.
-export const PRODUCTION_CREW: readonly CrewRole[] = PRODUCTION_ROLE_REGISTRY.map(role => ({ id: role.id, label: role.label, owner: role.owner, authority: role.authority, runtime: role.runtime, owns: role.owns, cannot: role.cannot }));
+export const PRODUCTION_CREW: readonly CrewRole[] = PRODUCTION_ROLE_REGISTRY.filter(role => role.id !== "production_director").map(role => ({ id: role.id, label: role.label, owner: role.owner, authority: role.authority, runtime: role.runtime, owns: role.owns, cannot: role.cannot }));
 export const STAGE_DEPARTMENTS: Record<string, string> = { ingestion:"source alignment", scene_breakdown:"planning", casting:"planning", media_generation:"generation", voice_lipsync:"dialogue and lip-sync", assembly:"picture and sound", qc:"quality" };
 export interface NegotiationLogEntry { id: string; narration_span_verse_ref: string; idea_id: string; round: number; role: "creative_director" | "production_director"; verdict: "approve" | "request_changes" | "reject" | "forced_final" | null; content: string; created_at: number; }
 export interface ProductionMonitorEvent { id: string; runId?: string; kind: "crew_event" | "negotiation"; sender: string; round: number; status: "active" | "completed" | "held" | "error"; current?: boolean; context: string; summary: string; createdAt: number; }

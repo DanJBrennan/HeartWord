@@ -8,7 +8,7 @@ export const PLANNING_ROLES = [
 export const FINISHING_ROLES = ["picture_editor", "script_supervisor", "colorist", "sound_designer", "composer",
   "scripture_cultural_reviewer"] as const;
 export const EDITING_ROLES = ["creative_director", "picture_editor", "script_supervisor", "scripture_cultural_reviewer"] as const;
-export type CrewRole = typeof PLANNING_ROLES[number] | typeof FINISHING_ROLES[number] | "production_director";
+export type CrewRole = typeof PLANNING_ROLES[number] | typeof FINISHING_ROLES[number] | "production_director" | "fidelity_challenger" | "clarity_challenger" | "feasibility_challenger";
 export type CrewPhase = "planning" | "editing" | "finishing";
 export interface AudioPlacement { segmentId: string; sourceStartMs: number; sourceEndMs: number; startMs: number; endMs: number }
 export interface CrewShot {

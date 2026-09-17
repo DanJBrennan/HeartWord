@@ -13,15 +13,16 @@ export const PRODUCTION_ROLE_REGISTRY = [
   role("scripture_cultural_reviewer", "Miriam", "Scripture and Cultural Reviewer", ["planning","editing","finishing"], "implemented", ["scripture_cultural"]),
   role("casting_canon", "Dottie", "Casting and Canon Steward", [], "declared"),
   role("storyboard", "Pippa", "Storyboard Planner", [], "declared"),
-  role("cinematographer", "Leon", "Cinematographer", ["planning"]), role("choreographer", "Tessa", "Choreographer", ["planning"]),
+  role("cinematographer", "Leon", "Cinematographer", ["planning"], "implemented", ["cinematography"]), role("choreographer", "Tessa", "Choreographer", ["planning"], "implemented", ["choreography"]),
   role("staging_designer", "Arlo", "Production and Staging Designer", ["planning"], "implemented", ["staging", "production_designer"]),
   role("costume_designer", "Costume specialist", "Costume Designer", ["planning"], "implemented", ["costume"]), role("lighting_designer", "Lighting specialist", "Lighting Designer", ["planning"], "implemented", ["lighting"]),
   role("script_supervisor", "Orion", "Continuity Reviewer", ["planning","editing","finishing"], "implemented", ["continuity"]),
   role("generation", "Gus", "Generation Specialist", [], "declared"), role("media_quality", "Vera", "Independent Media Quality Reviewer", [], "declared"), role("dialogue_lipsync", "Kit", "Dialogue / Lip-Sync Specialist", [], "declared"),
-  role("picture_editor", "Nell", "Picture Editor", ["planning","editing","finishing"]), role("sound_designer", "Sam", "Sound Designer / Mixer", ["finishing"], "implemented", ["sound"]), role("composer", "Composer specialist", "Composer", ["finishing"]), role("colorist", "Colorist specialist", "Colorist", ["finishing"]),
-  { ...role("fidelity_challenger", "Ada", "Fidelity Challenger", [], "declared"), authority: "independent_review" }, { ...role("clarity_challenger", "Theo", "Audience Clarity Challenger", [], "declared"), authority: "independent_review" }, { ...role("feasibility_challenger", "Cora", "Feasibility Challenger", [], "declared"), authority: "independent_review" },
+  role("picture_editor", "Nell", "Picture Editor", ["planning","editing","finishing"], "implemented", ["picture_editing"]), role("sound_designer", "Sam", "Sound Designer / Mixer", ["finishing"], "implemented", ["sound"]), role("composer", "Composer specialist", "Composer", ["finishing"]), role("colorist", "Colorist specialist", "Colorist", ["finishing"], "implemented", ["color"]),
+  { ...role("fidelity_challenger", "Ada", "Fidelity Challenger", ["planning","editing","finishing"]), authority: "independent_review" }, { ...role("clarity_challenger", "Theo", "Audience Clarity Challenger", ["planning","editing","finishing"]), authority: "independent_review" }, { ...role("feasibility_challenger", "Cora", "Feasibility Challenger", ["planning","editing","finishing"]), authority: "independent_review" },
+  role("production_director", "Production Director", "Production Director", ["planning","editing","finishing"]),
   { ...role("critics", "Presentation critics", "Optional presentation critics", [], "presentation"), authority: "presentation_only" }
 ] as const satisfies readonly ProductionRole[];
 export type ExecutableRole = Extract<typeof PRODUCTION_ROLE_REGISTRY[number], { runtime: "implemented" }> ["id"] | "production_director";
-export function resolveRoleId(id: string): string | undefined { return PRODUCTION_ROLE_REGISTRY.find(r => r.id === id || r.aliases.includes(id))?.id ?? (id === "production_director" ? id : undefined); }
+export function resolveRoleId(id: string): string | undefined { return PRODUCTION_ROLE_REGISTRY.find(r => r.id === id || r.aliases.includes(id))?.id; }
 export function executableRolesFor(phase: RolePhase): string[] { return PRODUCTION_ROLE_REGISTRY.filter(r => r.runtime === "implemented" && r.phases.includes(phase)).map(r => r.id); }

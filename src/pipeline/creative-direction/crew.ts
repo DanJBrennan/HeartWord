@@ -19,6 +19,9 @@ const DUTIES: Record<CrewRole, string> = {
   sound_designer: "Listen to the attached cut. Plan atmosphere and action effects as separate cues: period-appropriate footsteps, chickens, birds, crowd room tone, cloth or handling props where supported by the scene. Use approved sfx assets, or generationRequests to the ElevenLabs sound-effects adapter for 0.5–30 second effects. Describe perspective, distance, timing, material and loop behavior. No intelligible invented speech. Preserve narration and dialogue with clear priority.",
   composer: "Listen to the cut and plan an instrumental score following the emotional arc of the passage, including deliberate introductions and pauses. Use approved music assets or generationRequests to the Google Gemini/Lyria adapter. Specify instrumentation (regional/native instruments can inspire a non-diegetic score without inventing cultural facts), texture, tempo, mood and timed development, builds/crescendos and release. Do not reuse celebratory music indiscriminately. No vocals, lyrics, chanting or spoken words. Each generated cue is 1–180 seconds and will be reviewed before mixing. Preserve speech; a crescendo belongs in an appropriate breathing space.",
   production_director: "Resolve the team's proposals against source fidelity, continuity, film intent and measured duration. Review the actual spend and outstanding coverage. Approve only when there are no blocking findings or coverage requests. Ask for revision or hold with concrete reasons otherwise. You cannot waive a specialist's blocking finding or human approval requirement. Do not request new media merely to use the budget."
+  ,fidelity_challenger: "Independently challenge source fidelity, canon and continuity using only the supplied evidence. You do not direct production or approve release; record concrete blocking findings when evidence requires a hold.",
+  clarity_challenger: "Independently challenge first-viewer clarity and dramatic coherence without trading Scripture meaning for spectacle. You do not direct production or approve release.",
+  feasibility_challenger: "Independently challenge cost, scope, missing prerequisites and production feasibility. You do not direct production, spend funds or approve release."
 };
 const text = { type: "string" };
 const number = { type: "number" };
@@ -133,18 +136,19 @@ export interface CrewRunnerOptions {
 }
 export async function runCrew(options: CrewRunnerOptions): Promise<CrewResult> {
   const { phase, brief, call, log } = options;
-  const maxCalls = options.maxCalls ?? 24;
+  const maxCalls = options.maxCalls ?? 30;
   if (!Number.isInteger(maxCalls) || maxCalls < 1 || maxCalls > 100) throw new Error("Call budget must be 1..100.");
   const contributions: CrewResult["contributions"] = {};
   let calls = 0;
   if (phase === "finishing" && (!brief.render || !options.media?.length)) {
     return { status: "incomplete", summary: "Finishing review requires the actual assembled cut, including its audio.", calls, contributions };
   }
-  const roles: CrewRole[] = [...(phase === "planning" ? PLANNING_ROLES : phase === "editing" ? EDITING_ROLES : FINISHING_ROLES), "production_director"];
+  const productionRoles: CrewRole[] = [...(phase === "planning" ? PLANNING_ROLES : phase === "editing" ? EDITING_ROLES : FINISHING_ROLES), "production_director"];
   for (let round = 1; round <= 2; round++) {
+    const roles: CrewRole[] = round === 1 ? [...productionRoles.filter(role => role !== "production_director"), "fidelity_challenger", "clarity_challenger", "feasibility_challenger", "production_director"] : productionRoles;
     for (const role of roles) {
-      const registered = role === "production_director" ? undefined : PRODUCTION_ROLE_REGISTRY.find(entry => entry.id === role || entry.aliases.includes(role));
-      if (role !== "production_director" && (!registered || registered.runtime !== "implemented")) {
+      const registered = PRODUCTION_ROLE_REGISTRY.find(entry => entry.id === role || entry.aliases.includes(role));
+      if (!registered || registered.runtime !== "implemented") {
         return { status: "incomplete", summary: `${role} is a declared role and has no executable handler.`, calls, contributions };
       }
       if (calls >= maxCalls) return { status: "incomplete", summary: "Role-call budget exhausted; no further calls or automatic approval.", calls, contributions };
