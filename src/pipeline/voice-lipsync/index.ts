@@ -21,7 +21,7 @@ export const runVoiceLipSync: Stage = async (projectId) => {
   if (!shots.length) return { ok: true, reasoning: `${master.reasoning} No on-camera speech is planned; narration remains unsynchronised as required.` };
   const missing = shots.filter(s => !s.keyframe || !s.voice_id || !s.version_id || !s.verse_ref);
   if (missing.length) return { ok: false, reasoning: `${master.reasoning} Voice/lip-sync is held for ${missing.length} speaking shot(s): each needs an accepted keyframe and an approved speaking voice. No provider request was sent.` };
-  const segments = db.prepare(`SELECT source_path,start_ms,end_ms,speaker_character_id FROM audio_segments WHERE project_id=? AND layer='composite_cast_master' AND speaker_character_id IS NOT NULL ORDER BY created_at`).all(projectId) as Array<{source_path:string;start_ms:number;end_ms:number;speaker_character_id:string}>;
+  const segments = db.prepare(`SELECT source_path,start_ms,end_ms,speaker_character_id,verse_ref FROM audio_segments WHERE project_id=? AND layer='composite_cast_master' AND speaker_character_id IS NOT NULL ORDER BY created_at`).all(projectId) as Array<{source_path:string;start_ms:number;end_ms:number;speaker_character_id:string;verse_ref:string | null}>;
   const sync = new KlingLipSyncProvider(); let made = 0;
   for (const shot of shots) {
     const visible = (db.prepare(`SELECT COUNT(*) count FROM shot_characters WHERE shot_id=?`).get(shot.id) as { count: number }).count;
