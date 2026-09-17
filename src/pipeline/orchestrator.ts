@@ -57,7 +57,7 @@ function outputIsStillUsable(projectId: string, stage: string): boolean {
   switch (stage) {
     case "ingestion": {
       const segments = (db.prepare("SELECT COUNT(*) count FROM audio_segments WHERE project_id=? AND layer='original_reading'").get(projectId) as { count: number }).count;
-      const unresolved = (db.prepare("SELECT COUNT(*) count FROM review_notes WHERE project_id=? AND source='qc' AND subject_type IN ('audio_segment','project') AND resolved=0").get(projectId) as { count: number }).count;
+      const unresolved = (db.prepare("SELECT COUNT(*) count FROM review_notes WHERE project_id=? AND source='qc' AND resolved=0 AND (subject_type='audio_segment' OR (subject_type='project' AND note LIKE 'Ingestion%'))").get(projectId) as { count: number }).count;
       return segments > 0 && unresolved === 0;
     }
     case "scene_breakdown": return (db.prepare("SELECT COUNT(*) count FROM scenes WHERE project_id=?").get(projectId) as { count: number }).count > 0;
@@ -71,10 +71,13 @@ function outputIsStillUsable(projectId: string, stage: string): boolean {
     }
     case "voice_lipsync": {
       const missing = db.prepare(`SELECT COUNT(*) count FROM shots sh JOIN scenes s ON s.id=sh.scene_id WHERE s.project_id=? AND sh.needs_lip_sync=1 AND NOT EXISTS (SELECT 1 FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE c.shot_id=sh.id AND ga.operation='lip_sync' AND ga.status='accepted' AND ga.result_asset_path IS NOT NULL)`).get(projectId) as { count: number };
-      return missing.count === 0;
+      if (missing.count) return false;
+      const media = db.prepare(`SELECT ga.result_asset_path FROM generation_attempts ga JOIN shots sh ON sh.id=ga.shot_id JOIN scenes s ON s.id=sh.scene_id WHERE s.project_id=? AND ga.operation='lip_sync' AND ga.status='accepted'`).all(projectId) as Array<{result_asset_path:string}>;
+      const master = db.prepare("SELECT source_path FROM audio_segments WHERE project_id=? AND layer='composite_cast_master'").all(projectId) as Array<{source_path:string}>;
+      return media.every(row => file(row.result_asset_path)) && master.length > 0 && master.every(row => file(row.source_path));
     }
     case "assembly": return (db.prepare("SELECT result_asset_path FROM chapter_renders WHERE project_id=? ORDER BY created_at DESC LIMIT 1").all(projectId) as Array<{ result_asset_path: string }>).some(row => file(row.result_asset_path));
-    case "qc": return outputIsStillUsable(projectId, "assembly");
+    case "qc": return outputIsStillUsable(projectId, "assembly") && !!db.prepare("SELECT id FROM stage_executions WHERE project_id=? AND stage='qc' AND status='completed' LIMIT 1").get(projectId);
     default: return false;
   }
 }
