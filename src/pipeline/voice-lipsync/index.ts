@@ -39,6 +39,8 @@ export const runVoiceLipSync: Stage = async (projectId) => {
     const full = matching[0]!;
     const scale=(full.end_ms-full.start_ms)/(full.original_end-full.original_start);
     const audio={path:full.source_path,startMs:Math.round((shot.start_ms!-full.original_start)*scale),endMs:Math.round((shot.end_ms!-full.original_start)*scale)};
+    const selected = db.prepare(`SELECT c.id FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE ga.shot_id=? AND ga.operation='lip_sync' AND ga.status='accepted'`).get(shot.id) as {id:string}|undefined;
+    if (selected) continue;
     const prior = db.prepare(`SELECT id,status FROM generation_attempts WHERE shot_id=? AND operation='lip_sync' ORDER BY created_at DESC LIMIT 1`).get(shot.id) as { id:string; status:string } | undefined;
     if (prior) return { ok: false, reasoning: `${master.reasoning} Voice/lip-sync is held: shot ${shot.id} already has retained lip-sync candidate ${prior.id} (${prior.status}); review or explicitly supersede it before another paid request.` };
     const result = await sync.sync({ characterId: shot.dialogue_character_id, characterVersionId: shot.version_id! }, audio, { path: shot.keyframe! });
@@ -52,5 +54,5 @@ export const runVoiceLipSync: Stage = async (projectId) => {
     db.prepare(`INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'qc',?,0,?)`).run(randomUUID(), projectId, shot.id, `Lip-sync candidate ${attempt} returned by ${result.provenance.provider}; producer review is required before it can become a clip.`, now);
     made++;
   }
-  return { ok: false, reasoning: `${master.reasoning} Recorded ${made} speaking lip-sync candidate(s), all held for producer review; narration was not lip-synced.` };
+  return made === 0 ? { ok: true, reasoning: `${master.reasoning} Every speaking treatment already has an accepted selected clip; narration was not lip-synced.` } : { ok: false, reasoning: `${master.reasoning} Recorded ${made} speaking lip-sync candidate(s), all held for producer review; narration was not lip-synced.` };
 };

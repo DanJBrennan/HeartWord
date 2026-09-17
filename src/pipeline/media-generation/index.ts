@@ -3,12 +3,15 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
 import { GeminiImageProvider } from "../../providers/gemini/index.js";
+import { GeminiDraftVideoProvider, GeminiVideoProvider } from "../../providers/gemini/index.js";
+import { KlingVideoProvider } from "../../providers/kling/index.js";
 import type { CharacterRef } from "../../providers/types.js";
 import type { ProjectRow } from "../ingestion/index.js";
 import { loadSuggestedFix, runShotReview, type SuggestedFix } from "../qc/director.js";
 import { matchesBeatScope, tagNote } from "../qc/beat-scope.js";
 import { requireCurrentPlan, directionsFromRun } from "../creative-direction/crew-store.js";
 import type { StageResult } from "../types.js";
+import { generateNonSpeakingVideoCandidate } from "./final-video.js";
 
 interface ShotRow {
   id: string;
@@ -466,6 +469,19 @@ const activeGeneration = new Set<string>();
 export const runMediaGeneration = async (projectId: string, onlyShotIds?: string[]): Promise<StageResult> => {
   if (activeGeneration.has(projectId)) return { ok: false, reasoning: "Keyframe generation is already running for this chapter." };
   activeGeneration.add(projectId);
-  try { return await generateKeyframes(projectId, onlyShotIds); }
+  try {
+    const keyframes=await generateKeyframes(projectId, onlyShotIds);
+    if (!keyframes.ok) return keyframes;
+    const db=getDb();
+    const shots=db.prepare(`SELECT sh.id FROM shots sh JOIN scenes s ON s.id=sh.scene_id WHERE s.project_id=? AND sh.needs_lip_sync=0`).all(projectId) as Array<{id:string}>;
+    const outcomes=[] as string[];
+    for (const shot of shots) {
+      if (onlyShotIds && !onlyShotIds.includes(shot.id)) continue;
+      const out=await generateNonSpeakingVideoCandidate(db,projectId,shot.id,{veo:new GeminiVideoProvider(),kling:new KlingVideoProvider(),draft:new GeminiDraftVideoProvider()});
+      outcomes.push(out.status);
+    }
+    const waiting=outcomes.filter(s=>s==="candidate"||s==="held").length;
+    return waiting ? {ok:false,reasoning:`${keyframes.reasoning} ${waiting} non-speaking final-video candidate(s) await producer review/reconciliation; no clip was auto-selected.`} : keyframes;
+  }
   finally { activeGeneration.delete(projectId); }
 };
