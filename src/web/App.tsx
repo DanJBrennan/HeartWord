@@ -122,6 +122,7 @@ export default function App() {
   const [form, setForm] = useState({ language: "hatam", book: "mark", chapter: 2 });
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const selectedProjectRef = useRef<string | null>(null);
+  const selectionEpochRef = useRef(0);
 
   const [voices, setVoices] = useState<Voice[]>([]);
   const [voicesError, setVoicesError] = useState<string | null>(null);
@@ -206,7 +207,7 @@ export default function App() {
   }
 
   const activeProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0] ?? null;
-  function selectProject(id: string) { selectedProjectRef.current = id; setSelectedProjectId(id); setScenesWithShots([]); setCastMasterSegments([]); setReviewDrafts({}); setReviewError(null); }
+  function selectProject(id: string) { selectionEpochRef.current++; selectedProjectRef.current = id; setSelectedProjectId(id); setScenesWithShots([]); setCastMasterSegments([]); setReviewDrafts({}); setReviewError(null); setCastingResult(null); setCastingError(null); setMediaGenResult(null); setMediaGenError(null); setCastMasterResult(null); setCastMasterError(null); setCastingBusy(false); setMediaGenBusy(false); setCastMasterBusy(false); setReviewBusyShotId(null); setZoomedKeyframe(null); }
 
   async function loadCastMaster(projectId: string) {
     try {
@@ -215,7 +216,7 @@ export default function App() {
       );
       if (selectedProjectRef.current === projectId) setCastMasterSegments(segments);
     } catch (err) {
-      setCastMasterError((err as Error).message);
+      if (selectedProjectRef.current === projectId) setCastMasterError((err as Error).message);
     }
   }
 
@@ -228,20 +229,22 @@ export default function App() {
 
   async function generateCastMaster() {
     if (!activeProject) return;
+    const projectId = activeProject.id, epoch = selectionEpochRef.current;
     setCastMasterBusy(true);
     setCastMasterError(null);
     setCastMasterResult(null);
     try {
-      const result = await api<VoicingResult>(`/projects/${activeProject.id}/voicing`, { method: "POST" });
+      const result = await api<VoicingResult>(`/projects/${projectId}/voicing`, { method: "POST" });
+      if (selectedProjectRef.current !== projectId || selectionEpochRef.current !== epoch) return;
       setCastMasterResult(result);
       if (!result.ok) {
         setCastMasterError(result.reasoning);
       }
-      await loadCastMaster(activeProject.id);
+      await loadCastMaster(projectId);
     } catch (err) {
-      setCastMasterError((err as Error).message);
+      if (selectedProjectRef.current === projectId && selectionEpochRef.current === epoch) setCastMasterError((err as Error).message);
     } finally {
-      setCastMasterBusy(false);
+      if (selectedProjectRef.current === projectId && selectionEpochRef.current === epoch) setCastMasterBusy(false);
     }
   }
 
@@ -250,7 +253,7 @@ export default function App() {
       const { scenes } = await api<{ scenes: SceneWithShots[] }>(`/projects/${projectId}/shots`);
       if (selectedProjectRef.current === projectId) setScenesWithShots(scenes);
     } catch (err) {
-      setCastingError((err as Error).message);
+      if (selectedProjectRef.current === projectId) setCastingError((err as Error).message);
     }
   }
 
@@ -286,41 +289,45 @@ export default function App() {
 
   async function generateCasting() {
     if (!activeProject) return;
+    const projectId = activeProject.id, epoch = selectionEpochRef.current;
     setCastingBusy(true);
     setCastingError(null);
     setCastingResult(null);
     try {
-      const result = await api<CastingResult>(`/projects/${activeProject.id}/casting`, { method: "POST" });
+      const result = await api<CastingResult>(`/projects/${projectId}/casting`, { method: "POST" });
+      if (selectedProjectRef.current !== projectId || selectionEpochRef.current !== epoch) return;
       setCastingResult(result);
       if (!result.ok) {
         setCastingError(result.reasoning);
       }
-      await loadShots(activeProject.id);
+      await loadShots(projectId);
     } catch (err) {
-      setCastingError((err as Error).message);
+      if (selectedProjectRef.current === projectId && selectionEpochRef.current === epoch) setCastingError((err as Error).message);
     } finally {
-      setCastingBusy(false);
+      if (selectedProjectRef.current === projectId && selectionEpochRef.current === epoch) setCastingBusy(false);
     }
   }
 
   async function generateMedia() {
     if (!activeProject) return;
+    const projectId = activeProject.id, epoch = selectionEpochRef.current;
     setMediaGenBusy(true);
     setMediaGenError(null);
     setMediaGenResult(null);
     try {
-      const result = await api<MediaGenerationResult>(`/projects/${activeProject.id}/media-generation`, {
+      const result = await api<MediaGenerationResult>(`/projects/${projectId}/media-generation`, {
         method: "POST"
       });
+      if (selectedProjectRef.current !== projectId || selectionEpochRef.current !== epoch) return;
       setMediaGenResult(result);
       if (!result.ok) {
         setMediaGenError(result.reasoning);
       }
-      await loadShots(activeProject.id);
+      await loadShots(projectId);
     } catch (err) {
-      setMediaGenError((err as Error).message);
+      if (selectedProjectRef.current === projectId && selectionEpochRef.current === epoch) setMediaGenError((err as Error).message);
     } finally {
-      setMediaGenBusy(false);
+      if (selectedProjectRef.current === projectId && selectionEpochRef.current === epoch) setMediaGenBusy(false);
     }
   }
 
@@ -513,7 +520,7 @@ export default function App() {
         )}
       </section>
 
-      <MediaLibrary projectId={activeProject?.id ?? null} targets={scenesWithShots.flatMap(scene => scene.shots.map(shot => ({ id:shot.id, sequence:shot.sequence, action:shot.action })))} />
+      <MediaLibrary key={activeProject?.id ?? "no-project"} projectId={activeProject?.id ?? null} targets={scenesWithShots.flatMap(scene => scene.shots.map(shot => ({ id:shot.id, sequence:shot.sequence, action:shot.action })))} />
 
       <section>
         <h2>Voice casting</h2>
