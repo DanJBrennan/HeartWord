@@ -1994,3 +1994,11 @@ test's duplicate-score and timing protection while excluding encoder rounding
 noise. The four identity-free specialist cards are also included in the
 default cast-only layout; Benny is explicitly outside its active production
 crew frame. Full typecheck, web build, and all 245 tests pass.
+
+An endpoint-level correction-learning regression test now uses an isolated
+SQLite database, an ephemeral local Express server, and a mocked synthesis
+response to verify the full producer path: invalid reusable guidance writes
+nothing; a valid correction becomes a candidate; review creates an immutable
+active successor and history; and only that matching book/language/region
+lesson reaches a different chapter's brief, excluding disabled and
+wrong-language records.
