@@ -2159,3 +2159,24 @@ The same isolated suite also supplies the required published title, pericope
 heading, and parallel-reference structure, proving real ingestion and scene
 breakdown create a fresh Mark 3 scene from source structure rather than Mark
 2 data. It remains synthetic test evidence, not a source-language approval.
+
+## Fresh reviewed full-chapter proof (2026-09-17)
+
+An additional isolated Hatam Mark 5 acceptance test now follows one new
+synthetic chapter through the normal durable orchestrator: low-confidence
+ingestion first holds; a named reviewer submits the existing HTTP
+source-alignment attestation against the exact DOCX, audio, English reference,
+and alignment hashes; real scene breakdown, casting, crew planning, media,
+voicing, lip-sync selection, per-shot FFmpeg assembly, Picture Editor
+assembly, and finishing review then run. Provider/model seams alone are
+mocked. The fixture uses approved synthetic Papuan canon and voice data,
+explicit producer bindings for two distinct same-speaker source intervals,
+and explicit candidate acceptance; narration is not lip-synced. A final rerun
+reuses the durable ledger without another provider submission.
+
+This exposed and fixed a ledger defect in the QC output check: it previously
+required the currently-running QC execution to already be completed, making a
+successful finishing review self-hold. QC now validates its retained approved
+finishing run while preserving the existing completed-ledger path for recovered
+legacy work. The proof uses temporary SQLite/assets only; it performs no live
+provider call, production-data write, Mark 4 work, or push.

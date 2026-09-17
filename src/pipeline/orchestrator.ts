@@ -80,7 +80,14 @@ function outputIsStillUsable(projectId: string, stage: string): boolean {
       return media.every(row => file(row.result_asset_path)) && master.length > 0 && master.every(row => file(row.source_path));
     }
     case "assembly": return (db.prepare("SELECT result_asset_path FROM chapter_renders WHERE project_id=? ORDER BY created_at DESC LIMIT 1").all(projectId) as Array<{ result_asset_path: string }>).some(row => file(row.result_asset_path));
-    case "qc": return outputIsStillUsable(projectId, "assembly") && !!db.prepare("SELECT id FROM stage_executions WHERE project_id=? AND stage='qc' AND status='completed' LIMIT 1").get(projectId);
+    // This predicate is also evaluated while the current QC lease is still
+    // `running`, immediately after runQualityControl returns. Requiring this
+    // very ledger row to be `completed` made a successful review impossible
+    // to commit: the orchestrator would turn it back into a hold before it
+    // could write completion. The retained approved finishing review is the
+    // actual QC output; the ledger records that validated result afterwards.
+    case "qc": return outputIsStillUsable(projectId, "assembly") && !!db.prepare(`SELECT id FROM production_runs WHERE project_id=? AND phase='finishing' AND status='approved' ORDER BY completed_at DESC LIMIT 1`).get(projectId)
+      || outputIsStillUsable(projectId, "assembly") && !!db.prepare(`SELECT id FROM stage_executions WHERE project_id=? AND stage='qc' AND status='completed' LIMIT 1`).get(projectId);
     default: return false;
   }
 }
