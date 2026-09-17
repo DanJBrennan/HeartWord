@@ -445,6 +445,14 @@ CREATE TABLE IF NOT EXISTS review_notes (
 );
 CREATE INDEX IF NOT EXISTS idx_review_notes_project ON review_notes(project_id);
 
+-- Named human attestation for a specific immutable source/audio alignment.
+CREATE TABLE IF NOT EXISTS source_alignment_reviews (
+  id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), reviewer_name TEXT NOT NULL,
+  reviewer_attestation TEXT NOT NULL, source_hash TEXT NOT NULL, alignment_hash TEXT NOT NULL,
+  evidence TEXT NOT NULL, created_at INTEGER NOT NULL,
+  UNIQUE(project_id, source_hash, alignment_hash)
+);
+
 -- Producer-adjudicated evaluation evidence. Cases retain a hash/address of
 -- the reviewed artifact; variants are compared but never deployed here.
 CREATE TABLE IF NOT EXISTS evaluation_cases (

@@ -14,6 +14,7 @@ import { runQualityControl } from "./qc/index.js";
 import { runSceneBreakdown } from "./scene-breakdown/index.js";
 import type { Stage, StageResult } from "./types.js";
 import { runVoiceLipSync } from "./voice-lipsync/index.js";
+import { hasCurrentSourceReview } from "./ingestion/source-review.js";
 
 const STAGES: Array<{ name: string; run: Stage }> = [
   { name: "ingestion", run: runIngestion }, { name: "scene_breakdown", run: runSceneBreakdown }, { name: "casting", run: runCasting }, { name: "media_generation", run: runMediaGeneration }, { name: "voice_lipsync", run: runVoiceLipSync }, { name: "assembly", run: runAssembly }, { name: "qc", run: runQualityControl }
@@ -58,7 +59,9 @@ function outputIsStillUsable(projectId: string, stage: string): boolean {
     case "ingestion": {
       const segments = (db.prepare("SELECT COUNT(*) count FROM audio_segments WHERE project_id=? AND layer='original_reading'").get(projectId) as { count: number }).count;
       const unresolved = (db.prepare("SELECT COUNT(*) count FROM review_notes WHERE project_id=? AND source='qc' AND resolved=0 AND (subject_type='audio_segment' OR (subject_type='project' AND note LIKE 'Ingestion%'))").get(projectId) as { count: number }).count;
-      return segments > 0 && unresolved === 0;
+      const lowConfidence=(db.prepare("SELECT COUNT(*) count FROM audio_segments WHERE project_id=? AND layer='original_reading' AND confidence < 80").get(projectId) as {count:number}).count;
+      const reviewed=lowConfidence > 0 && hasCurrentSourceReview(db,projectId);
+      return segments > 0 && (unresolved === 0 || reviewed) && (lowConfidence === 0 || reviewed);
     }
     case "scene_breakdown": return (db.prepare("SELECT COUNT(*) count FROM scenes WHERE project_id=?").get(projectId) as { count: number }).count > 0;
     case "casting": return (db.prepare("SELECT COUNT(*) count FROM shots sh JOIN scenes s ON s.id=sh.scene_id WHERE s.project_id=?").get(projectId) as { count: number }).count > 0;
