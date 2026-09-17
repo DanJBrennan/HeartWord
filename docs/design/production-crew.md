@@ -45,6 +45,18 @@ and an autonomous run use the same implementation and saved decisions.
 
 ## Role ownership and authority
 
+### Executable registry
+
+`src/pipeline/creative-direction/role-registry.ts` is the single authority for
+role identity, historical aliases, authority boundary, phase participation,
+contract, and tool availability. The producer view derives from it. The crew
+runner dispatches only roles marked `implemented`; declared and presentation
+roles fail closed. Ada, Theo, and Cora run as separate first-pass evidence
+challengers at planning, editing, and finishing milestones. Their findings can
+hold a run but never approve it or override source, canon, producer, or human
+review authority. `production_director` is an internal decision handler, not
+an additional producer-facing crew member or Mabel impersonation.
+
 The existing casting pass supplies the initial shots; specialists refine
 their direction without rewriting source words or existing shot IDs. Each
 role owns its own contribution. A Director cannot make a specialist's
