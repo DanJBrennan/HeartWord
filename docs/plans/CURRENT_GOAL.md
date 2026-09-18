@@ -1,5 +1,24 @@
 # Current Goal
 
+## Mark 3 original-reading alignment coverage complete (2026-09-18)
+
+Every original-reading interval in Mark 3 now carries either a 100%-confidence
+automated text match or a named human-reviewed record — no interval remains
+at legacy/unresolved status. The last open gap, `399.191–413.645s`, was
+closed by Dan's manual listening and recorded as a single append-only
+correction (`Mark 3:32-33`) covering the full span: the Mark 3:32 quotation
+(`Andigpoi e...bit Na`, 399.191–406s), the Mark 3:33 narration lead-in
+(`Yesus buhup`, 406–408s), and the Mark 3:33 quotation (`Ningat ne
+dipmem...ritou nya i?`, 408–413.645s). The correction's evidence field
+preserves Dan's exact sub-boundary timestamps even though the interval
+remains one recorded segment; the tooling does not yet support splitting one
+automated interval into multiple reviewable rows, so finer per-clause
+boundaries were not created.
+
+The two producer-confirmed narrated editorial intervals below remain
+deliberate review holds pending Dan's film-treatment decision; they are not
+part of this coverage milestone and are not resolved by it.
+
 ## Mark 3 narrated editorial alignment review (2026-09-18)
 
 Mark 3 now retains two producer-confirmed narrated editorial intervals as
