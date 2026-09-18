@@ -1,5 +1,37 @@
 # Current Goal
 
+## Mark 3's two spoken titles resolved as on-screen title cards (2026-09-18)
+
+Dan decided film treatment for the two Mark 3 narrated titles that are
+actually spoken (before v20/22, "Yesus kin Beelzebul", and before v31,
+"Yesus nipmem kin nikinjoi bat nya"): both display as on-screen title cards,
+not narrated in the film's audio track. This is now wired into the
+pipeline, not just documented:
+
+- `source_alignment_editorial_classifications` gained an additive
+  `film_treatment` column (`title_card` | `omit` | `narrated`, nullable —
+  NULL means undecided). Schema.sql covers fresh databases; `client.ts`'s
+  `COLUMN_MIGRATIONS` covers Dan's existing production database.
+- `recordSourceAlignmentEditorialClassification` and the
+  `/source-alignment-editorial-classifications` endpoint accept an optional
+  `filmTreatment`; the audio-segments API and `editorialAlignmentDisplay`
+  surface the resolved status (e.g. "— resolved: on-screen title card")
+  once recorded, same append-only latest-wins pattern as corrections.
+- `crew-context.ts` now looks up a resolved treatment by matching a
+  classification's `next_verse_ref` against a parsed title's `verseStart`,
+  and gives the Story Writer/Shot Director a resolved producer note
+  ("Human-resolved by Dan: display as an on-screen title card...") instead
+  of the prior always-on "do not automatically display it... unless a
+  human resolves an exception" default. An unresolved title keeps that
+  original default wording unchanged.
+
+Both Mark 3 holds now carry `film_treatment='title_card'` (recorded via the
+running app, reviewer "Dan"), and the before-v20/22 title's classification
+now also records `next_verse_ref='Mark 3:20'` (previously null) so the new
+crew-context lookup can match it. Full validation: 55 Vitest files and 307
+tests pass (2 new: a film-treatment display test and a crew-context
+producer-note test), strict typecheck, and web build all pass.
+
 ## Mark 3 has five source paragraph titles, not two (2026-09-18)
 
 The Hatam and English ESV Mark 3 source docx files both confirm five

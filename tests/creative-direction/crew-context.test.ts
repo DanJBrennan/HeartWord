@@ -12,13 +12,17 @@ import { structuralCutFindings } from "../../src/pipeline/assembly/finishing.js"
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 let db: InstanceType<typeof DatabaseSync>, directory: string;
-function docx(text: string): Buffer {
+function docxBody(xmlBody: string): Buffer {
   const name = Buffer.from("word/document.xml");
-  const bytes = Buffer.from(`<w:document><w:p><w:r><w:t>${text}</w:t></w:r></w:p></w:document>`);
+  const bytes = Buffer.from(xmlBody);
   const local = Buffer.alloc(30); local.writeUInt32LE(0x04034b50, 0); local.writeUInt16LE(name.length, 26);
   const central = Buffer.alloc(46); central.writeUInt32LE(0x02014b50, 0); central.writeUInt32LE(bytes.length, 20); central.writeUInt16LE(name.length, 28);
   const end = Buffer.alloc(22); end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(1, 10); end.writeUInt32LE(local.length + name.length + bytes.length, 16);
   return Buffer.concat([local, name, bytes, central, name, end]);
+}
+function docx(text: string): Buffer { return docxBody(`<w:document><w:p><w:r><w:t>${text}</w:t></w:r></w:p></w:document>`); }
+function docxParagraphs(lines: string[]): Buffer {
+  return docxBody(`<w:document>${lines.map(line => `<w:p><w:r><w:t>${line}</w:t></w:r></w:p>`).join("")}</w:document>`);
 }
 function file(path: string, content: string | Buffer) { const absolute = join(directory, "assets", path); mkdirSync(dirname(absolute), { recursive: true }); writeFileSync(absolute, content); }
 beforeEach(() => {
@@ -85,6 +89,20 @@ describe("immutable project brief", () => {
     expect(b.source.text[0]!.text).toBe("Original words.");
     expect(b.canon).toMatchObject([{ id: "c", versionId: "v", notes: "Approved brown robe" }]);
     expect(b.audio[0]!.endMs).toBe(8000);
+  });
+  it("surfaces a producer-resolved title-card decision instead of the default do-not-display note", () => {
+    file("source/hatam/mark-2/mark-2-text.docx", docxParagraphs([
+      "MARKUS 2", "Yesus dimig Lewi", "(Mat. 9:9-13; Luk. 5:27-32)", "1Original words. 2More words."
+    ]));
+    const unresolved = loadCrewBrief(db, directory, "p", "planning").producerNotes.find(n => n.note.includes("Yesus dimig Lewi"))!;
+    expect(unresolved.note).toContain("do not automatically display it");
+
+    db.exec(`INSERT INTO source_alignment_editorial_classifications
+      (id,project_id,audio_segment_id,classification,title_text,cross_reference_text,next_verse_ref,reviewer_name,evidence,film_treatment,source_hash,alignment_hash,created_at)
+      VALUES ('ec','p','audio','narrated_title_cross_reference','Yesus dimig Lewi','Mat. 9:9-13; Luk. 5:27-32','Mark 2:1','Dan','Confirmed spoken; approved as a title card','title_card','h','h',1)`);
+    const resolved = loadCrewBrief(db, directory, "p", "planning").producerNotes.find(n => n.note.includes("Yesus dimig Lewi"))!;
+    expect(resolved.note).toContain("Human-resolved by Dan: display as an on-screen title card.");
+    expect(resolved.note).not.toContain("do not automatically display");
   });
   it("supplies only active reusable lessons whose project, subject, language, book, and region match", () => {
     const insert = db.prepare(`INSERT INTO production_lessons

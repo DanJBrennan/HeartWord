@@ -131,8 +131,25 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
       scope_kind='global'
     ) ORDER BY created_at,id`).all(projectId, projectId, projectId, projectId, projectId, project.book, project.language, region, project.language, region, region, project.language) as NonNullable<CrewBrief["appliedLessons"]>;
   // Published titles are optional scene context only. The Story Writer and
-  // Shot Director decide whether an on-screen Hatam title serves the scene.
-  producerNotes.push(...parseNarratedParagraphTitles(sources[0]!).map((title,index)=>({id:`source-title:${index}`,subjectId:projectId,note:`Narrated paragraph title before verse ${title.verseStart}: “${title.text}”. Optional scene-title context; do not automatically display it. Separate cross-reference metadata: (${title.parallelRefs}); do not treat it as film narration or on-screen content unless a human resolves an exception.`})));
+  // Shot Director decide whether an on-screen Hatam title serves the scene,
+  // unless a human has already resolved that decision -- see the
+  // film_treatment column on source_alignment_editorial_classifications.
+  const resolvedTitleTreatments = new Map<number, { filmTreatment: string; reviewerName: string }>();
+  try {
+    for (const row of db.prepare(`SELECT next_verse_ref AS nextVerseRef, film_treatment AS filmTreatment, reviewer_name AS reviewerName
+      FROM source_alignment_editorial_classifications WHERE project_id=? AND next_verse_ref IS NOT NULL AND film_treatment IS NOT NULL ORDER BY created_at`).all(projectId) as Array<{ nextVerseRef: string; filmTreatment: string; reviewerName: string }>) {
+      const verse = Number(row.nextVerseRef.match(/:(\d+)/)?.[1]);
+      if (Number.isFinite(verse)) resolvedTitleTreatments.set(verse, { filmTreatment: row.filmTreatment, reviewerName: row.reviewerName });
+    }
+  } catch { /* pre-migration test database */ }
+  producerNotes.push(...parseNarratedParagraphTitles(sources[0]!).map((title,index)=>{
+    const resolved = resolvedTitleTreatments.get(title.verseStart);
+    const treatmentNote = !resolved ? `Optional scene-title context; do not automatically display it. Separate cross-reference metadata: (${title.parallelRefs}); do not treat it as film narration or on-screen content unless a human resolves an exception.`
+      : resolved.filmTreatment === "title_card" ? `Human-resolved by ${resolved.reviewerName}: display as an on-screen title card. Cross-reference metadata: (${title.parallelRefs}); still not film narration.`
+      : resolved.filmTreatment === "omit" ? `Human-resolved by ${resolved.reviewerName}: omit from the finished film; retained only as review evidence.`
+      : `Human-resolved by ${resolved.reviewerName}: include as narrated content in the film's audio track. Cross-reference metadata: (${title.parallelRefs}).`;
+    return { id: `source-title:${index}`, subjectId: projectId, note: `Narrated paragraph title before verse ${title.verseStart}: “${title.text}”. ${treatmentNote}` };
+  }));
   producerNotes.push(...appliedLessons.map(lesson => ({ id: lesson.id, subjectId: lesson.subjectId ?? projectId, note: `Reusable lesson (${lesson.scopeKind}): ${lesson.requestedChange}${lesson.rationale ? ` Rationale: ${lesson.rationale}` : ""}` })));
   const spentUsd = Number(db.prepare("SELECT COALESCE(SUM(amount_usd), 0) AS total FROM cost_ledger_entries WHERE project_id = ?").get(projectId)!.total);
   const audioAssets = db.prepare(`SELECT id, kind, description, path, sha256, duration_ms AS durationMs

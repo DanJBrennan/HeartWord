@@ -488,6 +488,12 @@ CREATE TABLE IF NOT EXISTS source_alignment_editorial_classifications (
   classification TEXT NOT NULL CHECK (classification IN ('narrated_title_cross_reference','mixed_editorial_transition')),
   title_text TEXT NOT NULL, cross_reference_text TEXT NOT NULL,
   next_verse_ref TEXT, reviewer_name TEXT NOT NULL, evidence TEXT NOT NULL,
+  -- A producer's resolved film-treatment decision for this narrated title:
+  -- whether it appears on screen, is omitted, or is kept as narrated audio.
+  -- NULL means undecided (the default "do not automatically display" stance
+  -- in crew-context.ts still applies). Append-only like the rest of this
+  -- table: a later row for the same audio_segment_id/next_verse_ref wins.
+  film_treatment TEXT CHECK (film_treatment IS NULL OR film_treatment IN ('title_card','omit','narrated')),
   source_hash TEXT NOT NULL, alignment_hash TEXT NOT NULL, created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_source_alignment_editorial_classifications_segment ON source_alignment_editorial_classifications(audio_segment_id, created_at);
