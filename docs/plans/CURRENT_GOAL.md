@@ -1,5 +1,67 @@
 # Current Goal
 
+## Mark 3 narrated editorial alignment review (2026-09-18)
+
+Mark 3 now retains two producer-confirmed narrated editorial intervals as
+append-only, artifact-bound classifications: `259.262–273.262s` is the
+`Yesus kin Beelzebul` title with `Mat. 12:22-32; Luk. 11:14-23, 12:10`, and
+`371.645–385.645s` is a mixed transition containing `Yesus nipmem kin
+nikinjoi bat nya` with `Mat. 12:46-50; Luk. 8:19-21` before Mark 3:31.
+Neither is silently treated as Scripture or safe-to-omit material. The
+mixed span deliberately has no invented split boundary; its automated
+Mark 3:29–31 span is retained as evidence while its film treatment remains
+held for human review.
+
+The source-alignment view surfaces this as human-reviewed title/reference
+material, including the title, citations, next Scripture marker where known,
+and retained automated span. Re-ingestion remaps these append-only records
+only to an exactly equivalent original interval, just as verse corrections;
+otherwise it fails safely rather than orphaning review evidence. A future
+provider-authorized title-aware alignment may produce finer boundaries, but
+these classifications must remain review evidence and do not authorize a
+provider call, asset generation, boundary shift, or source-audio change.
+
+## Chapter-scoped canon readiness (2026-09-17)
+
+The character-canon browser is now collapsed by default only when a selected
+chapter has a planned cast whose every needed character has both approved
+canon status and an approved version. A read-only project readiness projection
+uses planned shot-character links, not the global browser, so a fresh chapter
+states that needs will be checked after storyboard planning rather than
+claiming readiness. Any missing or unapproved needed character expands the
+section and names the gap. This changes no character, approval, casting, or
+production record.
+
+## Chapter-preparation entry point (2026-09-17)
+
+The active chapter workspace now exposes one producer-facing **Start ingestion
+and chapter preparation** control. It calls the existing durable orchestrator,
+prevents duplicate submissions, and shows every returned stage result and any
+truthful review pause. It refreshes the selected chapter's persisted state
+afterward; it does not bypass source attestation, durable holds, candidate
+review, or provider boundaries. The Reusable Media Library remains intact but
+is collapsed by default behind a disclosure control so it does not obscure the
+normal chapter-start workflow.
+
+## Source-catalog migration (2026-09-17)
+
+The immutable HeartWordData corpus is now the normal source convention rather
+than a per-chapter copied runtime folder.  Stage 1, source review, scene
+breakdown, and the durable ingestion signature resolve Hatam chapter text,
+the default FCBH Non-Drama master, and the matching English ESV text directly
+from the catalog.  A `project_source_bindings` row records the selected
+relative paths, edition, hashes, and catalog/legacy provenance; changing a
+bound source file holds reuse rather than silently reusing dependent work.
+
+The FCBH Drama edition remains a bounded catalog selection, while Non-Drama
+is the default.  Generated media and Demucs stems are outside discovery.
+Existing legacy Mark 2-style paths remain readable for compatibility.  The
+catalog reports missing required inputs (including Genesis's absent FCBH
+audio) without copying or modifying source files.  Focused catalog tests
+cover fresh Mark 3 resolution, the default edition, missing-source handling,
+no-copy behavior, and binding invalidation. Full validation: 47 Vitest files
+and 284 tests, strict typecheck, and web build pass.
+
 ## Durable recovery hardening (2026-09-16)
 
 Completed executions are now reused only when their stage outputs still exist:
@@ -2181,27 +2243,6 @@ finishing run while preserving the existing completed-ledger path for recovered
 legacy work. The proof uses temporary SQLite/assets only; it performs no live
 provider call, production-data write, Mark 4 work, or push.
 
-## Mark 3 narrated editorial alignment review (2026-09-18)
-
-Mark 3 now retains two producer-confirmed narrated editorial intervals as
-append-only, artifact-bound classifications: `259.262–273.262s` is the
-`Yesus kin Beelzebul` title with `Mat. 12:22-32; Luk. 11:14-23, 12:10`, and
-`371.645–385.645s` is a mixed transition containing `Yesus nipmem kin
-nikinjoi bat nya` with `Mat. 12:46-50; Luk. 8:19-21` before Mark 3:31.
-Neither is silently treated as Scripture or safe-to-omit material. The
-mixed span deliberately has no invented split boundary; its automated
-Mark 3:29–31 span is retained as evidence while its film treatment remains
-held for human review.
-
-The source-alignment view surfaces this as human-reviewed title/reference
-material, including the title, citations, next Scripture marker where known,
-and retained automated span. Re-ingestion remaps these append-only records
-only to an exactly equivalent original interval, just as verse corrections;
-otherwise it fails safely rather than orphaning review evidence. A future
-provider-authorized title-aware alignment may produce finer boundaries, but
-these classifications must remain review evidence and do not authorize a
-provider call, asset generation, boundary shift, or source-audio change.
-
 ## Generic Gemini source-alignment evidence (2026-09-17)
 
 Generic ingestion now applies the proven Mark 2 pattern without importing its
@@ -2233,7 +2274,7 @@ data was used in validation.
 
 ## Bounded source-evidence playback (2026-09-17)
 
-The source-alignment view now uses a bounded native-audio
+The Chapter Preparation source-alignment list now uses a bounded native-audio
 control: Play seeks to the displayed interval start, an end timer plus a
 time-update guard stops precisely at its displayed end, and stopping resets
 the next replay to that interval start. Timers are cleared on pause, unmount,

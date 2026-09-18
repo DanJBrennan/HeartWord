@@ -63,6 +63,12 @@ interface MediaGenerationResult {
   reasoning: string;
 }
 
+interface PipelineRunResult {
+  stoppedAt?: string;
+  results: Array<{ stage: string; ok: boolean; reasoning: string }>;
+}
+interface CanonReadiness { planned: boolean; allApproved: boolean; needed: Array<{ id: string; name: string; canon_status: string; has_approved_version: number }>; gaps: Array<{ id: string; name: string; canon_status: string; has_approved_version: number }>; }
+
 interface Shot {
   id: string;
   sequence: number;
@@ -147,6 +153,10 @@ export default function App() {
   const [reviewBusyShotId, setReviewBusyShotId] = useState<string | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [zoomedKeyframe, setZoomedKeyframe] = useState<{ path: string; label: string } | null>(null);
+  const [pipelineBusy, setPipelineBusy] = useState(false);
+  const [pipelineResult, setPipelineResult] = useState<PipelineRunResult | null>(null);
+  const [pipelineError, setPipelineError] = useState<string | null>(null);
+  const [canonReadiness, setCanonReadiness] = useState<CanonReadiness | null>(null);
   const [sourceSegments, setSourceSegments] = useState<SourceSegment[]>([]);
 
   async function refresh() {
@@ -210,7 +220,24 @@ export default function App() {
   }
 
   const activeProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0] ?? null;
-  function selectProject(id: string) { selectionEpochRef.current++; selectedProjectRef.current = id; setSelectedProjectId(id); setScenesWithShots([]); setCastMasterSegments([]); setReviewDrafts({}); setReviewError(null); setCastingResult(null); setCastingError(null); setMediaGenResult(null); setMediaGenError(null); setCastMasterResult(null); setCastMasterError(null); setCastingBusy(false); setMediaGenBusy(false); setCastMasterBusy(false); setReviewBusyShotId(null); setZoomedKeyframe(null); }
+  function selectProject(id: string) { selectionEpochRef.current++; selectedProjectRef.current = id; setSelectedProjectId(id); setScenesWithShots([]); setCastMasterSegments([]); setReviewDrafts({}); setReviewError(null); setCastingResult(null); setCastingError(null); setMediaGenResult(null); setMediaGenError(null); setCastMasterResult(null); setCastMasterError(null); setCastingBusy(false); setMediaGenBusy(false); setCastMasterBusy(false); setReviewBusyShotId(null); setZoomedKeyframe(null); setPipelineBusy(false); setPipelineResult(null); setPipelineError(null); setCanonReadiness(null); }
+
+  async function startChapterPreparation() {
+    if (!activeProject || pipelineBusy) return;
+    const projectId = activeProject.id, epoch = selectionEpochRef.current;
+    setPipelineBusy(true); setPipelineResult(null); setPipelineError(null);
+    try {
+      const result = await api<PipelineRunResult>(`/projects/${projectId}/run`, { method: "POST" });
+      if (selectedProjectRef.current !== projectId || selectionEpochRef.current !== epoch) return;
+      setPipelineResult(result);
+      await refresh();
+      await Promise.all([loadShots(projectId), loadCastMaster(projectId), loadCanonReadiness(projectId)]);
+    } catch (err) {
+      if (selectedProjectRef.current === projectId && selectionEpochRef.current === epoch) setPipelineError((err as Error).message);
+    } finally {
+      if (selectedProjectRef.current === projectId && selectionEpochRef.current === epoch) setPipelineBusy(false);
+    }
+  }
 
   async function loadCastMaster(projectId: string) {
     try {
@@ -230,11 +257,21 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeProject?.id]);
 
+  async function loadCanonReadiness(projectId: string) {
+    try {
+      const result = await api<CanonReadiness>(`/projects/${projectId}/canon-readiness`);
+      if (selectedProjectRef.current === projectId) setCanonReadiness(result);
+    } catch {
+      if (selectedProjectRef.current === projectId) setCanonReadiness(null);
+    }
+  }
+
   async function loadSourceSegments(projectId: string) {
     try { const result=await api<{segments:SourceSegment[]}>(`/projects/${projectId}/audio-segments?layer=original_reading`); if(selectedProjectRef.current===projectId) setSourceSegments(result.segments); }
     catch { if(selectedProjectRef.current===projectId) setSourceSegments([]); }
   }
 
+  useEffect(() => { if (activeProject) void loadCanonReadiness(activeProject.id); }, [activeProject?.id]);
   useEffect(() => { if (activeProject) void loadSourceSegments(activeProject.id); }, [activeProject?.id]);
 
   async function generateCastMaster() {
@@ -310,7 +347,7 @@ export default function App() {
       if (!result.ok) {
         setCastingError(result.reasoning);
       }
-      await loadShots(projectId);
+      await Promise.all([loadShots(projectId), loadCanonReadiness(projectId)]);
     } catch (err) {
       if (selectedProjectRef.current === projectId && selectionEpochRef.current === epoch) setCastingError((err as Error).message);
     } finally {
@@ -382,13 +419,31 @@ export default function App() {
       </section>
 
       <section>
-        <h2>Source alignment</h2>
-        {sourceSegments.length > 0 && <details><summary>Source alignment intervals — listen to anything marked uncertain</summary><ul>{sourceSegments.map(segment => <li key={segment.id}><code>{(segment.start_ms/1000).toFixed(2)}–{(segment.end_ms/1000).toFixed(2)}s</code> · {segment.verse_ref ?? (segment.editorialTitle ? "editorial material" : "unassigned")} · {segment.alignmentStatus ?? "Legacy alignment — detailed evidence not recorded"}{segment.reviewerName ? ` · reviewed by ${segment.reviewerName}` : ""}{segment.assignedText ? ` · ${segment.assignedText}` : ""}{segment.editorialTitle ? ` · title: ${segment.editorialTitle}` : ""}{segment.crossReferenceText ? ` · references: (${segment.crossReferenceText})` : ""}{segment.editorialNextVerseRef ? ` · next Scripture begins ${segment.editorialNextVerseRef}` : ""}{segment.automatedVerseRef ? ` · automated span was ${segment.automatedVerseRef}` : ""}{segment.textMatchScore !== null && segment.textMatchScore !== undefined ? ` · local text-match score ${segment.textMatchScore}/100` : ""}<br /><BoundedIntervalAudio src={`/media/${segment.source_path}`} startMs={segment.start_ms} endMs={segment.end_ms} /></li>)}</ul></details>}
-        {activeProject && sourceSegments.length === 0 && <p className="hint">No original-reading alignment intervals have been retained for this chapter yet.</p>}
+        <h2>Chapter preparation</h2>
+        {!activeProject && <p className="empty">Open a chapter workspace first.</p>}
+        {activeProject && <>
+          <p className="hint">Start with the verified chapter inputs. HeartWord will stop here when source alignment or another required producer review is needed; it does not skip those safeguards.</p>
+          <button type="button" onClick={() => void startChapterPreparation()} disabled={pipelineBusy}>
+            {pipelineBusy ? "Preparing chapter…" : "Start ingestion and chapter preparation"}
+          </button>
+          {pipelineError && <p className="error">{pipelineError}</p>}
+          {pipelineResult && <div aria-live="polite">
+            <p className={pipelineResult.stoppedAt ? "hint" : "approved"}>
+              {pipelineResult.stoppedAt ? `Preparation paused at ${pipelineResult.stoppedAt.replaceAll("_", " ")}. Review the reason below before continuing.` : "Chapter preparation completed."}
+            </p>
+            <ol>{pipelineResult.results.map((result) => <li key={result.stage}><strong>{result.stage.replaceAll("_", " ")}</strong> — {result.reasoning}</li>)}</ol>
+          </div>}
+          {sourceSegments.length > 0 && <details><summary>Source alignment intervals — listen to anything marked uncertain</summary><ul>{sourceSegments.map(segment => <li key={segment.id}><code>{(segment.start_ms/1000).toFixed(2)}–{(segment.end_ms/1000).toFixed(2)}s</code> · {segment.verse_ref ?? (segment.editorialTitle ? "editorial material" : "unassigned")} · {segment.alignmentStatus ?? "Legacy alignment — detailed evidence not recorded"}{segment.reviewerName ? ` · reviewed by ${segment.reviewerName}` : ""}{segment.assignedText ? ` · ${segment.assignedText}` : ""}{segment.editorialTitle ? ` · title: ${segment.editorialTitle}` : ""}{segment.crossReferenceText ? ` · references: (${segment.crossReferenceText})` : ""}{segment.editorialNextVerseRef ? ` · next Scripture begins ${segment.editorialNextVerseRef}` : ""}{segment.automatedVerseRef ? ` · automated span was ${segment.automatedVerseRef}` : ""}{segment.textMatchScore !== null && segment.textMatchScore !== undefined ? ` · local text-match score ${segment.textMatchScore}/100` : ""}<br /><BoundedIntervalAudio src={`/media/${segment.source_path}`} startMs={segment.start_ms} endMs={segment.end_ms} /></li>)}</ul></details>}
+        </>}
       </section>
 
+      <details key={activeProject?.id ?? "no-project"} open={Boolean(canonReadiness?.planned && !canonReadiness.allApproved)}>
+        <summary>{canonReadiness?.allApproved ? "All identified chapter characters are approved." : canonReadiness?.planned ? `Character canon needs attention: ${canonReadiness.gaps.length} gap${canonReadiness.gaps.length === 1 ? "" : "s"}.` : "Character canon — needs will be checked after storyboard planning."}</summary>
       <section>
         <h2>Character canon</h2>
+        {canonReadiness?.planned && !canonReadiness.allApproved && <p className="error">Resolve before media generation: {canonReadiness.gaps.map(character => `${character.name}${character.canon_status !== "approved" ? " is not approved" : " has no approved version"}`).join("; ")}.</p>}
+        {canonReadiness?.allApproved && <p className="approved">All characters identified by this chapter's planned shots have an approved canon record and version.</p>}
+        {!canonReadiness?.planned && <p className="hint">No storyboard cast is recorded for this chapter yet. This list remains available, but it does not establish chapter readiness.</p>}
         <ul>
           {characters.map((c) => (
             <li key={c.id}>
@@ -402,6 +457,7 @@ export default function App() {
           )}
         </ul>
       </section>
+      </details>
 
       <section>
         <h2>Casting &amp; direction</h2>
@@ -536,7 +592,10 @@ export default function App() {
         )}
       </section>
 
-      <MediaLibrary key={activeProject?.id ?? "no-project"} projectId={activeProject?.id ?? null} targets={scenesWithShots.flatMap(scene => scene.shots.map(shot => ({ id:shot.id, sequence:shot.sequence, action:shot.action })))} />
+      <details>
+        <summary>Reusable media library</summary>
+        <MediaLibrary key={activeProject?.id ?? "no-project"} projectId={activeProject?.id ?? null} targets={scenesWithShots.flatMap(scene => scene.shots.map(shot => ({ id:shot.id, sequence:shot.sequence, action:shot.action })))} />
+      </details>
 
       <section>
         <h2>Voice casting</h2>

@@ -146,6 +146,20 @@ projectsRouter.post("/:id/source-alignment-editorial-classifications", (req,res)
   catch(error){res.status(400).json({error:(error as Error).message});}
 });
 
+// Read-only, chapter-scoped canon readiness.  A global approved character is
+// not assumed needed until a planned shot names it, and an approved character
+// still needs at least one approved version before media generation can use it.
+projectsRouter.get("/:id/canon-readiness", (req, res) => {
+  const db = getDb();
+  if (!db.prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)) { res.status(404).json({ error: "Project not found." }); return; }
+  const needed = db.prepare(`SELECT DISTINCT c.id,c.name,c.canon_status,
+    EXISTS(SELECT 1 FROM character_versions cv WHERE cv.character_id=c.id AND cv.status='approved') AS has_approved_version
+    FROM shots sh JOIN scenes s ON s.id=sh.scene_id JOIN shot_characters sc ON sc.shot_id=sh.id JOIN characters c ON c.id=sc.character_id
+    WHERE s.project_id=? ORDER BY c.name`).all(req.params.id) as Array<{id:string;name:string;canon_status:string;has_approved_version:number}>;
+  const gaps = needed.filter(character => character.canon_status !== "approved" || !character.has_approved_version);
+  res.json({ planned: needed.length > 0, allApproved: needed.length > 0 && gaps.length === 0, needed, gaps });
+});
+
 
 projectsRouter.get("/:id/audio-segments", (req, res) => {
   const db = getDb();
