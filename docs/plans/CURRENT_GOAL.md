@@ -1,5 +1,49 @@
 # Current Goal
 
+## Mark 3 has five source paragraph titles, not two (2026-09-18)
+
+The Hatam and English ESV Mark 3 source docx files both confirm five
+paragraph titles, matching English section-heading placement: before v1
+("A Man with a Withered Hand"), before v7 ("A Great Crowd Follows Jesus"),
+before v13 ("The Twelve Apostles"), before v20/22 ("Blasphemy Against the
+Holy Spirit" — already the recorded `Yesus kin Beelzebul` hold), and before
+v31 (already the recorded `Yesus nipmem kin nikinjoi bat nya` hold). Only the
+last two had recorded review evidence before this pass. The first three had
+none, and the audio segments around them show no separate interval for
+title material, so their spoken status was unconfirmed. The before-v7 title
+also has no parenthesized cross-reference in the source text, unlike the
+other four, which the existing editorial-classification schema does not yet
+have a slot for (it requires non-empty cross-reference text).
+
+Dan manually reviewed the audio at the before-v1 title's expected position
+(2.99-18.62s, spanning the automated `mark 3:1-2` match) and confirmed the
+narrator skips the title and its cross-reference entirely, starting directly
+on verse 1. This is a different kind of finding than the two existing holds:
+it is not spoken material awaiting a film-treatment decision, but a
+confirmation that no title audio exists here at all. No correction or
+classification record was created because none of the existing schemas
+represent a "confirmed not spoken" finding, and the automated `mark 3:1-2`
+match already accurately reflects the audio with nothing to carve out.
+
+Dan also reviewed the before-v13 title's expected position (168.0-181.27s,
+spanning the end of the automated `mark 3:12` match through the end of the
+automated `mark 3:13` match) and confirmed the title and its reference
+(Mat. 10:1-4; Luk. 6:12-16) are likewise not spoken there. Same conclusion:
+no correction needed, the automated v13 match already reflects the audio.
+
+Dan also reviewed the before-v7 title's expected position (88.0-106.80s,
+spanning the end of the automated `mark 3:6` match through the end of the
+automated `mark 3:7-8` match) and confirmed it too is not spoken. This
+retires the open question of how to record a title with no cross-reference
+text (the schema gap noted above) since there is no spoken material to
+record for it.
+
+All three previously unreviewed Mark 3 titles (before v1, v7, and v13) are
+now confirmed by Dan's manual listening to be unspoken in this FCBH
+recording. Only the two already-recorded titles (before v20/22 and before
+v31) are actually voiced, and those remain the two producer-confirmed
+editorial review holds described below, unchanged by this pass.
+
 ## Mark 3 original-reading alignment coverage complete (2026-09-18)
 
 Every original-reading interval in Mark 3 now carries either a 100%-confidence
