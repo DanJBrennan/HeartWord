@@ -9,10 +9,12 @@ const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof
 let db: import("node:sqlite").DatabaseSync, dataDir = "";
 vi.mock("../../src/db/client.js", () => ({ getDb: () => db, getDataDir: () => dataDir }));
 const cleanup: string[] = [];
-afterEach(() => { db?.close(); cleanup.splice(0).forEach(path => rmSync(path, { recursive:true, force:true })); });
+const originalGeminiKey=process.env.GEMINI_API_KEY;
+afterEach(() => { if(originalGeminiKey===undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY=originalGeminiKey; db?.close(); cleanup.splice(0).forEach(path => rmSync(path, { recursive:true, force:true })); });
 function docx(text: string | string[]): Buffer { const name=Buffer.from("word/document.xml"), lines=Array.isArray(text)?text:[text], bytes=Buffer.from(`<w:document>${lines.map(line=>`<w:p><w:r><w:t>${line}</w:t></w:r></w:p>`).join("")}</w:document>`); const local=Buffer.alloc(30), central=Buffer.alloc(46), end=Buffer.alloc(22); local.writeUInt32LE(0x04034b50,0);local.writeUInt16LE(name.length,26);central.writeUInt32LE(0x02014b50,0);central.writeUInt32LE(bytes.length,20);central.writeUInt16LE(name.length,28);end.writeUInt32LE(0x06054b50,0);end.writeUInt16LE(1,10);end.writeUInt32LE(local.length+name.length+bytes.length,16);return Buffer.concat([local,name,bytes,central,name,end]); }
 
 it("ingests an isolated new chapter from real fixture files then holds before invented scene planning", async () => {
+  delete process.env.GEMINI_API_KEY;
   dataDir=mkdtempSync(join(tmpdir(),"hw-fresh-")); cleanup.push(dataDir); const assets=join(dataDir,"assets"), source=join(assets,"source","hatam","mark-3"); mkdirSync(source,{recursive:true});
   writeFileSync(join(source,"mark-3-text.docx"),docx("1Fresh approved source verse. 2Second approved source verse."));
   execFileSync("ffmpeg",["-v","error","-y","-f","lavfi","-i","sine=frequency=440:duration=1","-c:a","libmp3lame",join(source,"mark-3-fcbh-audio.mp3")]);
@@ -25,6 +27,7 @@ it("ingests an isolated new chapter from real fixture files then holds before in
 });
 
 it("uses a synthetic published heading to build an isolated fresh scene plan", async () => {
+  delete process.env.GEMINI_API_KEY;
   dataDir=mkdtempSync(join(tmpdir(),"hw-fresh-positive-")); cleanup.push(dataDir); const assets=join(dataDir,"assets"), source=join(assets,"source","hatam","mark-3"); mkdirSync(source,{recursive:true});
   writeFileSync(join(source,"mark-3-text.docx"),docx(["MARKUS 3","Synthetic published heading","(Mat. 1:1)","1Fresh approved source verse."]));
   execFileSync("ffmpeg",["-v","error","-y","-f","lavfi","-i","sine=frequency=440:duration=1","-c:a","libmp3lame",join(source,"mark-3-fcbh-audio.mp3")]);

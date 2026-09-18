@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ProductionCrew } from "./ProductionCrew";
 import { MediaLibrary } from "./MediaLibrary";
+import { BoundedIntervalAudio } from "./BoundedIntervalAudio";
 
 interface Project {
   id: string;
@@ -41,6 +42,7 @@ interface CastMasterSegment {
   verse_ref: string | null;
   speaker_name: string | null;
 }
+interface SourceSegment { id:string; source_path:string; start_ms:number; end_ms:number; verse_ref:string|null; automatedVerseRef?:string|null; alignmentStatus?:string; alignmentMethod?:string; textMatchScore?:number|null; assignedText?:string; editorialTitle?:string; crossReferenceText?:string; editorialNextVerseRef?:string|null; reviewerName?:string; }
 
 interface VoicingResult {
   ok: boolean;
@@ -145,6 +147,7 @@ export default function App() {
   const [reviewBusyShotId, setReviewBusyShotId] = useState<string | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [zoomedKeyframe, setZoomedKeyframe] = useState<{ path: string; label: string } | null>(null);
+  const [sourceSegments, setSourceSegments] = useState<SourceSegment[]>([]);
 
   async function refresh() {
     try {
@@ -226,6 +229,13 @@ export default function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeProject?.id]);
+
+  async function loadSourceSegments(projectId: string) {
+    try { const result=await api<{segments:SourceSegment[]}>(`/projects/${projectId}/audio-segments?layer=original_reading`); if(selectedProjectRef.current===projectId) setSourceSegments(result.segments); }
+    catch { if(selectedProjectRef.current===projectId) setSourceSegments([]); }
+  }
+
+  useEffect(() => { if (activeProject) void loadSourceSegments(activeProject.id); }, [activeProject?.id]);
 
   async function generateCastMaster() {
     if (!activeProject) return;
@@ -369,6 +379,12 @@ export default function App() {
           <button type="submit">Create or open chapter workspace</button>
         </form>
         {activeProject && <p className="hint">Open workspace: {activeProject.language} / {activeProject.book} {activeProject.chapter}. A new chapter begins empty and never inherits another chapter’s shots, takes, timing, or provider work.</p>}
+      </section>
+
+      <section>
+        <h2>Source alignment</h2>
+        {sourceSegments.length > 0 && <details><summary>Source alignment intervals — listen to anything marked uncertain</summary><ul>{sourceSegments.map(segment => <li key={segment.id}><code>{(segment.start_ms/1000).toFixed(2)}–{(segment.end_ms/1000).toFixed(2)}s</code> · {segment.verse_ref ?? (segment.editorialTitle ? "editorial material" : "unassigned")} · {segment.alignmentStatus ?? "Legacy alignment — detailed evidence not recorded"}{segment.reviewerName ? ` · reviewed by ${segment.reviewerName}` : ""}{segment.assignedText ? ` · ${segment.assignedText}` : ""}{segment.editorialTitle ? ` · title: ${segment.editorialTitle}` : ""}{segment.crossReferenceText ? ` · references: (${segment.crossReferenceText})` : ""}{segment.editorialNextVerseRef ? ` · next Scripture begins ${segment.editorialNextVerseRef}` : ""}{segment.automatedVerseRef ? ` · automated span was ${segment.automatedVerseRef}` : ""}{segment.textMatchScore !== null && segment.textMatchScore !== undefined ? ` · local text-match score ${segment.textMatchScore}/100` : ""}<br /><BoundedIntervalAudio src={`/media/${segment.source_path}`} startMs={segment.start_ms} endMs={segment.end_ms} /></li>)}</ul></details>}
+        {activeProject && sourceSegments.length === 0 && <p className="hint">No original-reading alignment intervals have been retained for this chapter yet.</p>}
       </section>
 
       <section>

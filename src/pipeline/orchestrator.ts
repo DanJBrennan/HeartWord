@@ -15,6 +15,7 @@ import { runSceneBreakdown } from "./scene-breakdown/index.js";
 import type { Stage, StageResult } from "./types.js";
 import { runVoiceLipSync } from "./voice-lipsync/index.js";
 import { hasCurrentSourceReview } from "./ingestion/source-review.js";
+import { resolveAndBindSourcePaths } from "./ingestion/source-catalog.js";
 
 const STAGES: Array<{ name: string; run: Stage }> = [
   { name: "ingestion", run: runIngestion }, { name: "scene_breakdown", run: runSceneBreakdown }, { name: "casting", run: runCasting }, { name: "media_generation", run: runMediaGeneration }, { name: "voice_lipsync", run: runVoiceLipSync }, { name: "assembly", run: runAssembly }, { name: "qc", run: runQualityControl }
@@ -28,13 +29,12 @@ function inputSignature(projectId: string, stage: string): string {
   if (stage === "ingestion") {
     const project = getDb().prepare(`SELECT language,book,chapter FROM projects WHERE id=?`).get(projectId) as { language: string; book: string; chapter: number } | undefined;
     if (!project) return hash({ projectId, missingProject: true });
-    const base = join(getDataDir(), "assets", "source", project.language, `${project.book}-${project.chapter}`);
-    const files = [`${project.book}-${project.chapter}-text.docx`, `${project.book}-${project.chapter}-fcbh-audio.mp3`];
+    let paths;
+    try { paths = resolveAndBindSourcePaths(getDb(), { id: projectId, ...project }); }
+    catch (error) { return hash({ project, unavailableSourceCatalog: (error as Error).message }); }
     // A content hash makes a changed source recording/text invalidate stage 1
     // and every dependent stage; a missing prerequisite has a distinct hash.
-    return hash({ project, files: files.map(file => {
-      const path = join(base, file); return existsSync(path) ? hash(readFileSync(path)) : `missing:${file}`;
-    }) });
+    return hash({ project, edition: paths.edition, provenance: paths.provenance, files: [paths.docxPath, paths.audioPath, paths.referencePath].map(path => existsSync(path) ? hash(readFileSync(path)) : `missing:${path}`) });
   }
   const sql: Record<string, string> = {
     ingestion: `SELECT language,book,chapter FROM projects WHERE id=?`,
@@ -60,8 +60,13 @@ function outputIsStillUsable(projectId: string, stage: string): boolean {
       const segments = (db.prepare("SELECT COUNT(*) count FROM audio_segments WHERE project_id=? AND layer='original_reading'").get(projectId) as { count: number }).count;
       const unresolved = (db.prepare("SELECT COUNT(*) count FROM review_notes WHERE project_id=? AND source='qc' AND resolved=0 AND (subject_type='audio_segment' OR (subject_type='project' AND note LIKE 'Ingestion%'))").get(projectId) as { count: number }).count;
       const lowConfidence=(db.prepare("SELECT COUNT(*) count FROM audio_segments WHERE project_id=? AND layer='original_reading' AND confidence < 80").get(projectId) as {count:number}).count;
-      const reviewed=lowConfidence > 0 && hasCurrentSourceReview(db,projectId);
-      return segments > 0 && (unresolved === 0 || reviewed) && (lowConfidence === 0 || reviewed);
+      // Gemini's persisted number is a text-match evidence score, not the
+      // assurance score this legacy column formerly represented. It must not
+      // silently waive the named source-review gate merely because it is high.
+      const evidence=db.prepare("SELECT status FROM alignment_evidence WHERE project_id=? ORDER BY created_at DESC LIMIT 1").get(projectId) as {status:string}|undefined;
+      const requiresSourceReview=!!evidence && ["provisional","critical_hold"].includes(evidence.status);
+      const reviewed=(lowConfidence > 0 || requiresSourceReview) && hasCurrentSourceReview(db,projectId);
+      return segments > 0 && (unresolved === 0 || reviewed) && (lowConfidence === 0 || reviewed) && (!requiresSourceReview || reviewed);
     }
     case "scene_breakdown": return (db.prepare("SELECT COUNT(*) count FROM scenes WHERE project_id=?").get(projectId) as { count: number }).count > 0;
     case "casting": return (db.prepare("SELECT COUNT(*) count FROM shots sh JOIN scenes s ON s.id=sh.scene_id WHERE s.project_id=?").get(projectId) as { count: number }).count > 0;

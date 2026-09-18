@@ -2180,3 +2180,161 @@ successful finishing review self-hold. QC now validates its retained approved
 finishing run while preserving the existing completed-ledger path for recovered
 legacy work. The proof uses temporary SQLite/assets only; it performs no live
 provider call, production-data write, Mark 4 work, or push.
+
+## Mark 3 narrated editorial alignment review (2026-09-18)
+
+Mark 3 now retains two producer-confirmed narrated editorial intervals as
+append-only, artifact-bound classifications: `259.262–273.262s` is the
+`Yesus kin Beelzebul` title with `Mat. 12:22-32; Luk. 11:14-23, 12:10`, and
+`371.645–385.645s` is a mixed transition containing `Yesus nipmem kin
+nikinjoi bat nya` with `Mat. 12:46-50; Luk. 8:19-21` before Mark 3:31.
+Neither is silently treated as Scripture or safe-to-omit material. The
+mixed span deliberately has no invented split boundary; its automated
+Mark 3:29–31 span is retained as evidence while its film treatment remains
+held for human review.
+
+The source-alignment view surfaces this as human-reviewed title/reference
+material, including the title, citations, next Scripture marker where known,
+and retained automated span. Re-ingestion remaps these append-only records
+only to an exactly equivalent original interval, just as verse corrections;
+otherwise it fails safely rather than orphaning review evidence. A future
+provider-authorized title-aware alignment may produce finer boundaries, but
+these classifications must remain review evidence and do not authorize a
+provider call, asset generation, boundary shift, or source-audio change.
+
+## Generic Gemini source-alignment evidence (2026-09-17)
+
+Generic ingestion now applies the proven Mark 2 pattern without importing its
+chapter-specific speaker identities or hand-tuned timestamps: recursively
+bounded silence-derived speech intervals are sent to Gemini for a verbatim
+source-text proposal, then placed by a weighted local monotonic-anchor chain.
+Unanchored Scripture proposals receive a second, stronger-model fill limited
+to the text between neighboring anchors. Each interval, including
+announcements, empty responses, and failed placements, is retained as source
+evidence. The timing is explicitly estimated alignment, never a forced-
+alignment or native-language claim.
+
+Before a provider submission, ingestion writes a durable `submission_started`
+record. A lost response becomes `submission_uncertain` and holds the chapter;
+it is never silently converted to a gap heuristic or automatically resubmitted.
+Unresolved placements or less than 95% verified-text coverage also hold while
+leaving intervals available for listening and source review. When Gemini is
+not configured, a conservative silence-based estimate remains available for
+provisional planning and requires named source review; tests disable the key
+rather than relying on a production-code test bypass. The chapter-preparation
+screen exposes original-reading interval playback and unassigned intervals.
+
+Goal Guardian check: this is confined to Stage 1 evidence and the existing
+producer workflow. It preserves the complete FCBH performance, adds no claim
+of Hatam comprehension, no new stage, and no automatic decision reserved for
+the producer, Ryan, or the language team. Full typecheck, 47 Vitest files / 286
+tests, and the production web build pass; no live provider or production source
+data was used in validation.
+
+## Bounded source-evidence playback (2026-09-17)
+
+The source-alignment view now uses a bounded native-audio
+control: Play seeks to the displayed interval start, an end timer plus a
+time-update guard stops precisely at its displayed end, and stopping resets
+the next replay to that interval start. Timers are cleared on pause, unmount,
+and chapter switch. This reads the unchanged source master in place; it makes
+no clips, source edits, or production-record changes, and leaves all other
+audio controls unchanged. Focused behavior tests, strict typecheck, and the
+web build pass without provider calls.
+
+## Honest source-alignment display (2026-09-17)
+
+Generic Gemini matches now store their actual local ordered text-match score
+(0–100) rather than a fabricated 0/70 confidence value. The Chapter
+Preparation list labels matched text, opening/other non-Scripture audio, and
+unresolved review-required intervals separately. It shows a numeric score only
+for a matched local text comparison; it never presents that score as calibrated
+Gemini confidence, timing certainty, forced alignment, or language approval.
+Silence-only runs read “Estimated timing — no Gemini text-match evidence,” and
+old rows without retained evidence remain explicitly legacy rather than being
+retroactively assigned detail. This is a display/evidence correction only:
+source media, source records, and pipeline authority are unchanged.
+
+## Human Mark 3 alignment correction (2026-09-17)
+
+Dan confirmed that the retained Mark 3 original-reading interval
+239.321–240.940 seconds is “Simon the Zealot,” Mark 3:18. It is stored as an
+append-only named human correction with exact segment identity, assigned text,
+evidence, and current source/alignment hashes. The source-interval display
+prefers this human-reviewed assignment and identifies its reviewer, while
+retaining the original automated/unresolved evidence rather than overwriting
+it. The same small correction path is available for a future named,
+evidence-backed interval correction; it does not alter audio, source text, or
+automatically create reusable language claims.
+
+## Second human Mark 3 alignment correction (2026-09-17)
+
+Dan also confirmed that the retained 55.733–57.990-second original-reading
+interval is the narration “But they were silent,” the closing line of Mark
+3:4. It is now an append-only human-reviewed correction attached to the exact
+interval, attributed to Dan with the supplied gloss/evidence and current
+source/alignment hashes. The source-interval list therefore presents Mark 3:4
+and human-review provenance while retaining its earlier automated
+non-Scripture result unchanged. Goal Guardian check: this is one explicit,
+auditable producer correction, not a claim that generic alignment understands
+Hatam or a change to source audio/text.
+
+## Narrated paragraph-title source spans (2026-09-18)
+
+Hatam DOCX titles are now recognized only when a non-verse line is immediately
+followed by its parenthesized cross-reference line and then a verse paragraph.
+They remain non-Scripture `paragraph_title` records with the published
+cross-reference preserved. Generic Gemini alignment supplies these title words
+as legitimate narrated source spans, identifies a matched title in Chapter
+Preparation as “Narrated paragraph/section title,” and excludes title words
+from Scripture-coverage arithmetic. Story Writer and Shot Director receive
+the titles as optional scene-title context only; no automatic display
+instruction is created. Existing Mark 3 non-Scripture intervals have no
+verbatim automated span with which to prove a title match, so they are not
+retroactively reclassified: run an explicit title-aware ingestion/review or
+record a named human interval correction. Goal Guardian check: this preserves
+published source structure and the narrator’s performance without inventing
+Scripture assignment, title display, or language claims.
+
+## Cross-reference editorial evidence (2026-09-18)
+
+Paragraph-title cross-references now enter the alignment source stream as a
+separate non-Scripture `cross_reference` span. A match is explicit evidence
+that citation speech occurred and holds its film treatment for review; it is
+never forced into a verse. A citation can be safely omitted only when a
+matched narrated title is followed by a clean matched Scripture span with no
+intervening speech evidence. Any matched citation, unresolved interval, or
+missing clean Scripture resumption is a review hold. Story Writer and Shot
+Director receive title context separately from cross-reference metadata, with
+the default that citations are not film narration/on-screen text unless a
+human resolves an exception. Existing Mark 3 has not been reassessed: run a
+new title-aware alignment pass against the retained source (then review its
+evidence) or record named human corrections; no provider or source call was
+made here. Goal Guardian check: this safeguards the complete source
+performance and prohibits both silent omission and invented citation content.
+
+## Correction-safe re-ingestion (2026-09-18)
+
+The Mark 3 re-ingestion foreign-key failure was caused by deleting
+`original_reading` rows while append-only human alignment corrections still
+referenced those rows. Re-ingestion now inserts replacement rows first,
+remaps each correction only when the replacement has exactly the same source
+start/end interval, then deletes the old rows in the same transaction. If an
+equivalent interval is absent, it rolls back and holds rather than orphaning
+or silently retargeting a correction. The real Mark 3 cached-evidence
+re-ingestion completed this remap for both Dan corrections without a provider
+call; it remains held for its pre-existing coverage review, not a database
+failure. Goal Guardian check: this preserves immutable source assets and
+human evidence while allowing a reviewable Stage 1 recovery.
+
+## Mark 3:31–32 boundary correction (2026-09-18)
+
+Dan confirmed that automated Mark 3 interval 385.645–399.645 seconds included
+the initial word `Andigpoi` of the following speech. The source waveform's
+stable preceding pause begins at 399.191 seconds. Append-only named boundary
+overrides now end Mark 3:31–32 at 399.191 and begin the next retained interval
+there, so no gap or duplication occurs and downstream users of source timing
+receive the corrected boundary. The automatic interval/evidence remains
+retained through each override's original timing and evidence. Goal Guardian
+check: this is a specific producer listening correction; it neither changes
+the source asset nor infers a broader Hatam timing rule.

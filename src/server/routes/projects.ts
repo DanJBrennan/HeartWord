@@ -7,6 +7,7 @@ import { runVoicing } from "../../pipeline/voicing/index.js";
 import { runCasting, resolveEnglishReferencePath } from "../../pipeline/casting/index.js";
 import { runMediaGeneration } from "../../pipeline/media-generation/index.js";
 import { parseSourceTextByVerse } from "../../pipeline/ingestion/parse-source-text.js";
+import { alignmentDisplay } from "../../pipeline/ingestion/alignment-display.js";
 import { parseVerseRange } from "../../pipeline/scene-breakdown/build-scenes.js";
 import { buildProductionCrewView, type NegotiationLogEntry } from "../production-crew.js";
 import { createReuseCandidate, extractLibraryFrame, registerGeneratedMediaLibraryItems } from "../../pipeline/media-generation/media-library.js";
@@ -16,6 +17,8 @@ import { acceptFinalVideoCandidate, generateNonSpeakingVideoCandidate } from "..
 import { GeminiDraftVideoProvider, GeminiVideoProvider } from "../../providers/gemini/index.js";
 import { KlingVideoProvider } from "../../providers/kling/index.js";
 import { attestSourceAlignment } from "../../pipeline/ingestion/source-review.js";
+import { recordSourceAlignmentCorrection } from "../../pipeline/ingestion/source-alignment-corrections.js";
+import { editorialAlignmentDisplay, recordSourceAlignmentEditorialClassification } from "../../pipeline/ingestion/source-alignment-editorial-classifications.js";
 
 export const projectsRouter = Router();
 
@@ -130,6 +133,18 @@ projectsRouter.get("/:id/production-crew", (req, res) => {
 
   res.json(buildProductionCrewView(project, interactionLog));
 });
+projectsRouter.post("/:id/source-alignment-corrections", (req,res) => {
+  const raw=req.body??{};
+  if(!getDb().prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)){res.status(404).json({error:"Project not found."});return;}
+  try { res.status(201).json({correctionId:recordSourceAlignmentCorrection(getDb(),{projectId:req.params.id,audioSegmentId:String(raw.audioSegmentId??""),verseRef:String(raw.verseRef??""),assignedText:String(raw.assignedText??""),reviewerName:String(raw.reviewerName??""),evidence:String(raw.evidence??"")})}); }
+  catch(error){res.status(400).json({error:(error as Error).message});}
+});
+projectsRouter.post("/:id/source-alignment-editorial-classifications", (req,res) => {
+  const raw=req.body??{};
+  if(!getDb().prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)){res.status(404).json({error:"Project not found."});return;}
+  try { res.status(201).json({classificationId:recordSourceAlignmentEditorialClassification(getDb(),{projectId:req.params.id,audioSegmentId:String(raw.audioSegmentId??""),classification:raw.classification,titleText:String(raw.titleText??""),crossReferenceText:String(raw.crossReferenceText??""),nextVerseRef:raw.nextVerseRef ? String(raw.nextVerseRef) : null,reviewerName:String(raw.reviewerName??""),evidence:String(raw.evidence??"")})}); }
+  catch(error){res.status(400).json({error:(error as Error).message});}
+});
 
 
 projectsRouter.get("/:id/audio-segments", (req, res) => {
@@ -138,7 +153,7 @@ projectsRouter.get("/:id/audio-segments", (req, res) => {
 
   const segments = db
     .prepare(
-      `SELECT a.id, a.layer, a.source_path, a.start_ms, a.end_ms, a.verse_ref, a.speaker_character_id,
+      `SELECT a.id, a.layer, a.source_path, a.start_ms, a.end_ms, a.verse_ref, a.confidence, a.speaker_character_id,
               c.name AS speaker_name
        FROM audio_segments a
        LEFT JOIN characters c ON c.id = a.speaker_character_id
@@ -147,7 +162,16 @@ projectsRouter.get("/:id/audio-segments", (req, res) => {
     )
     .all(req.params.id, layer);
 
-  res.json({ segments });
+  let evidence: { method?: string; segments?: unknown[] } | undefined;
+  if (layer === "original_reading") {
+    const row = db.prepare("SELECT result_json FROM alignment_evidence WHERE project_id=? ORDER BY created_at DESC LIMIT 1").get(req.params.id) as { result_json: string } | undefined;
+    try { evidence = row ? JSON.parse(row.result_json) : undefined; } catch { evidence = undefined; }
+  }
+  let corrections=new Map<string,{verse_ref:string;assigned_text:string;reviewer_name:string;created_at:number}>();
+  if(layer==="original_reading")try{for(const correction of db.prepare("SELECT audio_segment_id,verse_ref,assigned_text,reviewer_name,created_at FROM source_alignment_corrections WHERE project_id=? ORDER BY created_at").all(req.params.id) as Array<{audio_segment_id:string;verse_ref:string;assigned_text:string;reviewer_name:string;created_at:number}>)corrections.set(correction.audio_segment_id,correction);}catch{/* pre-migration test database */}
+  let editorials=new Map<string,{classification:Parameters<typeof editorialAlignmentDisplay>[0];title_text:string;cross_reference_text:string;next_verse_ref:string|null;reviewer_name:string;created_at:number}>();
+  if(layer==="original_reading")try{for(const editorial of db.prepare("SELECT audio_segment_id,classification,title_text,cross_reference_text,next_verse_ref,reviewer_name,created_at FROM source_alignment_editorial_classifications WHERE project_id=? ORDER BY created_at").all(req.params.id) as Array<{audio_segment_id:string;classification:Parameters<typeof editorialAlignmentDisplay>[0];title_text:string;cross_reference_text:string;next_verse_ref:string|null;reviewer_name:string;created_at:number}>)editorials.set(editorial.audio_segment_id,editorial);}catch{/* pre-migration test database */}
+  res.json({ segments: layer === "original_reading" ? (segments as Array<{ id:string;start_ms:number; end_ms:number;verse_ref?:string|null }>).map(segment => {const correction=corrections.get(segment.id), editorial=editorials.get(segment.id);return correction ? {...segment,automatedVerseRef:segment.verse_ref,verse_ref:correction.verse_ref,assignedText:correction.assigned_text,alignmentStatus:"Human-reviewed correction",alignmentMethod:"human_reviewed",textMatchScore:null,reviewerName:correction.reviewer_name,correctedAt:correction.created_at} : editorial ? {...segment,automatedVerseRef:segment.verse_ref,verse_ref:null,editorialTitle:editorial.title_text,crossReferenceText:editorial.cross_reference_text,editorialNextVerseRef:editorial.next_verse_ref,alignmentStatus:editorialAlignmentDisplay(editorial.classification),alignmentMethod:"human_reviewed_editorial",textMatchScore:null,reviewerName:editorial.reviewer_name,correctedAt:editorial.created_at} : {...segment,...alignmentDisplay(segment,evidence as Parameters<typeof alignmentDisplay>[1])};}) : segments });
 });
 
 // Runs the composite-cast-master generation (the audio half of stage 5 --

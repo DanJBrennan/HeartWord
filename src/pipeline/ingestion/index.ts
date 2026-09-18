@@ -4,11 +4,14 @@ import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
 import type { Stage } from "../types.js";
 import { detectSilences, getAudioDurationMs } from "./detect-silences.js";
-import { parseSourceText, parseSourceTextByVerse, type VerseRecord } from "./parse-source-text.js";
+import { parseNarratedParagraphTitles, parseSourceText, parseSourceTextByVerse, type VerseRecord } from "./parse-source-text.js";
 import { selectBoundaries } from "./select-boundaries.js";
 import { decodeToPcm16Mono, computePitchTrack } from "./pitch.js";
 import { scoreMark2Utterances } from "./mark-2-acoustic-scoring.js";
 import { buildMark2Segments, type SegmentDescriptor } from "./mark-2-segments.js";
+import { discoverSourcePaths, resolveAndBindSourcePaths } from "./source-catalog.js";
+import { alignWithGemini, alignmentKey } from "./gemini-alignment.js";
+import { correctionReplacementMap } from "./correction-remap.js";
 
 export interface ProjectRow {
   id: string;
@@ -25,24 +28,8 @@ export interface ProjectRow {
  * a confusing downstream error.
  */
 export function resolveSourcePaths(project: ProjectRow): { docxPath: string; audioPath: string; audioRelPath: string } {
-  const chapterDir = `${project.book}-${project.chapter}`;
-  const baseName = `${project.book}-${project.chapter}`;
-  const audioRelPath = join("source", project.language, chapterDir, `${baseName}-fcbh-audio.mp3`);
-
-  const docxPath = join(getDataDir(), "assets", "source", project.language, chapterDir, `${baseName}-text.docx`);
-  const audioPath = join(getDataDir(), "assets", audioRelPath);
-
-  if (!existsSync(docxPath)) {
-    throw new Error(
-      `No source text found at ${docxPath}. Import this chapter's text/audio into ` +
-        `HEARTWORD_DATA_DIR/assets/source/${project.language}/${chapterDir}/ before running ingestion.`
-    );
-  }
-  if (!existsSync(audioPath)) {
-    throw new Error(`No source audio found at ${audioPath}.`);
-  }
-
-  return { docxPath, audioPath, audioRelPath };
+  const paths = discoverSourcePaths(project);
+  return { docxPath: paths.docxPath, audioPath: paths.audioPath, audioRelPath: paths.audioRelPath };
 }
 
 /**
@@ -75,7 +62,10 @@ export function resolveSourcePaths(project: ProjectRow): { docxPath: string; aud
  *   language specialist to confirm — see "Ingestion & alignment (v1)" in
  *   docs/ARCHITECTURE.md for the full approach and its known limitations.
  */
-export const runIngestion: Stage = async (projectId) => {
+export const runIngestion: Stage = async (projectId) => runIngestionWithAlignment(projectId);
+
+/** Injectable seam keeps tests offline; production always uses the provider. */
+export async function runIngestionWithAlignment(projectId: string, aligner = alignWithGemini) {
   const db = getDb();
   const project = db.prepare(`SELECT id, language, book, chapter FROM projects WHERE id = ?`).get(projectId) as
     | ProjectRow
@@ -87,7 +77,7 @@ export const runIngestion: Stage = async (projectId) => {
 
   let docxPath: string, audioPath: string, audioRelPath: string;
   try {
-    ({ docxPath, audioPath, audioRelPath } = resolveSourcePaths(project));
+    ({ docxPath, audioPath, audioRelPath } = resolveAndBindSourcePaths(db, project));
   } catch (err) {
     return { ok: false, reasoning: `Ingestion failed: ${(err as Error).message}` };
   }
@@ -136,6 +126,34 @@ export const runIngestion: Stage = async (projectId) => {
     return { ok: false, reasoning: `Ingestion failed reading/analyzing ${audioPath}: ${(err as Error).message}` };
   }
 
+  // General corpus alignment is evidence-first. It never supplies speaker
+  // identities and never removes an unmatched interval; failures are retained
+  // as reviewable evidence while the conservative timing fallback remains.
+  const verseRecords = parseSourceTextByVerse(docxPath);
+  const narratedTitles = parseNarratedParagraphTitles(docxPath);
+  const sourceHash = alignmentKey(audioPath, verseRecords);
+  let geminiEvidence: Awaited<ReturnType<typeof alignWithGemini>> | null = null;
+  const cached = db.prepare("SELECT result_json,status FROM alignment_evidence WHERE project_id=? AND source_hash=?").get(projectId, sourceHash) as {result_json:string;status:string}|undefined;
+  if (cached?.status === "submission_started" || cached?.status === "submission_uncertain") {
+    return { ok: false, reasoning: "Ingestion is held: a previous Gemini alignment submission has no durable result. Reconcile its evidence explicitly; HeartWord will not repeat a possibly paid submission." };
+  }
+  if (cached?.result_json && (cached.status === "provisional" || cached.status === "critical_hold")) geminiEvidence = JSON.parse(cached.result_json);
+  else if (process.env.GEMINI_API_KEY) {
+    // Record intent before calling a paid provider. A crash or network loss is
+    // intentionally a producer hold, never an automatic duplicate request.
+    db.prepare("INSERT OR REPLACE INTO alignment_evidence(project_id,source_hash,model,result_json,status,created_at) VALUES (?,?,?,?,?,?)").run(projectId,sourceHash,"gemini-text",JSON.stringify({submittedAt:Date.now()}),"submission_started",Date.now());
+    try {
+      geminiEvidence = await aligner({ audioPath, verses: verseRecords, titles: narratedTitles, durationMs: totalDurationMs, gaps });
+      const critical = geminiEvidence.coverage < .95 || geminiEvidence.segments.some(segment => segment.status === "unresolved");
+      db.prepare("INSERT OR REPLACE INTO alignment_evidence(project_id,source_hash,model,result_json,status,created_at) VALUES (?,?,?,?,?,?)").run(projectId,sourceHash,geminiEvidence.model,JSON.stringify(geminiEvidence),critical ? "critical_hold" : "provisional",Date.now());
+    } catch (error) {
+      db.prepare("INSERT OR REPLACE INTO alignment_evidence(project_id,source_hash,model,result_json,status,created_at) VALUES (?,?,?,?,?,?)").run(projectId,sourceHash,"gemini-text",JSON.stringify({error:(error as Error).message}),"submission_uncertain",Date.now());
+      return { ok: false, reasoning: "Ingestion is held: Gemini alignment submission/result is uncertain. No fallback was written and no retry will be sent automatically." };
+    }
+  } else {
+    db.prepare("INSERT OR REPLACE INTO alignment_evidence(project_id,source_hash,model,result_json,status,created_at) VALUES (?,?,?,?,?,?)").run(projectId,sourceHash,"none",JSON.stringify({method:"estimated_timing"}),"estimated_timing",Date.now());
+  }
+
   let timings: ReturnType<typeof selectBoundaries>;
   try {
     timings = selectBoundaries(gaps, verseGroups.length, totalDurationMs);
@@ -148,35 +166,48 @@ export const runIngestion: Stage = async (projectId) => {
     };
   }
 
+  const evidenceSegments = geminiEvidence?.segments ?? [];
+  const persisted = evidenceSegments.length > 0 ? evidenceSegments.map(segment => ({
+    startMs: segment.startMs, endMs: segment.endMs, verseRef: segment.verseRef ? `${project.book} ${project.chapter}:${segment.verseRef.replace(/^v/, "")}` : null,
+    confidence: segment.status === "matched" ? Math.round(segment.score * 100) : null
+  })) : verseGroups.map((group, i) => ({ startMs: timings[i]!.startMs, endMs: timings[i]!.endMs, verseRef: group.verseRef, confidence: timings[i]!.confidence }));
   const now = Date.now();
   const segmentIds: string[] = [];
   let lowConfidenceCount = 0;
 
   db.exec("BEGIN TRANSACTION");
   try {
-    // Ingestion re-runs replace this project's previous original_reading
-    // segments rather than appending duplicates alongside them.
-    db.prepare(`DELETE FROM audio_segments WHERE project_id = ? AND layer = 'original_reading'`).run(projectId);
-    db.prepare(`DELETE FROM review_notes WHERE project_id = ? AND subject_type = 'project' AND source = 'qc'`).run(
-      projectId
-    );
-
     const insertSegment = db.prepare(
       `INSERT INTO audio_segments
          (id, project_id, layer, source_path, start_ms, end_ms, speaker_character_id, verse_ref, confidence, created_at)
        VALUES (?, ?, 'original_reading', ?, ?, ?, NULL, ?, ?, ?)`
     );
 
-    for (let i = 0; i < verseGroups.length; i++) {
+    const oldSegments=db.prepare("SELECT id,start_ms,end_ms FROM audio_segments WHERE project_id=? AND layer='original_reading'").all(projectId) as Array<{id:string;start_ms:number;end_ms:number}>;
+    let corrections:Array<{id:string;audio_segment_id:string}>=[];
+    try { corrections=db.prepare("SELECT id,audio_segment_id FROM source_alignment_corrections WHERE project_id=?").all(projectId) as typeof corrections; } catch { /* pre-migration test DB */ }
+    let editorialClassifications:Array<{id:string;audio_segment_id:string}>=[];
+    try { editorialClassifications=db.prepare("SELECT id,audio_segment_id FROM source_alignment_editorial_classifications WHERE project_id=?").all(projectId) as typeof editorialClassifications; } catch { /* pre-migration test DB */ }
+    let boundaryOverrides:Array<{id:string;audio_segment_id:string;original_start_ms:number;original_end_ms:number;start_ms:number;end_ms:number}>=[];
+    try { boundaryOverrides=db.prepare("SELECT id,audio_segment_id,original_start_ms,original_end_ms,start_ms,end_ms FROM source_alignment_boundary_overrides WHERE project_id=? ORDER BY created_at").all(projectId) as typeof boundaryOverrides; } catch { /* pre-migration test DB */ }
+    const replacements=new Map<string,string>();
+    for (let i = 0; i < persisted.length; i++) {
       const id = randomUUID();
-      const group = verseGroups[i]!; // timings has exactly verseGroups.length entries
-      const timing = timings[i]!;
-      insertSegment.run(id, projectId, audioRelPath, timing.startMs, timing.endMs, group.verseRef, timing.confidence, now);
+      const timing = persisted[i]!;
+      insertSegment.run(id, projectId, audioRelPath, timing.startMs, timing.endMs, timing.verseRef, timing.confidence, now);
+      replacements.set(`${timing.startMs}:${timing.endMs}`,id);
       segmentIds.push(id);
       if (timing.confidence !== null && timing.confidence < 80) lowConfidenceCount++;
     }
+    for(const remap of correctionReplacementMap(oldSegments,replacements,corrections))db.prepare("UPDATE source_alignment_corrections SET audio_segment_id=? WHERE id=?").run(remap.replacement,remap.correctionId);
+    for(const remap of correctionReplacementMap(oldSegments,replacements,editorialClassifications))db.prepare("UPDATE source_alignment_editorial_classifications SET audio_segment_id=? WHERE id=?").run(remap.replacement,remap.correctionId);
+    for(const override of boundaryOverrides){const replacement=replacements.get(`${override.original_start_ms}:${override.original_end_ms}`);if(!replacement)throw new Error(`Cannot safely re-ingest: boundary override ${override.id} has no exactly equivalent replacement interval.`);db.prepare("UPDATE source_alignment_boundary_overrides SET audio_segment_id=? WHERE id=?").run(replacement,override.id);db.prepare("UPDATE audio_segments SET start_ms=?,end_ms=? WHERE id=?").run(override.start_ms,override.end_ms,replacement);}
+    const deleteOld=db.prepare("DELETE FROM audio_segments WHERE id=?");
+    for(const old of oldSegments) deleteOld.run(old.id);
+    db.prepare(`DELETE FROM review_notes WHERE project_id = ? AND subject_type = 'project' AND source = 'qc'`).run(projectId);
 
-    if (lowConfidenceCount > 0) {
+    const criticalEvidence = geminiEvidence && (geminiEvidence.coverage < .95 || geminiEvidence.segments.some(segment => segment.status === "unresolved"));
+    if (lowConfidenceCount > 0 || criticalEvidence) {
       db.prepare(
         `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
          VALUES (?, ?, 'project', ?, 'qc', ?, 0, ?)`
@@ -184,9 +215,9 @@ export const runIngestion: Stage = async (projectId) => {
         randomUUID(),
         projectId,
         projectId,
-        `Ingestion produced ${verseGroups.length} candidate audio segments for ` +
+        `Ingestion produced ${persisted.length} retained audio intervals for ` +
           `${project.book} ${project.chapter}, but ${lowConfidenceCount} of their boundaries are a ` +
-          `gap-duration heuristic (no ASR/forced-alignment exists for ${project.language}) and score ` +
+          `${criticalEvidence ? `Gemini evidence has uncovered/contradictory source text (coverage ${(geminiEvidence!.coverage * 100).toFixed(1)}%; uncovered verses ${geminiEvidence!.uncoveredVerses.join(",") || "none"}). ` : ""}Timing remains estimated rather than forced alignment and scores ` +
           `below the 80-point auto-decide threshold in PRODUCT_VISION.md's assurance model. A language ` +
           `specialist should confirm these boundaries against the audio before scene breakdown treats ` +
           `them as final.`,
@@ -200,17 +231,14 @@ export const runIngestion: Stage = async (projectId) => {
     return { ok: false, reasoning: `Ingestion failed writing results: ${(err as Error).message}` };
   }
 
+  const criticalEvidence = geminiEvidence && (geminiEvidence.coverage < .95 || geminiEvidence.segments.some(segment => segment.status === "unresolved"));
   return {
-    ok: true,
+    ok: !criticalEvidence,
     reasoning:
-      `Aligned ${verseGroups.length} verse-group segments (${verseGroups[0]!.verseRef} through ` +
-      `${verseGroups[verseGroups.length - 1]!.verseRef}) against ${Math.round(totalDurationMs / 1000)}s of source ` +
-      `audio using a longest-silence-gap heuristic (${gaps.length} candidate gaps detected). ` +
-      `${lowConfidenceCount} of ${verseGroups.length} segment boundaries scored below the auto-decide ` +
-      `threshold and were flagged in review_notes for language-specialist confirmation -- see ` +
-      `"Known limitations" in src/pipeline/ingestion/index.ts.`
+      criticalEvidence ? `Ingestion retained ${geminiEvidence!.segments.length} source intervals but is held: Gemini evidence covers ${(geminiEvidence!.coverage * 100).toFixed(1)}% of verified text, with uncovered verses ${geminiEvidence!.uncoveredVerses.join(",") || "none"}. Listen to the flagged intervals and reconcile before planning.` :
+      `${geminiEvidence ? `Gemini evidence retained ${geminiEvidence.segments.length} intervals with ${(geminiEvidence.coverage * 100).toFixed(1)}% text coverage.` : `Aligned ${verseGroups.length} verse-group intervals with silence-based estimated timing because no Gemini provider is configured.`} ${lowConfidenceCount} intervals require named source review before downstream work.`
   };
-};
+}
 
 /**
  * Real quote-aware ingestion for Hatam Mark 2 -- see runIngestion's

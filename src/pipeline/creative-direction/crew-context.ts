@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
-import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
+import { parseNarratedParagraphTitles, parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
 import type { CrewBrief, CrewPhase, CrewShot } from "./crew-types.js";
 import { readCutTimingAudit } from "../assembly/cut-timing-audit.js";
@@ -130,6 +130,9 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
       (scope_kind='region' AND lower(scope_value)=lower(?) AND lower(source_language)=lower(?)) OR
       scope_kind='global'
     ) ORDER BY created_at,id`).all(projectId, projectId, projectId, projectId, projectId, project.book, project.language, region, project.language, region, region, project.language) as NonNullable<CrewBrief["appliedLessons"]>;
+  // Published titles are optional scene context only. The Story Writer and
+  // Shot Director decide whether an on-screen Hatam title serves the scene.
+  producerNotes.push(...parseNarratedParagraphTitles(sources[0]!).map((title,index)=>({id:`source-title:${index}`,subjectId:projectId,note:`Narrated paragraph title before verse ${title.verseStart}: “${title.text}”. Optional scene-title context; do not automatically display it. Separate cross-reference metadata: (${title.parallelRefs}); do not treat it as film narration or on-screen content unless a human resolves an exception.`})));
   producerNotes.push(...appliedLessons.map(lesson => ({ id: lesson.id, subjectId: lesson.subjectId ?? projectId, note: `Reusable lesson (${lesson.scopeKind}): ${lesson.requestedChange}${lesson.rationale ? ` Rationale: ${lesson.rationale}` : ""}` })));
   const spentUsd = Number(db.prepare("SELECT COALESCE(SUM(amount_usd), 0) AS total FROM cost_ledger_entries WHERE project_id = ?").get(projectId)!.total);
   const audioAssets = db.prepare(`SELECT id, kind, description, path, sha256, duration_ms AS durationMs

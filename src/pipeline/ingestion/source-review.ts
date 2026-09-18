@@ -1,16 +1,13 @@
 import { createHash, randomUUID } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
-import { getDataDir } from "../../db/client.js";
-import { resolveSourcePaths, type ProjectRow } from "./index.js";
+import type { ProjectRow } from "./index.js";
+import { resolveAndBindSourcePaths } from "./source-catalog.js";
 const hash=(v: unknown)=>createHash("sha256").update(typeof v === "string"||Buffer.isBuffer(v)?v:JSON.stringify(v)).digest("hex");
 export function sourceReviewHashes(db:DatabaseSync, projectId:string) {
  const p=db.prepare("SELECT id,language,book,chapter FROM projects WHERE id=?").get(projectId) as ProjectRow|undefined; if(!p)throw new Error("Project not found.");
- const paths=resolveSourcePaths(p); const segments=db.prepare("SELECT source_path,start_ms,end_ms,speaker_character_id,verse_ref,confidence FROM audio_segments WHERE project_id=? AND layer='original_reading' ORDER BY start_ms,id").all(projectId);
- const reference=join(getDataDir(),"assets","reference","english",`${p.book}-${p.chapter}`,`${p.book}-${p.chapter}-text.docx`);
- if (!existsSync(reference)) throw new Error("Required English reference source is unavailable for attestation.");
- return {sourceHash:hash([readFileSync(paths.docxPath),readFileSync(paths.audioPath),readFileSync(reference)]),alignmentHash:hash(segments)};
+ const paths=resolveAndBindSourcePaths(db,p); const segments=db.prepare("SELECT source_path,start_ms,end_ms,speaker_character_id,verse_ref,confidence FROM audio_segments WHERE project_id=? AND layer='original_reading' ORDER BY start_ms,id").all(projectId);
+ return {sourceHash:hash([readFileSync(paths.docxPath),readFileSync(paths.audioPath),readFileSync(paths.referencePath)]),alignmentHash:hash(segments)};
 }
 export function attestSourceAlignment(db:DatabaseSync,input:{projectId:string;reviewerName:string;attestation:string;evidence:string}) {
  if(!input.reviewerName.trim()||!input.attestation.trim()||!input.evidence.trim())throw new Error("Named human attestation and evidence are required.");

@@ -133,6 +133,16 @@ export interface SourceHeading {
    *  docx has no other structural link between them. */
   verseStart: number;
 }
+/** A published non-Scripture title that the narrator may nevertheless read. */
+export interface NarratedParagraphTitle { text:string; parallelRefs:string; paragraphIndex:number; verseStart:number; }
+/** Only a title immediately followed by its own parenthetical references is
+ * classified this way; arbitrary unnumbered prose remains untouched. */
+export function parseNarratedParagraphTitles(docxPath:string):NarratedParagraphTitle[] {
+  const lines=xmlToParagraphLines(readDocumentXml(docxPath)), titles:NarratedParagraphTitle[]=[];
+  for(let i=1;i+2<lines.length;i++){const title=lines[i]!, refs=lines[i+1]!, following=splitParagraphIntoVerses(lines[i+2]!);
+    if(!splitParagraphIntoVerses(title).length && /^\(.+\)$/.test(refs) && following.length)titles.push({text:title,parallelRefs:refs.slice(1,-1),paragraphIndex:i,verseStart:following[0]!.verse});}
+  return titles;
+}
 
 /**
  * Recovers the chapter's own pericope headings and synoptic cross-

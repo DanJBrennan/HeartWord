@@ -40,7 +40,8 @@ export async function generateJson<T>(prompt: string, schema: GeminiJsonSchema):
 export async function generateJsonWithImages<T>(
   prompt: string,
   images: Array<{ mimeType: string; data: string }>,
-  schema: GeminiJsonSchema
+  schema: GeminiJsonSchema,
+  model = GEMINI_TEXT_MODEL
 ): Promise<T> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -52,7 +53,7 @@ export async function generateJsonWithImages<T>(
 
   const parts = [{ text: prompt }, ...images.map((img) => ({ inlineData: img }))];
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TEXT_MODEL}:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const res = await fetch(url, {
     method: "POST",
     signal: AbortSignal.timeout(180000),

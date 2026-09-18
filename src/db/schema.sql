@@ -55,6 +55,22 @@ CREATE TABLE IF NOT EXISTS projects (
   UNIQUE (language, book, chapter)
 );
 
+-- Immutable source selection for a chapter.  Corpus files stay in place; this
+-- records the exact selected edition, paths, bytes, and catalog provenance.
+CREATE TABLE IF NOT EXISTS project_source_bindings (
+  project_id TEXT PRIMARY KEY REFERENCES projects(id),
+  docx_path TEXT NOT NULL, audio_path TEXT NOT NULL, reference_path TEXT NOT NULL,
+  audio_edition TEXT NOT NULL CHECK (audio_edition IN ('non_drama','drama')),
+  docx_hash TEXT NOT NULL, audio_hash TEXT NOT NULL, reference_hash TEXT NOT NULL,
+  provenance TEXT NOT NULL CHECK (provenance IN ('catalog','legacy')),
+  bound_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS alignment_evidence (
+  project_id TEXT NOT NULL REFERENCES projects(id), source_hash TEXT NOT NULL, model TEXT NOT NULL,
+  result_json TEXT NOT NULL, status TEXT NOT NULL, created_at INTEGER NOT NULL,
+  PRIMARY KEY(project_id, source_hash)
+);
+
 -- Durable orchestration ledger.  This is deliberately local and single-worker:
 -- it records exactly what was started before a provider call can be made, so an
 -- interrupted desktop run can be reconciled instead of blindly repeated.
@@ -452,6 +468,38 @@ CREATE TABLE IF NOT EXISTS source_alignment_reviews (
   evidence TEXT NOT NULL, created_at INTEGER NOT NULL,
   UNIQUE(project_id, source_hash, alignment_hash)
 );
+
+-- Append-only human corrections for individual retained source intervals.
+CREATE TABLE IF NOT EXISTS source_alignment_corrections (
+  id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
+  audio_segment_id TEXT NOT NULL REFERENCES audio_segments(id),
+  verse_ref TEXT NOT NULL, assigned_text TEXT NOT NULL, reviewer_name TEXT NOT NULL,
+  evidence TEXT NOT NULL, source_hash TEXT NOT NULL, alignment_hash TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_source_alignment_corrections_segment ON source_alignment_corrections(audio_segment_id, created_at);
+
+-- Append-only human classifications for narrated structural material. These do
+-- not turn titles or citations into Scripture, and may describe a mixed
+-- transition where the available evidence does not support an exact split.
+CREATE TABLE IF NOT EXISTS source_alignment_editorial_classifications (
+  id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
+  audio_segment_id TEXT NOT NULL REFERENCES audio_segments(id),
+  classification TEXT NOT NULL CHECK (classification IN ('narrated_title_cross_reference','mixed_editorial_transition')),
+  title_text TEXT NOT NULL, cross_reference_text TEXT NOT NULL,
+  next_verse_ref TEXT, reviewer_name TEXT NOT NULL, evidence TEXT NOT NULL,
+  source_hash TEXT NOT NULL, alignment_hash TEXT NOT NULL, created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_source_alignment_editorial_classifications_segment ON source_alignment_editorial_classifications(audio_segment_id, created_at);
+
+CREATE TABLE IF NOT EXISTS source_alignment_boundary_overrides (
+  id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
+  audio_segment_id TEXT NOT NULL REFERENCES audio_segments(id),
+  original_start_ms INTEGER NOT NULL, original_end_ms INTEGER NOT NULL,
+  start_ms INTEGER NOT NULL, end_ms INTEGER NOT NULL,
+  reviewer_name TEXT NOT NULL, evidence TEXT NOT NULL, created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_source_alignment_boundary_overrides_segment ON source_alignment_boundary_overrides(audio_segment_id, created_at);
 
 -- Producer-adjudicated evaluation evidence. Cases retain a hash/address of
 -- the reviewed artifact; variants are compared but never deployed here.
