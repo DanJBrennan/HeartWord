@@ -1,5 +1,39 @@
 # Current Goal
 
+## Fixed a re-ingestion bug: corrections on boundary-overridden segments (2026-09-18)
+
+Running Mark 3's ingestion stage after recording the Mark 3:32-33 correction
+above threw "Cannot safely re-ingest: human correction ... has no exactly
+equivalent replacement interval" instead of holding cleanly. Root cause: the
+correction's target segment also had its own boundary override (its bounds
+were corrected from 399645-413645 down to 399191-413645 during earlier
+review). Re-ingestion regenerates fresh segments at their ORIGINAL automated
+timings, but the correction-remap step in `index.ts` was matching against
+the segment's CURRENT (already-corrected) bounds, which a freshly-generated
+original-timing segment can never equal. This was a latent bug -- it never
+surfaced before because no earlier correction happened to target a segment
+that also carried its own boundary override.
+
+Fixed by building an `originalBoundsBySegmentId` map from the existing
+`source_alignment_boundary_overrides` rows and using each segment's original
+(pre-override) bounds, not its live bounds, when matching corrections and
+editorial classifications for remap -- consistent with how the boundary-
+override remap step already worked correctly. No data was ever at risk: the
+transaction's existing rollback-on-mismatch behavior held exactly as
+designed, and nothing was deleted or corrupted while this was diagnosed.
+
+Verified against Dan's real Mark 3 project: re-running ingestion now
+completes (46 intervals retained) instead of throwing, correctly falls
+through to the expected pre-existing coverage hold (93.6%, uncovered verses
+10,18,21,23,29,32,33,34), and every piece of human-reviewed evidence
+survived the re-ingest with correct remapped bounds -- both text
+corrections, both title-card decisions, and the boundary-overridden
+Mark 3:31-32/32-33 pair. Added a regression test
+(`tests/pipeline/fresh-chapter.test.ts`) that reproduces the exact
+combination (a correction targeting a boundary-overridden segment) and
+confirmed it fails without the fix and passes with it. Full validation: 55
+Vitest files and 308 tests pass, strict typecheck, and web build all pass.
+
 ## Mark 3's two spoken titles resolved as on-screen title cards (2026-09-18)
 
 Dan decided film treatment for the two Mark 3 narrated titles that are
