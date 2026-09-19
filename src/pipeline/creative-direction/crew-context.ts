@@ -49,7 +49,11 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
   const audio: CrewBrief["audio"] = [];
   let end = 0;
   for (const segment of alignedAudio) {
-    checkRef(segment.verseRef);
+    // NULL is a legitimate, expected state here (narration, an editorial
+    // title card, or an unresolved gap) -- it makes no verse claim to
+    // validate, unlike a shot's verse_ref just below, which always names a
+    // real range and feeds straight into parseVerseRange.
+    if (segment.verseRef !== null) checkRef(segment.verseRef);
     if (!Number.isFinite(segment.startMs) || !Number.isFinite(segment.endMs) || segment.startMs < end || segment.endMs <= segment.startMs) throw new Error("Source audio intervals have an overlap or invalid duration.");
     if (segment.startMs > end) {
       const previous = audio.at(-1);

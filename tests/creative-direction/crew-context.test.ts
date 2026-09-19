@@ -166,6 +166,12 @@ describe("immutable project brief", () => {
     expect(b.audio).toHaveLength(3);
     expect(b.audio[1]).toMatchObject({ startMs: 3000, endMs: 4000, path: "source.wav", speakerId: null, provenance: "unassigned_source_interval" });
   });
+  it("accepts a real (non-gap-filler) audio segment with no verse claim, like narration or a title card", () => {
+    db.exec("UPDATE audio_segments SET end_ms=6000; INSERT INTO audio_segments (id,project_id,layer,source_path,start_ms,end_ms,verse_ref,created_at) VALUES ('title','p','original_reading','source.wav',6000,8000,NULL,2)");
+    const b = loadCrewBrief(db, directory, "p", "planning");
+    expect(b.audio).toHaveLength(2);
+    expect(b.audio[1]).toMatchObject({ id: "title", startMs: 6000, endMs: 8000, verseRef: null, speakerId: null });
+  });
   it("uses the saved group spokesperson without rewriting the recording's original speaker identity", () => {
     db.exec(`INSERT INTO character_groups (id,name,scope_kind,created_at) VALUES ('g','Witnesses','global',1);
       INSERT INTO characters (id,name,scope_kind,canon_status,region,group_id,created_at,updated_at) VALUES ('old','Legacy group','global','rejected','Papuan','g',1,1);
