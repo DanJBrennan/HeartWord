@@ -54,7 +54,22 @@ describe("coordinated filmmaking", () => {
     expect(result.status).toBe("approved");
     expect(events.map(e => e.role)).toEqual([...executableProductionRolesFor("planning").filter(role => role !== "production_director"), "fidelity_challenger", "clarity_challenger", "feasibility_challenger", "production_director"]);
     expect(events[1]!.prompt).toContain("creative_director checked the evidence");
-    for (const event of events) for (const text of ["Exact reference words", "Original words", "Roof intact", "Roof is opened", "8000", "Approved robe", "Preserve the approved wardrobe"]) expect(event.prompt).toContain(text);
+    const [fidelity, clarity, feasibility, director] = events.slice(-4);
+    for (const event of events.slice(0, -4)) for (const text of ["Exact reference words", "Original words", "Roof intact", "Roof is opened", "8000", "Approved robe", "Preserve the approved wardrobe"]) expect(event.prompt).toContain(text);
+    // Every challenger and the Director still see the shared story and shot plan.
+    for (const event of [fidelity, clarity, feasibility, director]) for (const text of ["Exact reference words", "Roof intact", "Roof is opened", "8000"]) expect(event.prompt).toContain(text);
+    // Each challenger's brief is narrowed to its own lens (challengerBrief in crew.ts) so
+    // three independent reviewers don't all just restate the same canon note.
+    expect(fidelity!.prompt).toContain("Original words");
+    expect(fidelity!.prompt).toContain("Approved robe");
+    expect(clarity!.prompt).toContain("Original words");
+    expect(clarity!.prompt).not.toContain("Approved robe");
+    expect(feasibility!.prompt).not.toContain("Original words");
+    expect(feasibility!.prompt).not.toContain("Approved robe");
+    expect(feasibility!.prompt).not.toContain("Preserve the approved wardrobe");
+    // The Director is unrestricted -- it must weigh every specialist's full evidence.
+    expect(director!.prompt).toContain("Approved robe");
+    expect(director!.prompt).toContain("Preserve the approved wardrobe");
   });
   it("cannot approve over an independent supervisor's blocking finding", async () => {
     const result = await runCrew({ phase: "planning", brief: brief(), log: () => {}, call: async prompt => {

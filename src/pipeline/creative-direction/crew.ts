@@ -129,6 +129,44 @@ export function validateContribution(raw: unknown, role: CrewRole, brief: CrewBr
   return result as unknown as CrewContribution;
 }
 
+const CHALLENGER_ROLES = ["fidelity_challenger", "clarity_challenger", "feasibility_challenger"] as const;
+type ChallengerRole = typeof CHALLENGER_ROLES[number];
+
+/**
+ * Each challenger owns a distinct lens (role-registry.ts's CONTRACTS), but
+ * all three previously received the identical full brief -- so all three
+ * independently noticed the same pre-documented canon fact (a character
+ * version's own "KNOWN GAP" note) rather than exercising their own distinct
+ * scrutiny, producing near-duplicate findings instead of orthogonal ones.
+ * See docs/plans/CURRENT_GOAL.md, 2026-09-19. This only shapes what a
+ * challenger is shown; their output is still validated against the real,
+ * full brief (validateContribution), so narrowing what they see can never
+ * let them claim something the real data wouldn't support.
+ */
+function challengerBrief(brief: CrewBrief, role: ChallengerRole): CrewBrief {
+  // render (including a finishing pass's timingAudit) stays visible to every
+  // role regardless of lens -- the shared prompt instructions treat it as
+  // universal continuity/repair evidence, not something specific to one
+  // challenger, so narrowing must not touch it.
+  const bareCanon = brief.canon.map(c => ({ ...c, notes: null }));
+  if (role === "fidelity_challenger") {
+    // Owns source fidelity, canon and continuity -- keeps full text and
+    // canon notes (its explicit domain); doesn't need asset bookkeeping or budget.
+    return { ...brief, audioAssets: [], spentUsd: 0 };
+  }
+  if (role === "clarity_challenger") {
+    // Owns first-viewer clarity and dramatic coherence -- keeps the full
+    // story and the staged shots; a canon-asset bookkeeping note (e.g. a
+    // known costume bug) and budget aren't its lens.
+    return { ...brief, canon: bareCanon, audioAssets: [], spentUsd: 0 };
+  }
+  // feasibility_challenger: owns cost, scope, missing prerequisites and
+  // production feasibility -- keeps shots/budget/technical assets, which are
+  // its actual signal; doesn't need the narrative text, canon-asset notes,
+  // or creative correction history.
+  return { ...brief, source: { ...brief.source, text: [] }, canon: bareCanon, producerNotes: [], appliedLessons: [] };
+}
+
 export interface CrewRunnerOptions {
   phase: CrewPhase; brief: CrewBrief; media?: ReviewMedia[]; maxCalls?: number;
   call: (prompt: string, schema: GeminiJsonSchema, media: ReviewMedia[]) => Promise<unknown>;
@@ -166,7 +204,8 @@ export async function runCrew(options: CrewRunnerOptions): Promise<CrewResult> {
         "The attached audiovisual proxy, when present, is compressed for review; it cannot prove sample-accurate lip sync.\n" +
         "If render.timingAudit is present, it records observed footage and audio matches, including unresolved gaps. It is not approved source coverage or an instruction to overwrite the existing edit. Use its findings to request specific repairs.\n" +
         "Finishing parameters are a COMPLETE replacement recipe, applied to the clean base cut. If render.finishing exists, consult previousDecisions and retain all desired existing color adjustments and audio cues in your own output; omit a cue only to remove it. Never assume the previous mix will be layered underneath.\n" +
-        `CHAPTER BRIEF:\n${JSON.stringify(brief)}\nTEAM CONTRIBUTIONS AND PREVIOUS DECISION:\n${JSON.stringify(contributions)}`;
+        (CHALLENGER_ROLES.includes(role as ChallengerRole) ? "Your brief below is narrowed to your own lens; a field you don't need has been removed, not hidden evidence -- do not infer withholding.\n" : "") +
+        `CHAPTER BRIEF:\n${JSON.stringify(CHALLENGER_ROLES.includes(role as ChallengerRole) ? challengerBrief(brief, role as ChallengerRole) : brief)}\nTEAM CONTRIBUTIONS AND PREVIOUS DECISION:\n${JSON.stringify(contributions)}`;
       let output: CrewContribution;
       calls++;
       try {
