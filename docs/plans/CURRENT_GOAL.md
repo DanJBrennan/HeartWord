@@ -1,5 +1,19 @@
 # Current Goal
 
+## "Man with Unclean Spirit" voice-mapped to ElevenLabs Torgrim (2026-09-18)
+
+Dan chose the ElevenLabs voice "Torgrim - Explosive & Furious"
+(`ELt1673DDdqHyrE7h2ua`) for this character -- looked up via the live
+`/api/voices` ElevenLabs listing, description matches the role well (a
+roaring, panicked, adrenaline-fueled voice). Written via the existing
+`PATCH /api/characters/:id/voice` endpoint directly onto the approved v2
+character_version row; per seed-characters.ts's own design, this is
+intentionally NOT mirrored back into the manifest file (the manifest's
+voice fields are only initial-seed values -- the live DB is authoritative
+for real voice approvals, and resyncing from the manifest would silently
+wipe this out on a future re-seed). Verified via the live API:
+`voice_provider: "elevenlabs"`, `voice_id: "ELt1673DDdqHyrE7h2ua"`.
+
 ## "Man with Unclean Spirit" approved with reference art (2026-09-18)
 
 Dan approved the candidate character created for Mark 3:11's speaker,
