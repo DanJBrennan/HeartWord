@@ -1,5 +1,45 @@
 # Current Goal
 
+## Mark 3:5 and 3:32-33's mixed segments split and attributed (2026-09-18)
+
+Used the new segment-splitting capability (and found/fixed a real bug in
+it) to resolve both of Mark 3's remaining mixed-content gaps:
+
+**Mark 3:5** (70.759-77.995s): Claude ran the ingestion pipeline's own
+`detectSilences` (ffmpeg silencedetect) scoped to this segment as a
+candidate-finding aid, found a 277ms pause at 71.763-72.040s, and Dan
+confirmed by ear at 0.5x speed that the quote ("Atit anda." / "Stretch out
+your hand") ends there. Split at 72.0s (Dan's requested +0.1s pad). The
+first piece (70.759-72.0s) is now attributed to Jesus; the second
+(72.0-77.995s, the healing's narration) stays unattributed.
+
+**Mark 3:32-33** (399.191-413.645s): this segment already carried the
+combined "Mark 3:32-33" correction from earlier, so splitting it exercised
+-- and broke -- the acknowledge-and-supersede path for the first time.
+Split twice, at Dan's previously-confirmed 406s and 408s boundaries, into
+three pieces: the crowd's quote (399.191-406s, now corrected + attributed
+to "Crowd witness (stern man, spokesperson)" -- the group's designated
+voice per canonical-characters.md), Mark 3:33's narration lead-in
+(406-408s, unattributed), and Jesus's reply (408-413.645s, corrected +
+attributed to Jesus). The old combined correction is preserved as
+historical record but no longer describes a live segment.
+
+**Bug found and fixed doing this**: the first real split attempt threw
+"FOREIGN KEY constraint failed" -- `recordSegmentSplit` deleted the
+original segment while evidence rows still referenced it, since
+schema.sql runs with `foreign_keys=ON`. Fixed by repointing superseded
+evidence onto the first new segment before deleting, matching how
+re-ingestion's own remap always repoints first. Also replaced the test
+fixture's hand-rolled schema with the real schema.sql, since the subset
+never enabled foreign keys and let this ship untested -- confirmed the
+corrected test fails without the fix and passes with it. Full validation
+after the fix: 57 Vitest files / 319 tests pass.
+
+Mark 3's speaker attribution is now complete: every identified quotation
+either has a canon character attributed to it, or is deliberately left as
+narration with documented reasoning (Mark 3:22's reported-not-quoted
+Beelzebul accusation, and the brief quotative-frame slivers throughout).
+
 ## Segment-splitting capability built (2026-09-18)
 
 Built the tooling gap flagged twice now: `recordSegmentSplit`
