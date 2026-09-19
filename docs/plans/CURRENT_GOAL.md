@@ -1,5 +1,49 @@
 # Current Goal
 
+## Mark 3 speaker/narrator text analysis, and a new candidate character (2026-09-18)
+
+Read Mark 3's Hatam text verse-by-verse against the English reference,
+following the precedent already set for Mark 2's hand-authored
+`mark-2-quote-decisions.ts` (close reading, not an algorithm): identified
+every direct-speech passage by its Hatam quotation marks and quotative verb
+(`pai`/`pai bak` = "said/said to", `buhup` = "answered", `hig` = "said to",
+`yahara` = "cried out"), cross-checked against the English reference and,
+for one uncertain case, the real Hatam-English lexicon at
+`HeartWordData/assets/source/hatam/reference/hatam-dictionary/hatam-lexicon.json`.
+
+Findings: verses 3, 4, 5, 14, 23-29, 33, and 34-35 are Jesus's own speech
+(the v14 attribution -- his charge to the twelve to preach the Gospel,
+rendered as direct speech in Hatam where English narrates it indirectly --
+is corroborated by the lexicon: `-cuk`="send", `-tri tut`="preach",
+`Nihyet Di Kei`="Gospel", matching the verse's wording closely). Verse 32 is
+the crowd (matches your own already-recorded evidence for that verse).
+Verse 11 (the unclean spirits' cry, "You are the Son of God!") had no
+existing character to attribute it to. Verse 22 is a notable negative
+finding: Hatam renders the scribes' Beelzebul accusation as reported/
+indirect speech (no quotation marks), unlike English's direct quotation --
+per the same "trust Hatam's own quote structure over English" principle
+Mark 2's q13 already established, this should NOT be cast as a vocalized
+line. Verse 17's "Boanerges" aside and verse 30's parenthetical are narrator
+glosses, not character speech.
+
+Dan decided verse 11's speaker will be a new character, "Man with Unclean
+Spirit," chapter-3 scoped (not book-wide, since demon-possessed figures
+elsewhere in Mark -- e.g. 1:23, chapter 5's Gerasene man -- are distinct
+individuals). Added via the normal manifest + `npm run db:seed-characters`
+path (`HeartWordData/assets/characters/import-manifest.json`), the same
+mechanism every other character here was built through -- not a raw DB
+insert. Recorded honestly as `canon_status: 'candidate'` with an empty
+`assets` array: no reference art exists yet, and none was fabricated. This
+character needs the normal Character Creation & Editing Tool pass (headshot,
+body-pose images, producer approval) before it's usable for real casting or
+lip-sync.
+
+This text analysis is evidence only so far -- nothing has been wired into
+`audio_segments.speaker_character_id` yet. Unlike Mark 2, Mark 3's modern
+Gemini-based ingestion pipeline has no code path that applies quote
+decisions to real segments (`mark-2-segments.ts` is hardcoded to Mark 2);
+building that is separate, later work Dan hasn't yet authorized.
+
 ## Fixed a re-ingestion bug: corrections on boundary-overridden segments (2026-09-18)
 
 Running Mark 3's ingestion stage after recording the Mark 3:32-33 correction
