@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { parseNarratedParagraphTitles, parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
+import { discoverSourcePaths } from "../ingestion/source-catalog.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
 import type { CrewBrief, CrewPhase, CrewShot } from "./crew-types.js";
 import { readCutTimingAudit } from "../assembly/cut-timing-audit.js";
@@ -23,9 +24,15 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
   // authority. Lesson matching below uses the actual selected canon region,
   // rather than treating this policy value as a universal regional default.
   const approvedRegion = project.language.toLowerCase() === "hatam" ? "Papuan" : null;
-  const stem = `${project.book}-${project.chapter}`;
-  const sourcePaths = [`source/${project.language}/${stem}/${stem}-text.docx`, `reference/english/${stem}/${stem}-text.docx`];
-  const sources = sourcePaths.map(p => productionAssetPath(dataDir, p));
+  // Catalog-aware (falls back to the legacy per-chapter layout automatically)
+  // and respects this function's own injected dataDir, unlike calling
+  // discoverSourcePaths with its default (the real HEARTWORD_DATA_DIR) would
+  // -- see docs/plans/CURRENT_GOAL.md, 2026-09-19. requireAudio=false: this
+  // brief never aligned against or verified a chapter audio file -- it reads
+  // audio per-segment from audio_segments.source_path below instead -- so an
+  // absent FCBH audio file must not block text/reference resolution.
+  const textPaths = discoverSourcePaths(project, undefined, dataDir, false);
+  const sources = [textPaths.docxPath, textPaths.referencePath];
   const source: CrewBrief["source"] = { text: parseSourceTextByVerse(sources[0]!), reference: parseSourceTextByVerse(sources[1]!), hashes: sources.map(p => digest(readFileSync(p))) };
   if (!source.text.length || !source.reference.length) throw new Error("Both source and reference Scripture text are required.");
   const normalizeBook = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");

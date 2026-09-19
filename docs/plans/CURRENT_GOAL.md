@@ -1,5 +1,55 @@
 # Current Goal
 
+## Mark 3 clears ingestion, scene breakdown, and casting (2026-09-19)
+
+Dan attested the current Gemini coverage hold as approved
+(`source_alignment_review`, reviewer "Dan"), which let the durable
+orchestrator reuse a review-released ingestion execution instead of
+re-running it fresh. That surfaced two real, unrelated path bugs left over
+from the 2026-09-17 source-catalog migration, which only updated
+ingestion's own path resolution -- casting and crew-context.ts kept their
+own separate hardcoded legacy-only resolvers and were never touched:
+
+1. `casting/index.ts`'s `resolveEnglishReferencePath` hardcoded
+   `reference/english/<book>-<chapter>/<book>-<chapter>-text.docx` with no
+   catalog fallback. Replaced with `resolveAndBindSourcePaths(db, project)`
+   -- casting needs the full text+audio+reference package (it's a real
+   pipeline stage using the bound source), so the full resolver is the
+   correct fit here.
+2. `crew-context.ts`'s `loadCrewBrief` had its own separate hardcoded
+   legacy path construction, and deliberately takes an explicit `dataDir`
+   parameter (not the global data directory) so its test suite can inject
+   a temp directory for isolation -- the catalog resolvers always resolved
+   against the *global* data directory internally, so a naive swap would
+   have silently broken that isolation. Fixed by adding an optional
+   `dataDir` override (default: the real data directory) to both
+   `discoverSourcePaths` and `resolveAndBindSourcePaths` in
+   `source-catalog.ts`.
+
+   That swap surfaced a second, real mismatch: `loadCrewBrief` never
+   needed a chapter's FCBH audio file to exist at all -- it reads audio
+   purely per-segment from `audio_segments.source_path`, never a single
+   canonical chapter-audio file. Forcing it through the full
+   `resolveAndBindSourcePaths` package (which requires text+audio+
+   reference as an all-or-nothing bundle, correct for ingestion's real
+   needs) broke on every project lacking a co-located audio file at that
+   convention, including all of `crew-context.test.ts`'s fixtures. Added a
+   `requireAudio` parameter to `discoverSourcePaths` (default `true`,
+   preserving ingestion/casting's exact existing behavior) and switched
+   crew-context.ts to call `discoverSourcePaths(project, undefined,
+   dataDir, false)` directly (not the DB-backed binding resolver, which it
+   never needed either -- it has its own independent hash-based staleness
+   check via `crewBriefHash`).
+
+Verified against the real Mark 3 project: the durable orchestrator now
+runs cleanly through ingestion, scene breakdown, and casting (all reused
+their prior valid/review-released executions), and stops at
+`media_generation` for a genuine, expected producer gate ("Run the
+production crew and resolve its findings before generating new media"),
+not a bug. Full validation: 57 Vitest files / 319 tests pass (including
+all 16 crew-context tests, which initially broke and forced the
+`requireAudio` fix above), typecheck and web build pass.
+
 ## Mark 3:5 and 3:32-33's mixed segments split and attributed (2026-09-18)
 
 Used the new segment-splitting capability (and found/fixed a real bug in

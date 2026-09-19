@@ -4,9 +4,10 @@ import { Router } from "express";
 import { getDataDir, getDb } from "../../db/client.js";
 import { adoptRecoveredPipeline, runPipeline } from "../../pipeline/orchestrator.js";
 import { runVoicing } from "../../pipeline/voicing/index.js";
-import { runCasting, resolveEnglishReferencePath } from "../../pipeline/casting/index.js";
+import { runCasting } from "../../pipeline/casting/index.js";
 import { runMediaGeneration } from "../../pipeline/media-generation/index.js";
 import { parseSourceTextByVerse } from "../../pipeline/ingestion/parse-source-text.js";
+import { discoverSourcePaths } from "../../pipeline/ingestion/source-catalog.js";
 import { alignmentDisplay } from "../../pipeline/ingestion/alignment-display.js";
 import { parseVerseRange } from "../../pipeline/scene-breakdown/build-scenes.js";
 import { buildProductionCrewView, type NegotiationLogEntry } from "../production-crew.js";
@@ -318,7 +319,7 @@ projectsRouter.get("/:id/shots", (req, res) => {
   // failing the whole shots view.
   let englishTextByVerse: Map<number, string> | null = null;
   try {
-    const referencePath = resolveEnglishReferencePath(project);
+    const referencePath = discoverSourcePaths(project).referencePath;
     if (existsSync(referencePath)) {
       const verses = parseSourceTextByVerse(referencePath);
       englishTextByVerse = new Map(verses.map((v) => [v.verse, v.text]));

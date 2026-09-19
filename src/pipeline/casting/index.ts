@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
-import { join } from "node:path";
-import { getDataDir, getDb } from "../../db/client.js";
+import { getDb } from "../../db/client.js";
 import { generateJson, type GeminiJsonSchema } from "../../providers/gemini-text.js";
 import type { ProjectRow } from "../ingestion/index.js";
 import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
+import { resolveAndBindSourcePaths } from "../ingestion/source-catalog.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
 import type { Stage } from "../types.js";
 import { hasJoinedByScene } from "./disciple-timeline.js";
@@ -153,11 +153,6 @@ const SHOT_RESPONSE_SCHEMA: GeminiJsonSchema = {
   required: ["reasoning", "lightingContinuity", "shots"]
 };
 
-export function resolveEnglishReferencePath(project: ProjectRow): string {
-  const chapterDir = `${project.book}-${project.chapter}`;
-  return join(getDataDir(), "assets", "reference", "english", chapterDir, `${chapterDir}-text.docx`);
-}
-
 function buildScenePrompt(
   project: ProjectRow,
   scene: SceneRow,
@@ -261,7 +256,16 @@ const buildCasting: Stage = async (projectId) => {
     return { ok: false, reasoning: "Casting failed: no scenes found -- run scene breakdown (stage 2) first." };
   }
 
-  const referencePath = resolveEnglishReferencePath(project);
+  let referencePath: string;
+  try { referencePath = resolveAndBindSourcePaths(db, project).referencePath; }
+  catch (error) {
+    return {
+      ok: false,
+      reasoning:
+        `Casting failed: ${(error as Error).message} Stage 3 grounds its shot ` +
+        "descriptions in this text (see NON_GOALS.md) rather than the Hatam source, which an LLM can't read directly."
+    };
+  }
   if (!existsSync(referencePath)) {
     return {
       ok: false,
