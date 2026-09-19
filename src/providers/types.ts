@@ -21,6 +21,8 @@ export type AudioSegmentRef = {
 export type CharacterRef = {
   characterId: string;
   characterVersionId: string;
+  /** Canonical shot verse used to select any story-state-bound references. */
+  storyVerseRef?: string;
 };
 
 export interface ShotRequest {

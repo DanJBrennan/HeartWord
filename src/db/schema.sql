@@ -182,6 +182,10 @@ CREATE TABLE IF NOT EXISTS character_assets (
   path TEXT NOT NULL,               -- path within HEARTWORD_DATA_DIR/assets
   content_hash TEXT,                -- sha256, for dedup/integrity (BVET-Data pattern)
   imported_from TEXT,               -- original path, if imported from BVET-Data
+  story_state TEXT,                 -- e.g. 'pre_healing' or 'healed'; NULL = no state gate
+  available_from_verse TEXT,        -- canonical verse where this scene reference becomes eligible
+  available_through_verse TEXT,     -- canonical verse after which this scene reference is ineligible
+  asset_role TEXT NOT NULL DEFAULT 'scene_reference', -- 'scene_reference' | 'comparison_proof'
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_character_assets_version ON character_assets(character_version_id);

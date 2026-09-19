@@ -40,6 +40,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, extname, join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
+import { sceneReferenceAssetsForVerse } from "../story-state-assets.js";
 import type {
   AssetRef,
   CharacterRef,
@@ -80,6 +81,10 @@ const NANO_BANANA_PRO_COST_USD = 0.24;
 interface ReferenceAssetRow {
   category: string;
   path: string;
+  story_state?: string | null;
+  available_from_verse?: string | null;
+  available_through_verse?: string | null;
+  asset_role?: string | null;
 }
 
 interface CharacterReferenceImages {
@@ -109,9 +114,10 @@ function loadCharacterReferenceImages(characters: ShotRequest["characters"]): Ch
   const db = getDb();
   const dataDir = getDataDir();
   const findAssets = db.prepare(
-    `SELECT category, path FROM character_assets
+    `SELECT category, path, story_state, available_from_verse, available_through_verse, asset_role FROM character_assets
      WHERE character_version_id = ?
-     ORDER BY CASE category WHEN 'headshot' THEN 0 WHEN 'body_pose' THEN 1 WHEN 'turnaround' THEN 2 ELSE 3 END`
+     ORDER BY CASE category WHEN 'headshot' THEN 0 WHEN 'body_pose' THEN 1 WHEN 'turnaround' THEN 2 ELSE 3 END,
+       CASE asset_role WHEN 'base_pose' THEN 0 WHEN 'story_state_pose' THEN 1 ELSE 2 END, path`
   );
   const findName = db.prepare(
     `SELECT c.name FROM characters c JOIN character_versions cv ON cv.character_id = c.id WHERE cv.id = ?`
@@ -119,7 +125,7 @@ function loadCharacterReferenceImages(characters: ShotRequest["characters"]): Ch
 
   const result: CharacterReferenceImages[] = [];
   for (const character of characters) {
-    let rows = findAssets.all(character.characterVersionId) as unknown as ReferenceAssetRow[];
+    let rows = sceneReferenceAssetsForVerse(findAssets.all(character.characterVersionId) as unknown as ReferenceAssetRow[], character.storyVerseRef);
     const nameRow = findName.get(character.characterVersionId) as { name: string } | undefined;
     const characterName = nameRow?.name ?? "this character";
 

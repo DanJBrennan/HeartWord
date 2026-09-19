@@ -1,5 +1,23 @@
 # Current Goal
 
+## Mark 3 Man with Withered Hand canon promotion (2026-09-19)
+
+Dan approved a new chapter-scoped Papuan v1 canon for the Man with Withered
+Hand. The seven selected candidates were copied non-destructively into
+`characters/man-with-withered-hand-mark-3/`, recorded with hashes and their
+candidate source paths, and left in the candidate area for comparison. The
+anatomical **left** hand is affected in all pre-healing references through
+Mark 3:4; the healed stretched-hand reference is eligible only from Mark 3:5.
+The affected/healed close-up comparison images are proof/reference assets,
+not ordinary scene poses.
+
+Character-asset metadata now carries story state, an eligible verse range,
+and an asset role. Generation reference selection receives the shot verse and
+excludes out-of-range state assets and comparison proofs, rather than relying
+on filename ordering. This is a narrow continuity safeguard: it does not add
+story action, modify the source performance, approve rejected variants, or
+alter existing candidates.
+
 ## Mark 3 production crew planning approved (2026-09-19)
 
 Dan asked to run the production crew (`POST .../production/plan`). Found

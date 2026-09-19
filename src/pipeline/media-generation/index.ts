@@ -23,6 +23,7 @@ interface ShotRow {
   needs_lip_sync: number;
   crowd_density: string | null;
   continuity_notes: string | null;
+  verse_ref: string | null;
 }
 
 interface SceneRow {
@@ -233,10 +234,17 @@ const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Pro
     return { ok: false, reasoning: `Media generation failed: no project with id ${projectId}.` };
   }
 
+  // Older imported projects and the narrow SQLite fixtures used for the
+  // media-stage integration test predate shot verse binding. Keep those
+  // projects runnable (without state-specific references) while current
+  // projects provide the verse needed for story-state selection.
+  const hasShotVerseRef = (db.prepare("PRAGMA table_info(shots)").all() as Array<{ name: string }>)
+    .some((column) => column.name === "verse_ref");
+  const shotVerseSelect = hasShotVerseRef ? "s.verse_ref" : "NULL AS verse_ref";
   const shots = db
     .prepare(
       `SELECT s.id, s.scene_id, s.sequence, s.action, s.framing, s.camera_movement, s.needs_lip_sync,
-              s.crowd_density, s.continuity_notes
+              s.crowd_density, s.continuity_notes, ${shotVerseSelect}
        FROM shots s JOIN scenes sc ON sc.id = s.scene_id
        WHERE sc.project_id = ? ORDER BY sc.sequence, s.sequence`
     )
@@ -357,7 +365,8 @@ const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Pro
     const shotCharacters = charStmt.all(shot.id) as unknown as ShotCharacterRow[];
     const characterRefs: CharacterRef[] = shotCharacters.map((c) => ({
       characterId: c.character_id,
-      characterVersionId: c.character_version_id
+      characterVersionId: c.character_version_id,
+      storyVerseRef: shot.verse_ref ?? undefined
     }));
 
     let prompt: string;

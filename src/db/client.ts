@@ -145,6 +145,10 @@ const COLUMN_MIGRATIONS: Array<{ table: string; column: string; ddl: string }> =
   { table: "production_lessons", column: "source_region", ddl: "ALTER TABLE production_lessons ADD COLUMN source_region TEXT" }
   ,{ table: "evaluation_predictions", column: "content_hash", ddl: "ALTER TABLE evaluation_predictions ADD COLUMN content_hash TEXT NOT NULL DEFAULT ''" }
   ,{ table: "source_alignment_editorial_classifications", column: "film_treatment", ddl: "ALTER TABLE source_alignment_editorial_classifications ADD COLUMN film_treatment TEXT" }
+  ,{ table: "character_assets", column: "story_state", ddl: "ALTER TABLE character_assets ADD COLUMN story_state TEXT" }
+  ,{ table: "character_assets", column: "available_from_verse", ddl: "ALTER TABLE character_assets ADD COLUMN available_from_verse TEXT" }
+  ,{ table: "character_assets", column: "available_through_verse", ddl: "ALTER TABLE character_assets ADD COLUMN available_through_verse TEXT" }
+  ,{ table: "character_assets", column: "asset_role", ddl: "ALTER TABLE character_assets ADD COLUMN asset_role TEXT NOT NULL DEFAULT 'scene_reference'" }
 ];
 
 function applyColumnMigrations(db: DatabaseSync): void {
