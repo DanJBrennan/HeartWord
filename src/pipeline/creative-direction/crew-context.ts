@@ -57,11 +57,16 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
     if (!Number.isFinite(segment.startMs) || !Number.isFinite(segment.endMs) || segment.startMs < end || segment.endMs <= segment.startMs) throw new Error("Source audio intervals have an overlap or invalid duration.");
     if (segment.startMs > end) {
       const previous = audio.at(-1);
-      if (!previous || previous.path !== segment.path) throw new Error("Source audio intervals have a gap without an unambiguous source recording.");
+      // No previous segment only means this is the recording's own leading
+      // silence before its first detected interval -- unambiguously that
+      // same segment's own recording, not a gap between two different
+      // takes. A genuine gap between two already-seen segments whose paths
+      // differ is the actually ambiguous case this still refuses to guess.
+      if (previous && previous.path !== segment.path) throw new Error("Source audio intervals have a gap without an unambiguous source recording.");
       // Retain samples between aligned lines; never discard a breath or infer
       // silence/speaker identity from the absence of a database segment.
-      audio.push({ id: `source-gap:${previous.id}:${segment.id}`, startMs: end, endMs: segment.startMs,
-        verseRef: previous.verseRef, speakerId: null, path: segment.path, confidence: null, provenance: "unassigned_source_interval" });
+      audio.push({ id: `source-gap:${previous ? previous.id : "start"}:${segment.id}`, startMs: end, endMs: segment.startMs,
+        verseRef: previous ? previous.verseRef : null, speakerId: null, path: segment.path, confidence: null, provenance: "unassigned_source_interval" });
     }
     audio.push(segment);
     end = segment.endMs;

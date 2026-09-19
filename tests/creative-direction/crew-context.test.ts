@@ -155,10 +155,14 @@ describe("immutable project brief", () => {
     file("ref.png", "changed reference");
     expect(() => requireCurrentPlan(db, directory, "p")).toThrow("stale");
   });
-  it("blocks source timing gaps and asset traversal", () => {
-    db.exec("UPDATE audio_segments SET start_ms=100");
-    expect(() => loadCrewBrief(db, directory, "p", "planning")).toThrow("gap");
+  it("blocks overlapping source intervals and asset traversal", () => {
+    db.exec("INSERT INTO audio_segments (id,project_id,layer,source_path,start_ms,end_ms,verse_ref,created_at) VALUES ('overlap','p','original_reading','source.wav',4000,8000,'Mark 2:2',2)");
+    expect(() => loadCrewBrief(db, directory, "p", "planning")).toThrow("overlap");
     expect(() => productionAssetPath(directory, "../secret.txt")).toThrow("inside");
+  });
+  it("blocks an ambiguous gap between two different source recordings", () => {
+    db.exec("UPDATE audio_segments SET end_ms=3000; INSERT INTO audio_segments (id,project_id,layer,source_path,start_ms,end_ms,verse_ref,created_at) VALUES ('other','p','original_reading','other.wav',4000,8000,'Mark 2:2',2)");
+    expect(() => loadCrewBrief(db, directory, "p", "planning")).toThrow("gap");
   });
   it("retains unassigned intervals between aligned lines from the same recording", () => {
     db.exec("UPDATE audio_segments SET end_ms=3000; INSERT INTO audio_segments (id,project_id,layer,source_path,start_ms,end_ms,verse_ref,created_at) VALUES ('a2','p','original_reading','source.wav',4000,8000,'Mark 2:2',2)");
@@ -171,6 +175,13 @@ describe("immutable project brief", () => {
     const b = loadCrewBrief(db, directory, "p", "planning");
     expect(b.audio).toHaveLength(2);
     expect(b.audio[1]).toMatchObject({ id: "title", startMs: 6000, endMs: 8000, verseRef: null, speakerId: null });
+  });
+  it("backfills a recording's own leading silence before its first detected interval", () => {
+    db.exec("UPDATE audio_segments SET start_ms=588");
+    const b = loadCrewBrief(db, directory, "p", "planning");
+    expect(b.audio).toHaveLength(2);
+    expect(b.audio[0]).toMatchObject({ startMs: 0, endMs: 588, path: "source.wav", speakerId: null, verseRef: null, provenance: "unassigned_source_interval" });
+    expect(b.audio[1]).toMatchObject({ id: "audio", startMs: 588, endMs: 8000 });
   });
   it("uses the saved group spokesperson without rewriting the recording's original speaker identity", () => {
     db.exec(`INSERT INTO character_groups (id,name,scope_kind,created_at) VALUES ('g','Witnesses','global',1);
