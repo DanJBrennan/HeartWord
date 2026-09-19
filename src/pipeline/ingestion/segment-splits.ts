@@ -52,6 +52,18 @@ export function recordSegmentSplit(db: DatabaseSync, input: {
       .run(firstId, input.projectId, segment.source_path, segment.start_ms, input.splitAtMs, now);
     db.prepare("INSERT INTO audio_segments (id,project_id,layer,source_path,start_ms,end_ms,speaker_character_id,verse_ref,confidence,created_at) VALUES (?,?,'original_reading',?,?,?,NULL,NULL,NULL,?)")
       .run(secondId, input.projectId, segment.source_path, input.splitAtMs, segment.end_ms, now);
+    // Superseded evidence must be repointed (never left dangling) before the
+    // original row can be deleted -- foreign_keys=ON (schema.sql) blocks
+    // deleting a still-referenced row, same reason re-ingestion always
+    // remaps before its own delete. Repointed onto the first new segment
+    // purely to satisfy that constraint; superseded_*_ids above is the
+    // actual record of what these rows meant, and a fresh, later-recorded
+    // correction/attribution/classification against either new segment
+    // naturally outranks them in the latest-wins display logic.
+    if (correctionIds.length) db.prepare(`UPDATE source_alignment_corrections SET audio_segment_id=? WHERE id IN (${correctionIds.map(() => "?").join(",")})`).run(firstId, ...correctionIds);
+    if (classificationIds.length) db.prepare(`UPDATE source_alignment_editorial_classifications SET audio_segment_id=? WHERE id IN (${classificationIds.map(() => "?").join(",")})`).run(firstId, ...classificationIds);
+    if (attributionIds.length) db.prepare(`UPDATE source_alignment_speaker_attributions SET audio_segment_id=? WHERE id IN (${attributionIds.map(() => "?").join(",")})`).run(firstId, ...attributionIds);
+    if (overrideIds.length) db.prepare(`UPDATE source_alignment_boundary_overrides SET audio_segment_id=? WHERE id IN (${overrideIds.map(() => "?").join(",")})`).run(firstId, ...overrideIds);
     db.prepare("DELETE FROM audio_segments WHERE id=?").run(input.audioSegmentId);
 
     const hashes = sourceReviewHashes(db, input.projectId);

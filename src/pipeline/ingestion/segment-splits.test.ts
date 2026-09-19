@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
@@ -24,18 +24,11 @@ function setup() {
   put("source/hatam/mark-3/mark-3-fcbh-audio.mp3", "audio");
   put("reference/english/mark-3/mark-3-text.docx", docx("1Reference"));
   db = new DatabaseSync(":memory:");
+  db.exec(readFileSync("src/db/schema.sql", "utf8"));
   db.exec(`
-    CREATE TABLE projects(id TEXT PRIMARY KEY,language TEXT,book TEXT,chapter INTEGER);
-    CREATE TABLE characters(id TEXT PRIMARY KEY,canon_status TEXT);
-    CREATE TABLE audio_segments(id TEXT,project_id TEXT,layer TEXT,source_path TEXT,start_ms INTEGER,end_ms INTEGER,speaker_character_id TEXT,verse_ref TEXT,confidence REAL,created_at INTEGER);
-    CREATE TABLE source_alignment_corrections(id TEXT,project_id TEXT,audio_segment_id TEXT,verse_ref TEXT,assigned_text TEXT,reviewer_name TEXT,evidence TEXT,source_hash TEXT,alignment_hash TEXT,created_at INTEGER);
-    CREATE TABLE source_alignment_editorial_classifications(id TEXT,project_id TEXT,audio_segment_id TEXT,classification TEXT,title_text TEXT,cross_reference_text TEXT,next_verse_ref TEXT,reviewer_name TEXT,evidence TEXT,film_treatment TEXT,source_hash TEXT,alignment_hash TEXT,created_at INTEGER);
-    CREATE TABLE source_alignment_speaker_attributions(id TEXT,project_id TEXT,audio_segment_id TEXT,character_id TEXT,verse_ref TEXT,reviewer_name TEXT,evidence TEXT,source_hash TEXT,alignment_hash TEXT,created_at INTEGER);
-    CREATE TABLE source_alignment_boundary_overrides(id TEXT,project_id TEXT,audio_segment_id TEXT,original_start_ms INTEGER,original_end_ms INTEGER,start_ms INTEGER,end_ms INTEGER,reviewer_name TEXT,evidence TEXT,created_at INTEGER);
-    CREATE TABLE source_alignment_segment_splits(id TEXT,project_id TEXT,original_segment_id TEXT,original_start_ms INTEGER,original_end_ms INTEGER,split_at_ms INTEGER,first_segment_id TEXT,second_segment_id TEXT,superseded_correction_ids TEXT,superseded_editorial_classification_ids TEXT,superseded_speaker_attribution_ids TEXT,superseded_boundary_override_ids TEXT,reviewer_name TEXT,evidence TEXT,source_hash TEXT,alignment_hash TEXT,created_at INTEGER);
-    INSERT INTO projects VALUES ('p','hatam','mark',3);
-    INSERT INTO characters VALUES ('jesus','approved');
-    INSERT INTO audio_segments VALUES ('seg','p','original_reading','source/hatam/mark-3/mark-3-fcbh-audio.mp3',1000,2000,NULL,'Mark 3:5',80,1);
+    INSERT INTO projects (id,language,book,chapter,created_at,updated_at) VALUES ('p','hatam','mark',3,1,1);
+    INSERT INTO characters (id,name,scope_kind,canon_status,region,created_at,updated_at) VALUES ('jesus','Jesus','global','approved','Papuan',1,1);
+    INSERT INTO audio_segments (id,project_id,layer,source_path,start_ms,end_ms,speaker_character_id,verse_ref,confidence,created_at) VALUES ('seg','p','original_reading','source/hatam/mark-3/mark-3-fcbh-audio.mp3',1000,2000,NULL,'Mark 3:5',80,1);
   `);
   return db;
 }
