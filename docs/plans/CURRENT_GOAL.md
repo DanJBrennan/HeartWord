@@ -1,5 +1,40 @@
 # Current Goal
 
+## Mark 3 production crew planning approved (2026-09-19)
+
+Dan asked to run the production crew (`POST .../production/plan`). Found
+and fixed two more real bugs surfaced along the way, both pre-existing and
+unrelated to this session's alignment work, before the run could succeed:
+
+- A copy-script bug from the earlier character-approval step: reference
+  art for "Man with Unclean Spirit" was written to a doubled
+  `assets/characters/characters/...` path, one level too deep, while the
+  manifest/DB correctly recorded the intended
+  `assets/characters/man-with-unclean-spirit-mark-3/...`. Moved the files
+  to the correct location (content hash re-verified unchanged) rather than
+  re-copying.
+- The first curl call to `/production/plan` was cut off by a client-side
+  timeout while the real crew run continued server-side (Express doesn't
+  abort in-flight async work just because the client disconnected),
+  leaving `production_runs` in `status='running'` with 5 events already
+  logged. Confirmed it was still genuinely progressing (not a dead
+  worker) rather than attempting `recover/:runId`, which would have
+  wrongly treated a live run as interrupted. Waited for natural
+  completion via a single-notification background poll instead of
+  chat-noisy per-event monitoring.
+
+Result: **approved**, 13 calls, 30 shots, no blocking issues or
+unresolved coverage requests. Summary: "Phase planning pass 1 for Mark 3
+resolves all team contributions across the synagogue healing, coastal
+shoreline crowd, mountain commissioning, domestic dispute with scribes,
+and redefinition of spiritual family. Script fidelity, historical
+lighting, continuity, and Lip-Sync framing are fully harmonized across all
+30 shots."
+
+Media generation (real image/video provider costs) is the next pipeline
+stage and has not been run -- that needs Dan's explicit go-ahead
+separately, same as every other real provider call in this project.
+
 ## Mark 3 clears ingestion, scene breakdown, and casting (2026-09-19)
 
 Dan attested the current Gemini coverage hold as approved
