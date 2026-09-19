@@ -1,5 +1,37 @@
 # Current Goal
 
+## "Man with Unclean Spirit" approved with reference art (2026-09-18)
+
+Dan approved the candidate character created for Mark 3:11's speaker,
+supplying real reference art: a headshot (chosen as v3 of three candidates)
+and four body poses (neutral standing, anguished standing, recoiling
+distress, collapsed distress) at
+`HeartWordData/assets/characters/candidates/`. Copied into the canonical
+`characters/man-with-unclean-spirit-mark-3/` location (matching the
+existing `lip_sync_closeup`/`motion` convention every other character
+uses), hashed, and wired into
+`HeartWordData/assets/characters/import-manifest.json` with real
+`content_hash` values -- same mechanism as every other character, still no
+raw DB writes.
+
+One wrinkle: `seed-characters.ts` deliberately does not resync an existing
+version row's `status` (to protect real producer voice-casting approvals
+from being silently overwritten on re-seed) -- so promoting the original v1
+placeholder (candidate, no assets) required bumping to a new `v2` entry
+rather than editing v1 in place, exactly the "generate a candidate revision,
+promote once it passes review" pattern `canonical-characters.md` already
+documents. v1 remains as history; v2 is now the sole `approved`
+character_version, satisfying crew-context.ts's one-approved-version
+invariant. Verified via the live API: `canon_status: 'approved'`,
+`version_status: 'approved'`, all 5 assets attached to the v2 version.
+Full validation: 55 Vitest files / 308 tests pass (one FFmpeg PCM-
+equivalence flake reproduced then passed clean on rerun, per the known
+issue already noted in this file), typecheck and web build unaffected (no
+application code changed, only runtime character data).
+
+No voice mapping yet, and nothing wired into `audio_segments.speaker_
+character_id` -- both remain open, separate steps.
+
 ## Mark 3 speaker/narrator text analysis, and a new candidate character (2026-09-18)
 
 Read Mark 3's Hatam text verse-by-verse against the English reference,
