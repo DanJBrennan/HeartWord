@@ -1,5 +1,43 @@
 # Current Goal
 
+## Segment-splitting capability built (2026-09-18)
+
+Built the tooling gap flagged twice now: `recordSegmentSplit`
+(`src/pipeline/ingestion/segment-splits.ts`) splits one original-reading
+interval into two at a producer-heard boundary, for when automated
+segmentation merged genuinely distinct content (two speakers, or dialogue
+mixed with narration) into one interval too coarse to attribute -- Mark
+3:5's "Stretch out your hand" and Mark 3:32's crowd line are the two real
+cases waiting on this.
+
+Segments are already treated as regenerable elsewhere in this schema
+(re-ingestion deletes and recreates all of them; only evidence tables are
+durable), so a split follows the same convention: delete the original row,
+insert two new ones with no verse_ref/confidence/speaker (a human
+re-attributes each side separately, never guessed). The new
+`source_alignment_segment_splits` table records the split permanently,
+including exactly which prior corrections/editorial classifications/
+speaker attributions/boundary overrides existed on the segment being
+split. `recordSegmentSplit` REFUSES to run if any exist unless the caller
+passes `acknowledgeSupersededEvidence: true` -- it never guesses which new
+segment inherits old evidence, and never deletes the superseded rows
+(preserved as historical record, just no longer linked to a live
+segment). Wired into `POST /:id/segment-splits`.
+
+Known, accepted limitation: a later re-ingestion won't find an automated
+interval matching either new segment's finer bounds, so evidence recorded
+against them will safely hold re-ingestion (the same "no exactly
+equivalent replacement interval" guard used elsewhere) rather than
+corrupt anything -- consistent with this project's "hold rather than
+guess" philosophy, not a new kind of risk.
+
+Full validation: 57 Vitest files / 319 tests pass (5 new unit tests
+covering the clean-split case, out-of-bounds rejection, the
+existing-evidence refusal/acknowledgment path, and validation), typecheck
+and web build pass. Not yet applied to Mark 3:5 or Mark 3:32 -- the exact
+split timestamp for 3:5 needs Dan's ear, and 3:32's split requires
+deciding what replaces the existing combined "Mark 3:32-33" correction.
+
 ## Speaker analysis wired into audio_segments.speaker_character_id (2026-09-18)
 
 Built the pipeline gap flagged earlier: a new append-only

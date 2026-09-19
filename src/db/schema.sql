@@ -515,6 +515,36 @@ CREATE TABLE IF NOT EXISTS source_alignment_speaker_attributions (
 );
 CREATE INDEX IF NOT EXISTS idx_source_alignment_speaker_attributions_segment ON source_alignment_speaker_attributions(audio_segment_id, created_at);
 
+-- Named, evidenced record of a producer splitting one original-reading
+-- interval into two at a heard boundary, when automated segmentation
+-- merged genuinely distinct content (two speakers, or dialogue mixed with
+-- narration) into one interval too coarse to attribute. Segments
+-- themselves are already treated as regenerable elsewhere in this schema
+-- (re-ingestion deletes and recreates all of them; only evidence tables
+-- are durable) -- a split follows that same convention: it deletes the
+-- original row and inserts two new ones, but the split itself, and which
+-- prior evidence rows it superseded, is recorded here permanently.
+-- Superseded evidence rows are never deleted or silently retargeted --
+-- recordSegmentSplit refuses to run unless the caller explicitly
+-- acknowledges any prior corrections/classifications/attributions/
+-- boundary overrides on the segment being split, and this table's
+-- superseded_*_ids columns (JSON arrays of ids, NULL when empty) name
+-- exactly which ones. A human must re-record fresh evidence against
+-- whichever new segment it actually belongs to -- this table does not
+-- attempt to guess that split.
+CREATE TABLE IF NOT EXISTS source_alignment_segment_splits (
+  id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
+  original_segment_id TEXT NOT NULL, -- historical only; that row is deleted by the split
+  original_start_ms INTEGER NOT NULL, original_end_ms INTEGER NOT NULL,
+  split_at_ms INTEGER NOT NULL,
+  first_segment_id TEXT NOT NULL, second_segment_id TEXT NOT NULL,
+  superseded_correction_ids TEXT, superseded_editorial_classification_ids TEXT,
+  superseded_speaker_attribution_ids TEXT, superseded_boundary_override_ids TEXT,
+  reviewer_name TEXT NOT NULL, evidence TEXT NOT NULL,
+  source_hash TEXT NOT NULL, alignment_hash TEXT NOT NULL, created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_source_alignment_segment_splits_original ON source_alignment_segment_splits(original_segment_id);
+
 CREATE TABLE IF NOT EXISTS source_alignment_boundary_overrides (
   id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
   audio_segment_id TEXT NOT NULL REFERENCES audio_segments(id),
