@@ -190,6 +190,8 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
     try { editorialClassifications=db.prepare("SELECT id,audio_segment_id FROM source_alignment_editorial_classifications WHERE project_id=?").all(projectId) as typeof editorialClassifications; } catch { /* pre-migration test DB */ }
     let boundaryOverrides:Array<{id:string;audio_segment_id:string;original_start_ms:number;original_end_ms:number;start_ms:number;end_ms:number}>=[];
     try { boundaryOverrides=db.prepare("SELECT id,audio_segment_id,original_start_ms,original_end_ms,start_ms,end_ms FROM source_alignment_boundary_overrides WHERE project_id=? ORDER BY created_at").all(projectId) as typeof boundaryOverrides; } catch { /* pre-migration test DB */ }
+    let speakerAttributions:Array<{id:string;audio_segment_id:string;character_id:string}>=[];
+    try { speakerAttributions=db.prepare("SELECT id,audio_segment_id,character_id FROM source_alignment_speaker_attributions WHERE project_id=? ORDER BY created_at").all(projectId) as typeof speakerAttributions; } catch { /* pre-migration test DB */ }
     // A boundary-overridden segment's row holds its CORRECTED bounds, but a
     // fresh re-ingest regenerates segments at their original automated
     // timings. A correction/classification on such a segment must be matched
@@ -209,6 +211,11 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
     }
     for(const remap of correctionReplacementMap(oldSegmentsAtOriginalBounds,replacements,corrections))db.prepare("UPDATE source_alignment_corrections SET audio_segment_id=? WHERE id=?").run(remap.replacement,remap.correctionId);
     for(const remap of correctionReplacementMap(oldSegmentsAtOriginalBounds,replacements,editorialClassifications))db.prepare("UPDATE source_alignment_editorial_classifications SET audio_segment_id=? WHERE id=?").run(remap.replacement,remap.correctionId);
+    for(const remap of correctionReplacementMap(oldSegmentsAtOriginalBounds,replacements,speakerAttributions)){
+      db.prepare("UPDATE source_alignment_speaker_attributions SET audio_segment_id=? WHERE id=?").run(remap.replacement,remap.correctionId);
+      const attribution=speakerAttributions.find(a=>a.id===remap.correctionId)!;
+      db.prepare("UPDATE audio_segments SET speaker_character_id=? WHERE id=?").run(attribution.character_id,remap.replacement);
+    }
     for(const override of boundaryOverrides){const replacement=replacements.get(`${override.original_start_ms}:${override.original_end_ms}`);if(!replacement)throw new Error(`Cannot safely re-ingest: boundary override ${override.id} has no exactly equivalent replacement interval.`);db.prepare("UPDATE source_alignment_boundary_overrides SET audio_segment_id=? WHERE id=?").run(replacement,override.id);db.prepare("UPDATE audio_segments SET start_ms=?,end_ms=? WHERE id=?").run(override.start_ms,override.end_ms,replacement);}
     const deleteOld=db.prepare("DELETE FROM audio_segments WHERE id=?");
     for(const old of oldSegments) deleteOld.run(old.id);

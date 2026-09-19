@@ -1,5 +1,41 @@
 # Current Goal
 
+## Speaker analysis wired into audio_segments.speaker_character_id (2026-09-18)
+
+Built the pipeline gap flagged earlier: a new append-only
+`source_alignment_speaker_attributions` table (schema.sql +
+`src/pipeline/ingestion/source-alignment-speaker-attributions.ts`), same
+family as corrections/editorial classifications, but different in one way
+-- it writes the real `audio_segments.speaker_character_id` column
+immediately on record, since casting (`src/pipeline/casting/index.ts`)
+reads that column directly rather than through an API-layer evidence
+overlay. Requires the target character to be `canon_status='approved'`.
+Wired into `POST /:id/source-alignment-speaker-attributions`, and into
+re-ingestion's remap logic in `index.ts` (alongside corrections/editorial
+classifications, using the same original-pre-override-bounds fix from
+earlier) so an attribution on a boundary-overridden segment survives and
+the new segment gets `speaker_character_id` reapplied -- proven by a
+regression test mirroring the correction/boundary-override one.
+
+Applied the earlier text analysis to Mark 3's real segments using the
+stored Gemini evidence's per-segment matched text (not just verse labels),
+so each attribution is grounded in exactly which words that interval
+covers, not a guess from verse ranges alone: 11 segments to Jesus (Mark
+3:3-4, 4, 14, 23, 24, 25-26, 26-27, 27, 28-29, 34-35, 35) and 1 to Man with
+Unclean Spirit (Mark 3:11). Two identified quotations were deliberately
+left unattributed because the automated segmentation mixes them with
+other content in one interval that can't be safely split with current
+tooling: Mark 3:5's "Stretch out your hand" (mixed with trailing narration
+describing the result), and Mark 3:32's crowd line (mixed with Mark 3:33's
+Jesus reply in the same corrected interval). Mark 3:22's Beelzebul
+accusation remains correctly unattributed -- confirmed narration/reported
+speech in Hatam, not a vocalized line.
+
+Full validation: 56 Vitest files / 314 tests pass (5 new speaker-
+attribution unit tests, 1 new re-ingest regression test), typecheck and
+web build pass. Verified live: all 12 segments now show the correct
+`speaker_name` via the existing character join.
+
 ## "Man with Unclean Spirit" voice-mapped to ElevenLabs Torgrim (2026-09-18)
 
 Dan chose the ElevenLabs voice "Torgrim - Explosive & Furious"

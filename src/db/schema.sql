@@ -498,6 +498,23 @@ CREATE TABLE IF NOT EXISTS source_alignment_editorial_classifications (
 );
 CREATE INDEX IF NOT EXISTS idx_source_alignment_editorial_classifications_segment ON source_alignment_editorial_classifications(audio_segment_id, created_at);
 
+-- Named, evidenced attribution of an original-reading interval to the
+-- character whose direct speech it is (a text-based casting judgment, not
+-- audio diarization). Append-only like the rest of this family; recording
+-- one immediately writes the real audio_segments.speaker_character_id
+-- column too, since casting (src/pipeline/casting/index.ts) reads that
+-- column directly rather than through an evidence overlay like corrections/
+-- editorial classifications. A segment with no attribution keeps
+-- speaker_character_id NULL, meaning narration (no character speaks it).
+CREATE TABLE IF NOT EXISTS source_alignment_speaker_attributions (
+  id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
+  audio_segment_id TEXT NOT NULL REFERENCES audio_segments(id),
+  character_id TEXT NOT NULL REFERENCES characters(id),
+  verse_ref TEXT, reviewer_name TEXT NOT NULL, evidence TEXT NOT NULL,
+  source_hash TEXT NOT NULL, alignment_hash TEXT NOT NULL, created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_source_alignment_speaker_attributions_segment ON source_alignment_speaker_attributions(audio_segment_id, created_at);
+
 CREATE TABLE IF NOT EXISTS source_alignment_boundary_overrides (
   id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
   audio_segment_id TEXT NOT NULL REFERENCES audio_segments(id),

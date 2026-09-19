@@ -47,6 +47,30 @@ it("re-ingests safely when a correction targets a segment that also has a bounda
   expect(newSegment).toEqual({start_ms:original.start_ms,end_ms:original.end_ms-100});
 });
 
+it("re-ingests safely when a speaker attribution targets a segment that also has a boundary override", async () => {
+  delete process.env.GEMINI_API_KEY;
+  dataDir=mkdtempSync(join(tmpdir(),"hw-fresh-speaker-reingest-")); cleanup.push(dataDir); const assets=join(dataDir,"assets"), source=join(assets,"source","hatam","mark-3"), reference=join(assets,"reference","english","mark-3"); mkdirSync(source,{recursive:true}); mkdirSync(reference,{recursive:true});
+  writeFileSync(join(source,"mark-3-text.docx"),docx("1Fresh approved source verse."));
+  writeFileSync(join(reference,"mark-3-text.docx"),docx("1Fresh approved reference verse."));
+  execFileSync("ffmpeg",["-v","error","-y","-f","lavfi","-i","sine=frequency=440:duration=1","-c:a","libmp3lame",join(source,"mark-3-fcbh-audio.mp3")]);
+  db=new DatabaseSync(":memory:"); db.exec(readFileSync("src/db/schema.sql","utf8"));
+  db.exec("INSERT INTO projects (id,language,book,chapter,created_at,updated_at) VALUES ('fresh','hatam','mark',3,1,1)");
+  db.exec("INSERT INTO characters (id,name,scope_kind,canon_status,region,created_at,updated_at) VALUES ('jesus','Jesus','global','approved','Papuan',1,1)");
+  const {runIngestion}=await import("../../src/pipeline/ingestion/index.js");
+  const {recordBoundaryOverride}=await import("../../src/pipeline/ingestion/boundary-overrides.js");
+  const {recordSourceAlignmentSpeakerAttribution}=await import("../../src/pipeline/ingestion/source-alignment-speaker-attributions.js");
+  expect((await runIngestion("fresh")).ok).toBe(true);
+  const original=db.prepare("SELECT id,start_ms,end_ms FROM audio_segments WHERE project_id='fresh' AND layer='original_reading'").get() as {id:string;start_ms:number;end_ms:number};
+  recordBoundaryOverride(db,{projectId:"fresh",segmentId:original.id,startMs:original.start_ms,endMs:original.end_ms-100,reviewerName:"Dan",evidence:"Trimmed trailing silence."});
+  const attributionId=recordSourceAlignmentSpeakerAttribution(db,{projectId:"fresh",audioSegmentId:original.id,characterId:"jesus",verseRef:"Mark 3:1",reviewerName:"Dan",evidence:"Text analysis: quotative verb introduces Jesus's line."});
+  expect(db.prepare("SELECT speaker_character_id FROM audio_segments WHERE id=?").get(original.id)).toMatchObject({speaker_character_id:"jesus"});
+  const second=await runIngestion("fresh");
+  expect(second.ok).toBe(true);
+  const remapped=db.prepare("SELECT audio_segment_id FROM source_alignment_speaker_attributions WHERE id=?").get(attributionId) as {audio_segment_id:string};
+  const newSegment=db.prepare("SELECT start_ms,end_ms,speaker_character_id FROM audio_segments WHERE id=?").get(remapped.audio_segment_id) as {start_ms:number;end_ms:number;speaker_character_id:string};
+  expect(newSegment).toEqual({start_ms:original.start_ms,end_ms:original.end_ms-100,speaker_character_id:"jesus"});
+});
+
 it("uses a synthetic published heading to build an isolated fresh scene plan", async () => {
   delete process.env.GEMINI_API_KEY;
   dataDir=mkdtempSync(join(tmpdir(),"hw-fresh-positive-")); cleanup.push(dataDir); const assets=join(dataDir,"assets"), source=join(assets,"source","hatam","mark-3"); mkdirSync(source,{recursive:true});

@@ -19,6 +19,7 @@ import { KlingVideoProvider } from "../../providers/kling/index.js";
 import { attestSourceAlignment } from "../../pipeline/ingestion/source-review.js";
 import { recordSourceAlignmentCorrection } from "../../pipeline/ingestion/source-alignment-corrections.js";
 import { editorialAlignmentDisplay, recordSourceAlignmentEditorialClassification } from "../../pipeline/ingestion/source-alignment-editorial-classifications.js";
+import { recordSourceAlignmentSpeakerAttribution } from "../../pipeline/ingestion/source-alignment-speaker-attributions.js";
 
 export const projectsRouter = Router();
 
@@ -143,6 +144,12 @@ projectsRouter.post("/:id/source-alignment-editorial-classifications", (req,res)
   const raw=req.body??{};
   if(!getDb().prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)){res.status(404).json({error:"Project not found."});return;}
   try { res.status(201).json({classificationId:recordSourceAlignmentEditorialClassification(getDb(),{projectId:req.params.id,audioSegmentId:String(raw.audioSegmentId??""),classification:raw.classification,titleText:String(raw.titleText??""),crossReferenceText:String(raw.crossReferenceText??""),nextVerseRef:raw.nextVerseRef ? String(raw.nextVerseRef) : null,reviewerName:String(raw.reviewerName??""),evidence:String(raw.evidence??""),filmTreatment:raw.filmTreatment ? raw.filmTreatment : null})}); }
+  catch(error){res.status(400).json({error:(error as Error).message});}
+});
+projectsRouter.post("/:id/source-alignment-speaker-attributions", (req,res) => {
+  const raw=req.body??{};
+  if(!getDb().prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)){res.status(404).json({error:"Project not found."});return;}
+  try { res.status(201).json({attributionId:recordSourceAlignmentSpeakerAttribution(getDb(),{projectId:req.params.id,audioSegmentId:String(raw.audioSegmentId??""),characterId:String(raw.characterId??""),verseRef:raw.verseRef ? String(raw.verseRef) : null,reviewerName:String(raw.reviewerName??""),evidence:String(raw.evidence??"")})}); }
   catch(error){res.status(400).json({error:(error as Error).message});}
 });
 
