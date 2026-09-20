@@ -1,5 +1,46 @@
 # Current Goal
 
+## Segment-merge capability built; all 12 crew-flagged shots now bound (2026-09-19)
+
+Dan chose to merge the two adjacent segments for the remaining shots rather
+than pick one as the emphasis line. There was no existing inverse of
+`segment-splits.ts`, so built one: `src/pipeline/ingestion/segment-merges.ts`
+(`recordSegmentMerge`), a new `source_alignment_segment_merges` table
+(mirrors `source_alignment_segment_splits`'s evidence-preservation shape,
+just two originals in instead of one), and `POST
+.../segment-merges`. Same discipline as the split: refuses to merge onto a
+segment a shot is already bound to, refuses silently dropping existing
+corrections/classifications/attributions/overrides (repoints them,
+requires `acknowledgeSupersededEvidence` if any exist), and the merged
+segment starts with no speaker/verse_ref -- a human re-records it. Added
+validation the split doesn't need, since two independent IDs create new
+failure modes a single segment can't: reject overlapping targets, reject
+targets passed out of chronological order, and reject a merge if some
+other segment falls between the two (guards against merging a mismatched
+pair). 9 new tests in `segment-merges.test.ts`, confirmed to fail without
+the implementation before confirming they pass with it.
+
+Both real cases turned out to already be part of one continuous,
+already-attributed Jesus quotation (Mark 3:23-29's divided-kingdom
+parable) split into one `audio_segments` row per verse by the aligner --
+their own existing attribution evidence said as much ("interior verse of
+the continuous quotation"), which is why merging rather than picking one
+segment was the right call, not an arbitrary choice. Merged
+`65856c33`+`814d3cbe` -> shot `da0b28bc` (Mark 3:24-26) and
+`5dcb5794`+`0ef8c24a` -> shot `4cc7c4fe` (Mark 3:27), re-attributed both
+merged segments to Jesus, and bound both shots.
+
+All 12 of the shots the production-crew challengers originally flagged as
+missing `sourceSegmentId` are now bound. Typecheck, full suite (347 tests
+across 62 files, including the 9 new ones), and `build:web` all pass.
+
+Also: the long-running `npm run dev` process (tsx watch + vite) stopped
+responding on port 4000 mid-session, after the schema/route edits above --
+alive as a process but not listening, and its stdout wasn't visible to
+this session since it predated it. Killed the stuck process tree and
+restarted `npm run dev` fresh rather than dig into a process this session
+had no log access to; the new instance's startup log was clean.
+
 ## Mark 3:3/3:4 boundary resolved by ear; 10 of 12 flagged shots now bound (2026-09-19)
 
 Dan listened to the playback tool and confirmed verse 3 ends at 37.752s

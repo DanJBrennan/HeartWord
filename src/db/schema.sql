@@ -549,6 +549,27 @@ CREATE TABLE IF NOT EXISTS source_alignment_segment_splits (
 );
 CREATE INDEX IF NOT EXISTS idx_source_alignment_segment_splits_original ON source_alignment_segment_splits(original_segment_id);
 
+-- The inverse of a split: two adjacent original-reading intervals that are
+-- really one continuous utterance (e.g. per-verse aligner output inside one
+-- unbroken quotation) merged into one, so a single shot can bind to it.
+-- Same evidence discipline as the split above -- corrections/editorial
+-- classifications/speaker attributions/boundary overrides on either source
+-- segment are preserved and repointed, never silently dropped, and a human
+-- must re-record fresh evidence against the merged segment.
+CREATE TABLE IF NOT EXISTS source_alignment_segment_merges (
+  id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
+  first_segment_id TEXT NOT NULL, second_segment_id TEXT NOT NULL, -- historical only; both rows are deleted by the merge
+  first_start_ms INTEGER NOT NULL, first_end_ms INTEGER NOT NULL,
+  second_start_ms INTEGER NOT NULL, second_end_ms INTEGER NOT NULL,
+  merged_segment_id TEXT NOT NULL,
+  superseded_correction_ids TEXT, superseded_editorial_classification_ids TEXT,
+  superseded_speaker_attribution_ids TEXT, superseded_boundary_override_ids TEXT,
+  reviewer_name TEXT NOT NULL, evidence TEXT NOT NULL,
+  source_hash TEXT NOT NULL, alignment_hash TEXT NOT NULL, created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_source_alignment_segment_merges_first ON source_alignment_segment_merges(first_segment_id);
+CREATE INDEX IF NOT EXISTS idx_source_alignment_segment_merges_second ON source_alignment_segment_merges(second_segment_id);
+
 CREATE TABLE IF NOT EXISTS source_alignment_boundary_overrides (
   id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
   audio_segment_id TEXT NOT NULL REFERENCES audio_segments(id),

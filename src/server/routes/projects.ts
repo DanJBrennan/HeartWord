@@ -22,6 +22,7 @@ import { recordSourceAlignmentCorrection } from "../../pipeline/ingestion/source
 import { editorialAlignmentDisplay, recordSourceAlignmentEditorialClassification } from "../../pipeline/ingestion/source-alignment-editorial-classifications.js";
 import { recordSourceAlignmentSpeakerAttribution } from "../../pipeline/ingestion/source-alignment-speaker-attributions.js";
 import { recordSegmentSplit } from "../../pipeline/ingestion/segment-splits.js";
+import { recordSegmentMerge } from "../../pipeline/ingestion/segment-merges.js";
 
 export const projectsRouter = Router();
 
@@ -158,6 +159,12 @@ projectsRouter.post("/:id/segment-splits", (req,res) => {
   const raw=req.body??{};
   if(!getDb().prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)){res.status(404).json({error:"Project not found."});return;}
   try { res.status(201).json(recordSegmentSplit(getDb(),{projectId:req.params.id,audioSegmentId:String(raw.audioSegmentId??""),splitAtMs:Number(raw.splitAtMs),reviewerName:String(raw.reviewerName??""),evidence:String(raw.evidence??""),acknowledgeSupersededEvidence:raw.acknowledgeSupersededEvidence===true})); }
+  catch(error){res.status(400).json({error:(error as Error).message});}
+});
+projectsRouter.post("/:id/segment-merges", (req,res) => {
+  const raw=req.body??{};
+  if(!getDb().prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)){res.status(404).json({error:"Project not found."});return;}
+  try { res.status(201).json(recordSegmentMerge(getDb(),{projectId:req.params.id,firstSegmentId:String(raw.firstSegmentId??""),secondSegmentId:String(raw.secondSegmentId??""),reviewerName:String(raw.reviewerName??""),evidence:String(raw.evidence??""),acknowledgeSupersededEvidence:raw.acknowledgeSupersededEvidence===true})); }
   catch(error){res.status(400).json({error:(error as Error).message});}
 });
 
