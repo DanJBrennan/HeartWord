@@ -1,5 +1,36 @@
 # Current Goal
 
+## Mark 3:3/3:4 boundary resolved by ear; 10 of 12 flagged shots now bound (2026-09-19)
+
+Dan listened to the playback tool and confirmed verse 3 ends at 37.752s
+within segment `5b497010` (29.569-40.929s, previously tagged the combined
+"mark 3:3-4" and already attributed whole to Jesus). Split it there
+(`source_alignment_segment_splits`, reviewer "Dan", acknowledging the
+existing attribution as superseded) and re-attributed both pieces at the
+finer grain, carrying forward the original attribution's own text
+breakdown rather than re-deciding it:
+- `567e1949` (29.569-37.752s) = "Yesus pai bak no di ninda nite hi mai
+  'Akiju kwei ba, aya ei yahagom yoho bei.'" -- narrator intro + Jesus's
+  quoted "Come here" -- Mark 3:3.
+- `fb51068d` (37.752-40.929s) = "Lene Noni hig singgre tungwatu nya" --
+  the quotative frame opening v4 ("And he said to them"), not the Sabbath
+  question itself -- Mark 3:4, unbound to any shot (it's narration about
+  Jesus's turn, not on-camera quoted dialogue).
+
+Bound shot `b3d64f2d` (Mark 3:3) to the new first piece, and shot
+`0e456bc8` (Mark 3:4) to `6563e2f8` (41.733-55.733s) -- already a clean,
+fully-attributed, uncontested match on its own. `0e456bc8`'s "25.4s of
+continuous dialogue" coverage-notes estimate implied it needed more than
+that segment's 14.0s alone, which is what made this look ambiguous
+originally; treating that figure as a rough pre-alignment approximation
+rather than literal (same call made for `9c94aef7` below) resolved it.
+
+10 of the 12 originally-flagged shots are now bound. The remaining 2
+(`da0b28bc` Mark 3:24-26, `4cc7c4fe` Mark 3:27) are still blocked on the
+architecture/editorial question already logged above -- each needs one of
+two already-attributed adjacent segments merged or chosen as the lip-synced
+emphasis line, not a listening question.
+
 ## Mark 3 utterance bindings for the crew's flagged shots (2026-09-19)
 
 The challengers' "12 dialogue shots have needsLipSync=true but sourceSegmentId
