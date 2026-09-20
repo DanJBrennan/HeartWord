@@ -3152,3 +3152,22 @@ Goal Guardian check: this is a bounded Canon Builder identity correction that
 strengthens recognition without inferring theology, narrative behavior, or new
 product scope. It deliberately does not force-regenerate existing approved
 shots or treat unreviewed body-pose redesigns as approved canon.
+
+## Matthew (Levi) v4 canon promotion (2026-09-20)
+
+Dan approved a complete v4 package for Matthew (Levi): an approximately
+30-year-old, bald, clean-shaven Papuan disciple with a broad, friendly face and
+fuller build. The reviewed headshot and four body references lock his pale
+stone-gray flax tunic, deep-teal mantle, leather belt, and sandals across
+neutral-standing, walking, teaching, and seated-listening poses. This replaces
+the older v3 headshot and the v2 body references that v3 had carried forward.
+
+All five approved assets are copied to canonical v4 paths; their SHA-256 hashes
+are recorded in `character_assets` and `import-manifest.json`. V3 is marked
+superseded, never deleted. Matthew's lack of an individually attributed New
+Testament line remains unchanged, so no voice mapping is added.
+
+Goal Guardian check: this producer-approved identity correction completes a
+consistent reusable motion package in the Canon Builder without inventing
+narrative content, changing Scripture, or requiring regeneration of existing
+approved scenes.
