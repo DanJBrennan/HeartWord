@@ -1,5 +1,47 @@
 # Current Goal
 
+## Mark 3 utterance bindings for the crew's flagged shots (2026-09-19)
+
+The challengers' "12 dialogue shots have needsLipSync=true but sourceSegmentId
+is null" finding named exact segment IDs for only 2 of the 12 shots, and one
+of those two (`5b497010` for shot `b3d64f2d`, Mark 3:3) turned out to be
+wrong on inspection -- it's a naive first-verse-match, not a verified
+utterance boundary. Rather than trust the challengers' suggestions directly,
+walked the full `original_reading` timeline for the chapter (49 segments,
+ordered by start_ms, cross-referenced against `speaker_character_id` -- not
+`verse_ref`, which goes stale/null across a segment split and undersells
+what's already decided) and classified all 12 by whether the correct segment
+was actually unambiguous:
+
+- **8 bound now**, each to an already speaker-attributed, non-competing
+  segment: `03501e06` (Mark 3:5, "Stretch out your hand" -- the exact
+  segment `3930cb5c` Dan's own earlier split evidence already identified and
+  attributed to Jesus, just never wired into the shot), `ffb0efa5` (Mark
+  3:11, Man with Unclean Spirit), `b01bcda8` (Mark 3:14-15), `b337e589`
+  (Mark 3:23), `b5371a81` (Mark 3:28-29), `48b246ee` (Mark 3:33 -- Dan's own
+  408-413.645s correction from earlier this session), `729dda33` (Mark
+  3:34), `9c94aef7` (Mark 3:35). All via `POST
+  .../shots/:shotId/utterance-binding`, approvedBy "Dan".
+- **4 left unbound, for two distinct reasons, neither safe to guess:**
+  - `b3d64f2d`/`0e456bc8` (Mark 3:3/3:4): segment `5b497010` (29.569-40.929s)
+    is tagged a combined "mark 3:3-4" and both shots' Jesus dialogue may
+    share it -- where "Come here" ends and "Is it lawful..." begins isn't
+    determinable from metadata. Built a playback control at
+    `HeartWordData/assets/_scratch/mark3-v3v4-boundary.html` (served via
+    `/media/_scratch/...`, same pattern as the earlier alignment-gap
+    listening tools) for Dan to find the exact boundary by ear.
+  - `da0b28bc` (Mark 3:24-26) and `4cc7c4fe` (Mark 3:27): each shot's Jesus
+    dialogue is already fully, unambiguously attributed -- but it spans TWO
+    adjacent segments each (`65856c33`+`814d3cbe`; `5dcb5794`+`0ef8c24a`),
+    and `shot_utterance_bindings` only holds one segment per shot. Both
+    shots are `coverage_plan='covered_sequence'`, where only one "tight
+    insert" line actually needs the lip-synced interval -- so this isn't a
+    listening question, it's an editorial one (which line is the emphasis
+    beat) or a schema one (support a segment merge). Left for Dan to decide
+    rather than picking one segment arbitrarily, which the existing
+    `voice-lipsync/index.ts` comments explicitly warn against ("choosing
+    the first one would put real speech on the wrong mouth").
+
 ## Mark 3 production crew re-run validates the deliberation improvements (2026-09-19)
 
 Re-ran the production crew for Mark 3 planning (run `ca9f1aca`) after
