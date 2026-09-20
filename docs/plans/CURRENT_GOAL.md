@@ -1,5 +1,60 @@
 # Current Goal
 
+## Production crew Gemini calls now record real cost (2026-09-19)
+
+Dan chose the cost-tracking improvement over the other option offered
+(dropping the fidelity challenger's specific-segment-ID guesses, since one
+of its 90%-confidence picks during the shot-binding work above was
+actually wrong). `production_events.cost_usd` was hardcoded NULL on every
+insert and `CrewBrief.spentUsd` (`SUM(amount_usd) FROM
+cost_ledger_entries`) never had a crew-call row to sum, so a production
+run's Gemini spend was invisible to both the audit trail and the
+Production Director's own "review the actual spend" duty.
+
+`generateJsonWithImages` (gemini-text.ts) discarded Gemini's
+`usageMetadata` entirely. Rather than change its return shape -- it has 7
+other unrelated callers (canonical-likeness, critic, scene-fidelity,
+soundtrack review, alignment identification, generateJson) that would all
+have to unwrap a `.result` they don't need -- added a sibling
+`generateJsonWithImagesMetered`, sharing the same underlying fetch/parse
+logic, that also returns token usage and an estimated USD cost. Pricing
+constants ($0.30/1M input, $2.50/1M output tokens, output including
+thinking tokens) are a rough public-pricing-based placeholder, explicitly
+labeled NOT reconciled against a real invoice -- same honesty convention
+already used for NANO_BANANA_COST_USD/VEO_COST_USD_PER_SECOND in
+providers/gemini/index.ts; replace with a verified figure once real
+billing data exists.
+
+crew-store.ts's default `call` (used whenever a caller doesn't inject its
+own, i.e. every real run) now calls the metered variant and captures its
+cost via a variable reset before each call and read once by `log`
+immediately after -- `runCrew` always calls `log` exactly once per `call`,
+success or failure, before starting the next one (crew.ts), so this can
+never attribute one call's cost to a different event or leak a stale
+value into a failed one. Every real call's cost_usd is now stored on its
+own production_events row, and a matching cost_ledger_entries row
+(generation_attempt_id NULL, since it's not a media generation attempt) is
+recorded too, so spentUsd will reflect real crew spend the next time a
+brief loads. A caller-supplied `call` (every existing test, and manual
+recovery) still leaves cost_usd NULL, unchanged from before.
+
+Discovered two existing tests that vi.mock the whole gemini-text module
+with an explicit export list (durable-production.test.ts,
+fresh-chapter-full-production.test.ts) and would have silently broken
+running the real pipeline the moment the new export was added; fixed both
+to also provide generateJsonWithImagesMetered. New tests: 2 in
+gemini-text.test.ts (cost computed from usage; missing usageMetadata
+treated as zero rather than throwing) and 1 in crew.test.ts exercising the
+real default call end-to-end (mocked fetch, maxCalls:1, no injected
+call) -- confirmed to fail (cost_usd stayed null) against the pre-change
+crew-store.ts before confirming it passes now. Typecheck, full suite (350
+tests/62 files), and build:web all pass.
+
+Known limitation, unchanged by this work: spentUsd is read once when a
+brief loads and held fixed for that whole run (crewBriefHash already
+zeroes it for planning-phase hashing), so a run's own earlier-round calls
+never appear in its own later-round spentUsd -- only in the *next* run's.
+
 ## Segment-merge capability built; all 12 crew-flagged shots now bound (2026-09-19)
 
 Dan chose to merge the two adjacent segments for the remaining shots rather

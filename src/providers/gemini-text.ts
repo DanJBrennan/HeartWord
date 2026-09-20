@@ -28,21 +28,29 @@ export async function generateJson<T>(prompt: string, schema: GeminiJsonSchema):
   return generateJsonWithImages(prompt, [], schema);
 }
 
-/**
- * Same text-in/JSON-out shape as generateJson, plus optional image inputs
- * -- used by src/pipeline/qc/canonical-likeness.ts's automated canon-
- * likeness check (comparing a character's approved reference image
- * against a generated shot), which needs the model to actually see both
- * images, not just read a text description of them. Same
- * gemini-3.6-flash model as the text-only path -- Gemini's flash line is
- * natively multimodal, confirmed working 2026-09-06 when this was added.
- */
-export async function generateJsonWithImages<T>(
+// Rough public-pricing-based estimate (Gemini flash-tier per-1M-token
+// rates), NOT reconciled against a real invoice -- same honesty caveat as
+// the image/video provider cost constants in providers/gemini/index.ts.
+// Replace with a verified figure once real billing data is available.
+// Output tokens include any thinking tokens, billed at the same rate.
+const GEMINI_TEXT_INPUT_USD_PER_MILLION_TOKENS = 0.30;
+const GEMINI_TEXT_OUTPUT_USD_PER_MILLION_TOKENS = 2.50;
+
+export interface GeminiUsage { promptTokenCount: number; candidatesTokenCount: number; thoughtsTokenCount: number; totalTokenCount: number }
+export interface GeminiMeteredResult<T> { result: T; usage: GeminiUsage; costUsd: number }
+
+function estimateGeminiTextCostUsd(usage: GeminiUsage): number {
+  const inputCost = usage.promptTokenCount * GEMINI_TEXT_INPUT_USD_PER_MILLION_TOKENS / 1_000_000;
+  const outputCost = (usage.candidatesTokenCount + usage.thoughtsTokenCount) * GEMINI_TEXT_OUTPUT_USD_PER_MILLION_TOKENS / 1_000_000;
+  return Math.round((inputCost + outputCost) * 1e6) / 1e6;
+}
+
+async function callGemini<T>(
   prompt: string,
   images: Array<{ mimeType: string; data: string; caption?: string }>,
   schema: GeminiJsonSchema,
-  model = GEMINI_TEXT_MODEL
-): Promise<T> {
+  model: string
+): Promise<GeminiMeteredResult<T>> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error(
@@ -85,17 +93,61 @@ export async function generateJsonWithImages<T>(
 
   const data = (await res.json()) as {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number; totalTokenCount?: number };
   };
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) {
     throw new Error(`Gemini returned no text in its response: ${JSON.stringify(data)}`);
   }
+  const usage: GeminiUsage = {
+    promptTokenCount: data.usageMetadata?.promptTokenCount ?? 0,
+    candidatesTokenCount: data.usageMetadata?.candidatesTokenCount ?? 0,
+    thoughtsTokenCount: data.usageMetadata?.thoughtsTokenCount ?? 0,
+    totalTokenCount: data.usageMetadata?.totalTokenCount ?? 0
+  };
+  const costUsd = estimateGeminiTextCostUsd(usage);
 
   try {
-    return JSON.parse(text) as T;
+    return { result: JSON.parse(text) as T, usage, costUsd };
   } catch (err) {
     throw new Error(`Gemini's response wasn't valid JSON despite responseSchema: ${(err as Error).message} -- raw: ${text}`);
   }
+}
+
+/**
+ * Same text-in/JSON-out shape as generateJson, plus optional image inputs
+ * -- used by src/pipeline/qc/canonical-likeness.ts's automated canon-
+ * likeness check (comparing a character's approved reference image
+ * against a generated shot), which needs the model to actually see both
+ * images, not just read a text description of them. Same
+ * gemini-3.6-flash model as the text-only path -- Gemini's flash line is
+ * natively multimodal, confirmed working 2026-09-06 when this was added.
+ */
+export async function generateJsonWithImages<T>(
+  prompt: string,
+  images: Array<{ mimeType: string; data: string; caption?: string }>,
+  schema: GeminiJsonSchema,
+  model = GEMINI_TEXT_MODEL
+): Promise<T> {
+  return (await callGemini<T>(prompt, images, schema, model)).result;
+}
+
+/**
+ * Same call as generateJsonWithImages, but also returns token usage and an
+ * estimated USD cost -- for a caller that needs to record real spend (the
+ * production crew; see production_events.cost_usd and cost_ledger_entries
+ * in crew-store.ts). A separate function rather than changing
+ * generateJsonWithImages's return shape, since that would force every
+ * existing caller (canonical-likeness, critic, scene-fidelity, soundtrack
+ * review, alignment identification) to unwrap a `.result` it doesn't need.
+ */
+export async function generateJsonWithImagesMetered<T>(
+  prompt: string,
+  images: Array<{ mimeType: string; data: string; caption?: string }>,
+  schema: GeminiJsonSchema,
+  model = GEMINI_TEXT_MODEL
+): Promise<GeminiMeteredResult<T>> {
+  return callGemini<T>(prompt, images, schema, model);
 }
 
 /**

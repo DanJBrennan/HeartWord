@@ -174,6 +174,36 @@ describe("coordinated filmmaking", () => {
       expect(db.prepare("SELECT COUNT(*) AS n FROM cost_ledger_entries").get()!.n).toBe(0);
     } finally { db.close(); }
   });
+  it("records the real Gemini call's estimated cost on its event and in the cost ledger, using no injected call", async () => {
+    const db = new DatabaseSync(":memory:");
+    const originalKey = process.env.GEMINI_API_KEY;
+    process.env.GEMINI_API_KEY = "test-key";
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({
+      candidates: [{ content: { parts: [{ text: JSON.stringify(response("creative_director")) }] } }],
+      usageMetadata: { promptTokenCount: 500, candidatesTokenCount: 100, totalTokenCount: 600 }
+    }) })));
+    try {
+      db.exec(readFileSync("src/db/schema.sql", "utf8"));
+      db.exec("INSERT INTO projects (id,language,book,chapter,created_at,updated_at) VALUES ('p','hatam','mark',2,1,1)");
+      // maxCalls: 1 means only the first role (creative_director) is actually
+      // called before the second role hits the budget and the run reports
+      // incomplete -- exactly one real call, so one event and one ledger row.
+      const result = await runProductionCrew("p", "planning", { db, brief: brief(), maxCalls: 1 });
+      expect(result.calls).toBe(1);
+      const expectedCostUsd = 500 * 0.30 / 1e6 + 100 * 2.50 / 1e6;
+      const event = db.prepare("SELECT role, cost_usd FROM production_events").get() as { role: string; cost_usd: number };
+      expect(event.role).toBe("creative_director");
+      expect(event.cost_usd).toBeCloseTo(expectedCostUsd, 10);
+      const ledger = db.prepare("SELECT project_id, generation_attempt_id, amount_usd FROM cost_ledger_entries").get() as { project_id: string; generation_attempt_id: string | null; amount_usd: number };
+      expect(ledger.project_id).toBe("p");
+      expect(ledger.generation_attempt_id).toBeNull();
+      expect(ledger.amount_usd).toBeCloseTo(expectedCostUsd, 10);
+    } finally {
+      db.close();
+      vi.unstubAllGlobals();
+      if (originalKey === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = originalKey;
+    }
+  });
   it("keeps coverage directions scoped to the chosen beat", () => {
     const result: CrewResult = { status: "approved", summary: "Ready", calls: 11, contributions: { creative_director: response("creative_director"), production_director: response("production_director") } };
     const run = { id: "r", project_id: "p", phase: "planning" as const, brief_hash: "h", brief_json: JSON.stringify(brief()), result_json: JSON.stringify(result), status: "approved", created_at: 1 };

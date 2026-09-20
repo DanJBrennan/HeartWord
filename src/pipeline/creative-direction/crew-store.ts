@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { getDataDir, getDb } from "../../db/client.js";
-import { generateJsonWithImages, GEMINI_TEXT_MODEL } from "../../providers/gemini-text.js";
+import { generateJsonWithImagesMetered, GEMINI_TEXT_MODEL } from "../../providers/gemini-text.js";
 import { crewBriefHash, loadCrewBrief } from "./crew-context.js";
 import { runCrew, type CrewRunnerOptions } from "./crew.js";
 import type { CrewBrief, CrewPhase, CrewResult } from "./crew-types.js";
@@ -28,14 +28,32 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
     VALUES (?, ?, ?, ?, ?, 'running', ?, ?)`).run(id, projectId, phase, hash, JSON.stringify(brief), Date.now(), process.pid);
   let sequence = 0;
   let result: CrewResult;
+  // Set only by the real default `call` below, from Gemini's own reported
+  // usageMetadata -- reset before each attempt so a failed call never
+  // inherits the previous call's cost, and read once by `log` immediately
+  // after, since `runCrew` always calls `log` exactly once per `call`
+  // before making the next one (see crew.ts). Stays null for a
+  // caller-supplied `call` (tests, recovery), same as before this change.
+  let lastCallCostUsd: number | null = null;
   try {
     result = await runCrew({ phase, brief, maxCalls: options.maxCalls, media: options.media,
       visualMedia: canonReferenceMedia(db, dataDir, brief),
-      call: options.call ?? ((prompt, schema, media) => generateJsonWithImages(prompt, media, schema)),
-      log: event => db.prepare(`INSERT INTO production_events
-        (id, run_id, sequence, role, round, prompt, output_json, error, model, cost_usd, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`).run(randomUUID(), id, ++sequence, event.role,
-          event.round, event.prompt, event.output ? JSON.stringify(event.output) : null, event.error, GEMINI_TEXT_MODEL, Date.now()) });
+      call: options.call ?? (async (prompt, schema, media) => {
+        lastCallCostUsd = null;
+        const metered = await generateJsonWithImagesMetered(prompt, media, schema);
+        lastCallCostUsd = metered.costUsd;
+        return metered.result;
+      }),
+      log: event => {
+        const costUsd = lastCallCostUsd;
+        lastCallCostUsd = null;
+        db.prepare(`INSERT INTO production_events
+          (id, run_id, sequence, role, round, prompt, output_json, error, model, cost_usd, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(randomUUID(), id, ++sequence, event.role,
+            event.round, event.prompt, event.output ? JSON.stringify(event.output) : null, event.error, GEMINI_TEXT_MODEL, costUsd, Date.now());
+        if (costUsd !== null) db.prepare(`INSERT INTO cost_ledger_entries (id, project_id, generation_attempt_id, amount_usd, created_at) VALUES (?, ?, NULL, ?, ?)`)
+          .run(randomUUID(), projectId, costUsd, Date.now());
+      } });
     // Reject a model result produced against inputs changed by another request.
     if (!options.brief && crewBriefHash(loadCrewBrief(db, options.dataDir ?? getDataDir(), projectId, phase), phase) !== hash) {
       result = { ...result, status: "held", summary: "Production inputs changed during review. Run the crew against the current brief." };

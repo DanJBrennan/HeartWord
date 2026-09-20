@@ -12,25 +12,27 @@ vi.mock("../../src/db/client.js", () => ({ getDb: () => db, getDataDir: () => da
 const sync = vi.fn();
 vi.mock("../../src/providers/kling/index.js", () => ({ KlingLipSyncProvider: class { sync = sync; } }));
 vi.mock("../../src/providers/elevenlabs.js", () => ({ reVoiceAudio: vi.fn(async (_voice: string, path: string) => ({ audioBuffer: readFileSync(path) })) }));
+async function fixtureCrewContribution(prompt: string) {
+  const role = prompt.match(/You are HeartWord's ([^.]+)\./)?.[1]?.replaceAll(" ", "_");
+  const directions = ["narrator", "a", "b"].map(shotId => ({ shotId, instruction: "Preserve the exact approved source order.", scriptureBasis: "Mark 1:1" }));
+  return {
+    summary: `${role} reviewed the complete fixture cut.`, directions, findings: [],
+    ...(role === "picture_editor" ? { coverageRequests: [], edits: [
+      { shotId: "narrator", sourceStartMs: 0, durationMs: 500 },
+      { shotId: "a", sourceStartMs: 0, durationMs: 1000 },
+      { shotId: "b", sourceStartMs: 0, durationMs: 1000 }
+    ], pauses: [] } : {}),
+    ...(role === "colorist" ? { colorAdjustments: [] } : {}),
+    ...(role === "sound_designer" || role === "composer" ? { audioCues: [], generationRequests: [] } : {}),
+    ...(role === "production_director" ? { decision: "approve" } : {})
+  };
+}
 // The crew model is the sole external boundary in this assembly acceptance
 // test.  The real crew runner, editorial planner and FFmpeg renderer run.
 vi.mock("../../src/providers/gemini-text.js", () => ({
   GEMINI_TEXT_MODEL: "fixture-crew",
-  generateJsonWithImages: vi.fn(async (prompt: string) => {
-    const role = prompt.match(/You are HeartWord's ([^.]+)\./)?.[1]?.replaceAll(" ", "_");
-    const directions = ["narrator", "a", "b"].map(shotId => ({ shotId, instruction: "Preserve the exact approved source order.", scriptureBasis: "Mark 1:1" }));
-    return {
-      summary: `${role} reviewed the complete fixture cut.`, directions, findings: [],
-      ...(role === "picture_editor" ? { coverageRequests: [], edits: [
-        { shotId: "narrator", sourceStartMs: 0, durationMs: 500 },
-        { shotId: "a", sourceStartMs: 0, durationMs: 1000 },
-        { shotId: "b", sourceStartMs: 0, durationMs: 1000 }
-      ], pauses: [] } : {}),
-      ...(role === "colorist" ? { colorAdjustments: [] } : {}),
-      ...(role === "sound_designer" || role === "composer" ? { audioCues: [], generationRequests: [] } : {}),
-      ...(role === "production_director" ? { decision: "approve" } : {})
-    };
-  })
+  generateJsonWithImages: vi.fn(async (prompt: string) => fixtureCrewContribution(prompt)),
+  generateJsonWithImagesMetered: vi.fn(async (prompt: string) => ({ result: await fixtureCrewContribution(prompt), usage: { promptTokenCount: 0, candidatesTokenCount: 0, thoughtsTokenCount: 0, totalTokenCount: 0 }, costUsd: 0 }))
 }));
 
 const ffmpeg = spawnSync("ffmpeg", ["-version"], { stdio: "ignore" }).status === 0;

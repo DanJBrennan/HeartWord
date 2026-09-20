@@ -37,7 +37,9 @@ vi.mock("../../src/providers/gemini-text.js", () => {
     if (role === "production_director") base.decision = "approve";
     return base;
   };
-  return { GEMINI_TEXT_MODEL: "synthetic", generateJson: vi.fn(async (p: string, s: any) => contribution(p, s)), generateJsonWithImages: vi.fn(async (p: string, _m: any, s: any) => contribution(p, s)), generateGroundedText: vi.fn(async () => ({ text: "No issue.\nSEVERITY: none\nSUGGESTED FIX: none\nPRESERVE: everything\nFINDINGS_JSON: {\"findings\":[]}", sources: [], searchQueries: [] })) };
+  return { GEMINI_TEXT_MODEL: "synthetic", generateJson: vi.fn(async (p: string, s: any) => contribution(p, s)), generateJsonWithImages: vi.fn(async (p: string, _m: any, s: any) => contribution(p, s)),
+    generateJsonWithImagesMetered: vi.fn(async (p: string, _m: any, s: any) => ({ result: contribution(p, s), usage: { promptTokenCount: 0, candidatesTokenCount: 0, thoughtsTokenCount: 0, totalTokenCount: 0 }, costUsd: 0 })),
+    generateGroundedText: vi.fn(async () => ({ text: "No issue.\nSEVERITY: none\nSUGGESTED FIX: none\nPRESERVE: everything\nFINDINGS_JSON: {\"findings\":[]}", sources: [], searchQueries: [] })) };
 });
 
 const cleanup = () => { if (server) server.close(); db?.close(); if (root) rmSync(root, { recursive: true, force: true }); root = ""; server = undefined; };
