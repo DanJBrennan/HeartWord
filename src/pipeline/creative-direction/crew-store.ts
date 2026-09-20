@@ -85,8 +85,17 @@ export function directionsFromRun(run: StoredCrewRun, shotId: string, beatId?: s
   const beat = beatId ? shot.beats.find(b => b.id === beatId) : null;
   if (beatId && !beat) throw new Error("Coverage beat is not in the reviewed plan.");
   const result = JSON.parse(run.result_json!) as CrewResult;
-  const directions = Object.entries(result.contributions).flatMap(([role, contribution]) =>
-    contribution.directions.filter(d => d.shotId === shotId).map(d => `${role.replaceAll("_", " ")}: ${d.instruction}\nPurpose: ${d.scriptureBasis}`));
-  return `\n\nAPPROVED FILM DIRECTION (${run.id}):\n${directions.join("\n")}\n` +
+  // The Production Director's own direction is the sole authoritative
+  // instruction sent to media generation -- see docs/plans/CURRENT_GOAL.md,
+  // 2026-09-19. Every other role's direction remains retained evidence in
+  // this run's own contributions (still fully inspectable via
+  // GET .../production/runs/:runId), just no longer forwarded into the live
+  // generation prompt, where 13 roles' potentially contradictory
+  // instructions previously had to be reconciled by the image/video model
+  // itself. crew.ts now requires the Director to cover every shot, so this
+  // should never be missing for an approved plan.
+  const direction = result.contributions.production_director?.directions.find(d => d.shotId === shotId);
+  if (!direction) throw new Error("The Production Director did not direct this shot.");
+  return `\n\nAPPROVED FILM DIRECTION (${run.id}):\nproduction director: ${direction.instruction}\nPurpose: ${direction.scriptureBasis}\n` +
     (beat ? `This is coverage beat ${beat.id}, not the whole parent action. Show only: ${beat.notes ?? beat.id}. Chosen subject: ${beat.characterId ?? "no singled-out character"}. Apply parent continuity only where visible in this angle.\n` : "");
 }

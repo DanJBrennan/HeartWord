@@ -157,10 +157,33 @@ describe("coordinated filmmaking", () => {
     } finally { db.close(); }
   });
   it("keeps coverage directions scoped to the chosen beat", () => {
-    const result: CrewResult = { status: "approved", summary: "Ready", calls: 11, contributions: { creative_director: response("creative_director") } };
+    const result: CrewResult = { status: "approved", summary: "Ready", calls: 11, contributions: { creative_director: response("creative_director"), production_director: response("production_director") } };
     const run = { id: "r", project_id: "p", phase: "planning" as const, brief_hash: "h", brief_json: JSON.stringify(brief()), result_json: JSON.stringify(result), status: "approved", created_at: 1 };
     expect(directionsFromRun(run, "s1", "beat")).toContain("Show only: A listener reaction");
     expect(() => directionsFromRun(run, "s2", "beat")).toThrow("not in");
+  });
+  it("sends only the Production Director's own direction to media generation, not other roles'", () => {
+    const cd = response("creative_director"); cd.directions[0]!.instruction = "Creative director's take on s1";
+    const pd = response("production_director"); pd.directions[0]!.instruction = "Director's final merged instruction for s1";
+    const result: CrewResult = { status: "approved", summary: "Ready", calls: 13, contributions: { creative_director: cd, production_director: pd } };
+    const run = { id: "r", project_id: "p", phase: "planning" as const, brief_hash: "h", brief_json: JSON.stringify(brief()), result_json: JSON.stringify(result), status: "approved", created_at: 1 };
+    const output = directionsFromRun(run, "s1");
+    expect(output).toContain("Director's final merged instruction for s1");
+    expect(output).not.toContain("Creative director's take on s1");
+  });
+  it("refuses to treat a plan as reviewable if the Production Director skipped a shot", () => {
+    const result: CrewResult = { status: "approved", summary: "Ready", calls: 13, contributions: { production_director: { ...response("production_director"), directions: [response("production_director").directions[0]!] } } };
+    const run = { id: "r", project_id: "p", phase: "planning" as const, brief_hash: "h", brief_json: JSON.stringify(brief()), result_json: JSON.stringify(result), status: "approved", created_at: 1 };
+    expect(() => directionsFromRun(run, "s2")).toThrow("did not direct this shot");
+  });
+  it("requires the Production Director, like every design specialist, to cover every shot before approving", async () => {
+    const result = await runCrew({ phase: "planning", brief: brief(), log: () => {}, call: async prompt => {
+      const role = roleFromPrompt(prompt), out = response(role);
+      if (role === "production_director") out.directions = out.directions.slice(0, 1);
+      return out;
+    } });
+    expect(result.status).toBe("incomplete");
+    expect(result.summary).toContain("every shot");
   });
 });
 
