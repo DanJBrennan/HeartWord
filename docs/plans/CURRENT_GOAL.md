@@ -1,5 +1,39 @@
 # Current Goal
 
+## Mark 3 production crew re-run validates the deliberation improvements (2026-09-19)
+
+Re-ran the production crew for Mark 3 planning (run `ca9f1aca`) after
+implementing challenger-brief narrowing, sole director authority, automatic
+per-chapter deliberation export, and canon reference images for visually-
+judging roles. Compared against the prior approved run (`31d90474`) directly
+via the stored `brief_json`/`result_json` for both:
+
+- Canon reference images measurably changed what the visual roles caught.
+  Before images were attached, `cinematographer` and `staging_designer` had
+  **zero** findings on the whole chapter; with the same shot now showing them
+  the actual reference art, both independently flagged the same real defect
+  `costume_designer` and `fidelity_challenger` already knew from text notes
+  alone (character `44a42fb6` docs say "headwrap", asset renders bareheaded).
+  `staging_designer`'s finding language ("is bareheaded in canon reference
+  image") confirms it reasoned from the image, not the name/notes. Total
+  advisory findings across the 13-role crew rose from 9 to 23, concentrated
+  in the four visually-oriented roles.
+- The automatic deliberation export
+  (`HeartWordData/exports/production-crew/hatam-mark-3-planning.json`)
+  correctly overwrote itself with the new run's id with no manual step,
+  confirming `saveDeliberationExport` is durably wired into
+  `runProductionCrew` rather than a one-off backfill.
+- Production Director direction for the same shot reads as genuinely merged
+  craft output in one instruction (lens/movement, per-character wardrobe,
+  blocking, lighting with an EV value), consistent with the updated
+  sole-authority duty; all 30 shots had director coverage in both runs, so
+  that validation was already incidentally satisfied before it was enforced.
+- Challenger-brief narrowing was already active in the prior run, so this
+  re-run isn't new evidence either way on redundancy; the three challengers
+  still converge on the same headwrap/lip-sync-binding issues, but that
+  reflects a real shared defect surface (one bad asset, twelve unbound
+  segments), not un-narrowed scope.
+
 ## Mark 3 Man with Withered Hand canon promotion (2026-09-19)
 
 Dan approved a new chapter-scoped Papuan v1 canon for the Man with Withered
