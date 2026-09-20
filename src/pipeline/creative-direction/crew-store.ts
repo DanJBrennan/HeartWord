@@ -5,6 +5,7 @@ import { generateJsonWithImages, GEMINI_TEXT_MODEL } from "../../providers/gemin
 import { crewBriefHash, loadCrewBrief } from "./crew-context.js";
 import { runCrew, type CrewRunnerOptions } from "./crew.js";
 import type { CrewBrief, CrewPhase, CrewResult } from "./crew-types.js";
+import { saveDeliberationExport } from "./deliberation-export.js";
 
 export interface StoredCrewRun { id: string; project_id: string; phase: CrewPhase; brief_hash: string;
   brief_json: string; status: string; result_json: string | null; created_at: number }
@@ -41,6 +42,11 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
   }
   db.prepare("UPDATE production_runs SET status = ?, result_json = ?, completed_at = ? WHERE id = ?")
     .run(result.status, JSON.stringify(result), Date.now(), id);
+  // Best-effort: a chapter's deliberation is worth saving for future
+  // visualization the moment it happens, at whatever status it actually
+  // reached -- but a failure here must never take down the real run above.
+  try { saveDeliberationExport(db, options.dataDir ?? getDataDir(), projectId, phase, id, brief, result.status); }
+  catch (error) { console.error(`Deliberation export failed for ${projectId}/${phase}/${id}:`, error); }
   return { ...result, runId: id };
 }
 
