@@ -6,6 +6,7 @@ import { crewBriefHash, loadCrewBrief } from "./crew-context.js";
 import { runCrew, type CrewRunnerOptions } from "./crew.js";
 import type { CrewBrief, CrewPhase, CrewResult } from "./crew-types.js";
 import { saveDeliberationExport } from "./deliberation-export.js";
+import { canonReferenceMedia } from "./visual-reference-media.js";
 
 export interface StoredCrewRun { id: string; project_id: string; phase: CrewPhase; brief_hash: string;
   brief_json: string; status: string; result_json: string | null; created_at: number }
@@ -17,7 +18,8 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
   brief?: CrewBrief; media?: CrewRunnerOptions["media"];
 } = {}): Promise<CrewResult & { runId: string }> {
   const db = options.db ?? getDb();
-  const brief = options.brief ?? loadCrewBrief(db, options.dataDir ?? getDataDir(), projectId, phase);
+  const dataDir = options.dataDir ?? getDataDir();
+  const brief = options.brief ?? loadCrewBrief(db, dataDir, projectId, phase);
   const active = db.prepare("SELECT id FROM production_runs WHERE project_id=? AND status='running' LIMIT 1").get(projectId);
   if (active) throw new Error("A production crew run is already active. Recover an interrupted run before restarting.");
   const id = randomUUID();
@@ -28,6 +30,7 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
   let result: CrewResult;
   try {
     result = await runCrew({ phase, brief, maxCalls: options.maxCalls, media: options.media,
+      visualMedia: canonReferenceMedia(db, dataDir, brief),
       call: options.call ?? ((prompt, schema, media) => generateJsonWithImages(prompt, media, schema)),
       log: event => db.prepare(`INSERT INTO production_events
         (id, run_id, sequence, role, round, prompt, output_json, error, model, cost_usd, created_at)

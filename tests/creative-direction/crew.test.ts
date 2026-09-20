@@ -71,6 +71,24 @@ describe("coordinated filmmaking", () => {
     expect(director!.prompt).toContain("Approved robe");
     expect(director!.prompt).toContain("Preserve the approved wardrobe");
   });
+  it("attaches canon reference images only to roles whose job is inherently visual", async () => {
+    const seenMedia: Record<string, unknown> = {};
+    const seenPrompt: Record<string, string> = {};
+    const visualMedia = [{ mimeType: "image/png", data: "ref", caption: "Canon reference image for \"Witness\":" }];
+    await runCrew({ phase: "planning", brief: brief(), visualMedia, log: () => {}, call: async (prompt, _schema, media) => {
+      const role = roleFromPrompt(prompt);
+      seenMedia[role] = media; seenPrompt[role] = prompt;
+      return response(role);
+    } });
+    for (const role of ["cinematographer", "costume_designer", "staging_designer", "fidelity_challenger"]) {
+      expect(seenMedia[role]).toEqual(visualMedia);
+      expect(seenPrompt[role]).toContain("canon reference images");
+    }
+    for (const role of ["creative_director", "choreographer", "lighting_designer", "script_supervisor", "picture_editor", "scripture_cultural_reviewer", "clarity_challenger", "feasibility_challenger", "production_director"]) {
+      expect(seenMedia[role]).toEqual([]);
+      expect(seenPrompt[role]).not.toContain("canon reference images");
+    }
+  });
   it("cannot approve over an independent supervisor's blocking finding", async () => {
     const result = await runCrew({ phase: "planning", brief: brief(), log: () => {}, call: async prompt => {
       const role = roleFromPrompt(prompt), out = response(role);

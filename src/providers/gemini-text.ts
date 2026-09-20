@@ -39,7 +39,7 @@ export async function generateJson<T>(prompt: string, schema: GeminiJsonSchema):
  */
 export async function generateJsonWithImages<T>(
   prompt: string,
-  images: Array<{ mimeType: string; data: string }>,
+  images: Array<{ mimeType: string; data: string; caption?: string }>,
   schema: GeminiJsonSchema,
   model = GEMINI_TEXT_MODEL
 ): Promise<T> {
@@ -51,7 +51,17 @@ export async function generateJsonWithImages<T>(
     );
   }
 
-  const parts = [{ text: prompt }, ...images.map((img) => ({ inlineData: img }))];
+  // A caption becomes its own text part immediately before its image --
+  // Gemini's inlineData parts carry no label of their own, so a caller
+  // sending several images (e.g. one per chapter character) has no other
+  // way to tell the model which is which.
+  const parts = [
+    { text: prompt },
+    ...images.flatMap((img) => [
+      ...(img.caption ? [{ text: img.caption }] : []),
+      { inlineData: { mimeType: img.mimeType, data: img.data } }
+    ])
+  ];
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const res = await fetch(url, {

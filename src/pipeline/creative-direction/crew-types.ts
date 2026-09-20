@@ -64,4 +64,8 @@ export interface CrewResult {
   status: "approved" | "awaiting_assets" | "held" | "incomplete"; summary: string; calls: number;
   contributions: Partial<Record<CrewRole, CrewContribution>>;
 }
-export interface ReviewMedia { mimeType: string; data: string }
+/** `caption`, when present, is rendered as its own text part immediately
+ *  before this image (see generateJsonWithImages) -- otherwise a model
+ *  receiving several images (e.g. per-character canon reference art) has
+ *  no way to know which image is which. */
+export interface ReviewMedia { mimeType: string; data: string; caption?: string }

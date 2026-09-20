@@ -167,8 +167,16 @@ function challengerBrief(brief: CrewBrief, role: ChallengerRole): CrewBrief {
   return { ...brief, source: { ...brief.source, text: [] }, canon: bareCanon, producerNotes: [], appliedLessons: [] };
 }
 
+// Roles whose job is inherently visual -- everyone else reasons about the
+// chapter in text, same as before. See docs/plans/CURRENT_GOAL.md,
+// 2026-09-19: without seeing the actual approved art, a visual
+// inconsistency that wasn't already written down as a canon text note
+// (like the one true accident this run happened to catch) would go
+// completely undetected.
+const VISUAL_ROLES = ["cinematographer", "costume_designer", "staging_designer", "fidelity_challenger"] as const;
+
 export interface CrewRunnerOptions {
-  phase: CrewPhase; brief: CrewBrief; media?: ReviewMedia[]; maxCalls?: number;
+  phase: CrewPhase; brief: CrewBrief; media?: ReviewMedia[]; visualMedia?: ReviewMedia[]; maxCalls?: number;
   call: (prompt: string, schema: GeminiJsonSchema, media: ReviewMedia[]) => Promise<unknown>;
   log: (event: CrewEvent) => void;
 }
@@ -205,11 +213,13 @@ export async function runCrew(options: CrewRunnerOptions): Promise<CrewResult> {
         "If render.timingAudit is present, it records observed footage and audio matches, including unresolved gaps. It is not approved source coverage or an instruction to overwrite the existing edit. Use its findings to request specific repairs.\n" +
         "Finishing parameters are a COMPLETE replacement recipe, applied to the clean base cut. If render.finishing exists, consult previousDecisions and retain all desired existing color adjustments and audio cues in your own output; omit a cue only to remove it. Never assume the previous mix will be layered underneath.\n" +
         (CHALLENGER_ROLES.includes(role as ChallengerRole) ? "Your brief below is narrowed to your own lens; a field you don't need has been removed, not hidden evidence -- do not infer withholding.\n" : "") +
+        (VISUAL_ROLES.includes(role as typeof VISUAL_ROLES[number]) ? "Attached are this chapter's approved canon reference images, one per character, each preceded by a caption naming which character it shows. Judge actual appearance (build, costume, coloring) from these images, not from a character's name or notes alone; record a finding if what's proposed conflicts with what the image actually shows.\n" : "") +
         `CHAPTER BRIEF:\n${JSON.stringify(CHALLENGER_ROLES.includes(role as ChallengerRole) ? challengerBrief(brief, role as ChallengerRole) : brief)}\nTEAM CONTRIBUTIONS AND PREVIOUS DECISION:\n${JSON.stringify(contributions)}`;
       let output: CrewContribution;
       calls++;
+      const media = VISUAL_ROLES.includes(role as typeof VISUAL_ROLES[number]) ? [...(options.media ?? []), ...(options.visualMedia ?? [])] : (options.media ?? []);
       try {
-        output = validateContribution(await call(prompt, crewSchema(role), options.media ?? []), role, brief);
+        output = validateContribution(await call(prompt, crewSchema(role), media), role, brief);
         if (phase === "planning" && ["creative_director", "cinematographer", "choreographer", "staging_designer", "production_designer", "costume_designer", "lighting_designer", "production_director"].includes(role) && output.directions.length !== brief.shots.length) {
           throw new Error("Planning directions must cover every shot.");
         }
