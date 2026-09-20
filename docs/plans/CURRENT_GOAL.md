@@ -1,5 +1,58 @@
 # Current Goal
 
+## The shot planner now sees real narration durations (2026-09-20)
+
+Root-cause fix for the under-provisioning the advisory above measured.
+`buildScenePrompt` previously gave the planning model only the English
+reference text, the confirmed speakers and the canon list -- nothing about
+how many seconds of narration audio it was actually covering. So it split
+each scene into shots purely by text structure, blind to duration, and
+Mark 3 came out with roughly half the non-dialogue video its narration
+needs.
+
+Each scene's prompt now carries a measured narration budget: the real
+seconds of narration-only audio in that verse range, broken down per span,
+and the fewest non-dialogue shots that can cover it at
+MAX_SINGLE_CLIP_LIPSYNC_MS. The arithmetic stays in code
+(`narrationBudgetFor`, pure and unit-tested) rather than being left to the
+model, the same reasoning that already governs `planCoverage`'s use of
+real dialogue durations. The verse-reference resolution is shared with the
+coverage report via a new exported `resolveNarrationSpans`, so the
+correction/editorial overlay fixed yesterday has exactly one
+implementation rather than two that can drift.
+
+The prompt is explicit that more shots means more COVERAGE of what the
+text already says -- another angle, a closer or wider view, the moment
+just before or after a stated action, a reaction from someone the text
+places in the scene -- never new events, dialogue or theology, and that a
+wordless reaction beat is legitimate only where the passage supports one
+and stays within its decorum. That mirrors the standing guidance already
+embedded in the Creative Director's gap-filler prompt, so the two agents
+now say the same thing rather than only the later one knowing the rule.
+
+What the planner would now see for Mark 3, against what it actually
+planned when it was blind to this:
+
+| scene | narration | needs | planned |
+| --- | --- | --- | --- |
+| 1 (3:1-6) | 49.1s | >= 10 | 5 |
+| 2 (3:7-12) | 72.5s | >= 12 | 4 |
+| 3 (3:13-19) | 57.3s | >= 13 | 3 |
+| 4 (3:20-30) | 47.8s | >= 7 | 4 |
+| 5 (3:31-35) | 13.5s | >= 2 | 2 |
+
+44 non-dialogue shots against the 18 Mark 3 has -- and that 44 is a floor,
+assuming every shot runs the full ceiling. Scene 5 already being adequate
+is a useful check that the figure isn't uniformly inflated.
+
+Two consequences worth stating plainly. This does not retroactively change
+Mark 3: casting refuses to re-plan a chapter that already has shots, so
+Mark 3's shortfall remains a deliberate decision (re-plan, or close it
+through the Creative/Production Director negotiation). And honouring
+"the narrator must never go silent" properly costs real money -- at the
+Production Director's own ~$1.04 per new shot, going from 18 to 44
+non-dialogue shots is roughly $27 more per chapter in generation.
+
 ## Narration coverage moved before media generation, as an advisory (2026-09-20)
 
 Dan asked whether breathing-room/reaction planning should happen before

@@ -104,17 +104,41 @@ export interface NarrationCoverageReport {
  * trigger for it -- that negotiation makes its own (small, now
  * cost-tracked) real Gemini calls, so running it stays an explicit choice.
  */
-export function computeNarrationCoverage(db: DatabaseSync, projectId: string): NarrationCoverageReport {
+/** One narration-only interval with its verse reference resolved through
+ *  the correction/editorial overlay -- the shared input for both the
+ *  coverage report and stage 3's shot-count guidance. */
+export interface ResolvedNarrationSpan {
+  segmentId: string;
+  verseRef: string;
+  verseRefSource: "raw" | "correction";
+  startMs: number;
+  endMs: number;
+  durationMs: number;
+}
+
+export interface ResolvedNarration {
+  spans: ResolvedNarrationSpan[];
+  excluded: NarrationCoverageExclusion[];
+  editorialMs: number;
+  unplaceableMs: number;
+}
+
+/**
+ * Every narration-only interval for a chapter, with its verse reference
+ * read through the same overlay the API projection uses: a human
+ * correction outranks the raw column, and an editorial classification
+ * means title/cross-reference material rather than Scripture. Anything
+ * with no resolvable reference is returned as an exclusion rather than
+ * dropped, since dropping it understates the real narration duration.
+ */
+export function resolveNarrationSpans(db: DatabaseSync, projectId: string): ResolvedNarration {
   const narrationSegs = db.prepare(
     `SELECT id, verse_ref, start_ms, end_ms FROM audio_segments
      WHERE project_id = ? AND layer = 'original_reading' AND speaker_character_id IS NULL
      ORDER BY start_ms`
   ).all(projectId) as Array<{ id: string; verse_ref: string | null; start_ms: number; end_ms: number }>;
 
-  // Same precedence as the API's own alignment projection (projects.ts):
-  // a human correction outranks the raw column; an editorial
-  // classification marks title/cross-reference material rather than
-  // Scripture. Later rows win, so iterate in created_at order.
+  // Later rows win, so iterate in created_at order.
   const correctedVerseRef = new Map<string, string>();
   for (const row of db.prepare(
     "SELECT audio_segment_id, verse_ref FROM source_alignment_corrections WHERE project_id = ? ORDER BY created_at"
@@ -126,6 +150,70 @@ export function computeNarrationCoverage(db: DatabaseSync, projectId: string): N
       "SELECT audio_segment_id FROM source_alignment_editorial_classifications WHERE project_id = ?"
     ).all(projectId) as Array<{ audio_segment_id: string }>).map(row => row.audio_segment_id)
   );
+
+  const spans: ResolvedNarrationSpan[] = [];
+  const excluded: NarrationCoverageExclusion[] = [];
+  let editorialMs = 0;
+  let unplaceableMs = 0;
+
+  for (const seg of narrationSegs) {
+    const durationMs = seg.end_ms - seg.start_ms;
+    const correction = correctedVerseRef.get(seg.id);
+    const verseRef = correction ?? seg.verse_ref;
+    if (!correction && editorialSegmentIds.has(seg.id)) {
+      editorialMs += durationMs;
+      excluded.push({ segmentId: seg.id, startMs: seg.start_ms, endMs: seg.end_ms, durationMs, reason: "editorial" });
+      continue;
+    }
+    if (!verseRef) {
+      unplaceableMs += durationMs;
+      excluded.push({ segmentId: seg.id, startMs: seg.start_ms, endMs: seg.end_ms, durationMs, reason: "unplaceable" });
+      continue;
+    }
+    spans.push({
+      segmentId: seg.id, verseRef, verseRefSource: correction ? "correction" : "raw",
+      startMs: seg.start_ms, endMs: seg.end_ms, durationMs
+    });
+  }
+
+  return { spans, excluded, editorialMs, unplaceableMs };
+}
+
+/** Per-scene narration budget for stage 3's shot planning: how many
+ *  seconds of narration must play under non-dialogue shots in this verse
+ *  range, and the fewest such shots that can cover it at the single-clip
+ *  ceiling. Pure, so the arithmetic stays in code rather than being left
+ *  to the planning model -- same reasoning as planCoverage's use of real
+ *  dialogue durations. */
+export interface NarrationBudget {
+  totalMs: number;
+  minimumNonDialogueShots: number;
+  spans: Array<{ verseRef: string; durationMs: number; minimumShots: number }>;
+}
+
+export function narrationBudgetFor(
+  spans: ResolvedNarrationSpan[],
+  verseStart: number,
+  verseEnd: number
+): NarrationBudget {
+  const inScene = spans.filter(span => {
+    const { start, end } = parseVerseRange(span.verseRef);
+    return start <= verseEnd && end >= verseStart;
+  });
+  const detail = inScene.map(span => ({
+    verseRef: span.verseRef,
+    durationMs: span.durationMs,
+    minimumShots: Math.ceil(span.durationMs / MAX_SINGLE_CLIP_LIPSYNC_MS)
+  }));
+  return {
+    totalMs: detail.reduce((sum, span) => sum + span.durationMs, 0),
+    minimumNonDialogueShots: detail.reduce((sum, span) => sum + span.minimumShots, 0),
+    spans: detail
+  };
+}
+
+export function computeNarrationCoverage(db: DatabaseSync, projectId: string): NarrationCoverageReport {
+  const { spans: narrationSpans, excluded, editorialMs, unplaceableMs } = resolveNarrationSpans(db, projectId);
 
   const shots = db.prepare(
     `SELECT s.id, s.verse_ref, s.needs_lip_sync
@@ -146,27 +234,12 @@ export function computeNarrationCoverage(db: DatabaseSync, projectId: string): N
   // not the match rule -- is what prevents a shot being counted twice.
   const claimedShotIds = new Set<string>();
   const spans: NarrationCoverageSpan[] = [];
-  const excluded: NarrationCoverageExclusion[] = [];
   let totalRealMs = 0;
   let totalCoveredMs = 0;
-  let editorialMs = 0;
-  let unplaceableMs = 0;
 
-  for (const seg of narrationSegs) {
-    const realMs = seg.end_ms - seg.start_ms;
-    const correction = correctedVerseRef.get(seg.id);
-    const verseRef = correction ?? seg.verse_ref;
-    if (!correction && editorialSegmentIds.has(seg.id)) {
-      editorialMs += realMs;
-      excluded.push({ segmentId: seg.id, startMs: seg.start_ms, endMs: seg.end_ms, durationMs: realMs, reason: "editorial" });
-      continue;
-    }
-    if (!verseRef) {
-      unplaceableMs += realMs;
-      excluded.push({ segmentId: seg.id, startMs: seg.start_ms, endMs: seg.end_ms, durationMs: realMs, reason: "unplaceable" });
-      continue;
-    }
-    const { start: segStart, end: segEnd } = parseVerseRange(verseRef);
+  for (const span of narrationSpans) {
+    const realMs = span.durationMs;
+    const { start: segStart, end: segEnd } = parseVerseRange(span.verseRef);
     totalRealMs += realMs;
 
     const covering = shots.filter(s => {
@@ -190,7 +263,7 @@ export function computeNarrationCoverage(db: DatabaseSync, projectId: string): N
     const gapMs = realMs - coveredMs;
     const status = gapMs > GAP_TOLERANCE_MS ? "short" : gapMs < -GAP_TOLERANCE_MS ? "overlap_check" : "ok";
     spans.push({
-      verseRef, verseRefSource: correction ? "correction" : "raw",
+      verseRef: span.verseRef, verseRefSource: span.verseRefSource,
       realMs, coveredMs, gapMs, status, shots: shotDetails
     });
   }

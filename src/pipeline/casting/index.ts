@@ -20,6 +20,7 @@ import {
   isCameraMovement,
   isCrowdDensity,
   isFraming,
+  MAX_SINGLE_CLIP_LIPSYNC_MS,
   planCoverage,
   validateFraming,
   verseRangesRelated,
@@ -27,6 +28,7 @@ import {
   type CrowdDensity,
   type Framing
 } from "./coverage.js";
+import { narrationBudgetFor, resolveNarrationSpans, type NarrationBudget } from "./narration-coverage.js";
 
 interface SceneRow {
   id: string;
@@ -153,12 +155,40 @@ const SHOT_RESPONSE_SCHEMA: GeminiJsonSchema = {
   required: ["reasoning", "lightingContinuity", "shots"]
 };
 
+/**
+ * Real measured narration time for this scene, stated as a floor on how
+ * many non-dialogue shots it takes to cover it. Without this the planner
+ * split scenes purely by text structure, blind to duration, and
+ * systematically under-provisioned b-roll -- Mark 3 came out with roughly
+ * half the non-dialogue video its narration needs (docs/plans/
+ * CURRENT_GOAL.md, 2026-09-20). The arithmetic stays in code rather than
+ * being left to the model, same reasoning as planCoverage's use of real
+ * dialogue durations.
+ */
+function narrationBudgetSection(budget: NarrationBudget): string {
+  if (budget.totalMs === 0) {
+    return `NARRATION TIMING FOR THIS SCENE: none -- every second of this scene's audio is attributed dialogue, so it needs no narration-only coverage.`;
+  }
+  const seconds = (ms: number) => (ms / 1000).toFixed(1);
+  const perSpan = budget.spans
+    .map(span => `  - ${span.verseRef}: ${seconds(span.durationMs)}s of narration -> at least ${span.minimumShots} non-dialogue shot(s)`)
+    .join("\n");
+  return `NARRATION TIMING FOR THIS SCENE (measured from the real recording, not an estimate):
+This scene carries ${seconds(budget.totalMs)}s of narration that plays under NON-dialogue shots -- shots where nobody is speaking on camera. One generated clip holds about ${seconds(MAX_SINGLE_CLIP_LIPSYNC_MS)}s, so covering this narration takes AT LEAST ${budget.minimumNonDialogueShots} non-dialogue shots:
+${perSpan}
+
+Plan at least that many non-dialogue shots, on top of whatever lip-synced dialogue shots the scene needs -- a dialogue shot carries its own audio and does not cover narration. Planning fewer leaves the picture running out before the narrator does.
+
+More shots here means more COVERAGE of what the text already says: another angle on the same action, a closer or wider view, the moment just before or just after a stated action, or a reaction from someone the text places in the scene. It never means new events, new dialogue, or new theology. A wordless reaction beat -- awe, alarm, someone taking in what just happened -- is legitimate where the passage genuinely supports one, and must stay within the decorum of the passage.`;
+}
+
 function buildScenePrompt(
   project: ProjectRow,
   scene: SceneRow,
   verseText: string,
   attributedSpeakers: string[],
-  canonCharacters: CanonCharacterRow[]
+  canonCharacters: CanonCharacterRow[],
+  narrationBudget: NarrationBudget
 ): string {
   const characterList = canonCharacters
     .map((c) => {
@@ -184,6 +214,8 @@ Characters already confirmed to speak in this scene from audio analysis: ${
 
 Available canon characters for this project (use ONLY these names, copied exactly):
 ${characterList}
+
+${narrationBudgetSection(narrationBudget)}
 
 Break this scene into a sequence of shots (a shot is one unit of blocking/action -- start a new shot when the framing, action, or which characters are the focus changes). For each shot, describe the action in one or two sentences grounded strictly in the text above, list which canon characters are visible (include silent/background characters where the text implies their presence -- e.g. the crowd, or the men carrying the mat -- even if they don't speak), and give it a specific verse reference from the range above.
 
@@ -318,6 +350,10 @@ const buildCasting: Stage = async (projectId) => {
     return computeDialogueDurationMs(matching);
   }
 
+  // Real narration timing, resolved through the correction/editorial
+  // overlay once for the whole chapter and sliced per scene below.
+  const { spans: narrationSpans } = resolveNarrationSpans(db, project.id);
+
   const now = Date.now();
   const unresolvedNames = new Set<string>();
   const framingCorrections: string[] = [];
@@ -334,7 +370,8 @@ const buildCasting: Stage = async (projectId) => {
       const speakers = [...new Set(dialogueSegments.filter(s => s.verse_ref && parseVerseRange(s.verse_ref).start <= end && parseVerseRange(s.verse_ref).end >= start)
         .map(s => s.speaker_name).filter((n): n is string => n !== null))];
       const canon = allCanonCharacters.filter(c => hasJoinedByScene(c.joined_narrative_at, scene.verse_end));
-      responses.set(scene.id, await generateJson<GeminiSceneResponse>(buildScenePrompt(project, scene, text, speakers, canon), SHOT_RESPONSE_SCHEMA));
+      const narrationBudget = narrationBudgetFor(narrationSpans, start, end);
+      responses.set(scene.id, await generateJson<GeminiSceneResponse>(buildScenePrompt(project, scene, text, speakers, canon, narrationBudget), SHOT_RESPONSE_SCHEMA));
     }
   } catch (error) { return { ok: false, reasoning: `Initial storyboard planning incomplete: ${(error as Error).message}` }; }
 

@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
-import { computeNarrationCoverage } from "./narration-coverage.js";
+import { computeNarrationCoverage, narrationBudgetFor, resolveNarrationSpans, type ResolvedNarrationSpan } from "./narration-coverage.js";
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 
@@ -142,4 +142,42 @@ it("totals real, covered and gap milliseconds across every span", () => {
   expect(report.totalRealMs).toBe(9000);
   expect(report.totalCoveredMs).toBe(8000); // s1 assumed 8000ms; seg2 has no covering shot
   expect(report.totalGapMs).toBe(1000);
+});
+
+function span(verseRef: string, durationMs: number): ResolvedNarrationSpan {
+  return { segmentId: verseRef + durationMs, verseRef, verseRefSource: "raw", startMs: 0, endMs: durationMs, durationMs };
+}
+
+it("floors a scene's non-dialogue shot count at the single-clip ceiling, per span", () => {
+  const budget = narrationBudgetFor([span("Mark 3:7-8", 14000), span("Mark 3:9", 14000)], 7, 9);
+  expect(budget.totalMs).toBe(28000);
+  // 14s needs 2 clips at the 8s ceiling, not 1.
+  expect(budget.spans).toEqual([
+    { verseRef: "Mark 3:7-8", durationMs: 14000, minimumShots: 2 },
+    { verseRef: "Mark 3:9", durationMs: 14000, minimumShots: 2 }
+  ]);
+  expect(budget.minimumNonDialogueShots).toBe(4);
+});
+
+it("counts only the narration spans overlapping the scene's own verse range", () => {
+  const spans = [span("Mark 3:1", 5000), span("Mark 3:7-8", 9000), span("Mark 3:20", 6000)];
+  expect(narrationBudgetFor(spans, 7, 12).spans.map(s => s.verseRef)).toEqual(["Mark 3:7-8"]);
+  expect(narrationBudgetFor(spans, 7, 12).minimumNonDialogueShots).toBe(2);
+});
+
+it("reports an empty budget for an all-dialogue scene", () => {
+  const budget = narrationBudgetFor([span("Mark 3:1", 5000)], 20, 30);
+  expect(budget).toEqual({ totalMs: 0, minimumNonDialogueShots: 0, spans: [] });
+});
+
+it("resolveNarrationSpans applies the same overlay the coverage report uses", () => {
+  const db = setup();
+  db.prepare(`INSERT INTO audio_segments (id,project_id,layer,source_path,start_ms,end_ms,speaker_character_id,verse_ref,confidence,created_at)
+    VALUES ('corrected','p','original_reading','a.mp3',0,4000,NULL,NULL,90,1)`).run();
+  db.prepare(`INSERT INTO source_alignment_corrections (id,project_id,audio_segment_id,verse_ref,assigned_text,reviewer_name,evidence,source_hash,alignment_hash,created_at)
+    VALUES ('c1','p','corrected','Mark 3:7','Text.','Dan','Heard it.','sh','ah',1)`).run();
+  narrationSeg(db, "plain", "Mark 3:8", 4000, 9000);
+  const resolved = resolveNarrationSpans(db, "p");
+  expect(resolved.spans.map(s => [s.verseRef, s.verseRefSource])).toEqual([["Mark 3:7", "correction"], ["Mark 3:8", "raw"]]);
+  expect(resolved.unplaceableMs).toBe(0);
 });
