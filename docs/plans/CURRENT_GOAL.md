@@ -1,5 +1,56 @@
 # Current Goal
 
+## Mark 3 canon verified, a real shot_characters gap found and fixed, plan re-approved (2026-09-20)
+
+Dan asked to verify all characters Mark 3 needs exist and are approved after
+canon changes. `GET .../canon-readiness` said yes (26 needed, all approved),
+but that endpoint only checks a DB status flag -- so also independently
+confirmed every needed character's approved version has real, existing asset
+files on disk (not just a flag), and separately compared the current
+planning-brief hash against the last approved run's stored hash. That
+surfaced something canon-readiness can't see: the previously-approved plan
+(`ca9f1aca`) was stale, since Bartholomew and Judas's new v3 approvals (see
+below) changed the brief after it was approved.
+
+Re-ran the crew for real cost data, using the cost-tracking work above for
+the first time on a live run: **held**, not approved, at **$0.963109**
+across 23 calls (13 round 1 + 10 round 2) -- the Production Director's
+blocking finding said "Man with withered hand" was missing from project
+canon. Verified this independently rather than trust the finding at face
+value: the character (`Man with Withered Hand`, v1, approved) genuinely
+exists, but `shot_characters` had **zero rows** for it, despite four shots'
+own action text naming him (Mark 3:1 gathered in the room, 3:3 "Jesus
+speaks... to the man", 3:5 "commands the man, 'Stretch out your hand'", and
+3:5's healing insert itself, `91afa1de`, which only listed Jesus). The
+character was approved last night's canon-promotion session but never
+actually wired to the shots that depict him -- canon-readiness's own query
+starts from `shot_characters`, so it can never catch a shot that never
+claimed a needed character in the first place, only that what's already
+claimed is approved.
+
+Linked the character to those four shots (`INSERT INTO shot_characters`,
+via the real `getDb()` connection so the correct `journal_mode=PERSIST`
+pragma applies -- a raw ad-hoc connection hit "disk I/O error" on this
+mount without it, same known limitation documented in db/client.ts).
+Confirmed canon-readiness now lists 27/27 approved with no gaps before
+spending anything further, then re-ran: **approved**, 13 calls, one round
+(no revision needed), **$0.550564**. Confirmed the healing shot's
+characterIds now list both the withered-hand character and Jesus, the
+Director covers all 30 shots, and the deliberation export refreshed with
+the new run id. Cumulative tracked spend for this project: $1.513673 --
+the first time this number has ever been nonzero.
+
+Separately: Dan (or a parallel session) used the Canon Builder workflow
+directly to promote seven apostles to new v3 identities while this
+conversation was ongoing -- Bartholomew, Judas Iscariot, James son of
+Alphaeus, James son of Zebedee, Philip, Matthew, and Thaddaeus (see the
+four canon-promotion entries following this one; `scripts/character-tool/
+promote-*-v3.ts` are the scripts that did it, committed alongside this
+entry since they were sitting uncommitted). Re-checked plan freshness
+after discovering this: the already-approved `acbf268c` run is still
+current -- all seven promotions were already live by the time it ran, so
+no further re-run is needed for that reason.
+
 ## Production crew Gemini calls now record real cost (2026-09-19)
 
 Dan chose the cost-tracking improvement over the other option offered
@@ -3018,3 +3069,86 @@ receive the corrected boundary. The automatic interval/evidence remains
 retained through each override's original timing and evidence. Goal Guardian
 check: this is a specific producer listening correction; it neither changes
 the source asset nor infers a broader Hatam timing rule.
+
+## Bartholomew v3 canon promotion (2026-09-19)
+
+Dan approved a complete replacement reference package for Bartholomew after
+reviewing the headshot and neutral-standing, walking, teaching, and
+seated-listening body shots. The new v3 canon locks a lean late-30s-to-early-
+40s Papuan disciple with an oval tapered face, close-cropped tight black curls,
+and a short pointed beard with minimal gray. Its color language is an undyed
+flax tunic with a narrow olive neckline and muted deep-indigo draped mantle.
+This deliberately separates him from Peter's broader, grayer, rust-brown
+silhouette while retaining historically appropriate simple woven garments.
+
+All five approved assets are copied into Bartholomew's canonical paths with
+SHA-256 hashes in both `character_assets` and `import-manifest.json`. The new
+approved v3 is the durable seed target; v2 is superseded, retained, and not
+deleted. The character still has no voice mapping, which remains a separate
+need only when a planned chapter assigns him spoken dialogue.
+
+Goal Guardian check: this is a producer-approved identity-continuity correction
+within the existing Canon Builder workflow. It improves recurring-character
+recognition without creating a new product requirement, rewriting Scripture,
+or recasting any approved scene.
+
+## Judas Iscariot v3 canon promotion (2026-09-19)
+
+Dan approved a complete replacement reference package for Judas Iscariot:
+headshot plus neutral-standing, walking, teaching, and seated-listening body
+shots. The new v3 canon locks a lean early-to-mid-30s Papuan disciple with a
+long narrow face, high forehead, swept-back tight curls, and a narrow moustache
+joined to a short pointed goatee. His olive flax tunic and dark wine-red mantle
+give him a distinct silhouette and color block from both James son of Zebedee
+and James son of Alphaeus.
+
+A small, plain leather drawstring money bag is recorded as a bounded practical
+accessory: it appears in standing, walking, and seated references, but is
+excluded from the headshot and teaching reference. It is neither a villain cue
+nor an automatic instruction to show the bag in every scene. The five approved
+assets are copied to canonical paths with matching SHA-256 hashes in
+`character_assets` and `import-manifest.json`; v3 is approved and v2 is
+superseded without deletion. Voice mapping remains a separate need when a
+planned chapter assigns Judas a line.
+
+Goal Guardian check: this is a producer-approved Canon Builder correction that
+improves disciple recognition and preserves reviewable version history. It
+does not invent narrative behavior or alter approved scene work.
+
+## James son of Alphaeus v3 canon promotion (2026-09-19)
+
+Dan approved a full v3 reference package for James son of Alphaeus: a headshot
+and neutral-standing, walking, teaching, and seated-listening body poses. The
+update makes him subtly five years younger and locks a full black beard in
+place of the prior gray beard, while retaining his short curls, pale flax tunic,
+and gray draped mantle. All five source files are copied to canonical paths,
+hash-recorded in `character_assets` and `import-manifest.json`, and the normal
+seed path is idempotent. V2 is superseded but retained for rollback.
+
+Goal Guardian check: this is a bounded producer-approved identity correction
+inside the existing Canon Builder workflow. It preserves the global character's
+reuse across future chapters without adding narrative content or a new stage.
+
+## Distinct disciple headshot v3 promotions (2026-09-19)
+
+Dan approved new v3 headshots for James son of Zebedee, Philip the Apostle,
+Matthew (Levi), and Thaddaeus (Jude) after identifying that their prior short
+black curls, full dark beards, similar builds, and robe-color-only differences
+would not survive independent shot generation. The four new identity locks are:
+a sturdy, cropped-hair, square-bearded James; a lean, clean-shaven,
+side-swept-haired Philip; an older bald, clean-shaven, fuller Matthew; and a
+young, angular, fine-moustached Thaddaeus. Each also has a distinct simple
+first-century color block.
+
+Each approved headshot was promoted as a new v3 with its previous v2 motion
+references carried forward unchanged and v2 superseded without deletion. This
+records exactly Dan's current approval while making the remaining gap explicit:
+matching v3 body-pose packages must be separately generated and reviewed before
+the new silhouette/color locks are uniform across all angles. All five assets
+per character, including carried-forward motion poses, are hash-recorded in the
+database and `import-manifest.json`; the normal seed is idempotent.
+
+Goal Guardian check: this is a bounded Canon Builder identity correction that
+strengthens recognition without inferring theology, narrative behavior, or new
+product scope. It deliberately does not force-regenerate existing approved
+shots or treat unreviewed body-pose redesigns as approved canon.
