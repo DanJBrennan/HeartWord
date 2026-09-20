@@ -23,6 +23,7 @@ import { editorialAlignmentDisplay, recordSourceAlignmentEditorialClassification
 import { recordSourceAlignmentSpeakerAttribution } from "../../pipeline/ingestion/source-alignment-speaker-attributions.js";
 import { recordSegmentSplit } from "../../pipeline/ingestion/segment-splits.js";
 import { recordSegmentMerge } from "../../pipeline/ingestion/segment-merges.js";
+import { computeNarrationCoverage } from "../../pipeline/casting/narration-coverage.js";
 
 export const projectsRouter = Router();
 
@@ -180,6 +181,16 @@ projectsRouter.get("/:id/canon-readiness", (req, res) => {
     WHERE s.project_id=? ORDER BY c.name`).all(req.params.id) as Array<{id:string;name:string;canon_status:string;has_approved_version:number}>;
   const gaps = needed.filter(character => character.canon_status !== "approved" || !character.has_approved_version);
   res.json({ planned: needed.length > 0, allApproved: needed.length > 0 && gaps.length === 0, needed, gaps });
+});
+
+// Read-only, chapter-scoped narration-coverage advisory -- see
+// src/pipeline/casting/narration-coverage.ts. Never blocks anything; a
+// producer checks this before deciding whether to run the Creative/
+// Production Director gap-filling negotiation.
+projectsRouter.get("/:id/narration-coverage", (req, res) => {
+  const db = getDb();
+  if (!db.prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)) { res.status(404).json({ error: "Project not found." }); return; }
+  res.json(computeNarrationCoverage(db, req.params.id));
 });
 
 

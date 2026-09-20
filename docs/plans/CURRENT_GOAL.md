@@ -1,5 +1,72 @@
 # Current Goal
 
+## Narration coverage moved before media generation, as an advisory (2026-09-20)
+
+Dan asked whether breathing-room/reaction planning should happen before
+media generation rather than after, and chose the advisory (non-gating)
+approach. Background: the Creative Director / Production Director
+gap-filling negotiation (creative-direction/index.ts,
+production-director.ts) already exists and is built for exactly this --
+its prompt quotes Dan's own standing guidance about awe, gasps and
+narration pauses -- but it had never run for Mark 3, because
+`scripts/report-narration-coverage.ts` is hardcoded to Mark 2's project id
+and measures gaps against already-assembled clip durations, which don't
+exist until media generation has happened.
+
+New `src/pipeline/casting/narration-coverage.ts` (`computeNarrationCoverage`)
+plus `GET /:id/narration-coverage`, modelled on canon-readiness: read-only,
+live-computed, never blocks anything, makes no provider calls. It works at
+any pipeline stage because the audio side of the equation -- real
+narration-span durations -- is already known from alignment. A non-dialogue
+shot's duration is its real assembled clip once one is accepted, and
+MAX_SINGLE_CLIP_LIPSYNC_MS (the single-generation ceiling, the most
+generous available assumption) before that, so a reported shortfall is
+genuine rather than an artifact of underestimating.
+
+Two matching bugs were found by checking the first Mark 3 output against
+the raw data rather than trusting it, and both are fixed:
+
+- **Containment dropped every multi-verse shot.** A shot planned for
+  "Mark 3:16-17" is wider than either of the narrower "mark 3:16"/"mark
+  3:17" narration rows the aligner actually produced, so it satisfied
+  neither and counted as covering nothing -- 3 of 18 non-dialogue shots,
+  24s. Switched to overlap. This does NOT reopen the double-count bug
+  coverage.ts's `verseRangesRelated` guards against: that path sums every
+  matching segment with no claim set, whereas `claimedShotIds` here
+  already caps each shot at one span globally. An earlier claim in this
+  session that loosening the match was risky was wrong -- it conflated the
+  two code paths.
+- **Reading the raw `verse_ref` column silently dropped real narration.**
+  28.3s of it, including two segments a human had explicitly corrected
+  ("Mark 3:4", "Mark 3:18") and three children of this session's own
+  segment splits, which start with a null verse_ref by design. Now
+  resolved through the same overlay the API projection uses (corrections
+  outrank the raw column; an editorial classification means
+  title/cross-reference material, not Scripture). Anything still
+  unplaceable is itemized in `excluded`/`unplaceableMs` rather than
+  vanishing.
+
+Mark 3 before the fixes: 130.4s gap, 15/18 shots credited, 28.3s silently
+dropped. After: **104.2s gap** against 240.2s of placeable narration and
+136.0s of planned non-dialogue video, 17/18 shots credited, with 28.0s
+editorial and 10.4s unplaceable both itemized.
+
+Two things this surfaced, left for Dan rather than decided unilaterally:
+
+- The remaining uncredited shot is `Mark 3:30` (the quiet-reaction beat).
+  Its only narration span, `48c24660`, is classified
+  `mixed_editorial_transition` -- it genuinely contains both the tail of
+  v29-30 narration and the paragraph title before v31 -- and the report
+  excludes any editorially-classified segment wholesale. That span likely
+  wants the same split treatment Mark 3:5 and 3:32/33 already got, so only
+  the title portion is editorial.
+- The headline finding is robust to all of the above and is a shot-plan
+  issue, not a report issue: 18 non-dialogue shots at the 8s ceiling is
+  136s of video against ~240s of narration, roughly half what the chapter
+  needs. That traces directly to `buildScenePrompt`, which never sees
+  narration durations -- the shot planner decides how many shots to create
+  with no idea how many seconds it has to fill.
+
 ## Mark 3 canon verified, a real shot_characters gap found and fixed, plan re-approved (2026-09-20)
 
 Dan asked to verify all characters Mark 3 needs exist and are approved after
