@@ -1,5 +1,46 @@
 # Current Goal
 
+## Drafts now arrive with an automated verdict (2026-09-21)
+
+Dan asked how draft clips were evaluated. They weren't: `generateShotDraft`
+wrote a "please look at this" note and nothing read it. The draft room's
+whole premise is judge-before-you-commit, and the judging was manual only.
+
+Three evaluation capabilities existed and none applied to drafts. The
+Critic/Director QC pass (`runShotReview`) is hard-filtered to
+`operation='generate'`, so it only ever sees keyframes, and every other QC
+check (critic, canonical-likeness, scene-fidelity) reads still images. The
+production crew does review real video, but only the assembled cut in the
+finishing phase. And a genuine automated *video* review already existed --
+inline in `creative-direction/implement.ts`, reachable only by gap-filler
+videos.
+
+Extracted that third one to `qc/video-review.ts` and pointed both callers
+at it. It watches the clip against the keyframe it was meant to animate,
+checking motion, continuity, physical action, source fidelity and unwanted
+text, and returns pass/confidence/reason. `videoReviewPassed` requires an
+explicit pass, a stated reason, and a confidence genuinely inside 0-100 --
+a model claiming 140 is not more certain than one claiming 90.
+
+The two callers deliberately treat a failure differently, and this is the
+part worth remembering:
+
+- A **directed gap-filler video** that fails is held. It would otherwise
+  become deliverable footage. Behaviour preserved exactly.
+- A **draft** that fails is recorded and stays choosable. The producer is
+  comparing takes, and an uncalibrated confidence score should not veto
+  that choice. A review that cannot run at all (model down, oversized
+  clip) is likewise recorded and nothing more -- the draft is already
+  generated and already paid for, so discarding it over a failed lookup
+  would destroy real work.
+
+The extraction also switched that path to the metered call, so the review
+that was previously invisible now lands in `cost_ledger_entries` for both
+callers. A draft now costs ~$0.26 to render plus ~$0.02 to review.
+
+Still unbuilt: the upscale-an-approved-draft path, and no discard, so
+rejecting all three drafts leaves a shot at capacity.
+
 ## Draft room wired into media generation (2026-09-21)
 
 Two halves, deliberately in different places.
@@ -3551,3 +3592,25 @@ Goal Guardian check: this producer-approved identity correction completes a
 consistent reusable motion package in the Canon Builder without inventing
 narrative content, changing Scripture, or requiring regeneration of existing
 approved scenes.
+
+## Matthew (Levi) v5 canon promotion (2026-09-21)
+
+Dan approved a new complete reference package for Matthew (Levi), replacing
+the prior v4 identity with a lean, 28-year-old Papuan tax collector. V5 locks
+a fine-boned oval face, compact tightly coiled black hair, clean-shaven face,
+attentive dark eyes, stone-gray flax tunic, and deep-teal mantle. His reserved,
+self-contained posture conveys meticulous observation and mild social unease
+with dignity, not caricature.
+
+A small plain wax tablet and reed stylus are bounded practical recognition
+cues: they appear in neutral-standing, walking, and seated-listening poses and
+are tucked away for teaching. The accessory supports his tax-collector
+precision but is neither an automatic scene instruction nor a substitute for
+his face, silhouette, age, and garment color language. All five approved assets
+are canonical v5 paths with SHA-256 hashes in `character_assets` and
+`import-manifest.json`; v4 is superseded but retained. Matthew still has no
+individually attributed New Testament line, so no voice mapping is added.
+
+Goal Guardian check: this is a producer-approved character-canon correction
+that strengthens future shot continuity without inventing narrative content,
+altering Scripture, or forcing regeneration of existing approved scenes.

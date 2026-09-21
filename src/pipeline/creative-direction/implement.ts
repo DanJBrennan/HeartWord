@@ -6,7 +6,7 @@ import { getDataDir } from "../../db/client.js";
 import { GeminiVideoProvider, GeminiDraftVideoProvider } from "../../providers/gemini/index.js";
 import { KlingVideoProvider } from "../../providers/kling/index.js";
 import { generateFinalVideoWithFallback } from "../media-generation/generate-final-with-fallback.js";
-import { generateJsonWithImages } from "../../providers/gemini-text.js";
+import { reviewGeneratedVideo, videoReviewPassed } from "../qc/video-review.js";
 import { runMediaGeneration } from "../media-generation/index.js";
 import { assembleSingleShot } from "../assembly/assemble-single-shot.js";
 import { mediaDurationMs } from "../assembly/finishing.js";
@@ -94,15 +94,16 @@ export async function implementApprovedIdeas(db: DatabaseSync, projectId: string
       db.prepare("INSERT INTO cost_ledger_entries (id,project_id,generation_attempt_id,amount_usd,created_at) VALUES (?,?,?,?,?)")
         .run(randomUUID(), projectId, attemptId, video.cost.usd, Date.now());
       if (video.status !== "accepted" || !video.media) throw new Error("Video provider did not return usable footage.");
-      const bytes = readFileSync(productionAssetPath(dataDir, video.media.path));
-      if (bytes.length > 18 * 1024 * 1024) throw new Error("Video needs a smaller review proxy before acceptance.");
-      const verdict = await generateJsonWithImages<{ pass: boolean; confidence: number; reason: string }>(
-        `Independently watch this silent supplementary shot against its approved keyframe direction: ${prompt}. Check motion, continuity, physical action, source fidelity and unwanted text. Do not approve uncertain evidence.`,
-        [{ mimeType: "video/mp4", data: bytes.toString("base64") }, { mimeType: "image/png", data: readFileSync(productionAssetPath(dataDir, String(keyframe.result_asset_path))).toString("base64") }],
-        { type: "object", properties: { pass: { type: "boolean" }, confidence: { type: "number" }, reason: { type: "string" } }, required: ["pass", "confidence", "reason"] });
+      const { verdict, costUsd: reviewCostUsd } = await reviewGeneratedVideo({
+        videoPath: productionAssetPath(dataDir, video.media.path),
+        keyframePath: productionAssetPath(dataDir, String(keyframe.result_asset_path)),
+        instruction: prompt
+      });
+      db.prepare("INSERT INTO cost_ledger_entries (id,project_id,generation_attempt_id,amount_usd,created_at) VALUES (?,?,?,?,?)")
+        .run(randomUUID(), projectId, attemptId, reviewCostUsd, Date.now());
       db.prepare(`INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'qc',?,0,?)`)
         .run(randomUUID(), projectId, idea.id, `ATTEMPT: ${attemptId}\nDirected video review: ${JSON.stringify(verdict)}`, Date.now());
-      if (verdict.pass !== true || !Number.isFinite(verdict.confidence) || verdict.confidence < 80 || verdict.confidence > 100 || !verdict.reason?.trim()) throw new Error("Directed video is held by its viewing review.");
+      if (!videoReviewPassed(verdict)) throw new Error("Directed video is held by its viewing review.");
       if (requireCurrentPlan(db, dataDir, projectId).id !== current.id) throw new Error("Direction changed while video was generated; review the saved candidate.");
       const durationMs = mediaDurationMs(productionAssetPath(dataDir, video.media.path));
       if (durationMs + 50 < idea.estimatedDurationSec * 1000) throw new Error("Video is too short; request additional coverage instead of freezing its last frame.");

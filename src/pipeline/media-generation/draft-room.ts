@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
+import { join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
+import { getDataDir } from "../../db/client.js";
 import type { DraftVideoProvider } from "../../providers/types.js";
+import { reviewGeneratedVideo, videoReviewPassed } from "../qc/video-review.js";
 import { shotRiskFor } from "./shot-risk-lookup.js";
 
 /**
@@ -39,6 +42,7 @@ export async function generateShotDraft(
      WHERE sh.id = ? AND s.project_id = ? AND sh.needs_lip_sync = 0`
   ).get(shotId, projectId) as { id: string; action: string } | undefined;
   if (!shot) throw new Error("Only a non-speaking shot in this project can be drafted.");
+  const dataDir = getDataDir();
 
   const settled = db.prepare(
     `SELECT c.id FROM clips c JOIN generation_attempts ga ON ga.id = c.generation_attempt_id
@@ -92,13 +96,38 @@ export async function generateShotDraft(
   db.prepare(
     "INSERT INTO cost_ledger_entries (id, project_id, generation_attempt_id, amount_usd, created_at) VALUES (?, ?, ?, ?, ?)"
   ).run(randomUUID(), projectId, id, result.cost.usd, now);
+
+  // Every draft arrives with a verdict attached rather than a bare "please
+  // look at this" -- the automated half of the evaluation
+  // docs/design/media-generation.md asks for. The verdict never decides:
+  // a failed draft stays choosable, because the producer is comparing
+  // takes and an uncalibrated confidence score should not veto that. A
+  // review that cannot run must not destroy a draft that already exists
+  // and is already paid for, so its failure is recorded and nothing else.
+  let reviewNote = "not reviewed";
+  if (result.media) {
+    try {
+      const review = await reviewGeneratedVideo({
+        videoPath: join(dataDir, "assets", result.media.path),
+        keyframePath: join(dataDir, "assets", keyframe.result_asset_path),
+        instruction: keyframe.prompt ?? shot.action
+      });
+      db.prepare(
+        "INSERT INTO cost_ledger_entries (id, project_id, generation_attempt_id, amount_usd, created_at) VALUES (?, ?, ?, ?, ?)"
+      ).run(randomUUID(), projectId, id, review.costUsd, Date.now());
+      reviewNote = `${videoReviewPassed(review.verdict) ? "passed" : "FAILED"} automated review (confidence ${review.verdict.confidence}): ${review.verdict.reason}`;
+    } catch (error) {
+      reviewNote = `automated review could not run: ${(error as Error).message}`;
+    }
+  }
+
   db.prepare(
     `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
      VALUES (?, ?, 'shot', ?, 'qc', ?, 0, ?)`
   ).run(randomUUID(), projectId, shotId,
-    `Draft ${id} (${held.length + 1} of at most ${MAX_HELD_DRAFTS}) for review. Shot risk ${risk.tier}: ${risk.reasons.join("; ")}.`, now);
+    `Draft ${id} (${held.length + 1} of at most ${MAX_HELD_DRAFTS}) for review. Shot risk ${risk.tier}: ${risk.reasons.join("; ")}. Draft ${reviewNote}.`, Date.now());
 
-  return { status: "draft" as const, attemptId: id, heldCount: held.length + 1 };
+  return { status: "draft" as const, attemptId: id, heldCount: held.length + 1, review: reviewNote };
 }
 
 /**
