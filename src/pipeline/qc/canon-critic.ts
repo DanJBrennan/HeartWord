@@ -22,6 +22,7 @@ import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { getDataDir, getDb } from "../../db/client.js";
 import { generateGroundedText } from "../../providers/gemini-text.js";
+import { sortAssetsByFreshness } from "../characters/asset-freshness.js";
 import { parseCriticSeverity, type CriticReport } from "./critic.js";
 
 /**
@@ -138,16 +139,6 @@ export const CANON_CRITIC_MAX_IMAGES = 2;
 
 const CANON_CATEGORY_RANK: Record<string, number> = { body_pose: 0, turnaround: 1, headshot: 2 };
 
-/** A costume-fix promotion (see scripts/character-tool/promote-*.ts) marks
- *  each asset row it left untouched with an `imported_from` note saying so
- *  -- it never overwrites what "carried forward" means, so matching that
- *  phrase is a reliable signal rather than a guess at wording. Every other
- *  value (a freshly generated candidate, or the original import path for a
- *  character nothing has ever promoted) counts as fresh. */
-function isCarriedForward(importedFrom: string | null): boolean {
-  return importedFrom !== null && /carried forward/i.test(importedFrom);
-}
-
 /**
  * The reference images this audit will actually look at, in the order it
  * reads them. Exported because the canon review page states WHICH images a
@@ -172,14 +163,7 @@ export function criticSampledAssets<T extends { path: string; category: string; 
   assets: readonly T[],
   exists: (relativePath: string) => boolean
 ): T[] {
-  return [...assets]
-    .sort((a, b) => {
-      const categoryDelta = (CANON_CATEGORY_RANK[a.category] ?? 9) - (CANON_CATEGORY_RANK[b.category] ?? 9);
-      if (categoryDelta !== 0) return categoryDelta;
-      const staleDelta = Number(isCarriedForward(a.importedFrom ?? null)) - Number(isCarriedForward(b.importedFrom ?? null));
-      if (staleDelta !== 0) return staleDelta;
-      return a.path.localeCompare(b.path);
-    })
+  return sortAssetsByFreshness(assets, CANON_CATEGORY_RANK)
     .filter((asset) => exists(asset.path))
     .slice(0, CANON_CRITIC_MAX_IMAGES);
 }

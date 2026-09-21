@@ -126,4 +126,14 @@ describe("external keyframe handoff", () => {
     expect(() => readLandscapePng(png(320, 180))).toThrow("16:9");
     expect(() => readLandscapePng(Buffer.from("not a png"))).toThrow("PNG");
   });
+  it("picks a costume fix's real body_pose over an unrelated older one that sorts first alphabetically", () => {
+    // The real bug (found 2026-09-21 re-auditing a costume-fix batch): a
+    // promotion had corrected "motion-neutral-standing" but left several
+    // older, differently-named poses in place. Path order alone put one
+    // of those ahead of the actual fix, so this exact selection would
+    // have handed a shot the pre-fix garment.
+    db.exec(`INSERT INTO character_assets (id,character_version_id,category,path,imported_from,created_at)
+      VALUES ('asset-stale','version','body_pose','motion-hand-stretched-healed-v1.png','Carried forward unchanged',1)`);
+    expect(getKeyframeContext(db, dir, "shot").references[0]?.path).toBe("ref.png");
+  });
 });

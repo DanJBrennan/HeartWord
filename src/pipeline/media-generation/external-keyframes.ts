@@ -5,6 +5,9 @@ import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
 import { latestCrewRun, requireCurrentPlan, directionsFromRun, validateHandoffPlan } from "../creative-direction/crew-store.js";
+import { sortAssetsByFreshness } from "../characters/asset-freshness.js";
+
+const REFERENCE_CATEGORY_RANK: Record<string, number> = { headshot: 0, body_pose: 1, turnaround: 2 };
 
 // Codex's image tool runs in the assistant session, outside the Node server.
 // This handoff uses the existing shot/attempt/review tables, without pretending
@@ -88,10 +91,17 @@ export function getKeyframeContext(db: DatabaseSync, dataDir: string, shotId: st
       WHERE character_id = ? AND status = 'approved'`).all(character.id) as Array<{ id: string; version_label: string }>;
     if (versions.length !== 1) throw new Error(`Need exactly one approved version: ${character.name}`);
     const version = versions[0]!;
-    const assets = db.prepare(`SELECT category, path, content_hash FROM character_assets WHERE character_version_id = ?
-      AND category IN ('headshot','body_pose','turnaround','approved_source')
-      ORDER BY CASE category WHEN 'headshot' THEN 0 WHEN 'body_pose' THEN 1 WHEN 'turnaround' THEN 2 ELSE 3 END, path`)
-      .all(version.id) as Array<{ category: string; path: string; content_hash: string | null }>;
+    const rawAssets = db.prepare(`SELECT category, path, content_hash, imported_from AS importedFrom
+      FROM character_assets WHERE character_version_id = ?
+      AND category IN ('headshot','body_pose','turnaround','approved_source')`)
+      .all(version.id) as Array<{ category: string; path: string; content_hash: string | null; importedFrom: string | null }>;
+    // A costume-fix promotion can leave several rows in the same category
+    // (e.g. a corrected motion-neutral-standing next to untouched motion-
+    // walking/-teaching/-seated poses it never regenerated). Ordering by
+    // category alone left the choice between same-category rows to path,
+    // which could silently pick an unrelated OLD asset over the one a
+    // promotion just fixed -- see asset-freshness.ts.
+    const assets = sortAssetsByFreshness(rawAssets, REFERENCE_CATEGORY_RANK);
     // A lip-sync shot can contain silent supporting cast (for example the
     // paralytic while Jesus speaks). Those characters still need their canon
     // reference, but must not block a keyframe because they have no headshot.

@@ -22,6 +22,9 @@ import type { DatabaseSync } from "node:sqlite";
 import { latestCrewRun, requireCurrentPlan, directionsFromRun, validateHandoffPlan } from "../creative-direction/crew-store.js";
 import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
 import { assetPath, readLandscapePng, referenceBoardFilter, sha256 } from "./external-keyframes.js";
+import { sortAssetsByFreshness } from "../characters/asset-freshness.js";
+
+const REFERENCE_CATEGORY_RANK: Record<string, number> = { headshot: 0, body_pose: 1, turnaround: 2 };
 
 export interface CoverageBeatContext {
   project: { id: string; language: string; book: string; chapter: number };
@@ -151,13 +154,16 @@ export function getCoverageBeatContext(db: DatabaseSync, dataDir: string, beatId
       .all(character.id) as Array<{ id: string; version_label: string }>;
     if (versions.length !== 1) throw new Error(`Need exactly one approved version: ${character.name}`);
     const version = versions[0]!;
-    const assets = db
+    const rawAssets = db
       .prepare(
-        `SELECT category, path, content_hash FROM character_assets WHERE character_version_id = ?
-         AND category IN ('headshot','body_pose','turnaround','approved_source')
-         ORDER BY CASE category WHEN 'headshot' THEN 0 WHEN 'body_pose' THEN 1 WHEN 'turnaround' THEN 2 ELSE 3 END, path`
+        `SELECT category, path, content_hash, imported_from AS importedFrom FROM character_assets WHERE character_version_id = ?
+         AND category IN ('headshot','body_pose','turnaround','approved_source')`
       )
-      .all(version.id) as Array<{ category: string; path: string; content_hash: string | null }>;
+      .all(version.id) as Array<{ category: string; path: string; content_hash: string | null; importedFrom: string | null }>;
+    // See asset-freshness.ts: prefers an asset a promotion didn't leave
+    // carried-forward, so a same-category sibling that was never
+    // regenerated can't silently outrank the one that was.
+    const assets = sortAssetsByFreshness(rawAssets, REFERENCE_CATEGORY_RANK);
     const isSpeaker = speakingCharacter?.id === character.id;
     const chosen = (
       isSpeaker && assets.some((a) => a.category === "headshot")
