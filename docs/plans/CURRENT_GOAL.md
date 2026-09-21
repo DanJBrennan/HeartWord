@@ -1,5 +1,47 @@
 # Current Goal
 
+## Draft room: several cheap drafts per shot, then one is chosen (2026-09-21)
+
+`media-generation/draft-room.ts` gives `draftFirst` its missing consumer.
+`generateShotDraft` produces a 360p Omni pass and, unlike
+`generateNonSpeakingVideoCandidate`, several can be held for the same shot
+at once; `chooseShotDraft` records which one the producer picked.
+
+Kept deliberately separate from the final-render candidate flow rather
+than loosening it, because a draft and a final are different things. Two
+finals pending review is an unreconciled decision about deliverable
+footage; several drafts pending is the point. They stay apart via
+`generation_attempts.operation` (`generate_draft` vs
+`generate_final_video`), which also keeps drafts out of the orchestrator's
+"does this shot have footage yet" check -- a 360p draft is never
+deliverable footage, and choosing one writes no `clips` row.
+
+Relaxing "one at a time" removed a real cost guard, so it is replaced
+rather than dropped: at most `MAX_HELD_DRAFTS` (3) may be held per shot.
+At ~$0.26 for an 8s Omni draft that is ~$0.78, still under the single
+premium render ($1.60) the draft room exists to avoid wasting -- raising
+the cap past the cost of the render it protects would defeat the point. A
+refusal at capacity costs nothing, which the tests assert by call count,
+and removing the cap fails them.
+
+Unchosen drafts stay held as history rather than being deleted or
+rewritten, matching the append-only discipline of the alignment evidence
+tables.
+
+Known limits:
+- Choosing a draft records the composition to commit to; it does not
+  produce the shot. The full render still runs through
+  `generateNonSpeakingVideoCandidate`, and the upscale-an-approved-draft
+  path that media-generation.md prefers is still unimplemented.
+- There is no discard, so a producer who rejects all three drafts is at
+  capacity with nothing chosen. Deliberately not built on speculation;
+  it needs a real decision about what "rejected" means, given
+  generation_attempts.status has no such value.
+- Nothing calls `generateShotDraft` automatically yet. The risk signal
+  says which 12 of Mark 3's 18 shots are worth drafting, but wiring that
+  into media generation is a separate step, and media generation for Mark
+  3 has never been run.
+
 ## Shot-risk signal drives Veo tiering and draft-first (2026-09-21)
 
 `casting/shot-risk.ts`'s `assessShotRisk` classifies a shot routine /
