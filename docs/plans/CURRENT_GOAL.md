@@ -3682,3 +3682,122 @@ Goal Guardian check: this delegates a producer-approved canon correction to
 the tool that already owns it, with the scope and the two overrides stated
 explicitly so nothing gets reinterpreted mid-work. No media generation is
 authorized by this handoff.
+
+## Mark 3 canon costume fixes — batches 1–2 promoted (2026-09-21)
+
+Dan approved the completed full reference packages and they are now canon:
+
+- **Jesus v4:** all four motion references now use finished woven hems and
+  simple low-ankle toe-thong sandals. The v3 close-up and approved source are
+  carried forward unchanged; per Dan's override, shoulder-length hair remains
+  unchanged.
+- **Crowd witness (stern man, spokesperson) v3:** standing, walking,
+  teaching, and seated references now show dark-indigo clavi, elbow-length
+  drop sleeves, a full beard, and an unbelted outer mantle. His existing
+  tzitzit remain intact.
+
+Former versions are superseded rather than deleted, and each asset has a
+SHA-256 record in the manifest. The next handoff item, **Principal scribe**,
+is in producer review as a candidate only: black fabric remains a deliberate
+producer override, while the candidate corrects the head covering, knotted
+corner fringes, and non-figurative purple gamma motifs.
+
+Goal Guardian check: this is limited to producer-approved canon identity and
+costume references that improve Mark 3's consistent visual world. It creates
+no shots, media-generation attempts, voices, or narrative content.
+
+## Mark 3 canon costume fixes — batch 3 promoted; batch 4 in review (2026-09-21)
+
+Dan approved **Principal scribe v3**, now promoted non-destructively. The
+turnaround retains black/charcoal as the explicit producer override and adds
+the loose sudra, small hand-knotted corner tzitzit, and non-figurative purple
+gamma motifs. His v2 remains superseded history.
+
+**Peter** is now in producer review as a standing-reference candidate. It
+unifies the clavi-striped tunic, plain narrow waist strap, shoulder-draped
+rust mantle, and four proper corner tzitzit. No canon promotion or shot work
+has been performed for Peter yet.
+
+## Mark 3 canon costume fixes — batch 4 promoted; batch 5 in review (2026-09-21)
+
+Dan approved **Peter v4**, promoted non-destructively. The standing reference
+now consistently carries the clavi-striped tunic, plain waist strap,
+shoulder-draped mantle, and four knotted corner tzitzit; other poses and the
+close-up remain carried forward. **John son of Zebedee** is in producer review
+as a candidate with a short full beard, loose cream sudarium, naturally draped
+mantle, and small knotted corner tzitzit. His teal clavi and gamma markings
+are deliberately retained.
+
+## Mark 3 canon costume fixes — batch 5 promoted; batch 6 in review (2026-09-21)
+
+Dan approved **John son of Zebedee v4**, promoted non-destructively. The
+standing reference adds the beard, loose sudarium, natural mantle drape, and
+knotted tzitzit while retaining his teal clavi and gamma motifs. **Crowd
+witness (young man)** is now in producer review as a corrected full-turnaround
+candidate: indigo clavi, straight neck slit, drop sleeves, small knotted
+corner tzitzit, flush flat sash, and period toe-thong sandals. No canon
+promotion or shot work has been performed for him yet.
+
+## Mark 3 canon costume fixes — batch 7 promoted; batch 8 in review (2026-09-21)
+
+Dan approved **Man with Withered Hand v2**, promoted non-destructively. The
+neutral-standing reference now uses a shoulder-draped mantle, indigo clavi,
+knotted corner tzitzit, plain weave, authentic repair placement, and sandals,
+while preserving the affected hand; healing-state poses remain carried
+forward. The character has no import-manifest entry, so no new one was
+invented. **Matthew (Levi)** is now in producer review as a costume-only
+standing candidate retaining his approved v5 identity, tablet, and precise
+tax-collector manner while adding clavi, a flush sash, period sandals, and
+small corner tzitzit to a plain-weave mantle.
+
+## Mark 3 canon costume fixes — batch 6 promoted; batch 7 in review (2026-09-21)
+
+Dan approved **Crowd witness (young man) v3**, promoted non-destructively.
+The corrected full turnaround includes indigo clavi, straight neck slit,
+drop sleeves, knotted tzitzit, a flush sash, and period sandals. **Man with
+Withered Hand** is now in producer review as a standing candidate retaining
+his affected hand and identity while correcting the mantle drape, clavi,
+corner tzitzit, plain weave, repair placement, and footwear. No canon
+promotion or shot work has been performed for him yet.
+
+## Mark 3 canon costume fixes — batches 8–12 promoted (2026-09-21)
+
+Codex continued through the handoff after the log above was written; this
+entry catches the log up to what the database actually holds. All promoted
+non-destructively, prior versions superseded rather than deleted:
+
+- **Matthew (Levi) v6:** flat plain-weave fabric, solid indigo clavi, corner
+  eyelet-tied cords, a narrow leather belt, and supported sandals. Approved
+  v5 Papuan identity, tablet/stylus, and other poses carried forward.
+- **Scribe (younger, lean) v3:** drapery-style tassels replaced with small
+  hand-knotted corner tzitzit. Black fabric, clavi, and gamma markings
+  retained per Dan's override.
+- **Crowd witness (man, headwrap) v3:** madder-red clavi and gamma corners
+  added, waist cord moved off the outer mantle onto the inner tunic only,
+  headwrap restyled to drape over the crown.
+- **Scribe (older, stout) v3:** tunic and mantle fabric differentiated
+  (previously an identical bolt), drop sleeves, gamma corner markings, and a
+  head covering added.
+- **Bartholomew v4:** V-neck bias binding replaced with a horizontal neck
+  slit, clavi and mantle gamma marks added, corner tzitzit added.
+- **James son of Alphaeus v4:** same neckline/clavi/gamma/tzitzit set as
+  Bartholomew, plus a travel headwrap. Approved face and beard unchanged.
+- **Judas Iscariot v4:** clavi, gamma marks, and corner tzitzit added; the
+  exterior "Hollywood" money pouch removed, funds implied within the belt
+  fold instead.
+- **Philip the Apostle v4:** clavi moved from stitched sleeve seams to
+  proper shoulder-to-hem weaving, corner tzitzit added, girdle and sandals
+  corrected. Approved clean-shaven identity close-up unchanged.
+
+Not reached: **Thomas** (last item in the handoff's batch 12) remains v2,
+untouched. Everything below it in the handoff (the three single-issue
+crowd characters, Simon the Zealot, Thaddaeus, and the deferred Mark-2
+"Friend" characters) is also untouched.
+
+No garment-critic re-audit has run against any of these 15 versions yet —
+the canon review page still shows each character's pre-fix severity and
+finding text until that's done.
+
+Goal Guardian check: unchanged from the batches-1–2 entry above — canon
+identity/costume references only, no shots, media-generation attempts,
+voices, or narrative content created.
