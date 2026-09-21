@@ -12,6 +12,8 @@ import { matchesBeatScope, tagNote } from "../qc/beat-scope.js";
 import { requireCurrentPlan, directionsFromRun } from "../creative-direction/crew-store.js";
 import type { StageResult } from "../types.js";
 import { generateNonSpeakingVideoCandidate } from "./final-video.js";
+import { generateShotDraft } from "./draft-room.js";
+import { shotRiskFor } from "./shot-risk-lookup.js";
 
 interface ShotRow {
   id: string;
@@ -492,11 +494,27 @@ export const runMediaGeneration = async (projectId: string, onlyShotIds?: string
     const outcomes=[] as string[];
     for (const shot of shots) {
       if (onlyShotIds && !onlyShotIds.includes(shot.id)) continue;
+      // A risky shot spends ~$0.26 on a 360p draft to be judged before it
+      // spends up to $1.60 committing a render -- the draft-then-commit
+      // rule in docs/design/media-generation.md. Only once a draft has
+      // been chosen (or the shot was never risky) does the full render
+      // run.
+      if (shotRiskFor(db,shot.id).draftFirst) {
+        const draft=await generateShotDraft(db,projectId,shot.id,new GeminiDraftVideoProvider());
+        if (draft.status!=="chosen"&&draft.status!=="settled") { outcomes.push(draft.status); continue; }
+      }
       const out=await generateNonSpeakingVideoCandidate(db,projectId,shot.id,{veo:new GeminiVideoProvider(),kling:new KlingVideoProvider(),draft:new GeminiDraftVideoProvider()});
       outcomes.push(out.status);
     }
+    const drafts=outcomes.filter(s=>s==="draft").length;
+    const atCapacity=outcomes.filter(s=>s==="at_capacity").length;
     const waiting=outcomes.filter(s=>s==="candidate"||s==="held").length;
-    return waiting ? {ok:false,reasoning:`${keyframes.reasoning} ${waiting} non-speaking final-video candidate(s) await producer review/reconciliation; no clip was auto-selected.`} : keyframes;
+    const pending=[
+      drafts?`${drafts} draft(s) await a producer's choice before any full render`:"",
+      atCapacity?`${atCapacity} shot(s) hold the maximum drafts already`:"",
+      waiting?`${waiting} non-speaking final-video candidate(s) await producer review/reconciliation; no clip was auto-selected`:""
+    ].filter(Boolean).join("; ");
+    return pending ? {ok:false,reasoning:`${keyframes.reasoning} ${pending}.`} : keyframes;
   }
   finally { activeGeneration.delete(projectId); }
 };

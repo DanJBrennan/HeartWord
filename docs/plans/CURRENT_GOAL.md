@@ -1,5 +1,45 @@
 # Current Goal
 
+## Draft room wired into media generation (2026-09-21)
+
+Two halves, deliberately in different places.
+
+The **gate** lives in `generateNonSpeakingVideoCandidate`: a shot whose
+risk says `draftFirst` returns `needs_draft` unless a draft has already
+been chosen. Put there rather than in the stage loop so the per-shot API
+route (`POST .../final-video`) cannot skip it, and placed before the
+keyframe lookup so a refusal costs nothing -- asserted by provider call
+count and an empty cost ledger.
+
+The **production** of drafts lives in `runMediaGeneration`'s loop: a risky
+shot gets a 360p Omni draft instead of a render, and only falls through to
+the full render once one is chosen. The stage's summary now separates
+drafts awaiting a choice, shots holding the maximum drafts already, and
+final candidates awaiting review, rather than lumping them together.
+
+What a real Mark 3 media-generation run would now do, computed through the
+actual code path (18 non-dialogue shots, 12 risky):
+
+| | cost |
+| --- | --- |
+| first run: 12 drafts + 6 economy renders | **$5.52** |
+| remaining renders after drafts are chosen | $13.60 |
+| total if nothing is re-rendered | $19.12 |
+| all-premium, no drafts | $28.80 |
+| all-economy, no drafts | $7.20 |
+
+Worth being plain about: **drafting is not free insurance.** If every
+render lands first time, this costs $19.12 where rendering everything at
+economy would have cost $7.20. It pays only where a draft prevents a
+wasted premium render -- two avoided premium re-renders roughly cover the
+whole draft budget. The reason to run it is that the risky shots are
+exactly the ones the RAI filter and the crowd-duplicate check have
+actually bitten before, not a general assumption that drafts save money.
+
+Still unbuilt: the upscale-an-approved-draft path media-generation.md
+prefers (the chosen draft informs the render; it is not its source), and
+no discard, so rejecting all three drafts leaves a shot at capacity.
+
 ## Draft room: several cheap drafts per shot, then one is chosen (2026-09-21)
 
 `media-generation/draft-room.ts` gives `draftFirst` its missing consumer.

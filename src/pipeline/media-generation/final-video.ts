@@ -11,14 +11,22 @@ export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, project
   if (selected) return {status:"reused" as const,clipId:selected.id};
   const prior=db.prepare("SELECT id,status,result_asset_path FROM generation_attempts WHERE shot_id=? AND operation='generate_final_video' ORDER BY created_at DESC LIMIT 1").get(shotId) as {id:string;status:string;result_asset_path:string|null}|undefined;
   if (prior) return {status:"held" as const,attemptId:prior.id,reason:`Existing final-video candidate is ${prior.status}; reconcile or review it before another request.`};
+  // A risky shot commits to a full render only after a draft has been
+  // chosen -- docs/design/media-generation.md's draft-then-commit rule.
+  // Guarded here rather than in the stage loop so the per-shot API route
+  // cannot skip it, and it refuses before spending anything.
+  const risk=shotRiskFor(db,shotId);
+  if (risk.draftFirst) {
+    const chosenDraft=db.prepare("SELECT id FROM generation_attempts WHERE shot_id=? AND operation='generate_draft' AND status='accepted' LIMIT 1").get(shotId) as {id:string}|undefined;
+    if (!chosenDraft) return {status:"needs_draft" as const,reason:`Shot risk ${risk.tier} (${risk.reasons.join("; ")}): choose a draft before committing a ${tierForRisk(risk)} render.`};
+  }
   const keyframe=db.prepare("SELECT result_asset_path,prompt FROM generation_attempts WHERE shot_id=? AND operation='generate' AND status='accepted' AND result_asset_path IS NOT NULL ORDER BY created_at DESC LIMIT 1").get(shotId) as {result_asset_path:string;prompt:string|null}|undefined;
   if (!keyframe) throw new Error("Final video is held: this shot needs an accepted reviewed keyframe.");
   const characters=db.prepare("SELECT sc.character_id characterId,cv.id characterVersionId FROM shot_characters sc JOIN character_versions cv ON cv.character_id=sc.character_id AND cv.status='approved' WHERE sc.shot_id=?").all(shotId) as Array<{characterId:string;characterVersionId:string}>;
   if (!characters.length && /character|person|jesus/i.test(shot.action)) throw new Error("Final video is held: visible canon characters need approved versions.");
-  // A shot's own crowd/cast/camera/continuity facts decide how good a
-  // render it gets -- see casting/shot-risk.ts. Routine frames stay on the
-  // cheapest tier instead of every shot buying the same render.
-  const risk=shotRiskFor(db,shotId);
+  // A shot's own crowd/cast/camera facts decide how good a render it gets
+  // -- see casting/shot-risk.ts. Routine frames stay on the cheapest tier
+  // instead of every shot buying the same render.
   const tier:VideoTier=tierForRisk(risk);
   const result=await generateFinalVideoWithFallback(providers.veo,providers.kling,providers.draft,{shotId,prompt:keyframe.prompt ?? shot.action,characters},{resolution:"720p",startFrame:{path:keyframe.result_asset_path},durationSeconds:8,tier});
   const id=randomUUID(), now=Date.now();
