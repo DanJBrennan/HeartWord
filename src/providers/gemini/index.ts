@@ -36,6 +36,7 @@
  *    "inline" -- the value that works for video -- errors with "Image
  *    delivery mode is not supported").
  */
+import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, extname, join } from "node:path";
@@ -281,11 +282,49 @@ const INTERACTIONS_IMAGE_EDIT_VERSION = "v1";
 
 const OMNI_MODEL = "gemini-omni-1.1-flash";
 
-// Rough estimate, NOT reconciled against a real invoice -- same honesty
-// caveat as every other cost constant in this file. Omni's 360p draft
-// tier is meant to be far cheaper than a full Veo render; this is a
-// placeholder until real billing data is available.
-const OMNI_DRAFT_COST_USD = 0.10;
+// Omni 1.1's 360p rate, per Dan (2026-09-20). Previously a flat $0.10 per
+// draft regardless of length, which is the wrong shape: Omni bills per
+// second of output like Veo does, so a long draft was under-counted and a
+// short one over-counted. Still not reconciled against a real invoice.
+const OMNI_DRAFT_COST_USD_PER_SECOND = 0.033;
+
+/**
+ * Real duration of a generated clip, for per-second pricing. generateDraft
+ * has no duration parameter -- Omni decides the length -- so the only
+ * honest way to price it is to measure what actually came back.
+ *
+ * Deliberately a local helper rather than assembly's mediaDurationMs:
+ * providers must not import from pipeline/ (see
+ * tests/architecture/provider-boundaries.test.ts), and assemble-single-shot
+ * and assemble-covered-shot already keep their own small ffprobe helpers
+ * for the same reason.
+ *
+ * Returns null rather than throwing if probing fails: the clip is already
+ * generated and written to disk at this point, so losing real work over a
+ * pricing lookup would be a worse outcome than an unpriced attempt.
+ */
+function probeDurationSeconds(absPath: string): number | null {
+  try {
+    const out = execFileSync(
+      "ffprobe",
+      ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", absPath],
+      { encoding: "utf8" }
+    ).trim();
+    const seconds = Number(out);
+    return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Per-second draft cost against the clip's measured length. An unprobeable
+ *  clip is recorded at zero rather than at an invented duration -- an
+ *  honest gap in the ledger, not a fabricated number. Exported for its own
+ *  test; the provider calls it internally. */
+export function omniDraftCostUsd(absPath: string): number {
+  const seconds = probeDurationSeconds(absPath);
+  return seconds === null ? 0 : Math.round(seconds * OMNI_DRAFT_COST_USD_PER_SECOND * 100) / 100;
+}
 
 type InteractionContentBlock =
   | { type: "image"; data: string; mime_type: string }
@@ -813,12 +852,13 @@ export class GeminiDraftVideoProvider implements DraftVideoProvider {
 
     const relPath = join("generated", "drafts", `${request.shotId}.mp4`);
     mkdirSync(join(dataDir, "assets", "generated", "drafts"), { recursive: true });
-    writeFileSync(join(dataDir, "assets", relPath), Buffer.from(output.data, "base64"));
+    const absPath = join(dataDir, "assets", relPath);
+    writeFileSync(absPath, Buffer.from(output.data, "base64"));
 
     return {
       status: "accepted",
       media: { path: relPath },
-      cost: { usd: OMNI_DRAFT_COST_USD },
+      cost: { usd: omniDraftCostUsd(absPath) },
       provenance: { provider: "gemini", model: OMNI_MODEL, prompt: request.prompt }
     };
   }
@@ -850,12 +890,13 @@ export class GeminiDraftVideoProvider implements DraftVideoProvider {
 
     const relPath = join("generated", "drafts", `${request.shotId}-guided.mp4`);
     mkdirSync(join(dataDir, "assets", "generated", "drafts"), { recursive: true });
-    writeFileSync(join(dataDir, "assets", relPath), Buffer.from(output.data, "base64"));
+    const absPath = join(dataDir, "assets", relPath);
+    writeFileSync(absPath, Buffer.from(output.data, "base64"));
 
     return {
       status: "accepted",
       media: { path: relPath },
-      cost: { usd: OMNI_DRAFT_COST_USD },
+      cost: { usd: omniDraftCostUsd(absPath) },
       provenance: { provider: "gemini", model: OMNI_MODEL, prompt: request.prompt }
     };
   }

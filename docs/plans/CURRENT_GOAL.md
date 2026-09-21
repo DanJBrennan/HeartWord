@@ -1,5 +1,37 @@
 # Current Goal
 
+## Omni draft cost is measured per second, not flat (2026-09-20)
+
+`OMNI_DRAFT_COST_USD` was a flat $0.10 per draft regardless of length,
+which is the wrong shape -- Omni bills per second like Veo does, so a long
+draft was under-counted and a short one over-counted. Now
+$0.033/sec (Dan's figure, 2026-09-20).
+
+Per-second pricing needs a duration, and `generateDraft` has none: unlike
+Veo's `generateFinal` there is no `durationSeconds` parameter, because
+Omni decides the clip length itself. So the only honest way to price it is
+to measure what actually came back, with a local ffprobe helper
+(`probeDurationSeconds`). Deliberately local rather than reusing
+assembly's `mediaDurationMs`: providers must not import from `pipeline/`,
+enforced by tests/architecture/provider-boundaries.test.ts, and
+assemble-single-shot/assemble-covered-shot already keep their own small
+ffprobe helpers for the same reason.
+
+If probing fails the attempt is recorded at zero rather than at an
+invented duration. The clip is already generated and written to disk by
+that point, so throwing over a pricing lookup would discard real work, and
+a fabricated duration would be worse than an honest gap in the ledger.
+
+Verified against real clips: 5s -> $0.17, 2s -> $0.07, 8s -> $0.26, and a
+missing file -> $0. All three assertions fail against the old flat rate,
+confirmed by restoring it.
+
+This also sharpens the draft-first question Dan raised: at $0.033/sec an
+8s Omni draft is $0.26, not the $0.10 the old constant implied, so three
+drafts plus one Veo Lite final is ~$1.18 against $0.40 for a single blind
+Veo render. Draft-first only pays where it actually prevents a wasted
+render, which argues for making it selective rather than universal.
+
 ## Gap-filler negotiation is now cost-tracked (2026-09-20)
 
 The Creative Director / Production Director calls used `generateJson`, so
