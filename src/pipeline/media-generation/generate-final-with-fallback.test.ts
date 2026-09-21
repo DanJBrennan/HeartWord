@@ -208,4 +208,32 @@ describe("generateFinalVideoWithFallback", () => {
     expect((klingOpts as any).startFrame).toEqual(startFrame);
     expect(draftOpts).toEqual({ startFrame });
   });
+
+  it("carries the caller's render tier into Veo and into the Kling fallback", async () => {
+    let veoTier: unknown;
+    let klingTier: unknown;
+    const videoProvider: VideoProvider = {
+      async generateFinal(_req, opts) {
+        veoTier = opts?.tier;
+        throw raiFilterError();
+      }
+    };
+    const klingSceneProvider: VideoProvider = {
+      async generateFinal(_req, opts) {
+        klingTier = opts?.tier;
+        return fakeResult();
+      }
+    };
+    const draftProvider: DraftVideoProvider = {
+      async generateDraft() {
+        throw new Error("should not be called");
+      },
+      async generateGuided() {
+        throw new Error("should not be called");
+      }
+    };
+    await generateFinalVideoWithFallback(videoProvider, klingSceneProvider, draftProvider, request, { tier: "premium" });
+    expect(veoTier).toBe("premium");
+    expect(klingTier).toBe("premium");
+  });
 });

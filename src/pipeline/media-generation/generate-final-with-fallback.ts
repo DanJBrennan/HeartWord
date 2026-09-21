@@ -31,7 +31,7 @@
  * codebase already keeps between provider adapters and the pipeline
  * stages that combine them.
  */
-import type { AssetRef, DraftVideoProvider, GenerationResult, ShotRequest, VideoProvider } from "../../providers/types.js";
+import type { AssetRef, DraftVideoProvider, GenerationResult, ShotRequest, VideoProvider, VideoTier } from "../../providers/types.js";
 
 export const MAX_VEO_ATTEMPTS = 3;
 
@@ -75,7 +75,11 @@ export async function generateFinalVideoWithFallback(
   klingSceneProvider: VideoProvider,
   draftProvider: DraftVideoProvider,
   request: ShotRequest,
-  opts: { resolution?: "720p" | "1080p"; startFrame?: AssetRef; durationSeconds?: number }
+  // tier passes straight through to both VideoProvider.generateFinal calls
+  // below: the caller picked a render quality from the shot's own risk
+  // (see casting/shot-risk.ts), and a fallback to Kling must not silently
+  // drop it. The Omni last resort has one quality and ignores it.
+  opts: { resolution?: "720p" | "1080p"; startFrame?: AssetRef; durationSeconds?: number; tier?: VideoTier }
 ): Promise<FallbackResult> {
   let veoAttempts = 0;
   for (let attempt = 1; attempt <= MAX_VEO_ATTEMPTS; attempt++) {
