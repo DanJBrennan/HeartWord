@@ -24,6 +24,7 @@ import { recordSourceAlignmentSpeakerAttribution } from "../../pipeline/ingestio
 import { recordSegmentSplit } from "../../pipeline/ingestion/segment-splits.js";
 import { recordSegmentMerge } from "../../pipeline/ingestion/segment-merges.js";
 import { computeNarrationCoverage } from "../../pipeline/casting/narration-coverage.js";
+import { renderCanonReviewPage } from "../canon-review-page.js";
 
 export const projectsRouter = Router();
 
@@ -181,6 +182,16 @@ projectsRouter.get("/:id/canon-readiness", (req, res) => {
     WHERE s.project_id=? ORDER BY c.name`).all(req.params.id) as Array<{id:string;name:string;canon_status:string;has_approved_version:number}>;
   const gaps = needed.filter(character => character.canon_status !== "approved" || !character.has_approved_version);
   res.json({ planned: needed.length > 0, allApproved: needed.length > 0 && gaps.length === 0, needed, gaps });
+});
+
+// The canon review page: a bookmarkable, always-current view of every
+// approved canon character, its reference art, and its latest garment
+// review -- rendered from the live database rather than a generated file
+// someone has to remember to rebuild. See server/canon-review-page.ts.
+projectsRouter.get("/:id/canon-review", (req, res) => {
+  const db = getDb();
+  if (!db.prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)) { res.status(404).send("Project not found."); return; }
+  res.type("html").send(renderCanonReviewPage(db, req.params.id));
 });
 
 // Read-only, chapter-scoped narration-coverage advisory -- see

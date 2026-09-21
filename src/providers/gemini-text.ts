@@ -198,6 +198,10 @@ export interface GroundedTextResult {
   text: string;
   sources: GroundingSource[];
   searchQueries: string[];
+  /** Estimated cost of this call, from Gemini's own reported usage --
+   *  grounded search is the most expensive call this project makes, and
+   *  a caller recording spend should not have to guess at it. */
+  costUsd: number;
 }
 
 export async function generateGroundedText(
@@ -234,6 +238,7 @@ export async function generateGroundedText(
         groundingChunks?: Array<{ web?: { uri?: string; title?: string } }>;
       };
     }>;
+    usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number; totalTokenCount?: number };
   };
   const candidate = data.candidates?.[0];
   const text = candidate?.content?.parts?.map((p) => p.text ?? "").join("");
@@ -246,6 +251,12 @@ export async function generateGroundedText(
     .filter((web): web is { uri: string; title?: string } => !!web?.uri)
     .map((web) => ({ uri: web.uri, title: web.title ?? web.uri }));
   const searchQueries = candidate?.groundingMetadata?.webSearchQueries ?? [];
+  const costUsd = estimateGeminiTextCostUsd({
+    promptTokenCount: data.usageMetadata?.promptTokenCount ?? 0,
+    candidatesTokenCount: data.usageMetadata?.candidatesTokenCount ?? 0,
+    thoughtsTokenCount: data.usageMetadata?.thoughtsTokenCount ?? 0,
+    totalTokenCount: data.usageMetadata?.totalTokenCount ?? 0
+  });
 
-  return { text, sources, searchQueries };
+  return { text, sources, searchQueries, costUsd };
 }

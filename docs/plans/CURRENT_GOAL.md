@@ -3614,3 +3614,49 @@ individually attributed New Testament line, so no voice mapping is added.
 Goal Guardian check: this is a producer-approved character-canon correction
 that strengthens future shot continuity without inventing narrative content,
 altering Scripture, or forcing regeneration of existing approved scenes.
+
+## Canon review page as a live route (2026-09-21)
+
+The canon critic's verdicts previously landed only in `review_notes`, readable
+one SQL query at a time. They are now browsable at
+`GET /api/projects/:id/canon-review`: one card per approved canon character
+showing its reference images, severity chip, the critic's actual note text, and
+filters by severity or "only without body pose".
+
+Two decisions worth keeping:
+
+- It is a server-rendered route, not a generated file. An exported HTML
+  snapshot goes stale the moment canon changes or the critic re-runs, and a
+  stale canon view is worse than none — this page reads the live DB on every
+  request, so a bookmark is always current.
+- Each card names the exact images the critic read. Its garment verdicts rest
+  on what it could see, and a "severe: no outer mantle, so no tassels" drawn
+  from a turnaround alone is a weaker claim than the same verdict drawn from a
+  standing body pose. Across the current canon that splits 15 characters judged
+  from two body poses, 12 from a body pose plus a turnaround, and 5 from a
+  single turnaround. Those 5 are what the "only without body pose" filter
+  isolates, rather than letting the severity chip imply more confidence than
+  the evidence carries.
+
+The page originally re-derived that selection itself and got it wrong: it
+labelled all four of Bartholomew's body poses "sampled by critic" when the
+audit reads two, ranked same-category ties differently, and ignored the audit's
+skip of assets missing from disk. Both now call one exported
+`criticSampledAssets` in `pipeline/qc/canon-critic.ts`, so a page about
+evidence strength cannot drift from the code that produced the evidence.
+
+That extraction also made the audit's own choice reproducible. Its SQL ranks
+categories but leaves same-category rows to rowid order, so "which of
+Bartholomew's four body poses did the critic see" had no stable answer between
+runs; ties now break on path. The next `auditCanonGarments` run may therefore
+read a different pair than the last one did for characters with several poses.
+
+Also fixed here: `generateFinalVideoWithFallback` did not accept the `tier`
+option its caller in `final-video.ts` was passing, so `npm run typecheck` had
+been failing since the shot-risk tiering commit. The wrapper now declares
+`tier` and a test pins that it reaches both Veo and the Kling fallback.
+
+Goal Guardian check: this is review tooling that makes existing QC evidence
+legible to the producer. It generates no media, spends nothing, and changes no
+canon — it only surfaces what the critic already recorded, with the strength of
+each verdict's evidence attached.

@@ -97,7 +97,7 @@ export async function runCanonGarmentCritic(
   // those trailer lines, so there's nothing real to parse out here.
   // This older canon-only review does not ask for structured confidence.
   // Preserve that absence rather than manufacturing a numeric estimate.
-  return { severity, findings: `${result.text}${sourcesFinding}`, structuredFindings: [], sources, suggestedFix: null, preserve: null };
+  return { severity, findings: `${result.text}${sourcesFinding}`, structuredFindings: [], sources, suggestedFix: null, preserve: null, costUsd: result.costUsd };
 }
 
 interface CanonCharacterRow {
@@ -129,12 +129,52 @@ function readCanonAssets(rows: Record<string, unknown>[]): CanonAssetRow[] {
   });
 }
 
+/** How many reference images the garment critic reads per character. A
+ *  headshot alone can't show a hem or tassels, so two is the floor at
+ *  which a garment verdict means anything; more than that multiplies the
+ *  grounded-review cost across the whole canon for little added signal. */
+export const CANON_CRITIC_MAX_IMAGES = 2;
+
+const CANON_CATEGORY_RANK: Record<string, number> = { body_pose: 0, turnaround: 1, headshot: 2 };
+
+/**
+ * The reference images this audit will actually look at, in the order it
+ * reads them. Exported because the canon review page states WHICH images a
+ * verdict rests on, and a page that re-derives that independently drifts
+ * from the truth -- it already did, labelling all four of a character's
+ * body poses as "sampled" when only two were read.
+ *
+ * Ties break on path so the choice is reproducible. The SQL ordering alone
+ * ranks categories but leaves same-category rows to rowid order, which
+ * meant "which of Bartholomew's four body poses did the critic see" had no
+ * stable answer between runs.
+ *
+ * `exists` drops assets whose file is missing from disk, because a missing
+ * body pose silently demotes the verdict to whatever was readable next --
+ * the one case where the page must not claim a body pose was seen.
+ */
+export function criticSampledAssets<T extends { path: string; category: string }>(
+  assets: readonly T[],
+  exists: (relativePath: string) => boolean
+): T[] {
+  return [...assets]
+    .sort(
+      (a, b) =>
+        (CANON_CATEGORY_RANK[a.category] ?? 9) - (CANON_CATEGORY_RANK[b.category] ?? 9) ||
+        a.path.localeCompare(b.path)
+    )
+    .filter((asset) => exists(asset.path))
+    .slice(0, CANON_CRITIC_MAX_IMAGES);
+}
+
 export interface CanonGarmentAuditEntry {
   characterId: string;
   characterVersionId: string;
   characterName: string;
   severity: CriticReport["severity"];
   findings: string;
+  /** What this character's grounded review actually cost. */
+  costUsd: number;
 }
 
 /**
@@ -182,13 +222,11 @@ export async function auditCanonGarments(projectId: string): Promise<CanonGarmen
   const results: CanonGarmentAuditEntry[] = [];
   for (const character of characters) {
     const assets = readCanonAssets(assetStmt.all(character.character_version_id));
-    const images: Array<{ mimeType: string; data: string }> = [];
-    for (const asset of assets) {
-      if (images.length >= 2) break;
-      const absPath = join(dataDir, "assets", asset.path);
-      if (!existsSync(absPath)) continue;
-      images.push({ mimeType: "image/png", data: readFileSync(absPath).toString("base64") });
-    }
+    const sampled = criticSampledAssets(assets, (path) => existsSync(join(dataDir, "assets", path)));
+    const images = sampled.map((asset) => ({
+      mimeType: "image/png",
+      data: readFileSync(join(dataDir, "assets", asset.path)).toString("base64")
+    }));
     if (images.length === 0) continue;
 
     const overrides = (loadOverrides.all(character.character_version_id) as Array<{ note: string }>).map((r) =>
@@ -202,10 +240,19 @@ export async function auditCanonGarments(projectId: string): Promise<CanonGarmen
       characterVersionId: character.character_version_id,
       characterName: character.character_name,
       severity: critic.severity,
-      findings: critic.findings
+      findings: critic.findings,
+      costUsd: critic.costUsd ?? 0
     });
 
     const now = Date.now();
+    // Grounded search with reference images is the most expensive call
+    // this project makes, and a full-canon pass is dozens of them --
+    // recorded like any other spend rather than left invisible.
+    if (critic.costUsd) {
+      db.prepare(
+        "INSERT INTO cost_ledger_entries (id, project_id, generation_attempt_id, amount_usd, created_at) VALUES (?, ?, NULL, ?, ?)"
+      ).run(randomUUID(), projectId, critic.costUsd, now);
+    }
     insertReviewNote.run(
       randomUUID(),
       projectId,

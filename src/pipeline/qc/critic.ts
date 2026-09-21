@@ -75,6 +75,10 @@ export interface CriticReport {
    *  severity is "none". Always paired with suggestedFix: a caller should
    *  not act on one without the other. See parseCriticPreserve. */
   preserve: string | null;
+  /** Estimated cost of the grounded call(s) behind this report, for a
+   *  caller that records spend. Optional because not every producer of a
+   *  CriticReport totals its own calls. */
+  costUsd?: number;
 }
 
 export interface CriticContinuityFrame {
