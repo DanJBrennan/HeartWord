@@ -1,5 +1,52 @@
 # Current Goal
 
+## Shot-risk signal drives Veo tiering and draft-first (2026-09-21)
+
+`casting/shot-risk.ts`'s `assessShotRisk` classifies a shot routine /
+elevated / critical from facts the plan already carries, with a stated
+reason for every tier. `media-generation/shot-risk-lookup.ts` reads those
+facts from the database and maps them onto a render tier; the DB half is
+kept separate so the rule itself stays pure and directly testable, the
+same split coverage.ts already uses.
+
+`VideoProvider.generateFinal` now takes a `tier`, and
+`GeminiVideoProvider` selects the matching Veo 3.1 variant and rate --
+economy/lite $0.05, standard/fast $0.10, premium $0.20. All three model
+IDs were confirmed against the live model list (2026-09-21) rather than
+guessed: `veo-3.1-lite-generate-preview`,
+`veo-3.1-fast-generate-preview`, `veo-3.1-generate-preview`. Omitting the
+tier gives economy, so a caller that has not assessed risk cannot
+silently buy the expensive render. `generateNonSpeakingVideoCandidate`
+passes the assessed tier and records the reasoning in its review note.
+
+**The first calibration was wrong and real data caught it.** Thresholds
+chosen a priori classified all 18 of Mark 3's non-dialogue shots as
+critical -- no discrimination at all, and a 4x cost increase ($28.80 vs
+$7.20) for nothing. Two factors turned out to carry no information:
+continuity notes are set on 30 of 30 shots, and "moderate" crowd is also
+`DEFAULT_CROWD_DENSITY`, so neither separates one shot from another. Both
+were dropped. Cast size is the factor that actually varies (2-9 per shot)
+and is the one the feasibility challenger independently flagged for the
+nine-apostle frame.
+
+Recalibrated against the real distribution, Mark 3 now comes out 6 routine
+/ 7 elevated / 5 critical, 12 of 18 worth a draft first, and $16.00 of 8s
+renders against $28.80 all-premium. The critical five are the frames you
+would pick by eye: both nine-apostle shots, the six-character seaside
+shot, and two five-character shots inside packed crowds.
+
+Known limits, stated rather than papered over:
+- Thresholds are calibrated against one crowd-heavy chapter. Re-check
+  against a quieter one before trusting them on non-Mark-like material.
+- Emotional weight is a real input that nothing in the shot row carries,
+  so it is never inferred. Mark 3:5's healing insert -- two characters,
+  locked off -- scores routine despite being the emotional turn of its
+  scene. `escalateToCritical` exists for exactly that, and demands a
+  stated reason.
+- `draftFirst` is computed but has no consumer yet: the candidate flow
+  still holds one take at a time, so multi-draft selection remains
+  unbuilt.
+
 ## Omni draft cost is measured per second, not flat (2026-09-20)
 
 `OMNI_DRAFT_COST_USD` was a flat $0.10 per draft regardless of length,

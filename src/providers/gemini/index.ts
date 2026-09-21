@@ -50,7 +50,8 @@ import type {
   ImageEditor,
   ImageProvider,
   ShotRequest,
-  VideoProvider
+  VideoProvider,
+  VideoTier
 } from "../types.js";
 
 function requireApiKey(): string {
@@ -528,22 +529,21 @@ export class GeminiImageEditor implements ImageEditor {
 // "veo-3.1-generate-preview" or "-fast-" variants also listed).
 const VEO_MODEL = "veo-3.1-lite-generate-preview";
 
-// Per-second rate for VEO_MODEL above, which is Veo 3.1 *Lite*. Dan gave
-// the tier pricing directly (2026-09-20): Lite $0.05/sec, Fast $0.10/sec,
-// Standard $0.20/sec. This previously read $0.20 -- the Standard rate --
-// derived from an assumed "$1.60 for an always-8-second clip", so every
-// recorded video cost was 4x the model actually being called. Note that
-// generation_attempts.cost_usd is computed FROM this constant (see
-// generateFinal below), so those rows are this estimate's own arithmetic,
-// not independent evidence of what Google charged; they inherit any error
-// here. Still not reconciled against a real invoice.
-//
-// There is deliberately no tier selection for video: every shot renders
-// through Lite. Escalating a complex or emotional shot to Fast/Standard
-// would need a tier parameter on VideoProvider.generateFinal and a
-// per-tier rate here, the way GeminiImageProvider already switches
-// between Nano Banana and Nano Banana Pro.
-const VEO_COST_USD_PER_SECOND = 0.05;
+/**
+ * The three real Veo 3.1 variants, confirmed against the live model list
+ * 2026-09-21, with Dan's per-second pricing for each. A shot's tier comes
+ * from pipeline/casting/shot-risk.ts; economy is the default so a caller
+ * that has not assessed risk cannot silently buy the expensive render.
+ *
+ * Same honesty caveat as every cost constant here: the rates are Dan's
+ * figures, not an invoice, and generation_attempts.cost_usd is computed
+ * from them rather than being independent evidence of what was charged.
+ */
+const VEO_TIERS: Record<VideoTier, { model: string; usdPerSecond: number }> = {
+  economy: { model: "veo-3.1-lite-generate-preview", usdPerSecond: 0.05 },
+  standard: { model: "veo-3.1-fast-generate-preview", usdPerSecond: 0.10 },
+  premium: { model: "veo-3.1-generate-preview", usdPerSecond: 0.20 }
+};
 
 interface VeoOperationResponse {
   name?: string;
@@ -658,9 +658,10 @@ export async function generateVeoFromFrames(request: VeoFrameGenerationRequest):
 export class GeminiVideoProvider implements VideoProvider {
   async generateFinal(
     request: ShotRequest,
-    opts?: { resolution?: "720p" | "1080p"; startFrame?: AssetRef; durationSeconds?: number }
+    opts?: { resolution?: "720p" | "1080p"; startFrame?: AssetRef; durationSeconds?: number; tier?: VideoTier }
   ): Promise<GenerationResult> {
     const apiKey = requireApiKey();
+    const { model: tierModel, usdPerSecond } = VEO_TIERS[opts?.tier ?? "economy"];
     const resolution = opts?.resolution ?? "720p";
     // Veo's stated bound is "between 4 and 8, inclusive" (2026-09-09, a
     // live 400 response), but the REAL constraint is a discrete set
@@ -709,7 +710,7 @@ export class GeminiVideoProvider implements VideoProvider {
     }
     const startImageBase64 = readFileSync(keyframePath).toString("base64");
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${VEO_MODEL}:predictLongRunning?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${tierModel}:predictLongRunning?key=${apiKey}`;
     const submitRes = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -795,8 +796,8 @@ export class GeminiVideoProvider implements VideoProvider {
     return {
       status: "accepted",
       media: { path: relPath },
-      cost: { usd: Math.round(durationSeconds * VEO_COST_USD_PER_SECOND * 100) / 100 },
-      provenance: { provider: "gemini", model: VEO_MODEL, prompt: request.prompt }
+      cost: { usd: Math.round(durationSeconds * usdPerSecond * 100) / 100 },
+      provenance: { provider: "gemini", model: tierModel, prompt: request.prompt }
     };
   }
 }

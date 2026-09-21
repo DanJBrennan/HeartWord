@@ -58,6 +58,12 @@ export interface ImageEditor {
   editRegion(asset: AssetRef, instruction: string): Promise<GenerationResult>;
 }
 
+/** Render quality/price point for one shot. Mirrors the risk tiers in
+ *  pipeline/casting/shot-risk.ts: routine shots take the cheapest render,
+ *  critical ones the best. A provider without three real tiers maps these
+ *  onto whatever it has. */
+export type VideoTier = "economy" | "standard" | "premium";
+
 export interface VideoProvider {
   // startFrame overrides the default "shot's own accepted keyframe" lookup
   // -- needed for a covered_sequence shot's individual beats (see
@@ -66,9 +72,14 @@ export interface VideoProvider {
   // overrides the 8s default -- a beat's video should roughly match its
   // own audio span (a 3.5s master doesn't need an 8s clip), not always
   // max out the single-clip ceiling.
+  // tier selects the render quality/price point for this specific shot --
+  // see pipeline/casting/shot-risk.ts, which derives it from the shot's own
+  // crowd/cast/camera/continuity facts. Omitted means the cheapest tier: a
+  // caller that has not assessed risk must not silently buy the expensive
+  // one.
   generateFinal(
     request: ShotRequest,
-    opts?: { resolution?: "720p" | "1080p"; startFrame?: AssetRef; durationSeconds?: number }
+    opts?: { resolution?: "720p" | "1080p"; startFrame?: AssetRef; durationSeconds?: number; tier?: VideoTier }
   ): Promise<GenerationResult>;
 }
 

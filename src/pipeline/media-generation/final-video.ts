@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import type { DraftVideoProvider, VideoProvider } from "../../providers/types.js";
+import type { DraftVideoProvider, VideoProvider, VideoTier } from "../../providers/types.js";
 import { generateFinalVideoWithFallback } from "./generate-final-with-fallback.js";
+import { shotRiskFor, tierForRisk } from "./shot-risk-lookup.js";
 
 export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, projectId:string, shotId:string, providers:{veo:VideoProvider;kling:VideoProvider;draft:DraftVideoProvider}) {
   const shot=db.prepare(`SELECT sh.id,sh.action FROM shots sh JOIN scenes s ON s.id=sh.scene_id WHERE sh.id=? AND s.project_id=? AND sh.needs_lip_sync=0`).get(shotId,projectId) as {id:string;action:string}|undefined;
@@ -14,11 +15,16 @@ export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, project
   if (!keyframe) throw new Error("Final video is held: this shot needs an accepted reviewed keyframe.");
   const characters=db.prepare("SELECT sc.character_id characterId,cv.id characterVersionId FROM shot_characters sc JOIN character_versions cv ON cv.character_id=sc.character_id AND cv.status='approved' WHERE sc.shot_id=?").all(shotId) as Array<{characterId:string;characterVersionId:string}>;
   if (!characters.length && /character|person|jesus/i.test(shot.action)) throw new Error("Final video is held: visible canon characters need approved versions.");
-  const result=await generateFinalVideoWithFallback(providers.veo,providers.kling,providers.draft,{shotId,prompt:keyframe.prompt ?? shot.action,characters},{resolution:"720p",startFrame:{path:keyframe.result_asset_path},durationSeconds:8});
+  // A shot's own crowd/cast/camera/continuity facts decide how good a
+  // render it gets -- see casting/shot-risk.ts. Routine frames stay on the
+  // cheapest tier instead of every shot buying the same render.
+  const risk=shotRiskFor(db,shotId);
+  const tier:VideoTier=tierForRisk(risk);
+  const result=await generateFinalVideoWithFallback(providers.veo,providers.kling,providers.draft,{shotId,prompt:keyframe.prompt ?? shot.action,characters},{resolution:"720p",startFrame:{path:keyframe.result_asset_path},durationSeconds:8,tier});
   const id=randomUUID(), now=Date.now();
   db.prepare("INSERT INTO generation_attempts (id,shot_id,provider,model,operation,resolution,prompt,status,result_asset_path,cost_usd,created_at) VALUES (?,?,?,?,?,'720p',?,'hold_for_review',?,?,?)").run(id,shotId,result.provenance.provider,result.provenance.model,"generate_final_video",result.provenance.prompt,result.media?.path ?? null,result.cost.usd,now);
   db.prepare("INSERT INTO cost_ledger_entries (id,project_id,generation_attempt_id,amount_usd,created_at) VALUES (?,?,?,?,?)").run(randomUUID(),projectId,id,result.cost.usd,now);
-  db.prepare("INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'qc',?,0,?)").run(randomUUID(),projectId,shotId,`Final-video candidate ${id} (${result.tier}) requires producer review before timeline selection.`,now);
+  db.prepare("INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'qc',?,0,?)").run(randomUUID(),projectId,shotId,`Final-video candidate ${id} (${result.tier}) requires producer review before timeline selection. Risk ${risk.tier} (${risk.reasons.join("; ")}) -> ${tier} render${risk.draftFirst?"; a cheap draft first would have been worth it":""}.`,now);
   return {status:"candidate" as const,attemptId:id};
 }
 
