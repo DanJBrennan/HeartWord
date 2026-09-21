@@ -3660,3 +3660,25 @@ Goal Guardian check: this is review tooling that makes existing QC evidence
 legible to the producer. It generates no media, spends nothing, and changes no
 canon — it only surfaces what the critic already recorded, with the strength of
 each verdict's evidence attached.
+
+## Tzitzit/costume fix handoff to Codex (2026-09-21)
+
+Dan reviewed the 2026-09-21 canon garment audit's findings via the canon
+review page and decided to act on them: accept the critic's recommendations
+across the Mark 3 canon, with two named exceptions (keep Jesus's hair as-is;
+keep both scribes' fabric black rather than recoloring to cream/off-white).
+
+Handed off to Codex as
+[`docs/handoffs/2026-09-21-codex-canon-costume-fixes.md`](../handoffs/2026-09-21-codex-canon-costume-fixes.md)
+rather than done here, since Codex owns the canon-image generation workflow
+(`scripts/character-tool/promote-*.ts`). The handoff breaks ~20 characters
+into ordered, independently-committable batches by Mark 3 production impact
+(shot count × open issues) given Codex's limited usage window before 9pm
+tonight — Jesus first (23 of 30 shots, only 2 fixes needed), the five old-v1
+Mark 2 "Friend" characters and the Healed paralytic last (currently 0 Mark 3
+shots, deferred rather than skipped).
+
+Goal Guardian check: this delegates a producer-approved canon correction to
+the tool that already owns it, with the scope and the two overrides stated
+explicitly so nothing gets reinterpreted mid-work. No media generation is
+authorized by this handoff.
