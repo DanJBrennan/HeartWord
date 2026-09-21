@@ -38,7 +38,8 @@
  */
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import { generateJson, type GeminiJsonSchema } from "../../providers/gemini-text.js";
+import { generateJsonMetered, type GeminiJsonSchema } from "../../providers/gemini-text.js";
+import { recordModelSpend } from "./model-spend.js";
 import type { GapFillIdea, CreativeDirectorProposal } from "./index.js";
 import { reviseGapFillerIdeas } from "./index.js";
 import { getDataDir } from "../../db/client.js";
@@ -46,15 +47,22 @@ import { loadCrewBrief } from "./crew-context.js";
 
 const MAX_ROUNDS_PER_CONFLICT = 10;
 
-// Rough, real per-idea cost this project has actually observed this
-// session: ~$0.24 for a Nano Banana Pro keyframe + ~$0.80 for a Veo/
-// Kling video generation. reorder_existing costs nothing to generate
-// (it's a timeline edit); extend_existing usually means re-generating
-// that shot's video at a longer duration, so it carries a similar cost
-// to a new_shot video generation without a second keyframe call.
+// Per-idea generation cost, matching what the pipeline actually calls:
+// a $0.24 Nano Banana Pro keyframe plus an 8-second Veo 3.1 Lite render
+// at $0.05/sec (providers/gemini/index.ts's VEO_COST_USD_PER_SECOND) =
+// $0.40, so $0.64 for a new shot. reorder_existing generates nothing
+// (it's a timeline edit); extend_existing re-renders that shot's video
+// without a second keyframe call, so it carries the video cost alone.
+//
+// This previously read $1.04/$0.80, built on a $0.20/sec video rate --
+// the Veo *Standard* price applied to a *Lite* model call. The Director
+// weighs approve/reject decisions against these figures, so an inflated
+// number made it reject ideas as too expensive that were not. Corrected
+// 2026-09-20 with Dan's own tier pricing; still an estimate, not an
+// invoice.
 const ESTIMATED_COST_USD: Record<GapFillIdea["operation"], number> = {
-  new_shot: 1.04,
-  extend_existing: 0.8,
+  new_shot: 0.64,
+  extend_existing: 0.4,
   reorder_existing: 0
 };
 
@@ -72,7 +80,12 @@ export interface NegotiationOutcome {
   rejectedIdeas: GapFillIdea[];
   roundsUsed: number;
   forcedFinalCount: number;
+  /** What building every approved idea would cost in image/video
+   *  generation -- a forecast, nothing has been spent. */
   estimatedCostUsd: number;
+  /** What this negotiation itself actually cost in Gemini reasoning
+   *  calls, recorded to cost_ledger_entries as it went. */
+  modelCostUsd: number;
 }
 
 const VERDICT_SCHEMA: GeminiJsonSchema = {
@@ -118,7 +131,7 @@ async function runDirectorReview(
   gapMs: number,
   approvedIdeas: GapFillIdea[],
   context: string
-): Promise<DirectorVerdict[]> {
+): Promise<{ verdicts: DirectorVerdict[]; costUsd: number }> {
   const prompt =
     `You are the Production Director for a Scripture video production. The Creative Director has proposed ideas to ` +
     `fill a real gap: the source narration for ${narrationSpanVerseRef.replace(" (narration)", "")} runs about ` +
@@ -152,8 +165,8 @@ async function runDirectorReview(
     `feedback -- vague feedback wastes a round). An idea at round ${MAX_ROUNDS_PER_CONFLICT}/${MAX_ROUNDS_PER_CONFLICT} ` +
     `is on its last round: only approve or reject it, since no further revision will happen regardless of what you return.`;
 
-  const result = await generateJson<{ verdicts: DirectorVerdict[] }>(prompt, VERDICT_SCHEMA);
-  return result.verdicts;
+  const { result, costUsd } = await generateJsonMetered<{ verdicts: DirectorVerdict[] }>(prompt, VERDICT_SCHEMA);
+  return { verdicts: result.verdicts, costUsd };
 }
 
 /**
@@ -181,10 +194,14 @@ export async function negotiateGapProposal(
   const rejected: GapFillIdea[] = [];
   let forcedFinalCount = 0;
   let maxRoundReached = 0;
+  let modelCostUsd = 0;
 
   while (activeIdeas.length > 0) {
     const reviewBatch = activeIdeas.map((idea) => ({ idea, round: roundCounts.get(idea.id)! }));
-    const verdicts = await runDirectorReview(reviewBatch, narrationSpanVerseRef, gapMs, approved, context);
+    const review = await runDirectorReview(reviewBatch, narrationSpanVerseRef, gapMs, approved, context);
+    const verdicts = review.verdicts;
+    modelCostUsd += review.costUsd;
+    recordModelSpend(db, projectId, review.costUsd);
     if (!Array.isArray(verdicts) || verdicts.length !== activeIdeas.length ||
         new Set(verdicts.map(v => v.ideaId)).size !== activeIdeas.length ||
         verdicts.some(v => !activeIdeas.some(i => i.id === v.ideaId) || !["approve", "reject", "request_changes"].includes(v.verdict) || typeof v.feedback !== "string" || !v.feedback.trim() || !Number.isFinite(v.confidence) || v.confidence < 0 || v.confidence > 100 || typeof v.limitations !== "string" || !v.limitations.trim())) {
@@ -233,8 +250,10 @@ export async function negotiateGapProposal(
 
     if (toRevise.length === 0) break;
 
-    const revised = await reviseGapFillerIdeas(toRevise, feedbackByIdeaId, context);
-    activeIdeas = revised.map((idea) => {
+    const revision = await reviseGapFillerIdeas(toRevise, feedbackByIdeaId, context);
+    modelCostUsd += revision.costUsd;
+    recordModelSpend(db, projectId, revision.costUsd);
+    activeIdeas = revision.ideas.map((idea) => {
       const newRound = roundCounts.get(idea.id)! + 1;
       roundCounts.set(idea.id, newRound);
       logRound(db, projectId, narrationSpanVerseRef, idea.id, newRound, "creative_director", null, JSON.stringify(idea));
@@ -255,6 +274,7 @@ export async function negotiateGapProposal(
     rejectedIdeas: rejected,
     roundsUsed: maxRoundReached,
     forcedFinalCount,
-    estimatedCostUsd
+    estimatedCostUsd,
+    modelCostUsd
   };
 }

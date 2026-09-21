@@ -28,6 +28,12 @@ export async function generateJson<T>(prompt: string, schema: GeminiJsonSchema):
   return generateJsonWithImages(prompt, [], schema);
 }
 
+/** generateJson plus token usage and an estimated cost, for a caller that
+ *  records real spend -- see generateJsonWithImagesMetered. */
+export async function generateJsonMetered<T>(prompt: string, schema: GeminiJsonSchema): Promise<GeminiMeteredResult<T>> {
+  return generateJsonWithImagesMetered(prompt, [], schema);
+}
+
 // Rough public-pricing-based estimate (Gemini flash-tier per-1M-token
 // rates), NOT reconciled against a real invoice -- same honesty caveat as
 // the image/video provider cost constants in providers/gemini/index.ts.

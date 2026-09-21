@@ -1,5 +1,104 @@
 # Current Goal
 
+## Gap-filler negotiation is now cost-tracked (2026-09-20)
+
+The Creative Director / Production Director calls used `generateJson`, so
+none of their spend reached `cost_ledger_entries` -- yesterday's cost
+tracking covered the production crew only. Added `generateJsonMetered`
+(the no-images sibling of `generateJsonWithImagesMetered`) and a shared
+`recordModelSpend` helper, and switched `proposeGapFillers`,
+`reviseGapFillerIdeas` and the Director's `runDirectorReview` onto it.
+Each call writes its own ledger row with a null generation_attempt_id, the
+same shape crew-store.ts already uses, and `NegotiationOutcome` now
+carries `modelCostUsd` alongside the existing `estimatedCostUsd` forecast.
+
+Measured for real: the 15-gap Mark 3 negotiation cost **$0.4916** in
+reasoning across 30 calls, to decide on **$15.04** of generation it has
+not spent. Project ledger total is now $2.0379. `generation_attempts` for
+Mark 3 remains zero -- nothing has been built.
+
+Two defects found by the metering itself, both fixed:
+
+- **The script under-reported by half.** It printed $0.2257 while the
+  ledger grew $0.4916. `proposeGapFillers` writes its own ledger row, but
+  its cost never reached the outcome object the script was summing -- so
+  only the negotiation half was displayed. The proposal now carries
+  `modelCostUsd` and the caller adds both halves. The ledger was right and
+  the display was wrong, which is the failure the ledger exists to catch.
+- **The script re-negotiated settled gaps.** Re-running with a lower
+  threshold redid all 13 already-decided gaps, wasting about $0.43. It now
+  skips any gap with a recorded `director_resolution`, with `--force` to
+  redo deliberately.
+
+Both verified on a real run: the next invocation skipped 15 settled gaps,
+negotiated the 1 genuinely new one, printed $0.0326, and the ledger grew
+by exactly $0.0326 across 2 rows.
+
+Worth noting for the draft-tier question: roughly $0.50 of reasoning to
+gate $15 of generation is a good ratio, and it is the same shape as using
+a cheap Omni draft to decide before committing an expensive Veo render.
+
+## Video cost constants corrected; Mark 3 gap negotiation run (2026-09-20)
+
+Dan asked where the $1.04-per-shot figure came from before authorizing the
+negotiation. Tracing it found two errors worth more than the number
+itself.
+
+**The recorded costs were not evidence.** `generation_attempts.cost_usd`
+is computed from our own constants (`durationSeconds *
+VEO_COST_USD_PER_SECOND`), so citing 229 recorded attempts as
+corroboration of those constants was circular -- it was the estimate's own
+arithmetic played back. Nothing in this repo has ever been reconciled
+against a real invoice, exactly as every cost comment already said.
+
+**The price didn't match the model.** `VEO_MODEL` is
+`veo-3.1-lite-generate-preview` -- every shot renders through Veo 3.1
+*Lite*, with no tier selection at all (images have standard/Pro tiering;
+video never got it). But `VEO_COST_USD_PER_SECOND` was $0.20, the
+*Standard* rate, derived from an assumed "$1.60 for an always-8-second
+clip". Corrected to $0.05/sec using Dan's tier pricing (Lite $0.05, Fast
+$0.10, Standard $0.20), and `ESTIMATED_COST_USD` from $1.04/$0.80 to
+$0.64/$0.40 ($0.24 keyframe + 8s Lite at $0.40). This is not just
+bookkeeping: the Production Director weighs approve/reject against those
+figures, so a 1.6x-inflated number was making it decline coverage that was
+actually affordable.
+
+New `scripts/negotiate-narration-gaps.ts` drives the Creative Director /
+Production Director negotiation from the coverage advisory for any
+project, and **stops before `implementApprovedIdeas`** -- the existing
+`run-production-director.ts` is hardcoded to Mark 2 and proceeds straight
+into real paid generation, which is not what "run the negotiation" should
+mean.
+
+First run for Mark 3, 13 gaps of >= 4s (97.3s of the 104.2s total):
+**26 ideas approved, 5 rejected**, $14.24 estimated if every one were
+built. Verified nothing was generated -- `generation_attempts` for this
+project is still zero. The approved ideas are precisely the beats Dan
+asked about when this thread started: crowd reactions to the scribes'
+accusation, the disciples' astonishment at the unclean spirit, James and
+John receiving the name Boanerges, the man with the withered hand seated
+quietly before he is called.
+
+Three honest observations about the run:
+
+- **The negotiation never actually negotiated.** Every one of the 13 gaps
+  resolved in 0 rounds -- the Director issued 26 approvals and 5
+  rejections on first pass and never once returned `request_changes`, so
+  the 10-round machinery has yet to engage. Whether that means the ideas
+  were simply good or that the Director isn't pushing back hard enough is
+  unresolved.
+- **Adjacent spans produce duplicate ideas.** The two separate "mark
+  3:17" narration rows were proposed for independently, and both returned
+  a "hold on Jesus naming the Sons of Thunder" extension plus a "James and
+  John react" close-up. Building both would put two near-identical
+  reaction shots back to back. Nothing in the current design lets one
+  gap's proposal see another's.
+- **These calls aren't cost-tracked.** `proposeGapFillers` and
+  `negotiateGapProposal` use `generateJson`, not the metered variant, so
+  the ~40 Gemini calls this run made never reached `cost_ledger_entries`
+  (still 36 rows, all from the crew runs). The cost tracking added
+  yesterday covers the production crew only.
+
 ## The shot planner now sees real narration durations (2026-09-20)
 
 Root-cause fix for the under-provisioning the advisory above measured.

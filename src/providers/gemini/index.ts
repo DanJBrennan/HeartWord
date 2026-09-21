@@ -489,12 +489,22 @@ export class GeminiImageEditor implements ImageEditor {
 // "veo-3.1-generate-preview" or "-fast-" variants also listed).
 const VEO_MODEL = "veo-3.1-lite-generate-preview";
 
-// Rough public-pricing-based estimate, NOT reconciled against a real
-// invoice -- same honesty caveat as the Nano Banana cost constants above.
-// Veo charges per second of output at 720p; $1.60 for the original
-// always-8-second clip implies $0.20/sec, scaled here now that a
-// covered_sequence beat can request a shorter duration.
-const VEO_COST_USD_PER_SECOND = 0.20;
+// Per-second rate for VEO_MODEL above, which is Veo 3.1 *Lite*. Dan gave
+// the tier pricing directly (2026-09-20): Lite $0.05/sec, Fast $0.10/sec,
+// Standard $0.20/sec. This previously read $0.20 -- the Standard rate --
+// derived from an assumed "$1.60 for an always-8-second clip", so every
+// recorded video cost was 4x the model actually being called. Note that
+// generation_attempts.cost_usd is computed FROM this constant (see
+// generateFinal below), so those rows are this estimate's own arithmetic,
+// not independent evidence of what Google charged; they inherit any error
+// here. Still not reconciled against a real invoice.
+//
+// There is deliberately no tier selection for video: every shot renders
+// through Lite. Escalating a complex or emotional shot to Fast/Standard
+// would need a tier parameter on VideoProvider.generateFinal and a
+// per-tier rate here, the way GeminiImageProvider already switches
+// between Nano Banana and Nano Banana Pro.
+const VEO_COST_USD_PER_SECOND = 0.05;
 
 interface VeoOperationResponse {
   name?: string;

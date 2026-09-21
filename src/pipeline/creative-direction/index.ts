@@ -43,7 +43,8 @@
  */
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import { generateJson, type GeminiJsonSchema, GEMINI_TEXT_MODEL } from "../../providers/gemini-text.js";
+import { generateJsonMetered, type GeminiJsonSchema, GEMINI_TEXT_MODEL } from "../../providers/gemini-text.js";
+import { recordModelSpend } from "./model-spend.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
 import { getDataDir } from "../../db/client.js";
 import { loadCrewBrief } from "./crew-context.js";
@@ -120,6 +121,11 @@ export interface CreativeDirectorProposal {
   gapMs: number;
   ideas: GapFillIdea[];
   createdAt: number;
+  /** What proposing these ideas cost in Gemini reasoning calls, already
+   *  recorded to cost_ledger_entries. Separate from the negotiation's own
+   *  cost (NegotiationOutcome.modelCostUsd) -- a caller reporting total
+   *  spend for a gap must add both, or it under-reports by half. */
+  modelCostUsd?: number;
 }
 
 interface ShotContextRow {
@@ -303,7 +309,8 @@ export async function proposeGapFillers(
     `reverence/decorum appropriate to this Scripture passage -- if an idea would risk trivializing, sensationalizing, ` +
     `or distracting from the passage's meaning, do not propose it.`;
 
-  const result = await generateJson<{ ideas: Array<Omit<GapFillIdea, "id">> }>(prompt, GAP_FILL_SCHEMA);
+  const { result, costUsd } = await generateJsonMetered<{ ideas: Array<Omit<GapFillIdea, "id">> }>(prompt, GAP_FILL_SCHEMA);
+  recordModelSpend(db, projectId, costUsd);
   const ideasWithIds: GapFillIdea[] = result.ideas.map((idea) => ({ ...idea, id: randomUUID() }));
 
   const proposal: CreativeDirectorProposal = {
@@ -313,7 +320,8 @@ export async function proposeGapFillers(
     narrationSpanVerseRef,
     gapMs,
     ideas: ideasWithIds,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    modelCostUsd: costUsd
   };
 
   db.prepare(
@@ -337,7 +345,7 @@ export async function reviseGapFillerIdeas(
   ideasToRevise: GapFillIdea[],
   feedbackByIdeaId: Map<string, string>,
   productionContext = ""
-): Promise<GapFillIdea[]> {
+): Promise<{ ideas: GapFillIdea[]; costUsd: number }> {
   const prompt =
     `You are the Creative Director for a Scripture video production, revising specific shot ideas in response to ` +
     `the Production Director's feedback. For each idea below, either adjust it to address the feedback, or -- if ` +
@@ -398,11 +406,11 @@ export async function reviseGapFillerIdeas(
     required: ["ideas"]
   };
 
-  const result = await generateJson<{ ideas: GapFillIdea[] }>(prompt, schemaWithId);
+  const { result, costUsd } = await generateJsonMetered<{ ideas: GapFillIdea[] }>(prompt, schemaWithId);
   const expected = new Set(ideasToRevise.map(i => i.id));
   if (!Array.isArray(result.ideas) || result.ideas.length !== expected.size ||
       new Set(result.ideas.map(i => i.id)).size !== expected.size || result.ideas.some(i => !expected.has(i.id))) {
     throw new Error("Creative revision changed, duplicated or omitted an idea ID.");
   }
-  return result.ideas;
+  return { ideas: result.ideas, costUsd };
 }

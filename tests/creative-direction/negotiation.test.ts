@@ -2,9 +2,12 @@ import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { negotiateGapProposal } from "../../src/pipeline/creative-direction/production-director.js";
-import { generateJson } from "../../src/providers/gemini-text.js";
+import { generateJsonMetered } from "../../src/providers/gemini-text.js";
 import type { CreativeDirectorProposal, GapFillIdea } from "../../src/pipeline/creative-direction/index.js";
-vi.mock("../../src/providers/gemini-text.js", () => ({ generateJson: vi.fn(), generateJsonWithImages: vi.fn(), GEMINI_TEXT_MODEL: "test" }));
+vi.mock("../../src/providers/gemini-text.js", () => ({ generateJson: vi.fn(), generateJsonMetered: vi.fn(), generateJsonWithImages: vi.fn(), generateJsonWithImagesMetered: vi.fn(), GEMINI_TEXT_MODEL: "test" }));
+/** The negotiation path is metered, so every stubbed call returns the
+ *  {result, usage, costUsd} envelope a real call does. */
+const metered = (result: unknown, costUsd = 0.01) => ({ result, usage: { promptTokenCount: 0, candidatesTokenCount: 0, thoughtsTokenCount: 0, totalTokenCount: 0 }, costUsd });
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 let db: InstanceType<typeof DatabaseSync>;
 const idea: GapFillIdea = { id: "idea", operation: "new_shot", kind: "continuity", targetShotId: "shot", targetShotVerseRef: "Mark 2:1", label: "Listener", description: "A listener", framing: "close_up", cameraMovement: "static", setting: "Established room", estimatedDurationSec: 4, charactersInvolved: [], decorumRationale: "A restrained reaction" };
@@ -13,22 +16,32 @@ beforeEach(() => { vi.resetAllMocks(); db = new DatabaseSync(":memory:"); db.exe
 afterEach(() => db.close());
 describe("Creative/Production Director negotiation", () => {
   it("rejects an unresolved conflict at the revision cap and retains context throughout", async () => {
-    vi.mocked(generateJson).mockImplementation(async (_prompt, schema) => (schema.properties as Record<string, unknown>).verdicts
+    vi.mocked(generateJsonMetered).mockImplementation(async (_prompt, schema) => metered((schema.properties as Record<string, unknown>).verdicts
       ? { verdicts: [{ ideaId: "idea", verdict: "request_changes", feedback: "Resolve continuity", confidence: 70, limitations: "Needs producer visual review." }] }
-      : { ideas: [idea] });
+      : { ideas: [idea] }) as never);
     const result = await negotiateGapProposal(db, "p", proposal);
     expect(result.approvedIdeas).toEqual([]); expect(result.rejectedIdeas).toEqual([idea]); expect(result.forcedFinalCount).toBe(1);
-    expect(generateJson).toHaveBeenCalledTimes(21);
-    for (const [prompt] of vi.mocked(generateJson).mock.calls) expect(prompt).toContain("EXACT SOURCE AND CANON");
+    expect(generateJsonMetered).toHaveBeenCalledTimes(21);
+    for (const [prompt] of vi.mocked(generateJsonMetered).mock.calls) expect(prompt).toContain("EXACT SOURCE AND CANON");
+  });
+  it("records every negotiation call's real cost against the project", async () => {
+    vi.mocked(generateJsonMetered).mockImplementation(async (_prompt, schema) => metered((schema.properties as Record<string, unknown>).verdicts
+      ? { verdicts: [{ ideaId: "idea", verdict: "approve", feedback: "Useful coverage", confidence: 70, limitations: "Needs producer visual review." }] }
+      : { ideas: [idea] }, 0.02) as never);
+    const result = await negotiateGapProposal(db, "p", proposal);
+    expect(result.modelCostUsd).toBeCloseTo(0.02, 10);
+    const ledger = db.prepare("SELECT COUNT(*) AS n, SUM(amount_usd) AS total FROM cost_ledger_entries WHERE project_id='p'").get() as { n: number; total: number };
+    expect(ledger.n).toBe(1);
+    expect(ledger.total).toBeCloseTo(0.02, 10);
   });
   it("fails closed when the Director omits a verdict", async () => {
-    vi.mocked(generateJson).mockResolvedValue({ verdicts: [] });
+    vi.mocked(generateJsonMetered).mockResolvedValue(metered({ verdicts: [] }) as never);
     await expect(negotiateGapProposal(db, "p", proposal)).rejects.toThrow("incomplete");
     expect(db.prepare("SELECT COUNT(*) AS n FROM director_resolutions").get()!.n).toBe(0);
   });
   it("counts all approved ideas against the same measured gap", async () => {
     const ideas = [idea, { ...idea, id: "other" }];
-    vi.mocked(generateJson).mockResolvedValue({ verdicts: ideas.map(i => ({ ideaId: i.id, verdict: "approve", feedback: "Useful coverage", confidence: 70, limitations: "Needs producer visual review." })) });
+    vi.mocked(generateJsonMetered).mockResolvedValue(metered({ verdicts: ideas.map(i => ({ ideaId: i.id, verdict: "approve", feedback: "Useful coverage", confidence: 70, limitations: "Needs producer visual review." })) }) as never);
     const result = await negotiateGapProposal(db, "p", { ...proposal, ideas });
     expect(result.approvedIdeas).toHaveLength(1); expect(result.rejectedIdeas).toHaveLength(1);
   });
