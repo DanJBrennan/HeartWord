@@ -109,6 +109,7 @@ interface CanonCharacterRow {
 interface CanonAssetRow {
   path: string;
   category: string;
+  importedFrom: string | null;
 }
 
 function readCanonCharacters(rows: Record<string, unknown>[]): CanonCharacterRow[] {
@@ -125,7 +126,7 @@ function readCanonAssets(rows: Record<string, unknown>[]): CanonAssetRow[] {
     if (typeof row.path !== "string" || typeof row.category !== "string") {
       throw new Error("Expected canon asset rows with string path and category.");
     }
-    return { path: row.path, category: row.category };
+    return { path: row.path, category: row.category, importedFrom: typeof row.importedFrom === "string" ? row.importedFrom : null };
   });
 }
 
@@ -137,6 +138,16 @@ export const CANON_CRITIC_MAX_IMAGES = 2;
 
 const CANON_CATEGORY_RANK: Record<string, number> = { body_pose: 0, turnaround: 1, headshot: 2 };
 
+/** A costume-fix promotion (see scripts/character-tool/promote-*.ts) marks
+ *  each asset row it left untouched with an `imported_from` note saying so
+ *  -- it never overwrites what "carried forward" means, so matching that
+ *  phrase is a reliable signal rather than a guess at wording. Every other
+ *  value (a freshly generated candidate, or the original import path for a
+ *  character nothing has ever promoted) counts as fresh. */
+function isCarriedForward(importedFrom: string | null): boolean {
+  return importedFrom !== null && /carried forward/i.test(importedFrom);
+}
+
 /**
  * The reference images this audit will actually look at, in the order it
  * reads them. Exported because the canon review page states WHICH images a
@@ -144,25 +155,31 @@ const CANON_CATEGORY_RANK: Record<string, number> = { body_pose: 0, turnaround: 
  * from the truth -- it already did, labelling all four of a character's
  * body poses as "sampled" when only two were read.
  *
- * Ties break on path so the choice is reproducible. The SQL ordering alone
- * ranks categories but leaves same-category rows to rowid order, which
- * meant "which of Bartholomew's four body poses did the critic see" had no
- * stable answer between runs.
+ * Within a category, an asset a promotion left untouched sorts behind one
+ * it actually regenerated -- found 2026-09-21 re-auditing a costume-fix
+ * batch: "Man with Withered Hand" had its neutral-standing pose corrected,
+ * but path order alone sampled two unrelated, never-touched healing-state
+ * poses instead, so the re-audit judged a fix by images that didn't contain
+ * it and called the (real, verified-by-eye) fix severe. Path is still the
+ * final tie-break within the same freshness, so the choice stays
+ * reproducible when nothing distinguishes two assets otherwise.
  *
  * `exists` drops assets whose file is missing from disk, because a missing
  * body pose silently demotes the verdict to whatever was readable next --
  * the one case where the page must not claim a body pose was seen.
  */
-export function criticSampledAssets<T extends { path: string; category: string }>(
+export function criticSampledAssets<T extends { path: string; category: string; importedFrom?: string | null }>(
   assets: readonly T[],
   exists: (relativePath: string) => boolean
 ): T[] {
   return [...assets]
-    .sort(
-      (a, b) =>
-        (CANON_CATEGORY_RANK[a.category] ?? 9) - (CANON_CATEGORY_RANK[b.category] ?? 9) ||
-        a.path.localeCompare(b.path)
-    )
+    .sort((a, b) => {
+      const categoryDelta = (CANON_CATEGORY_RANK[a.category] ?? 9) - (CANON_CATEGORY_RANK[b.category] ?? 9);
+      if (categoryDelta !== 0) return categoryDelta;
+      const staleDelta = Number(isCarriedForward(a.importedFrom ?? null)) - Number(isCarriedForward(b.importedFrom ?? null));
+      if (staleDelta !== 0) return staleDelta;
+      return a.path.localeCompare(b.path);
+    })
     .filter((asset) => exists(asset.path))
     .slice(0, CANON_CRITIC_MAX_IMAGES);
 }
@@ -186,22 +203,35 @@ export interface CanonGarmentAuditEntry {
  * has one real project to attach these to. Sequential, not parallel, for
  * the same rate-limit reason runProjectReview is sequential.
  */
-export async function auditCanonGarments(projectId: string): Promise<CanonGarmentAuditEntry[]> {
+export async function auditCanonGarments(
+  projectId: string,
+  // Re-checking a just-promoted fix batch needs only those characters, not
+  // a full-canon pass -- narrowing by name (not id) because that's what a
+  // caller re-running a batch actually has on hand: the character list from
+  // a promotion handoff, not their internal ids. Omitted means every
+  // approved character, same as before this parameter existed.
+  characterNames?: readonly string[]
+): Promise<CanonGarmentAuditEntry[]> {
   const db = getDb();
   const dataDir = getDataDir();
 
-  const characters = readCanonCharacters(db
-    .prepare(
-      `SELECT c.id AS character_id, cv.id AS character_version_id, c.name AS character_name
+  const characterQuery = characterNames
+    ? `SELECT c.id AS character_id, cv.id AS character_version_id, c.name AS character_name
+       FROM characters c
+       JOIN character_versions cv ON cv.character_id = c.id AND cv.status = 'approved'
+       WHERE c.canon_status = 'approved' AND c.name IN (${characterNames.map(() => "?").join(",")})
+       ORDER BY c.name`
+    : `SELECT c.id AS character_id, cv.id AS character_version_id, c.name AS character_name
        FROM characters c
        JOIN character_versions cv ON cv.character_id = c.id AND cv.status = 'approved'
        WHERE c.canon_status = 'approved'
-       ORDER BY c.name`
-    )
-    .all());
+       ORDER BY c.name`;
+  const characters = readCanonCharacters(
+    characterNames ? db.prepare(characterQuery).all(...characterNames) : db.prepare(characterQuery).all()
+  );
 
   const assetStmt = db.prepare(
-    `SELECT path, category FROM character_assets WHERE character_version_id = ?
+    `SELECT path, category, imported_from AS importedFrom FROM character_assets WHERE character_version_id = ?
      ORDER BY CASE category WHEN 'body_pose' THEN 0 WHEN 'turnaround' THEN 1 WHEN 'headshot' THEN 2 ELSE 3 END`
   );
 

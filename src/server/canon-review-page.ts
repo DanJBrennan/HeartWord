@@ -42,7 +42,7 @@ export function renderCanonReviewPage(db: DatabaseSync, projectId: string, exist
      WHERE c.canon_status = 'approved' ORDER BY c.name`
   ).all() as unknown as CanonRow[];
 
-  const assetStmt = db.prepare("SELECT category, path FROM character_assets WHERE character_version_id = ? ORDER BY category, path");
+  const assetStmt = db.prepare("SELECT category, path, imported_from AS importedFrom FROM character_assets WHERE character_version_id = ? ORDER BY category, path");
   const reviewStmt = db.prepare(
     "SELECT note FROM review_notes WHERE subject_type='character_version' AND subject_id=? AND source='qc' ORDER BY created_at DESC LIMIT 1"
   );
@@ -56,7 +56,7 @@ export function renderCanonReviewPage(db: DatabaseSync, projectId: string, exist
   );
 
   const data = characters.map(c => {
-    const assets = assetStmt.all(c.versionId) as unknown as Array<{ category: string; path: string }>;
+    const assets = assetStmt.all(c.versionId) as unknown as Array<{ category: string; path: string; importedFrom: string | null }>;
     const review = reviewStmt.get(c.versionId) as { note: string } | undefined;
     const severity = review ? (review.note.match(/severity: (\w+)/)?.[1] ?? "unreviewed") : "unreviewed";
     const sampledAssets = criticSampledAssets(assets, exists);
