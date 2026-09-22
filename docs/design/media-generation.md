@@ -44,6 +44,17 @@ production reference rather than an inferred domestic or synagogue treatment.
 This rule is informed by the first-century door reconstruction described by
 [Nazareth Village](https://nazarethvillage.com/about/research-and-archaeology/the-synagogue/entrance/), which uses a Gamla-style synagogue threshold and door-pivot evidence.
 
+## Shared costume palette rule
+
+Named characters retain their approved canon clothing. Unnamed people draw
+from a controlled first-century palette of plain-weave or subtly striped wool
+and linen: unbleached cream, brown, charcoal, ochre, muted madder, and
+restrained indigo. Generation explicitly rejects high-contrast green-and-white
+vertical stripes, vivid modern patterns, machine-like prints, and any unique
+color or pattern language that has not been approved for a named character.
+This keeps background variety legible without allowing a one-off extra to
+invent an anachronistic visual language.
+
 ## Retained-take library
 
 Every verifiable generated image or video remains at its immutable original
