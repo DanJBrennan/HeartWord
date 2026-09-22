@@ -107,6 +107,7 @@ const COLUMN_MIGRATIONS: Array<{ table: string; column: string; ddl: string }> =
   { table: "production_runs", column: "worker_pid", ddl: "ALTER TABLE production_runs ADD COLUMN worker_pid INTEGER" },
   { table: "creative_direction_proposals", column: "context_json", ddl: "ALTER TABLE creative_direction_proposals ADD COLUMN context_json TEXT" },
   { table: "scenes", column: "lighting_continuity", ddl: "ALTER TABLE scenes ADD COLUMN lighting_continuity TEXT" },
+  { table: "scenes", column: "spatial_continuity", ddl: "ALTER TABLE scenes ADD COLUMN spatial_continuity TEXT" },
   { table: "shots", column: "verse_ref", ddl: "ALTER TABLE shots ADD COLUMN verse_ref TEXT" },
   { table: "shots", column: "framing", ddl: "ALTER TABLE shots ADD COLUMN framing TEXT" },
   { table: "shots", column: "camera_movement", ddl: "ALTER TABLE shots ADD COLUMN camera_movement TEXT" },
@@ -128,6 +129,7 @@ const COLUMN_MIGRATIONS: Array<{ table: string; column: string; ddl: string }> =
   { table: "shots", column: "coverage_notes", ddl: "ALTER TABLE shots ADD COLUMN coverage_notes TEXT" },
   { table: "shots", column: "crowd_density", ddl: "ALTER TABLE shots ADD COLUMN crowd_density TEXT" },
   { table: "shots", column: "continuity_notes", ddl: "ALTER TABLE shots ADD COLUMN continuity_notes TEXT" },
+  { table: "shots", column: "spatial_view", ddl: "ALTER TABLE shots ADD COLUMN spatial_view TEXT" },
   { table: "characters", column: "group_id", ddl: "ALTER TABLE characters ADD COLUMN group_id TEXT REFERENCES character_groups(id)" },
   {
     table: "characters",

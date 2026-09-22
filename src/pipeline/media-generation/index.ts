@@ -25,6 +25,7 @@ interface ShotRow {
   needs_lip_sync: number;
   crowd_density: string | null;
   continuity_notes: string | null;
+  spatial_view: string | null;
   verse_ref: string | null;
 }
 
@@ -32,6 +33,7 @@ interface SceneRow {
   id: string;
   sequence: number;
   lighting_continuity: string | null;
+  spatial_continuity: string | null;
 }
 
 interface ShotCharacterRow {
@@ -133,7 +135,7 @@ const CASTING_AND_SETTING_ANCHOR =
   "to continue. A pose already frozen at the action's end state (already standing, already turned, already " +
   "speaking with the gesture fully extended) gives a video generator nothing to animate and is a failure.";
 
-function buildShotPrompt(scene: SceneRow, shot: ShotRow, characterNames: string[], suggestedFix: SuggestedFix | null = null): string {
+export function buildShotPrompt(scene: SceneRow, shot: ShotRow, characterNames: string[], suggestedFix: SuggestedFix | null = null): string {
   const framing = shot.framing ? (FRAMING_DESCRIPTIONS[shot.framing] ?? shot.framing) : "medium shot";
   const crowdInstruction = shot.crowd_density
     ? (CROWD_DENSITY_INSTRUCTIONS[shot.crowd_density] ?? CROWD_DENSITY_INSTRUCTIONS.moderate)
@@ -162,6 +164,8 @@ function buildShotPrompt(scene: SceneRow, shot: ShotRow, characterNames: string[
   return `${CASTING_AND_SETTING_ANCHOR}${correctionBlock}
 
 Scene setting: ${scene.lighting_continuity ?? "natural daylight, consistent with the rest of the scene"}.
+Shared scene space: ${scene.spatial_continuity ?? "Preserve one consistent location across this scene; do not change its apparent overall scale, architecture, or geography between shots."}
+This shot's view of that space: ${shot.spatial_view ?? "Keep the established spatial identity; a tight framing may omit it but must not contradict it."}
 
 Shot: ${framing}, camera ${shot.camera_movement ?? "static"}.
 Action: ${shot.action}
@@ -240,13 +244,15 @@ const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Pro
   // media-stage integration test predate shot verse binding. Keep those
   // projects runnable (without state-specific references) while current
   // projects provide the verse needed for story-state selection.
-  const hasShotVerseRef = (db.prepare("PRAGMA table_info(shots)").all() as Array<{ name: string }>)
-    .some((column) => column.name === "verse_ref");
+  const shotColumns = db.prepare("PRAGMA table_info(shots)").all() as Array<{ name: string }>;
+  const hasShotVerseRef = shotColumns.some((column) => column.name === "verse_ref");
+  const hasSpatialView = shotColumns.some((column) => column.name === "spatial_view");
   const shotVerseSelect = hasShotVerseRef ? "s.verse_ref" : "NULL AS verse_ref";
+  const spatialViewSelect = hasSpatialView ? "s.spatial_view" : "NULL AS spatial_view";
   const shots = db
     .prepare(
       `SELECT s.id, s.scene_id, s.sequence, s.action, s.framing, s.camera_movement, s.needs_lip_sync,
-              s.crowd_density, s.continuity_notes, ${shotVerseSelect}
+              s.crowd_density, s.continuity_notes, ${spatialViewSelect}, ${shotVerseSelect}
        FROM shots s JOIN scenes sc ON sc.id = s.scene_id
        WHERE sc.project_id = ? ORDER BY sc.sequence, s.sequence`
     )
@@ -256,8 +262,11 @@ const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Pro
     return { ok: false, reasoning: "Media generation failed: no shots found -- run casting (stage 3) first." };
   }
 
+  const sceneColumns = db.prepare("PRAGMA table_info(scenes)").all() as Array<{ name: string }>;
+  const spatialContinuitySelect = sceneColumns.some((column) => column.name === "spatial_continuity")
+    ? "spatial_continuity" : "NULL AS spatial_continuity";
   const scenes = db
-    .prepare(`SELECT id, sequence, lighting_continuity FROM scenes WHERE project_id = ?`)
+    .prepare(`SELECT id, sequence, lighting_continuity, ${spatialContinuitySelect} FROM scenes WHERE project_id = ?`)
     .all(project.id) as unknown as SceneRow[];
   const sceneById = new Map(scenes.map((s) => [s.id, s]));
 
@@ -323,7 +332,7 @@ const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Pro
 
   for (const shot of shots) {
     if (onlyShotIds && !onlyShotIds.includes(shot.id)) continue;
-    const scene = sceneById.get(shot.scene_id) ?? { id: shot.scene_id, sequence: 0, lighting_continuity: null };
+    const scene = sceneById.get(shot.scene_id) ?? { id: shot.scene_id, sequence: 0, lighting_continuity: null, spatial_continuity: null };
 
     const latest = findLatestAttempt.get(shot.id) as { id: string; status: string; result_asset_path: string | null } | undefined;
 
@@ -371,6 +380,15 @@ const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Pro
       storyVerseRef: shot.verse_ref ?? undefined
     }));
 
+    // An earlier accepted view, not a merely-generated candidate, is the
+    // scene's set reference for later angles. This makes continuity work even
+    // before an archaeological reconstruction packet has been approved.
+    const sceneReference = db.prepare(
+      `SELECT ga.result_asset_path FROM shots earlier
+       JOIN generation_attempts ga ON ga.shot_id=earlier.id AND ga.operation='generate' AND ga.status='accepted'
+       WHERE earlier.scene_id=? AND earlier.sequence < ? AND ga.result_asset_path IS NOT NULL
+       ORDER BY earlier.sequence ASC, ga.created_at DESC LIMIT 1`
+    ).get(shot.scene_id, shot.sequence) as { result_asset_path: string } | undefined;
     let prompt: string;
     try {
       const plan = requireCurrentPlan(db, dataDir, projectId);
@@ -381,7 +399,8 @@ const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Pro
     const tier: "standard" | "pro" = shot.needs_lip_sync ? "pro" : "standard";
 
     try {
-      const result = await imageProvider.generate({ shotId: shot.id, prompt, characters: characterRefs }, { tier });
+      const result = await imageProvider.generate({ shotId: shot.id, prompt, characters: characterRefs,
+        sceneReferences: sceneReference ? [{ path: sceneReference.result_asset_path }] : [] }, { tier });
       const now = Date.now();
       const attemptId = randomUUID();
       insertAttempt.run(

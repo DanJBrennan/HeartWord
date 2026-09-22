@@ -29,6 +29,9 @@ export interface ShotRequest {
   shotId: string;
   prompt: string;
   characters: CharacterRef[];
+  /** Approved earlier view of the same location, used only to preserve its
+   * production design and geography -- never as a character-canon source. */
+  sceneReferences?: AssetRef[];
 }
 
 export type GenerationStatus =

@@ -83,6 +83,23 @@ be able to open a chapter's storyboard and see *why* it looks the way it
 does — which role proposed what, and how any disagreement was resolved —
 not just the final shot list.
 
+### Shared scene-space plan
+
+Before the individual shots for a recurring location are finalized, planning
+records one shared spatial-continuity description: the location's relative
+scale, stable architectural anchors, and staging zones. This is a
+producer-reviewable production reconstruction, not an assertion that
+Scripture specifies uncertain architectural details. Each shot records how
+its camera relates to that shared space; a close view may deliberately omit
+the wider room but may not contradict its scale or geography.
+
+After an earlier view of the scene is approved, later keyframe generations
+receive it as a set reference. It preserves room scale and visible anchors,
+but is explicitly not a character reference and must not cause people, poses,
+or framing to be copied. This gives a chapter continuity even before a
+location has an approved archaeological research packet; such a packet may
+refine the shared plan later without changing this control.
+
 ## Open questions
 
 - How this multi-agent role model relates to the Staged Production

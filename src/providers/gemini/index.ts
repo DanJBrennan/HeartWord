@@ -206,6 +206,16 @@ export class GeminiImageProvider implements ImageProvider {
       });
       parts.push(...ref.images.map((img) => ({ inlineData: img })));
     }
+    // A set reference is distinct from character references: it locks room
+    // scale and geography but must never be interpreted as another person.
+    for (const reference of request.sceneReferences ?? []) {
+      const sceneReferencePath = join(getDataDir(), "assets", reference.path);
+      if (!existsSync(sceneReferencePath)) continue;
+      parts.push({
+        text: "Approved earlier view of THIS SAME LOCATION. Preserve its room scale, architecture, stable anchors and spatial orientation where visible. This is a SET reference, not an instruction to copy its people, poses, or framing."
+      });
+      parts.push({ inlineData: { mimeType: "image/png", data: readFileSync(sceneReferencePath).toString("base64") } });
+    }
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const res = await fetch(url, {

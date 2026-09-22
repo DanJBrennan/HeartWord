@@ -64,11 +64,13 @@ interface GeminiShot {
   dialogueCharacterName: string;
   crowdDensity: string;
   continuityNotes: string;
+  spatialView: string;
 }
 
 interface GeminiSceneResponse {
   reasoning: string;
   lightingContinuity: string;
+  spatialContinuity: string;
   shots: GeminiShot[];
 }
 
@@ -84,6 +86,11 @@ const SHOT_RESPONSE_SCHEMA: GeminiJsonSchema = {
       type: "string",
       description:
         "One sentence describing this scene's lighting/setting continuity (time of day, light source, interior vs. exterior) that every shot in the scene should share -- e.g. 'Bright midday sun, interior of a crowded mudbrick house, warm natural light through a roof opening.'"
+    },
+    spatialContinuity: {
+      type: "string",
+      description:
+        "One shared production-design description for the ONE location used by every shot in this scene: relative scale, stable architectural anchors, and staging zones. Where the source is silent, call this a reconstruction choice, not a Scriptural fact. Later shots must never silently become a different or smaller room."
     },
     shots: {
       type: "array",
@@ -136,6 +143,11 @@ const SHOT_RESPONSE_SCHEMA: GeminiJsonSchema = {
             type: "string",
             description:
               "Any object, prop, or physical state that must (or must NOT) be visible in this specific shot to stay consistent with the rest of the scene's own sequence of events -- e.g. a roof that hasn't been opened yet at this point in the story, a wound not yet inflicted, a door not yet opened, an object not yet introduced. Think across ALL the shots in this scene, not just this one: if an earlier shot in your own plan establishes something, later shots must keep it; if a later shot introduces something, earlier shots must NOT already show it. Empty string if nothing in this scene has this kind of ordering constraint."
+          },
+          spatialView: {
+            type: "string",
+            description:
+              "How this camera relates to the shared scene location: camera position/direction and which stable anchors or zone should remain legible. For a close-up/insert, explicitly say that the wider room is intentionally out of frame but its scale must not be contradicted."
           }
         },
         required: [
@@ -147,12 +159,13 @@ const SHOT_RESPONSE_SCHEMA: GeminiJsonSchema = {
           "needsLipSync",
           "dialogueCharacterName",
           "crowdDensity",
-          "continuityNotes"
+          "continuityNotes",
+          "spatialView"
         ]
       }
     }
   },
-  required: ["reasoning", "lightingContinuity", "shots"]
+  required: ["reasoning", "lightingContinuity", "spatialContinuity", "shots"]
 };
 
 /**
@@ -220,6 +233,8 @@ ${narrationBudgetSection(narrationBudget)}
 Break this scene into a sequence of shots (a shot is one unit of blocking/action -- start a new shot when the framing, action, or which characters are the focus changes). For each shot, describe the action in one or two sentences grounded strictly in the text above, list which canon characters are visible (include silent/background characters where the text implies their presence -- e.g. the crowd, or the men carrying the mat -- even if they don't speak), and give it a specific verse reference from the range above.
 
 A character tagged as a group member (not its spokesperson) may appear in a shot and react non-verbally (a gasp, a murmur) but must never be dialogueCharacterName -- only that group's tagged spokesperson can carry a lip-synced line for the group.\n\nAlso decide the camera for each shot: a framing, a camera movement, and whether it needs lip-sync. Lip-sync is only for a shot whose focus is a specific character actually speaking on camera -- not narration, not silent action, not a character speaking off-screen. Because the lip-sync provider needs a clear view of the mouth, any shot with needsLipSync = true must use a framing of 'medium_close', 'close_up', or 'insert', never wider. When needsLipSync is true, name the exact speaking character in dialogueCharacterName; otherwise leave it an empty string.
+
+Before planning the shots, define spatialContinuity: one shared production-design description for this scene's physical location. Name its relative scale, stable anchors, and staging zones. This does not add a narrative event or claim uncertain architecture is Scripture; it stops each shot from reinventing the same room. For every shot set spatialView: camera position/direction plus the anchors or zone that should remain legible. A tight shot may intentionally omit the room, but must never imply a contradictory room size.
 
 For each shot, also set crowdDensity (how full the location should read -- ground this in what the text actually says about population, don't leave it to guesswork) and continuityNotes (anything that must or must not be visible in THIS shot to stay consistent with the other shots you're planning in this same scene -- read your own full shot sequence before answering this: an object introduced in a later shot must not already appear earlier; something established earlier must persist later, unless the text says otherwise).
 
@@ -383,13 +398,13 @@ const buildCasting: Stage = async (projectId) => {
     const insertShot = db.prepare(
       `INSERT INTO shots
          (id, scene_id, sequence, action, verse_ref, framing, camera_movement, needs_lip_sync,
-          dialogue_character_id, coverage_plan, coverage_notes, crowd_density, continuity_notes, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'planned', ?)`
+          dialogue_character_id, coverage_plan, coverage_notes, crowd_density, continuity_notes, spatial_view, status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'planned', ?)`
     );
     const insertShotCharacter = db.prepare(
       `INSERT OR IGNORE INTO shot_characters (shot_id, character_id) VALUES (?, ?)`
     );
-    const updateScene = db.prepare(`UPDATE scenes SET reasoning = ?, lighting_continuity = ? WHERE id = ?`);
+    const updateScene = db.prepare(`UPDATE scenes SET reasoning = ?, lighting_continuity = ?, spatial_continuity = ? WHERE id = ?`);
 
     for (const scene of scenes) {
       const response = responses.get(scene.id)!;
@@ -430,6 +445,7 @@ const buildCasting: Stage = async (projectId) => {
           );
         }
         const continuityNotes = shot.continuityNotes?.trim() || null;
+        const spatialView = shot.spatialView?.trim() || null;
 
         // Resolve the dialogue character (if any) the same way as the visible
         // cast list -- an unresolved name is flagged, not silently dropped.
@@ -500,6 +516,7 @@ const buildCasting: Stage = async (projectId) => {
           coverageNotes,
           crowdDensity,
           continuityNotes,
+          spatialView,
           now
         );
         totalShots++;
@@ -509,7 +526,7 @@ const buildCasting: Stage = async (projectId) => {
         }
       });
 
-      updateScene.run(response.reasoning, response.lightingContinuity || null, scene.id);
+      updateScene.run(response.reasoning, response.lightingContinuity || null, response.spatialContinuity?.trim() || null, scene.id);
     }
 
     const reviewNoteParts: string[] = [];
@@ -548,7 +565,7 @@ const buildCasting: Stage = async (projectId) => {
       crew.summary + " " +
       `Cast and directed ${scenes.length} scene(s) for ${project.book} ${project.chapter}: ${totalShots} shots ` +
       `planned via Gemini, grounded in the English reference text, each with a framing/camera-movement decision ` +
-      `and a lighting/continuity note set per scene.` +
+          `and shared lighting and spatial-continuity plans set per scene.` +
       (unresolvedNames.size > 0
         ? ` ${unresolvedNames.size} character name(s) Gemini returned didn't match the canon list and were dropped ` +
           "-- flagged in review_notes."

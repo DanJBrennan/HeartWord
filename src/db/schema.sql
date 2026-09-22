@@ -206,6 +206,9 @@ CREATE TABLE IF NOT EXISTS scenes (
                                      -- generation prompt, so a scene's shots
                                      -- share one lighting decision instead of
                                      -- each reinventing it and drifting
+  spatial_continuity TEXT,          -- shared production-design identity for
+                                     -- one recurring location: scale, stable
+                                     -- anchors and staging zones
   created_at INTEGER NOT NULL,
   UNIQUE (project_id, sequence)
 );
@@ -250,6 +253,9 @@ CREATE TABLE IF NOT EXISTS shots (
                                      -- roof-opening event, "opening now
                                      -- visible" after. NULL when nothing
                                      -- scene-specific applies.
+  spatial_view TEXT,                 -- camera relation to the scene's shared
+                                     -- spatial identity; tight views can
+                                     -- intentionally omit anchors
   status TEXT NOT NULL DEFAULT 'planned',
   created_at INTEGER NOT NULL,
   UNIQUE (scene_id, sequence)
