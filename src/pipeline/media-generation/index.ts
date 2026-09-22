@@ -5,7 +5,7 @@ import { getDataDir, getDb } from "../../db/client.js";
 import { GeminiImageProvider } from "../../providers/gemini/index.js";
 import { GeminiDraftVideoProvider, GeminiVideoProvider } from "../../providers/gemini/index.js";
 import { KlingVideoProvider } from "../../providers/kling/index.js";
-import type { CharacterRef } from "../../providers/types.js";
+import type { CharacterRef, LockedVisualFacts } from "../../providers/types.js";
 import type { ProjectRow } from "../ingestion/index.js";
 import { loadSuggestedFix, runShotReview, type SuggestedFix } from "../qc/director.js";
 import { matchesBeatScope, tagNote } from "../qc/beat-scope.js";
@@ -40,6 +40,38 @@ interface ShotCharacterRow {
   character_id: string;
   character_version_id: string;
   name: string;
+  locked_visual_facts: string | null;
+}
+
+interface PromptCharacterCanon {
+  name: string;
+  facts: LockedVisualFacts;
+}
+
+function parseLockedVisualFacts(value: string | null, name: string): LockedVisualFacts | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value) as Partial<LockedVisualFacts>;
+    if (typeof parsed.description !== "string" || !Array.isArray(parsed.prohibitedPromptPhrases)) {
+      throw new Error("missing description or prohibited prompt phrases");
+    }
+    return {
+      description: parsed.description,
+      prohibitedPromptPhrases: parsed.prohibitedPromptPhrases.filter((phrase): phrase is string => typeof phrase === "string")
+    };
+  } catch {
+    throw new Error(`Approved visual facts for ${name} are invalid. Hold this shot for producer correction rather than generating from incomplete canon.`);
+  }
+}
+
+/** Returns deliberate conflicts only. The locked-canon block itself is excluded,
+ * so a fact such as "indigo bands, not a blue mantle" can describe the rule
+ * without triggering its own guard. */
+export function findLockedCanonConflicts(instructions: string, canons: PromptCharacterCanon[]): string[] {
+  const normalized = instructions.toLowerCase();
+  return canons.flatMap(({ name, facts }) => facts.prohibitedPromptPhrases
+    .filter((phrase) => normalized.includes(phrase.toLowerCase()))
+    .map((phrase) => `${name}: instruction conflicts with locked canon phrase “${phrase}”`));
 }
 
 const imageProvider = new GeminiImageProvider();
@@ -135,7 +167,13 @@ const CASTING_AND_SETTING_ANCHOR =
   "to continue. A pose already frozen at the action's end state (already standing, already turned, already " +
   "speaking with the gesture fully extended) gives a video generator nothing to animate and is a failure.";
 
-export function buildShotPrompt(scene: SceneRow, shot: ShotRow, characterNames: string[], suggestedFix: SuggestedFix | null = null): string {
+export function buildShotPrompt(
+  scene: SceneRow,
+  shot: ShotRow,
+  characterNames: string[],
+  suggestedFix: SuggestedFix | null = null,
+  characterCanons: PromptCharacterCanon[] = []
+): string {
   const framing = shot.framing ? (FRAMING_DESCRIPTIONS[shot.framing] ?? shot.framing) : "medium shot";
   const crowdInstruction = shot.crowd_density
     ? (CROWD_DENSITY_INSTRUCTIONS[shot.crowd_density] ?? CROWD_DENSITY_INSTRUCTIONS.moderate)
@@ -161,7 +199,11 @@ export function buildShotPrompt(scene: SceneRow, shot: ShotRow, characterNames: 
         : `\n\nPER-FINDING REVIEW CONTEXT: confidence not reported in this legacy review; investigate the recorded evidence without inventing a score.`)
     : "";
 
-  return `${CASTING_AND_SETTING_ANCHOR}${correctionBlock}
+  const lockedCanonBlock = characterCanons.length
+    ? `\n\nLOCKED CHARACTER CANON — mandatory, not a suggestion. Match the attached approved reference image and these facts exactly; do not redesign, recolor, or substitute the costume:\n${characterCanons.map(({ name, facts }) => `- ${name}: ${facts.description}`).join("\n")}`
+    : "";
+
+  return `${CASTING_AND_SETTING_ANCHOR}${lockedCanonBlock}${correctionBlock}
 
 Scene setting: ${scene.lighting_continuity ?? "natural daylight, consistent with the rest of the scene"}.
 Shared scene space: ${scene.spatial_continuity ?? "Preserve one consistent location across this scene; do not change its apparent overall scale, architecture, or geography between shots."}
@@ -270,8 +312,11 @@ const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Pro
     .all(project.id) as unknown as SceneRow[];
   const sceneById = new Map(scenes.map((s) => [s.id, s]));
 
+  const versionColumns = db.prepare("PRAGMA table_info(character_versions)").all() as Array<{ name: string }>;
+  const lockedFactsSelect = versionColumns.some((column) => column.name === "locked_visual_facts")
+    ? "cv.locked_visual_facts" : "NULL AS locked_visual_facts";
   const charStmt = db.prepare(
-    `SELECT c.id AS character_id, cv.id AS character_version_id, c.name
+    `SELECT c.id AS character_id, cv.id AS character_version_id, c.name, ${lockedFactsSelect}
      FROM shot_characters sc
      JOIN characters c ON c.id = sc.character_id
      JOIN character_versions cv ON cv.character_id = c.id AND cv.status = 'approved'
@@ -374,10 +419,15 @@ const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Pro
       continue;
     }
     const shotCharacters = charStmt.all(shot.id) as unknown as ShotCharacterRow[];
+    const characterCanons = shotCharacters.flatMap((character) => {
+      const facts = parseLockedVisualFacts(character.locked_visual_facts, character.name);
+      return facts ? [{ name: character.name, facts }] : [];
+    });
     const characterRefs: CharacterRef[] = shotCharacters.map((c) => ({
       characterId: c.character_id,
       characterVersionId: c.character_version_id,
-      storyVerseRef: shot.verse_ref ?? undefined
+      storyVerseRef: shot.verse_ref ?? undefined,
+      lockedVisualFacts: parseLockedVisualFacts(c.locked_visual_facts, c.name) ?? undefined
     }));
 
     // An earlier accepted view, not a merely-generated candidate, is the
@@ -392,7 +442,29 @@ const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Pro
     let prompt: string;
     try {
       const plan = requireCurrentPlan(db, dataDir, projectId);
-      prompt = buildShotPrompt(scene, shot, shotCharacters.map((c) => c.name), loadSuggestedFix(db, shot.id)) + directionsFromRun(plan, shot.id);
+      const suggestedFix = loadSuggestedFix(db, shot.id);
+      const basePrompt = buildShotPrompt(scene, shot, shotCharacters.map((c) => c.name), suggestedFix, characterCanons);
+      const productionDirections = directionsFromRun(plan, shot.id);
+      const heldPrompt = `${basePrompt}${productionDirections}`;
+      // Check only mutable direction fields. The generated locked-canon block
+      // may itself explain what is prohibited (for example, "not a blue
+      // mantle") and must never trigger its own guard.
+      const conflicts = findLockedCanonConflicts(
+        [shot.action, shot.continuity_notes ?? "", suggestedFix?.fix ?? "", suggestedFix?.preserve ?? "", productionDirections].join("\n"),
+        characterCanons
+      );
+      if (conflicts.length) {
+        const now = Date.now();
+        const attemptId = randomUUID();
+        insertAttempt.run(attemptId, shot.id, "canon_guard", "blocked_before_submission", heldPrompt, "hold_for_review", null, 0, now);
+        insertCostEntry.run(randomUUID(), project.id, attemptId, 0, now);
+        insertReviewNote.run(randomUUID(), project.id, shot.id, tagNote({ attemptId }, `LOCKED CANON CONFLICT — no image was generated. ${conflicts.join("; ")}`), now);
+        updateShotStatus.run("keyframe_held", shot.id);
+        awaitingHuman++;
+        awaitingHumanShots.push(`scene ${scene.sequence} shot ${shot.sequence} (locked canon conflict)`);
+        continue;
+      }
+      prompt = heldPrompt;
     } catch (error) {
       return { ok: false, reasoning: `New media is held: ${(error as Error).message}` };
     }

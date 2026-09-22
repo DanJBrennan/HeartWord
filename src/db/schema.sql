@@ -166,6 +166,7 @@ CREATE TABLE IF NOT EXISTS character_versions (
   status TEXT NOT NULL CHECK (status IN ('candidate','approved','superseded','rejected')),
   voice_provider TEXT,              -- e.g. 'elevenlabs'; NULL for a
   voice_id TEXT,                    -- character with no spoken lines
+  locked_visual_facts TEXT,         -- producer-approved JSON facts that every generated shot must obey
   notes TEXT,
   created_at INTEGER NOT NULL,
   UNIQUE (character_id, version_label)

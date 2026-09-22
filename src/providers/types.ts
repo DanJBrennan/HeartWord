@@ -23,6 +23,16 @@ export type CharacterRef = {
   characterVersionId: string;
   /** Canonical shot verse used to select any story-state-bound references. */
   storyVerseRef?: string;
+  /** Producer-approved visual facts that may not be contradicted by this
+   * generation.  Kept with the reference so direct and queued generation
+   * share the same locked canon. */
+  lockedVisualFacts?: LockedVisualFacts;
+};
+
+export type LockedVisualFacts = {
+  description: string;
+  /** Phrases that must not appear in a generation instruction for this character. */
+  prohibitedPromptPhrases: string[];
 };
 
 export interface ShotRequest {

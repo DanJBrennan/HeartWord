@@ -47,6 +47,22 @@ provider — or a different provider later — reproduce the same character
 consistently. A character record should make it easy to see, at a glance,
 which traits are locked.
 
+## Locked visual facts and generation gate
+
+An approved character version may carry a small, producer-approved set of
+machine-readable visual facts: the stable color-block, garment/drape, and
+any detail that must not drift. Every keyframe or regeneration involving that
+character must attach the approved image package and place those facts in the
+generation instruction. Before a provider request is submitted, HeartWord
+checks production directions and correction text for explicitly prohibited
+conflicts. A conflict holds the shot and records the reason; it must never
+spend a generation request and hope the visual critic catches it afterward.
+
+This is deliberately a narrow guard, not a style generator: it catches known
+hard contradictions such as a blue mantle for a canon whose mantle is cream.
+The producer remains responsible for approving or changing the canon facts;
+approved shots remain historical evidence and are never overwritten.
+
 ## Naming and Identity Safety
 
 Several New Testament names are shared by multiple distinct people. A canon

@@ -130,6 +130,7 @@ const COLUMN_MIGRATIONS: Array<{ table: string; column: string; ddl: string }> =
   { table: "shots", column: "crowd_density", ddl: "ALTER TABLE shots ADD COLUMN crowd_density TEXT" },
   { table: "shots", column: "continuity_notes", ddl: "ALTER TABLE shots ADD COLUMN continuity_notes TEXT" },
   { table: "shots", column: "spatial_view", ddl: "ALTER TABLE shots ADD COLUMN spatial_view TEXT" },
+  { table: "character_versions", column: "locked_visual_facts", ddl: "ALTER TABLE character_versions ADD COLUMN locked_visual_facts TEXT" },
   { table: "characters", column: "group_id", ddl: "ALTER TABLE characters ADD COLUMN group_id TEXT REFERENCES character_groups(id)" },
   {
     table: "characters",
