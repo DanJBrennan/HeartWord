@@ -11,6 +11,17 @@ describe("shared scene-space prompt", () => {
     expect(prompt).toContain("Large synagogue interior");
     expect(prompt).toContain("must not read as smaller");
   });
+
+  it("automatically applies the historical doorway construction rule", () => {
+    const prompt = buildShotPrompt(
+      { id: "scene", sequence: 1, lighting_continuity: null, spatial_continuity: null },
+      { id: "shot", scene_id: "scene", sequence: 1, action: "Scribes leave through the doorway.", framing: null, camera_movement: null, needs_lip_sync: 0, crowd_density: null, continuity_notes: null, spatial_view: null, verse_ref: "Mark 3:6" },
+      []
+    );
+    expect(prompt).toContain("DOORWAYS: whenever a door is visible");
+    expect(prompt).toContain("wooden pivot pegs");
+    expect(prompt).toContain("never modern butt hinges");
+  });
 });
 
 describe("locked character canon", () => {

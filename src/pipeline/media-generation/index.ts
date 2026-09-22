@@ -168,6 +168,11 @@ const CASTING_AND_SETTING_ANCHOR =
   "floors, minarets, or any modern rooftop fixtures (tanks, pipes, wiring). If the location is by the water, it " +
   "is the Sea of Galilee -- an inland freshwater lake surrounded by rolling hills, never an ocean coastline or " +
   "sea cliffs.\n\n" +
+  "DOORWAYS: whenever a door is visible, use a historically grounded plank-leaf door turning on wooden pivot pegs " +
+  "seated in sockets in the stone threshold -- never modern butt hinges, lever handles, decorative hardware, or tidy " +
+  "modern trim. Ordinary homes use one smaller plank leaf; public buildings such as synagogues may use heavier two-leaf " +
+  "doors. In Capernaum, thresholds and jambs are dark basalt; in Jerusalem, they are local limestone. Temple doors are " +
+  "a separate, source-specific production design and must not be guessed from domestic or synagogue doors.\n\n" +
   "PROPS: written records are papyrus/parchment SCROLLS or wooden WAX TABLETS with a stylus -- never a bound " +
   "book/codex (a later invention) and never a Bronze-Age clay tablet.\n\n" +
   "CONTINUITY DEBRIS: if the shot's action or continuity notes describe something recently broken, dug through, " +

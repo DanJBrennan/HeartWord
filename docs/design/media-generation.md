@@ -29,6 +29,21 @@ Rendered visual content per scene, ready to receive lip-synced speech (see
 `docs/design/audio-and-speakers.md`) and be placed on the timeline (see
 `docs/design/timeline.md`).
 
+## Shared doorway construction rule
+
+Whenever a generated shot visibly contains a doorway, the historical setting
+prompt automatically specifies plank leaves on wooden pivot pegs seated in
+stone threshold sockets. It excludes modern butt hinges, lever handles,
+decorative hardware, and tidy modern trim. The rule is deliberately
+construction-level rather than one universal door design: ordinary homes use
+one smaller plank leaf, while public buildings such as synagogues may use
+heavier two-leaf doors. Capernaum uses dark-basalt thresholds and jambs;
+Jerusalem uses local limestone. Temple doors require a separate, source-based
+production reference rather than an inferred domestic or synagogue treatment.
+
+This rule is informed by the first-century door reconstruction described by
+[Nazareth Village](https://nazarethvillage.com/about/research-and-archaeology/the-synagogue/entrance/), which uses a Gamla-style synagogue threshold and door-pivot evidence.
+
 ## Retained-take library
 
 Every verifiable generated image or video remains at its immutable original
