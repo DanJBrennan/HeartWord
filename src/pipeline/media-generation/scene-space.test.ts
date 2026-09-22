@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildShotPrompt, findLockedCanonConflicts } from "./index.js";
+import { buildShotPrompt, expandTzitzitDefinition, findLockedCanonConflicts } from "./index.js";
 
 describe("shared scene-space prompt", () => {
   it("keeps a later angle tied to the same planned room", () => {
@@ -36,5 +36,24 @@ describe("locked character canon", () => {
     expect(findLockedCanonConflicts("Jesus wears a muted blue mantle.", jesusCanon)).toEqual([
       "Jesus: instruction conflicts with locked canon phrase “blue mantle”"
     ]);
+  });
+});
+
+describe("tzitzit prompt expansion", () => {
+  it("turns a compact historical term into an unambiguous visual instruction", () => {
+    const prompt = expandTzitzitDefinition("The principal scribe wears tzitzit.");
+    expect(prompt).toContain("TZITZIT COSTUME RULE");
+    expect(prompt).toContain("short, hand-twisted wool cords");
+    expect(prompt).toContain("never a continuous border, long white hanging fringe");
+  });
+
+  it("treats tassel wording as an alias for tzitzit rather than decorative trim", () => {
+    const prompt = expandTzitzitDefinition("The scribe's tassels must be corrected.");
+    expect(prompt).toContain("TZITZIT COSTUME RULE");
+    expect(prompt).toContain("never a continuous border, long white hanging fringe");
+  });
+
+  it("does not add costume rules when tzitzit are not requested", () => {
+    expect(expandTzitzitDefinition("A plain undyed mantle.")).not.toContain("TZITZIT COSTUME RULE");
   });
 });

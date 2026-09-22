@@ -99,6 +99,19 @@ const CROWD_DENSITY_INSTRUCTIONS: Record<string, string> = {
     "modestly-sized or neatly-arranged gathering is a failure here, not a reasonable interpretation."
 };
 
+const TZITZIT_VISUAL_DEFINITION =
+  "TZITZIT COSTUME RULE: render tzitzit as small, separate clusters of short, hand-twisted wool cords tied into compact knots at the visible garment corners. " +
+  "They are corner fringes only: never a continuous border, long white hanging fringe, pom-poms, curtain trim, or drapery tassels.";
+
+/** Any use of the historical term carries its visual definition automatically.
+ * This keeps a compact canon note from being misread by an image provider as
+ * generic decorative tassels. */
+export function expandTzitzitDefinition(prompt: string): string {
+  return /\b(tzitzit|tassel|tassels)\b/i.test(prompt) && !prompt.includes("TZITZIT COSTUME RULE")
+    ? `${prompt}\n\n${TZITZIT_VISUAL_DEFINITION}`
+    : prompt;
+}
+
 /**
  * Casting/setting anchor, corrected 2026-09-06 after Dan caught the
  * original version -- "first-century Hatam/Papuan (Melanesian Arfak
@@ -203,7 +216,7 @@ export function buildShotPrompt(
     ? `\n\nLOCKED CHARACTER CANON — mandatory, not a suggestion. Match the attached approved reference image and these facts exactly; do not redesign, recolor, or substitute the costume:\n${characterCanons.map(({ name, facts }) => `- ${name}: ${facts.description}`).join("\n")}`
     : "";
 
-  return `${CASTING_AND_SETTING_ANCHOR}${lockedCanonBlock}${correctionBlock}
+  return expandTzitzitDefinition(`${CASTING_AND_SETTING_ANCHOR}${lockedCanonBlock}${correctionBlock}
 
 Scene setting: ${scene.lighting_continuity ?? "natural daylight, consistent with the rest of the scene"}.
 Shared scene space: ${scene.spatial_continuity ?? "Preserve one consistent location across this scene; do not change its apparent overall scale, architecture, or geography between shots."}
@@ -225,7 +238,7 @@ ${
       `above -- never let an extra's outfit or face accidentally match a named character's locked design.\n`
     : ""
 }
-No text, no labels, no logos anywhere in the image.`;
+No text, no labels, no logos anywhere in the image.`);
 }
 
 /**
@@ -445,7 +458,7 @@ const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Pro
       const suggestedFix = loadSuggestedFix(db, shot.id);
       const basePrompt = buildShotPrompt(scene, shot, shotCharacters.map((c) => c.name), suggestedFix, characterCanons);
       const productionDirections = directionsFromRun(plan, shot.id);
-      const heldPrompt = `${basePrompt}${productionDirections}`;
+      const heldPrompt = expandTzitzitDefinition(`${basePrompt}${productionDirections}`);
       // Check only mutable direction fields. The generated locked-canon block
       // may itself explain what is prohibited (for example, "not a blue
       // mantle") and must never trigger its own guard.

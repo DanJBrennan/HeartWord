@@ -63,6 +63,17 @@ hard contradictions such as a blue mantle for a canon whose mantle is cream.
 The producer remains responsible for approving or changing the canon facts;
 approved shots remain historical evidence and are never overwritten.
 
+### Tzitzit expansion
+
+`tzitzit` is a compact historical term but an ambiguous image instruction on
+its own. Whenever `tzitzit`, `tassel`, or `tassels` appears in a character
+canon, shot direction, or review correction, media generation automatically
+expands it to: short, separate, hand-twisted wool cords tied into compact
+knots at visible garment corners. The prompt also forbids continuous trim,
+long white fringe, pom-poms, and drapery-style tassels. This applies the same
+approved costume definition without relying on a producer or planner to
+remember it every time.
+
 ## Naming and Identity Safety
 
 Several New Testament names are shared by multiple distinct people. A canon
