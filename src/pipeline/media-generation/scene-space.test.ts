@@ -33,6 +33,17 @@ describe("shared scene-space prompt", () => {
     expect(prompt).toContain("high-contrast green-and-white vertical stripes");
     expect(prompt).toContain("approved canon");
   });
+
+  it("defaults every generated frame to readable ambient light", () => {
+    const prompt = buildShotPrompt(
+      { id: "scene", sequence: 1, lighting_continuity: "dusty interior daylight", spatial_continuity: null },
+      { id: "shot", scene_id: "scene", sequence: 1, action: "A crowd listens.", framing: null, camera_movement: null, needs_lip_sync: 0, crowd_density: "packed", continuity_notes: null, spatial_view: null, verse_ref: "Mark 3:20" },
+      []
+    );
+    expect(prompt).toContain("LIGHTING READABILITY");
+    expect(prompt).toContain("generous motivated ambient light");
+    expect(prompt).toContain("stated story purpose specifically calls for it");
+  });
 });
 
 describe("locked character canon", () => {

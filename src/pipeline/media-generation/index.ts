@@ -178,6 +178,10 @@ const CASTING_AND_SETTING_ANCHOR =
   "ochre, muted madder, and restrained indigo. Do NOT invent high-contrast green-and-white vertical stripes, vivid modern " +
   "patterns, machine-like prints, or a unique color/pattern language unless that exact treatment belongs to a named character's " +
   "approved canon.\n\n" +
+  "LIGHTING READABILITY: default to a clearly readable exposure with generous motivated ambient light, so faces, action, " +
+  "and important setting details remain visible at normal viewing size. Preserve natural direction, time of day, and atmosphere, " +
+  "but do not let dust, shadow, smoke, or a dramatic key light bury the scene in murk. A genuinely dark or low-key frame is allowed " +
+  "only when the shot's stated story purpose specifically calls for it; it must still preserve readable faces and action.\n\n" +
   "PROPS: written records are papyrus/parchment SCROLLS or wooden WAX TABLETS with a stylus -- never a bound " +
   "book/codex (a later invention) and never a Bronze-Age clay tablet.\n\n" +
   "CONTINUITY DEBRIS: if the shot's action or continuity notes describe something recently broken, dug through, " +

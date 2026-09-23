@@ -55,6 +55,17 @@ color or pattern language that has not been approved for a named character.
 This keeps background variety legible without allowing a one-off extra to
 invent an anachronistic visual language.
 
+## Shared lighting readability rule
+
+HeartWord defaults generated scenes to clearly readable exposure with generous
+motivated ambient light. Natural direction, time of day, and atmosphere remain
+important, but dust, smoke, shadow, or a dramatic key light must not make faces,
+action, or important setting details hard to read at normal viewing size. A
+genuinely dark or low-key treatment is reserved for a stated story purpose and
+must still preserve readable faces and action. This is a visual-legibility
+default, not a license to alter a scene's source-grounded action, setting, or
+time of day.
+
 ## Retained-take library
 
 Every verifiable generated image or video remains at its immutable original
