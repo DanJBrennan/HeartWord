@@ -93,6 +93,32 @@ export function requireCurrentPlan(db: DatabaseSync, dataDir: string, projectId:
   if (crewBriefHash(loadCrewBrief(db, dataDir, projectId, "planning"), "planning") !== run.brief_hash) throw new Error("The production plan is stale; review the changed source, canon or shot plan first.");
   return run;
 }
+
+/**
+ * Producer override for requireCurrentPlan's staleness check (Dan's
+ * explicit request, 2026-09-22): when Dan directly edits a shot's or
+ * scene's creative fields through the producer-edit routes in
+ * projects.ts, his edit IS the human review -- it should not also require
+ * the crew to re-review its own prior recommendation before media
+ * generation can run against it. Re-stamps the current APPROVED planning
+ * run's brief_hash/brief_json to the live DB state (via loadCrewBrief) so
+ * requireCurrentPlan treats it as current, without spending on a new crew
+ * pass. Deliberately narrow: only re-stamps a run that is already
+ * 'approved' (never fabricates approval for a plan that was never
+ * reviewed at all -- that still requires a real crew pass), and never
+ * touches result_json, so the crew's own recorded contributions and
+ * per-shot Production Director direction (see directionsFromRun) stay
+ * exactly what the crew actually said. A no-op (returns false) when there
+ * is no approved plan yet.
+ */
+export function reapproveCurrentPlanAfterProducerEdit(db: DatabaseSync, dataDir: string, projectId: string): boolean {
+  const run = latestCrewRun(db, projectId, "planning");
+  if (!run || run.status !== "approved") return false;
+  const brief = loadCrewBrief(db, dataDir, projectId, "planning");
+  const hash = crewBriefHash(brief, "planning");
+  db.prepare(`UPDATE production_runs SET brief_hash = ?, brief_json = ? WHERE id = ?`).run(hash, JSON.stringify(brief), run.id);
+  return true;
+}
 /** Legacy briefs remain usable until a crew plan is introduced for the chapter. */
 export function validateHandoffPlan(db: DatabaseSync, dataDir: string, projectId: string, preparedRunId?: string): void {
   const latest = latestCrewRun(db, projectId, "planning");

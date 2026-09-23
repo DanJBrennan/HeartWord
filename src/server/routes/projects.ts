@@ -25,6 +25,7 @@ import { recordSegmentSplit } from "../../pipeline/ingestion/segment-splits.js";
 import { recordSegmentMerge } from "../../pipeline/ingestion/segment-merges.js";
 import { computeNarrationCoverage } from "../../pipeline/casting/narration-coverage.js";
 import { renderCanonReviewPage } from "../canon-review-page.js";
+import { reapproveCurrentPlanAfterProducerEdit } from "../../pipeline/creative-direction/crew-store.js";
 
 export const projectsRouter = Router();
 
@@ -306,8 +307,18 @@ projectsRouter.post("/:id/media-generation", async (req, res) => {
     return;
   }
 
+  const rawShotIds = (req.body as { shotIds?: unknown } | undefined)?.shotIds;
+  let onlyShotIds: string[] | undefined;
+  if (rawShotIds !== undefined) {
+    if (!Array.isArray(rawShotIds) || rawShotIds.some((id) => typeof id !== "string")) {
+      res.status(400).json({ error: "shotIds, if provided, must be an array of shot id strings." });
+      return;
+    }
+    onlyShotIds = rawShotIds as string[];
+  }
+
   try {
-    const result = await runMediaGeneration(req.params.id);
+    const result = await runMediaGeneration(req.params.id, onlyShotIds);
     res.json(result);
   } catch (err) {
     res.status(502).json({ error: (err as Error).message });
@@ -420,15 +431,109 @@ projectsRouter.post("/:id/shots/:shotId/reuse-candidates", (req,res) => {
   catch (error) { res.status(409).json({error:(error as Error).message}); }
 });
 
+// Producer-directed edit to a shot's own creative fields (action,
+// continuity notes, crowd density, spatial view) -- the lighter alternative
+// to re-running the whole storyboard crew pass just to fold in a narrow
+// correction like a blocking or framing detail. Requires a note explaining
+// the change, kept in review_notes for the same durable audit trail QC's
+// own findings already use (AGENTS.md: log judgment calls on content).
+// If the shot's latest generation attempt is currently held for human
+// review (hold_for_review/escalate), this also clears that hold: Dan's
+// edit IS the human review acting on it, so the attempt is marked
+// 'retry_modified' -- an existing generation_attempts status -- so the next
+// media-generation run regenerates instead of staying stuck awaiting a
+// human who has, in fact, just acted. Does not touch other shots in the
+// scene: a scene-wide edit (e.g. lighting) needs the scene route below and,
+// if visual continuity across already-approved shots in that scene matters,
+// a producer decision about whether to also reopen those for regeneration.
+projectsRouter.patch("/:id/shots/:shotId", (req, res) => {
+  const db = getDb();
+  const shot = db.prepare(`SELECT s.id FROM shots s JOIN scenes sc ON sc.id=s.scene_id WHERE s.id=? AND sc.project_id=?`).get(req.params.shotId, req.params.id);
+  if (!shot) { res.status(404).json({ error: "Shot not found in this project." }); return; }
+
+  const { action, continuityNotes, crowdDensity, spatialView, note } = req.body ?? {};
+  if (typeof note !== "string" || !note.trim()) { res.status(400).json({ error: "A note explaining the producer's change is required." }); return; }
+
+  const fields: string[] = [];
+  const values: (string | null)[] = [];
+  if (action !== undefined) {
+    if (typeof action !== "string" || !action.trim()) { res.status(400).json({ error: "action must be a non-empty string." }); return; }
+    fields.push("action = ?"); values.push(action.trim());
+  }
+  if (continuityNotes !== undefined) {
+    if (continuityNotes !== null && typeof continuityNotes !== "string") { res.status(400).json({ error: "continuityNotes must be a string or null." }); return; }
+    fields.push("continuity_notes = ?"); values.push(continuityNotes);
+  }
+  if (crowdDensity !== undefined) {
+    if (crowdDensity !== null && typeof crowdDensity !== "string") { res.status(400).json({ error: "crowdDensity must be a string or null." }); return; }
+    fields.push("crowd_density = ?"); values.push(crowdDensity);
+  }
+  if (spatialView !== undefined) {
+    if (spatialView !== null && typeof spatialView !== "string") { res.status(400).json({ error: "spatialView must be a string or null." }); return; }
+    fields.push("spatial_view = ?"); values.push(spatialView);
+  }
+  if (fields.length === 0) { res.status(400).json({ error: "No editable fields provided." }); return; }
+
+  db.prepare(`UPDATE shots SET ${fields.join(", ")} WHERE id = ?`).run(...values, req.params.shotId);
+
+  db.prepare(
+    `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
+     VALUES (?, ?, 'shot', ?, 'human', ?, 1, ?)`
+  ).run(randomUUID(), req.params.id, req.params.shotId, `Producer edit: ${note.trim()}`, Date.now());
+
+  const latest = db.prepare(
+    `SELECT id, status FROM generation_attempts WHERE shot_id = ? AND operation = 'generate' ORDER BY created_at DESC LIMIT 1`
+  ).get(req.params.shotId) as { id: string; status: string } | undefined;
+  if (latest && (latest.status === "hold_for_review" || latest.status === "escalate")) {
+    db.prepare(`UPDATE generation_attempts SET status = 'retry_modified' WHERE id = ?`).run(latest.id);
+  }
+
+  reapproveCurrentPlanAfterProducerEdit(db, getDataDir(), req.params.id);
+
+  res.json({ ok: true, shot: db.prepare(`SELECT * FROM shots WHERE id = ?`).get(req.params.shotId) });
+});
+
+// Producer-directed edit to a scene's lighting, threaded into every shot's
+// generation prompt in that scene (scenes.lighting_continuity, see
+// schema.sql). Scene-wide by design -- affects every shot's prompt in this
+// scene, not just one -- so use the shot-level route above for a
+// single-shot correction. Same audit-trail requirement as above; logged
+// against the project since review_notes has no 'scene' subject_type.
+projectsRouter.patch("/:id/scenes/:sceneId", (req, res) => {
+  const db = getDb();
+  const scene = db.prepare(`SELECT id FROM scenes WHERE id = ? AND project_id = ?`).get(req.params.sceneId, req.params.id);
+  if (!scene) { res.status(404).json({ error: "Scene not found in this project." }); return; }
+
+  const { lightingContinuity, note } = req.body ?? {};
+  if (typeof note !== "string" || !note.trim()) { res.status(400).json({ error: "A note explaining the producer's change is required." }); return; }
+  if (typeof lightingContinuity !== "string" || !lightingContinuity.trim()) { res.status(400).json({ error: "lightingContinuity is required." }); return; }
+
+  db.prepare(`UPDATE scenes SET lighting_continuity = ? WHERE id = ?`).run(lightingContinuity.trim(), req.params.sceneId);
+
+  db.prepare(
+    `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
+     VALUES (?, ?, 'project', ?, 'human', ?, 1, ?)`
+  ).run(randomUUID(), req.params.id, req.params.id, `Producer edit to scene ${req.params.sceneId} lighting: ${note.trim()}`, Date.now());
+
+  reapproveCurrentPlanAfterProducerEdit(db, getDataDir(), req.params.id);
+
+  res.json({ ok: true, scene: db.prepare(`SELECT * FROM scenes WHERE id = ?`).get(req.params.sceneId) });
+});
+
 // Records Dan's own review decision on a shot's current keyframe --
 // "approved" (a resolved human review_notes row) or "flagged" (an
 // unresolved one carrying his comment, the same table QC's own automated
 // checks like canonical-likeness.ts already write to, just source='human'
-// instead of 'qc'). Not wired to any pipeline action itself (approving
-// doesn't do anything special yet, flagging doesn't auto-regenerate) --
-// this just gives Dan a durable, visible record of what he's looked at
-// and what he wants changed, which the review_notes table already exists
-// to hold.
+// instead of 'qc'). An "approved" decision now also does what its own
+// prior comment here said it didn't: if this shot's latest 'generate'
+// attempt is sitting in hold_for_review/escalate (e.g. a stricter
+// automated check like canonical-likeness disagreed with the narrative
+// Critic, or just disagreed with Dan), his approval overrides it --
+// marked 'accepted' so the reuse-if-exists check in media-generation/
+// index.ts treats this keyframe as done, and any outstanding unresolved
+// 'qc' review_notes for this shot are resolved since a human has now
+// looked and disagreed with them. A "flagged" decision still does not
+// auto-regenerate; use the shots/:shotId producer-edit route above for that.
 projectsRouter.post("/:id/shots/:shotId/review", (req, res) => {
   const db = getDb();
   const shot = db.prepare(`SELECT id FROM shots WHERE id = ?`).get(req.params.shotId);
@@ -454,6 +559,18 @@ projectsRouter.post("/:id/shots/:shotId/review", (req, res) => {
     `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
      VALUES (?, ?, 'shot', ?, 'human', ?, ?, ?)`
   ).run(randomUUID(), req.params.id, req.params.shotId, note, resolved, Date.now());
+
+  if (decision === "approved") {
+    const latest = db.prepare(
+      `SELECT id, status FROM generation_attempts WHERE shot_id = ? AND operation = 'generate' ORDER BY created_at DESC LIMIT 1`
+    ).get(req.params.shotId) as { id: string; status: string } | undefined;
+    if (latest && latest.status !== "accepted") {
+      db.prepare(`UPDATE generation_attempts SET status = 'accepted' WHERE id = ?`).run(latest.id);
+    }
+    db.prepare(
+      `UPDATE review_notes SET resolved = 1 WHERE subject_type = 'shot' AND subject_id = ? AND source = 'qc' AND resolved = 0`
+    ).run(req.params.shotId);
+  }
 
   res.status(201).json({ ok: true });
 });
