@@ -296,7 +296,7 @@ No text, no labels, no logos anywhere in the image.`);
  * media-generation.md, was considered and rejected by Dan (2026-09-06) --
  * both docs corrected to remove it.
  */
-const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Promise<StageResult> => {
+export const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Promise<StageResult> => {
   const db = getDb();
   const project = db.prepare(`SELECT id, language, book, chapter FROM projects WHERE id = ?`).get(projectId) as
     | ProjectRow

@@ -41,6 +41,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, extname, join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
+import { sortAssetsByFreshness } from "../../characters/asset-freshness.js";
 import { sceneReferenceAssetsForVerse } from "../story-state-assets.js";
 import type {
   AssetRef,
@@ -83,6 +84,7 @@ const NANO_BANANA_PRO_COST_USD = 0.24;
 interface ReferenceAssetRow {
   category: string;
   path: string;
+  importedFrom?: string | null;
   story_state?: string | null;
   available_from_verse?: string | null;
   available_through_verse?: string | null;
@@ -93,6 +95,12 @@ interface CharacterReferenceImages {
   characterName: string;
   images: Array<{ mimeType: string; data: string }>;
 }
+
+const CHARACTER_REFERENCE_CATEGORY_RANK: Record<string, number> = {
+  headshot: 0,
+  body_pose: 1,
+  turnaround: 2
+};
 
 /**
  * Loads up to TWO reference images per character (a headshot/turnaround
@@ -116,7 +124,8 @@ function loadCharacterReferenceImages(characters: ShotRequest["characters"]): Ch
   const db = getDb();
   const dataDir = getDataDir();
   const findAssets = db.prepare(
-    `SELECT category, path, story_state, available_from_verse, available_through_verse, asset_role FROM character_assets
+    `SELECT category, path, story_state, available_from_verse, available_through_verse, asset_role,
+       imported_from AS importedFrom FROM character_assets
      WHERE character_version_id = ?
      ORDER BY CASE category WHEN 'headshot' THEN 0 WHEN 'body_pose' THEN 1 WHEN 'turnaround' THEN 2 ELSE 3 END,
        CASE asset_role WHEN 'base_pose' THEN 0 WHEN 'story_state_pose' THEN 1 ELSE 2 END, path`
@@ -128,6 +137,10 @@ function loadCharacterReferenceImages(characters: ShotRequest["characters"]): Ch
   const result: CharacterReferenceImages[] = [];
   for (const character of characters) {
     let rows = sceneReferenceAssetsForVerse(findAssets.all(character.characterVersionId) as unknown as ReferenceAssetRow[], character.storyVerseRef);
+    // Promotions mark untouched sibling poses as carried forward. Prefer the
+    // newly regenerated pose within a category, rather than letting a stale
+    // filename happen to win the old alphabetical SQL ordering.
+    rows = sortAssetsByFreshness(rows, CHARACTER_REFERENCE_CATEGORY_RANK);
     const nameRow = findName.get(character.characterVersionId) as { name: string } | undefined;
     const characterName = nameRow?.name ?? "this character";
 

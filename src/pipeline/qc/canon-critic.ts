@@ -22,7 +22,7 @@ import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { getDataDir, getDb } from "../../db/client.js";
 import { generateGroundedText } from "../../providers/gemini-text.js";
-import { sortAssetsByFreshness } from "../characters/asset-freshness.js";
+import { sortAssetsByFreshness } from "../../characters/asset-freshness.js";
 import { parseCriticSeverity, type CriticReport } from "./critic.js";
 
 /**

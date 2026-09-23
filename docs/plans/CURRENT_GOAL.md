@@ -3801,3 +3801,241 @@ finding text until that's done.
 Goal Guardian check: unchanged from the batches-1–2 entry above — canon
 identity/costume references only, no shots, media-generation attempts,
 voices, or narrative content created.
+
+## Canon pose-consistency repair — candidates in review (2026-09-21)
+
+The approved costume fixes had sometimes been stored only in turnaround
+sheets, while production needs a clean single `body_pose`; other older poses
+were deliberately carried forward. The shared asset selector now prefers a
+newly regenerated asset over a carried-forward sibling in both keyframe and
+Gemini-provider paths, without allowing a multi-panel turnaround into shot
+generation. Typecheck and the full suite pass (416 tests).
+
+Candidates awaiting Dan's review are in
+`HeartWordData/assets/characters/candidates/canon-consistency-repair-2026-09-21/`:
+
+- clean production standing poses for Principal scribe, Crowd witness (young
+  man), Scribe (younger, lean), Crowd witness (man, headwrap), and Scribe
+  (older, stout), derived from their approved turnaround designs;
+- pre-healing and healed arm-stretched poses for Man with Withered Hand,
+  matching his corrected standing costume and intended for Mark 3:1–6 state
+  continuity.
+
+Nothing in this repair candidate set has been promoted. On approval, each
+character receives a new immutable version; Man with Withered Hand will also
+receive verse-bounded pre-healing/healed metadata. The remaining named
+disciples' seated, teaching, and walking poses follow only after this batch is
+reviewed.
+
+The grounded garment critic was run on all seven unpromoted candidates; its
+persisted full findings are alongside them as `garment-critic-review.json`.
+Principal scribe and Scribe (younger, lean) were assessed `none` (with the
+black-fabric producer override supplied). Crowd witness (young man), Crowd
+witness (man, headwrap), Scribe (older, stout), and both Man with Withered
+Hand state poses were assessed `severe`; none are eligible for promotion
+without producer direction or a corrective pass.
+
+## Man with Withered Hand — full state-pose propagation in review (2026-09-21)
+
+At Dan's direction, six additional **unpromoted** production-pose candidates
+now provide both narrative states for the neutral-standing, seated-listening,
+and walking bodies. They are stored beside the earlier repair candidates:
+
+- `man-with-withered-hand-neutral-standing-pre-healing-r1.png`
+- `man-with-withered-hand-neutral-standing-healed-r1.png`
+- `man-with-withered-hand-seated-listening-pre-healing-r1.png`
+- `man-with-withered-hand-seated-listening-healed-r1.png`
+- `man-with-withered-hand-walking-pre-healing-r1.png`
+- `man-with-withered-hand-walking-healed-r1.png`
+
+The pre-healing variants explicitly show his contracted left hand (viewer’s
+right); the healed variants show that hand restored. These remain candidate
+art only: the current canon, prior approvals, and source assets have not been
+changed.
+
+## Man with Withered Hand — full state package promoted (2026-09-21)
+
+Dan approved the complete package. **Man with Withered Hand v3** is now the
+sole approved version; v1 and v2 are superseded, retained history. It has
+eight immutable body-pose references: pre-healing and healed variants of
+neutral standing, seated listening, walking, and the hand-stretched pose.
+Pre-healing assets are eligible only through Mark 3:4; healed assets start at
+Mark 3:5. The two existing hand close-ups are preserved solely as comparison
+proofs and cannot enter ordinary generation references.
+
+During promotion verification, the story-state selector was corrected to
+accept approved `base_pose` and `story_state_pose` assets while continuing to
+exclude `comparison_proof` assets. Direct data validation confirms that every
+body reference selected for Mark 3:4 is pre-healing, every one selected for
+Mark 3:5 is healed, and every stored file matches its recorded SHA-256 hash.
+
+Goal Guardian check: this finishes the producer-approved character-canon
+correction and state-continuity package only. It changes neither media
+generation nor the Mark 3 narrative or casting plan.
+
+## Canon standing-pose consistency repair — five approvals promoted (2026-09-21)
+
+Dan approved the reviewed production-standing candidates for **Principal
+scribe**, **Crowd witness (young man)**, **Scribe (younger, lean)**, **Crowd
+witness (man, headwrap)**, and **Scribe (older, stout)**. Each is now v4;
+v3 is superseded, not deleted. Each new version replaces its only stale
+single-pose neutral-standing image with the approved clean standing image and
+carries its turnaround sheet forward strictly as a design reference.
+
+## Jesus v4 neutral-background repair — candidates in review (2026-09-21)
+
+Jesus’s v4 neutral-standing image already has the reusable neutral studio
+backdrop. The v4 seated-listening, teaching, and walking images had rendered
+courtyard environments, so three identity-preserving, background-only
+candidates now replace those with a flat warm-neutral studio backdrop. They
+remain unpromoted at
+`HeartWordData/assets/characters/candidates/canon-background-repair-2026-09-21/`;
+the outdoor-background v4 images remain canonical until Dan reviews these
+candidates.
+
+The grounded garment critic reviewed the three neutral-background candidates
+(`garment-critic-review.json` in that candidate directory): teaching was
+assessed `none`; seated and walking were assessed `severe`, citing the
+already-visible tassel construction, applied-looking trim, patterned fabric,
+and sandals. The review concerns costume continuity, not the requested
+neutral backgrounds; no candidate was promoted or changed as a consequence.
+
+Two corrective passes then produced r3 seated and walking candidates. They
+separate the outer mantle from the inner tunic, put visible fringe on the
+mantle, replace the continuous blue border with a corner-only mark, and use
+the neutral studio background. The critic's r3 review remains `severe` for
+both, primarily on increasingly fine-grained tunic cut, fringe, and sandal
+construction; its complete persisted record is `garment-critic-review-r3.json`.
+Neither revised image is promoted pending Dan's review.
+
+## Jesus v3 reference package restored as v5 (2026-09-21)
+
+Dan directed that Jesus return to the v3 reference package because v4 did not
+maintain the established tassel treatment and introduced courtyard
+backgrounds. The complete v3 package is now approved again as immutable
+**Jesus v5**: its close-up, neutral-standing, seated-listening, teaching, and
+walking references are all reused exactly with new SHA-256 records. Jesus v4
+is superseded history, not overwritten; the v4-background repair candidates
+remain unpromoted.
+
+## Shared scene-space continuity (2026-09-22)
+
+Dan identified a real Mark 3 Scene 1 failure: the first two approved views
+read as one synagogue, while the older third shot made the room look much
+smaller and narrower. Existing per-shot `continuity_notes` could preserve an
+object or state transition, but could not make a room's scale or geography
+persist across angles.
+
+Stage 3 now records a shared `spatial_continuity` plan for each scene
+(relative scale, stable anchors, and staging zones) and a `spatial_view` for
+every shot (its camera relation to that plan). They are production-design
+choices when Scripture and archaeology are silent, not invented Scripture.
+Stage 4 includes both in the generation prompt and supplies an earlier
+**approved** view of the same scene as a distinct set reference for a later
+shot. It is never used as a character reference or a reason to copy people or
+framing.
+
+This protects visual continuity even before a producer-approved
+archaeological reference packet exists. Such a packet can later sharpen the
+Capernaum synagogue reconstruction without replacing the generic control.
+
+Goal Guardian check: this keeps a chapter's approved Scripture-grounded action
+and casting intact while making its already-planned setting reviewable and
+consistent. It neither invents narrative events nor authorizes media
+generation or regeneration on its own.
+
+## Mark 3 Scene 3 Shot 2 — producer-supplied replacement approved (2026-09-22)
+
+Dan approved a replacement keyframe for Mark 3, Scene 3, Shot 2 (Mark
+3:14–15). The submitted 1376×768 PNG is retained unchanged as the source
+attachment; its accepted production copy is a minimal centered crop to
+1365×768 so the keyframe meets HeartWord's required 16:9 aspect ratio. The
+new immutable attempt is recorded as `producer_supplied`, status `accepted`,
+with provenance and Dan's approval note. The preceding held candidate is
+retained as `retry_modified`; no provider call or automated QC was run.
+
+Goal Guardian check: this is a producer-approved replacement for one planned,
+source-grounded shot. It does not change Scripture, casting, shot planning, or
+any other asset.
+
+## Mark 3 Scene 3 Shots 1 and 3 — revised candidates awaiting review (2026-09-22)
+
+At Dan's direction, two new 1672×941 Codex-image candidates were generated
+and imported non-destructively for the mountain-commissioning scene:
+
+- **Shot 1:** retains the elevated mountain-call composition while correcting
+  visible Papuan/Hatam casting and increasing the ascending group toward the
+  planned roughly thirty followers.
+- **Shot 3:** retains Jesus's designation staging while giving John distinct
+  teal shoulder accents rather than Jesus's indigo clavi, and separating the
+  foreground/background figures into visibly distinct faces and garments.
+
+Both candidates are held for Dan's review; their previous held candidates are
+retained as `retry_modified`. No automated QC or approval was inferred.
+
+Goal Guardian check: these are bounded corrective candidates for two existing,
+source-grounded shots. They change no Scripture, casting plan, or other shot.
+
+## Mark 3 Scene 3 Shots 1 and 3 — canon-reference correction candidates (2026-09-22)
+
+Dan correctly found that the first replacements still used generic likenesses
+for principal disciples. A second replacement candidate for each shot is now
+grounded directly in the approved **Jesus v5**, **Peter v4**, **John son of
+Zebedee v4**, and **James son of Zebedee v3** reference packages.
+
+- **Shot 1:** Jesus, Peter, John, and James are each visibly distinct within
+  the mountain ascent, using their respective approved face, hair, and garment
+  signatures rather than generic crowd substitutes.
+- **Shot 3:** the four named men are all reference-locked: James retains his
+  short coiled hair and madder-marked mantle; John retains his head covering
+  and teal clavi; Peter retains his grey beard and rust mantle; Jesus retains
+  his established face, hair, and indigo-banded outer mantle.
+
+Both 1672×941 images remain `hold_for_review`; their first regeneration
+candidates were retained as `retry_modified`. No automated QC or approval was
+inferred.
+
+Goal Guardian check: these targeted candidates restore approved identity and
+costume continuity for four existing named characters without changing the
+source action, casting plan, or surrounding production.
+
+## Mark 3 Scene 3 Shots 1 and 3 — canon-reference candidates approved (2026-09-22)
+
+Dan approved both reference-locked correction candidates. Shot 1 and Shot 3
+are now `keyframe_approved`, and their latest immutable Codex attempts are
+`accepted`. Earlier candidates remain retained as revision history. No video
+generation, automated QC, Scripture change, or casting-plan change occurred.
+
+Goal Guardian check: this records the producer's approval of two existing
+source-grounded keyframes after their named-character identity continuity was
+corrected.
+
+## Mark 3 Scene 3 Shot 4 — nine-apostle reference-locked keyframe approved (2026-09-22)
+
+Dan approved a non-destructive replacement keyframe for Mark 3:18–19. The
+candidate was built in three sequential identity-preserving passes, locking
+three approved Papuan canon references at a time: Andrew/Philip/Bartholomew,
+Matthew/Thomas/James son of Alphaeus, then Simon the Zealot/Thaddaeus/Judas
+Iscariot. The result keeps all nine apostles face-readable on the established
+Galilean mountain slope, with their distinct canon faces, hair, garments, and
+Matthew's tablet; Judas has no exterior money pouch. The previous held
+Nano Banana candidate is retained as `retry_modified`.
+
+Goal Guardian check: this corrects an existing, source-grounded group shot
+without altering the casting plan, Scripture, or scene action. The producer
+approved the final keyframe; no video was generated.
+
+## Mark 3 Scene 4 Shot 1 — arrival keyframe approved (2026-09-22)
+
+Dan approved a replacement for Mark 3:20. It changes the staging from a
+formal interior teaching circle to the specified arrival moment: Jesus,
+Peter, John son of Zebedee, and James son of Zebedee enter the established
+Galilean basalt house while an overflowing Papuan/Hatam crowd presses through
+the open doorway. The bread table remains blocked and unreachable, visibly
+supporting the verse's statement that there was no room even to eat. The four
+principals are directly grounded in their approved canon references; the
+earlier held candidate is retained as `retry_modified`.
+
+Goal Guardian check: this is a producer-approved correction to the existing
+source-grounded shot action and visual canon. It adds no Scripture, alters no
+casting plan, and generates no video.

@@ -22,7 +22,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { latestCrewRun, requireCurrentPlan, directionsFromRun, validateHandoffPlan } from "../creative-direction/crew-store.js";
 import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
 import { assetPath, readLandscapePng, referenceBoardFilter, sha256 } from "./external-keyframes.js";
-import { sortAssetsByFreshness } from "../characters/asset-freshness.js";
+import { sortAssetsByFreshness } from "../../characters/asset-freshness.js";
 
 const REFERENCE_CATEGORY_RANK: Record<string, number> = { headshot: 0, body_pose: 1, turnaround: 2 };
 

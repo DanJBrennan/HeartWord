@@ -5,7 +5,7 @@ import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
 import { latestCrewRun, requireCurrentPlan, directionsFromRun, validateHandoffPlan } from "../creative-direction/crew-store.js";
-import { sortAssetsByFreshness } from "../characters/asset-freshness.js";
+import { sortAssetsByFreshness } from "../../characters/asset-freshness.js";
 
 const REFERENCE_CATEGORY_RANK: Record<string, number> = { headshot: 0, body_pose: 1, turnaround: 2 };
 
