@@ -23,6 +23,29 @@ interface VoiceAssignmentRow {
   voiceId: string;
 }
 
+interface ReviewedMasterRow {
+  originalSegmentId: string;
+  sourcePathRel: string | null;
+  startMs: number | null;
+  endMs: number | null;
+  sourceHash: string | null;
+  voiceVersionId: string | null;
+}
+
+export function reviewedCastMasterIsReusable(input: {
+  force: boolean; originalDurationMs: number; castStartMs: number | null;
+  castEndMs: number | null; measuredCastDurationMs: number | null;
+  mappedSourceHash: string | null; currentSourceHash: string | null;
+  mappedVoiceVersionId: string | null; currentVoiceVersionId: string | null;
+}): boolean {
+  return !input.force && input.castStartMs===0 && input.castEndMs!==null &&
+    input.measuredCastDurationMs!==null && input.currentSourceHash!==null &&
+    Math.abs(input.castEndMs-input.originalDurationMs)<=100 &&
+    Math.abs(input.measuredCastDurationMs-input.castEndMs)<=100 &&
+    input.mappedSourceHash===input.currentSourceHash &&
+    input.mappedVoiceVersionId===input.currentVoiceVersionId;
+}
+
 function slugify(verseRef: string | null, index: number): string {
   const base = verseRef ?? `segment-${index}`;
   return base.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -100,6 +123,40 @@ export async function runVoicing(projectId: string, opts: { force?: boolean } = 
   const voiceByCharacter = new Map(voiceRows.map((v) => [v.characterId, v]));
 
   const dataDir = getDataDir();
+  // A producer-confirmed boundary revision may have an already-reviewed,
+  // shortened cast master. Reusing the old provider filename below would
+  // resurrect its pre-revision tail on the next stage run. Preserve the
+  // current mapped asset instead, or hold before any paid re-voicing.
+  const reviewedMasters = db.prepare(`SELECT DISTINCT o.id AS originalSegmentId,
+      a.source_path AS sourcePathRel, a.start_ms AS startMs, a.end_ms AS endMs,
+      m.source_hash AS sourceHash, m.voice_version_id AS voiceVersionId
+    FROM source_alignment_boundary_overrides bo
+    JOIN audio_segments o ON o.id=bo.audio_segment_id AND o.project_id=? AND o.layer='original_reading'
+    JOIN shot_utterance_bindings ub ON ub.source_audio_segment_id=o.id
+    LEFT JOIN composite_audio_source_map m ON m.original_segment_id=o.id
+    LEFT JOIN audio_segments a ON a.id=m.composite_segment_id AND a.project_id=o.project_id AND a.layer='composite_cast_master'`)
+    .all(project.id) as unknown as ReviewedMasterRow[];
+  const reviewedByOriginal = new Map(reviewedMasters.map(row => [row.originalSegmentId, row]));
+  for (const seg of segments) {
+    const protectedMaster = reviewedByOriginal.get(seg.id);
+    if (!protectedMaster) continue;
+    const assignment = seg.speaker_character_id ? voiceByCharacter.get(seg.speaker_character_id) : undefined;
+    const originalPath = join(dataDir, "assets", seg.source_path);
+    const currentHash = existsSync(originalPath)
+      ? createHash("sha256").update(readFileSync(originalPath)).digest("hex") : null;
+    const masterPath = protectedMaster.sourcePathRel
+      ? join(dataDir, "assets", protectedMaster.sourcePathRel) : null;
+    if (!reviewedCastMasterIsReusable({
+      force: opts.force===true, originalDurationMs: seg.end_ms-seg.start_ms,
+      castStartMs: protectedMaster.startMs, castEndMs: protectedMaster.endMs,
+      measuredCastDurationMs: masterPath && existsSync(masterPath) ? getAudioDurationMs(masterPath) : null,
+      mappedSourceHash: protectedMaster.sourceHash, currentSourceHash: currentHash,
+      mappedVoiceVersionId: protectedMaster.voiceVersionId,
+      currentVoiceVersionId: assignment?.versionId ?? null
+    })) {
+      return { ok:false, reasoning:`Producer-reviewed source boundary for ${seg.id} needs an explicit cast-master reconciliation before voicing can replace it.`, generated:0, reused:0, passthrough:0, skippedNoVoice:0 };
+    }
+  }
   const chapterDir = `${project.book}-${project.chapter}`;
   const outDirRel = join("generated", project.language, chapterDir, "composite_cast_master");
   const outDir = join(dataDir, "assets", outDirRel);
@@ -125,6 +182,18 @@ export async function runVoicing(projectId: string, opts: { force?: boolean } = 
     const absSourcePath = join(dataDir, "assets", seg.source_path);
     const slug = `${String(i + 1).padStart(2, "0")}-${slugify(seg.verse_ref, i)}`;
     const assignment = seg.speaker_character_id ? voiceByCharacter.get(seg.speaker_character_id) : undefined;
+
+    const protectedMaster = reviewedByOriginal.get(seg.id);
+    if (protectedMaster?.sourcePathRel && protectedMaster.endMs !== null && protectedMaster.sourceHash) {
+      newRows.push({
+        id: randomUUID(), sourcePathRel: protectedMaster.sourcePathRel,
+        durationMs: protectedMaster.endMs, speakerCharacterId: seg.speaker_character_id,
+        verseRef: seg.verse_ref, originalSegmentId: seg.id,
+        sourceHash: protectedMaster.sourceHash, voiceVersionId: protectedMaster.voiceVersionId
+      });
+      reused++;
+      continue;
+    }
 
     const outFileName = assignment ? `${slug}-${assignment.voiceProvider}.mp3` : `${slug}-passthrough.mp3`;
     const outPath = join(outDir, outFileName);

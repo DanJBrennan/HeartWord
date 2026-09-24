@@ -12,7 +12,7 @@ import { buildMark2Segments, type SegmentDescriptor } from "./mark-2-segments.js
 import { discoverSourcePaths, resolveAndBindSourcePaths } from "./source-catalog.js";
 import { alignWithGemini, alignmentKey } from "./gemini-alignment.js";
 import { correctionReplacementMap } from "./correction-remap.js";
-import { auditBoundaryIntegrity } from "./boundary-integrity.js";
+import { auditBoundaryIntegrity, safeQuietGapSnap } from "./boundary-integrity.js";
 
 export interface ProjectRow {
   id: string;
@@ -155,37 +155,56 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
     db.prepare("INSERT OR REPLACE INTO alignment_evidence(project_id,source_hash,model,result_json,status,created_at) VALUES (?,?,?,?,?,?)").run(projectId,sourceHash,"none",JSON.stringify({method:"estimated_timing"}),"estimated_timing",Date.now());
   }
 
-  let timings: ReturnType<typeof selectBoundaries>;
-  try {
-    timings = selectBoundaries(gaps, verseGroups.length, totalDurationMs);
-  } catch (err) {
-    return {
-      ok: false,
-      reasoning:
-        `Ingestion failed: could not place ${verseGroups.length - 1} boundaries for ` +
-        `${verseGroups.length} verse groups. ${(err as Error).message}`
-    };
+  const evidenceSegments = geminiEvidence?.segments ?? [];
+  let timings: ReturnType<typeof selectBoundaries> = [];
+  if (evidenceSegments.length === 0) {
+    try {
+      timings = selectBoundaries(gaps, verseGroups.length, totalDurationMs);
+    } catch (err) {
+      return {
+        ok: false,
+        reasoning:
+          `Ingestion failed: could not place ${verseGroups.length - 1} boundaries for ` +
+          `${verseGroups.length} verse groups. ${(err as Error).message}`
+      };
+    }
   }
 
-  const evidenceSegments = geminiEvidence?.segments ?? [];
   const persisted = evidenceSegments.length > 0 ? evidenceSegments.map(segment => ({
     startMs: segment.startMs, endMs: segment.endMs, verseRef: segment.verseRef ? `${project.book} ${project.chapter}:${segment.verseRef.replace(/^v/, "")}` : null,
     confidence: segment.status === "matched" ? Math.round(segment.score * 100) : null
   })) : verseGroups.map((group, i) => ({ startMs: timings[i]!.startMs, endMs: timings[i]!.endMs, verseRef: group.verseRef, confidence: timings[i]!.confidence }));
   // Text-match confidence does not validate a segment's millisecond edge.
-  // Audit the original audio before persisting or allowing any downstream
-  // generation; only the two intervals touching a suspect edge are held.
+  // Crossing activity alone is not a fault: a speaker may continue through a
+  // visual cut. Only a substantial measured pause permits an automatic timing
+  // correction. Exact old-to-new remapping below protects any retained human
+  // correction or attribution if a newly proposed snap differs from it.
   const maxSegmentMs = geminiEvidence?.config?.maxSegmentMs ?? 14_000;
   let boundaryFindings: ReturnType<typeof auditBoundaryIntegrity> = [];
+  const snappedBoundaries = new Map<number, number>();
   try {
-    if (persisted.length > 1) boundaryFindings = auditBoundaryIntegrity(decodeToPcm16Mono(audioPath, 8000), 8000, persisted, maxSegmentMs);
+    if (persisted.length > 1) {
+      const pcm = decodeToPcm16Mono(audioPath, 8000);
+      boundaryFindings = auditBoundaryIntegrity(pcm, 8000, persisted, maxSegmentMs);
+      for (const finding of boundaryFindings) {
+        const left = persisted[finding.leftIndex]!, right = persisted[finding.rightIndex]!;
+        const snapped = safeQuietGapSnap(finding, left, right);
+        if (snapped === null) continue;
+        left.endMs = snapped; right.startMs = snapped;
+        if (auditBoundaryIntegrity(pcm, 8000, [left, right], maxSegmentMs).length) {
+          left.endMs = finding.boundaryMs; right.startMs = finding.boundaryMs;
+        } else {
+          snappedBoundaries.set(finding.boundaryMs, snapped);
+          // The model's exact text match remains evidence, but a timing
+          // adjustment made from waveform shape alone is not 100-point
+          // linguistic assurance. It proceeds with a visible caveat.
+          if (left.confidence !== null) left.confidence = Math.min(left.confidence, 89);
+          if (right.confidence !== null) right.confidence = Math.min(right.confidence, 89);
+        }
+      }
+    }
   } catch (err) {
     return { ok: false, reasoning: `Ingestion failed auditing source-audio boundaries: ${(err as Error).message}` };
-  }
-  const boundaryHeld = new Set(boundaryFindings.flatMap(finding => [finding.leftIndex, finding.rightIndex]));
-  for (const index of boundaryHeld) {
-    const segment = persisted[index]!;
-    if (segment.confidence !== null) segment.confidence = Math.min(segment.confidence, 75);
   }
   const now = Date.now();
   const segmentIds: string[] = [];
@@ -200,7 +219,7 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
     );
 
     const oldSegments=db.prepare("SELECT id,start_ms,end_ms FROM audio_segments WHERE project_id=? AND layer='original_reading'").all(projectId) as Array<{id:string;start_ms:number;end_ms:number}>;
-    db.prepare("DELETE FROM review_notes WHERE project_id=? AND source='qc' AND subject_type='audio_segment' AND note LIKE 'Ingestion boundary integrity hold:%'").run(projectId);
+    db.prepare("DELETE FROM review_notes WHERE project_id=? AND source='qc' AND subject_type='audio_segment' AND note LIKE 'Ingestion boundary integrity %'").run(projectId);
     let corrections:Array<{id:string;audio_segment_id:string}>=[];
     try { corrections=db.prepare("SELECT id,audio_segment_id FROM source_alignment_corrections WHERE project_id=?").all(projectId) as typeof corrections; } catch { /* pre-migration test DB */ }
     let editorialClassifications:Array<{id:string;audio_segment_id:string}>=[];
@@ -238,20 +257,21 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
     for(const old of oldSegments) deleteOld.run(old.id);
     db.prepare(`DELETE FROM review_notes WHERE project_id = ? AND subject_type = 'project' AND source = 'qc'`).run(projectId);
 
-    const insertBoundaryHold = db.prepare(`INSERT INTO review_notes
+    const insertBoundaryObservation = db.prepare(`INSERT INTO review_notes
       (id,project_id,subject_type,subject_id,source,note,resolved,created_at)
-      VALUES (?,?,'audio_segment',?,'qc',?,0,?)`);
+      VALUES (?,?,'audio_segment',?,'qc',?,1,?)`);
     for (const finding of boundaryFindings) {
       const leftId = segmentIds[finding.leftIndex]!, rightId = segmentIds[finding.rightIndex]!;
+      const snapped = snappedBoundaries.get(finding.boundaryMs);
       const pause = finding.quietGap
-        ? ` A quiet gap at ${finding.quietGap.startMs}-${finding.quietGap.endMs} ms suggests ${finding.quietGap.midpointMs} ms as a listening point, not an automatic correction.`
+        ? ` Quiet gap ${finding.quietGap.startMs}-${finding.quietGap.endMs} ms, midpoint ${finding.quietGap.midpointMs} ms.`
         : " No qualifying nearby quiet gap was found.";
-      insertBoundaryHold.run(randomUUID(), projectId, leftId,
-        `Ingestion boundary integrity hold: source activity crosses ${finding.boundaryMs} ms between segments ${leftId} and ${rightId}. ` +
+      insertBoundaryObservation.run(randomUUID(), projectId, leftId,
+        `Ingestion boundary integrity ${snapped === undefined ? "advisory" : "auto-snap"}: source activity crosses proposed ${finding.boundaryMs} ms between segments ${leftId} and ${rightId}. ` +
         `Local floor ${finding.noiseFloorDb} dBFS, activity threshold ${finding.activityThresholdDb} dBFS, ` +
         `left/right activity ${finding.leftActivityDb}/${finding.rightActivityDb} dBFS. ` +
         `${finding.atMaxSegmentLength ? `The left interval is at the ${maxSegmentMs} ms technical maximum. ` : ""}` +
-        `${pause} Review both sides with source text and speaker context; no words, speaker, or boundary were decided automatically.`, now);
+        `${pause}${snapped === undefined ? " No timing change; crossing activity alone is not a hold." : ` Unreviewed alignment was shifted to ${snapped} ms within that pause without dropping source audio; affected numeric confidence is capped at 89.`} No words or speaker were inferred.`, now);
     }
 
     const criticalEvidence = geminiEvidence && (geminiEvidence.coverage < .95 || geminiEvidence.segments.some(segment => segment.status === "unresolved"));
@@ -281,11 +301,10 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
 
   const criticalEvidence = geminiEvidence && (geminiEvidence.coverage < .95 || geminiEvidence.segments.some(segment => segment.status === "unresolved"));
   return {
-    ok: !criticalEvidence && boundaryFindings.length === 0,
+    ok: !criticalEvidence,
     reasoning:
-      boundaryFindings.length ? `Ingestion retained ${persisted.length} source intervals but held ${boundaryFindings.length} boundary${boundaryFindings.length === 1 ? "" : "ies"} where source activity crosses both sides of a proposed cut. Review the affected adjacent intervals before planning; no timing or speaker correction was made.${criticalEvidence ? " Gemini text evidence also needs review." : ""}` :
       criticalEvidence ? `Ingestion retained ${geminiEvidence!.segments.length} source intervals but is held: Gemini evidence covers ${(geminiEvidence!.coverage * 100).toFixed(1)}% of verified text, with uncovered verses ${geminiEvidence!.uncoveredVerses.join(",") || "none"}. Listen to the flagged intervals and reconcile before planning.` :
-      `${geminiEvidence ? `Gemini evidence retained ${geminiEvidence.segments.length} intervals with ${(geminiEvidence.coverage * 100).toFixed(1)}% text coverage.` : `Aligned ${verseGroups.length} verse-group intervals with silence-based estimated timing because no Gemini provider is configured.`} ${lowConfidenceCount} intervals require named source review before downstream work.`
+      `${geminiEvidence ? `Gemini evidence retained ${geminiEvidence.segments.length} intervals with ${(geminiEvidence.coverage * 100).toFixed(1)}% text coverage.` : `Aligned ${verseGroups.length} verse-group intervals with silence-based estimated timing because no Gemini provider is configured.`} ${snappedBoundaries.size} clear-pause boundary corrections; ${boundaryFindings.length - snappedBoundaries.size} acoustic advisories (neither infers a speaker). ${lowConfidenceCount} intervals require named source review before downstream work.`
   };
 }
 

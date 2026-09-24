@@ -28,20 +28,32 @@ before committing to dedicated hardware (e.g. an RTX 5090 tower).
 
 ## Source-boundary integrity
 
-An exact match between the recorded words and translated text does not prove
-that an audio interval ends between utterances. During general chapter
-ingestion, inspect the original audio immediately around each adjacent
-alignment edge. Sustained activity on both sides is a QC hold on the two
-affected intervals, even if text-match confidence is high. Record the local
-audio levels, any nearby quiet gap, and whether a technical maximum-length
-split may have forced the edge. A quiet-gap midpoint is a listening cue, not
-an automatic replacement timestamp.
+An exact match between recorded words and translated text does not prove that
+an audio interval ends between utterances. Inspect the original audio around
+adjacent alignment edges, but activity on both sides is **not by itself a
+hold**: a speaker can continue over a visual cut. Retain the local levels and
+technical-length evidence as an advisory. For an unreviewed alignment, a
+substantial quiet gap shortly before an activity-crossing edge permits a
+timing-only correction to the gap midpoint, provided both adjacent intervals
+remain contiguous and complete. Record the original edge and chosen point.
+Cap the affected timing confidence at 89: the acoustic choice may proceed
+conservatively, but it is not 100-point linguistic assurance.
+Repeat the same decision on a re-ingest; existing exact-match remapping must
+preserve a retained source correction/attribution or fail safely. Never silently
+rewrite a producer-reviewed binding. An explicitly confirmed producer revision
+may supersede the active binding only when the previous intervals, binding,
+cast-master mapping, and approval are retained in typed edit history; both
+adjacent source intervals remain contiguous; the corrected alignment receives
+a new named attestation; and downstream cast audio and coverage timing are
+reconciled. A later voicing run must reuse that reviewed cast audio or hold,
+not resurrect the pre-revision tail.
 
-The detector cannot identify words or speakers from acoustic level alone.
-The language specialist reviews both sides against source text and speaker
-context, then uses the named source-alignment correction process. Preserve
-existing producer-reviewed bindings on a re-ingest; do not silently move a
-boundary or alter the chapter's approved media.
+Neither acoustic activity nor a quiet gap identifies words or speakers. Do
+not promote text-match confidence into linguistic assurance, and do not move
+an ambiguous edge without evidence. The audio-output check at assembly is
+separate: it protects the audible end of a speaking turn, not every picture
+cut. A genuinely unresolved content/speaker decision remains eligible for
+qualified language review; routine acoustic crossing does not summon Dan.
 
 ## Open questions
 

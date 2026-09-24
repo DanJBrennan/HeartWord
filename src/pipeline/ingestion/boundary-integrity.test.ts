@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { auditBoundaryIntegrity } from "./boundary-integrity.js";
+import { auditBoundaryIntegrity, safeQuietGapSnap } from "./boundary-integrity.js";
 
 const RATE = 8000;
 
@@ -20,7 +20,7 @@ function recording(durationMs: number, active: Array<[number, number]>, clickMs?
 describe("source boundary integrity", () => {
   const pcm = recording(3000, [[0, 775], [1515, 2800]]);
 
-  it("holds a cut inside renewed activity and points to the preceding quiet gap", () => {
+  it("finds a cut inside renewed activity and points to the preceding quiet gap", () => {
     const findings = auditBoundaryIntegrity(pcm, RATE,
       [{ startMs: 0, endMs: 1733 }, { startMs: 1733, endMs: 3000 }], 1733);
     expect(findings).toHaveLength(1);
@@ -29,6 +29,8 @@ describe("source boundary integrity", () => {
     expect(findings[0]!.quietGap?.midpointMs).toBeLessThan(1250);
     expect(findings[0]!.leftActivityDb).toBeGreaterThan(findings[0]!.activityThresholdDb);
     expect(findings[0]!.rightActivityDb).toBeGreaterThan(findings[0]!.activityThresholdDb);
+    expect(safeQuietGapSnap(findings[0]!, { startMs: 0, endMs: 1733 }, { startMs: 1733, endMs: 3000 }))
+      .toBe(findings[0]!.quietGap!.midpointMs);
   });
 
   it("does not hold a cut placed inside the quiet gap", () => {
@@ -45,5 +47,14 @@ describe("source boundary integrity", () => {
   it("ignores noncontiguous intervals with a real gap between them", () => {
     expect(auditBoundaryIntegrity(pcm, RATE,
       [{ startMs: 0, endMs: 775 }, { startMs: 1515, endMs: 3000 }])).toEqual([]);
+  });
+
+  it("leaves a crossing without a substantial nearby gap advisory", () => {
+    const continuous = recording(3000, [[0, 3000]]);
+    const finding = auditBoundaryIntegrity(continuous, RATE,
+      [{ startMs: 0, endMs: 1500 }, { startMs: 1500, endMs: 3000 }]);
+    // Sustained level is not necessarily speech and may have no useful pause.
+    expect(finding).toHaveLength(1);
+    expect(safeQuietGapSnap(finding[0]!, { startMs: 0, endMs: 1500 }, { startMs: 1500, endMs: 3000 })).toBeNull();
   });
 });

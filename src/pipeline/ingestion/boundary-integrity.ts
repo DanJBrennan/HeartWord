@@ -21,6 +21,18 @@ export interface BoundaryIntegrityFinding {
   atMaxSegmentLength: boolean;
 }
 
+/** A timing-only correction is safe only when a substantial, measured pause
+ * separates the activity from the proposed edge. This says nothing about the
+ * words or speaker; callers must keep the original evidence and never apply
+ * it to a producer-reviewed source version. */
+export function safeQuietGapSnap(finding: BoundaryIntegrityFinding, left: SourceInterval, right: SourceInterval): number | null {
+  const gap = finding.quietGap;
+  if (!gap || gap.endMs - gap.startMs < 500 || gap.endMs > finding.boundaryMs - 80) return null;
+  if (left.endMs !== finding.boundaryMs || right.startMs !== finding.boundaryMs) return null;
+  if (gap.midpointMs <= left.startMs + 200 || gap.midpointMs >= right.endMs - 200) return null;
+  return gap.midpointMs;
+}
+
 const FRAME_MS = 20;
 const EDGE_MS = 180;
 const CONTEXT_BEFORE_MS = 1200;
