@@ -29,6 +29,154 @@ starts from verified chapter inputs and exposes planner reasoning for review.
 Typecheck and the four targeted intro tests pass. The full suite is 460/461,
 with only the previously known unrelated fresh-chapter stage mismatch.
 
+## Mark 3 Hatam opening title card (2026-09-24)
+
+Dan requested the same opening title treatment used on Mark 2. The current
+producer review is now
+`HeartWordData/assets/generated/video/review/mark3-full-chapter-source-review-r6-title-card.mp4`.
+It begins with a 2.5-second card reading `MARKUS 3` and `HATAM`, rendered by
+the established font-based chapter-card builder over a darkened still from
+the Capernaum aerial. The card has that shot's audible ambient sound and no
+narration. The approved aerial, aerial-to-synagogue bridge, and synagogue
+arrival remain at their original eight-second lengths, shifted to output
+2.5–26.5 seconds; source-clock Mark 3 picture and speech start together at
+26.5 seconds. The prior r5 review remains retained. The r6 manifest records
+the card, source hash, input cut, and new chapter entrance;
+`scripts/prepend-mark3-title-card.ts` rebuilds the edit.
+
+QC: the card matches the Mark 2 title layout and yields 10,965 video frames,
+with one 456.900-second 48 kHz stereo audio stream. The full video decodes
+without errors, and typecheck passes. The full suite is 456/457, with the
+previously known unrelated fresh-chapter stage expectation mismatch. The only >0.5-second low-level interval
+near chapter entry is the same 0.584-second pause present in r5's source-clock
+audio, shifted by the card duration. The title card adds no theological or
+narrative content. Goal Guardian check: this is exactly the series title-card
+treatment requested by Dan and specified in `docs/design/chapter-title-card.md`;
+the three approved shots and Mark 3 source recording are not altered.
+
+## Mark 3 approved three-shot location intro and reusable b-roll (2026-09-24)
+
+Dan approved the eight-second aerial-to-synagogue bridge as the second opening
+shot and asked for it to be saved as reusable b-roll. A byte-identical copy of
+the endpoint-locked review candidate is cataloged as a standalone Hatam/Papuan
+`reusable_reference` at
+`HeartWordData/assets/generated/media-library/capernaum-aerial-to-synagogue-zoom-broll-v1.mp4`.
+Its library provenance records Dan's approval, the generated source take, and
+the exact aerial/synagogue endpoint frames and hashes; it is not tied to a
+future chapter or automatically selected for any other timeline.
+
+The current Mark 3 producer review is
+`HeartWordData/assets/generated/video/review/mark3-full-chapter-source-review-r5-three-shot-intro.mp4`.
+Its three independently traceable opening shots are the original Mark 2
+Capernaum aerial at output 0–8 seconds, the approved zoom bridge at 8–16,
+and the sound-bearing synagogue arrival at 16–24. Each supplies its own
+ambient sound. The approved chapter picture and source soundtrack start
+together at output 0:24, with no source-clock content removed or retimed.
+The JSON manifest records each trim, path, hash, and output position;
+`scripts/prepend-mark3-location-intro.ts` rebuilds the cut. Earlier review
+versions remain retained.
+
+QC: 10,905 video frames (576 intro plus 10,329 prior chapter frames) and
+454.379 seconds of single-stream 48 kHz stereo audio. Sound measurements
+cover all three intro shots, the 0:24 entrance, after the former audio dropout,
+and near the ending; no intro silence longer than 0.5 seconds was detected at
+-42 dB. Both intro seams and the chapter entrance were checked visually, and
+the full file decodes. Typecheck passes; the full-suite result remains the
+previously recorded 456/457 fresh-chapter stage expectation mismatch.
+
+Goal Guardian check: this executes only Dan's approved opening edit and
+reusable-b-roll request. It preserves the Scripture recording, cast and
+chapter sync, adds no dialogue, and keeps all three opening shots separately
+traceable and editable. Reuse beyond this chapter still requires the normal
+target-shot review.
+
+## Mark 3 aerial-to-synagogue bridge generation and review (2026-09-24)
+
+Dan requested an eight-second zoom/descending camera move that uses the final
+displayed frame of the Mark 2 Capernaum aerial as its first frame and the
+first frame of the current sound-bearing synagogue exterior shot as its last.
+The exact source frames are retained under `assets/generated/keyframes/`.
+Veo 3.1 Lite produced two eight-second candidates with native nonverbal
+ambience. V1 reached the exterior but invented a large intervening stone arch
+and an abrupt blurred rush; retain it as rejected review history. V2 keeps the
+synagogue visible and growing through a steadier approach. A review derivative
+pins the first and last displayed frames to the source stills with only very
+short terminal blends, retaining V2's central motion and audio:
+`HeartWordData/assets/generated/video/review/mark3-capernaum-aerial-to-synagogue-bridge-v2-endpoint-locked.mp4`.
+Its JSON manifest records the dependency on the V2 generation and both frames.
+
+QC: 192 frames at 1280x720/24 fps, 48 kHz stereo audio, no detected silence
+longer than 0.5 seconds at -42 dB, and clean full decode. After encoding, the
+first and last displayed frames compare at SSIM 0.983 and 0.977 with their
+respective source stills. The generated motion is a visual approximation of
+the route. At this candidate stage, the existing 16-second intro and full
+chapter cut were not changed; Dan later approved the bridge as recorded above.
+Typecheck passed and the full suite remained at the previously known
+456/457 fresh-chapter stage mismatch.
+
+Goal Guardian check: this is an independently reviewable location transition
+between producer-specified frames, not a new Scripture event or an automatic
+timeline decision. It preserves the approved source recording and canon while
+deferring selection to Dan.
+
+## Mark 3 synagogue intro with native courtyard ambience (2026-09-24)
+
+Dan identified that the selected synagogue opening take was silent. The r4
+synagogue draft remains retained, but a new ten-second r5 draft was generated
+from the approved exterior and Jesus references with explicit natural
+courtyard sound: soft footfalls, cloth movement, lake breeze, birds, and
+indistinct bustle, with no words or music. The provider returned a continuous
+48 kHz stereo audio stream; its low level (about -48 dB mean) was raised 20 dB
+in a separately retained, video-identical audible take. Both are cataloged
+with their provenance and remain available for review.
+
+The current producer review is
+`HeartWordData/assets/generated/video/review/mark3-full-chapter-source-review-r4-location-intro-ambient.mp4`.
+It uses 0–8 seconds of the original Mark 2 aerial with that shot's ambience,
+then 0–8 seconds of the new synagogue take with its own courtyard ambience.
+Jesus finishes entering before the second shot ends. The approved Mark 3
+picture and source soundtrack start together at output 0:16. Its JSON manifest
+records both source paths and trims; `scripts/prepend-mark3-location-intro.ts`
+rebuilds the review without modifying the earlier r2 or r3 cuts.
+
+QC: 10,713 frames and 446.379 seconds of 48 kHz stereo audio. Measured audio
+remains non-silent across the entire second shot, with mean levels about
+-29 to -28 dB in successive two-second intervals; decoded audio is present
+at chapter entry, after the former 1:33 dropout, and near the ending.
+The full render null-decodes without stream errors. Typecheck passes; the
+full-suite result remains the known 456/457 fresh-chapter stage mismatch.
+
+Goal Guardian check: this corrects the producer's specified opening with
+location-native sound, rather than reused aerial audio, while retaining the
+source-language recording, canon references, chapter sync, and independent
+review/edit provenance. It adds no speech or narrative content.
+
+## Mark 3 initial two-shot location intro review, superseded (2026-09-24)
+
+At Dan's direction, the full-chapter producer review now has two eight-second
+location shots before source-clock time zero: the original Mark 2 bird's-eye
+Capernaum master (`shot-000-ancient-fishing.mp4`, 0–8 seconds), followed by
+the current reusable synagogue arrival draft r4 (2–10 seconds, allowing Jesus
+to finish entering and the doorway to clear). The new retained review is
+`HeartWordData/assets/generated/video/review/mark3-full-chapter-source-review-r3-location-intro.mp4`.
+Its JSON manifest records both independently trimmable source takes and the
+unchanged r2 chapter dependency; `scripts/prepend-mark3-location-intro.ts`
+rebuilds the cut. The bird's-eye source ambience is crossfaded through the
+16-second opening and raised to an audible bed. The approved Mark 3 soundtrack
+begins at output 0:16, remaining aligned with the original chapter picture.
+
+QC: 10,713 video frames (384 intro plus 10,329 source-clock frames), 48 kHz
+stereo AAC through 446.379 seconds, audible ambience in both intro shots, and
+decoded audio at the chapter entrance, after the old 1:33 seam, and near the
+ending. The original r2 review remains retained. Typecheck passes; full suite
+is 456/457 with the previously recorded unrelated fresh-chapter stage
+expectation mismatch.
+
+Goal Guardian check: this adds only Dan's two requested establishing shots to
+the review workflow, with no new speech, changed Scripture, recasting, or
+source-clock retiming. The intro and original chapter remain traceable and
+separately editable rather than replacing upstream scene decisions.
+
 ## Mark 3 full-chapter review audio playback repair (2026-09-24)
 
 Dan found that the chapter review became silent in his player from about
@@ -70,7 +218,7 @@ scale and a late threshold crossing in earlier retained takes, the active r4
 candidate explicitly holds Jesus to normal adult scale against the doorway
 and keeps the open doorway empty for the final third after he has entered.
 The generator audio was discarded. The retained MP4 is cataloged as
-reusable_reference, with its set/canon sources and full generation prompt
+`reusable_reference`, with its set/canon sources and full generation prompt
 in the library provenance, and is held for review rather than selected on any
 timeline.
 
@@ -79,6 +227,381 @@ within the current reusable-reference catalog goal. It preserves the approved
 synagogue reconstruction and Jesus canon, makes no claim about a specific
 Scripture passage, does not introduce dialogue or a timeline edit, and leaves
 all future reuse subject to the normal source/canon/editorial review.
+
+## Reusable location-reference catalog (2026-09-24)
+
+The existing retained-take media library now also catalogs standalone Hatam/
+Papuan location stills and videos without inventing chapter or shot origins.
+It records an immutable asset path/hash, provenance, title, location and tags;
+the producer can browse or register these in the same library and extract
+timecoded frames from video. Reuse remains a target-shot candidate requiring
+normal source, canon and editorial review, never automatic timeline placement.
+The approved Capernaum synagogue exterior r4 16:9 still is the first
+standalone reusable reference. No video asset has been generated or selected
+for it. The pre-migration SQLite database was backed up to
+`HeartWordData/db/heartword-before-broll-20260924.sqlite`.
+
+Goal Guardian check: this gives future Hatam chapters discoverable setting
+coverage while preserving the autonomous chapter workflow and every existing
+shot decision. It adds no new pipeline stage, story action, or cross-canon
+reuse policy.
+Focused library tests (5/5), typecheck, web build, SQLite integrity and
+foreign-key checks pass. The full suite remains at 456/457 passing with its
+existing fresh-chapter stage expectation mismatch (`media_generation` versus
+`voice_lipsync`); this library work does not touch that fixture.
+
+## Capernaum synagogue exterior location reference (2026-09-24)
+
+Created a photorealistic exterior candidate with Nano Banana Pro. The first
+take was too small for the approved Mark 3 Scene 1 interior; the revised take
+uses that interior as a set-scale reference and a restrained early-Roman
+dark-basalt building rather than the much later ornate limestone synagogue.
+The delivered 16:9 PNG and retained model/prompt details are documented in
+`docs/production/CAPERNAUM_SYNAGOGUE_EXTERIOR.md`. This is not selected onto
+the timeline; no approved scene, character, or audio binding changed.
+After Dan caught modern-looking door construction in that take, a revised
+Nano Banana Pro edit replaced the main doors with plain plank leaves on
+concealed outer-jamb pivots. An intermediate edit with an exposed freestanding
+pivot post was rejected. The r4 16:9 PNG in the production note is the
+current candidate; the original exterior and failed door edit are retained.
+
+## Mark 3 Scene 1 opening coverage and full-chapter producer review (2026-09-24)
+
+Scene 1's measured opening picture shortfall is closed. Seven source-timed
+picture beats now cover 0–41.733 s, including the recorded chapter heading,
+the existing selected eight-second Shot 1 and Shot 2 takes, the approved
+8.183-second Shot 3A→3B performance, and four independently editable local
+coverage shots derived from approved synagogue/observer keyframes. The final
+observer reaction covers Jesus's continued 37.752–40.929 s cast line with
+Jesus offscreen, followed by the recorded 0.804-second pause. The existing
+Shot 3 lip-sync and all later approved scene content remain unchanged. A typed
+edit command records source bounds, parent shots, picture paths, and rationale.
+
+The six source-contiguous review sections are joined into
+`HeartWordData/assets/generated/video/review/mark3-full-chapter-source-review-r1.mp4`,
+with a JSON source/picture manifest beside it. Its 10,329 decoded video frames
+at 24 fps represent the entire five-scene chapter, 0–430.352 s of the source
+clock including the natural closing silence. Encoded audio measures 430.407 s
+(about 55 ms of container padding); the last 200 ms averages about -49.5 dBFS,
+not a renewed speech burst. The full file decodes through the final frame.
+Original Hatam narration and approved composite-cast dialogue remain the
+soundtrack; no provider audio was substituted by the chapter join.
+
+This is a **producer review cut, not a distribution export**. The fast
+six-section stream-copy join reports one non-monotonic DTS warning during an
+ffmpeg null-mux decode near an early seam. Two attempted whole-file
+normalization approaches lost frames and were rejected, not promoted; their
+failed outputs were removed. The next finishing scope is to normalize the
+picture from its short, independently editable source-timed beats (where
+pixel formats and timestamps can be made uniform before joining), then
+recheck audio seams and chapter duration. No scene regeneration or new
+source/content decision is implied.
+
+Goal Guardian check: the autonomous chapter workflow now yields one
+reviewable film with complete original-source coverage, approved Papuan
+canon, exact existing speech bindings, and inspectable editable shot records.
+The review status and timestamp limitation are explicit rather than
+misrepresented as a final field-ready export. Typecheck passes. Full suite
+with two workers: 453 passing, one existing
+`fresh-chapter-full-production.test.ts` failure (expects `voice_lipsync`,
+receives `media_generation`); additional default-parallelism timeouts were
+reproducibly absent at the lower worker count.
+
+## Mark 3 Scenes 3–5 source-timed production (2026-09-24)
+
+The three remaining Mark 3 scenes now have reviewed, selected, independently
+editable picture coverage and source-continuous soundtrack previews. Scene 3
+(Mark 3:13–19) covers 172.258–245.262 s in 10 shots; Scene 4 (Mark 3:20–30)
+covers 245.262–371.645 s in 23 shots; Scene 5 (Mark 3:31–35) covers
+371.645–429.852 s in 10 spoken/narrated picture beats, followed by a
+0.500-second hold over silence actually present in the source recording. The
+approved final 2.207-second Jesus binding remains unchanged. Every selected
+shot has a separately assembled clip, and typed edit commands record source
+bounds, donors, cutaway choices, and rejected alternatives.
+
+The deliverable review cuts are
+`HeartWordData/assets/generated/video/review/mark3-scene3-full-source-review-r1.mp4`,
+`mark3-scene4-full-source-review-r2.mp4`, and
+`mark3-scene5-full-source-review-r2.mp4` in the same directory. A JSON
+picture/cast manifest accompanies each scene's initial cut; the Scene 5
+postroll has a separate typed edit command. Original Hatam narration and
+approved composite cast speech stay continuous across picture cuts. Provider
+audio is discarded. Long Jesus turns in Scene 4 use short source-bound
+lip-synced inserts with offscreen-scribe/listener coverage for the remaining
+speech. The listener crops exclude Jesus's stationary mouth. Scene 5's
+14-second Jesus turn is two contiguous 7-second source-bound lip-sync clips.
+No speech is dropped to fit a provider's clip-length ceiling.
+
+Visual QC retained approved Papuan faces, wardrobe, scene geography, and
+causal action. Two Scene 4 doorway motion takes were rejected because they
+added food props or an unsupported threshold crossing; restrained pans of
+the approved still carry that narration. Veo rejected several other requests
+under content/audio filters, and Kling parallel-task limits required smaller
+batches. These provider failures did not change canon or source bindings.
+The source final word is active almost to 429.852 s, followed immediately by
+recorded silence; Scene 5's 0.500-second natural tail holds its last frame and
+uses that recorded silence, with a 20 ms smoothing fade at the cast seam.
+
+Automated QC report:
+`HeartWordData/assets/generated/video/review/mark3-scenes3-5-qc-r2.json`.
+It verifies full selected source coverage, 1,752 / 3,033 / 1,409 video frames,
+audio durations, one assembled clip per selected beat, no truncated renewed
+onset at the scene ends, and no acoustic crossing flag at the Scene 4→5
+speaker turn. The final review's last 200 ms is approximately -51.8 dBFS RMS.
+Typecheck passes. The full suite has 453 passing tests and the same existing
+`fresh-chapter-full-production.test.ts` failure (expects `voice_lipsync`,
+receives `media_generation`).
+
+Goal Guardian check: this completes the requested remaining scenes within the
+autonomous, exact-source, editable Hatam chapter workflow. It introduces no
+new Scripture action or speech, does not replace approved character identities,
+keeps every provider/cutaway decision reviewable, and required no routine
+listening or choice from Dan. A fresh chapter-level audit found that Scene 1's
+first two selected eight-second clips and Shot 3 do not yet cover the full
+4.616–41.733-second source opening, even though its later passage and all of
+Scene 2 are covered. The next scope is closing those Scene 1 opening picture
+gaps before joining all five scenes into a chapter-level review cut, without
+regenerating Scenes 2–5 by default.
+
+## Mark 3 Scene 2 full source-timed picture coverage (2026-09-24)
+
+Scene 2 (Mark 3:7–12) is now covered from the first original-reading onset at
+92.799 seconds to the following scene's onset at 172.258 seconds. The six
+previously selected clips supplied only 33.933 seconds of picture for this
+79.459-second source span. Eight independently editable, source-timed coverage
+shots now fill the gaps: three following-crowd continuations for verses 7–8,
+closer boat preparation for verse 9, the same staff and woven-mat carriers for
+verse 10, the kneeling man's pre-cry reaction for verse 11, a 0.755-second
+post-cry pause, and a 3.507-second stern-order hold through the last 1.358
+seconds of verse 12 narration and its natural 2.149-second pause. The original
+six selected clips and the producer-approved 1.933-second lip-sync line remain
+unchanged. A typed edit command records the old shot order, all additions,
+source bounds, donor attempts, and rejected alternatives.
+
+The complete review cut is
+`HeartWordData/assets/generated/video/review/mark3-scene2-full-source-review-r1.mp4`
+with a source/picture manifest beside it. It has 1,907 frames at 24 fps and
+79.459 seconds of encoded audio. Original Hatam narration remains continuous
+across picture cuts; only the bound 162.063–163.996-second man-with-unclean-
+spirit line uses the approved cast master. Provider audio is discarded except
+for Dan's approved quiet breathing at seconds 2–4 of the existing four-second
+bridge. Acoustic QC found no truncated renewed onset at either speaker turn
+or scene end; the final natural pause measures about -52 dBFS RMS.
+
+The first crowd-led continuation for verse 7–8 and the first verse 9
+continuation showed synchronized gestures and were retained as rejected
+attempts. Revised tight-follow and boat-preparation coverage, plus a closer
+mat-and-staff angle, passed visual review for source action and apparent canon
+continuity. Three further provider requests returned no video under content
+filters and were not selected. The successful new footage and three reviewed
+keyframes are retained separately from local still holds. All 14 shots now
+have selected and assembled clips; the review cut is a scene deliverable, not
+yet a joined chapter render. Exact image-edit prompts and source/result paths
+are recorded in `docs/production/MARK3_SCENE2_COVERAGE_KEYFRAMES.md`.
+
+Goal Guardian check: the unit advances the autonomous, editable Hatam chapter
+film without new Scripture content, invented healing/speech, replacement of
+approved characters, or routine listening requests to Dan. New angles cover
+only measured audio-clock picture gaps; picture decisions and their reasons
+remain inspectable. The next production scope is Scene 3 or joining the
+completed Scene 1 and 2 segments into a longer source-continuous review cut,
+not regenerating already approved Scene 2 footage.
+
+Verification: `npm run typecheck` passes. Full suite: 453 passing tests and
+the same existing `fresh-chapter-full-production.test.ts` failure (expects
+`voice_lipsync`, receives `media_generation`).
+
+## Mark 3 Scene 1 verse 6 exit and scene close (2026-09-23)
+
+The approved Mark 3:6 doorway keyframe now has selected 720p footage. Shot 10
+shows the same dark-robed Pharisees leaving the dark-basalt synagogue for
+8.000 seconds (source picture 78.779–86.779 s). Shot 11 was added as a
+frame-continuous 6.020-second aftermath: the figures clear the doorway while
+the same seated witnesses remain, then the empty entrance holds through the
+natural pause before Scene 2 (86.779–92.799 s). A typed edit command records
+the added coverage and its source timing. Both shots have selected and
+assembled clips; selection-script replay is idempotent.
+
+Verified Mark 3:6 Hatam and English name the Herodians and the counsel
+against Jesus. No approved Herodian visual canon is present. The picture
+therefore shows only the approved departure and aftermath, while the original
+source-language narration carries the complete verse; it does not fabricate
+a meeting, quoted words, weapons, or violence. The narration is one uncut
+source span from 78.779–90.655 s across the picture cut, followed by the
+recorded 2.144-second pause to the next scene. The scene-closing review cut
+from Shot 4 through Shot 11 is
+`HeartWordData/assets/generated/video/review/mark3-scene1-shot4-through-exit-review-r2.mp4`.
+Its source-faithful audio is 51.066 seconds; picture is 1,226 frames at
+24 fps (51.083 seconds, one-frame end hold). Speaker-turn tail QC reports
+no truncated renewed onset at either Jesus or narrator turn, and the final
+pause measures approximately -54.1 dBFS RMS. Provider-generated audio was
+discarded.
+
+Goal Guardian check: the work advances the autonomous Hatam Mark chapter
+with approved Papuan canon, full original words, logged picture choices,
+and no routine listening request to Dan. It adds one independently editable
+coverage shot, not a new pipeline stage or an invented narrative event.
+The next production scope is Mark 3:7–8 at the Sea of Galilee.
+
+Verification: typecheck passes; the full suite has 453 passing tests and
+the same single pre-existing `fresh-chapter-full-production.test.ts`
+failure (expects `voice_lipsync`, receives `media_generation`).
+
+## Mark 3 Scene 1 verse 5 selected coverage (2026-09-23)
+
+The next source-grounded passage is now covered through the healing hand:
+Shot 6 Jesus's closed-mouth anger/grief reaction (57.990–65.990 s), Shot 7
+the three-person over-the-shoulder bench lead-in (65.990–70.759 s), Shot 8
+Jesus's approved 1.241-second command over the man's still-contracted left
+hand (70.759–72.000 s), and Shot 9 the same hand extending and restoring
+(72.000–78.779 s). Each has a selected raw clip and an assembled clip. The
+command remains bound to Dan's approved original source interval and the
+mapped Jesus cast master; only its picture coverage changed. Typed edit
+commands retain the prior shot order and original approved OTS command plan.
+
+The original-reading narrator stays continuous from 55.153–70.759 seconds,
+including both picture cuts; it is never sliced at 57.990 or 65.990. The
+37.046-second review cut from Shot 4 through the healing is
+`HeartWordData/assets/generated/video/review/mark3-scene1-shot4-through-verse5-healing-review-r2.mp4`.
+Audio is 37.046 seconds, picture 889 frames at 24 fps (37.042 seconds).
+Speaker-turn tail QC found no truncated renewed onset at the two Jesus and
+two narrator turn ends. The cut is a selected producer-delegated work-in-
+progress, not a claim that the entire Mark 3 chapter is finished.
+
+The first 720p OTS final candidate introduced a fourth bench man, so it
+was retained but not selected. A constrained Kling retry held the original
+three men and supplied the selected 4.769-second lead-in. Jesus's side
+profile remained slightly visible in that angle; during his command the
+picture therefore cuts to the contracted hand, holds until the line ends,
+and proceeds into the healing from the matching hand frame. The Jesus
+reaction and healing clips came back as five-second Kling takes and were
+retimed at constant speed to their eight- and 6.779-second source-grounded
+picture slots. The failed draft label on the OTS was not treated as a veto:
+its prose verdict and inspected frames were positive, but the fourth man in
+the *later* full render was a real continuity failure. Paid generation
+attempts and locally derived selections remain separately inspectable.
+
+Goal Guardian check: this advances an editable, autonomously produced
+heart-language chapter without new narrative content or routine listening
+requests to Dan. The approved voices and source timing remain intact;
+local picture cuts and retimes are logged rather than silently changing the
+alignment. Next production scope is the following Mark 3:6 counsel/exit
+shot, not a new product feature or stage.
+
+Verification: typecheck passes. Full suite: 453 pass, one unchanged
+`fresh-chapter-full-production.test.ts` failure expecting `voice_lipsync`
+where the current pipeline holds at `media_generation`. Selection-script
+replay is idempotent and leaves the approved command binding at
+70.759–72.000 seconds.
+
+## Mark 3 Scene 1 Shot 4 → 5 producer-confirmed boundary (2026-09-23)
+
+Dan explicitly confirmed revising the reviewed 55.733-second edge to 55.153
+seconds. The two original-reading intervals now meet there (41.733–55.153
+seconds Jesus, 55.153–57.990 seconds narration), with 89-point timing
+confidence, two named boundary-override records, and a new Dan-attributed
+alignment attestation for the changed alignment hash. The original source
+file and Dan's earlier narration-text correction were not replaced. Typed
+edit command `mark3-scene1-shot4-shot5-boundary-55153-v1` retains the old
+source intervals, Shot 4 utterance binding, composite mapping, and accepted
+coverage-beat timing before the active projections were updated.
+
+The approved Jesus cast performance is retained unchanged; a 13.420-second
+PCM derivative excludes only its quiet/burst tail and is the active mapped
+cast master. Shot 4's three coverage clips were selected at 0–6.755,
+6.755–10.053, and 10.053–13.420 seconds and assembled. The 720p Kling
+Shot 5 reaction was selected for 2.837 seconds and assembled silently for
+continuous original narration underneath. The selected two-shot transition
+is `HeartWordData/assets/generated/assembled/mark3-scene1-shot4-shot5-approved-transition.mp4`:
+390 frames at 24 fps (16.25 seconds), with the real joined source/cast audio
+and the natural ~0.8-second pause at the speaker change. The pre- and
+post-approval PCM soundtrack files have identical SHA-256 hashes.
+
+Re-running the one-shot reconciliation script makes no duplicate override,
+selection, or assembly. The voicing stage now retains a current producer-
+reviewed cast master across an ordinary rerun and holds a forced/stale
+regeneration before paid provider calls; three focused tests and typecheck
+pass. A read-only forced-voicing probe against the live project returns that
+hold with zero generated segments. Full-suite result is recorded below.
+The full suite ran with 453 passing tests and the same single pre-existing
+`fresh-chapter-full-production.test.ts` failure (`media_generation` versus
+expected `voice_lipsync`).
+
+Goal Guardian check: this is Dan's confirmed timing correction, not a new
+speaker or Scripture decision. The total source span remains 16.257 seconds,
+the prior approval is inspectable, real narration is continuous, and only
+the needed downstream clip timing was changed. No new pipeline stage or
+unrelated production requirement was added.
+
+## Mark 3 Scene 1 Shot 4 → 5 transition review (2026-09-23)
+
+The 55.733-second original-source edge falls after a measured quiet gap
+(54.753–55.553 s), inside the onset of Dan-attributed narration, “But they
+were silent.” A review-only splice places the picture/audio transition at
+55.153 s: Jesus's cast-master audio contributes 13.420 s, then the original
+reading contributes 55.153–57.990 s. Together they retain the original
+16.257-second combined span. Signal review shows one natural pause across
+the splice and no renewed Jesus tail or missing beginning of the narrator's
+phrase. The 16.25-second 720p/24fps review cut is
+`HeartWordData/assets/generated/video/review/mark3-scene1-shot4-shot5-continuous-review-r2.mp4`.
+
+Shot 5's accepted still was animated. The normal final-video route exhausted
+Veo/Kling fallback and retained a 360p Omni candidate
+(`2daec694-290e-455b-b233-d3b22f9e5892`, estimated $0.33); its full length
+had visual continuity faults, and only its first 2.83 seconds were plausible. A concise
+720p Kling retry (`aeb84524-f27d-43a5-b8b3-ce30328477dc`, estimated $0.60)
+preserves the approved three-man bench composition through the needed 2.83
+seconds and is used in the review cut. Automated gaze QC flagged the retry,
+but its “all three look into the lens” claim conflicts with inspection of
+the approved near-frontal starting keyframe and sampled retry frames; that
+warning is retained as advisory, not silently erased.
+
+At this review checkpoint, no Shot 4/5 clip had been promoted and no approved
+source binding had been revised. Dan subsequently confirmed the version-safe
+revision and selection recorded above; no routine listening was required.
+
+Goal Guardian check: the review preserves the source words and total elapsed
+audio, uses the approved visual staging, records paid attempts and QC, and
+does not invent a new line or silently change a producer-reviewed binding.
+
+Verification: the transition preview has 390 frames at 24 fps and a single
+natural ~0.8-second quiet interval across the audio join at the -30 dB
+threshold. The full suite remains at 450 passing / 1 pre-existing failure:
+`fresh-chapter-full-production.test.ts` expects `voice_lipsync` but the
+pipeline currently holds at `media_generation`.
+
+## Autonomous audio-boundary correction and turn-end QC (2026-09-23)
+
+Dan clarified that the goal is a finished chapter without his routine audio
+listening. The preceding source-boundary hold was too broad: source activity
+across a cut often means only that the same speaker continues. General
+ingestion now treats such crossings as recorded advisories, not acoustic
+holds or confidence penalties. When a fresh, unreviewed alignment has a
+substantial quiet gap just before a proposed edge, it moves that edge into
+the gap while keeping adjacent source intervals contiguous and caps their
+timing confidence at 89; existing named
+source decisions and approved bindings remain protected.
+
+Chapter assembly now extracts adjacent intervals of the same speaker from
+the same recording as one continuous PCM span, independently of picture
+cuts. Before promoting a cut, it checks the rendered end of each speaker
+turn and the chapter tail for a short, strong renewed onset after silence.
+The failed output is held with timing and level evidence, never made to pass
+by discarding audio. Read-only replay on the 48 existing Mark 3 composite
+segments flags the known Shot 4 Jesus tail and no other speaker-turn tail.
+It does not rewrite that existing approved chapter; its source correction
+still requires explicit reconciliation.
+
+Goal Guardian check: this serves the autonomous source-to-chapter workflow
+and continuous-audio requirement. It avoids needless Dan listening at
+ordinary picture cuts, preserves every source interval, does not infer Hatam
+words or speakers, and does not add a pipeline stage or change approved media.
+The broader pre-existing source-review gate remains conservative; this change
+does not claim that text-match scores alone can certify linguistic timing.
+
+Verification: typecheck passes; 450 tests pass. The same pre-existing
+`fresh-chapter-full-production.test.ts` assertion remains the sole full-suite
+failure (`media_generation` versus expected `voice_lipsync`).
 
 ## Source-boundary integrity at alignment (2026-09-23)
 
@@ -107,6 +630,152 @@ Verification: focused boundary and fresh-chapter tests pass; typecheck passes.
 The full suite is 442 passing / 1 pre-existing failure in
 `fresh-chapter-full-production.test.ts` (expects `voice_lipsync` while the
 pipeline holds at `media_generation`).
+
+## Mark 3 Scene 1 Shot 3 — producer-approved covered-sequence revision (2026-09-23)
+
+Dan approved retaining the accepted Scene 1 Shot 3 synagogue composition as a
+two-second staging beat (Shot 3A), then cutting to a new close,
+canonical-Jesus lip-sync insert (Shot 3B) from the Man with Withered Hand's
+eye line. The existing exact Hatam utterance binding remains authoritative:
+Shot 3A covers its first 2.0 seconds without visible speech, and Shot 3B is
+planned to perform the remaining 6.183 seconds. The original approved
+keyframe is reused only for the staging beat; the close-up requires its own
+producer-reviewable, canon-locked keyframe before a lip-sync candidate can be
+made.
+
+Goal Guardian check: this is a producer-directed coverage and performance
+revision within the approved Mark 3:3 action. It preserves the source-audio
+binding, approved Papuan Jesus canon, scene geography, and review gate; it
+does not alter Scripture. The paragraph above records the planning decision;
+the subsequent media work is recorded below.
+
+### Shot 3B production candidate held for review (2026-09-23)
+
+The approved 3B keyframe was animated through Kling. The first completed base
+task (`931849384533950479`) was recovered and retained, but its measured
+5.042 seconds cannot cover the approved 6.183-second speaking beat. A second
+base task (`931868133391597592`) from the same accepted keyframe runs 10.042
+seconds. Its frames preserve Jesus's approved face, clothing, eye line, and
+synagogue setting. Kling identified one face across the beat; its thumbnail
+was visually confirmed as Jesus (face ID `0`).
+
+The original producer-approved source interval and hash remain unchanged.
+The older bound Jesus character version and the currently approved composite
+version both specify the same ElevenLabs voice ID, so no re-voicing or binding
+rewrite was needed. The mapped composite slice is 1.998-8.173 seconds,
+corresponding to the remaining source line after 3A's two-second setup.
+Kling face-targeted lip-sync task `931869319351369821` returned and was
+recorded as attempt `c672f203-b174-4aad-b1a8-38f80b4018d2`,
+`hold_for_review`. Its original provider output is
+`generated/lipsync-face/931869319351369821.mp4`; the first 6.183 seconds are
+also rendered as `generated/lipsync-face/mark3-scene1-shot3b-review-6.183s.mp4`
+for producer review. The original 10-second output is retained. No clip was
+added to the timeline; Dan's review of this speaking take and completion of
+3A remain next. The ledger records the prior short base, extended base, and
+lip-sync at estimated USD 0.60, 0.60, and 0.50 respectively; these figures
+are not invoice-reconciled. Kling reported 2.5, 5, and 1 deduction units for
+those three tasks. The flat USD estimate for the 10-second base may understate
+its cost relative to the 5-second base.
+
+Goal Guardian check: the candidate performs only the approved Mark 3:3
+utterance in the approved close Jesus view. It preserves the original source
+binding, existing character voice, and producer review gate without adding
+Scripture content or selecting footage for the editable cut.
+
+### Shot 3B speaking-performance revision (2026-09-23)
+
+Dan found the first face-targeted take too weak: Jesus barely opened his mouth.
+That attempt (`c672f203-b174-4aad-b1a8-38f80b4018d2`) is retained as
+`retry_modified`, with his feedback recorded. A direct Kling Avatar take from
+the same accepted, single-face 3B keyframe and exactly the same mapped Hatam
+audio slice is now attempt `51b5ed76-04ef-4bad-a09f-a6b77d3115c0`,
+`hold_for_review`. The provider output is
+`generated/lipsync/931871945874866179.mp4`; a review trim of its first 6.183
+seconds is `generated/lipsync/mark3-scene1-shot3b-avatar-review-6.183s.mp4`.
+Sampled speaking frames show wider and more varied mouth shapes and facial
+movement than the first take. Audio comparison against the bound composite
+slice confirms the returned audio closely matches it. Kling reported 2.4
+deduction units; the existing USD ledger estimate is $0.50, not invoice
+reconciled. No timeline clip was selected; Dan's visual review remains the
+gate before using this take alongside the still-planned 3A video.
+
+Goal Guardian check: the revision responds to producer feedback on visible
+speech performance while keeping the approved source interval, character
+voice, keyframe, synagogue setting, and reviewable edit path intact.
+
+### Shot 3B Avatar take approved and selected (2026-09-23)
+
+Dan approved the stronger direct Avatar performance. Attempt
+`51b5ed76-04ef-4bad-a09f-a6b77d3115c0` is now `accepted`, with selected
+clip `45b35461-76f1-4135-9335-437a40aa5a8f` spanning shot-local
+2.000-8.183 seconds, exactly the approved 3B coverage beat. The weaker
+face-targeted take remains retained as `retry_modified`. No clip occupies
+3A's 0-2.000 second setup yet, so covered-shot assembly must wait for that
+beat. The ordinary whole-shot lip-sync acceptor now refuses covered shots;
+the beat-aware acceptor is tested for exact offsets, idempotency, and overlap
+protection.
+
+Goal Guardian check: producer approval selected only the reviewed speaking
+performance. It neither stretches that performance across 3A nor changes the
+source audio, Scripture action, or character canon.
+
+### Shot 3A staging candidate held for review (2026-09-23)
+
+The accepted wide synagogue keyframe was animated for Shot 3A's approved
+0-2.000-second non-speaking setup. Veo 3.1 Lite returned a 4.000-second,
+1280×720 base (attempt `a5369573-3359-4587-a26d-1eba2c1ea57a`,
+`generate_coverage_base`, `hold_for_review`); its first two seconds were
+rendered as a muted 48-frame review clip at
+`generated/video/review/mark3-scene1-shot3a-a5369573-3359-4587-a26d-1eba2c1ea57a-2s-muted.mp4`.
+The base remains retained at
+`generated/video/mark3-scene1-shot3a-a5369573-3359-4587-a26d-1eba2c1ea57a.mp4`.
+Frame review found the approved character/room staging intact and no obvious
+visible speech. Automated video review passed on recheck at 95/100 confidence;
+its first 0.95 confidence response did not meet the documented 0-100 scale and
+was not treated as a pass. Both review calls and their costs are retained.
+A separate 3A-to-approved-3B review cut with the exact existing Hatam composite
+line is at `generated/video/review/mark3-scene1-shot3ab-review-8.2s.mp4`.
+Neither preview is a timeline selection: Dan's review of 3A and the cut remains
+the gate before filling its 0-2.000-second interval.
+
+Goal Guardian check: this creates a candidate for the producer-directed silent
+picture beat under the existing Hatam line. It does not substitute provider
+audio, approve the take, overwrite 3B, alter the source binding, or invent a
+new event.
+
+### Shot 3A approved; Shot 3 assembled (2026-09-23)
+
+Dan approved the 3A→3B review cut while clarifying that **Jesus speaks during
+all eight seconds**. The first two seconds are not narrator audio or silence:
+3A is a wide visual setup under the same continuous Hatam Jesus line. Dan
+accepted this take, but noted that lip-syncing the full line or choosing an
+over-the-shoulder opening that concealed Jesus's mouth would have avoided the
+visibly stationary mouth in 3A. This is retained as production feedback, not
+silently turned into a new global requirement.
+
+Attempt `a5369573-3359-4587-a26d-1eba2c1ea57a` is now `accepted` and its
+clip `8bfae4da-0ceb-432e-b94a-7d738364965f` occupies shot-local
+0-2.000 seconds. The previously approved 3B clip remains at 2.000-8.183
+seconds. Covered-shot assembly initially stopped because it searched cast
+audio by verse label, while the exact approved composite segment has a null
+verse label by design. The assembler now prefers the producer-approved
+utterance binding and `composite_audio_source_map`, checks source-hash and
+speaker identity, and trims to the mapped interval; older unbound productions
+retain their legacy verse lookup. Focused tests cover null verse labels,
+subset intervals, stale-map rejection, and the legacy path.
+
+The assembled 720p shot is retained at
+`generated/assembled/b3d64f2d-90ff-4b6c-8cda-dd98391a0d50.mp4`, with
+the provider audio discarded and the single continuous Hatam Jesus line
+under both cuts. The output has 8.167 seconds of 24 fps picture for the
+8.183-second planned interval (sub-frame rounding); the audio stream is
+8.150 seconds after AAC muxing, roughly 23 ms shorter than the retained
+8.173-second composite source. No source binding, 3B approval, Scripture,
+casting, or other shot was changed.
+
+Goal Guardian check: the producer-approved coverage now has complete picture
+and the correct mapped speaker audio. The narrower audio tail is disclosed
+for final-cut QC rather than represented as sample-exact preservation.
 
 ## Drafts now arrive with an automated verdict (2026-09-21)
 
@@ -4160,3 +4829,175 @@ silently reopened or regenerated by this policy.
 Goal Guardian check: this improves visual legibility for producer review and
 finished Scripture films without inventing narrative content or changing an
 approved scene's setting, action, or time of day.
+
+## Cinematic staging default (2026-09-23)
+
+Dan directed that HeartWord avoid frames reading as posed, audience-facing
+portraits. Keyframe prompts now require story-motivated eyelines, varied poses,
+asymmetry, and natural overlap for ordinary shots. The deliberate exception is
+a lip-sync performance: its named speaking character may address the lens when
+that helps the spoken performance, while every supporting person remains
+naturally oriented within the scene.
+
+Goal Guardian check: this preserves readable, source-grounded action and
+performance rather than adding events or altering the approved narrative.
+
+## Shot-state fidelity safeguard (2026-09-23)
+
+After a Scene 4 reaction shot repeatedly rendered Jesus entering the house,
+Dan directed that HeartWord prevent a visually plausible adjacent event from
+replacing the planned moment. Every keyframe prompt now explicitly locks the
+shot to its stated causal moment and excludes doorways, thresholds, props, and
+composition cues that imply an unstated arrival, departure, crossing, or
+confrontation. Automated scene-fidelity review now separately requires exact
+action match, so a frame that changes the event cannot pass on setting and
+crowd plausibility alone.
+
+Goal Guardian check: this protects the planned, Scripture-grounded action and
+does not add narrative content or prescribe new events.
+
+## No-portrait priority over repeated crew gestures (2026-09-23)
+
+Dan confirmed that defensive gestures such as folded arms remain useful, but
+must never create an audience-facing group portrait. The final generation
+prompt now states the hierarchy after the crew direction: retain gestures as
+individual reactions, while requiring varied poses, uneven depth, partial
+occlusion, and story-motivated eyelines. Direct camera gaze remains reserved
+for the named lip-sync speaker when performance calls for it.
+
+Goal Guardian check: this preserves the crew's emotional intent while keeping
+the action legible and cinematic; it adds no narrative event or character act.
+
+## Named-character wardrobe continuity gate (2026-09-23)
+
+Dan identified a close-up of Jesus that passed facial likeness review while
+drifting from his approved garment. Canonical likeness review now separately
+compares a named character's visible wardrobe to the approved reference:
+garment cut and neckline, layers and mantle arrangement, locked color-block,
+visible fringe/tassels, and footwear. A material mismatch fails the review;
+an obscured wardrobe may remain inconclusive, but a missing or malformed
+assessment is held rather than passing silently. The producer retains control
+of the approved canon and may approve an intentional canon revision.
+
+Goal Guardian check: this protects the approved Papuan character canon across
+independently generated shots without changing Scripture, action, or costume
+requirements beyond the producer-approved reference.
+
+## Mark 3 keyframe review complete (2026-09-23)
+
+Dan reviewed and approved every remaining Mark 3 keyframe. The fifteen
+previously pending producer decisions across Scenes 1, 2, 4, and 5 are now
+recorded as accepted; Scene 2 Shot 3's unexplained canonical-likeness hold was
+explicitly overridden after Dan's visual review. All Mark 3 shots are now
+`keyframe_approved`; no video generation was started.
+
+Goal Guardian check: this records producer decisions on existing
+Scripture-grounded planned shots only. It changes no Scripture, casting plan,
+shot action, or media beyond the approval state.
+
+## Draft-room take retention repaired (2026-09-23)
+
+The draft room allowed several held takes for one shot, but the Omni provider
+derived every file path from the underlying shot id, so later takes overwrote
+earlier ones. Provider-facing draft labels now include the immutable generation
+attempt id while the database continues to associate each take with its actual
+shot. A focused regression test proves two drafts receive distinct retained
+paths. The initial Mark 3 draft batch exposed the defect; overwritten earlier
+records were retained as `retry_modified` history, with the newest playable
+take kept for review.
+
+Goal Guardian check: this is a bounded media-provenance repair. It preserves
+the producer's ability to compare independently generated takes and does not
+change Scripture, casting, shot action, or choose any draft automatically.
+
+## Non-speaking draft safeguard (2026-09-23)
+
+Dan's first Mark 3 draft review found invented English speech and Papuan-canon
+identity drift in Scene 2's non-speaking crowd shots. Every future draft now
+receives an explicit instruction to preserve nonverbal action and background
+ambience only, never generate intelligible speech or visible speech performance,
+and retain approved Papuan/Hatam identity and wardrobe throughout. The focused
+draft-room tests and typecheck pass. Scene 2 Shots 1–3 are retained as rejected
+draft history with Dan's corrections; no replacement or final footage was
+generated.
+
+Goal Guardian check: this is a narrowly scoped safeguard against provider-added
+performance and visual-canon drift in existing non-speaking shots. It changes
+neither Scripture nor the planned action, and does not create or select media.
+
+## Natural crowd-motion default (2026-09-23)
+
+Dan approved the revised Veo Lite test for Mark 3 Scene 2 Shot 1: it retains
+the approved Papuan identities, ambient-only non-speaking treatment, and
+irregular crowd action. Future non-speaking draft and final-video prompts now
+require independently timed reactions and explicitly prohibit synchronized arm
+waves, repeated group gestures, mirrored motion, and mass reach-and-retract.
+Automated video review now assesses that same failure mode. The approved test
+clip is the first selected Scene 2 footage; earlier Omni and Veo candidates
+remain retained revision history.
+
+Goal Guardian check: this makes crowd motion more natural without adding an
+event, altering Scripture, or changing the approved casting and staging plan.
+
+## Mark 3 Scene 1 Shot 4 pause-aligned coverage prepared (2026-09-23)
+
+The approved 14-second Jesus line in Mark 3:4 is planned as three continuous
+source-audio beats: 0–6.755 s single-face Jesus lip-sync, 6.755–10.053 s
+over-the-shoulder cutaway with his mouth fully hidden, and 10.053–14.000 s
+single-face Jesus lip-sync. Both cuts fall within measured pauses in the
+13.978-second composite voice line. The final pause remains in the third beat;
+speech must not be animated through it. This applies the Shot 3 lesson that
+every frame showing Jesus's mouth while he speaks needs audio-driven lip-sync.
+
+Three imagegen still candidates are recorded but held for Dan's approval, not
+submitted for video generation. The over-the-shoulder candidate required two
+targeted face-diversity revisions and its third version passed automated
+visual review. The two close-ups received wardrobe/crowd-density flags that
+conflict with the approved Shot 4 keyframe and the intentionally single-face
+beat framing; these are documented for producer review, not silently
+overridden. No beat image is accepted, no Shot 4 clip is selected, and the
+approved shot-level keyframe and source audio remain unchanged.
+
+Goal Guardian check: the coverage adds no dialogue, event, or cast member; it
+preserves the source Jesus line, approved scene geography, canon wardrobe, and
+producer approval gate. The full suite remains at 437 passing / 1 unrelated
+fresh-chapter fixture failure (`media_generation` vs `voice_lipsync`).
+
+## Mark 3 Scene 1 Shot 4 footage held for review (2026-09-23)
+
+Dan approved all three Shot 4 coverage stills. The opening and closing Jesus
+beats were generated as separate Kling Avatar image-to-audio performances from
+those accepted stills and the unchanged composite Jesus line; the middle
+mouth-hidden cutaway was generated with Veo. Their retained source takes are
+7.2 s, 4.0 s, and 4.0 s, respectively, covering planned 6.755 s, 3.298 s,
+and 3.947 s intervals. All three attempts are held, not selected.
+
+A review-only 14.000-second cut is at
+`C:\Users\danbr\HeartWordData\assets\generated\video\review\mark3-scene1-shot4-full-review-r1.mp4`.
+It trims the takes to their planned beat intervals, mutes provider audio,
+and carries the approved 13.978-second Jesus composite with 22 ms of tail
+padding. Advisory video-and-audio QC found no visible mouth, silent-leader,
+or continuity concern, but producer playback approval is still required.
+No Shot 4 clips have been selected on the timeline.
+
+Goal Guardian check: this is an editorial review artifact, not a new source
+line or a change to casting, canon, or shot action. The source recording,
+voice binding, accepted stills, and producer decision gate are preserved.
+
+## Shot 4 ending boundary flagged (2026-09-23)
+
+Dan heard an abrupt new utterance at the end of the 14-second Shot 4 review.
+Inspection found the approved Jesus composite quiet from 13.029 to 13.834 s,
+then a strong new sound in its final 0.144 s. In the original chapter audio,
+the next phrase begins around 55.4–55.6 s; the following passthrough segment
+starts at 55.733 s already at full speech level. The existing source split
+therefore likely assigns the start of the following narration to Jesus and
+cuts the next segment in mid-phrase. Its exact language boundary has not
+been attested by a Hatam reviewer.
+
+A diagnostic 13.8-second review copy ends inside the quiet gap at
+`C:\Users\danbr\HeartWordData\assets\generated\video\review\mark3-scene1-shot4-boundary-check-r2.mp4`.
+It is not a selected timeline clip. The original media, approved binding,
+coverage intervals, and source map remain unchanged. Before final assembly,
+reconcile the source/voice boundary with the following narration so no
+syllable is lost or assigned to the wrong speaker.
