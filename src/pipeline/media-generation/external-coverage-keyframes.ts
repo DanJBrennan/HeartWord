@@ -79,8 +79,8 @@ export interface CoverageBeatBrief {
 }
 
 /**
- * Loads one beat's full context. Deliberately scoped to Hatam Mark 2 /
- * Papuan canon / approved-only, same guards as
+ * Loads one beat's full context. Deliberately scoped to the approved Hatam
+ * Mark production chapters / Papuan canon / approved-only, same guards as
  * external-keyframes.ts's getKeyframeContext -- this is the active
  * production, not a blanket approval of other books/regions.
  */
@@ -119,8 +119,8 @@ export function getCoverageBeatContext(db: DatabaseSync, dataDir: string, beatId
       `SELECT p.id, p.language, p.book, p.chapter FROM projects p JOIN scenes sc ON sc.project_id = p.id WHERE sc.id = ?`
     )
     .get(scene.id) as CoverageBeatContext["project"];
-  if (project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || project.chapter !== 2) {
-    throw new Error("The coverage-beat keyframe handoff currently supports Hatam Mark 2 only.");
+  if (project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || ![2, 3].includes(project.chapter)) {
+    throw new Error("The coverage-beat keyframe handoff currently supports Hatam Mark 2 and Mark 3 only.");
   }
 
   let speakingCharacter: CoverageBeatContext["speakingCharacter"] = null;
@@ -232,9 +232,10 @@ export function prepareCoverageBeatBrief(
     throw new Error(`Beat ${beatId} is already '${context.beat.status}' -- only a planned or unaccepted generated beat can be prepared.`);
   }
 
+  const chapterSlug = `${context.project.book.toLowerCase()}-${context.project.chapter}`;
   const sources = [
-    { role: "verified Hatam source", path: "source/hatam/mark-2/mark-2-text.docx" },
-    { role: "English reference", path: "reference/english/mark-2/mark-2-text.docx" }
+    { role: "verified Hatam source", path: `source/hatam/${chapterSlug}/${chapterSlug}-text.docx` },
+    { role: "English reference", path: `reference/english/${chapterSlug}/${chapterSlug}-text.docx` }
   ].map((source) => {
     const path = assetPath(dataDir, source.path);
     return { ...source, sha256: sha256(readFileSync(path)), verses: parseSourceTextByVerse(path) };
