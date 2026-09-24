@@ -1,4 +1,5 @@
 import type { GeminiJsonSchema } from "../../providers/gemini-text.js";
+import { EDITORIAL_CHECKS, editorialChecksNeedRevision, editorialReviewTargets } from "../qc/editorial-review.js";
 import { planEditorialCut } from "../assembly/editorial-plan.js";
 import { PRODUCTION_ROLE_REGISTRY, executableProductionRolesFor } from "./role-registry.js";
 import { type CrewBrief, type CrewContribution, type CrewEvent, type CrewPhase, type CrewResult,
@@ -13,7 +14,7 @@ const DUTIES: Record<CrewRole, string> = {
   costume_designer: "Maintain the exact approved character appearance, clothing color blocks, drape and accessories across shots. Do not redesign canon; record a conflict as a finding.",
   lighting_designer: "Specify motivated light sources, direction, time of day and exposure consistently across adjoining shots, respecting scene/shot state such as a roof before and after opening.",
   script_supervisor: "Independently check every source passage, speaker, narrative order, character entrance, prop, costume, eyeline and state transition across the WHOLE chapter. State before/after continuity for each shot. Distinguish sourced facts from staging choices. Flag omitted causal actions. Check the actual cut when supplied; do not claim exact lip-sync or translated-word verification from a low-resolution proxy.",
-  picture_editor: "Assess shot-to-shot rhythm, performance, transitions and measured coverage against source audio. In editing, produce edits selecting existing shot clips by shotId, sourceStartMs and durationMs, in final screen order; the edits must cover all source performance plus proposed pauses exactly. Pauses are permitted before the first segment (afterSegmentId=null) or after whole audio segments, for establishing views and emotional breathing room. Never cut, replace, stretch or reorder the source performance. In planning and finishing, edits/pauses may be empty. In finishing, watch the actual attached cut. Request precise missing coverage with additional milliseconds, shot ID and purpose. Never extend a lip-synced mouth past its speech. A coverage request is blocking until fulfilled.",
+  picture_editor: "Assess shot-to-shot rhythm, performance, transitions and measured coverage against source audio. In editing, produce edits selecting existing shot clips by shotId, sourceStartMs and durationMs, in final screen order; the edits must cover all source performance plus proposed pauses exactly. Pauses are permitted before the first segment (afterSegmentId=null) or after whole audio segments, for establishing views and emotional breathing room. Never cut, replace, stretch or reorder the source performance. In planning and finishing, edits/pauses may be empty. In finishing, watch the actual attached cut and complete every editorialChecks item with timestamps and concrete evidence. Look for repetitive panned stills or recycled takes; a continuous view that needs distinct angles; a frozen action beat; Jesus or another named speaker lacking a face-readable close-up during speech without a justified reaction/over-shoulder exception; a listener visibly mouthing someone else's words; out-of-canon faces, standing/seated or room-state discontinuities; and an intended wordless beat lacking appropriate ambience or placed inside an unsplit source utterance. Do not invent a pause or gesture: only evaluate one when supported by the plan or producer direction. Do not claim exact lip-sync or canon certainty from a low-resolution proxy; mark unverified when necessary. Request precise missing coverage with additional milliseconds, shot ID and purpose. Never extend a lip-synced mouth past its speech. A coverage request is blocking until fulfilled.",
   scripture_cultural_reviewer: "Independently compare the visual interpretation with the exact supplied reference and regional canon. Identify contradictions, invented speech/theology and unsupported cultural assumptions. Staging and tasteful human reactions are allowed. You do not translate Hatam or replace native-speaker/field approval. Do not claim that human review has occurred.",
   colorist: "Watch the cut and match adjacent shots to the intended look. Supply only necessary restrained brightness/contrast/saturation corrections, preserving skin and approved clothing colors. Each adjustment is keyed to an actual timeline shot.",
   sound_designer: "Listen to the attached cut. Plan atmosphere and action effects as separate cues: period-appropriate footsteps, chickens, birds, crowd room tone, cloth or handling props where supported by the scene. Use approved sfx assets, or generationRequests to the ElevenLabs sound-effects adapter for 0.5–30 second effects. Describe perspective, distance, timing, material and loop behavior. No intelligible invented speech. Preserve narration and dialogue with clear priority.",
@@ -38,6 +39,7 @@ export function crewSchema(role: CrewRole): GeminiJsonSchema {
     properties.coverageRequests = array(object({ shotId: text, additionalMs: number, description: text, reason: text }));
     properties.edits = array(object({ shotId: text, sourceStartMs: number, durationMs: number }));
     properties.pauses = array(object({ afterSegmentId: { type: "string", nullable: true }, durationMs: number, reason: text }));
+    properties.editorialChecks = array(object({ name: { type: "string", enum: [...EDITORIAL_CHECKS] }, status: { type: "string", enum: ["clear", "concern", "unverified", "not_applicable"] }, startMs: number, endMs: number, evidence: text, requestedChange: text }));
   }
   if (role === "colorist") properties.colorAdjustments = array(object({ shotId: text, brightness: number, contrast: number, saturation: number, reason: text }));
   if (role === "sound_designer" || role === "composer") {
@@ -86,6 +88,16 @@ export function validateContribution(raw: unknown, role: CrewRole, brief: CrewBr
     const c = record(item); shot(c.shotId); range(c.additionalMs, 1, 120000); nonempty(c.description); nonempty(c.reason);
   }
   if (role === "picture_editor") {
+    if (result.editorialChecks !== undefined) {
+      const names = new Set<unknown>();
+      for (const item of list(result.editorialChecks)) {
+        const c = record(item);
+        if (!EDITORIAL_CHECKS.includes(c.name as typeof EDITORIAL_CHECKS[number]) || names.has(c.name)) throw new Error("Unknown or duplicate editorial check.");
+        names.add(c.name); range(c.startMs, 0, brief.render?.durationMs ?? 0); range(c.endMs, Number(c.startMs), brief.render?.durationMs ?? 0);
+        nonempty(c.evidence); nonempty(c.requestedChange);
+        if (!["clear", "concern", "unverified", "not_applicable"].includes(String(c.status))) throw new Error("Invalid editorial check status.");
+      }
+    }
     for (const item of list(result.edits)) {
       const e = record(item); shot(e.shotId);
       const clip = brief.shots.find(s => s.id === e.shotId)!.clip;
@@ -212,6 +224,8 @@ export async function runCrew(options: CrewRunnerOptions): Promise<CrewResult> {
         "The attached audiovisual proxy, when present, is compressed for review; it cannot prove sample-accurate lip sync.\n" +
         "If render.timingAudit is present, it records observed footage and audio matches, including unresolved gaps. It is not approved source coverage or an instruction to overwrite the existing edit. Use its findings to request specific repairs.\n" +
         "Finishing parameters are a COMPLETE replacement recipe, applied to the clean base cut. If render.finishing exists, consult previousDecisions and retain all desired existing color adjustments and audio cues in your own output; omit a cue only to remove it. Never assume the previous mix will be layered underneath.\n" +
+        (phase === "finishing" && role === "picture_editor" ? `Mandatory editorialChecks: ${EDITORIAL_CHECKS.join(", ")}. Return each exactly once. For each, clear means inspected and sound, concern means a concrete defect, unverified means evidence is insufficient, not_applicable means genuinely absent in this cut; explain every status and give an affected interval (0-0 when not applicable). A concern or unverified item holds approval. Metadata review targets are leads only, not proof: ${JSON.stringify(editorialReviewTargets(brief))}.\n` : "") +
+        (phase !== "finishing" && role === "picture_editor" ? "No assembled whole cut is attached in this phase; return editorialChecks as an empty array.\n" : "") +
         (CHALLENGER_ROLES.includes(role as ChallengerRole) ? "Your brief below is narrowed to your own lens; a field you don't need has been removed, not hidden evidence -- do not infer withholding.\n" : "") +
         (VISUAL_ROLES.includes(role as typeof VISUAL_ROLES[number]) ? "Attached are this chapter's approved canon reference images, one per character, each preceded by a caption naming which character it shows. Judge actual appearance (build, costume, coloring) from these images, not from a character's name or notes alone; record a finding if what's proposed conflicts with what the image actually shows.\n" : "") +
         `CHAPTER BRIEF:\n${JSON.stringify(CHALLENGER_ROLES.includes(role as ChallengerRole) ? challengerBrief(brief, role as ChallengerRole) : brief)}\nTEAM CONTRIBUTIONS AND PREVIOUS DECISION:\n${JSON.stringify(contributions)}`;
@@ -220,6 +234,7 @@ export async function runCrew(options: CrewRunnerOptions): Promise<CrewResult> {
       const media = VISUAL_ROLES.includes(role as typeof VISUAL_ROLES[number]) ? [...(options.media ?? []), ...(options.visualMedia ?? [])] : (options.media ?? []);
       try {
         output = validateContribution(await call(prompt, crewSchema(role), media), role, brief);
+        if (phase === "finishing" && role === "picture_editor" && (!output.editorialChecks || output.editorialChecks.length !== EDITORIAL_CHECKS.length)) throw new Error("Picture Editor must assess every whole-cut editorial check.");
         if (phase === "planning" && ["creative_director", "cinematographer", "choreographer", "staging_designer", "production_designer", "costume_designer", "lighting_designer", "production_director"].includes(role) && output.directions.length !== brief.shots.length) {
           throw new Error("Planning directions must cover every shot.");
         }
@@ -236,13 +251,20 @@ export async function runCrew(options: CrewRunnerOptions): Promise<CrewResult> {
       try { planEditorialCut(brief, contributions.picture_editor!); }
       catch (error) { return { status: "held", summary: (error as Error).message, calls, contributions }; }
     }
-    const blocking = Object.values(contributions).some(c => c.findings.some(f => f.severity === "blocking") || (c.coverageRequests?.length ?? 0) > 0);
+    const blocking = Object.values(contributions).some(c => c.findings.some(f => f.severity === "blocking") || (c.coverageRequests?.length ?? 0) > 0)
+      || (phase === "finishing" && editorialChecksNeedRevision(contributions.picture_editor?.editorialChecks));
     const requestedAssets = Object.values(contributions).some(c => (c.generationRequests?.length ?? 0) > 0);
     if (phase === "finishing" && brief.render?.timingAudit && director.decision !== "revise") {
       return { status: "held", summary: `${director.summary} Observed timing still needs verified complete source coverage before automatic finishing.`, calls, contributions };
     }
     if (director.decision === "approve" && !blocking) return { status: requestedAssets ? "awaiting_assets" : "approved", summary: director.summary, calls, contributions };
-    if (director.decision !== "revise" || round === 2) return { status: "held", summary: `${director.summary}${blocking ? " Blocking findings or missing coverage remain." : ""}`, calls, contributions };
+    if (director.decision !== "revise" || round === 2) {
+      const unresolved = contributions.picture_editor?.editorialChecks?.filter(check => check.status === "concern" || check.status === "unverified") ?? [];
+      const detail = phase === "finishing" && unresolved.length
+        ? ` Editorial review: ${unresolved.map(check => `${check.name} ${check.startMs}-${check.endMs} ms (${check.status}): ${check.requestedChange}`).join("; ")}.`
+        : "";
+      return { status: "held", summary: `${director.summary}${blocking ? " Blocking findings, unresolved editorial checks, or missing coverage remain." : ""}${detail}`, calls, contributions };
+    }
   }
   throw new Error("Unreachable crew state.");
 }

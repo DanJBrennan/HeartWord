@@ -1,5 +1,22 @@
 # Current Goal
 
+## Whole-cut editorial intelligence captured in Stage 7 (2026-09-24)
+
+Dan's Mark 3 review exposed repeated pans and takes, weak speaking coverage,
+wrong-mouth speech, frozen action, staging/canon drift, and a desired wordless
+beat. The existing finishing review now requires explicit timestamped
+Picture Editor verdicts on these six reusable dimensions. Missing or
+uncertain assessments hold approval, while timeline metadata highlights
+likely repetition and wide speaking shots for inspection. This changes the
+review gate, not Scripture, canon, or the current Mark 3 picture. The
+eight-second Mark 3 pause remains an approved *edit direction* requiring a
+verified phrase boundary; the rubric does not insert it automatically.
+
+Goal Guardian check: this strengthens autonomous review before producer
+handoff without inventing source content, paid generation, or a new pipeline
+stage. It preserves Dan's review-and-correct workflow and keeps uncertain
+visual/linguistic evidence visible rather than silently passing it.
+
 ## Fresh-chapter production fixture restored (2026-09-24)
 
 The synthetic end-to-end chapter test now supplies the explicit wardrobe and

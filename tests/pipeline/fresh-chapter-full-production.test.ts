@@ -31,6 +31,7 @@ vi.mock("../../src/providers/gemini-text.js", () => {
     if (role === "picture_editor") {
       const timeline = (brief.shots ?? []).every((s: any) => s.clip) ? (brief.shots ?? []).map((s: any, i: number) => ({ shotId: s.id, sourceStartMs: 0, durationMs: brief.audio[i].endMs - brief.audio[i].startMs })) : [];
       Object.assign(base, { coverageRequests: [], edits: timeline, pauses: [] });
+      if (prompt.includes("Phase: finishing")) base.editorialChecks = ["repeated_coverage", "speaking_framing", "speaker_mouth", "static_action", "scene_continuity_canon", "pause_and_ambience"].map(name => ({ name, status: "clear", startMs: 0, endMs: brief.render.durationMs, evidence: "Synthetic fixture review of the complete cut", requestedChange: "None" }));
     }
     if (role === "colorist") base.colorAdjustments = [];
     if (role === "sound_designer" || role === "composer") Object.assign(base, { audioCues: [], generationRequests: [] });

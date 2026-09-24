@@ -7,6 +7,7 @@ import { directionsFromRun, runProductionCrew } from "../../src/pipeline/creativ
 import { finishingRecipe, structuralCutFindings } from "../../src/pipeline/assembly/finishing.js";
 import { FINISHING_ROLES, PLANNING_ROLES, type CrewBrief, type CrewContribution, type CrewEvent, type CrewRole, type CrewResult } from "../../src/pipeline/creative-direction/crew-types.js";
 import { executableProductionRolesFor } from "../../src/pipeline/creative-direction/role-registry.js";
+import { EDITORIAL_CHECKS, editorialReviewTargets } from "../../src/pipeline/qc/editorial-review.js";
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 function brief(): CrewBrief {
@@ -27,7 +28,7 @@ function brief(): CrewBrief {
 function response(role: CrewRole): CrewContribution {
   return { summary: `${role} checked the evidence.`, directions: [1,2].map(n => ({ shotId: `s${n}`, instruction: n === 1 ? "Preserve the intact roof" : "Show the opened roof", scriptureBasis: "Mark 2:1" })), findings: [],
     ...(role === "production_director" ? { decision: "approve" as const } : {}),
-    ...(role === "picture_editor" ? { coverageRequests: [], edits: [], pauses: [] } : {}),
+    ...(role === "picture_editor" ? { coverageRequests: [], edits: [], pauses: [], editorialChecks: EDITORIAL_CHECKS.map(name => ({ name, status: "clear" as const, startMs: 0, endMs: 8000, evidence: "Inspected the complete audiovisual cut", requestedChange: "None" })) } : {}),
     ...(role === "colorist" ? { colorAdjustments: [] } : {}),
     ...(role === "sound_designer" || role === "composer" ? { audioCues: [], generationRequests: [] } : {}) };
 }
@@ -153,6 +154,30 @@ describe("coordinated filmmaking", () => {
     const done = await runCrew({ phase: "finishing", brief: brief(), media, call, log: () => {} });
     expect(done.status).toBe("approved"); expect(done.calls).toBe(executableProductionRolesFor("finishing").filter(role => role !== "production_director").length + 4);
     expect(call).toHaveBeenLastCalledWith(expect.any(String), expect.any(Object), media);
+  });
+  it("holds a finishing review if a speaking mouth or other editorial check is uncertain", async () => {
+    const result = await runCrew({ phase: "finishing", brief: brief(), media: [{ mimeType: "video/mp4", data: "fixture" }], log: () => {}, call: async prompt => {
+      const out = response(roleFromPrompt(prompt));
+      if (roleFromPrompt(prompt) === "picture_editor") out.editorialChecks!.find(c => c.name === "speaker_mouth")!.status = "unverified";
+      return out;
+    } });
+    expect(result.status).toBe("held");
+    expect(result.summary).toContain("speaker_mouth");
+  });
+  it("rejects a missing editorial checklist instead of approving an unexamined cut", async () => {
+    const result = await runCrew({ phase: "finishing", brief: brief(), media: [{ mimeType: "video/mp4", data: "fixture" }], log: () => {}, call: async prompt => {
+      const out = response(roleFromPrompt(prompt));
+      if (roleFromPrompt(prompt) === "picture_editor") delete out.editorialChecks;
+      return out;
+    } });
+    expect(result.status).toBe("incomplete");
+    expect(result.summary).toContain("every whole-cut editorial check");
+  });
+  it("targets repeated placements without treating metadata as visual proof", () => {
+    const b = brief();
+    b.render!.timeline = [{ shotId: "s1", startMs: 0, endMs: 8000 }, { shotId: "s1", startMs: 8000, endMs: 16000 }];
+    expect(editorialReviewTargets(b).join(" ")).toContain("0-16000 ms");
+    expect(editorialReviewTargets(brief())).toEqual([]);
   });
   it("invalidates source, canon and producer changes without invalidating planning when a clip is produced", () => {
     const b = brief(), hash = crewBriefHash(b, "planning");

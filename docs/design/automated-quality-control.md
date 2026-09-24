@@ -79,6 +79,28 @@ event — see `docs/design/notifications.md`.
 
 ## Candidate checks (assembled video)
 
+### Whole-cut editorial review rubric (implemented)
+
+The existing Stage 7 finishing review now requires the Picture Editor to
+return a timestamped verdict for each of six reusable questions before a cut
+can be approved: repeated stills/takes or long unvaried angles; face-readable
+coverage when a named character speaks; a listener or second character visibly
+mouthing the active speaker's words; frozen action or awkward holds; approved
+canon and spatial/staging continuity; and intended wordless pauses with
+appropriate ambience. Each verdict is `clear`, `concern`, `unverified`, or
+`not_applicable`, with evidence and a requested change. Concern or uncertainty
+holds automatic approval; an absent checklist is an incomplete review.
+
+The saved timeline also supplies deterministic *review targets* for long
+consecutive placements of one shot, a shot reused three or more times, and a
+planned wide lip-sync framing. These are leads for inspecting the actual
+audiovisual cut, not evidence that the picture is defective. A compressed
+review proxy cannot certify exact Hatam word boundaries, sample-accurate lip
+sync, or a face's canon identity; those remain separate source/canon gates or
+must be reported as unverified. In particular, a dramatic pause may be
+suggested only when source timing and producer direction support it; QC never
+inserts silence into a source utterance on its own.
+
 - A speaking turn that becomes active again after a substantial pause, then
   ends abruptly on that new onset. Check the actual rendered speech asset at
   speaker changes and chapter end, not at every visual cut; allow a continuing

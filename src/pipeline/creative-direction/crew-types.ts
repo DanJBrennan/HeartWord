@@ -1,4 +1,5 @@
 import type { SavedCutTimingAudit } from "../assembly/cut-timing-audit.js";
+import type { EditorialCheck } from "../qc/editorial-review.js";
 
 export const PLANNING_ROLES = [
   "creative_director", "cinematographer", "choreographer", "staging_designer",
@@ -51,6 +52,8 @@ export interface CrewContribution {
   summary: string;
   directions: Array<{ shotId: string; instruction: string; scriptureBasis: string }>;
   findings: CrewFinding[];
+  /** Required from the Picture Editor when reviewing an actual finished cut. */
+  editorialChecks?: EditorialCheck[];
   coverageRequests?: Array<{ shotId: string; additionalMs: number; description: string; reason: string }>;
   edits?: Array<{ shotId: string; sourceStartMs: number; durationMs: number }>;
   pauses?: Array<{ afterSegmentId: string | null; durationMs: number; reason: string }>;
