@@ -271,7 +271,9 @@ export class KlingFaceLipSyncProvider {
         prompt,
         duration: String(Math.max(5, Math.round(durationSec))), // Kling's scene duration only accepts a small fixed set; "5" is its shortest
         aspect_ratio: "16:9",
-        mode: KLING_SCENE_MODE
+        mode: KLING_SCENE_MODE,
+        // HeartWord supplies the real source audio separately.
+        sound: "off"
       })
     });
     const submitData = (await submitRes.json()) as KlingTaskResponse;
@@ -399,7 +401,9 @@ export class KlingVideoProvider implements VideoProvider {
         prompt: request.prompt,
         duration: SCENE_DURATION,
         aspect_ratio: "16:9",
-        mode: KLING_SCENE_MODE
+        mode: KLING_SCENE_MODE,
+        // Non-lip-sync footage needs native ambience; source narration is layered separately.
+        sound: "on"
       })
     });
     const submitData = (await submitRes.json()) as KlingTaskResponse;
