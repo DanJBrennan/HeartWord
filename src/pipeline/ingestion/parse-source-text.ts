@@ -41,6 +41,14 @@ function xmlToParagraphLines(xml: string): string[] {
     .filter((line) => line.length > 0);
 }
 
+/** Published chapter identity for the opening card; never translated by a model. */
+export function parseChapterTitle(docxPath: string, chapter: number): string | null {
+  const first = xmlToParagraphLines(readDocumentXml(docxPath))[0]?.trim();
+  if (!first || !Number.isInteger(chapter) || chapter < 1) return null;
+  const match = first.match(/^(.+?)\s+(\d+)$/u);
+  return match && Number(match[2]) === chapter && /\p{L}/u.test(match[1]!) ? first : null;
+}
+
 /**
  * A verse marker: one to three digits, optionally followed by a space,
  * immediately followed by a capital letter or an opening quote — matches

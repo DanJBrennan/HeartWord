@@ -263,6 +263,18 @@ CREATE TABLE IF NOT EXISTS shots (
 );
 CREATE INDEX IF NOT EXISTS idx_shots_scene ON shots(scene_id);
 
+-- Pre-source-clock opening strategy from casting/direction. It is not a
+-- Scripture shot or an accepted media selection. The JSON records the fixed
+-- title card, optional location shots, timing, ambience, evidence and review
+-- state; later stages may fulfill it without retiming source audio.
+CREATE TABLE IF NOT EXISTS chapter_intro_plans (
+  project_id TEXT PRIMARY KEY REFERENCES projects(id),
+  plan_json TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('proposed','needs_review')),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
 -- Producer-confirmed speech identity for an on-camera speaking shot. A verse
 -- is intentionally insufficient: one speaker may have several utterances in
 -- it. The bound source interval is immutable evidence for voicing, lip sync

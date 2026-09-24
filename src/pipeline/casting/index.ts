@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { getDb } from "../../db/client.js";
 import { generateJson, type GeminiJsonSchema } from "../../providers/gemini-text.js";
 import type { ProjectRow } from "../ingestion/index.js";
-import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
+import { parseChapterTitle, parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
 import { resolveAndBindSourcePaths } from "../ingestion/source-catalog.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
 import type { Stage } from "../types.js";
@@ -29,6 +29,7 @@ import {
   type Framing
 } from "./coverage.js";
 import { narrationBudgetFor, resolveNarrationSpans, type NarrationBudget } from "./narration-coverage.js";
+import { buildChapterIntroPlan, type IntroProposal } from "./chapter-intro.js";
 
 interface SceneRow {
   id: string;
@@ -72,6 +73,7 @@ interface GeminiSceneResponse {
   lightingContinuity: string;
   spatialContinuity: string;
   shots: GeminiShot[];
+  chapterOpening?: IntroProposal;
 }
 
 const SHOT_RESPONSE_SCHEMA: GeminiJsonSchema = {
@@ -163,6 +165,20 @@ const SHOT_RESPONSE_SCHEMA: GeminiJsonSchema = {
           "spatialView"
         ]
       }
+    },
+    chapterOpening: {
+      type: "object",
+      description: "Only for the first scene: optional pre-story location sequence, separate from all verse-timed scene shots.",
+      properties: {
+        reasoning: { type: "string" },
+        shots: { type: "array", items: { type: "object", properties: {
+          role: { type: "string", enum: ["establishing", "bridge", "arrival"] },
+          description: { type: "string" },
+          reason: { type: "string" },
+          evidence: { type: "string" },
+          durationSec: { type: "number" }
+        }, required: ["role", "description", "reason", "evidence", "durationSec"] } }
+      }, required: ["reasoning", "shots"]
     }
   },
   required: ["reasoning", "lightingContinuity", "spatialContinuity", "shots"]
@@ -240,6 +256,8 @@ For each shot, also set crowdDensity (how full the location should read -- groun
 
 Finally, state one shared lighting/setting continuity note for the whole scene (time of day, light source, interior vs. exterior) that every shot's generation should follow, so the scene doesn't drift in lighting from shot to shot.
 
+${scene.sequence === 1 ? `CHAPTER OPENING (separate from the verse-timed shots above): Propose chapterOpening as a short, wordless location-to-story sequence BEFORE source recording time zero. Give zero to three location shots, only if the first scene's text or your shared spatialContinuity actually establishes a setting. Start with one establishing view; optionally use a bridge as shot two only when a destination/arrival view is shot three and the geographic move is credible. Otherwise cut directly. Do not force an aerial, a bridge, three shots, or eight seconds per shot. Each proposed shot must last 3-8 seconds, supply an exact short evidence phrase copied from the text or spatialContinuity, and explain its purpose. No dialogue, Scripture action, invented landmark, or theological content in these pre-story shots. The fixed series title card is created separately from the verified source-language title. Each shot needs natural location ambience; existing media is only a candidate requiring target-shot review. The full approved source recording starts with the first verse-timed picture after this opening.` : ""}
+
 Do not invent theological content, dialogue, or narrative beyond what the text says: you are deciding HOW the text is shown, not adding to WHAT it says.`;
 }
 
@@ -303,8 +321,12 @@ const buildCasting: Stage = async (projectId) => {
     return { ok: false, reasoning: "Casting failed: no scenes found -- run scene breakdown (stage 2) first." };
   }
 
-  let referencePath: string;
-  try { referencePath = resolveAndBindSourcePaths(db, project).referencePath; }
+  let referencePath: string, sourceTextPath: string;
+  try {
+    const paths = resolveAndBindSourcePaths(db, project);
+    referencePath = paths.referencePath;
+    sourceTextPath = paths.docxPath;
+  }
   catch (error) {
     return {
       ok: false,
@@ -322,6 +344,8 @@ const buildCasting: Stage = async (projectId) => {
     };
   }
   const verses = parseSourceTextByVerse(referencePath);
+  const chapterTitle = parseChapterTitle(sourceTextPath, project.chapter);
+  if (!chapterTitle) return { ok: false, reasoning: "Casting held: the source document has no verifiable chapter title for the opening card." };
 
   const allCanonCharacters = db
     .prepare(
@@ -386,9 +410,23 @@ const buildCasting: Stage = async (projectId) => {
         .map(s => s.speaker_name).filter((n): n is string => n !== null))];
       const canon = allCanonCharacters.filter(c => hasJoinedByScene(c.joined_narrative_at, scene.verse_end));
       const narrationBudget = narrationBudgetFor(narrationSpans, start, end);
-      responses.set(scene.id, await generateJson<GeminiSceneResponse>(buildScenePrompt(project, scene, text, speakers, canon, narrationBudget), SHOT_RESPONSE_SCHEMA));
+      const schema = scene.sequence === 1
+        ? { ...SHOT_RESPONSE_SCHEMA, required: [...(SHOT_RESPONSE_SCHEMA.required as string[]), "chapterOpening"] }
+        : SHOT_RESPONSE_SCHEMA;
+      responses.set(scene.id, await generateJson<GeminiSceneResponse>(buildScenePrompt(project, scene, text, speakers, canon, narrationBudget), schema));
     }
   } catch (error) { return { ok: false, reasoning: `Initial storyboard planning incomplete: ${(error as Error).message}` }; }
+
+  const firstScene = scenes[0]!;
+  const firstResponse = responses.get(firstScene.id)!;
+  const firstStart = parseVerseRange(firstScene.verse_start).start;
+  const firstEnd = parseVerseRange(firstScene.verse_end).end;
+  const firstText = verses.filter(v => v.verse >= firstStart && v.verse <= firstEnd).map(v => v.text).join(" ");
+  const introPlan = buildChapterIntroPlan({
+    title: chapterTitle, language: project.language,
+    grounding: `${firstText} ${firstResponse.spatialContinuity}`,
+    proposal: firstResponse.chapterOpening,
+  });
 
   db.exec("BEGIN TRANSACTION");
   try {
@@ -405,6 +443,9 @@ const buildCasting: Stage = async (projectId) => {
       `INSERT OR IGNORE INTO shot_characters (shot_id, character_id) VALUES (?, ?)`
     );
     const updateScene = db.prepare(`UPDATE scenes SET reasoning = ?, lighting_continuity = ?, spatial_continuity = ? WHERE id = ?`);
+    db.prepare(`INSERT INTO chapter_intro_plans (project_id, plan_json, status, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?) ON CONFLICT(project_id) DO NOTHING`)
+      .run(project.id, JSON.stringify(introPlan), introPlan.status, now, now);
 
     for (const scene of scenes) {
       const response = responses.get(scene.id)!;
@@ -543,6 +584,7 @@ const buildCasting: Stage = async (projectId) => {
         `${coverageFlags.length} shot(s) need covered-sequence coverage (see shots.coverage_notes): ${coverageFlags.join(" | ")}`
       );
     }
+    if (introPlan.reviewNotes.length) reviewNoteParts.push(`Chapter opening: ${introPlan.reviewNotes.join(" ")}`);
     if (reviewNoteParts.length > 0) {
       db.prepare(
         `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
@@ -566,6 +608,7 @@ const buildCasting: Stage = async (projectId) => {
       `Cast and directed ${scenes.length} scene(s) for ${project.book} ${project.chapter}: ${totalShots} shots ` +
       `planned via Gemini, grounded in the English reference text, each with a framing/camera-movement decision ` +
           `and shared lighting and spatial-continuity plans set per scene.` +
+      ` A separate ${introPlan.status} chapter opening has ${introPlan.shots.length} pre-story location shot(s); the verified title card and source-clock entrance are recorded in chapter_intro_plans.` +
       (unresolvedNames.size > 0
         ? ` ${unresolvedNames.size} character name(s) Gemini returned didn't match the canon list and were dropped ` +
           "-- flagged in review_notes."

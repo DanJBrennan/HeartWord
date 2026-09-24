@@ -103,6 +103,15 @@ interface SceneWithShots {
   shots: Shot[];
 }
 
+interface ChapterIntroPlan {
+  titleCard: { title: string; language: string; durationMs: number; audio: string };
+  shots: Array<{ role: string; description: string; reason: string; evidence: string; durationMs: number; endpointRule: string; audio: string }>;
+  sourceClockStartMs: number;
+  reasoning: string;
+  status: "proposed" | "needs_review";
+  reviewNotes: string[];
+}
+
 const QC_STATUS_LABELS: Record<string, string> = {
   accepted: "✓ QC passed",
   retry_same: "⟳ QC: flagged for retry",
@@ -142,6 +151,7 @@ export default function App() {
   const [castMasterResult, setCastMasterResult] = useState<VoicingResult | null>(null);
 
   const [scenesWithShots, setScenesWithShots] = useState<SceneWithShots[]>([]);
+  const [introPlan, setIntroPlan] = useState<ChapterIntroPlan | null>(null);
   const [castingError, setCastingError] = useState<string | null>(null);
   const [castingBusy, setCastingBusy] = useState(false);
   const [castingResult, setCastingResult] = useState<CastingResult | null>(null);
@@ -220,7 +230,7 @@ export default function App() {
   }
 
   const activeProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0] ?? null;
-  function selectProject(id: string) { selectionEpochRef.current++; selectedProjectRef.current = id; setSelectedProjectId(id); setScenesWithShots([]); setCastMasterSegments([]); setReviewDrafts({}); setReviewError(null); setCastingResult(null); setCastingError(null); setMediaGenResult(null); setMediaGenError(null); setCastMasterResult(null); setCastMasterError(null); setCastingBusy(false); setMediaGenBusy(false); setCastMasterBusy(false); setReviewBusyShotId(null); setZoomedKeyframe(null); setPipelineBusy(false); setPipelineResult(null); setPipelineError(null); setCanonReadiness(null); }
+  function selectProject(id: string) { selectionEpochRef.current++; selectedProjectRef.current = id; setSelectedProjectId(id); setScenesWithShots([]); setIntroPlan(null); setCastMasterSegments([]); setReviewDrafts({}); setReviewError(null); setCastingResult(null); setCastingError(null); setMediaGenResult(null); setMediaGenError(null); setCastMasterResult(null); setCastMasterError(null); setCastingBusy(false); setMediaGenBusy(false); setCastMasterBusy(false); setReviewBusyShotId(null); setZoomedKeyframe(null); setPipelineBusy(false); setPipelineResult(null); setPipelineError(null); setCanonReadiness(null); }
 
   async function startChapterPreparation() {
     if (!activeProject || pipelineBusy) return;
@@ -297,8 +307,8 @@ export default function App() {
 
   async function loadShots(projectId: string) {
     try {
-      const { scenes } = await api<{ scenes: SceneWithShots[] }>(`/projects/${projectId}/shots`);
-      if (selectedProjectRef.current === projectId) setScenesWithShots(scenes);
+      const { scenes, introPlan } = await api<{ scenes: SceneWithShots[]; introPlan: ChapterIntroPlan | null }>(`/projects/${projectId}/shots`);
+      if (selectedProjectRef.current === projectId) { setScenesWithShots(scenes); setIntroPlan(introPlan); }
     } catch (err) {
       if (selectedProjectRef.current === projectId) setCastingError((err as Error).message);
     }
@@ -471,6 +481,13 @@ export default function App() {
             <ProductionCrew key={activeProject.id} projectId={activeProject.id} onUpdated={() => void loadShots(activeProject.id)} />
             {castingResult && <p>{castingResult.reasoning}</p>}
             {castingError && <p className="error">{castingError}</p>}
+            {introPlan && <div className="scene-block">
+              <h3>Chapter opening — {introPlan.status.replaceAll("_", " ")}</h3>
+              <p>{introPlan.titleCard.title} · {introPlan.titleCard.language} title card ({(introPlan.titleCard.durationMs / 1000).toFixed(1)}s), then {introPlan.shots.length} pre-story location shot{introPlan.shots.length === 1 ? "" : "s"}. Natural location ambience; source recording begins at {(introPlan.sourceClockStartMs / 1000).toFixed(1)}s.</p>
+              <p className="hint">{introPlan.reasoning}</p>
+              {introPlan.reviewNotes.map((note, index) => <p className="error" key={index}>{note}</p>)}
+              <ol>{introPlan.shots.map((shot, index) => <li key={index}><strong>{shot.role}</strong> ({(shot.durationMs / 1000).toFixed(1)}s) — {shot.description} Purpose: {shot.reason} Evidence: “{shot.evidence}”. {shot.endpointRule === "match_adjacent_frames" ? "Match its first/last frames to the adjacent shots. " : ""}Media is not assigned; reuse requires target-shot review.</li>)}</ol>
+            </div>}
             {scenesWithShots.map((scene) => (
               <div key={scene.id} className="scene-block">
                 <h3>

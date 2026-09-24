@@ -1,5 +1,34 @@
 # Current Goal
 
+## Chapter-opening strategy in shot planning (2026-09-24)
+
+Dan approved the reusable Mark 3-derived intro strategy for future chapters.
+The existing casting/direction stage now asks its first-scene planner for a
+separate pre-source-clock opening proposal. It validates the published
+heart-language chapter title, records a 2.5-second series card, and accepts
+zero to three grounded location shots with individually justified 3–8-second
+durations. A bridge is allowed only between establishing and arrival views;
+otherwise the plan can use a direct cut. The plan records evidence, reasoning,
+ambience, frame-match constraints, unassigned media status, and the calculated
+source-recording entrance. Malformed or unsupported suggestions become
+`needs_review` instead of being silently adopted. Reused media remains only
+a target-review candidate. The plan is persisted in `chapter_intro_plans`,
+available through the project API and displayed beside the storyboard;
+`docs/design/shot-planning.md` now specifies the strategy.
+
+This change implements automatic **planning**, not automatic paid media
+generation or assembly. Those existing stages still need to fulfill the plan
+with reviewed assets and protect the exact source clock; no existing chapter
+render or producer-approved intro is changed. The generated plan is available
+for producer correction before any footage is assigned.
+
+Goal Guardian check: the change advances the autonomous chapter storyboard
+without hardcoding Mark 3's locations or 24-second opening, inventing
+Scripture action, or shifting source-language speech. The user workflow still
+starts from verified chapter inputs and exposes planner reasoning for review.
+Typecheck and the four targeted intro tests pass. The full suite is 460/461,
+with only the previously known unrelated fresh-chapter stage mismatch.
+
 ## Mark 3 full-chapter review audio playback repair (2026-09-24)
 
 Dan found that the chapter review became silent in his player from about

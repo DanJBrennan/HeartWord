@@ -28,6 +28,43 @@ setting that recurs differently than assumed, a character introduced
 earlier than expected) — the book-level storyboard is a living overview, not
 a plan that gets silently invalidated by chapter work.
 
+## Chapter-opening strategy
+
+The first scene's shot planner also proposes a **separate, pre-source-clock**
+chapter opening. It is not a verse-timed scene shot and never consumes,
+shortens, or retimes the approved Scripture recording.
+
+- Every chapter has the series' 2–3-second title card, using the verified
+  source-language chapter title and language name. Its background is a
+  darkened frame of the opening establishing view (or the first story view if
+  no separate location footage is justified). See `chapter-title-card.md`.
+- When the first scene establishes a setting, plan a short wordless progression
+  from a wide location view toward the first story space. An arrival view may
+  follow directly. A connecting bridge is optional and belongs only between
+  two known views whose geography supports the move; its generated first and
+  last frames must match those views. Never invent a landmark, route, arrival,
+  dialogue, or Scripture action merely to fill an opening.
+- Shot count and durations are justified by location clarity, pacing, and
+  cost. Mark 3's three eight-second shots are a worked example, not a default
+  quota. No location shot is required when the first scene has no grounded
+  location to establish; that case remains visible for review.
+- The card and each pre-story shot require audible, appropriate location
+  ambience, not generated speech. The complete source recording starts with
+  the first verse-timed picture after the opening. Assembly/QC must verify
+  continuous audio, the visual seams, and the exact source-clock offset.
+- Reusable footage is a discovery candidate, not an automatic timeline
+  selection. Location, approved regional canon, continuity, target-shot fit,
+  and provenance must pass the normal reuse review before assignment.
+
+The chapter-level plan records each shot's purpose, exact grounding phrase,
+duration, ambient-audio requirement, endpoint constraint, unassigned media
+state, and the calculated source-clock entrance. In v1 it is stored separately
+from `shots` in `chapter_intro_plans` and shown beside the storyboard. This
+planning record does not itself generate or approve footage; media generation
+and assembly must fulfill it through their existing reviewed stages. An
+ungrounded or malformed proposal is held for review rather than silently
+turned into a forced three-shot opening.
+
 ## Manual Trigger
 
 Alongside the autonomous default (HeartWord proposes a storyboard and shot

@@ -99,6 +99,16 @@ projectsRouter.post("/:id/run", async (req, res) => {
   res.json(result);
 });
 
+projectsRouter.get("/:id/chapter-intro-plan", (req, res) => {
+  const db = getDb();
+  if (!db.prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)) {
+    res.status(404).json({ error: "Project not found." }); return;
+  }
+  const row = db.prepare("SELECT plan_json, status, updated_at FROM chapter_intro_plans WHERE project_id=?")
+    .get(req.params.id) as { plan_json: string; status: string; updated_at: number } | undefined;
+  res.json({ plan: row ? JSON.parse(row.plan_json) : null, status: row?.status ?? "not_planned", updatedAt: row?.updated_at ?? null });
+});
+
 projectsRouter.post("/:id/source-alignment-review", (req,res) => {
   const raw=req.body ?? {};
   if (typeof raw.reviewerName!=="string" || typeof raw.attestation!=="string" || typeof raw.evidence!=="string" || raw.attestation.trim().toLowerCase() !== "confirm") { res.status(400).json({error:"reviewerName, evidence, and explicit attestation 'confirm' are required."}); return; }
@@ -420,7 +430,8 @@ projectsRouter.get("/:id/shots", (req, res) => {
     return { ...scene, englishText, shots: shotsStmt.all(scene.id) };
   });
 
-  res.json({ scenes: scenesWithShots });
+  const intro = db.prepare("SELECT plan_json FROM chapter_intro_plans WHERE project_id=?").get(req.params.id) as { plan_json: string } | undefined;
+  res.json({ scenes: scenesWithShots, introPlan: intro ? JSON.parse(intro.plan_json) : null });
 });
 
 projectsRouter.post("/:id/shots/:shotId/reuse-candidates", (req,res) => {
