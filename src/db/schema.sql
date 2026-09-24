@@ -320,14 +320,19 @@ CREATE INDEX IF NOT EXISTS idx_generation_attempts_shot ON generation_attempts(s
 CREATE TABLE IF NOT EXISTS media_library_items (
   id TEXT PRIMARY KEY,
   generation_attempt_id TEXT UNIQUE REFERENCES generation_attempts(id),
-  project_id TEXT NOT NULL REFERENCES projects(id),
-  shot_id TEXT NOT NULL REFERENCES shots(id),
+  project_id TEXT REFERENCES projects(id),
+  shot_id TEXT REFERENCES shots(id),
   kind TEXT NOT NULL CHECK (kind IN ('image','video','frame')),
   asset_path TEXT NOT NULL UNIQUE,
   parent_item_id TEXT REFERENCES media_library_items(id),
   parent_time_ms INTEGER,
+  title TEXT,
+  location TEXT,
+  tags_json TEXT,
+  library_status TEXT NOT NULL DEFAULT 'retained' CHECK (library_status IN ('retained','reusable_reference')),
   provenance_json TEXT NOT NULL,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  CHECK ((project_id IS NULL AND shot_id IS NULL) OR (project_id IS NOT NULL AND shot_id IS NOT NULL))
 );
 CREATE INDEX IF NOT EXISTS idx_media_library_items_lookup ON media_library_items(kind, project_id, shot_id, created_at);
 

@@ -93,6 +93,18 @@ provenance; it never edits the original video or calls a media provider. The
 stable library metadata is intentionally suitable for later retrieval agents,
 but automatic creative selection is not implemented or implied by this design.
 
+Standalone location references (stills or video) use the same immutable media
+catalog without a fabricated project or shot origin. Registering an existing
+file records its path, hash, production provenance, title, location, concise
+search tags, source language, and approved regional-canon context; it does not
+copy the file, generate media, or put anything on a timeline. Such items are
+marked `reusable_reference` for discovery, which is an asset-level label only:
+each target shot still requires the guarded reuse-candidate and normal
+source/canon/editorial review. A frame extracted from a standalone video keeps
+its parent/timecode and location metadata. For now, standalone registration is
+scoped to the approved Hatam/Papuan production world; other language/canon
+reuse is a separate producer decision, not an inference from an empty cast.
+
 ## Draft Room and Cost-Tiered Generation
 
 Gemini Omni 1.1 Flash (Google, released 2026) is a concrete example of the

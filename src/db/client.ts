@@ -80,6 +80,8 @@ export function getDb(): DatabaseSync {
   const schema = readFileSync(SCHEMA_PATH, "utf-8");
   db.exec(schema);
   applyColumnMigrations(db);
+  migrateMediaLibraryStandaloneOrigins(db);
+  db.exec("CREATE INDEX IF NOT EXISTS idx_media_library_items_location ON media_library_items(location, library_status);");
 
   // These two indexes reference characters.group_id/is_spokesperson, which
   // only exist after applyColumnMigrations runs on an already-existing
@@ -160,6 +162,46 @@ function applyColumnMigrations(db: DatabaseSync): void {
     if (!columns.some((c) => c.name === migration.column)) {
       db.exec(migration.ddl);
     }
+  }
+}
+
+/** SQLite cannot drop NOT NULL in place; retain old rows and candidate FKs. */
+export function migrateMediaLibraryStandaloneOrigins(db: DatabaseSync): void {
+  const columns = db.prepare("PRAGMA table_info(media_library_items)").all() as Array<{name:string; notnull:number}>;
+  if (columns.some(c => c.name === "title") && columns.find(c => c.name === "shot_id")?.notnull === 0) return;
+  db.exec("PRAGMA foreign_keys=OFF");
+  try {
+    db.exec(`BEGIN;
+      CREATE TABLE media_library_items_new (
+        id TEXT PRIMARY KEY,
+        generation_attempt_id TEXT UNIQUE REFERENCES generation_attempts(id),
+        project_id TEXT REFERENCES projects(id),
+        shot_id TEXT REFERENCES shots(id),
+        kind TEXT NOT NULL CHECK (kind IN ('image','video','frame')),
+        asset_path TEXT NOT NULL UNIQUE,
+        parent_item_id TEXT REFERENCES media_library_items(id),
+        parent_time_ms INTEGER,
+        title TEXT,
+        location TEXT,
+        tags_json TEXT,
+        library_status TEXT NOT NULL DEFAULT 'retained' CHECK (library_status IN ('retained','reusable_reference')),
+        provenance_json TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        CHECK ((project_id IS NULL AND shot_id IS NULL) OR (project_id IS NOT NULL AND shot_id IS NOT NULL))
+      );
+      INSERT INTO media_library_items_new (id,generation_attempt_id,project_id,shot_id,kind,asset_path,parent_item_id,parent_time_ms,provenance_json,created_at)
+        SELECT id,generation_attempt_id,project_id,shot_id,kind,asset_path,parent_item_id,parent_time_ms,provenance_json,created_at FROM media_library_items;
+      DROP TABLE media_library_items;
+      ALTER TABLE media_library_items_new RENAME TO media_library_items;
+      CREATE INDEX IF NOT EXISTS idx_media_library_items_lookup ON media_library_items(kind, project_id, shot_id, created_at);
+      COMMIT;`);
+    const issues = db.prepare("PRAGMA foreign_key_check").all();
+    if (issues.length) throw new Error("Media library migration found broken foreign keys.");
+  } catch (error) {
+    try { db.exec("ROLLBACK"); } catch { /* transaction may have committed */ }
+    throw error;
+  } finally {
+    db.exec("PRAGMA foreign_keys=ON");
   }
 }
 

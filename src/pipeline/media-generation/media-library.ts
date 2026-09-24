@@ -9,6 +9,39 @@ type LibraryKind = "image" | "video" | "frame";
 const kindFor = (path: string): LibraryKind => /\.(mp4|mov|webm)$/i.test(path) ? "video" : "image";
 const sha256 = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
 
+export interface StandaloneLibraryAsset {
+  assetPath: string;
+  title: string;
+  location: string;
+  tags: string[];
+  language: string;
+  canonRegion: string;
+  provenance: Record<string, unknown>;
+}
+
+/** Catalogs an existing immutable still or video; it never copies or approves timeline media. */
+export function registerStandaloneLibraryAsset(db: DatabaseSync, dataDir: string, input: StandaloneLibraryAsset) {
+  const assetPath = input.assetPath.replaceAll("\\", "/");
+  if (!/\.(png|jpe?g|webp|mp4|mov|webm)$/i.test(assetPath)) throw new Error("A supported image or video path is required.");
+  if (!input.title?.trim() || !input.location?.trim() || !input.language?.trim() || !input.canonRegion?.trim()) throw new Error("Title, location, language, and canon region are required.");
+  if (input.language.trim().toLowerCase() !== "hatam" || input.canonRegion.trim() !== "Papuan") throw new Error("Standalone references currently require the approved Hatam/Papuan production context.");
+  if (!Array.isArray(input.tags) || input.tags.some(tag => typeof tag !== "string" || !tag.trim()) || input.tags.length > 20) throw new Error("Tags must be a short list of nonempty labels.");
+  if (!input.provenance || typeof input.provenance !== "object" || Array.isArray(input.provenance)) throw new Error("Production provenance must be an object.");
+  const absolute = productionAssetPath(dataDir,assetPath);
+  if (!existsSync(absolute)) throw new Error("The original asset file was not found.");
+  const existing = db.prepare("SELECT id,provenance_json FROM media_library_items WHERE asset_path=?").get(assetPath) as {id:string;provenance_json:string}|undefined;
+  if (existing) {
+    const recorded = JSON.parse(existing.provenance_json) as {generation?:{contentHash?:string}};
+    if (recorded.generation?.contentHash && recorded.generation.contentHash !== sha256(absolute)) throw new Error("The cataloged original has changed on disk.");
+    return { id:existing.id, existing:true };
+  }
+  const id=randomUUID();
+  const provenance = { ...input.provenance, origin:{ language:input.language.trim().toLowerCase(), canonRegion:input.canonRegion.trim(), standalone:true }, generation:{ ...(typeof input.provenance.generation === "object" && input.provenance.generation !== null ? input.provenance.generation : {}), contentHash:sha256(absolute) }, currentOriginCast:[] };
+  db.prepare(`INSERT INTO media_library_items (id,kind,asset_path,title,location,tags_json,library_status,provenance_json,created_at)
+    VALUES (?,?,?,?,?,?,'reusable_reference',?,?)`).run(id,kindFor(assetPath),assetPath,input.title.trim(),input.location.trim(),JSON.stringify(input.tags.map(tag=>tag.trim())),JSON.stringify(provenance),Date.now());
+  return { id, existing:false };
+}
+
 /** Idempotently exposes existing, verifiable generated files without moving them. */
 export function registerGeneratedMediaLibraryItems(db: DatabaseSync, dataDir: string): number {
   const attempts = db.prepare(`SELECT ga.id,ga.result_asset_path AS path,ga.provider,ga.model,ga.operation,ga.prompt,ga.status,ga.created_at,
@@ -33,15 +66,16 @@ export function registerGeneratedMediaLibraryItems(db: DatabaseSync, dataDir: st
 }
 
 export function extractLibraryFrame(db: DatabaseSync, dataDir: string, itemId: string, timeMs: number) {
-  const item = db.prepare("SELECT * FROM media_library_items WHERE id=? AND kind='video'").get(itemId) as { id:string; project_id:string; shot_id:string; asset_path:string; provenance_json:string } | undefined;
+  const item = db.prepare("SELECT * FROM media_library_items WHERE id=? AND kind='video'").get(itemId) as { id:string; project_id:string|null; shot_id:string|null; asset_path:string; provenance_json:string; title:string|null; location:string|null; tags_json:string|null; library_status:string } | undefined;
   if (!item) throw new Error("A retained video item is required.");
   if (!Number.isInteger(timeMs) || timeMs < 0) throw new Error("Frame time must be a non-negative integer millisecond value.");
   const source = productionAssetPath(dataDir,item.asset_path); if (!existsSync(source)) throw new Error("The retained source video is missing; no frame was created.");
   const id = randomUUID(), path = `generated/media-library/frames/${id}.png`, output = productionAssetPath(dataDir,path); mkdirSync(dirname(output),{recursive:true});
   execFileSync("ffmpeg",["-v","error","-n","-ss",String(timeMs / 1000),"-i",source,"-frames:v","1",output],{stdio:["ignore","ignore","pipe"]});
-  const provenance = { ...JSON.parse(item.provenance_json) as object, parentItemId:item.id, parentPath:item.asset_path, parentTimeMs:timeMs, contentHash:sha256(output) };
-  db.prepare(`INSERT INTO media_library_items (id,project_id,shot_id,kind,asset_path,parent_item_id,parent_time_ms,provenance_json,created_at) VALUES (?,?,?,?,?,?,?,?,?)`)
-    .run(id,item.project_id,item.shot_id,"frame",path,item.id,timeMs,JSON.stringify(provenance),Date.now());
+  const parent = JSON.parse(item.provenance_json) as {generation?:{contentHash?:string}};
+  const provenance = { ...parent, generation:{ ...parent.generation, contentHash:sha256(output) }, parentItemId:item.id, parentPath:item.asset_path, parentTimeMs:timeMs, parentContentHash:parent.generation?.contentHash };
+  db.prepare(`INSERT INTO media_library_items (id,project_id,shot_id,kind,asset_path,parent_item_id,parent_time_ms,title,location,tags_json,library_status,provenance_json,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(id,item.project_id,item.shot_id,"frame",path,item.id,timeMs,item.title,item.location,item.tags_json,item.library_status,JSON.stringify(provenance),Date.now());
   return { id, path, parentItemId:item.id, parentTimeMs:timeMs };
 }
 
@@ -49,12 +83,14 @@ export function createReuseCandidate(db: DatabaseSync, dataDir: string, itemId: 
   const item = db.prepare("SELECT * FROM media_library_items WHERE id=?").get(itemId) as { id:string; asset_path:string; provenance_json:string } | undefined;
   const target = db.prepare(`SELECT s.id,sc.project_id,p.language FROM shots s JOIN scenes sc ON sc.id=s.scene_id JOIN projects p ON p.id=sc.project_id WHERE s.id=?`).get(targetShotId) as { id:string; project_id:string; language:string } | undefined;
   if (!item || !target) throw new Error("Library item or target shot was not found.");
-  const donor = JSON.parse(item.provenance_json) as { origin?:{ language?:string }, currentOriginCast?:Array<{region?:string}>, generation?:{contentHash?:string} };
+  const donor = JSON.parse(item.provenance_json) as { origin?:{ language?:string; canonRegion?:string }, currentOriginCast?:Array<{region?:string}>, generation?:{contentHash?:string} };
   const source = productionAssetPath(dataDir,item.asset_path);
   if (!existsSync(source) || (donor.generation?.contentHash && sha256(source) !== donor.generation.contentHash)) throw new Error("Retained donor file is missing or changed; it cannot be reused.");
   const targetRegions = db.prepare(`SELECT DISTINCT c.region FROM shot_characters sc JOIN characters c ON c.id=sc.character_id JOIN character_versions cv ON cv.character_id=c.id AND cv.status='approved' WHERE sc.shot_id=?`).all(targetShotId) as Array<{ region:string }>;
   const donorRegions = [...new Set((donor.currentOriginCast ?? []).map(c => c.region).filter(Boolean))];
-  if (donor.origin?.language !== target.language || targetRegions.length > 1 || donorRegions.length > 1 || (donorRegions.length === 1 && targetRegions.length === 1 && donorRegions[0] !== targetRegions[0]!.region)) throw new Error("Reuse candidate requires matching language and compatible approved regional canon context.");
+  const donorRegion = donor.origin?.canonRegion ?? donorRegions[0];
+  const targetRegion = target.language.toLowerCase() === "hatam" ? "Papuan" : targetRegions[0]?.region;
+  if (donor.origin?.language !== target.language || !targetRegion || targetRegions.length > 1 || donorRegions.length > 1 || (donorRegion && donorRegion !== targetRegion)) throw new Error("Reuse candidate requires matching language and compatible approved regional canon context.");
   const existing = db.prepare("SELECT id FROM media_reuse_candidates WHERE library_item_id=? AND target_shot_id=?").get(itemId,targetShotId) as {id:string}|undefined;
   if (existing) return { id:existing.id, existing:true };
   const context = donorRegions.length ? "Historical generation reference versions are unknown; Dottie must verify target canon before use." : "Characterless donor; Vera and Orion must verify target fitness.";

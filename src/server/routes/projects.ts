@@ -11,7 +11,7 @@ import { discoverSourcePaths } from "../../pipeline/ingestion/source-catalog.js"
 import { alignmentDisplay } from "../../pipeline/ingestion/alignment-display.js";
 import { parseVerseRange } from "../../pipeline/scene-breakdown/build-scenes.js";
 import { buildProductionCrewView, type NegotiationLogEntry } from "../production-crew.js";
-import { createReuseCandidate, extractLibraryFrame, registerGeneratedMediaLibraryItems } from "../../pipeline/media-generation/media-library.js";
+import { createReuseCandidate, extractLibraryFrame, registerGeneratedMediaLibraryItems, registerStandaloneLibraryAsset } from "../../pipeline/media-generation/media-library.js";
 import { bindShotUtterance } from "../../pipeline/voice-lipsync/utterance-binding.js";
 import { acceptLipSyncCandidate } from "../../pipeline/voice-lipsync/candidate-selection.js";
 import { acceptFinalVideoCandidate, generateNonSpeakingVideoCandidate } from "../../pipeline/media-generation/final-video.js";
@@ -44,13 +44,25 @@ projectsRouter.get("/media-library", (req, res) => {
   const kind = typeof req.query.kind === "string" ? req.query.kind : null;
   const status = typeof req.query.status === "string" ? req.query.status : null;
   const selection = typeof req.query.selection === "string" ? req.query.selection : null;
+  const libraryStatus = typeof req.query.libraryStatus === "string" ? req.query.libraryStatus : null;
   const search = typeof req.query.search === "string" ? req.query.search.trim().toLowerCase() : "";
-  const rows = db.prepare(`SELECT li.*,ga.provider,ga.model,ga.operation,ga.prompt,ga.status AS review_status,p.language,p.book,p.chapter,s.action,s.verse_ref,
-      CASE WHEN EXISTS(SELECT 1 FROM clips c WHERE c.generation_attempt_id=li.generation_attempt_id) THEN 'selected_in_origin' ELSE 'not_selected_in_origin' END AS origin_selection,
+  const rows = db.prepare(`SELECT li.*,coalesce(ga.provider,json_extract(li.provenance_json,'$.generation.provider')) AS provider,coalesce(ga.model,json_extract(li.provenance_json,'$.generation.model')) AS model,ga.operation,ga.prompt,ga.status AS review_status,coalesce(p.language,json_extract(li.provenance_json,'$.origin.language')) AS language,p.book,p.chapter,s.action,s.verse_ref,
+      CASE WHEN li.shot_id IS NULL THEN 'standalone_reference' WHEN EXISTS(SELECT 1 FROM clips c WHERE c.generation_attempt_id=li.generation_attempt_id) THEN 'selected_in_origin' ELSE 'not_selected_in_origin' END AS origin_selection,
       (SELECT GROUP_CONCAT(rn.note, '\n') FROM review_notes rn WHERE rn.subject_type='shot' AND rn.subject_id=li.shot_id AND rn.resolved=0) AS unresolved_review_notes
-    FROM media_library_items li LEFT JOIN generation_attempts ga ON ga.id=li.generation_attempt_id JOIN projects p ON p.id=li.project_id JOIN shots s ON s.id=li.shot_id
-    WHERE (? IS NULL OR li.kind=?) AND (? IS NULL OR ga.status=?) AND (? IS NULL OR (CASE WHEN EXISTS(SELECT 1 FROM clips c WHERE c.generation_attempt_id=li.generation_attempt_id) THEN 'selected_in_origin' ELSE 'not_selected_in_origin' END)=?) AND (''=? OR lower(coalesce(p.book,'') || ' ' || p.chapter || ' ' || coalesce(s.action,'') || ' ' || coalesce(s.verse_ref,'') || ' ' || coalesce(ga.prompt,'')) LIKE '%' || ? || '%') ORDER BY li.created_at DESC`).all(kind,kind,status,status,selection,selection,search,search);
+    FROM media_library_items li LEFT JOIN generation_attempts ga ON ga.id=li.generation_attempt_id LEFT JOIN projects p ON p.id=li.project_id LEFT JOIN shots s ON s.id=li.shot_id
+    WHERE (? IS NULL OR li.kind=?) AND (? IS NULL OR ga.status=?) AND (? IS NULL OR li.library_status=?) AND (? IS NULL OR (CASE WHEN li.shot_id IS NULL THEN 'standalone_reference' WHEN EXISTS(SELECT 1 FROM clips c WHERE c.generation_attempt_id=li.generation_attempt_id) THEN 'selected_in_origin' ELSE 'not_selected_in_origin' END)=?) AND (''=? OR lower(coalesce(li.title,'') || ' ' || coalesce(li.location,'') || ' ' || coalesce(li.tags_json,'') || ' ' || coalesce(p.book,'') || ' ' || coalesce(p.chapter,'') || ' ' || coalesce(s.action,'') || ' ' || coalesce(s.verse_ref,'') || ' ' || coalesce(ga.prompt,'')) LIKE '%' || ? || '%') ORDER BY li.created_at DESC`).all(kind,kind,status,status,libraryStatus,libraryStatus,selection,selection,search,search);
   res.json({ items: rows, note:"Library records retain original review context. A reuse selection is only a target-shot candidate until the normal reviewed generation workflow approves a result." });
+});
+
+projectsRouter.post("/media-library/standalone", (req,res) => {
+  try {
+    const raw = req.body ?? {};
+    const result = registerStandaloneLibraryAsset(getDb(),getDataDir(),{
+      assetPath:raw.assetPath,title:raw.title,location:raw.location,tags:raw.tags,
+      language:raw.language,canonRegion:raw.canonRegion,provenance:raw.provenance ?? {}
+    });
+    res.status(result.existing ? 200 : 201).json(result);
+  } catch (error) { res.status(400).json({error:(error as Error).message}); }
 });
 
 projectsRouter.post("/media-library/:itemId/frame", (req,res) => {
