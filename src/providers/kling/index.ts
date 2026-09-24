@@ -187,7 +187,9 @@ export class KlingLipSyncProvider implements LipSyncProvider {
 // attempts, succeeding cleanly with no content-filter issue on the same
 // composition Veo still fails roughly half the time.
 const SCENE_SUBMIT_PATH = "/v1/videos/image2video";
-const KLING_SCENE_MODEL = "kling-v1-6";
+// Kling retired v1.6. Its current legacy image-to-video endpoint supports
+// v2.6 with the same task/poll contract used below.
+const KLING_SCENE_MODEL = "kling-v2-6";
 const KLING_SCENE_MODE = "pro";
 
 // Rough public-pricing-based estimate, NOT reconciled against a real
