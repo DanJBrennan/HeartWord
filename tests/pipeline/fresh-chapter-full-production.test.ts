@@ -15,8 +15,8 @@ vi.mock("../../src/providers/gemini/index.js", () => ({ GeminiImageProvider: cla
 vi.mock("../../src/providers/kling/index.js", () => ({ KlingLipSyncProvider: class { sync = sync; }, KlingVideoProvider: class { generateFinal = video; } }));
 vi.mock("../../src/providers/gemini-text.js", () => {
   const contribution = (prompt: string, schema: any) => {
-    if (schema.properties.score) return { score: 100, instanceCount: 1, notes: "Synthetic reference match." };
-    if (schema.properties.settingScore) return { settingScore: 100, crowdDensityMatch: true, continuityViolation: false, notes: "Synthetic fixture passes." };
+    if (schema.properties.score) return { score: 100, instanceCount: 1, wardrobeStatus: "match", wardrobeNotes: "Synthetic canon wardrobe matches.", notes: "Synthetic reference match." };
+    if (schema.properties.settingScore) return { settingScore: 100, crowdDensityMatch: true, actionMatch: true, continuityViolation: false, notes: "Synthetic fixture passes." };
     if (schema.properties.largestIdenticalGroup) return { largestIdenticalGroup: 1, location: "none", explanation: "No duplicate.", confidence: 100, limitations: "fixture" };
     if (schema.properties.shots) return { reasoning: "Synthetic source-grounded plan.", lightingContinuity: "daylight", shots: [
       { action: "Narration view of the stated event.", characterNames: [], verseRef: "Mark 5:1", framing: "wide", cameraMovement: "static", needsLipSync: false, dialogueCharacterName: "", crowdDensity: "sparse", continuityNotes: "No invented action." },
@@ -66,7 +66,10 @@ it("takes a fresh reviewed chapter through real common stages without provider c
   const { projectsRouter }=await import("../../src/server/routes/projects.js"); const app=express(); app.use(express.json()); app.use("/api/projects",projectsRouter); await new Promise<void>(resolve=>{server=app.listen(0,resolve);}); const port=(server.address() as any).port;
   const review=await fetch(`http://127.0.0.1:${port}/api/projects/fresh-full/source-alignment-review`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reviewerName:"Synthetic language reviewer",attestation:"confirm",evidence:"Compared each fixture interval with the supplied DOCX, audio, and English reference."})}); expect(review.status).toBe(201);
   const planned=await runPipeline("fresh-full"); expect(planned.stoppedAt, planned.results.at(-1)?.reasoning).toBe("media_generation");
-  const { acceptFinalVideoCandidate }=await import("../../src/pipeline/media-generation/final-video.js"); for(const row of db.prepare("SELECT id FROM generation_attempts WHERE operation='generate_final_video'").all() as Array<{id:string}>) acceptFinalVideoCandidate(db,"fresh-full",row.id,1000);
+  const { acceptFinalVideoCandidate }=await import("../../src/pipeline/media-generation/final-video.js");
+  const videoCandidates=db.prepare("SELECT id FROM generation_attempts WHERE operation='generate_final_video'").all() as Array<{id:string}>;
+  expect(videoCandidates).toHaveLength(1);
+  for(const row of videoCandidates) acceptFinalVideoCandidate(db,"fresh-full",row.id,1000);
   const afterVideo=await runPipeline("fresh-full"); expect(afterVideo.stoppedAt, JSON.stringify(db.prepare("SELECT note FROM review_notes WHERE note LIKE 'REVIEW STATUS:%'").all())).toBe("voice_lipsync");
   const shots=db.prepare("SELECT id,verse_ref FROM shots WHERE needs_lip_sync=1 ORDER BY sequence").all() as Array<{id:string;verse_ref:string}>; const { bindShotUtterance }=await import("../../src/pipeline/voice-lipsync/utterance-binding.js"); for(const [i,shot] of shots.entries()) { const sourceSegment=segments[i+1]!; const row=db.prepare("SELECT start_ms,end_ms FROM audio_segments WHERE id=?").get(sourceSegment.id) as {start_ms:number;end_ms:number}; bindShotUtterance(db,{projectId:"fresh-full",shotId:shot.id,sourceSegmentId:sourceSegment.id,startMs:row.start_ms,endMs:row.end_ms,characterVersionId:"voice",approvedBy:"Synthetic producer"}); }
   expect((await runPipeline("fresh-full")).stoppedAt).toBe("voice_lipsync");

@@ -1,5 +1,15 @@
 # Current Goal
 
+## Fresh-chapter production fixture restored (2026-09-24)
+
+The synthetic end-to-end chapter test now supplies the explicit wardrobe and
+planned-action verdicts required by the current automated QC gates. It also
+asserts that a non-speaking final-video candidate exists before its simulated
+producer acceptance, so an empty candidate list cannot silently skip that
+step. No production gate or chapter output was changed. The fresh-chapter test,
+typecheck, and full suite pass (463/463 tests). This preserves the autonomous
+ingestion-through-assembly workflow while retaining fail-safe media review.
+
 ## Chapter-opening strategy in shot planning (2026-09-24)
 
 Dan approved the reusable Mark 3-derived intro strategy for future chapters.
