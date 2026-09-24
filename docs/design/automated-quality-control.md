@@ -64,6 +64,12 @@ event — see `docs/design/notifications.md`.
 
 ## Candidate checks (assembled video)
 
+- A speaking turn that becomes active again after a substantial pause, then
+  ends abruptly on that new onset. Check the actual rendered speech asset at
+  speaker changes and chapter end, not at every visual cut; allow a continuing
+  same-speaker turn. Hold the affected render before promotion, retaining the
+  detected gap, onset duration, level, and source interval IDs for automatic
+  source-boundary reconciliation. Do not trim a phrase away to make QC pass.
 - Audio/video sync drift across scene boundaries.
 - Lip-sync accuracy/confidence per character line.
 - Character appearance consistency across scenes (same character looks the

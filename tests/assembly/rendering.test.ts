@@ -85,3 +85,42 @@ it.skipIf(!ffmpegAvailable)("renders real pauses and cast speech, then applies a
     expect(Math.sqrt(squaredError / firstSamples.length)).toBeLessThanOrEqual(0.1);
   } finally { db.close(); if (relative(tmpdir(), directory).startsWith("heartword-render-test-")) rmSync(directory, { recursive: true, force: true }); }
 }, 30000);
+
+it.skipIf(!ffmpegAvailable)("holds an exported audio turn with a renewed onset cut off after silence", () => {
+  const directory = mkdtempSync(join(tmpdir(), "heartword-tail-test-")), assets = join(directory, "assets");
+  mkdirSync(assets);
+  const db = new DatabaseSync(":memory:"); db.exec(readFileSync("src/db/schema.sql", "utf8"));
+  const ffmpeg = (args: string[]) => execFileSync("ffmpeg", ["-v", "error", "-n", ...args], { stdio: ["ignore", "ignore", "pipe"] });
+  const put = (path: string, content: Buffer) => { const full = join(assets, path); mkdirSync(dirname(full), { recursive: true }); writeFileSync(full, content); };
+  try {
+    put("source/hatam/mark-2/mark-2-text.docx", docx("1Source words."));
+    put("reference/english/mark-2/mark-2-text.docx", docx("1Reference words."));
+    put("ref.png", Buffer.from("canon fixture"));
+    ffmpeg(["-f", "lavfi", "-i", "sine=frequency=200:duration=1.0:sample_rate=8000",
+      "-f", "lavfi", "-i", "anullsrc=r=8000:cl=mono:d=0.84",
+      "-f", "lavfi", "-i", "sine=frequency=200:duration=0.16:sample_rate=8000",
+      "-filter_complex", "[0:a][1:a][2:a]concat=n=3:v=0:a=1", join(assets, "source.wav")]);
+    ffmpeg(["-f", "lavfi", "-i", "color=red:s=160x90:r=24:d=2", "-c:v", "libx264", "-pix_fmt", "yuv420p", join(assets, "shot.mp4")]);
+    db.exec(`INSERT INTO projects (id,language,book,chapter,created_at,updated_at) VALUES ('p','hatam','mark',2,1,1);
+      INSERT INTO scenes (id,project_id,sequence,verse_start,verse_end,created_at) VALUES ('scene','p',1,'Mark 2:1','Mark 2:1',1);
+      INSERT INTO characters (id,name,scope_kind,canon_status,region,created_at,updated_at) VALUES ('c','Witness','global','approved','Papuan',1,1);
+      INSERT INTO character_versions (id,character_id,version_label,status,created_at) VALUES ('v','c','v1','approved',1);
+      INSERT INTO character_assets (id,character_version_id,category,path,created_at) VALUES ('a','v','body_pose','ref.png',1);
+      INSERT INTO shots (id,scene_id,sequence,action,verse_ref,needs_lip_sync,created_at) VALUES ('shot','scene',1,'Listening','Mark 2:1',0,1);
+      INSERT INTO shot_characters VALUES ('shot','c');
+      INSERT INTO audio_segments (id,project_id,layer,source_path,start_ms,end_ms,verse_ref,created_at) VALUES ('line','p','original_reading','source.wav',0,2000,'Mark 2:1',1);
+      INSERT INTO generation_attempts (id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)
+        VALUES ('take','shot','local','test','assemble_shot','accepted','shot.mp4',0,1);
+      INSERT INTO clips (id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)
+        VALUES ('clip','shot','take',0,2000,1);`);
+    const before = loadCrewBrief(db, directory, "p", "editing");
+    const edit: CrewResult = { status: "approved", calls: 1, summary: "Test cut", contributions: {
+      picture_editor: { summary: "Cut", directions: [], findings: [], coverageRequests: [],
+        edits: [{ shotId: "shot", sourceStartMs: 0, durationMs: 2000 }], pauses: [] }
+    } };
+    db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('edit','p','editing',?,?,'approved',?,1)")
+      .run(crewBriefHash(before, "editing"), JSON.stringify(before), JSON.stringify(edit));
+    expect(() => renderEditorialCut(db, directory, "p", "edit")).toThrow(/renewed onset after a quiet gap/);
+    expect(db.prepare("SELECT COUNT(*) AS n FROM chapter_renders WHERE project_id='p'").get()).toMatchObject({ n: 0 });
+  } finally { db.close(); if (relative(tmpdir(), directory).startsWith("heartword-tail-test-")) rmSync(directory, { recursive: true, force: true }); }
+}, 30000);

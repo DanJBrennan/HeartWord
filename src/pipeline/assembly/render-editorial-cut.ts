@@ -9,6 +9,9 @@ import { latestCrewRun } from "../creative-direction/crew-store.js";
 import type { CrewResult } from "../creative-direction/crew-types.js";
 import { planEditorialCut } from "./editorial-plan.js";
 import { mediaDurationMs } from "./finishing.js";
+import { continuousAudioGroups, type ResolvedAudioPlacement } from "./continuous-audio.js";
+import { decodeToPcm16Mono } from "../ingestion/pitch.js";
+import { detectTruncatedRenewal } from "../qc/audio-tail.js";
 
 export function assertEditorialRebuildable(db: DatabaseSync, projectId: string): void {
   const render = db.prepare(`SELECT r.id,m.timeline_json FROM chapter_renders r LEFT JOIN chapter_render_manifests m ON m.render_id=r.id
@@ -55,8 +58,7 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
       runFfmpeg(["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", String(durationMs / 1000), "-c:a", "pcm_s16le", output]);
       audio.push(output);
     };
-    for (const placement of cut.audioMap) {
-      silence(placement.startMs - cursor);
+    const resolvedAudio: ResolvedAudioPlacement[] = cut.audioMap.map(placement => {
       const segment = brief.audio.find(a => a.id === placement.segmentId)!;
       let path = segment.path, startMs = segment.startMs;
       const durationMs = segment.endMs - segment.startMs;
@@ -69,11 +71,27 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
         if (versions.length !== 1 || Math.abs(versions[0]!.endMs - versions[0]!.startMs - durationMs) > 50) throw new Error(`A duration-matched approved cast-master segment is required for ${segment.verseRef}.`);
         path = versions[0]!.path; startMs = versions[0]!.startMs;
       }
-      const input = productionAssetPath(dataDir, path);
-      if (startMs + durationMs > mediaDurationMs(input) + 50) throw new Error("Source audio file is shorter than its approved segment.");
+      return { segmentId: placement.segmentId, path, speakerId: segment.speakerId,
+        sourceStartMs: startMs, sourceEndMs: startMs + durationMs,
+        startMs: placement.startMs, endMs: placement.endMs };
+    });
+    const audioGroups = continuousAudioGroups(resolvedAudio);
+    for (const [index, group] of audioGroups.entries()) {
+      silence(group.startMs - cursor);
+      const input = productionAssetPath(dataDir, group.path);
+      if (group.sourceEndMs > mediaDurationMs(input) + 50) throw new Error("Source audio file is shorter than its approved segment.");
       const output = join(directory, `audio-${audio.length}.wav`);
-      runFfmpeg(["-ss", String(startMs / 1000), "-i", input, "-t", String(durationMs / 1000), "-af", "apad", "-ar", "44100", "-ac", "2", "-c:a", "pcm_s16le", output]);
-      audio.push(output); cursor = placement.endMs;
+      runFfmpeg(["-ss", String(group.sourceStartMs / 1000), "-i", input,
+        "-t", String((group.sourceEndMs - group.sourceStartMs) / 1000),
+        "-af", "apad", "-ar", "44100", "-ac", "2", "-c:a", "pcm_s16le", output]);
+      // A picture cut is irrelevant to this check. Only a speaker-turn or
+      // chapter end can make a renewed onset at the tail an audible fragment.
+      const next = audioGroups[index + 1];
+      if (!next || next.speakerId !== group.speakerId || next.startMs > group.endMs) {
+        const tail = detectTruncatedRenewal(decodeToPcm16Mono(output, 8000), 8000);
+        if (tail) throw new Error(`Audio turn ending at ${group.endMs} ms (${group.segmentIds.join(", ")}) has a ${tail.activeTailMs} ms renewed onset after a quiet gap, cut off at ${tail.tailLevelDb} dBFS. Reconcile that source boundary or preserve the continuous turn before rendering; no audio was dropped.`);
+      }
+      audio.push(output); cursor = group.endMs;
     }
     silence(cut.durationMs - cursor);
     const concatList = (name: string, paths: string[]) => {
@@ -89,6 +107,17 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
       "-c:v", "copy", "-c:a", "aac", "-t", String(cut.durationMs / 1000), "-movflags", "+faststart", output]);
     const duration = mediaDurationMs(output);
     if (Math.abs(duration - cut.durationMs) > 100) throw new Error("Rendered duration differs from the protected performance and pauses.");
+    // Confirm the *encoded chapter*, not just the intermediate PCM, did not
+    // acquire a chopped onset at a speaking-turn end. Picture cuts are absent
+    // from this decision; the source-to-production audio map remains intact.
+    const renderedPcm = decodeToPcm16Mono(output, 8000);
+    for (const [index, group] of audioGroups.entries()) {
+      const next = audioGroups[index + 1];
+      if (next && next.speakerId === group.speakerId && next.startMs === group.endMs) continue;
+      const end = Math.min(renderedPcm.length, Math.round(group.endMs * 8));
+      const tail = detectTruncatedRenewal(renderedPcm.subarray(Math.max(0, end - 12_000), end), 8000);
+      if (tail) throw new Error(`Rendered chapter ${path} holds a ${tail.activeTailMs} ms renewed onset cut off at audio turn ${group.endMs} ms (${group.segmentIds.join(", ")}). The unpromoted render is retained for diagnosis; reconcile the source boundary without discarding speech.`);
+    }
     db.exec("BEGIN IMMEDIATE");
     try {
       db.prepare("INSERT INTO chapter_renders (id,project_id,result_asset_path,total_duration_ms,shot_count,created_at) VALUES (?,?,?,?,?,?)").run(renderId, projectId, path, duration, cut.timeline.length, Date.now());

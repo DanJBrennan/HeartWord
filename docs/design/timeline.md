@@ -38,6 +38,11 @@ from the source narration.
   - Narration audio for a multi-shot span is muxed once, continuously,
     under the whole concatenated group — never sliced and re-attached
     per-shot, which risks cutting the narrator off mid-word.
+  - An alignment edge is not automatically an audio edit. When adjacent
+    source intervals use the same recording, speaker, and contiguous source
+    times, extract them as one soundtrack span even if picture changes within
+    it. A speaker-turn or chapter-end tail check may hold a renewed onset
+    that would be audibly severed; it must not flag a same-speaker visual cut.
   - A silent supplementary insert (b-roll with no dialogue of its own) still
     must not create a silent gap by default: mute its own generated audio
     and lay the real narration/dialogue that already belongs at that point
