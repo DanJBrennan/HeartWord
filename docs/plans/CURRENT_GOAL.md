@@ -1,5 +1,33 @@
 # Current Goal
 
+## Source-boundary integrity at alignment (2026-09-23)
+
+The Shot 4 ending exposed a timing failure that text-match confidence could
+not catch: the 55.733 s source split lands after a quiet gap, inside renewed
+audio activity. General chapter ingestion now checks adjacent proposed edges
+in the original recording before scene planning or media generation. A cut
+with sustained activity on both sides holds the two affected source
+intervals for review, records acoustic evidence and a nearby quiet-gap
+listening point, and caps their numeric confidence below the 80-point
+auto-decide threshold. It does not move the edge or infer words or speakers.
+
+An offline read-only replay against the current Mark 3 source found the
+55.733 s failure and seven other candidate edges among 48 intervals. These
+are review prompts, not attested errors; several coincide with 14-second
+technical splits. The existing Mark 3 database and approved media were not
+rewritten. Its producer-reviewed source binding still requires explicit
+reconciliation before the new check could be applied through re-ingestion.
+
+Goal Guardian check: this extends ingestion QC within the existing autonomous
+workflow and preserves the source audio, named correction path, and producer
+review. It adds no Scripture content, speaker attribution, new pipeline
+stage, or automatic edit to an approved cut.
+
+Verification: focused boundary and fresh-chapter tests pass; typecheck passes.
+The full suite is 442 passing / 1 pre-existing failure in
+`fresh-chapter-full-production.test.ts` (expects `voice_lipsync` while the
+pipeline holds at `media_generation`).
+
 ## Drafts now arrive with an automated verdict (2026-09-21)
 
 Dan asked how draft clips were evaluated. They weren't: `generateShotDraft`

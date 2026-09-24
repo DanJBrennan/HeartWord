@@ -12,6 +12,7 @@ import { buildMark2Segments, type SegmentDescriptor } from "./mark-2-segments.js
 import { discoverSourcePaths, resolveAndBindSourcePaths } from "./source-catalog.js";
 import { alignWithGemini, alignmentKey } from "./gemini-alignment.js";
 import { correctionReplacementMap } from "./correction-remap.js";
+import { auditBoundaryIntegrity } from "./boundary-integrity.js";
 
 export interface ProjectRow {
   id: string;
@@ -171,6 +172,21 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
     startMs: segment.startMs, endMs: segment.endMs, verseRef: segment.verseRef ? `${project.book} ${project.chapter}:${segment.verseRef.replace(/^v/, "")}` : null,
     confidence: segment.status === "matched" ? Math.round(segment.score * 100) : null
   })) : verseGroups.map((group, i) => ({ startMs: timings[i]!.startMs, endMs: timings[i]!.endMs, verseRef: group.verseRef, confidence: timings[i]!.confidence }));
+  // Text-match confidence does not validate a segment's millisecond edge.
+  // Audit the original audio before persisting or allowing any downstream
+  // generation; only the two intervals touching a suspect edge are held.
+  const maxSegmentMs = geminiEvidence?.config?.maxSegmentMs ?? 14_000;
+  let boundaryFindings: ReturnType<typeof auditBoundaryIntegrity> = [];
+  try {
+    if (persisted.length > 1) boundaryFindings = auditBoundaryIntegrity(decodeToPcm16Mono(audioPath, 8000), 8000, persisted, maxSegmentMs);
+  } catch (err) {
+    return { ok: false, reasoning: `Ingestion failed auditing source-audio boundaries: ${(err as Error).message}` };
+  }
+  const boundaryHeld = new Set(boundaryFindings.flatMap(finding => [finding.leftIndex, finding.rightIndex]));
+  for (const index of boundaryHeld) {
+    const segment = persisted[index]!;
+    if (segment.confidence !== null) segment.confidence = Math.min(segment.confidence, 75);
+  }
   const now = Date.now();
   const segmentIds: string[] = [];
   let lowConfidenceCount = 0;
@@ -184,6 +200,7 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
     );
 
     const oldSegments=db.prepare("SELECT id,start_ms,end_ms FROM audio_segments WHERE project_id=? AND layer='original_reading'").all(projectId) as Array<{id:string;start_ms:number;end_ms:number}>;
+    db.prepare("DELETE FROM review_notes WHERE project_id=? AND source='qc' AND subject_type='audio_segment' AND note LIKE 'Ingestion boundary integrity hold:%'").run(projectId);
     let corrections:Array<{id:string;audio_segment_id:string}>=[];
     try { corrections=db.prepare("SELECT id,audio_segment_id FROM source_alignment_corrections WHERE project_id=?").all(projectId) as typeof corrections; } catch { /* pre-migration test DB */ }
     let editorialClassifications:Array<{id:string;audio_segment_id:string}>=[];
@@ -221,6 +238,22 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
     for(const old of oldSegments) deleteOld.run(old.id);
     db.prepare(`DELETE FROM review_notes WHERE project_id = ? AND subject_type = 'project' AND source = 'qc'`).run(projectId);
 
+    const insertBoundaryHold = db.prepare(`INSERT INTO review_notes
+      (id,project_id,subject_type,subject_id,source,note,resolved,created_at)
+      VALUES (?,?,'audio_segment',?,'qc',?,0,?)`);
+    for (const finding of boundaryFindings) {
+      const leftId = segmentIds[finding.leftIndex]!, rightId = segmentIds[finding.rightIndex]!;
+      const pause = finding.quietGap
+        ? ` A quiet gap at ${finding.quietGap.startMs}-${finding.quietGap.endMs} ms suggests ${finding.quietGap.midpointMs} ms as a listening point, not an automatic correction.`
+        : " No qualifying nearby quiet gap was found.";
+      insertBoundaryHold.run(randomUUID(), projectId, leftId,
+        `Ingestion boundary integrity hold: source activity crosses ${finding.boundaryMs} ms between segments ${leftId} and ${rightId}. ` +
+        `Local floor ${finding.noiseFloorDb} dBFS, activity threshold ${finding.activityThresholdDb} dBFS, ` +
+        `left/right activity ${finding.leftActivityDb}/${finding.rightActivityDb} dBFS. ` +
+        `${finding.atMaxSegmentLength ? `The left interval is at the ${maxSegmentMs} ms technical maximum. ` : ""}` +
+        `${pause} Review both sides with source text and speaker context; no words, speaker, or boundary were decided automatically.`, now);
+    }
+
     const criticalEvidence = geminiEvidence && (geminiEvidence.coverage < .95 || geminiEvidence.segments.some(segment => segment.status === "unresolved"));
     if (lowConfidenceCount > 0 || criticalEvidence) {
       db.prepare(
@@ -248,8 +281,9 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
 
   const criticalEvidence = geminiEvidence && (geminiEvidence.coverage < .95 || geminiEvidence.segments.some(segment => segment.status === "unresolved"));
   return {
-    ok: !criticalEvidence,
+    ok: !criticalEvidence && boundaryFindings.length === 0,
     reasoning:
+      boundaryFindings.length ? `Ingestion retained ${persisted.length} source intervals but held ${boundaryFindings.length} boundary${boundaryFindings.length === 1 ? "" : "ies"} where source activity crosses both sides of a proposed cut. Review the affected adjacent intervals before planning; no timing or speaker correction was made.${criticalEvidence ? " Gemini text evidence also needs review." : ""}` :
       criticalEvidence ? `Ingestion retained ${geminiEvidence!.segments.length} source intervals but is held: Gemini evidence covers ${(geminiEvidence!.coverage * 100).toFixed(1)}% of verified text, with uncovered verses ${geminiEvidence!.uncoveredVerses.join(",") || "none"}. Listen to the flagged intervals and reconcile before planning.` :
       `${geminiEvidence ? `Gemini evidence retained ${geminiEvidence.segments.length} intervals with ${(geminiEvidence.coverage * 100).toFixed(1)}% text coverage.` : `Aligned ${verseGroups.length} verse-group intervals with silence-based estimated timing because no Gemini provider is configured.`} ${lowConfidenceCount} intervals require named source review before downstream work.`
   };

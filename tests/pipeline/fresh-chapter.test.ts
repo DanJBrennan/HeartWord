@@ -26,6 +26,40 @@ it("ingests an isolated new chapter from real fixture files then holds before in
   expect(db.prepare("SELECT COUNT(*) n FROM scenes WHERE project_id='fresh'").get()).toMatchObject({n:0});
 });
 
+it("holds a confident text alignment when its source boundary cuts through renewed audio", async () => {
+  process.env.GEMINI_API_KEY = "offline-injected-aligner";
+  dataDir=mkdtempSync(join(tmpdir(),"hw-boundary-hold-")); cleanup.push(dataDir);
+  const source=join(dataDir,"assets","source","hatam","mark-3");
+  const reference=join(dataDir,"assets","reference","english","mark-3");
+  mkdirSync(source,{recursive:true}); mkdirSync(reference,{recursive:true});
+  writeFileSync(join(source,"mark-3-text.docx"),docx(["1First source verse.","2Second source verse."]));
+  writeFileSync(join(reference,"mark-3-text.docx"),docx(["1First reference verse.","2Second reference verse."]));
+  execFileSync("ffmpeg",["-v","error","-y",
+    "-f","lavfi","-i","sine=frequency=190:duration=0.775:sample_rate=8000",
+    "-f","lavfi","-i","anullsrc=r=8000:cl=mono:d=0.740",
+    "-f","lavfi","-i","sine=frequency=190:duration=1.485:sample_rate=8000",
+    "-filter_complex","[0:a][1:a][2:a]concat=n=3:v=0:a=1",
+    "-c:a","libmp3lame",join(source,"mark-3-fcbh-audio.mp3")]);
+  db=new DatabaseSync(":memory:"); db.exec(readFileSync("src/db/schema.sql","utf8"));
+  db.exec("INSERT INTO projects (id,language,book,chapter,created_at,updated_at) VALUES ('fresh','hatam','mark',3,1,1)");
+  const {runIngestionWithAlignment}=await import("../../src/pipeline/ingestion/index.js");
+  const aligned={segments:[
+    {startMs:0,endMs:1733,verseRef:"v1",text:"First source verse.",score:1,status:"matched",note:"Fixture text match."},
+    {startMs:1733,endMs:3000,verseRef:"v2",text:"Second source verse.",score:1,status:"matched",note:"Fixture text match."}
+  ],coverage:1,uncoveredVerses:[],model:"offline fixture",config:{fastModel:"fixture",strongModel:"fixture",maxSegmentMs:14000}};
+  const result=await runIngestionWithAlignment("fresh",async()=>aligned as any);
+  expect(result.ok).toBe(false);
+  expect(result.reasoning).toContain("source activity crosses both sides");
+  const segments=db.prepare("SELECT id,start_ms AS startMs,end_ms AS endMs,speaker_character_id AS speakerId,confidence FROM audio_segments WHERE project_id='fresh' AND layer='original_reading' ORDER BY start_ms").all() as Array<{id:string;startMs:number;endMs:number;speakerId:string|null;confidence:number}>;
+  expect(segments).toHaveLength(2);
+  expect(segments.map(segment=>segment.confidence)).toEqual([75,75]);
+  expect(segments.map(segment=>[segment.startMs,segment.endMs,segment.speakerId])).toEqual([[0,1733,null],[1733,3000,null]]);
+  const note=db.prepare("SELECT subject_id,note FROM review_notes WHERE project_id='fresh' AND subject_type='audio_segment' AND source='qc'").get() as {subject_id:string;note:string};
+  expect(note.subject_id).toBe(segments[0]!.id);
+  expect(note.note).toContain("quiet gap");
+  expect(note.note).toContain(segments[1]!.id);
+});
+
 it("re-ingests safely when a correction targets a segment that also has a boundary override", async () => {
   delete process.env.GEMINI_API_KEY;
   dataDir=mkdtempSync(join(tmpdir(),"hw-fresh-reingest-")); cleanup.push(dataDir); const assets=join(dataDir,"assets"), source=join(assets,"source","hatam","mark-3"), reference=join(assets,"reference","english","mark-3"); mkdirSync(source,{recursive:true}); mkdirSync(reference,{recursive:true});
