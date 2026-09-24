@@ -65,7 +65,7 @@ export async function reviewGeneratedVideo(input: {
   if (bytes.length > MAX_REVIEW_PROXY_BYTES) throw new Error("Video needs a smaller review proxy before acceptance.");
   const { result, costUsd } = await generateJsonWithImagesMetered<VideoReviewVerdict>(
     `Independently watch this silent supplementary shot against its approved keyframe direction: ${input.instruction}. ` +
-      "Check motion, continuity, physical action, source fidelity and unwanted text. Do not approve uncertain evidence.",
+      "Check motion, continuity, physical action, source fidelity, unwanted text, and crowd choreography. A synchronized wave of arms, repeated group gesture, mirrored movement, or mass simultaneous reach-and-retract is a failure unless the approved direction explicitly requires it. Do not approve uncertain evidence.",
     [
       { mimeType: "video/mp4", data: bytes.toString("base64") },
       { mimeType: "image/png", data: readFileSync(input.keyframePath).toString("base64") }

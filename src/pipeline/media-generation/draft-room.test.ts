@@ -37,13 +37,28 @@ function draftProvider(costUsd = 0.26): DraftVideoProvider {
 
 it("holds several drafts for the same shot instead of refusing the second", async () => {
   const db = setup();
-  const provider = draftProvider();
+  const provider: DraftVideoProvider = {
+    generateDraft: vi.fn(async (request) => ({
+      status: "accepted" as const,
+      media: { path: `generated/drafts/${request.shotId}.mp4` },
+      cost: { usd: 0.26 },
+      provenance: { provider: "gemini", model: "gemini-omni-1.1-flash", prompt: "p" }
+    })),
+    generateGuided: vi.fn()
+  };
   const first = await generateShotDraft(db, "p", "shot", provider);
   const second = await generateShotDraft(db, "p", "shot", provider);
   expect(first).toMatchObject({ status: "draft", heldCount: 1 });
   expect(second).toMatchObject({ status: "draft", heldCount: 2 });
   const held = db.prepare("SELECT COUNT(*) AS n FROM generation_attempts WHERE operation='generate_draft' AND status='hold_for_review'").get() as { n: number };
   expect(held.n).toBe(2);
+  const paths = db.prepare("SELECT result_asset_path FROM generation_attempts WHERE operation='generate_draft' ORDER BY created_at").all() as Array<{ result_asset_path: string }>;
+  expect(paths.map(row => row.result_asset_path)).toHaveLength(2);
+  expect(new Set(paths.map(row => row.result_asset_path)).size).toBe(2);
+  const prompts = vi.mocked(provider.generateDraft).mock.calls.map(([request]) => request.prompt);
+  expect(prompts.every(prompt => prompt.includes("NON-SPEAKING VIDEO RULE"))).toBe(true);
+  expect(prompts.every(prompt => prompt.includes("Papuan/Hatam casting"))).toBe(true);
+  expect(prompts.every(prompt => prompt.includes("NATURAL CROWD MOTION RULE"))).toBe(true);
 });
 
 it("stops at the cap rather than letting a retry loop spend without limit", async () => {

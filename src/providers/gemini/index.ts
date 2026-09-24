@@ -850,19 +850,22 @@ export class GeminiDraftVideoProvider implements DraftVideoProvider {
 
     const content: InteractionContentBlock[] = [];
     if (opts?.startFrame) {
-      // A specific composed shot/beat keyframe to animate from -- takes
-      // priority over generic character references, same as
-      // VideoProvider.generateFinal's startFrame override.
+      // Preserve the approved composition, but do not let it displace the
+      // identity references below. A start frame alone proved insufficient
+      // for multi-person Papuan scenes: Omni began correctly then drifted
+      // toward generic/Caucasian faces as the clip progressed.
       content.push(loadImageAsContentBlock(dataDir, opts.startFrame.path, "generateDraft startFrame"));
-    } else {
-      const referenceImages = loadCharacterReferenceImages(request.characters);
-      for (const ref of referenceImages) {
-        content.push({
-          text: `Reference image(s) for ${ref.characterName} -- this is the EXACT face, build, and likeness to use for ${ref.characterName} in the video. Do not redesign or genericize.`,
-          type: "text"
-        });
-        content.push(...ref.images.map((img) => ({ type: "image" as const, data: img.data, mime_type: img.mimeType })));
-      }
+    }
+    // Character-reference images are additive to a starting frame, not an
+    // alternative to it. The frame supplies staging; the approved canon
+    // references supply the identities the animation must preserve.
+    const referenceImages = loadCharacterReferenceImages(request.characters);
+    for (const ref of referenceImages) {
+      content.push({
+        text: `Reference image(s) for ${ref.characterName} -- this is the EXACT face, build, and likeness to use for ${ref.characterName} in the video. Do not redesign or genericize.`,
+        type: "text"
+      });
+      content.push(...ref.images.map((img) => ({ type: "image" as const, data: img.data, mime_type: img.mimeType })));
     }
     content.push({ type: "text", text: request.prompt });
 

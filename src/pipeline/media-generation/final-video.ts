@@ -28,7 +28,12 @@ export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, project
   // -- see casting/shot-risk.ts. Routine frames stay on the cheapest tier
   // instead of every shot buying the same render.
   const tier:VideoTier=tierForRisk(risk);
-  const result=await generateFinalVideoWithFallback(providers.veo,providers.kling,providers.draft,{shotId,prompt:keyframe.prompt ?? shot.action,characters},{resolution:"720p",startFrame:{path:keyframe.result_asset_path},durationSeconds:8,tier});
+  const prompt=`${keyframe.prompt ?? shot.action}
+
+NON-SPEAKING VIDEO RULE: Do not generate dialogue, narration, singing, lip-sync performance, intelligible words, or visible speech from any person. Preserve natural nonverbal action and background ambience only. Keep every visible person in the approved Papuan/Hatam canon identity and wardrobe throughout; never drift toward Caucasian, Levantine, European, or generic substitute identities.
+
+NATURAL CROWD MOTION RULE: Crowd movement is independently timed and irregular. At most a few people reach, shift, or react at once while others hold, breathe, look, edge forward, or respond subtly at different moments. Never generate a synchronized wave of arms, a repeated group gesture, mirrored movement, or a mass simultaneous reach-and-retract.`;
+  const result=await generateFinalVideoWithFallback(providers.veo,providers.kling,providers.draft,{shotId,prompt,characters},{resolution:"720p",startFrame:{path:keyframe.result_asset_path},durationSeconds:8,tier});
   const id=randomUUID(), now=Date.now();
   db.prepare("INSERT INTO generation_attempts (id,shot_id,provider,model,operation,resolution,prompt,status,result_asset_path,cost_usd,created_at) VALUES (?,?,?,?,?,'720p',?,'hold_for_review',?,?,?)").run(id,shotId,result.provenance.provider,result.provenance.model,"generate_final_video",result.provenance.prompt,result.media?.path ?? null,result.cost.usd,now);
   db.prepare("INSERT INTO cost_ledger_entries (id,project_id,generation_attempt_id,amount_usd,created_at) VALUES (?,?,?,?,?)").run(randomUUID(),projectId,id,result.cost.usd,now);

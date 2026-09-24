@@ -81,13 +81,23 @@ export async function generateShotDraft(
      WHERE sc.shot_id = ?`
   ).all(shotId) as Array<{ characterId: string; characterVersionId: string }>;
 
+  // Omni derives its output filename from request.shotId.  A draft room
+  // deliberately permits several takes for one underlying shot, so passing
+  // the bare shot id would overwrite the preceding take on disk.  Use the
+  // immutable attempt id for the provider-facing label while retaining the
+  // actual shot id in generation_attempts.
+  const id = randomUUID(), now = Date.now();
+  const draftPrompt = `${keyframe.prompt ?? shot.action}
+
+NON-SPEAKING VIDEO RULE: This is a non-speaking shot. Do not generate dialogue, narration, singing, lip-sync performance, intelligible words, or visible mouth movements that suggest speech from any person. Preserve only natural nonverbal action and background ambience. The chapter narration is a separate audio layer and must not be visually performed here. Every visible person must retain the approved Papuan/Hatam casting; named characters must retain their exact approved canon face, hair, skin tone, build, and wardrobe throughout the entire clip. Do not drift toward Caucasian, Levantine, or generic substitute identities.
+
+NATURAL CROWD MOTION RULE: People in a crowd move on independent, staggered timings. At most a few people may reach, shift, or react at once while others hold, breathe, look, edge forward, or respond subtly at different moments. Never generate a synchronized wave of arms, a repeated group gesture, mirrored movement, or a mass simultaneous reach-and-retract.`;
   const result = await draftProvider.generateDraft(
-    { shotId, prompt: keyframe.prompt ?? shot.action, characters },
+    { shotId: `${shot.id}-draft-${id}`, prompt: draftPrompt, characters },
     { startFrame: { path: keyframe.result_asset_path } }
   );
 
   const risk = shotRiskFor(db, shotId);
-  const id = randomUUID(), now = Date.now();
   db.prepare(
     `INSERT INTO generation_attempts (id, shot_id, provider, model, operation, resolution, prompt, status, result_asset_path, cost_usd, created_at)
      VALUES (?, ?, ?, ?, 'generate_draft', '360p', ?, 'hold_for_review', ?, ?, ?)`
