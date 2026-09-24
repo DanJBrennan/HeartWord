@@ -1,5 +1,35 @@
 # Current Goal
 
+## Mark 3 full-chapter review audio playback repair (2026-09-24)
+
+Dan found that the chapter review became silent in his player from about
+1:33 onward. The six-section stream-copy join combined stereo Scene 1 opening,
+mono Scene 1 remainder, and stereo Scenes 2–5 as one AAC stream. The mono-to-
+stereo switch at source time 92.799 seconds matches the reported loss point.
+FFmpeg's ability to decode later packets had hidden this player-level failure.
+
+`HeartWordData/assets/generated/video/review/mark3-full-chapter-source-review-r2.mp4`
+is the new producer review cut. It decodes each existing section's approved
+soundtrack, pads or trims it to the recorded source interval, joins those
+intervals, and encodes one 48 kHz stereo AAC track. The video stream is copied
+unchanged from r1; r1 remains retained as diagnosis/history. A corresponding
+JSON manifest records the repair. The chapter assembly script now invokes the
+normalization step after its source-section join so repeat runs deliver r2.
+
+QC: r2 has 10,329 video frames with a bit-identical video stream to r1 and
+430.352 seconds of stereo AAC. Five-second decoded checks on both sides of
+1:33 and near the ending contain audio; the repaired file loads and seeks past
+the join in Chrome without a media error. A full r2 null decode reports no DTS
+warning, though final export work remains separate from this audio repair.
+
+Goal Guardian check: this restores audible, continuous approved Hatam audio in
+the producer's existing full-chapter review workflow without changing the
+Scripture, speaker bindings, picture edit, or selected media.
+
+Typecheck passes. The full suite is 456/457 passing; the lone failure is the
+previously recorded fresh-chapter stage expectation mismatch
+(`media_generation` versus `voice_lipsync`).
+
 ## Source-boundary integrity at alignment (2026-09-23)
 
 The Shot 4 ending exposed a timing failure that text-match confidence could
