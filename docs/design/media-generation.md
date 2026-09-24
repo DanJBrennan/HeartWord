@@ -66,6 +66,31 @@ must still preserve readable faces and action. This is a visual-legibility
 default, not a license to alter a scene's source-grounded action, setting, or
 time of day.
 
+## Shared cinematic staging rule
+
+Generated frames are staged as story moments, never as posed group portraits.
+Unless a shot is explicitly a lip-sync performance shot, people use
+story-motivated eyelines, varied natural poses, asymmetrical spacing, and
+partial overlap; they face the speaker, action, or another credible point in
+the scene rather than the camera. For a lip-sync performance, the designated
+speaker may make intentional near-lens or direct-to-camera eye contact when it
+serves the spoken performance. Supporting people still remain naturally
+oriented within the scene.
+
+## Shared shot-state fidelity rule
+
+Every keyframe must depict the exact planned moment, not a generic adjacent
+event. Prompts explicitly prohibit invented arrivals, departures, doorway
+crossings, or confrontations when they are not in the shot action. A doorway,
+threshold, prop, or composition cue is omitted unless the action or a recorded
+continuity constraint needs it. Automated scene fidelity review separately
+checks that the returned image has not changed the planned causal moment.
+
+When crew direction specifies a reaction gesture, it applies to individual
+people, not the group composition. Final prompt priority preserves the gesture
+while prohibiting a centered, symmetrical, camera-facing lineup; it requires
+varied poses, uneven depth, partial occlusion, and story-motivated eyelines.
+
 ## Retained-take library
 
 Every verifiable generated image or video remains at its immutable original

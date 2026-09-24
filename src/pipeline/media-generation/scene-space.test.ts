@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildShotPrompt, expandTzitzitDefinition, findLockedCanonConflicts } from "./index.js";
+import { buildShotPrompt, expandTzitzitDefinition, FINAL_STAGING_PRIORITY_RULE, findLockedCanonConflicts } from "./index.js";
 
 describe("shared scene-space prompt", () => {
   it("keeps a later angle tied to the same planned room", () => {
@@ -43,6 +43,46 @@ describe("shared scene-space prompt", () => {
     expect(prompt).toContain("LIGHTING READABILITY");
     expect(prompt).toContain("generous motivated ambient light");
     expect(prompt).toContain("stated story purpose specifically calls for it");
+  });
+
+  it("prevents portrait-lineup staging in non-lip-sync shots", () => {
+    const prompt = buildShotPrompt(
+      { id: "scene", sequence: 1, lighting_continuity: null, spatial_continuity: null },
+      { id: "shot", scene_id: "scene", sequence: 1, action: "The crowd reacts.", framing: null, camera_movement: null, needs_lip_sync: 0, crowd_density: "packed", continuity_notes: null, spatial_view: null, verse_ref: "Mark 3:30" },
+      []
+    );
+    expect(prompt).toContain("this is not a portrait");
+    expect(prompt).toContain("story-motivated eyelines");
+    expect(prompt).toContain("direct eye contact with the lens");
+  });
+
+  it("allows only the speaking lip-sync performer to address the camera", () => {
+    const prompt = buildShotPrompt(
+      { id: "scene", sequence: 1, lighting_continuity: null, spatial_continuity: null },
+      { id: "shot", scene_id: "scene", sequence: 1, action: "Jesus answers.", framing: null, camera_movement: null, needs_lip_sync: 1, crowd_density: "packed", continuity_notes: null, spatial_view: null, verse_ref: "Mark 3:33" },
+      ["Jesus", "Witness"]
+    );
+    expect(prompt).toContain("lip-sync performance shot");
+    expect(prompt).toContain("designated speaking character may make intentional near-lens or direct-to-camera eye contact");
+    expect(prompt).toContain("Every supporting person must remain naturally oriented");
+  });
+
+  it("locks generation to the planned moment instead of a generic adjacent event", () => {
+    const prompt = buildShotPrompt(
+      { id: "scene", sequence: 1, lighting_continuity: null, spatial_continuity: null },
+      { id: "shot", scene_id: "scene", sequence: 1, action: "The crowd reacts in silence.", framing: null, camera_movement: null, needs_lip_sync: 0, crowd_density: "packed", continuity_notes: null, spatial_view: null, verse_ref: "Mark 3:30" },
+      []
+    );
+    expect(prompt).toContain("SHOT-STATE FIDELITY");
+    expect(prompt).toContain("Do not invent an arrival");
+    expect(prompt).toContain("Exclude any doorway");
+  });
+
+  it("keeps no-portrait staging higher priority than a repeated crew gesture", () => {
+    expect(FINAL_STAGING_PRIORITY_RULE).toContain("overrides any earlier wording");
+    expect(FINAL_STAGING_PRIORITY_RULE).toContain("INDIVIDUAL reactions");
+    expect(FINAL_STAGING_PRIORITY_RULE).toContain("never repeat the same gesture across the group");
+    expect(FINAL_STAGING_PRIORITY_RULE).toContain("designated lip-sync speaker");
   });
 });
 

@@ -18,6 +18,9 @@ automatically examine it for:
 - **Adherence to the request.** Does the returned media actually reflect
   what the shot asked for: the correct characters present, the specified
   action/blocking, and the intended camera framing?
+- **Exact planned moment.** Does the image preserve the shot's causal state,
+  rather than substituting a visually plausible adjacent event such as an
+  arrival for a reaction shot?
 - **Tone alignment with the Scripture passage.** Does the shot's emotional
   register match the passage being depicted (for example, not rendering a
   solemn passage comically, or a joyful passage somberly)?

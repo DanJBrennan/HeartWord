@@ -69,6 +69,10 @@ const FIDELITY_RESPONSE_SCHEMA: GeminiJsonSchema = {
       type: "boolean",
       description: "Does the number of people actually visible in the image match the REQUIRED crowd density stated below? true if it matches or no specific density was required."
     },
+    actionMatch: {
+      type: "boolean",
+      description: "Does the visible action depict the exact planned moment below, without substituting an earlier/later generic event such as an arrival, departure, doorway crossing, or confrontation?"
+    },
     continuityViolation: {
       type: "boolean",
       description: "Does the image violate the CONTINUITY CONSTRAINT stated below (show something that shouldn't be there yet, or omit something that should already be established)? false if it's respected or no constraint was given."
@@ -78,7 +82,7 @@ const FIDELITY_RESPONSE_SCHEMA: GeminiJsonSchema = {
       description: "One or two sentences on anything found wrong, or a brief confirmation everything checks out."
     }
   },
-  required: ["settingScore", "crowdDensityMatch", "continuityViolation", "notes"]
+  required: ["settingScore", "crowdDensityMatch", "actionMatch", "continuityViolation", "notes"]
 };
 
 /** Compares one generated shot against its own planned requirements
@@ -100,8 +104,9 @@ export async function checkSceneFidelity(
     `This shot's planned action: "${action}"\n` +
     `Required crowd density for this shot: ${requiredCrowdDensity ?? "not specified -- any density is fine"}\n` +
     `Continuity constraint for this exact shot: ${continuityConstraint ?? "none specified"}\n\n` +
-    `Judge the attached image against all three: setting/costume fidelity, crowd density match, and the ` +
-    `continuity constraint.`;
+    `Judge the attached image against all four: setting/costume fidelity, crowd density match, exact action ` +
+    `match, and the continuity constraint. Reject a visually plausible frame when it depicts a different ` +
+    `causal moment than the planned action.`;
 
   const verdict = await generateJsonWithImages<FidelityVerdict>(prompt, [generatedImage], FIDELITY_RESPONSE_SCHEMA);
   return parseFidelityVerdict(verdict);
@@ -178,6 +183,7 @@ export async function runSceneFidelityAudit(
     const problems: string[] = [];
     if (verdict.settingScore < SETTING_FIDELITY_THRESHOLD) problems.push(`setting/costume scored ${verdict.settingScore}/100`);
     if (!verdict.crowdDensityMatch) problems.push(`crowd density doesn't match the required "${row.crowd_density}"`);
+    if (!verdict.actionMatch) problems.push(`visible action doesn't match the planned moment`);
     if (verdict.continuityViolation) problems.push(`continuity constraint violated`);
     insertReviewNote.run(
       randomUUID(),

@@ -13,6 +13,7 @@ export const SETTING_FIDELITY_THRESHOLD = 70;
 export interface FidelityVerdict {
   settingScore: number;
   crowdDensityMatch: boolean;
+  actionMatch: boolean;
   continuityViolation: boolean;
   notes: string;
 }
@@ -29,20 +30,22 @@ export function parseFidelityVerdict(raw: unknown): FidelityVerdict {
   const obj = (raw && typeof raw === "object" ? raw : {}) as {
     settingScore?: unknown;
     crowdDensityMatch?: unknown;
+    actionMatch?: unknown;
     continuityViolation?: unknown;
     notes?: unknown;
   };
   const rawScore = typeof obj.settingScore === "number" && Number.isFinite(obj.settingScore) ? obj.settingScore : 0;
   const settingScore = Math.max(0, Math.min(100, rawScore));
   const crowdDensityMatch = obj.crowdDensityMatch === true;
+  const actionMatch = obj.actionMatch === true;
   const continuityViolation = obj.continuityViolation !== false; // fail safe: assume a violation unless explicitly cleared
   const notes = typeof obj.notes === "string" && obj.notes.trim().length > 0 ? obj.notes.trim() : "(no notes returned)";
-  return { settingScore, crowdDensityMatch, continuityViolation, notes };
+  return { settingScore, crowdDensityMatch, actionMatch, continuityViolation, notes };
 }
 
 /** A shot passes only if every dimension passes -- one bad dimension
  *  (wrong costume, wrong crowd size, a continuity break) is a real
  *  failure even if the other two are fine. */
 export function isSceneFidelityAligned(verdict: FidelityVerdict, threshold: number = SETTING_FIDELITY_THRESHOLD): boolean {
-  return verdict.settingScore >= threshold && verdict.crowdDensityMatch && !verdict.continuityViolation;
+  return verdict.settingScore >= threshold && verdict.crowdDensityMatch && verdict.actionMatch && !verdict.continuityViolation;
 }

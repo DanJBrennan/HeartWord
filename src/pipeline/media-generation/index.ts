@@ -194,6 +194,31 @@ const CASTING_AND_SETTING_ANCHOR =
   "to continue. A pose already frozen at the action's end state (already standing, already turned, already " +
   "speaking with the gesture fully extended) gives a video generator nothing to animate and is a failure.";
 
+const SHOT_STATE_FIDELITY_RULE =
+  "SHOT-STATE FIDELITY: portray the exact planned moment below, not an earlier or later generic event. Do not " +
+  "invent an arrival, departure, doorway crossing, confrontation, or other causal action that the shot does not " +
+  "state. Exclude any doorway, threshold, prop, or composition cue that implies a different event unless the " +
+  "action or continuity constraint explicitly requires it.";
+
+/**
+ * Crew direction gives the model emotional and performance intent, but it
+ * must never turn a group into an audience-facing still. This block is
+ * appended AFTER the saved crew direction, making the hierarchy explicit
+ * at the final, highest-attention position in the provider prompt.
+ */
+export const FINAL_STAGING_PRIORITY_RULE =
+  "FINAL STAGING PRIORITY — this rule overrides any earlier wording that could be read as a group pose: preserve " +
+  "the crew's intended emotional gestures as INDIVIDUAL reactions (for example, one or some scribes may fold " +
+  "their arms defensively), but never repeat the same gesture across the group or arrange people as a centered, " +
+  "symmetrical, camera-facing lineup. Maintain varied poses, uneven depth, partial occlusion, and story-motivated " +
+  "eyelines. Direct eye contact with camera is permitted only for the designated lip-sync speaker in a performance shot.";
+
+function cinematicStagingInstruction(needsLipSync: boolean): string {
+  return needsLipSync
+    ? "CINEMATIC STAGING: this is a lip-sync performance shot. The designated speaking character may make intentional near-lens or direct-to-camera eye contact when it serves the spoken performance. Every supporting person must remain naturally oriented toward the speaker, action, or another story-motivated point; never arrange the group as a portrait lineup facing the lens."
+    : "CINEMATIC STAGING: this is not a portrait. Do not arrange people in a centered lineup or have them make direct eye contact with the lens. Use story-motivated eyelines, varied natural poses, asymmetrical spacing, partial occlusion, and credible reactions to the action; people should face the speaker, the action, or another story-motivated point rather than the camera.";
+}
+
 export function buildShotPrompt(
   scene: SceneRow,
   shot: ShotRow,
@@ -235,6 +260,10 @@ export function buildShotPrompt(
 Scene setting: ${scene.lighting_continuity ?? "natural daylight, consistent with the rest of the scene"}.
 Shared scene space: ${scene.spatial_continuity ?? "Preserve one consistent location across this scene; do not change its apparent overall scale, architecture, or geography between shots."}
 This shot's view of that space: ${shot.spatial_view ?? "Keep the established spatial identity; a tight framing may omit it but must not contradict it."}
+
+${SHOT_STATE_FIDELITY_RULE}
+
+${cinematicStagingInstruction(shot.needs_lip_sync === 1)}
 
 Shot: ${framing}, camera ${shot.camera_movement ?? "static"}.
 Action: ${shot.action}
@@ -460,19 +489,27 @@ export const generateKeyframes = async (projectId: string, onlyShotIds?: string[
     // An earlier accepted view, not a merely-generated candidate, is the
     // scene's set reference for later angles. This makes continuity work even
     // before an archaeological reconstruction packet has been approved.
-    const sceneReference = db.prepare(
-      `SELECT ga.result_asset_path FROM shots earlier
-       JOIN generation_attempts ga ON ga.shot_id=earlier.id AND ga.operation='generate' AND ga.status='accepted'
-       WHERE earlier.scene_id=? AND earlier.sequence < ? AND ga.result_asset_path IS NOT NULL
-       ORDER BY earlier.sequence ASC, ga.created_at DESC LIMIT 1`
-    ).get(shot.scene_id, shot.sequence) as { result_asset_path: string } | undefined;
+    // An earlier frame is a set reference, not permission to carry its
+    // people into a reaction shot. An explicit offscreen direction is the
+    // producer's clearest statement that the prior cast must not reappear.
+    const excludesPriorCast = /\boffscreen\b/i.test(
+      [shot.action, shot.continuity_notes ?? "", shot.spatial_view ?? ""].join("\n")
+    );
+    const sceneReference = excludesPriorCast
+      ? undefined
+      : db.prepare(
+        `SELECT ga.result_asset_path FROM shots earlier
+         JOIN generation_attempts ga ON ga.shot_id=earlier.id AND ga.operation='generate' AND ga.status='accepted'
+         WHERE earlier.scene_id=? AND earlier.sequence < ? AND ga.result_asset_path IS NOT NULL
+         ORDER BY earlier.sequence DESC, ga.created_at DESC LIMIT 1`
+      ).get(shot.scene_id, shot.sequence) as { result_asset_path: string } | undefined;
     let prompt: string;
     try {
       const plan = requireCurrentPlan(db, dataDir, projectId);
       const suggestedFix = loadSuggestedFix(db, shot.id);
       const basePrompt = buildShotPrompt(scene, shot, shotCharacters.map((c) => c.name), suggestedFix, characterCanons);
       const productionDirections = directionsFromRun(plan, shot.id);
-      const heldPrompt = expandTzitzitDefinition(`${basePrompt}${productionDirections}`);
+      const heldPrompt = expandTzitzitDefinition(`${basePrompt}${productionDirections}\n\n${FINAL_STAGING_PRIORITY_RULE}`);
       // Check only mutable direction fields. The generated locked-canon block
       // may itself explain what is prohibited (for example, "not a blue
       // mantle") and must never trigger its own guard.
