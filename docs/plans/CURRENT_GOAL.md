@@ -30,6 +30,27 @@ Typecheck passes. The full suite is 456/457 passing; the lone failure is the
 previously recorded fresh-chapter stage expectation mismatch
 (`media_generation` versus `voice_lipsync`).
 
+## Capernaum synagogue reusable arrival-motion draft (2026-09-24)
+
+At Dan's direction, a ten-second silent 16:9 Omni draft now animates the
+approved Capernaum synagogue exterior r4 as a standalone reusable location
+reference. Independently timed Papuan/Hatam townspeople pass by and conduct
+ordinary business while Jesus, locked to the approved v5 walking reference,
+enters frame and walks into the open synagogue. After Dan flagged a giant
+scale and a late threshold crossing in earlier retained takes, the active r4
+candidate explicitly holds Jesus to normal adult scale against the doorway
+and keeps the open doorway empty for the final third after he has entered.
+The generator audio was discarded. The retained MP4 is cataloged as
+reusable_reference, with its set/canon sources and full generation prompt
+in the library provenance, and is held for review rather than selected on any
+timeline.
+
+Goal Guardian check: this creates bounded, non-speaking location coverage
+within the current reusable-reference catalog goal. It preserves the approved
+synagogue reconstruction and Jesus canon, makes no claim about a specific
+Scripture passage, does not introduce dialogue or a timeline edit, and leaves
+all future reuse subject to the normal source/canon/editorial review.
+
 ## Source-boundary integrity at alignment (2026-09-23)
 
 The Shot 4 ending exposed a timing failure that text-match confidence could
