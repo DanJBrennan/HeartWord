@@ -329,7 +329,7 @@ No text, no labels, no logos anywhere in the image.`);
  * media-generation.md, was considered and rejected by Dan (2026-09-06) --
  * both docs corrected to remove it.
  */
-export const generateKeyframes = async (projectId: string, onlyShotIds?: string[]): Promise<StageResult> => {
+export const generateKeyframes = async (projectId: string, onlyShotIds?: string[], imageTier?: "standard" | "pro"): Promise<StageResult> => {
   const db = getDb();
   const project = db.prepare(`SELECT id, language, book, chapter FROM projects WHERE id = ?`).get(projectId) as
     | ProjectRow
@@ -532,7 +532,7 @@ export const generateKeyframes = async (projectId: string, onlyShotIds?: string[
     } catch (error) {
       return { ok: false, reasoning: `New media is held: ${(error as Error).message}` };
     }
-    const tier: "standard" | "pro" = shot.needs_lip_sync ? "pro" : "standard";
+    const tier: "standard" | "pro" = imageTier ?? (shot.needs_lip_sync ? "pro" : "standard");
 
     try {
       const result = await imageProvider.generate({ shotId: shot.id, prompt, characters: characterRefs,
@@ -638,11 +638,11 @@ export const generateKeyframes = async (projectId: string, onlyShotIds?: string[
 };
 
 const activeGeneration = new Set<string>();
-export const runMediaGeneration = async (projectId: string, onlyShotIds?: string[]): Promise<StageResult> => {
+export const runMediaGeneration = async (projectId: string, onlyShotIds?: string[], imageTier?: "standard" | "pro"): Promise<StageResult> => {
   if (activeGeneration.has(projectId)) return { ok: false, reasoning: "Keyframe generation is already running for this chapter." };
   activeGeneration.add(projectId);
   try {
-    const keyframes=await generateKeyframes(projectId, onlyShotIds);
+    const keyframes=await generateKeyframes(projectId, onlyShotIds, imageTier);
     if (!keyframes.ok) return keyframes;
     const db=getDb();
     const shots=db.prepare(`SELECT sh.id FROM shots sh JOIN scenes s ON s.id=sh.scene_id WHERE s.project_id=? AND sh.needs_lip_sync=0`).all(projectId) as Array<{id:string}>;

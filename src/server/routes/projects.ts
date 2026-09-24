@@ -330,6 +330,7 @@ projectsRouter.post("/:id/media-generation", async (req, res) => {
   }
 
   const rawShotIds = (req.body as { shotIds?: unknown } | undefined)?.shotIds;
+  const rawImageTier = (req.body as { imageTier?: unknown } | undefined)?.imageTier;
   let onlyShotIds: string[] | undefined;
   if (rawShotIds !== undefined) {
     if (!Array.isArray(rawShotIds) || rawShotIds.some((id) => typeof id !== "string")) {
@@ -338,9 +339,13 @@ projectsRouter.post("/:id/media-generation", async (req, res) => {
     }
     onlyShotIds = rawShotIds as string[];
   }
+  if (rawImageTier !== undefined && rawImageTier !== "standard" && rawImageTier !== "pro") {
+    res.status(400).json({ error: "imageTier, if provided, must be 'standard' or 'pro'." });
+    return;
+  }
 
   try {
-    const result = await runMediaGeneration(req.params.id, onlyShotIds);
+    const result = await runMediaGeneration(req.params.id, onlyShotIds, rawImageTier);
     res.json(result);
   } catch (err) {
     res.status(502).json({ error: (err as Error).message });
@@ -507,7 +512,7 @@ projectsRouter.patch("/:id/shots/:shotId", (req, res) => {
   const latest = db.prepare(
     `SELECT id, status FROM generation_attempts WHERE shot_id = ? AND operation = 'generate' ORDER BY created_at DESC LIMIT 1`
   ).get(req.params.shotId) as { id: string; status: string } | undefined;
-  if (latest && (latest.status === "hold_for_review" || latest.status === "escalate")) {
+  if (latest && (latest.status === "accepted" || latest.status === "hold_for_review" || latest.status === "escalate")) {
     db.prepare(`UPDATE generation_attempts SET status = 'retry_modified' WHERE id = ?`).run(latest.id);
   }
 
