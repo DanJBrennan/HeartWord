@@ -15,9 +15,16 @@
  *  revisit once this has run against more chapters. */
 export const LIKENESS_THRESHOLD = 70;
 
+/** Whether the named character's visible wardrobe matches the approved
+ * reference. An obscured wardrobe is not a mismatch, but an unparseable
+ * reviewer response must never quietly pass the wardrobe gate. */
+export type WardrobeStatus = "match" | "mismatch" | "not_visible" | "unverified";
+
 export interface LikenessVerdict {
   score: number;
   instanceCount: number;
+  wardrobeStatus: WardrobeStatus;
+  wardrobeNotes: string;
   notes: string;
 }
 
@@ -31,15 +38,29 @@ export interface LikenessVerdict {
  * count shouldn't itself trigger a duplicate-character flag.
  */
 export function parseLikenessVerdict(raw: unknown): LikenessVerdict {
-  const obj = (raw && typeof raw === "object" ? raw : {}) as { score?: unknown; instanceCount?: unknown; notes?: unknown };
+  const obj = (raw && typeof raw === "object" ? raw : {}) as {
+    score?: unknown;
+    instanceCount?: unknown;
+    wardrobeStatus?: unknown;
+    wardrobeNotes?: unknown;
+    notes?: unknown;
+  };
   const rawScore = typeof obj.score === "number" && Number.isFinite(obj.score) ? obj.score : 0;
   const score = Math.max(0, Math.min(100, rawScore));
   const instanceCount =
     typeof obj.instanceCount === "number" && Number.isFinite(obj.instanceCount) && obj.instanceCount >= 0
       ? Math.round(obj.instanceCount)
       : 1;
+  const wardrobeStatus: WardrobeStatus =
+    obj.wardrobeStatus === "match" || obj.wardrobeStatus === "mismatch" || obj.wardrobeStatus === "not_visible"
+      ? obj.wardrobeStatus
+      : "unverified";
+  const wardrobeNotes =
+    typeof obj.wardrobeNotes === "string" && obj.wardrobeNotes.trim().length > 0
+      ? obj.wardrobeNotes.trim()
+      : "(no wardrobe assessment returned)";
   const notes = typeof obj.notes === "string" && obj.notes.trim().length > 0 ? obj.notes.trim() : "(no notes returned)";
-  return { score, instanceCount, notes };
+  return { score, instanceCount, wardrobeStatus, wardrobeNotes, notes };
 }
 
 /**
@@ -61,7 +82,9 @@ export function isLikenessAligned(
   score: number,
   threshold: number = LIKENESS_THRESHOLD,
   instanceCount: number = 1,
-  expectedInstances: number = 1
+  expectedInstances: number = 1,
+  wardrobeStatus: WardrobeStatus = "match"
 ): boolean {
-  return score >= threshold && instanceCount === expectedInstances;
+  return score >= threshold && instanceCount === expectedInstances &&
+    (wardrobeStatus === "match" || wardrobeStatus === "not_visible");
 }

@@ -419,7 +419,7 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
     const referenceAbsPath = join(dataDir, "assets", character.reference_path);
     if (!existsSync(referenceAbsPath)) continue;
     const verdict = await checkCanonicalLikeness(character.character_name, referenceAbsPath, generatedAbsPath);
-    if (!isLikenessAligned(verdict.score, undefined, verdict.instanceCount)) {
+    if (!isLikenessAligned(verdict.score, undefined, verdict.instanceCount, 1, verdict.wardrobeStatus)) {
       likenessAligned = false;
     }
   }
@@ -559,9 +559,12 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
       continue;
     }
     const verdict = await checkCanonicalLikeness(character.character_name, referenceAbsPath, generatedAbsPath);
-    if (!isLikenessAligned(verdict.score, undefined, verdict.instanceCount)) {
+    if (!isLikenessAligned(verdict.score, undefined, verdict.instanceCount, 1, verdict.wardrobeStatus)) {
       likenessAligned = false;
-      likenessNotes.push(`${character.character_name}: ${verdict.score}/100, ${verdict.instanceCount} instance(s) — ${verdict.notes}`);
+      likenessNotes.push(
+        `${character.character_name}: ${verdict.score}/100, ${verdict.instanceCount} instance(s), wardrobe ${verdict.wardrobeStatus} — ` +
+        `${verdict.notes} ${verdict.wardrobeNotes}`
+      );
     }
   }
 
@@ -745,10 +748,11 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
         likenessNotes.push(`${requiredCharacter.character_name}'s approved comparison asset is missing`);
       } else {
         const verdict = await checkCanonicalLikeness(requiredCharacter.character_name, referenceAbsPath, generatedAbsPath);
-        if (!isLikenessAligned(verdict.score, undefined, verdict.instanceCount)) {
+        if (!isLikenessAligned(verdict.score, undefined, verdict.instanceCount, 1, verdict.wardrobeStatus)) {
           likenessAligned = false;
           likenessNotes.push(
-            `${requiredCharacter.character_name}: ${verdict.score}/100, ${verdict.instanceCount} instance(s) — ${verdict.notes}`
+            `${requiredCharacter.character_name}: ${verdict.score}/100, ${verdict.instanceCount} instance(s), wardrobe ` +
+            `${verdict.wardrobeStatus} — ${verdict.notes} ${verdict.wardrobeNotes}`
           );
         }
       }

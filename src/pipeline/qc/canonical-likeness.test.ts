@@ -3,9 +3,17 @@ import { isLikenessAligned, LIKENESS_THRESHOLD, parseLikenessVerdict } from "./l
 
 describe("parseLikenessVerdict", () => {
   it("passes through a well-formed response", () => {
-    expect(parseLikenessVerdict({ score: 85, instanceCount: 1, notes: "Strong match." })).toEqual({
+    expect(parseLikenessVerdict({
       score: 85,
       instanceCount: 1,
+      wardrobeStatus: "match",
+      wardrobeNotes: "The mantle and bands match.",
+      notes: "Strong match."
+    })).toEqual({
+      score: 85,
+      instanceCount: 1,
+      wardrobeStatus: "match",
+      wardrobeNotes: "The mantle and bands match.",
       notes: "Strong match."
     });
   });
@@ -39,9 +47,15 @@ describe("parseLikenessVerdict", () => {
   });
 
   it("fails safe on completely malformed input rather than throwing", () => {
-    expect(parseLikenessVerdict(null)).toEqual({ score: 0, instanceCount: 1, notes: "(no notes returned)" });
-    expect(parseLikenessVerdict(undefined)).toEqual({ score: 0, instanceCount: 1, notes: "(no notes returned)" });
-    expect(parseLikenessVerdict("not an object")).toEqual({ score: 0, instanceCount: 1, notes: "(no notes returned)" });
+    expect(parseLikenessVerdict(null)).toEqual({
+      score: 0, instanceCount: 1, wardrobeStatus: "unverified", wardrobeNotes: "(no wardrobe assessment returned)", notes: "(no notes returned)"
+    });
+    expect(parseLikenessVerdict(undefined)).toEqual({
+      score: 0, instanceCount: 1, wardrobeStatus: "unverified", wardrobeNotes: "(no wardrobe assessment returned)", notes: "(no notes returned)"
+    });
+    expect(parseLikenessVerdict("not an object")).toEqual({
+      score: 0, instanceCount: 1, wardrobeStatus: "unverified", wardrobeNotes: "(no wardrobe assessment returned)", notes: "(no notes returned)"
+    });
   });
 
   it("defaults notes when missing or blank", () => {
@@ -51,6 +65,12 @@ describe("parseLikenessVerdict", () => {
 
   it("trims whitespace from real notes", () => {
     expect(parseLikenessVerdict({ score: 90, notes: "  looks good  " }).notes).toBe("looks good");
+  });
+
+  it("holds an absent or malformed wardrobe assessment as unverified", () => {
+    expect(parseLikenessVerdict({ score: 90, wardrobeStatus: "unclear" }).wardrobeStatus).toBe("unverified");
+    expect(parseLikenessVerdict({ score: 90, wardrobeStatus: "match", wardrobeNotes: "  correct mantle  " }).wardrobeNotes)
+      .toBe("correct mantle");
   });
 });
 
@@ -96,5 +116,14 @@ describe("isLikenessAligned", () => {
   it("respects a non-default expected instance count", () => {
     expect(isLikenessAligned(90, LIKENESS_THRESHOLD, 2, 2)).toBe(true);
     expect(isLikenessAligned(90, LIKENESS_THRESHOLD, 1, 2)).toBe(false);
+  });
+
+  it("fails a visible wardrobe mismatch even with a strong face match", () => {
+    expect(isLikenessAligned(95, LIKENESS_THRESHOLD, 1, 1, "mismatch")).toBe(false);
+  });
+
+  it("allows an honestly obscured wardrobe but holds an unverified response", () => {
+    expect(isLikenessAligned(95, LIKENESS_THRESHOLD, 1, 1, "not_visible")).toBe(true);
+    expect(isLikenessAligned(95, LIKENESS_THRESHOLD, 1, 1, "unverified")).toBe(false);
   });
 });

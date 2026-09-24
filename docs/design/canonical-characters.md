@@ -63,6 +63,12 @@ hard contradictions such as a blue mantle for a canon whose mantle is cream.
 The producer remains responsible for approving or changing the canon facts;
 approved shots remain historical evidence and are never overwritten.
 
+Returned shots are checked again after generation against the approved
+reference. The comparison treats a visible mismatch in garment cut, neckline,
+layering, mantle arrangement, locked color-block, tassel/fringe treatment, or
+footwear as a continuity failure even if the clothing is period-plausible. A
+face-only likeness score is not sufficient to accept a named character.
+
 ### Tzitzit expansion
 
 `tzitzit` is a compact historical term but an ambiguous image instruction on

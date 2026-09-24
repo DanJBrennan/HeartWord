@@ -41,6 +41,18 @@ close-up, malformed or extra hands/faces, unwanted text or artifacts baked
 into the image, continuity with the immediately preceding shot, and coverage
 of the requested action without silently dropping part of it.
 
+### Named-character wardrobe continuity
+
+For every named character with an approved visual reference, review must also
+compare the candidate's **visible wardrobe directly** to that reference. This
+is separate from facial likeness and historical plausibility: garment cut and
+neckline, layers and mantle arrangement, locked color-block and bands, visible
+tassel/fringe treatment, and visible footwear are continuity facts. A material
+visible mismatch fails the character-continuity gate and cannot be accepted;
+an obscured wardrobe may be recorded as not visible, but a malformed or absent
+assessment is held for review rather than silently passing. The result must
+name the concrete drift so the next generation can correct it.
+
 When review yields a verdict, it should resolve to one of a small set of
 concrete outcomes rather than a bare pass/fail: accept, retry with the same
 prompt (useful for a provider's own generation variance), retry with a

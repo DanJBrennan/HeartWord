@@ -41,10 +41,16 @@ import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
 import { generateJsonWithImages, type GeminiJsonSchema } from "../../providers/gemini-text.js";
 import { runMediaGeneration } from "../media-generation/index.js";
-import { isLikenessAligned, LIKENESS_THRESHOLD, parseLikenessVerdict, type LikenessVerdict } from "./likeness-verdict.js";
+import {
+  isLikenessAligned,
+  LIKENESS_THRESHOLD,
+  parseLikenessVerdict,
+  type LikenessVerdict,
+  type WardrobeStatus
+} from "./likeness-verdict.js";
 import { findFailedShotCharacterRow, type ShotCharacterCheckRow } from "./canonical-likeness-row.js";
 
-export { isLikenessAligned, LIKENESS_THRESHOLD, parseLikenessVerdict, type LikenessVerdict };
+export { isLikenessAligned, LIKENESS_THRESHOLD, parseLikenessVerdict, type LikenessVerdict, type WardrobeStatus };
 
 const LIKENESS_RESPONSE_SCHEMA: GeminiJsonSchema = {
   type: "object",
@@ -72,6 +78,20 @@ const LIKENESS_RESPONSE_SCHEMA: GeminiJsonSchema = {
         "what looks like the same person appearing twice as two separate figures in the scene (a real generation " +
         "bug), report 2. Report 0 if the character isn't identifiable at all."
     },
+    wardrobeStatus: {
+      type: "string",
+      description:
+        "One of: match, mismatch, not_visible. Compare the named character's visible wardrobe directly to the " +
+        "approved reference: garment silhouette/cut, layering and mantle arrangement, color-block and bands, " +
+        "neckline, fringe/tassel count and length, and visible footwear. Use mismatch for any material visible " +
+        "difference, not_visible only when the clothing cannot honestly be assessed."
+    },
+    wardrobeNotes: {
+      type: "string",
+      description:
+        "One or two sentences naming the visible evidence for the wardrobe result. For mismatch, identify the " +
+        "specific drift and the approved reference detail that should replace it."
+    },
     notes: {
       type: "string",
       description: "One or two sentences: what specifically matches or drifts (e.g. 'nose/jaw read softer and " +
@@ -79,7 +99,7 @@ const LIKENESS_RESPONSE_SCHEMA: GeminiJsonSchema = {
         "If instanceCount is not 1, say so explicitly here too."
     }
   },
-  required: ["score", "instanceCount", "notes"]
+  required: ["score", "instanceCount", "wardrobeStatus", "wardrobeNotes", "notes"]
 };
 
 /**
@@ -107,7 +127,13 @@ export async function checkCanonicalLikeness(
     `composition, not lighting, not clothing. A face that has drifted toward a generic or different regional/ ` +
     `ethnic appearance (e.g. more Mediterranean, more Western-default) than the reference is a real failure, even ` +
     `if it's a plausible-looking face on its own.\n\n` +
-    `For INSTANCE COUNT: this is where clothing DOES matter -- look carefully across the WHOLE second image ` +
+    `For WARDROBE STATUS: compare the named character's visible clothing DIRECTLY against the approved reference. ` +
+    `This is a hard continuity check, not a historical-plausibility judgment. Check the garment cut and neckline, ` +
+    `layers and mantle arrangement, the locked cream/indigo or other color-block, bands, visible tassel/fringe ` +
+    `count and length, and visible footwear. If any visible element materially differs from the reference, return ` +
+    `mismatch even when the clothing is historically plausible. Return not_visible only when the wardrobe cannot ` +
+    `honestly be judged; never use it merely because the comparison is difficult.\n\n` +
+    `For INSTANCE COUNT: this is where clothing ALSO matters -- look carefully across the WHOLE second image ` +
     `(including figures partially cropped, in the background, or facing away) for more than one figure wearing ` +
     `this character's exact locked robe/clothing color combination and hair length. A second figure sharing that ` +
     `specific combination is this character duplicated -- a real generation bug -- even if you can't clearly see ` +
@@ -143,7 +169,15 @@ export interface CanonicalLikenessAuditResult {
   passed: number;
   failed: number;
   regenerated: number;
-  failures: Array<{ shotId: string; characterName: string; score: number; instanceCount: number; notes: string }>;
+  failures: Array<{
+    shotId: string;
+    characterName: string;
+    score: number;
+    instanceCount: number;
+    wardrobeStatus: WardrobeStatus;
+    wardrobeNotes: string;
+    notes: string;
+  }>;
 }
 
 /**
@@ -208,7 +242,7 @@ export async function runCanonicalLikenessAudit(
 
     checked++;
     const verdict = await checkCanonicalLikeness(row.character_name, referenceAbsPath, generatedAbsPath);
-    if (isLikenessAligned(verdict.score, LIKENESS_THRESHOLD, verdict.instanceCount)) {
+    if (isLikenessAligned(verdict.score, LIKENESS_THRESHOLD, verdict.instanceCount, 1, verdict.wardrobeStatus)) {
       passed++;
       continue;
     }
@@ -218,11 +252,17 @@ export async function runCanonicalLikenessAudit(
       characterName: row.character_name,
       score: verdict.score,
       instanceCount: verdict.instanceCount,
+      wardrobeStatus: verdict.wardrobeStatus,
+      wardrobeNotes: verdict.wardrobeNotes,
       notes: verdict.notes
     });
     invalidateAttempt.run(row.generation_attempt_id);
     const problem =
-      verdict.instanceCount !== 1
+      verdict.wardrobeStatus === "mismatch"
+        ? `has a visible wardrobe mismatch against the approved reference: ${verdict.wardrobeNotes}`
+        : verdict.wardrobeStatus === "unverified"
+          ? `has an unverified wardrobe comparison -- ${verdict.wardrobeNotes}`
+        : verdict.instanceCount !== 1
         ? `appears ${verdict.instanceCount} time(s) in this shot instead of once (a duplicate-character rendering bug)`
         : `scored ${verdict.score}/100 (below the ${LIKENESS_THRESHOLD} threshold) against their canon reference`;
     insertReviewNote.run(
@@ -254,7 +294,7 @@ export async function runCanonicalLikenessAudit(
       const referenceAbsPath = join(dataDir, "assets", row.reference_path);
       const newGeneratedAbsPath = join(dataDir, "assets", newAttempt.result_asset_path);
       const recheck = await checkCanonicalLikeness(failure.characterName, referenceAbsPath, newGeneratedAbsPath);
-      if (isLikenessAligned(recheck.score, LIKENESS_THRESHOLD, recheck.instanceCount)) {
+      if (isLikenessAligned(recheck.score, LIKENESS_THRESHOLD, recheck.instanceCount, 1, recheck.wardrobeStatus)) {
         regenerated++;
       } else {
         stillFailing.push({
@@ -262,6 +302,8 @@ export async function runCanonicalLikenessAudit(
           characterName: failure.characterName,
           score: recheck.score,
           instanceCount: recheck.instanceCount,
+          wardrobeStatus: recheck.wardrobeStatus,
+          wardrobeNotes: recheck.wardrobeNotes,
           notes: recheck.notes
         });
       }
