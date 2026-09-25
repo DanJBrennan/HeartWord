@@ -55,6 +55,8 @@ describe("coordinated filmmaking", () => {
     expect(result.status).toBe("approved");
     expect(events.map(e => e.role)).toEqual([...executableProductionRolesFor("planning").filter(role => role !== "production_director"), "fidelity_challenger", "clarity_challenger", "feasibility_challenger", "production_director"]);
     expect(events[1]!.prompt).toContain("creative_director checked the evidence");
+    expect(events[0]!.prompt).toContain("IMPLIED EMOTION");
+    expect(events[0]!.prompt).toContain("textual action triggers the emotion");
     const [fidelity, clarity, feasibility, director] = events.slice(-4);
     for (const event of events.slice(0, -4)) for (const text of ["Exact reference words", "Original words", "Roof intact", "Roof is opened", "8000", "Approved robe", "Preserve the approved wardrobe"]) expect(event.prompt).toContain(text);
     // Every challenger and the Director still see the shared story and shot plan.
@@ -71,6 +73,8 @@ describe("coordinated filmmaking", () => {
     // The Director is unrestricted -- it must weigh every specialist's full evidence.
     expect(director!.prompt).toContain("Approved robe");
     expect(director!.prompt).toContain("Preserve the approved wardrobe");
+    expect(EDITORIAL_CHECKS).toContain("implied_emotion");
+    expect(EDITORIAL_CHECKS).toContain("chapter_handoff");
   });
   it("attaches canon reference images only to roles whose job is inherently visual", async () => {
     const seenMedia: Record<string, unknown> = {};
@@ -163,6 +167,24 @@ describe("coordinated filmmaking", () => {
     } });
     expect(result.status).toBe("held");
     expect(result.summary).toContain("speaker_mouth");
+  });
+  it("holds an unsupported implied-emotion verdict for producer review", async () => {
+    const result = await runCrew({ phase: "finishing", brief: brief(), media: [{ mimeType: "video/mp4", data: "fixture" }], log: () => {}, call: async prompt => {
+      const out = response(roleFromPrompt(prompt));
+      if (roleFromPrompt(prompt) === "picture_editor") out.editorialChecks!.find(c => c.name === "implied_emotion")!.status = "unverified";
+      return out;
+    } });
+    expect(result.status).toBe("held");
+    expect(result.summary).toContain("implied_emotion");
+  });
+  it("holds an unverified final chapter handoff", async () => {
+    const result = await runCrew({ phase: "finishing", brief: brief(), media: [{ mimeType: "video/mp4", data: "fixture" }], log: () => {}, call: async prompt => {
+      const out = response(roleFromPrompt(prompt));
+      if (roleFromPrompt(prompt) === "picture_editor") out.editorialChecks!.find(c => c.name === "chapter_handoff")!.status = "unverified";
+      return out;
+    } });
+    expect(result.status).toBe("held");
+    expect(result.summary).toContain("chapter_handoff");
   });
   it("rejects a missing editorial checklist instead of approving an unexamined cut", async () => {
     const result = await runCrew({ phase: "finishing", brief: brief(), media: [{ mimeType: "video/mp4", data: "fixture" }], log: () => {}, call: async prompt => {

@@ -48,6 +48,7 @@ import { recordModelSpend } from "./model-spend.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
 import { getDataDir } from "../../db/client.js";
 import { loadCrewBrief } from "./crew-context.js";
+import { IMPLIED_EMOTION_POLICY } from "./implied-emotion.js";
 
 export interface GapFillIdea {
   targetShotId?: string;
@@ -275,8 +276,9 @@ export async function proposeGapFillers(
     `stretches where the narrator is paused and music builds, dancing occurs, or a character simply reacts. This ` +
     `can be an emotional time when the actual passage supports it. Determine THIS passage's mood from the source. Fill gaps with ideas that add a human side, ` +
     `while always maintaining the decorum of the intent of the scripture passage. Most ideas should be continuity ` +
-    `keyframes/clips (another angle or extension of action already happening), but invented human-interest beats ` +
-    `are welcome when the moment genuinely calls for one."\n\n` +
+    `keyframes/clips (another angle or extension of action already happening); source-grounded nonverbal human reactions ` +
+    `may be proposed when the moment genuinely calls for one, without inventing a new event."\n\n` +
+    `${IMPLIED_EMOTION_POLICY}\n\n` +
     `THIS CHAPTER'S SHOTS ALREADY COVERING THIS SPAN (their exact verse_ref is how you must refer to one of them):\n${describe(withinGap)}\n\n` +
     `Use the exact targetShotId for EVERY idea: the existing target for an edit, or the nearby shot anchoring a new insert. New shots must each be at most eight seconds; split longer coverage into distinct ideas. A verse reference alone is ambiguous.\n` +
     `EXACT SOURCE, APPROVED CANON, MEASURED TIMING AND CHAPTER CONTEXT:\n${context}\n\n` +

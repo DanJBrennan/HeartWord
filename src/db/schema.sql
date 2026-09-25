@@ -275,6 +275,15 @@ CREATE TABLE IF NOT EXISTS chapter_intro_plans (
   updated_at INTEGER NOT NULL
 );
 
+-- Post-source handoff to the next chapter's verified opening; never a verse-timed shot.
+CREATE TABLE IF NOT EXISTS chapter_ending_plans (
+  project_id TEXT PRIMARY KEY REFERENCES projects(id),
+  plan_json TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('proposed','needs_review')),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
 -- Producer-confirmed speech identity for an on-camera speaking shot. A verse
 -- is intentionally insufficient: one speaker may have several utterances in
 -- it. The bound source interval is immutable evidence for voicing, lip sync

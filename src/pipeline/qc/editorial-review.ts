@@ -3,7 +3,7 @@ import type { CrewBrief } from "../creative-direction/crew-types.js";
 /** The producer's Mark 3 corrections, expressed as reusable whole-cut questions. */
 export const EDITORIAL_CHECKS = [
   "repeated_coverage", "speaking_framing", "speaker_mouth", "static_action",
-  "scene_continuity_canon", "pause_and_ambience"
+  "scene_continuity_canon", "pause_and_ambience", "implied_emotion", "chapter_handoff"
 ] as const;
 export type EditorialCheckName = typeof EDITORIAL_CHECKS[number];
 export interface EditorialCheck {

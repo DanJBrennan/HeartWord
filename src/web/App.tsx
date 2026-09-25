@@ -112,6 +112,16 @@ interface ChapterIntroPlan {
   reviewNotes: string[];
 }
 
+interface ChapterEndingPlan {
+  nextChapterRef: string | null;
+  shots: Array<{ role: string; description: string; reason: string; currentEvidence: string; nextEvidence: string; durationMs: number; audio: string }>;
+  sourceClockEndMs: number;
+  postSourceDurationMs: number;
+  reasoning: string;
+  status: "proposed" | "needs_review";
+  reviewNotes: string[];
+}
+
 const QC_STATUS_LABELS: Record<string, string> = {
   accepted: "✓ QC passed",
   retry_same: "⟳ QC: flagged for retry",
@@ -152,6 +162,7 @@ export default function App() {
 
   const [scenesWithShots, setScenesWithShots] = useState<SceneWithShots[]>([]);
   const [introPlan, setIntroPlan] = useState<ChapterIntroPlan | null>(null);
+  const [endingPlan, setEndingPlan] = useState<ChapterEndingPlan | null>(null);
   const [castingError, setCastingError] = useState<string | null>(null);
   const [castingBusy, setCastingBusy] = useState(false);
   const [castingResult, setCastingResult] = useState<CastingResult | null>(null);
@@ -230,7 +241,7 @@ export default function App() {
   }
 
   const activeProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0] ?? null;
-  function selectProject(id: string) { selectionEpochRef.current++; selectedProjectRef.current = id; setSelectedProjectId(id); setScenesWithShots([]); setIntroPlan(null); setCastMasterSegments([]); setReviewDrafts({}); setReviewError(null); setCastingResult(null); setCastingError(null); setMediaGenResult(null); setMediaGenError(null); setCastMasterResult(null); setCastMasterError(null); setCastingBusy(false); setMediaGenBusy(false); setCastMasterBusy(false); setReviewBusyShotId(null); setZoomedKeyframe(null); setPipelineBusy(false); setPipelineResult(null); setPipelineError(null); setCanonReadiness(null); }
+  function selectProject(id: string) { selectionEpochRef.current++; selectedProjectRef.current = id; setSelectedProjectId(id); setScenesWithShots([]); setIntroPlan(null); setEndingPlan(null); setCastMasterSegments([]); setReviewDrafts({}); setReviewError(null); setCastingResult(null); setCastingError(null); setMediaGenResult(null); setMediaGenError(null); setCastMasterResult(null); setCastMasterError(null); setCastingBusy(false); setMediaGenBusy(false); setCastMasterBusy(false); setReviewBusyShotId(null); setZoomedKeyframe(null); setPipelineBusy(false); setPipelineResult(null); setPipelineError(null); setCanonReadiness(null); }
 
   async function startChapterPreparation() {
     if (!activeProject || pipelineBusy) return;
@@ -307,8 +318,8 @@ export default function App() {
 
   async function loadShots(projectId: string) {
     try {
-      const { scenes, introPlan } = await api<{ scenes: SceneWithShots[]; introPlan: ChapterIntroPlan | null }>(`/projects/${projectId}/shots`);
-      if (selectedProjectRef.current === projectId) { setScenesWithShots(scenes); setIntroPlan(introPlan); }
+      const { scenes, introPlan, endingPlan } = await api<{ scenes: SceneWithShots[]; introPlan: ChapterIntroPlan | null; endingPlan: ChapterEndingPlan | null }>(`/projects/${projectId}/shots`);
+      if (selectedProjectRef.current === projectId) { setScenesWithShots(scenes); setIntroPlan(introPlan); setEndingPlan(endingPlan); }
     } catch (err) {
       if (selectedProjectRef.current === projectId) setCastingError((err as Error).message);
     }
@@ -584,6 +595,13 @@ export default function App() {
                 </ul>
               </div>
             ))}
+            {endingPlan && <div className="scene-block">
+              <h3>Chapter ending — {endingPlan.status.replaceAll("_", " ")}</h3>
+              <p>After the complete source recording ({(endingPlan.sourceClockEndMs / 1000).toFixed(1)}s), {endingPlan.shots.length} wordless transition shot{endingPlan.shots.length === 1 ? "" : "s"} may hint at {endingPlan.nextChapterRef ?? "the next chapter"} for {(endingPlan.postSourceDurationMs / 1000).toFixed(1)}s. Natural ambience; optional score.</p>
+              <p className="hint">{endingPlan.reasoning} Inferred movement is visual staging, not narrated Scripture.</p>
+              {endingPlan.reviewNotes.map((note, index) => <p className="error" key={index}>{note}</p>)}
+              <ol>{endingPlan.shots.map((shot, index) => <li key={index}><strong>{shot.role}</strong> ({(shot.durationMs / 1000).toFixed(1)}s) — {shot.description} Purpose: {shot.reason} Current: “{shot.currentEvidence}”; next: “{shot.nextEvidence}”. Media is not assigned; reuse requires target-shot review.</li>)}</ol>
+            </div>}
             {reviewError && <p className="error">{reviewError}</p>}
           </>
         )}

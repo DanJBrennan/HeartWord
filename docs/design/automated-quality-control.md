@@ -82,12 +82,16 @@ event — see `docs/design/notifications.md`.
 ### Whole-cut editorial review rubric (implemented)
 
 The existing Stage 7 finishing review now requires the Picture Editor to
-return a timestamped verdict for each of six reusable questions before a cut
+return a timestamped verdict for each of eight reusable questions before a cut
 can be approved: repeated stills/takes or long unvaried angles; face-readable
 coverage when a named character speaks; a listener or second character visibly
 mouthing the active speaker's words; frozen action or awkward holds; approved
-canon and spatial/staging continuity; and intended wordless pauses with
-appropriate ambience. Each verdict is `clear`, `concern`, `unverified`, or
+canon and spatial/staging continuity; intended wordless pauses with
+appropriate ambience; and implied emotion expressed through passage-grounded,
+nonverbal reactions without an invented event or generic synchronized celebration;
+and a planned chapter-ending handoff without a stray frame, missing final speech,
+geographic jump, or premature next-chapter action (not applicable if none is planned).
+Each verdict is `clear`, `concern`, `unverified`, or
 `not_applicable`, with evidence and a requested change. Concern or uncertainty
 holds automatic approval; an absent checklist is an incomplete review.
 

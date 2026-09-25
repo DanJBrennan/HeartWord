@@ -65,6 +65,28 @@ and assembly must fulfill it through their existing reviewed stages. An
 ungrounded or malformed proposal is held for review rather than silently
 turned into a forced three-shot opening.
 
+## Chapter-ending handoff
+
+The last scene's planner also reads the **verified first English-reference verse
+of the next chapter**, when it exists, to consider a separate wordless ending
+after the current chapter's complete source performance. This is not another
+verse-timed scene shot. It may propose zero to three 3–8-second shots that
+connect the present setting to the next opening through a departure, journey,
+or destination hint. Each shot records exact evidence from both chapter
+boundaries, a reason, duration, ambience/optional score, and unassigned media
+status. The inferred travel or recognition is labelled visual staging, not
+Scripture. No route, crowd, aerial, or fixed duration is obligatory. The next
+chapter's actual teaching, dialogue, boat use, or other action waits for its
+own source recording; the ending may orient viewers but may not consume it.
+
+The plan is retained in `chapter_ending_plans`, supplied to the existing
+creative crew, and displayed beside the storyboard. Missing next-chapter
+source evidence or invalid citations hold the handoff for review instead of
+silently inventing a location. Its last image should be considered alongside
+the next chapter's opening strategy for geographic/visual continuity. Generated
+media and music remain candidate-only under their normal gates, and assembly
+must confirm the source recording plays fully before any post-source tail.
+
 ## Manual Trigger
 
 Alongside the autonomous default (HeartWord proposes a storyboard and shot
@@ -75,6 +97,37 @@ which chapter that work happens rather than relying on an automatic run. The
 action's result is the same chapter-level storyboard described above,
 whether it was triggered automatically or manually — manual operation is a
 different trigger, not a different output.
+
+## Implied Emotion within the existing shot plan
+
+The shot planner treats emotion as an inference about **how people respond to
+an event the passage already supplies**, not as permission to add an event,
+line, or theological claim. For every scene its saved reasoning identifies
+the textual trigger, the people affected, the emotional progression, the
+intended intensity, and any uncertain interpretation. Shot actions make the
+response filmable through specific facial, hand, body, or group behavior.
+The source-grounded reasoning and shot action are the v1 record; this does
+not create another pipeline stage or a separate emotional soundtrack.
+
+After a healing, for example, the healed person may first be stunned and
+then cautiously test restored movement before showing amazement. Nearby
+witnesses may react at different moments with looks, breath, gasps, or
+restrained applause. An opposing group may respond with visible frustration
+and depart where the text says it does. A broad celebration or dance is a
+passage-specific proposal for cultural and producer review, not a default
+assumption about a people group. Contrast should preserve the scene's next
+narrative turn, not drown it out.
+
+The Director owns the progression; choreography specifies beginning, change,
+and end of the physical response; cinematography supplies distinct coverage;
+sound design proposes separately controllable nonverbal ambience; and script
+supervision checks source, canon, speaker, causal order, and scene geography.
+Prefer a motivated angle within measured narration coverage to a new clip.
+When a short non-lip-sync reaction shot is needed, it follows the existing
+generation, cost, review, and approval gates. No reaction may stretch or
+replace source speech, show a listener mouthing it, or create intelligible
+dialogue. Stage 7 judges the emotional progression on the assembled cut and
+holds uncertain or unsupported inferences for producer review.
 
 ## Shot Planning as Multi-Agent Collaboration
 

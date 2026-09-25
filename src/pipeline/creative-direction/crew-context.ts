@@ -134,11 +134,14 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
   const region = regions[0]!;
   const producerNotes = db.prepare(`SELECT id, subject_id AS subjectId, note FROM review_notes
     WHERE project_id = ? AND (source = 'human' OR (source = 'qc' AND note LIKE 'Production Director approved edit:%')) ORDER BY created_at, id`).all(projectId) as CrewBrief["producerNotes"];
-  if (phase === "planning") {
-    const opening = db.prepare("SELECT plan_json FROM chapter_intro_plans WHERE project_id=?").get(projectId) as { plan_json: string } | undefined;
-    if (opening) producerNotes.push({ id: "chapter-intro-plan", subjectId: projectId,
-      note: `Separate pre-source-clock chapter opening plan (do not turn into verse-timed shots or accept media without target review): ${opening.plan_json}` });
-  }
+    if (phase === "planning") {
+      const opening = db.prepare("SELECT plan_json FROM chapter_intro_plans WHERE project_id=?").get(projectId) as { plan_json: string } | undefined;
+      if (opening) producerNotes.push({ id: "chapter-intro-plan", subjectId: projectId,
+        note: `Separate pre-source-clock chapter opening plan (do not turn into verse-timed shots or accept media without target review): ${opening.plan_json}` });
+      const ending = db.prepare("SELECT plan_json FROM chapter_ending_plans WHERE project_id=?").get(projectId) as { plan_json: string } | undefined;
+      if (ending) producerNotes.push({ id: "chapter-ending-plan", subjectId: projectId,
+        note: `Separate post-source chapter handoff toward the next verified first verse (an inferred visual bridge, not verse-timed Scripture; do not accept media without target review): ${ending.plan_json}` });
+    }
   // A correction is local by default. Broader reuse requires an explicit scope
   // and matching value; never let a language/region label leak across contexts.
   const appliedLessons: NonNullable<CrewBrief["appliedLessons"]> = db.prepare(`SELECT id, subject_id AS subjectId, scope_kind AS scopeKind, requested_change AS requestedChange, rationale
