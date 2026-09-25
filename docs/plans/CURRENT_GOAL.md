@@ -1,5 +1,295 @@
 # Current Goal
 
+## Mark 3 r15 review cut producer-approved (2026-09-25)
+
+Dan corrected the reported timestamp to 1:40. Exact frame inspection of r14
+found eight frames of the scribes already walking out at frames 2,409–2,416
+(1:40.375–1:40.708), between the healed-hand detail and the man's reaction.
+`C:\Users\danbr\HeartWordData\assets\generated\video\review\mark3-full-chapter-r15-no-premature-departure-review-v1.mp4`
+replaces only that premature glimpse by gently retiming the preceding eight
+hand-detail frames across sixteen frames. The later shots of the scribes
+seated and then departing remain untouched. No narration, ambience, or music
+was edited; the AAC soundtrack is an exact stream copy of r14.
+
+QC: 12,138 frames/24 fps, picture 505.750 s, audio 505.735 s. Boundary
+contact frames show hand detail through frame 2,416 and the original man's
+reaction from frame 2,417. Complete decode succeeds; decoded-audio SHA-256
+matches r14 exactly. Typecheck and full suite pass (472/472). Script:
+`scripts/finish-mark3-r15-premature-departure-flash.ts`. Dan reviewed this
+version and stated, "I love it. I approve." The exact approved file is bound
+in its review manifest by SHA-256. It is the current approved Mark 3 review
+cut; no final publication or repository commit was requested.
+
+Goal Guardian check: this changes only an eight-frame continuity error,
+preserves the producer-approved healing/reaction/departure sequence, and
+leaves the source-language soundtrack and later chapter work intact.
+
+## Mark 3 final close-up to crowd bridge held for producer review (2026-09-25)
+
+`C:\Users\danbr\HeartWordData\assets\generated\video\review\mark3-full-chapter-r14-ending-reaction-review-v2.mp4`
+keeps the approved Jesus close-up and departure take. At frame 11,394
+(7:54.75), the first 1.5 seconds of the existing departure take are reframed
+on a seated listener, with Jesus's partial mantle and the same crowd in the
+frame. The picture then returns to the original wide take at the matching
+source frame as Jesus rises. A modest warm grade on both parts narrows the
+light change without altering the rest of the ending. Nothing was generated.
+The entire r13 audio stream, including the continuing final syllable,
+ambience, and resolving music, is copied without timing or content changes.
+
+QC: 12,138 frames/24 fps, 505.750 seconds of picture and 505.735 seconds of
+audio; complete decode succeeds and decoded audio has the same SHA-256 as r13.
+Typecheck and full suite pass (472/472). A first technical render was one
+frame short at the return to unchanged picture and is marked rejected; v2
+uses an exact frame trim and is the review candidate. Script:
+`scripts/finish-mark3-r14-ending-reaction.ts`.
+
+Goal Guardian check: the bridge uses only approved footage from the same
+house and take, keeps the producer-liked close-up and wide view, and preserves
+all Scripture speech and the existing chapter-to-sea transition. It is held
+for Dan's visual approval, not promoted as final.
+
+## Mark 3 early speaking-picture sync candidate held for producer review (2026-09-25)
+
+Dan preferred the right side of the 250 ms A/B comparison. The new review cut
+`C:\Users\danbr\HeartWordData\assets\generated\video\review\mark3-full-chapter-r13-early-lipsync-review-v1.mp4`
+delays picture by six frames only in five early visible-mouth spans: Jesus's
+first call, both Sabbath-question close-ups, the unclean spirit, and Jesus's
+appointment of the disciples. Each shot borrows a gently stretched half-second
+of preceding mouth-hidden coverage, then yields its final six frames to the
+following shot. The original r12 soundtrack is copied bit-for-bit; no
+Scripture speech, room ambience, score, or later house lip-sync is shifted.
+This is an editorial candidate, not a new global sync default or a promoted
+final cut. Script: `scripts/finish-mark3-r13-early-lipsync.ts`.
+
+QC: 12,138 frames at 24 fps; picture 505.749 s and audio 505.735 s. Full
+decode succeeds, decoded-audio SHA-256 matches r12 exactly, typecheck passes,
+and the full suite passes (472/472). Producer
+playback should assess all five corrected performances and their in/out cuts;
+the single approved A/B sample directly demonstrates only the first call.
+
+Goal Guardian check: the producer-preferred local picture alignment improves
+visible speech without altering the exact source-language soundtrack or
+unrelated chapter footage. Approval remains with Dan.
+
+## Mark 3 single-entry/room-tone correction held for producer review (2026-09-24)
+
+`C:\Users\danbr\HeartWordData\assets\generated\video\review\mark3-full-chapter-r12-single-entry-ambience-review-v1.mp4`
+removes the first repeated interior entrance at old frames 635–744 (4.583 s),
+so the exterior leads directly to the remaining interior view. A screened
+same-synagogue, non-speaking Kling take supplies an eight-second crossfaded
+room-ambience bed there at +9 dB; the removed picture and audio intervals use
+the same frame/sample boundaries. The Hatam chapter announcement still starts
+at 0:20. All source words and the r11 chapter ending remain in order.
+
+QC: 12,138 frames/24 fps, 505.750 s of picture, 505.735 s of audio. Across
+nine later sample points, r12 speech matches the previously good r10 mix at a
+5 ms best lag after the intentional 4.583 s entrance removal and 10 s wordless
+insert; r11 matched r10 at 0 ms. Five unchanged picture windows also match
+r10 closely (SSIM 0.994–0.999). The full cut decodes, has no ≥1.5 s
+-50 dBFS dead-air stretch, and typecheck/full suite pass (472/472).
+The producer's reported ~0.25 s visible-mouth
+lead remains open: the evidence rules out a global r11 soundtrack drift, not
+a local performance or playback issue. Do not shift the entire master audio
+without a shot-local visual comparison. This is a review cut, not promoted.
+
+A review-only side-by-side at
+`C:\Users\danbr\HeartWordData\assets\generated\video\review\mark3-r12-early-lipsync-250ms-ab-preview.mp4`
+puts current picture on the left and picture delayed by six frames (250 ms)
+on the right over the same untouched audio. Automated audiovisual opinions
+were inconsistent for some speaking excerpts when prompted twice, so they
+are advisory, not grounds for a blanket correction. Dan selected the right
+side; the bounded r13 candidate above applies that timing to early visible
+speaking faces for producer review.
+
+Goal Guardian check: one repeated entrance is removed, synagogue ambience is
+restored without new speech, and Scripture timing remains source-locked. The
+unresolved lip-sync observation is stated explicitly rather than silently
+altering lines that compare in sync at the file level.
+
+## Mark 3 continuity/emotion revision held for producer review (2026-09-24)
+
+The current review candidate is
+`C:\Users\danbr\HeartWordData\assets\generated\video\review\mark3-full-chapter-r11-continuity-emotion-review-v3.mp4`.
+It starts the original Hatam chapter announcement at 0:20 over the exterior
+entry, animates the former frozen entrance, dissolves the brief jitter into
+the leaders, and changes the frozen Jesus setup to an over-the-shoulder view of
+the man with the withered hand. A same-synagogue leader angle repairs the room
+jump. The man's discovery of his restored hand, a lively crowd reaction with
+native non-lexical sound, and the leaders' contained disappointment/anger form
+two added five-second wordless beats before narration resumes. A screened
+instrumental cue supports that celebration; source Scripture speech is
+preserved in order, without new dialogue. House reactions and five new Avatar
+close-ups use one basalt-house spatial anchor, Papuan listeners, and Jesus's
+approved cream mantle with its two blue edge bands. A listener reaction
+replaces the late young-scribe flash. Four chained aerial takes extend the
+sea-bound departure by sixteen seconds, with a longer score designed to
+resolve naturally. All new picture/music remains held for Dan's review;
+the prior r10 cut is retained for comparison.
+
+The generated closing cue was screened as instrumental but rose again in its
+last second. V3 copies v2's complete picture stream and applies a four-second
+whole-mix tail fade, retaining the earlier crescendo and ending without a
+hard musical cutoff. V2 remains the un-finished comparison render.
+
+QC: v3 has 12,248 frames at 24 fps and 510.333 seconds of picture with
+510.318 seconds of audio. It fully decodes; a -50 dBFS, 1.5-second silence
+scan detected no dead-air stretch. The final 0.3-second window averages
+-48.5 dBFS rather than cutting at the previous loud level. Typecheck and
+the full suite pass (472/472). The intermediate v1 render was rejected
+because 30 fps Avatar clips were trimmed before 24 fps conversion, shortening
+picture by 7.167 seconds; v2 corrects the conversion order. Visual contact
+review confirms the requested coverage, but the healed-hand finger anatomy
+in motion and the far-aerial geography remain producer review points.
+
+Goal Guardian check: this applies Dan's specific editorial notes, restores
+approved wardrobe and spatial continuity, and lets inferred emotion occupy
+wordless time without inventing Scripture speech. The new sea departure hints
+at Mark 4:1 but does not portray Mark 4 action. No candidate is promoted as
+final and the producer approval gate remains intact.
+
+## Mark 3 to Mark 4 chapter handoff held for producer review (2026-09-24)
+
+The current ending candidate is
+`HeartWordData/assets/generated/video/review/mark3-full-chapter-r10-nextchapter-bridge-review-v1.mp4`.
+It replaces the 13-frame Jesus flash at the end of r9 with the first of three
+five-second, non-speaking moving takes: Jesus rises and leaves the same house;
+he walks toward the visible sea as a few residents notice and follow; the
+camera pulls higher and back until he is small against the village and sea.
+Generated location/character keyframes, Kling motion with native ambience,
+and the screened instrumental bridge cue remain retained as candidates. The
+ending music swells through the pull-back and resolves softly. The entire r9
+audio through 469.900 seconds is retained, including the final Hatam words;
+the replacement picture starts at 469.333 seconds, under the last 0.567 seconds
+of that audio, to eliminate the flash without a frozen frame. This is a review
+cut, not a promoted final film. Automated review found minor background-motion
+and lighting inconsistencies in the street/aerial takes, so producer visual
+approval remains necessary.
+
+The normal shot planner now consults the next chapter's verified first
+reference verse at the final scene. It can save a separate, source-cited,
+wordless handoff plan after the complete source performance, with zero to
+three short proposed shots or a direct cut; generated media is unassigned and
+review-gated. Mark 3's producer-directed plan is retained in its project.
+Mark 4:1 establishes teaching beside the sea; this transition hints at that
+location but neither starts the teaching nor depicts the boat. An eighth
+whole-cut editorial check reviews chapter handoff, including stray end frames,
+source-audio integrity, geography and premature next-chapter action.
+
+QC: r10 has 11,624 frames at 24 fps, 484.333 seconds of video and 484.315
+seconds of 48 kHz stereo audio. The full file decodes, and no two-second
+low-level silence was detected in its ending. The final five-second window's
+mean level is 3.1 dB higher than the first five seconds of the transition;
+the last soft fade prevents a hard musical stop. The score and generated
+ambient tracks contain no screened speech. Typecheck passes; the full suite
+passes (472/472).
+
+Goal Guardian check: this delivers Dan's specific Mark 3 ending while making
+next-chapter location awareness a reviewable planner habit. Inferred travel is
+explicit staging, not a Scripture claim, and the entire source performance
+remains intact. No chapter-four scene action or automatic approval was added.
+
+## Mark 3 provisional score pass held for producer review (2026-09-24)
+
+The current music-mix review is
+`HeartWordData/assets/generated/video/review/mark3-full-chapter-r9-score-review-v1.mp4`.
+It copies the r8 v2 video stream without a picture edit and retains that
+unscored cut for comparison. Four separately retained Lyria instrumental
+candidates underscore the synagogue/healing aftermath, calling of the twelve,
+house dispute, and family ending. The existing intro music and scene ambience
+remain. Each cue has a timed gain/fade and speech-triggered ducking; a separate
+lift supports only the approved eight-second wordless open-arms gesture.
+Candidate prompts, provider provenance, machine audio screening, exact cue
+placements, and the editable mix recipe are retained beside the media. The
+first synagogue candidate was rejected for humming and the first house
+candidate was held after a stricter listen found wordless vocalization; the
+selected replacement candidates screened as instrumental. A stray phrase in
+the unused tail of the calling candidate is excluded by the exact 62-second
+trim. None of these assets or this cut is promoted as a final pipeline render.
+
+QC: r9 retains 11,277 picture frames and 469.900 seconds of 48 kHz stereo
+audio; a video-packet hash matches r8 exactly. The full file decodes, no
+two-second low-level silence was detected, and peak audio is -0.4 dBFS.
+Machine listening comparisons on four representative source/scored excerpts
+found perceptible music, clear Hatam performance, preserved ambience, smooth
+transitions, and no new music vocal. This is not native-speaker or producer
+approval. Typecheck remains clean and the full test suite passes (467/467).
+
+Goal Guardian check: this is a reversible finishing pass toward a reviewed
+Hatam Mark 3 film, not a picture repair, Scripture change, or automatic
+decision about the remaining lip-sync and editorial ten percent. Dan can
+compare r8 and r9 and revise or remove individual cues later.
+
+## Mark 3 Combined List and Implied Emotion review cut (2026-09-24)
+
+The current retained candidate is
+`HeartWordData/assets/generated/video/review/mark3-full-chapter-source-review-r8-emotion-editorial-v2.mp4`.
+Relative to r7 v5 it fades the opening music, replaces the repeat synagogue
+entrance with listening coverage, breaks up the crowded-house still/pan and
+exterior jump with moving interior angles, removes the brief Jesus flash and
+two young-scribe returns during his speech, and varies the family-doorway
+reaction. A five-second nonverbal beat after Mark 3:5 lets the healed man test
+his restored hand; witnesses react while the Pharisees depart. The approved
+eight-second ending pause now opens Jesus's arms in motion, with a moving
+continuation, and new single-face Jesus lip-sync takes cover his final words.
+All new candidates, their costs, and the editable picture manifest are retained;
+none is promoted as a selected asset. The source/cast speech remains in order.
+
+The same source-grounded implied-emotion policy is now in the existing scene
+planner, creative crew, gap-filler and finishing/video-review prompts, with a
+seventh whole-cut editorial check. It asks for a textual trigger, emotional
+progression, filmable nonverbal behavior, differentiated reactions, and
+uncertainty for producer review. It prohibits invented dialogue/events and
+generic assumptions that a people group will dance. Planning and review, not
+automatic paid generation, are the reusable change for future chapters.
+
+QC: r8 has 11,277 picture frames at 1280×720/24 fps and 469.900 seconds of
+48 kHz stereo audio. It decodes cleanly; no long mute section was detected;
+the only >=2-second low-level interval is a pre-existing source pause; and the
+only >=2-second visual freeze is the intended 2.5-second title card. Typecheck
+and the full test suite pass (467/467). Provider-to-cut audio cross-correlation
+for the earlier Jesus takes peaks at zero offset, so the producer-observed
+fractional *mouth* lead has not been objectively cleared by that audio-only
+test. Dan should inspect the speaking faces and emotional/cultural intensity
+in this new cut before approval or selection.
+
+Goal Guardian check: this addresses Dan's timestamped whole-cut notes and
+source-grounded human reactions while preserving the exact Hatam source
+performance, earlier review cuts, canon review gates, and producer control.
+It does not turn an emotional inference into a new Scripture event.
+
+## Mark 3 whole-cut editorial revision held for producer review (2026-09-24)
+
+Dan approved the nine replacement keyframes in the editorial contact sheet and
+the single-face Jesus keyframe used for two new source-locked Avatar takes. The
+retained review cut is
+`HeartWordData/assets/generated/video/review/mark3-full-chapter-source-review-r7-editorial-v5.mp4`.
+It replaces the frozen house entrance, breaks up the long repeated pans and
+mountain angle, puts Jesus in close-up for the selected speech beats, hides the
+scribe during Jesus's words, keeps the family-message crowd seated with Jesus
+visible, and gives the crowd spokesperson a tight single-speaker lip-sync.
+The earlier two Jesus takes that animated background mouths remain rejected
+attempt history; r6 and intermediate r7 review renders remain retained.
+
+Dan identified the narration-to-Jesus handoff at about 5.6 seconds into the
+Mark 3:34–35 segment. The next measured quiet gap is 9.203–10.050 seconds;
+the eight-second, wordless open-arms beat is inserted at its midpoint, source
+clock 423.272 seconds. All r6 audio before and after that insertion is
+preserved; the pause carries quiet, crossfaded room ambience from the new
+non-speaking shot. The review manifest records all 19 picture replacements
+and the audio edit. No generated take was promoted to a selected pipeline
+asset, and Dan's playback approval is still required.
+
+QC: 11,157 frames at 1280×720/24 fps, 464.875 seconds of picture and
+464.900 seconds of 48 kHz stereo audio. The full file decodes without errors.
+No new two-second low-level audio gap was detected; the only such gap is the
+pre-existing 117.29–119.32-second interval. Decoded-audio PSNR checks at
+four locations before and after the new pause confirm that source-clock
+audio matches r6, with the post-pause material shifted exactly eight seconds.
+The full test suite passes (466/466). Goal Guardian check: this is Dan's
+approved editorial correction and review workflow, not a new Scripture event
+or automatic approval; the original source audio, canon references, and r6
+cut remain intact.
+
 ## Whole-cut editorial intelligence captured in Stage 7 (2026-09-24)
 
 Dan's Mark 3 review exposed repeated pans and takes, weak speaking coverage,
