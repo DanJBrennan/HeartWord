@@ -1,6 +1,107 @@
 # Current Goal
 
-## Active: Mark 4 v39 aesthetic-review correction and held ending extension (2026-09-27)
+## Active: integrate local LTX scene-video generation (2026-10-06)
+
+Dan has proven LTX Desktop 1.2.7 / LTX 2.5 Fast on his dedicated M4 Pro Mac mini
+with 64 GB memory, and Windows-to-Mac image-to-video generation over SSH. Use
+it as the primary video backend to support affordable production of hundreds
+of films while keeping Veo/Kling selectable during extended comparison testing.
+Kling Avatar continues to generate lip-synced speaking video. LTX's primary
+role is scene motion; the video-backend selector does not change lip-sync.
+Dan reaffirmed that ambience remains part of the soundtrack: prohibit
+invented speech, not environmental sound. Mark 4's separate ambience/music
+mixing is preserved. LTX now requests environmental audio and retains a
+separate WAV candidate. Only stems passing independent no-speech listening,
+scene-fit and technical review become approved SFX assets for the existing
+sound-design/finishing mixer. Mixed speech or uncertainty holds the whole
+stem; raw provider audio never bypasses the source/cast production mix.
+
+Acceptance: reuse the existing provider/stage/candidate/QC architecture;
+validate supported settings; keep session tokens environment-only; discover
+the backend port; manage a loopback SSH tunnel; authenticate readiness;
+upload unique keyframes; keep synchronous inference open with reasonable
+timeouts and authenticated progress polling; retrieve the exact local MP4;
+retain useful metadata; clean temporary inputs after definitive outcomes;
+hold uncertain submissions without blind retry; provide a standalone diagnostic.
+Allow reviewed native ambience without generated voices, new audio subsystems
+or altered Scripture/cast timing; keep retained listening evidence and costs.
+Install no ComfyUI or models and expose no backend to the LAN.
+
+Implementation: `LtxVideoProvider` implements `VideoProvider`; the stage,
+per-shot route and directed coverage use configurable LTX/Veo/Kling selection.
+The media-generation UI offers that choice. API progress is retained in the
+existing production monitor and data-directory logs with phase, percentage and
+step counts. Takes retain credential-free JSON metadata and zero API cost.
+Risky-shot draft and final-video canon/QC review gates remain in place.
+Native ambience review runs in the existing final-candidate and directed-video
+paths, with accepted/held results in job status/logs, QC notes and audio evidence.
+The existing approved SFX collection and finishing cues carry accepted stems;
+picture review and audio review remain independent. Kling Avatar keeps all
+speaking video. The diagnostic defaults to ambience review, or `--audio none`
+for an explicitly silent clip. Listening uses existing Gemini QC, separately
+metered from free LTX generation, with no automatic regeneration on a hold.
+`npm run ltx:test` supports health-only and independent keyframe generation.
+Operational details: `docs/production/LTX_LOCAL.md`.
+
+Validation after the ambience extension: full suite passed (539 tests / 91
+files), TypeScript checks passed, and the production web build passed.
+The independent diagnostic help and missing-token error were exercised.
+HTTP/transfer/tunnel fixtures cover real
+request/progress fields, auth, unique output paths, retained metadata, Desktop
+restart discovery, readiness/errors, empty output, serialization, secret
+redaction, secondary diagnostics and uncertain-response handling. Existing
+cloud-path and fresh-chapter tests still pass.
+Real-MP4 tests cover default native audio retention, separate WAV extraction,
+explicit silent output with identical encoded video, actual metadata and
+rejection of a nonempty corrupt download. New soundtrack and pipeline tests
+cover speech-free admission to editable SFX cues, unintelligible/conflicting
+speech, uncertain/failed review, changed files, ownership, cached review/cost
+and preservation of the video candidate/source mix. The
+live video-only diagnostic fully decodes and its encoded-picture SHA-256
+matches the original Mac MP4.
+
+Live generation verified on 2026-10-06: SSH BatchMode authentication and
+authenticated readiness work. The actual provider uploaded a unique Mark 4
+keyframe, generated a five-second 720p/24 fps request in 14m11s, downloaded
+the MP4, and cleaned its Mac input/lease. Full decoding passed. The actual
+Desktop output is H.264, 1280x704, 121 frames (5.041667s), with audible AAC
+despite `audio: false`. The initial adapter correction muted that whole track;
+Dan then requested native ambience. The default now retains the original MP4
+and extracts a separate WAV, while explicit silent requests still stream-copy
+video without audio. Actual output properties remain recorded. The earlier
+Mac take was copied and exercised through real extraction and Gemini listening
+review: the check flagged speech and held its audio (estimated QC cost $0.001522).
+Evidence is retained at `scratch/ltx-local-diagnostic-e65f5879/ambience-review.json`.
+This tests extraction/review of an existing Mac take, not a new `audio: true`
+generation or a guarantee of the model's speech detection. Source/cast audio
+and Kling Avatar remain authoritative. A video-only diagnostic is retained for
+review, without placement in the Mark 4 timeline. Progress polling recovered
+from one timeout; Desktop's reported inference remained 15%, step 0/8 until
+completion. The token stays in process memory.
+Dan reported successful 720p/10-second generation taking over 30 minutes;
+the default inference timeout is now two hours, configurable up to that limit.
+
+Goal Guardian: this extends scene generation for the existing source-faithful,
+editable chapter workflow. It changes no Scripture, voice ownership, source
+clock, canon authority or timeline acceptance rules and adds no pipeline stage.
+Separate completion review checked PRODUCT_VISION, USER_WORKFLOW and this goal:
+the Mac remains a media provider, Windows remains the orchestrator, candidate
+review/editing stays in the chapter workspace, and cloud providers are retained.
+The ambience extension reuses the provider, soundtrack QC, approved SFX
+collection and finishing mixer. It creates no new pipeline stage, model copy,
+sound-generation backend or timeline automation; Windows remains the
+orchestrator and producer review/editing stays in the chapter workspace.
+It preserves picture, source/cast timing/ownership, cue ducking and Kling
+Avatar's lip-sync role. Diagnostic footage has not been placed in or promoted
+over the reviewed Mark 4 film. This dedicated completion pass checked the
+workflow separately from the implementation/tests: Dan still selects the
+chapter, runs existing stages, reviews the assembled cut and edits individual
+scenes. Audio approval publishes only a sound asset, not a video/timeline or
+release approval. No new product decisions or disconnected tasks were added.
+The live diagnostic has passed. The next production validation is reviewed
+LTX/Veo/Kling comparisons, not a new subsystem or chapter rewrite.
+
+## Previous production context: Mark 4 correction and held cuts
 
 Dan's v39 review identifies residual out-of-sync mouth movement, flashes,
 duplicate coverage, silent editorial breaths, a storm-to-calm picture-timing

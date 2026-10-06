@@ -172,6 +172,7 @@ export default function App() {
   const [castingResult, setCastingResult] = useState<CastingResult | null>(null);
   const [mediaGenError, setMediaGenError] = useState<string | null>(null);
   const [mediaGenBusy, setMediaGenBusy] = useState(false);
+  const [videoBackend, setVideoBackend] = useState("");
   const [mediaGenResult, setMediaGenResult] = useState<MediaGenerationResult | null>(null);
   const [imageGenerationCosts, setImageGenerationCosts] = useState<ImageGenerationCosts | null>(null);
   const [videoGenerationCosts, setVideoGenerationCosts] = useState<VideoGenerationCosts | null>(null);
@@ -402,7 +403,7 @@ export default function App() {
     setMediaGenResult(null);
     try {
       const result = await api<MediaGenerationResult>(`/projects/${projectId}/media-generation`, {
-        method: "POST"
+        method: "POST", body: JSON.stringify(videoBackend ? { provider: videoBackend } : {})
       });
       if (selectedProjectRef.current !== projectId || selectionEpochRef.current !== epoch) return;
       setMediaGenResult(result);
@@ -633,11 +634,14 @@ export default function App() {
           Generates one keyframe still image per shot via Nano Banana (Gemini) -- Nano Banana Pro for any shot
           needing lip-sync, standard tier otherwise -- grounded in each visible character's approved canon
           reference image. Costs one real Gemini image call per shot not already generated; re-running reuses
-          any shot whose keyframe already exists on disk. Still images only for now -- no video clips yet.
+          any shot whose keyframe already exists on disk. Reviewed keyframes become video candidates through the selected backend.
         </p>
         {!activeProject && <p className="empty">No project yet — create one above first.</p>}
         {activeProject && (
           <>
+            <label>Video backend <select value={videoBackend} onChange={event => setVideoBackend(event.target.value)} disabled={mediaGenBusy}>
+              <option value="">Studio default</option><option value="ltx">LTX local</option><option value="veo">Veo</option><option value="kling">Kling</option>
+            </select></label>
             <button type="button" onClick={generateMedia} disabled={mediaGenBusy}>
               {mediaGenBusy ? "Generating…" : "Generate media"}
             </button>

@@ -64,7 +64,8 @@ export async function reviewGeneratedVideo(input: {
   const bytes = readFileSync(input.videoPath);
   if (bytes.length > MAX_REVIEW_PROXY_BYTES) throw new Error("Video needs a smaller review proxy before acceptance.");
   const { result, costUsd } = await generateJsonWithImagesMetered<VideoReviewVerdict>(
-    `Independently watch this silent supplementary shot against its approved keyframe direction: ${input.instruction}. ` +
+    `Independently watch this non-speaking supplementary shot against its approved keyframe direction: ${input.instruction}. ` +
+      "Judge the picture and visible performance, including unwanted visible talking. Native audio is a separate candidate with its own listening review before mixing; this verdict does not approve that soundtrack. " +
       "Identity is a hard gate: every visible person must retain the same approved Papuan/Hatam facial appearance, skin tone, hair, build, and canonical wardrobe as the supplied keyframe throughout the clip. Any Caucasian, European, Levantine, generic substitute identity, or material identity drift is a failure. " +
       "Check motion, continuity, physical action, source fidelity, unwanted text, crowd choreography, and whether a requested nonverbal emotion is visible without adding speech or a new event. A synchronized wave of arms, repeated group gesture, mirrored movement, or mass simultaneous reach-and-retract is a failure unless the approved direction explicitly requires it. Do not approve uncertain evidence.",
     [

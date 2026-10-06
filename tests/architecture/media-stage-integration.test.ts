@@ -1,4 +1,7 @@
-import { createRequire } from "node:module"; import { mkdtempSync,mkdirSync,writeFileSync } from "node:fs"; import { tmpdir } from "node:os"; import { join } from "node:path"; import { describe,expect,it,vi } from "vitest";
+import { createRequire } from "node:module"; import { mkdtempSync,mkdirSync,writeFileSync } from "node:fs"; import { tmpdir } from "node:os"; import { join } from "node:path"; import { afterEach,beforeEach,describe,expect,it,vi } from "vitest";
+// This fixture verifies the retained Veo path. LTX is exercised separately.
+beforeEach(()=>vi.stubEnv("HEARTWORD_VIDEO_PROVIDER","veo"));
+afterEach(()=>vi.unstubAllEnvs());
 const {DatabaseSync}=createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite"); let db:import("node:sqlite").DatabaseSync; let root=""; const image=vi.fn(); const video=vi.fn();
 vi.mock("../../src/db/client.js",()=>({getDb:()=>db,getDataDir:()=>root}));
 vi.mock("../../src/providers/gemini/index.js",()=>({GeminiImageProvider:class{generate=image},GeminiVideoProvider:class{generateFinal=video},GeminiDraftVideoProvider:class{generateDraft=video}}));

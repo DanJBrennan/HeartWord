@@ -2,12 +2,15 @@ import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { getDataDir } from "../../db/client.js";
-import type { DraftVideoProvider, VideoProvider, VideoTier } from "../../providers/types.js";
+import type { GenerationProgress, VideoTier } from "../../providers/types.js";
+import type { VideoProviders } from "../../providers/video-selection.js";
 import { reviewGeneratedVideo, videoReviewPassed } from "../qc/video-review.js";
-import { generateFinalVideoWithFallback } from "./generate-final-with-fallback.js";
+import { generateSelectedFinalVideo } from "./select-final-video.js";
+import { beginVideoJob } from "./video-job-status.js";
 import { shotRiskFor, tierForRisk } from "./shot-risk-lookup.js";
+import { registerVideoAmbience } from "../assembly/soundtrack.js";
 
-export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, projectId:string, shotId:string, providers:{veo:VideoProvider;kling:VideoProvider;draft:DraftVideoProvider}, policy:{allowDraftFallback?:boolean}={}) {
+export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, projectId:string, shotId:string, providers:VideoProviders, policy:{allowDraftFallback?:boolean}={}) {
   const shot=db.prepare(`SELECT sh.id,sh.action FROM shots sh JOIN scenes s ON s.id=sh.scene_id WHERE sh.id=? AND s.project_id=? AND sh.needs_lip_sync=0`).get(shotId,projectId) as {id:string;action:string}|undefined;
   if (!shot) throw new Error("Only a non-speaking shot in this project can receive ordinary final video.");
   const selected=db.prepare(`SELECT c.id FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id
@@ -21,6 +24,11 @@ export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, project
       AND (cutover.started_at IS NULL OR ga.created_at>=cutover.started_at)
     ORDER BY ga.created_at DESC LIMIT 1`).get(shotId) as {id:string;status:string;result_asset_path:string|null}|undefined;
   if (prior) return {status:"held" as const,attemptId:prior.id,reason:`Existing final-video candidate is ${prior.status}; reconcile or review it before another request.`};
+  const local = providers.primaryBackend === "ltx";
+  if (local) {
+    const unfinished = db.prepare("SELECT id,status FROM video_generation_jobs WHERE shot_id=? AND status IN ('active','held') ORDER BY updated_at DESC LIMIT 1").get(shotId) as {id:string;status:string}|undefined;
+    if (unfinished) return {status:"held" as const,reason:`LTX job ${unfinished.id} is ${unfinished.status}; reconcile its retained output before another submission.`};
+  }
   // A risky shot commits to a full render only after a draft has been
   // chosen -- docs/design/media-generation.md's draft-then-commit rule.
   // Guarded here rather than in the stage loop so the per-shot API route
@@ -47,7 +55,15 @@ export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, project
 NON-SPEAKING VIDEO RULE: Do not generate dialogue, narration, singing, lip-sync performance, intelligible words, or visible speech from any person. Preserve natural nonverbal action and background ambience only. Keep every visible person in the approved Papuan/Hatam canon identity and wardrobe throughout; never drift toward Caucasian, Levantine, European, or generic substitute identities.
 
 NATURAL CROWD MOTION RULE: Crowd movement is independently timed and irregular. At most a few people reach, shift, or react at once while others hold, breathe, look, edge forward, or respond subtly at different moments. Never generate a synchronized wave of arms, a repeated group gesture, mirrored movement, or a mass simultaneous reach-and-retract.`;
-  const result=await generateFinalVideoWithFallback(providers.veo,providers.kling,providers.draft,{shotId,prompt,characters:[]},{resolution:"720p",startFrame:{path:keyframe.result_asset_path},durationSeconds:8,tier,allowKlingSceneFallback:false,allowDraftFallback:policy.allowDraftFallback});
+  const job = local ? beginVideoJob(db,projectId,shotId,"ltx") : undefined;
+  let submitted = false;
+  let result;
+  try {
+    result = await generateSelectedFinalVideo(providers,{shotId,prompt,characters:[]},{resolution:"720p",startFrame:{path:keyframe.result_asset_path},durationSeconds:8,tier,allowKlingSceneFallback:false,allowDraftFallback:policy.allowDraftFallback,onProgress:(progress:GenerationProgress) => { if(progress.phase === "submitted") submitted = true; job?.progress(progress); }});
+  } catch(error) {
+    job?.finish(submitted ? "held" : "error",{error:(error as Error).message,submissionMayHaveStarted:submitted});
+    throw error;
+  }
   const id=randomUUID(), now=Date.now();
   // A final clip is not safe merely because the provider returned a file.
   // Review it against the approved keyframe before it can be auto-selected;
@@ -65,6 +81,13 @@ NATURAL CROWD MOTION RULE: Crowd movement is independently timed and irregular. 
     } catch(error) { reviewNote=`final video review unavailable: ${(error as Error).message}`; }
   }
   db.prepare("INSERT INTO generation_attempts (id,shot_id,provider,model,operation,resolution,prompt,status,result_asset_path,cost_usd,created_at) VALUES (?,?,?,?,?,'720p',?,'hold_for_review',?,?,?)").run(id,shotId,result.provenance.provider,result.provenance.model,"generate_final_video",result.provenance.prompt,result.media?.path ?? null,result.cost.usd,now);
+  if (result.ambientAudio) {
+    job?.progress({ phase: "reviewing_ambience", percentage: null, currentStep: null, totalSteps: null });
+    const ambienceReview = await registerVideoAmbience(db, projectId, id, result);
+    result.metadata = { ...result.metadata, ambienceReview };
+    job?.progress({ phase: `ambience_${ambienceReview.status}`, percentage: null, currentStep: null, totalSteps: null, diagnostic: ambienceReview.reason });
+  }
+  job?.finish("completed",{attemptId:id,...result.metadata});
   db.prepare("INSERT INTO cost_ledger_entries (id,project_id,generation_attempt_id,amount_usd,created_at) VALUES (?,?,?,?,?)").run(randomUUID(),projectId,id,result.cost.usd,now);
   if (reviewCostUsd !== undefined) {
     db.prepare("INSERT INTO cost_ledger_entries (id,project_id,generation_attempt_id,amount_usd,created_at) VALUES (?,?,?,?,?)").run(randomUUID(),projectId,id,reviewCostUsd,Date.now());

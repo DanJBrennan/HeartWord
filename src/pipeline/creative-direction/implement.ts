@@ -3,13 +3,14 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
 import { getDataDir } from "../../db/client.js";
-import { GeminiVideoProvider, GeminiDraftVideoProvider } from "../../providers/gemini/index.js";
-import { KlingVideoProvider } from "../../providers/kling/index.js";
-import { generateFinalVideoWithFallback } from "../media-generation/generate-final-with-fallback.js";
+import { createVideoProviders } from "../../providers/video-selection.js";
+import { generateSelectedFinalVideo } from "../media-generation/select-final-video.js";
+import { beginVideoJob } from "../media-generation/video-job-status.js";
 import { reviewGeneratedVideo, videoReviewPassed } from "../qc/video-review.js";
 import { runMediaGeneration } from "../media-generation/index.js";
 import { assembleSingleShot } from "../assembly/assemble-single-shot.js";
 import { mediaDurationMs } from "../assembly/finishing.js";
+import { registerVideoAmbience } from "../assembly/soundtrack.js";
 import { loadCrewBrief, productionAssetPath } from "./crew-context.js";
 import { directionsFromRun, requireCurrentPlan, runProductionCrew } from "./crew-store.js";
 import type { CrewBrief } from "./crew-types.js";
@@ -75,6 +76,8 @@ export async function implementApprovedIdeas(db: DatabaseSync, projectId: string
   }
   await runMediaGeneration(projectId, newIdeas.map(i => i.id));
   for (const idea of newIdeas) {
+    let liveJob: ReturnType<typeof beginVideoJob> | undefined;
+    let submitted = false;
     try {
       const job = db.prepare("SELECT * FROM directed_video_jobs WHERE shot_id=? AND project_id=?").get(idea.id, projectId);
       if (job) {
@@ -86,11 +89,21 @@ export async function implementApprovedIdeas(db: DatabaseSync, projectId: string
       const current = requireCurrentPlan(db, dataDir, projectId);
       const prompt = idea.description + directionsFromRun(current, idea.id);
       db.prepare("INSERT INTO directed_video_jobs (shot_id,project_id,status,created_at) VALUES (?,?,'running',?)").run(idea.id, projectId, Date.now());
-      const video = await generateFinalVideoWithFallback(new GeminiVideoProvider(), new KlingVideoProvider(), new GeminiDraftVideoProvider(), { shotId: idea.id, prompt, characters: [] },
-        { resolution: "720p", startFrame: { path: String(keyframe.result_asset_path) }, durationSeconds: idea.estimatedDurationSec <= 4 ? 4 : 8 });
+      const providers = createVideoProviders();
+      if (providers.primaryBackend === "ltx") liveJob = beginVideoJob(db,projectId,idea.id,"ltx");
+      const video = await generateSelectedFinalVideo(providers, { shotId: idea.id, prompt, characters: [] },
+        { resolution: "720p", startFrame: { path: String(keyframe.result_asset_path) }, durationSeconds: providers.primaryBackend === "ltx" ? (idea.estimatedDurationSec <= 5 ? 5 : 8) : (idea.estimatedDurationSec <= 4 ? 4 : 8), onProgress: progress => { if(progress.phase === "submitted") submitted = true; liveJob?.progress(progress); } });
       const attemptId = randomUUID();
       db.prepare(`INSERT INTO generation_attempts (id,shot_id,provider,model,operation,resolution,prompt,status,result_asset_path,cost_usd,created_at)
         VALUES (?,?,?,?,'generate_directed_video','720p',?,'hold_for_review',?,?,?)`).run(attemptId, idea.id, video.provenance.provider, video.provenance.model, prompt, video.media?.path ?? null, video.cost.usd, Date.now());
+      if (video.ambientAudio) {
+        liveJob?.progress({ phase: "reviewing_ambience", percentage: null, currentStep: null, totalSteps: null });
+        const ambienceReview = await registerVideoAmbience(db, projectId, attemptId, video);
+        video.metadata = { ...video.metadata, ambienceReview };
+        liveJob?.progress({ phase: `ambience_${ambienceReview.status}`, percentage: null, currentStep: null, totalSteps: null, diagnostic: ambienceReview.reason });
+      }
+      liveJob?.finish("completed",{attemptId,...video.metadata});
+      liveJob = undefined;
       db.prepare("INSERT INTO cost_ledger_entries (id,project_id,generation_attempt_id,amount_usd,created_at) VALUES (?,?,?,?,?)")
         .run(randomUUID(), projectId, attemptId, video.cost.usd, Date.now());
       if (video.status !== "accepted" || !video.media) throw new Error("Video provider did not return usable footage.");
@@ -115,6 +128,7 @@ export async function implementApprovedIdeas(db: DatabaseSync, projectId: string
       db.prepare("UPDATE directed_video_jobs SET status='accepted',result_json=? WHERE shot_id=?").run(JSON.stringify(built), idea.id);
       output.newShots.push(built);
     } catch (error) {
+      liveJob?.finish(submitted ? "held" : "error",{error:(error as Error).message,submissionMayHaveStarted:submitted});
       db.prepare("UPDATE directed_video_jobs SET status='incomplete',error=? WHERE shot_id=? AND status='running'").run((error as Error).message, idea.id);
       output.failures.push({ ideaId: idea.id, label: idea.label, error: (error as Error).message });
     }

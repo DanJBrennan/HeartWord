@@ -744,6 +744,21 @@ CREATE INDEX IF NOT EXISTS idx_creative_direction_proposals_project ON creative_
 
 -- Reserves a paid directed-video request before sending it. An interrupted or
 -- rejected request remains visible and never silently triggers another bill.
+-- Live status/progress for existing video-generation attempts. This is a
+-- projection for the production monitor; it does not dispatch provider work.
+CREATE TABLE IF NOT EXISTS video_generation_jobs (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  shot_id TEXT NOT NULL REFERENCES shots(id),
+  backend TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('active','completed','held','error')),
+  progress_json TEXT,
+  metadata_json TEXT,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_video_jobs_project ON video_generation_jobs(project_id,updated_at);
+CREATE INDEX IF NOT EXISTS idx_video_jobs_shot ON video_generation_jobs(shot_id,status);
+
 CREATE TABLE IF NOT EXISTS directed_video_jobs (
   shot_id TEXT PRIMARY KEY REFERENCES shots(id),
   project_id TEXT NOT NULL REFERENCES projects(id),

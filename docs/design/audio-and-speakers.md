@@ -17,14 +17,40 @@
 
 ## Lip-sync
 
-The primary technical challenge in this whole pipeline. Candidate approach:
-NVIDIA Audio2Face-3D, driving lip movement on the 3D character models from the
-character's speech audio.
+**Confirmed provider: Kling Avatar.** Dan reaffirmed on 2026-10-06 that
+Kling Avatar continues to generate lip-synced speaking video, driven by the
+exact source-timed cast audio through the existing `LipSyncProvider` path.
+Local LTX 2.5 Fast is the primary scene-motion generator; selecting it does
+not replace Kling Avatar or authorize LTX-generated speech/lip-sync.
 
-Known constraint: Audio2Face-3D needs GPU hardware the current dev machines
-don't have (an HP laptop with Intel Iris Xe, and a 64GB Mac Mini are both
-incompatible). Cloud GPU options (RunPod, Vast.ai, Lambda) are being evaluated
-before committing to dedicated hardware (e.g. an RTX 5090 tower).
+## Ambience and scene-video audio
+
+Dan reaffirmed on 2026-10-06 that ambience remains part of the soundtrack.
+Non-speaking video may have appropriate environmental sound, but must not
+invent intelligible speech, narration, singing or a visible speech performance.
+The reviewed Mark 4 mix includes separate ambience beds and music; those
+remain independent of the scene-video backend.
+
+LTX requests environmental audio (`audio: true`) by default, with explicit
+prompt and negative-prompt rules against speech, narration, gibberish voices,
+singing, music and visible talking. The original MP4 is retained and its native
+audio is extracted into a separate WAV stem. An independent listening review
+must explicitly find **no speech in any language**, including unintelligible
+background speech, and pass scene fit and technical checks at confidence
+80–100. Uncertainty, unavailable review or detected voices holds the whole
+stem; this does not claim to separate voices from a mixed recording.
+
+Approved stems enter the existing `production_audio_assets` SFX collection,
+so the Sound Designer/Director can place editable cues through the existing
+finishing mixer, including its gain limits and ducking beneath source/cast
+speech. Raw provider-video audio remains muted in production assembly. Held
+stems never enter that collection; their audio and listening evidence remain
+available for review. Review cost is metered separately from free local video
+generation. Explicit `audioMode: "none"` (CLI `--audio none`) still removes the
+whole native track when Desktop returns audio despite the silent request.
+
+Audio2Face-3D and cloud GPU evaluation were earlier candidate approaches,
+not the current lip-sync production path.
 
 ## Source-boundary integrity
 

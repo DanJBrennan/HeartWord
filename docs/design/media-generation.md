@@ -8,6 +8,46 @@ established photorealistic visual style (see
 `docs/design/canonical-characters.md`; an earlier "Pixar-style 3D" direction
 was considered and rejected).
 
+## Local LTX primary backend (2026-10-06)
+
+Dan's proven M4 Pro Mac mini is the primary scene-video backend through LTX
+Desktop's local LTX 2.5 Fast image-to-video API. It implements the existing
+`VideoProvider.generateFinal` contract in `src/providers/ltx`, feeds stage 4
+and the per-shot candidate API, and shares retained attempts, cost ledger,
+canon review and timeline acceptance. It creates no separate pipeline stage.
+Veo and Kling remain selectable during the extended comparison period.
+Kling Avatar continues as the lip-sync video generator, independently of this
+scene-motion backend selection (Dan reaffirmed 2026-10-06).
+
+Normal generation requests 720p, 24 fps, 5–10-second shots (currently 8s for
+ordinary coverage). The provider validates Dan's proven duration matrix,
+checks environment-only session authentication, discovers the Mac port over
+SSH, owns a loopback-only tunnel, transfers a unique input and retrieves the
+MP4 with credential-free metadata. Local API generation cost is zero; other
+stage costs and the existing risky-shot approved-draft gate are preserved.
+LTX requests environmental ambience (`audio: true`) with explicit no-speech
+direction. It preserves the raw MP4 and exposes native audio as a separate
+WAV `GenerationResult.ambientAudio` candidate. The existing candidate and
+directed-coverage paths listen to that stem before publishing it as an
+approved SFX asset for the existing finishing mixer. Any speech (including
+unintelligible voices), uncertain review, music or failed scene/technical
+checks holds the stem while leaving picture review independent. Raw video
+audio remains muted in production assembly; source/cast speech retains its
+authority. `audioMode: "none"` strips even unexpected Desktop audio with video
+stream copy. Output dimensions and duration are recorded rather than assumed
+from Desktop's preset labels. See [audio design](audio-and-speakers.md).
+
+Progress uses authenticated `/api/generation/progress` every three seconds,
+surfaced through the existing production monitor and data-directory logs.
+Log parsing is limited to port discovery and secondary diagnostics after
+progress failures. Requests are serialized against Desktop's single progress
+slot. Lost responses retain inputs/leases and hold for reconciliation, with
+no automatic paid fallback or duplicate submission.
+
+See [local LTX operations](../production/LTX_LOCAL.md) for configuration,
+diagnostics, settings and recovery. Future ending-frame/keyframe/audio-input/reference
+features extend the adapter and capability contracts rather than the pipeline.
+
 ## Inputs
 
 Producer update, 2026-09-08: Dan asked Codex to take over keyframe generation,
@@ -177,12 +217,9 @@ in without redesigning this workflow.
   manual correction each time (beyond a single provider's short-reference
   window) — the targeted-edit capability above helps for single-detail
   fixes, but broader drift across many scenes is a separate problem.
-- Compute requirements and where generation runs: resolved for v1 as "not
-  applicable" — Nano Banana, Veo 3.1 Lite, Omni 1.1, and Kling's Avatar API
-  are all cloud-hosted and API-key authenticated, so v1 needs no local GPU
-  provisioning for media generation itself (see
-  `docs/design/audio-and-speakers.md` for whether that holds for lip-sync
-  too).
+- Compute requirements: local scene video now uses Dan's dedicated M4 Pro
+  Mac mini with 64 GB unified memory and LTX Desktop. The other image, draft,
+  voice, review and lip-sync providers retain their cloud APIs.
 - The automated media review in `docs/design/automated-quality-control.md`
   resolves to one of: accept, retry same prompt, retry with a modified
   prompt, escalate to a different provider/tier, or hold for human review.

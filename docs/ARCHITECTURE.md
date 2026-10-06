@@ -46,6 +46,20 @@ below.
 
 ## Design principles
 
+Producer update (2026-10-06): LTX Desktop on Dan's dedicated Mac mini supplies
+the primary local scene-video backend behind the existing `VideoProvider`.
+`src/providers/video-selection.ts` selects LTX, Veo or Kling for stage 4,
+per-shot final candidates and directed coverage. SSH port discovery, a managed
+loopback tunnel, authenticated API progress, SCP and retained take metadata
+belong in `src/providers/ltx`; Windows remains the orchestrator. The additive
+`video_generation_jobs` status projection feeds the existing production monitor
+and does not create another dispatcher/queue. See
+[LTX operations](production/LTX_LOCAL.md) and the media-generation design.
+Native LTX ambience is a separate audio candidate: the existing soundtrack
+listening review admits speech-free stems to `production_audio_assets` as SFX.
+The existing Sound Designer/Director and finishing mixer place those cues;
+raw provider-video audio stays muted during source/cast assembly.
+
 **Stage isolation.** Every stage should be able to run in isolation against
 saved output from the previous stage, so re-running "just the lip-sync for
 scene 4" doesn't require re-running the whole chapter.

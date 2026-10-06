@@ -14,3 +14,8 @@ Start here:
 - [`docs/plans/CURRENT_GOAL.md`](docs/plans/CURRENT_GOAL.md) — what's active right now
 
 For AI agent working conventions, see [`AGENTS.md`](AGENTS.md).
+
+Local video generation defaults to LTX Desktop on the dedicated Mac mini.
+See [`docs/production/LTX_LOCAL.md`](docs/production/LTX_LOCAL.md) for session
+authentication, SSH access, diagnostics (`npm run ltx:test -- --health`),
+supported settings, and selectable Veo/Kling comparison runs.

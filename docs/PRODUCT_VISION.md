@@ -376,8 +376,20 @@ scene/shot, and approval status. Changing a gap shifts all later dialogue and
 picture while preserving the underlying master and previously generated
 lip-sync media. Provider-video audio remains muted in the production edit;
 the spaced production dialogue plays underneath it.
+Environmental audio from LTX may be retained as a separate editable ambience
+stem after listening review confirms it is speech-free. The existing sound
+design and finishing mix can place it beneath the authoritative source/cast
+recording. Generated dialogue, including unintelligible voices, is held.
 
 ## Generation Providers, Models, and Cost
+
+Producer update (2026-10-06): use local LTX 2.5 Fast on the dedicated M4 Pro
+Mac mini as the primary scene-video provider because it has no per-call API
+cost. Keep Veo and Kling selectable for an extended testing/comparison period.
+The autonomous pipeline, approved canon, Scripture fidelity and reviewed
+producer workflow remain the product; this is a provider choice rather than
+a reorganization around local hardware. Setup and limits are recorded in
+`docs/production/LTX_LOCAL.md`.
 
 Confirmed v1 providers (see `docs/ARCHITECTURE.md`'s Provider interface for
 how these map onto the provider abstraction):

@@ -46,11 +46,12 @@ vi.mock("../../src/providers/gemini-text.js", () => {
 
 const cleanup = () => { if (server) server.close(); db?.close(); if (root) rmSync(root, { recursive: true, force: true }); root = ""; server = undefined; };
 const originalGeminiKey=process.env.GEMINI_API_KEY;
-afterEach(() => { if(originalGeminiKey===undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY=originalGeminiKey; cleanup(); });
+afterEach(() => { vi.unstubAllEnvs(); if(originalGeminiKey===undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY=originalGeminiKey; cleanup(); });
 function docx(lines: string[]) { const n=Buffer.from("word/document.xml"), b=Buffer.from(`<w:document>${lines.map(x=>`<w:p><w:r><w:t>${x}</w:t></w:r></w:p>`).join("")}</w:document>`), l=Buffer.alloc(30), c=Buffer.alloc(46), e=Buffer.alloc(22); l.writeUInt32LE(0x04034b50,0);l.writeUInt16LE(n.length,26);c.writeUInt32LE(0x02014b50,0);c.writeUInt32LE(b.length,20);c.writeUInt16LE(n.length,28);e.writeUInt32LE(0x06054b50,0);e.writeUInt16LE(1,10);e.writeUInt32LE(l.length+n.length+b.length,16);return Buffer.concat([l,n,b,c,n,e]); }
 function mp4(path: string, color: string) { mkdirSync(dirname(path), { recursive:true }); execFileSync("ffmpeg", ["-v","error","-y","-f","lavfi","-i",`color=${color}:s=160x90:r=24:d=1`,"-f","lavfi","-i","sine=frequency=440:duration=1","-shortest","-c:v","libx264","-pix_fmt","yuv420p","-c:a","aac",path]); }
 
 it("takes a fresh reviewed chapter through real common stages without provider calls", async () => {
+  vi.stubEnv("HEARTWORD_VIDEO_PROVIDER","veo");
   delete process.env.GEMINI_API_KEY;
   root=mkdtempSync(join(tmpdir(),"hw-full-fresh-")); const assets=join(root,"assets"), source=join(assets,"source","hatam","mark-5"); mkdirSync(source,{recursive:true});
   writeFileSync(join(source,"mark-5-text.docx"),docx(["MARKUS 5","Synthetic published heading","(Mat. 1:1)","1Approved narration.","2Approved spoken line.","3Approved second spoken line."]));

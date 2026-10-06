@@ -3,8 +3,8 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
 import { GeminiImageProvider } from "../../providers/gemini/index.js";
-import { GeminiDraftVideoProvider, GeminiVideoProvider } from "../../providers/gemini/index.js";
-import { KlingVideoProvider } from "../../providers/kling/index.js";
+import { GeminiDraftVideoProvider } from "../../providers/gemini/index.js";
+import { createVideoProviders, type VideoBackend } from "../../providers/video-selection.js";
 import type { CharacterRef, LockedVisualFacts } from "../../providers/types.js";
 import type { ProjectRow } from "../ingestion/index.js";
 import { loadSuggestedFix, runShotReview, type SuggestedFix } from "../qc/director.js";
@@ -655,10 +655,11 @@ export const generateKeyframes = async (projectId: string, onlyShotIds?: string[
 };
 
 const activeGeneration = new Set<string>();
-export const runMediaGeneration = async (projectId: string, onlyShotIds?: string[], imageTier?: "standard" | "pro"): Promise<StageResult> => {
+export const runMediaGeneration = async (projectId: string, onlyShotIds?: string[], imageTier?: "standard" | "pro", backend?: VideoBackend): Promise<StageResult> => {
   if (activeGeneration.has(projectId)) return { ok: false, reasoning: "Keyframe generation is already running for this chapter." };
   activeGeneration.add(projectId);
   try {
+    const videoProviders = createVideoProviders(backend);
     // A retry verdict is an instruction for the pipeline, not a request for
     // the producer to click Generate again. Continue eligible image retries
     // until they settle or reach the retained Director retry ceiling.
@@ -693,7 +694,7 @@ export const runMediaGeneration = async (projectId: string, onlyShotIds?: string
           else if (draft.status!=="chosen"&&draft.status!=="settled") { outcomes.push(draft.status); continue; }
         }
       }
-      const out=await generateNonSpeakingVideoCandidate(db,projectId,shot.id,{veo:new GeminiVideoProvider(),kling:new KlingVideoProvider(),draft:new GeminiDraftVideoProvider()});
+      const out=await generateNonSpeakingVideoCandidate(db,projectId,shot.id,videoProviders);
       if (out.status==="candidate" && out.reviewPassed) {
         acceptFinalVideoCandidate(db,projectId,out.attemptId,8000);
         outcomes.push("accepted");

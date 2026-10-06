@@ -15,8 +15,7 @@ import { createReuseCandidate, extractLibraryFrame, registerGeneratedMediaLibrar
 import { bindShotUtterance } from "../../pipeline/voice-lipsync/utterance-binding.js";
 import { acceptLipSyncCandidate } from "../../pipeline/voice-lipsync/candidate-selection.js";
 import { acceptFinalVideoCandidate, generateNonSpeakingVideoCandidate } from "../../pipeline/media-generation/final-video.js";
-import { GeminiDraftVideoProvider, GeminiVideoProvider } from "../../providers/gemini/index.js";
-import { KlingVideoProvider } from "../../providers/kling/index.js";
+import { createVideoProviders, videoBackend } from "../../providers/video-selection.js";
 import { attestSourceAlignment } from "../../pipeline/ingestion/source-review.js";
 import { recordSourceAlignmentCorrection } from "../../pipeline/ingestion/source-alignment-corrections.js";
 import { editorialAlignmentDisplay, recordSourceAlignmentEditorialClassification } from "../../pipeline/ingestion/source-alignment-editorial-classifications.js";
@@ -385,7 +384,7 @@ projectsRouter.post("/:id/lip-sync-candidates/:attemptId/accept", (req,res) => {
   catch (error) { res.status(400).json({error:(error as Error).message}); }
 });
 projectsRouter.post("/:id/shots/:shotId/final-video", async (req,res) => {
-  try { res.status(201).json(await generateNonSpeakingVideoCandidate(getDb(),req.params.id,req.params.shotId,{veo:new GeminiVideoProvider(),kling:new KlingVideoProvider(),draft:new GeminiDraftVideoProvider()})); }
+  try { res.status(201).json(await generateNonSpeakingVideoCandidate(getDb(),req.params.id,req.params.shotId,createVideoProviders(req.body?.provider))); }
   catch (error) { res.status(400).json({error:(error as Error).message}); }
 });
 projectsRouter.post("/:id/final-video-candidates/:attemptId/accept", (req,res) => {
@@ -441,7 +440,7 @@ projectsRouter.post("/:id/media-generation", async (req, res) => {
   }
 
   try {
-    const result = await runMediaGeneration(req.params.id, onlyShotIds, rawImageTier);
+    const result = await runMediaGeneration(req.params.id, onlyShotIds, rawImageTier, videoBackend(req.body?.provider));
     res.json(result);
   } catch (err) {
     res.status(502).json({ error: (err as Error).message });

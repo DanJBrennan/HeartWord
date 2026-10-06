@@ -1,8 +1,8 @@
 /**
  * Provider interfaces — see "Provider interface (v1 shape)" in
- * docs/ARCHITECTURE.md. One interface per media capability; v1 has exactly
- * one adapter implementation per interface (src/providers/gemini,
- * src/providers/kling). Pipeline stages depend on these types, never on a
+ * docs/ARCHITECTURE.md. One interface per media capability, with selectable
+ * scene-video adapters (local LTX, Veo and Kling). Pipeline stages depend
+ * on these types, never on a
  * specific vendor SDK directly — see the Provider abstraction design
  * principle in ARCHITECTURE.md.
  */
@@ -58,8 +58,12 @@ export interface CostRecord {
 export interface GenerationResult {
   status: GenerationStatus;
   media?: AssetRef;
+  /** Native environmental audio retained for no-speech review before mixing. */
+  ambientAudio?: AssetRef;
   cost: CostRecord;
   provenance: { provider: string; model: string; prompt: string };
+  /** Provider-specific, credential-free evidence, also retained with the media. */
+  metadata?: Record<string, unknown>;
 }
 
 export interface ImageProvider {
@@ -77,6 +81,29 @@ export interface ImageEditor {
  *  onto whatever it has. */
 export type VideoTier = "economy" | "standard" | "premium";
 
+export interface GenerationProgress {
+  phase: string;
+  percentage: number | null;
+  currentStep: number | null;
+  totalSteps: number | null;
+  status?: string;
+  diagnostic?: string;
+}
+
+export interface VideoGenerationOptions {
+  resolution?: "540p" | "720p" | "1080p";
+  startFrame?: AssetRef;
+  durationSeconds?: number;
+  fps?: number;
+  seed?: number;
+  /** Scene audio only; character speech continues through the lip-sync provider. */
+  audioMode?: "ambient" | "none";
+  tier?: VideoTier;
+  /** Absolute destination within the HeartWord asset area. */
+  outputPath?: string;
+  onProgress?: (progress: GenerationProgress) => void;
+}
+
 export interface VideoProvider {
   // startFrame overrides the default "shot's own accepted keyframe" lookup
   // -- needed for a covered_sequence shot's individual beats (see
@@ -92,7 +119,7 @@ export interface VideoProvider {
   // one.
   generateFinal(
     request: ShotRequest,
-    opts?: { resolution?: "720p" | "1080p"; startFrame?: AssetRef; durationSeconds?: number; tier?: VideoTier }
+    opts?: VideoGenerationOptions
   ): Promise<GenerationResult>;
 }
 
