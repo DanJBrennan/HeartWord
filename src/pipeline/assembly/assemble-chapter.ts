@@ -52,6 +52,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { getDataDir } from "../../db/client.js";
+import { assertNoRenderedFlashes } from "../qc/flash-detection.js";
 
 const TARGET_WIDTH = 1280;
 const TARGET_HEIGHT = 720;
@@ -216,6 +217,7 @@ export function assembleChapter(db: DatabaseSync, projectId: string): AssembleCh
     const outPath = join(dataDir, "assets", relPath);
     mkdirSync(join(dataDir, "assets", "generated", "chapter"), { recursive: true });
     concatClips(normalizedPaths, outPath, tmpDir);
+    assertNoRenderedFlashes(outPath, TARGET_FPS);
 
     const totalDurationMs = shotClips.reduce((sum, c) => sum + (c.timeline_end_ms - c.timeline_start_ms), 0);
 

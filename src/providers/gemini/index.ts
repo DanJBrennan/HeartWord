@@ -63,14 +63,11 @@ function requireApiKey(): string {
   return key;
 }
 
-// Nano Banana / Nano Banana Pro model names -- confirmed against the live
-// Gemini API's own model list 2026-09-06 (gemini-2.5-flash-image is listed
-// with displayName "Nano Banana", gemini-3-pro-image with "Nano Banana
-// Pro") while building the character-canon candidate images this same day
-// -- see scripts/character-tool/generate-scribe-candidates.ts. Per
-// docs/ARCHITECTURE.md's Provider interface: tier "pro" -> Pro, default ->
-// standard.
-const NANO_BANANA_MODEL = "gemini-2.5-flash-image";
+// Nano Banana 2 (Gemini 3.1 Flash Image) supersedes legacy Nano Banana for
+// routine generation.  Google documents it as the general-purpose image
+// workhorse, with up to four character-consistency inputs; Pro allows five.
+// The legacy Gemini 2.5 Flash Image model remains only in retained history.
+const NANO_BANANA_MODEL = "gemini-3.1-flash-image";
 const NANO_BANANA_PRO_MODEL = "gemini-3-pro-image";
 
 // Rough public-pricing-based estimates, NOT reconciled against a real
@@ -78,7 +75,10 @@ const NANO_BANANA_PRO_MODEL = "gemini-3-pro-image";
 // attempt's cost tracked, and a rough number here is better than silently
 // recording $0 -- replace with a verified figure once real billing data is
 // available.
-const NANO_BANANA_COST_USD = 0.04;
+// Google's current published 1K image-output price for Nano Banana 2. This
+// is an output estimate; provider invoices may also charge prompt/reference
+// input tokens, which need reconciliation rather than fabrication here.
+const NANO_BANANA_COST_USD = 0.067;
 const NANO_BANANA_PRO_COST_USD = 0.24;
 
 interface ReferenceAssetRow {
@@ -93,7 +93,7 @@ interface ReferenceAssetRow {
 
 interface CharacterReferenceImages {
   characterName: string;
-  images: Array<{ mimeType: string; data: string }>;
+  images: Array<{ mimeType: string; data: string; path: string }>;
 }
 
 const CHARACTER_REFERENCE_CATEGORY_RANK: Record<string, number> = {
@@ -170,17 +170,57 @@ function loadCharacterReferenceImages(characters: ShotRequest["characters"]): Ch
       if (chosen.length === 2) break;
     }
 
-    const images: Array<{ mimeType: string; data: string }> = [];
+    const images: Array<{ mimeType: string; data: string; path: string }> = [];
     for (const row of chosen) {
       const absPath = join(dataDir, "assets", row.path);
       if (!existsSync(absPath)) continue;
-      images.push({ mimeType: "image/png", data: readFileSync(absPath).toString("base64") });
+      images.push({ mimeType: "image/png", data: readFileSync(absPath).toString("base64"), path: row.path });
     }
     if (images.length > 0) {
       result.push({ characterName, images });
     }
   }
   return result;
+}
+
+/**
+ * Gemini loses identity fidelity when a group shot is supplied with a long
+ * stream of separate character references.  For three or more named people,
+ * turn one approved headshot per person into labelled-in-prompt contact
+ * sheets of at most three people.  This keeps a twelve-person group to four
+ * visual inputs (rather than twenty-four alternate poses) without dropping
+ * any named canon identity.  The sheets are deterministic local derivatives
+ * of approved assets, not generated production media.
+ */
+function groupedReferenceSheets(request: ShotRequest, references: CharacterReferenceImages[]): Array<{ names: string[]; mimeType: string; data: string }> {
+  if (references.length < 3) {
+    return references.map((ref) => ({ names: [ref.characterName], mimeType: ref.images[0]!.mimeType, data: ref.images[0]!.data }));
+  }
+  const dataDir = getDataDir();
+  const groups: Array<{ names: string[]; mimeType: string; data: string }> = [];
+  for (let offset = 0; offset < references.length; offset += 3) {
+    const group = references.slice(offset, offset + 3);
+    // ffmpeg's hstack rejects a single input. A final one-person remainder
+    // is already a perfectly good reference packet on its own.
+    if (group.length === 1) {
+      const ref = group[0]!;
+      groups.push({ names: [ref.characterName], mimeType: ref.images[0]!.mimeType, data: ref.images[0]!.data });
+      continue;
+    }
+    const relPath = join("generated", "reference-packs", `${request.shotId}-${offset / 3}.png`);
+    const absPath = join(dataDir, "assets", relPath);
+    mkdirSync(join(dataDir, "assets", "generated", "reference-packs"), { recursive: true });
+    if (!existsSync(absPath)) {
+      const inputs = group.map((ref) => join(dataDir, "assets", ref.images[0]!.path));
+      const filters = group.map((_, index) =>
+        `[${index}:v]scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=black[p${index}]`
+      );
+      const stack = group.map((_, index) => `[p${index}]`).join("") + `hstack=inputs=${group.length}[out]`;
+      execFileSync("ffmpeg", ["-y", ...inputs.flatMap((input) => ["-i", input]), "-filter_complex", `${filters.join(";")};${stack}`, "-map", "[out]", "-frames:v", "1", absPath], { stdio: "ignore" });
+    }
+    groups.push({ names: group.map((ref) => ref.characterName), mimeType: "image/png", data: readFileSync(absPath).toString("base64") });
+  }
+  return groups;
 }
 
 export class GeminiImageProvider implements ImageProvider {
@@ -209,15 +249,14 @@ export class GeminiImageProvider implements ImageProvider {
     // them as two views of one person. A shot's own character list already
     // says how many times a name appears; this line stops the model from
     // inventing an extra instance from the reference images themselves.
-    for (const ref of referenceImages) {
-      const multiImageNote =
-        ref.images.length > 1
-          ? ` These ${ref.images.length} images are DIFFERENT ANGLES/POSES OF THE SAME SINGLE PERSON, not different people -- ${ref.characterName} must appear only as many times in the final shot as the character list below says, never once per reference image.`
-          : "";
+    for (const ref of groupedReferenceSheets(request, referenceImages)) {
+      const names = ref.names.join(", ");
       parts.push({
-        text: `Reference image(s) for ${ref.characterName} -- this is the EXACT face, build, and likeness to use for ${ref.characterName} in the shot. Do not redesign, genericize, or drift toward a different face -- match this reference's facial structure, skin tone, and regional appearance precisely.${multiImageNote}`
+        text: ref.names.length === 1
+          ? `Reference image for ${names} -- this is the EXACT face, build, and likeness to use in the shot. Do not redesign, genericize, or drift toward a different face -- match this reference's facial structure, skin tone, and regional appearance precisely.`
+          : `Approved character reference sheet: left-to-right, the single people are ${names}. Use each named person exactly once where required; do not merge, duplicate, recolor, or substitute any face or garment.`
       });
-      parts.push(...ref.images.map((img) => ({ inlineData: img })));
+      parts.push({ inlineData: { mimeType: ref.mimeType, data: ref.data } });
     }
     // A set reference is distinct from character references: it locks room
     // scale and geography but must never be interpreted as another person.
@@ -245,7 +284,7 @@ export class GeminiImageProvider implements ImageProvider {
         // imageConfig.aspectRatio field is real and respected by testing
         // directly against the live API, the same empirical approach used
         // to confirm Nano Banana's own model names.
-        generationConfig: { responseModalities: ["IMAGE"], imageConfig: { aspectRatio: "16:9" } }
+        generationConfig: { responseModalities: ["IMAGE"], imageConfig: { aspectRatio: "16:9", imageSize: "1K" } }
       })
     });
 
@@ -267,7 +306,10 @@ export class GeminiImageProvider implements ImageProvider {
     }
 
     const dataDir = getDataDir();
-    const relPath = join("generated", "keyframes", `${request.shotId}.png`);
+    // A generation attempt is a retained production candidate. Never reuse a
+    // shot-level filename here: a retry must not overwrite the prior image
+    // that the producer may need to compare, approve, or restore.
+    const relPath = join("generated", "keyframes", `${request.shotId}-${randomUUID().slice(0, 8)}.png`);
     mkdirSync(join(dataDir, "assets", "generated", "keyframes"), { recursive: true });
     writeFileSync(join(dataDir, "assets", relPath), Buffer.from(imagePart.inlineData.data, "base64"));
 

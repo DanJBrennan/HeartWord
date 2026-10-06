@@ -119,8 +119,8 @@ export function getCoverageBeatContext(db: DatabaseSync, dataDir: string, beatId
       `SELECT p.id, p.language, p.book, p.chapter FROM projects p JOIN scenes sc ON sc.project_id = p.id WHERE sc.id = ?`
     )
     .get(scene.id) as CoverageBeatContext["project"];
-  if (project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || ![2, 3].includes(project.chapter)) {
-    throw new Error("The coverage-beat keyframe handoff currently supports Hatam Mark 2 and Mark 3 only.");
+  if (project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || ![2, 3, 4].includes(project.chapter)) {
+    throw new Error("The coverage-beat keyframe handoff currently supports Hatam Mark 2, Mark 3, and the producer-approved Mark 4 coverage plan only.");
   }
 
   let speakingCharacter: CoverageBeatContext["speakingCharacter"] = null;
@@ -233,10 +233,15 @@ export function prepareCoverageBeatBrief(
   }
 
   const chapterSlug = `${context.project.book.toLowerCase()}-${context.project.chapter}`;
-  const sources = [
-    { role: "verified Hatam source", path: `source/hatam/${chapterSlug}/${chapterSlug}-text.docx` },
-    { role: "English reference", path: `reference/english/${chapterSlug}/${chapterSlug}-text.docx` }
-  ].map((source) => {
+  const sources = (context.project.chapter === 4
+    ? [
+        { role: "verified Hatam source", path: "source/hatam/text/Mark/Mark 4.docx" },
+        { role: "English reference", path: "source/english-esv/text/Mark/Mark 4.docx" }
+      ]
+    : [
+        { role: "verified Hatam source", path: `source/hatam/${chapterSlug}/${chapterSlug}-text.docx` },
+        { role: "English reference", path: `reference/english/${chapterSlug}/${chapterSlug}-text.docx` }
+      ]).map((source) => {
     const path = assetPath(dataDir, source.path);
     return { ...source, sha256: sha256(readFileSync(path)), verses: parseSourceTextByVerse(path) };
   });

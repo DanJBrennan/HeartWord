@@ -11,7 +11,9 @@ export const FINISHING_ROLES = ["picture_editor", "script_supervisor", "colorist
 export const EDITING_ROLES = ["creative_director", "picture_editor", "script_supervisor", "scripture_cultural_reviewer"] as const;
 export type CrewRole = typeof PLANNING_ROLES[number] | typeof FINISHING_ROLES[number] | "production_director" | "fidelity_challenger" | "clarity_challenger" | "feasibility_challenger";
 export type CrewPhase = "planning" | "editing" | "finishing";
-export interface AudioPlacement { segmentId: string; sourceStartMs: number; sourceEndMs: number; startMs: number; endMs: number }
+export interface AudioPlacement { segmentId: string; sourceStartMs: number; sourceEndMs: number; startMs: number; endMs: number;
+  /** Render-audit evidence; absent on an unrendered editorial plan. */
+  voice?: "original" | "cast"; speakerId?: string | null }
 export interface CrewShot {
   id: string; sceneId: string; sceneSequence: number; sequence: number;
   verseRef: string; action: string; framing: string | null; cameraMovement: string | null;

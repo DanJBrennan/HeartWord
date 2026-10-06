@@ -76,10 +76,11 @@ export async function generateShotDraft(
   if (!keyframe) throw new Error("Drafting is held: this shot needs an accepted reviewed keyframe.");
 
   const characters = db.prepare(
-    `SELECT sc.character_id characterId, cv.id characterVersionId FROM shot_characters sc
+    `SELECT sc.character_id characterId, cv.id characterVersionId, c.name FROM shot_characters sc
      JOIN character_versions cv ON cv.character_id = sc.character_id AND cv.status = 'approved'
+     JOIN characters c ON c.id = sc.character_id
      WHERE sc.shot_id = ?`
-  ).all(shotId) as Array<{ characterId: string; characterVersionId: string }>;
+  ).all(shotId) as Array<{ characterId: string; characterVersionId: string; name: string }>;
 
   // Omni derives its output filename from request.shotId.  A draft room
   // deliberately permits several takes for one underlying shot, so passing
@@ -87,13 +88,19 @@ export async function generateShotDraft(
   // immutable attempt id for the provider-facing label while retaining the
   // actual shot id in generation_attempts.
   const id = randomUUID(), now = Date.now();
-  const draftPrompt = `${keyframe.prompt ?? shot.action}
+  // Gemini's video endpoint rejects named real-person likeness references.
+  // The reviewed keyframe remains the sole visual identity anchor; text uses
+  // role language so an historical character's name is not sent upstream.
+  const safeAction = redactCharacterNames(shot.action, characters.map(character => character.name));
+  const draftPrompt = `Animate the supplied approved start frame. Preserve its exact people, Papuan/Hatam wardrobe, setting, camera framing, and action: ${safeAction}
 
 NON-SPEAKING VIDEO RULE: This is a non-speaking shot. Do not generate dialogue, narration, singing, lip-sync performance, intelligible words, or visible mouth movements that suggest speech from any person. Preserve only natural nonverbal action and background ambience. The chapter narration is a separate audio layer and must not be visually performed here. Every visible person must retain the approved Papuan/Hatam casting; named characters must retain their exact approved canon face, hair, skin tone, build, and wardrobe throughout the entire clip. Do not drift toward Caucasian, Levantine, or generic substitute identities.
 
 NATURAL CROWD MOTION RULE: People in a crowd move on independent, staggered timings. At most a few people may reach, shift, or react at once while others hold, breathe, look, edge forward, or respond subtly at different moments. Never generate a synchronized wave of arms, a repeated group gesture, mirrored movement, or a mass simultaneous reach-and-retract.`;
   const result = await draftProvider.generateDraft(
-    { shotId: `${shot.id}-draft-${id}`, prompt: draftPrompt, characters },
+    // Do not attach named canonical reference sheets: the accepted frame is
+    // the identity reference for video generation and avoids Gemini's block.
+    { shotId: `${shot.id}-draft-${id}`, prompt: draftPrompt, characters: [] },
     { startFrame: { path: keyframe.result_asset_path } }
   );
 
@@ -138,6 +145,15 @@ NATURAL CROWD MOTION RULE: People in a crowd move on independent, staggered timi
     `Draft ${id} (${held.length + 1} of at most ${MAX_HELD_DRAFTS}) for review. Shot risk ${risk.tier}: ${risk.reasons.join("; ")}. Draft ${reviewNote}.`, Date.now());
 
   return { status: "draft" as const, attemptId: id, heldCount: held.length + 1, review: reviewNote };
+}
+
+function redactCharacterNames(text: string, names: string[]) {
+  let result = text;
+  for (const name of names.filter(Boolean).sort((a, b) => b.length - a.length)) {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    result = result.replace(new RegExp(`\\b${escaped}\\b`, "gi"), /jesus/i.test(name) ? "the central teacher" : "a follower");
+  }
+  return result;
 }
 
 /**

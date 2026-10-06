@@ -36,6 +36,10 @@ export function recordSegmentSplit(db: DatabaseSync, input: {
   const classificationIds = (db.prepare("SELECT id FROM source_alignment_editorial_classifications WHERE audio_segment_id=?").all(input.audioSegmentId) as Array<{ id: string }>).map(r => r.id);
   const attributionIds = (db.prepare("SELECT id FROM source_alignment_speaker_attributions WHERE audio_segment_id=?").all(input.audioSegmentId) as Array<{ id: string }>).map(r => r.id);
   const overrideIds = (db.prepare("SELECT id FROM source_alignment_boundary_overrides WHERE audio_segment_id=?").all(input.audioSegmentId) as Array<{ id: string }>).map(r => r.id);
+  // A composite cast-master segment retains its provenance through this map.
+  // It is a foreign-key dependency of the original interval just like the
+  // review evidence below, even when the composite itself is narration-only.
+  const compositeMapIds = (db.prepare("SELECT composite_segment_id FROM composite_audio_source_map WHERE original_segment_id=?").all(input.audioSegmentId) as Array<{ composite_segment_id: string }>).map(r => r.composite_segment_id);
   const hasExistingEvidence = correctionIds.length > 0 || classificationIds.length > 0 || attributionIds.length > 0 || overrideIds.length > 0;
   if (hasExistingEvidence && !input.acknowledgeSupersededEvidence) {
     throw new Error(
@@ -64,6 +68,12 @@ export function recordSegmentSplit(db: DatabaseSync, input: {
     if (classificationIds.length) db.prepare(`UPDATE source_alignment_editorial_classifications SET audio_segment_id=? WHERE id IN (${classificationIds.map(() => "?").join(",")})`).run(firstId, ...classificationIds);
     if (attributionIds.length) db.prepare(`UPDATE source_alignment_speaker_attributions SET audio_segment_id=? WHERE id IN (${attributionIds.map(() => "?").join(",")})`).run(firstId, ...attributionIds);
     if (overrideIds.length) db.prepare(`UPDATE source_alignment_boundary_overrides SET audio_segment_id=? WHERE id IN (${overrideIds.map(() => "?").join(",")})`).run(firstId, ...overrideIds);
+    // The composite is retained; its source map must move before deleting the
+    // superseded source row. Like superseded review evidence, it is anchored
+    // to the first replacement only to preserve referential integrity. A new
+    // cast-master mapping for a later speaker split must be created from the
+    // newly reviewed intervals, never inferred from this historical row.
+    if (compositeMapIds.length) db.prepare(`UPDATE composite_audio_source_map SET original_segment_id=? WHERE composite_segment_id IN (${compositeMapIds.map(() => "?").join(",")})`).run(firstId, ...compositeMapIds);
     db.prepare("DELETE FROM audio_segments WHERE id=?").run(input.audioSegmentId);
 
     const hashes = sourceReviewHashes(db, input.projectId);

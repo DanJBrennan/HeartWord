@@ -1,15 +1,25 @@
 import { randomUUID } from "node:crypto";
+import { join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
+import { getDataDir } from "../../db/client.js";
 import type { DraftVideoProvider, VideoProvider, VideoTier } from "../../providers/types.js";
+import { reviewGeneratedVideo, videoReviewPassed } from "../qc/video-review.js";
 import { generateFinalVideoWithFallback } from "./generate-final-with-fallback.js";
 import { shotRiskFor, tierForRisk } from "./shot-risk-lookup.js";
 
-export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, projectId:string, shotId:string, providers:{veo:VideoProvider;kling:VideoProvider;draft:DraftVideoProvider}) {
+export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, projectId:string, shotId:string, providers:{veo:VideoProvider;kling:VideoProvider;draft:DraftVideoProvider}, policy:{allowDraftFallback?:boolean}={}) {
   const shot=db.prepare(`SELECT sh.id,sh.action FROM shots sh JOIN scenes s ON s.id=sh.scene_id WHERE sh.id=? AND s.project_id=? AND sh.needs_lip_sync=0`).get(shotId,projectId) as {id:string;action:string}|undefined;
   if (!shot) throw new Error("Only a non-speaking shot in this project can receive ordinary final video.");
-  const selected=db.prepare("SELECT c.id FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE c.shot_id=? AND ga.status='accepted'").get(shotId) as {id:string}|undefined;
+  const selected=db.prepare(`SELECT c.id FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id
+    JOIN shots sh ON sh.id=c.shot_id JOIN scenes sc ON sc.id=sh.scene_id
+    LEFT JOIN project_restart_cutovers cutover ON cutover.project_id=sc.project_id
+    WHERE c.shot_id=? AND ga.status='accepted' AND (cutover.started_at IS NULL OR ga.created_at>=cutover.started_at)`).get(shotId) as {id:string}|undefined;
   if (selected) return {status:"reused" as const,clipId:selected.id};
-  const prior=db.prepare("SELECT id,status,result_asset_path FROM generation_attempts WHERE shot_id=? AND operation='generate_final_video' ORDER BY created_at DESC LIMIT 1").get(shotId) as {id:string;status:string;result_asset_path:string|null}|undefined;
+  const prior=db.prepare(`SELECT ga.id,ga.status,ga.result_asset_path FROM generation_attempts ga JOIN shots sh ON sh.id=ga.shot_id JOIN scenes sc ON sc.id=sh.scene_id
+    LEFT JOIN project_restart_cutovers cutover ON cutover.project_id=sc.project_id
+    WHERE ga.shot_id=? AND ga.operation='generate_final_video' AND ga.status!='retry_modified'
+      AND (cutover.started_at IS NULL OR ga.created_at>=cutover.started_at)
+    ORDER BY ga.created_at DESC LIMIT 1`).get(shotId) as {id:string;status:string;result_asset_path:string|null}|undefined;
   if (prior) return {status:"held" as const,attemptId:prior.id,reason:`Existing final-video candidate is ${prior.status}; reconcile or review it before another request.`};
   // A risky shot commits to a full render only after a draft has been
   // chosen -- docs/design/media-generation.md's draft-then-commit rule.
@@ -22,23 +32,54 @@ export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, project
   }
   const keyframe=db.prepare("SELECT result_asset_path,prompt FROM generation_attempts WHERE shot_id=? AND operation='generate' AND status='accepted' AND result_asset_path IS NOT NULL ORDER BY created_at DESC LIMIT 1").get(shotId) as {result_asset_path:string;prompt:string|null}|undefined;
   if (!keyframe) throw new Error("Final video is held: this shot needs an accepted reviewed keyframe.");
-  const characters=db.prepare("SELECT sc.character_id characterId,cv.id characterVersionId FROM shot_characters sc JOIN character_versions cv ON cv.character_id=sc.character_id AND cv.status='approved' WHERE sc.shot_id=?").all(shotId) as Array<{characterId:string;characterVersionId:string}>;
+  const characters=db.prepare("SELECT sc.character_id characterId,cv.id characterVersionId,c.name FROM shot_characters sc JOIN character_versions cv ON cv.character_id=sc.character_id AND cv.status='approved' JOIN characters c ON c.id=sc.character_id WHERE sc.shot_id=?").all(shotId) as Array<{characterId:string;characterVersionId:string;name:string}>;
   if (!characters.length && /character|person|jesus/i.test(shot.action)) throw new Error("Final video is held: visible canon characters need approved versions.");
   // A shot's own crowd/cast/camera facts decide how good a render it gets
   // -- see casting/shot-risk.ts. Routine frames stay on the cheapest tier
   // instead of every shot buying the same render.
   const tier:VideoTier=tierForRisk(risk);
-  const prompt=`${keyframe.prompt ?? shot.action}
+  // The video vendor blocks real-person names and likeness sheets. The
+  // accepted keyframe is therefore the only visual identity anchor here;
+  // retain the scene action while replacing canonical names with roles.
+  const safeAction=redactCharacterNames(shot.action,characters.map(character=>character.name));
+  const prompt=`Animate the supplied approved start frame. Preserve its exact people, Papuan/Hatam wardrobe, setting, camera framing, and action: ${safeAction}
 
 NON-SPEAKING VIDEO RULE: Do not generate dialogue, narration, singing, lip-sync performance, intelligible words, or visible speech from any person. Preserve natural nonverbal action and background ambience only. Keep every visible person in the approved Papuan/Hatam canon identity and wardrobe throughout; never drift toward Caucasian, Levantine, European, or generic substitute identities.
 
 NATURAL CROWD MOTION RULE: Crowd movement is independently timed and irregular. At most a few people reach, shift, or react at once while others hold, breathe, look, edge forward, or respond subtly at different moments. Never generate a synchronized wave of arms, a repeated group gesture, mirrored movement, or a mass simultaneous reach-and-retract.`;
-  const result=await generateFinalVideoWithFallback(providers.veo,providers.kling,providers.draft,{shotId,prompt,characters},{resolution:"720p",startFrame:{path:keyframe.result_asset_path},durationSeconds:8,tier});
+  const result=await generateFinalVideoWithFallback(providers.veo,providers.kling,providers.draft,{shotId,prompt,characters:[]},{resolution:"720p",startFrame:{path:keyframe.result_asset_path},durationSeconds:8,tier,allowKlingSceneFallback:false,allowDraftFallback:policy.allowDraftFallback});
   const id=randomUUID(), now=Date.now();
+  // A final clip is not safe merely because the provider returned a file.
+  // Review it against the approved keyframe before it can be auto-selected;
+  // this is specifically the guard against identity/casting drift after the
+  // first frame of a video.
+  let reviewNote="video review unavailable";
+  let reviewPassed=false;
+  let reviewCostUsd: number | undefined;
+  if(result.media?.path) {
+    try {
+      const review=await reviewGeneratedVideo({videoPath:join(getDataDir(),"assets",result.media.path),keyframePath:join(getDataDir(),"assets",keyframe.result_asset_path),instruction:prompt});
+      reviewPassed=videoReviewPassed(review.verdict);
+      reviewNote=`${reviewPassed?"passed":"FAILED"} final video review (confidence ${review.verdict.confidence}): ${review.verdict.reason}`;
+      reviewCostUsd=review.costUsd;
+    } catch(error) { reviewNote=`final video review unavailable: ${(error as Error).message}`; }
+  }
   db.prepare("INSERT INTO generation_attempts (id,shot_id,provider,model,operation,resolution,prompt,status,result_asset_path,cost_usd,created_at) VALUES (?,?,?,?,?,'720p',?,'hold_for_review',?,?,?)").run(id,shotId,result.provenance.provider,result.provenance.model,"generate_final_video",result.provenance.prompt,result.media?.path ?? null,result.cost.usd,now);
   db.prepare("INSERT INTO cost_ledger_entries (id,project_id,generation_attempt_id,amount_usd,created_at) VALUES (?,?,?,?,?)").run(randomUUID(),projectId,id,result.cost.usd,now);
-  db.prepare("INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'qc',?,0,?)").run(randomUUID(),projectId,shotId,`Final-video candidate ${id} (${result.tier}) requires producer review before timeline selection. Risk ${risk.tier} (${risk.reasons.join("; ")}) -> ${tier} render${risk.draftFirst?"; a cheap draft first would have been worth it":""}.`,now);
-  return {status:"candidate" as const,attemptId:id};
+  if (reviewCostUsd !== undefined) {
+    db.prepare("INSERT INTO cost_ledger_entries (id,project_id,generation_attempt_id,amount_usd,created_at) VALUES (?,?,?,?,?)").run(randomUUID(),projectId,id,reviewCostUsd,Date.now());
+  }
+  db.prepare("INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'qc',?,0,?)").run(randomUUID(),projectId,shotId,`Final-video candidate ${id}. ${reviewNote} Risk ${risk.tier} (${risk.reasons.join("; ")}) -> ${tier} render. Cost policy: ${result.fallbackReason}`,now);
+  return {status:"candidate" as const,attemptId:id,reviewPassed};
+}
+
+function redactCharacterNames(text:string,names:string[]) {
+  let result=text;
+  for(const name of names.filter(Boolean).sort((a,b)=>b.length-a.length)) {
+    const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    result=result.replace(new RegExp(`\\b${escaped}\\b`,"gi"),/jesus/i.test(name)?"the central teacher":"a follower");
+  }
+  return result;
 }
 
 export function acceptFinalVideoCandidate(db:DatabaseSync, projectId:string, attemptId:string, durationMs:number) {

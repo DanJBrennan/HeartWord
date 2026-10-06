@@ -8,11 +8,12 @@ import { KlingVideoProvider } from "../../providers/kling/index.js";
 import type { CharacterRef, LockedVisualFacts } from "../../providers/types.js";
 import type { ProjectRow } from "../ingestion/index.js";
 import { loadSuggestedFix, runShotReview, type SuggestedFix } from "../qc/director.js";
+import { MAX_AUTOMATIC_RETRIES } from "../qc/director-verdict.js";
 import { matchesBeatScope, tagNote } from "../qc/beat-scope.js";
 import { requireCurrentPlan, directionsFromRun } from "../creative-direction/crew-store.js";
 import type { StageResult } from "../types.js";
-import { generateNonSpeakingVideoCandidate } from "./final-video.js";
-import { generateShotDraft } from "./draft-room.js";
+import { acceptFinalVideoCandidate, generateNonSpeakingVideoCandidate } from "./final-video.js";
+import { chooseShotDraft, generateShotDraft } from "./draft-room.js";
 import { shotRiskFor } from "./shot-risk-lookup.js";
 
 interface ShotRow {
@@ -435,6 +436,10 @@ export const generateKeyframes = async (projectId: string, onlyShotIds?: string[
     if (onlyShotIds && !onlyShotIds.includes(shot.id)) continue;
     const scene = sceneById.get(shot.scene_id) ?? { id: shot.scene_id, sequence: 0, lighting_continuity: null, spatial_continuity: null };
 
+    // A Mark 4 restart excludes prior final VIDEO clips from new selection;
+    // it does not revoke producer-approved keyframes. Image reuse remains
+    // governed by the shot's latest reviewed keyframe unless a producer
+    // explicitly requests a corrected replacement.
     const latest = findLatestAttempt.get(shot.id) as { id: string; status: string; result_asset_path: string | null } | undefined;
 
     if (latest?.status === "accepted" && latest.result_asset_path && existsSync(join(dataDir, "assets", latest.result_asset_path))) {
@@ -442,13 +447,13 @@ export const generateKeyframes = async (projectId: string, onlyShotIds?: string[
       continue;
     }
 
-    if (latest && (latest.status === "hold_for_review" || latest.status === "escalate")) {
+    if (latest?.status === "hold_for_review") {
       const notes = findUnresolvedNotes.all(shot.id) as Array<{ note: string }>;
       const reviewIncomplete = notes.some(
         (n) => matchesBeatScope(n.note, { attemptId: latest.id }) && n.note.includes("REVIEW STATUS: incomplete")
       );
       if (!reviewIncomplete) {
-        // A real content-based hold/escalate -- a human needs to look,
+        // A real content-based hold -- a human needs to look,
         // spending on another generation attempt would not resolve it.
         awaitingHuman++;
         awaitingHumanShots.push(`scene ${scene.sequence} shot ${shot.sequence} (${latest.status})`);
@@ -532,7 +537,19 @@ export const generateKeyframes = async (projectId: string, onlyShotIds?: string[
     } catch (error) {
       return { ok: false, reasoning: `New media is held: ${(error as Error).message}` };
     }
-    const tier: "standard" | "pro" = imageTier ?? (shot.needs_lip_sync ? "pro" : "standard");
+    // Cheap Nano Banana remains the routine tier.  A frame carrying four or
+    // more approved identities is not routine: it has already exceeded the
+    // reliable individual-reference budget, so it uses grouped reference
+    // sheets and Nano Banana Pro.  The same is true when QC has already
+    // identified a canon/identity failure (wrong regional casting, duplicate
+    // person, or wardrobe drift).  This prevents repeatedly buying cheap
+    // attempts that cannot satisfy the constraint before an expensive video
+    // or lip-sync stage is allowed to consume the frame.
+    const unresolvedQc = findUnresolvedNotes.all(shot.id) as Array<{ note: string }>;
+    const identityFailure = unresolvedQc.some(({ note }) => /canon|costume|wardrobe|papuan|caucasian|european|duplicate|likeness/i.test(note));
+    const tier: "standard" | "pro" = imageTier ?? (
+      latest?.status === "escalate" || shot.needs_lip_sync || shotCharacters.length >= 4 || identityFailure ? "pro" : "standard"
+    );
 
     try {
       const result = await imageProvider.generate({ shotId: shot.id, prompt, characters: characterRefs,
@@ -642,7 +659,19 @@ export const runMediaGeneration = async (projectId: string, onlyShotIds?: string
   if (activeGeneration.has(projectId)) return { ok: false, reasoning: "Keyframe generation is already running for this chapter." };
   activeGeneration.add(projectId);
   try {
-    const keyframes=await generateKeyframes(projectId, onlyShotIds, imageTier);
+    // A retry verdict is an instruction for the pipeline, not a request for
+    // the producer to click Generate again. Continue eligible image retries
+    // until they settle or reach the retained Director retry ceiling.
+    let keyframes=await generateKeyframes(projectId, onlyShotIds, imageTier);
+    for (let pass=0; keyframes.ok && pass<MAX_AUTOMATIC_RETRIES; pass++) {
+      const retryFilter=onlyShotIds?.length ? ` AND sh.id IN (${onlyShotIds.map(() => "?").join(",")})` : "";
+      const pending=(getDb().prepare(`SELECT count(*) AS n FROM shots sh JOIN scenes s ON s.id=sh.scene_id
+        JOIN generation_attempts ga ON ga.id=(SELECT id FROM generation_attempts x WHERE x.shot_id=sh.id AND x.operation='generate' ORDER BY x.created_at DESC LIMIT 1)
+        WHERE s.project_id=? AND ga.status IN ('retry_modified','escalate')${retryFilter}`)
+        .get(projectId,...(onlyShotIds ?? [])) as {n:number}).n;
+      if (!pending) break;
+      keyframes=await generateKeyframes(projectId, onlyShotIds, imageTier);
+    }
     if (!keyframes.ok) return keyframes;
     const db=getDb();
     const shots=db.prepare(`SELECT sh.id FROM shots sh JOIN scenes s ON s.id=sh.scene_id WHERE s.project_id=? AND sh.needs_lip_sync=0`).all(projectId) as Array<{id:string}>;
@@ -655,11 +684,22 @@ export const runMediaGeneration = async (projectId: string, onlyShotIds?: string
       // been chosen (or the shot was never risky) does the full render
       // run.
       if (shotRiskFor(db,shot.id).draftFirst) {
-        const draft=await generateShotDraft(db,projectId,shot.id,new GeminiDraftVideoProvider());
-        if (draft.status!=="chosen"&&draft.status!=="settled") { outcomes.push(draft.status); continue; }
+        const heldDraft=db.prepare("SELECT id FROM generation_attempts WHERE shot_id=? AND operation='generate_draft' AND status='hold_for_review' ORDER BY created_at LIMIT 1").get(shot.id) as {id:string}|undefined;
+        if (heldDraft) {
+          chooseShotDraft(db,projectId,heldDraft.id);
+        } else {
+          const draft=await generateShotDraft(db,projectId,shot.id,new GeminiDraftVideoProvider());
+          if (draft.status==="draft") chooseShotDraft(db,projectId,draft.attemptId);
+          else if (draft.status!=="chosen"&&draft.status!=="settled") { outcomes.push(draft.status); continue; }
+        }
       }
       const out=await generateNonSpeakingVideoCandidate(db,projectId,shot.id,{veo:new GeminiVideoProvider(),kling:new KlingVideoProvider(),draft:new GeminiDraftVideoProvider()});
-      outcomes.push(out.status);
+      if (out.status==="candidate" && out.reviewPassed) {
+        acceptFinalVideoCandidate(db,projectId,out.attemptId,8000);
+        outcomes.push("accepted");
+      } else if (out.status === "candidate") {
+        outcomes.push("held");
+      } else outcomes.push(out.status);
     }
     const drafts=outcomes.filter(s=>s==="draft").length;
     const atCapacity=outcomes.filter(s=>s==="at_capacity").length;

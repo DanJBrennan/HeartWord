@@ -77,8 +77,8 @@ export function getKeyframeContext(db: DatabaseSync, dataDir: string, shotId: st
     JOIN scenes sc ON sc.project_id = p.id WHERE sc.id = ?`).get(scene.id) as KeyframeContext["project"];
   // This bridge is deliberately scoped to the active production, not an implicit
   // approval of other books, languages or regional canons.
-  if (project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || project.chapter !== 2) {
-    throw new Error("The external keyframe handoff currently supports Hatam Mark 2 only.");
+  if (project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || ![2, 4].includes(project.chapter)) {
+    throw new Error("The external keyframe handoff currently supports Hatam Mark 2 and the producer-approved Mark 4 coverage plan only.");
   }
   const cast = db.prepare(`SELECT c.id, c.name, c.region, c.canon_status FROM shot_characters sh
     JOIN characters c ON c.id = sh.character_id WHERE sh.shot_id = ? ORDER BY c.id`).all(shotId) as
@@ -128,10 +128,15 @@ export function prepareKeyframe(db: DatabaseSync, dataDir: string, shotId: strin
   if (latestCrewRun(db, context.project.id, "planning")) {
     prompt += directionsFromRun(requireCurrentPlan(db, dataDir, context.project.id), shotId);
   }
-  const sources = [
-    { role: "verified Hatam source", path: "source/hatam/mark-2/mark-2-text.docx" },
-    { role: "English reference", path: "reference/english/mark-2/mark-2-text.docx" }
-  ].map(source => {
+  const sources = (context.project.chapter === 4
+    ? [
+        { role: "verified Hatam source", path: "source/hatam/text/Mark/Mark 4.docx" },
+        { role: "English reference", path: "source/english-esv/text/Mark/Mark 4.docx" }
+      ]
+    : [
+        { role: "verified Hatam source", path: `source/hatam/mark-${context.project.chapter}/mark-${context.project.chapter}-text.docx` },
+        { role: "English reference", path: `reference/english/mark-${context.project.chapter}/mark-${context.project.chapter}-text.docx` }
+      ]).map(source => {
     const path = assetPath(dataDir, source.path);
     return { ...source, sha256: sha256(readFileSync(path)), verses: parseSourceTextByVerse(path) };
   });

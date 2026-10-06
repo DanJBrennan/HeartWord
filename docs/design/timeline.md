@@ -101,6 +101,23 @@ makes this safe, based on what worked in a prior attempt at this project:
   many subsequent changes, and so the record of how a chapter reached its
   current state stays inspectable.
 
+## Frame-addressable review contract
+
+When a producer reviews a rendered chapter frame by frame, the displayed frame
+number, timecode, and any edit command must refer to the same decoded image.
+HeartWord uses zero-based frame indices: frame 0 is the first rendered frame.
+The reviewer derives its number from the browser's decoded-frame callback, not
+from a rounded playback or seek clock, because a playback position can fall at
+the boundary after the image still on screen. The displayed timecode is the
+start time of that same decoded frame at the render's declared frame rate.
+
+If a browser cannot report the decoded image timestamp, it may play the cut but
+must disable frame-number notes rather than present an approximate number. A
+picture-only repair records its inclusive zero-based frame range and converts
+it to seconds as `start / fps` through `(end + 1) / fps`, so a producer's
+reviewer note, the repair command, and post-render inspection address the same
+pixels.
+
 ## Open questions
 
 - Target output format/container and whether an editable project file

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mark 4 canonical Jesus — held performance review</title>
+  <style>
+    body{max-width:1420px;margin:2rem auto;padding:0 1rem;font-family:system-ui,sans-serif;color:#202124}
+    .note{color:#4b5563;max-width:950px;line-height:1.45}.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:1rem;margin-top:1.5rem}
+    article{border:1px solid #cbd5e1;border-radius:8px;padding:.8rem;background:#fff}h2{font-size:1rem;margin:0 0 .3rem}p{margin:.25rem 0 .75rem;font-size:.9rem}
+    video{width:100%;background:#000;border-radius:5px;display:block}.held{color:#7c2d12;font-weight:600}
+  </style>
+</head>
+<body>
+  <h1>Mark 4 — held canonical Jesus performance candidates</h1>
+  <p class="note"><span class="held">Held review only.</span> These fifteen clips use the producer-approved canonical Jesus keyframes and their exact prepared cast-audio excerpts. They are grouped by Scripture setting, not presented as a continuous edit. None has been selected into the chapter cut.</p>
+  <div id="board" class="board"></div>
+  <script>
+    const clips = [
+      ['Mark 4:3–8 · boat teaching · beat 1', '55.000–59.500s', 'generated/lipsync-face/933580727550746706.mp4'],
+      ['Mark 4:3–8 · boat teaching · beat 2', '75.500–80.000s', 'generated/lipsync-face/933581379491729430.mp4'],
+      ['Mark 4:3–8 · boat teaching · beat 3 · replacement', '98.800–103.308s', 'generated/lipsync-face/933594340159524902.mp4'],
+      ['Mark 4:14–20 · private olive-grove teaching · beat 1 · replacement', '195.500–200.000s', 'generated/lipsync-face/933594948216160354.mp4'],
+      ['Mark 4:14–20 · private olive-grove teaching · beat 2', '215.500–220.000s', 'generated/lipsync-face/933583375460339797.mp4'],
+      ['Mark 4:14–20 · private olive-grove teaching · beat 3', '235.500–240.000s', 'generated/lipsync-face/933583974096568383.mp4'],
+      ['Mark 4:14–20 · private olive-grove teaching · beat 4 · replacement', '254.200–258.679s', 'generated/lipsync-face/933595613861249027.mp4'],
+      ['Mark 4:21–25 · lakeshore teaching · beat 1', '284.700–289.148s', 'generated/lipsync-face/933585305729368116.mp4'],
+      ['Mark 4:21–25 · lakeshore teaching · beat 2', '296.600–301.142s', 'generated/lipsync-face/933585974323052588.mp4'],
+      ['Mark 4:21–25 · lakeshore teaching · beat 3', '302.300–306.801s', 'generated/lipsync-face/933586573508739163.mp4'],
+      ['Mark 4:26–29 · field-side teaching · beat 1', '333.000–337.500s', 'generated/lipsync-face/933587237920055350.mp4'],
+      ['Mark 4:26–29 · field-side teaching · beat 2', '348.000–352.500s', 'generated/lipsync-face/933587901928710184.mp4'],
+      ['Mark 4:26–29 · field-side teaching · beat 3 · replacement', '353.800–358.269s', 'generated/lipsync-face/933596279446310971.mp4'],
+      ['Mark 4:30–32 · mustard-seed teaching · beat 1', '377.300–381.800s', 'generated/lipsync-face/933589166586204190.mp4'],
+      ['Mark 4:30–32 · mustard-seed teaching · beat 2 · replacement', '391.700–396.232s', 'generated/lipsync-face/933596954113343491.mp4']
+    ];
+    document.querySelector('#board').replaceChildren(...clips.map(([label, source, path]) => {
+      const card = document.createElement('article');
+      const title = document.createElement('h2'); title.textContent = label;
+      const range = document.createElement('p'); range.textContent = `Exact source interval: ${source}`;
+      const video = document.createElement('video'); video.controls = true; video.preload = 'metadata'; video.src = `/media/${path}`;
+      card.append(title, range, video); return card;
+    }));
+  </script>
+</body>
+</html>

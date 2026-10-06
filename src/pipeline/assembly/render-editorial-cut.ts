@@ -9,9 +9,10 @@ import { latestCrewRun } from "../creative-direction/crew-store.js";
 import type { CrewResult } from "../creative-direction/crew-types.js";
 import { planEditorialCut } from "./editorial-plan.js";
 import { mediaDurationMs } from "./finishing.js";
-import { continuousAudioGroups, type ResolvedAudioPlacement } from "./continuous-audio.js";
+import { assertSpeakerAudioContinuity, continuousAudioGroups, type ResolvedAudioPlacement } from "./continuous-audio.js";
 import { decodeToPcm16Mono } from "../ingestion/pitch.js";
 import { detectTruncatedRenewal } from "../qc/audio-tail.js";
+import { assertNoRenderedFlashes } from "../qc/flash-detection.js";
 
 export function assertEditorialRebuildable(db: DatabaseSync, projectId: string): void {
   const render = db.prepare(`SELECT r.id,m.timeline_json FROM chapter_renders r LEFT JOIN chapter_render_manifests m ON m.render_id=r.id
@@ -72,9 +73,14 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
         path = versions[0]!.path; startMs = versions[0]!.startMs;
       }
       return { segmentId: placement.segmentId, path, speakerId: segment.speakerId,
+        voice: segment.speakerId ? "cast" : "original",
         sourceStartMs: startMs, sourceEndMs: startMs + durationMs,
         startMs: placement.startMs, endMs: placement.endMs };
     });
+    // This is intentionally independent of `cut.timeline`: any master,
+    // listener, or cover shot within a spoken interval keeps the same cast
+    // voice until that source interval ends.
+    assertSpeakerAudioContinuity(brief.audio, resolvedAudio);
     const audioGroups = continuousAudioGroups(resolvedAudio);
     for (const [index, group] of audioGroups.entries()) {
       silence(group.startMs - cursor);
@@ -107,6 +113,7 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
       "-c:v", "copy", "-c:a", "aac", "-t", String(cut.durationMs / 1000), "-movflags", "+faststart", output]);
     const duration = mediaDurationMs(output);
     if (Math.abs(duration - cut.durationMs) > 100) throw new Error("Rendered duration differs from the protected performance and pauses.");
+    assertNoRenderedFlashes(output);
     // Confirm the *encoded chapter*, not just the intermediate PCM, did not
     // acquire a chopped onset at a speaking-turn end. Picture cuts are absent
     // from this decision; the source-to-production audio map remains intact.
@@ -121,7 +128,9 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
     db.exec("BEGIN IMMEDIATE");
     try {
       db.prepare("INSERT INTO chapter_renders (id,project_id,result_asset_path,total_duration_ms,shot_count,created_at) VALUES (?,?,?,?,?,?)").run(renderId, projectId, path, duration, cut.timeline.length, Date.now());
-      db.prepare("INSERT INTO chapter_render_manifests (render_id,timeline_json,source_audio_json) VALUES (?,?,?)").run(renderId, JSON.stringify(cut.timeline), JSON.stringify(cut.audioMap));
+      const auditedAudioMap = cut.audioMap.map((placement, index) => ({ ...placement,
+        voice: resolvedAudio[index]!.voice, speakerId: resolvedAudio[index]!.speakerId }));
+      db.prepare("INSERT INTO chapter_render_manifests (render_id,timeline_json,source_audio_json) VALUES (?,?,?)").run(renderId, JSON.stringify(cut.timeline), JSON.stringify(auditedAudioMap));
       const sequence = Number(db.prepare("SELECT COALESCE(MAX(sequence),0)+1 AS n FROM edit_commands WHERE project_id=?").get(projectId)!.n);
       db.prepare("INSERT INTO edit_commands (id,project_id,sequence,command_type,payload,idempotency_key,applied_at) VALUES (?,?,?,'render_editorial_cut',?,?,?)")
         .run(randomUUID(), projectId, sequence, JSON.stringify({ path, renderId, runId, cut }), `editorial:${runId}`, Date.now());

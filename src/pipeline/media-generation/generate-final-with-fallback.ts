@@ -68,6 +68,8 @@ export interface FallbackResult extends GenerationResult {
    *  recording even though it's still 720p. */
   tier: FallbackTier;
   veoAttempts: number;
+  /** Human-readable policy outcome for the cost/dailies record. */
+  fallbackReason: string;
 }
 
 export async function generateFinalVideoWithFallback(
@@ -79,7 +81,7 @@ export async function generateFinalVideoWithFallback(
   // below: the caller picked a render quality from the shot's own risk
   // (see casting/shot-risk.ts), and a fallback to Kling must not silently
   // drop it. The Omni last resort has one quality and ignores it.
-  opts: { resolution?: "720p" | "1080p"; startFrame?: AssetRef; durationSeconds?: number; tier?: VideoTier }
+  opts: { resolution?: "720p" | "1080p"; startFrame?: AssetRef; durationSeconds?: number; tier?: VideoTier; allowKlingSceneFallback?: boolean; allowDraftFallback?: boolean }
 ): Promise<FallbackResult> {
   let veoAttempts = 0;
   for (let attempt = 1; attempt <= MAX_VEO_ATTEMPTS; attempt++) {
@@ -88,7 +90,7 @@ export async function generateFinalVideoWithFallback(
     while (true) {
       try {
         const result = await videoProvider.generateFinal(request, opts);
-        return { ...result, tier: "veo", veoAttempts };
+        return { ...result, tier: "veo", veoAttempts, fallbackReason: `Veo succeeded on attempt ${attempt}; no fallback used.` };
       } catch (err) {
         if (isRateLimitFailure(err) && rateLimitRetries < RATE_LIMIT_MAX_RETRIES) {
           rateLimitRetries++;
@@ -102,6 +104,15 @@ export async function generateFinalVideoWithFallback(
     }
   }
 
+  if (opts.allowKlingSceneFallback === false && opts.allowDraftFallback === false) {
+    throw new Error("Veo was unavailable after retries; both Kling and draft fallbacks are disabled for this producer-approved Veo-only request.");
+  }
+
+  if (opts.allowKlingSceneFallback === false) {
+    const draftResult = await draftProvider.generateDraft(request, { startFrame: opts.startFrame });
+    return { ...draftResult, tier: "omni_draft", veoAttempts, fallbackReason: "Veo was unavailable after retries; Kling scene fallback is disabled by ordinary-coverage cost policy, so the retained result is a draft." };
+  }
+
   // Kling's own failure messages have a different shape than Veo's RAI
   // filter (isRaiFilterFailure doesn't apply here) -- by this point Veo
   // has already exhausted its retries, so ANY Kling failure (content
@@ -111,11 +122,11 @@ export async function generateFinalVideoWithFallback(
   // degrade further.
   try {
     const klingResult = await klingSceneProvider.generateFinal(request, opts);
-    return { ...klingResult, tier: "kling_scene", veoAttempts };
+    return { ...klingResult, tier: "kling_scene", veoAttempts, fallbackReason: "Veo was unavailable after retries; Kling scene fallback was explicitly permitted for this request." };
   } catch {
     // fall through to Omni
   }
 
   const draftResult = await draftProvider.generateDraft(request, { startFrame: opts.startFrame });
-  return { ...draftResult, tier: "omni_draft", veoAttempts };
+  return { ...draftResult, tier: "omni_draft", veoAttempts, fallbackReason: "Both Veo and the permitted Kling scene fallback failed; retained the lower-cost draft." };
 }

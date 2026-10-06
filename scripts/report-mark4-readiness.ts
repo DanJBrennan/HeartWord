@@ -1,15 +1,41 @@
-/** Read-only readiness report: never creates a project, calls a provider, or
- * mutates the production database. */
+/** Read-only Mark 4 readiness/preflight report. It never creates a project,
+ * binds source inputs, calls a provider, or mutates the production database. */
 import { createRequire } from "node:module";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { discoverSourcePaths } from "../src/pipeline/ingestion/source-catalog.js";
+import { parseChapterTitle, parseSourceHeadings, parseSourceText, parseSourceTextByVerse } from "../src/pipeline/ingestion/parse-source-text.js";
+import { getAudioDurationMs } from "../src/pipeline/ingestion/detect-silences.js";
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 const dataDir = process.env.HEARTWORD_DATA_DIR || "C:\\Users\\danbr\\HeartWordData";
-const base = join(dataDir, "assets", "source", "hatam", "mark-4");
-const text = join(base, "mark-4-text.docx"), audio = join(base, "mark-4-fcbh-audio.mp3");
 const dbPath = join(dataDir, "db", "heartword.sqlite");
-const report: Record<string, unknown> = { chapter: "Hatam Mark 4", readOnly: true, sourceTextPresent: existsSync(text), sourceAudioPresent: existsSync(audio), databasePresent: existsSync(dbPath) };
+const project = { language: "hatam", book: "mark", chapter: 4 } as const;
+const report: Record<string, unknown> = { chapter: "Hatam Mark 4", readOnly: true, sourceCatalog: { status: "unresolved" } };
+
+try {
+  // Deliberately call discovery rather than resolveAndBindSourcePaths: this is
+  // a preflight and must not create the project's durable source binding.
+  const source = discoverSourcePaths(project, "non_drama", dataDir);
+  const verses = parseSourceTextByVerse(source.docxPath);
+  const groups = parseSourceText(source.docxPath, project.book, project.chapter);
+  report.sourceCatalog = {
+    status: "ready", provenance: source.provenance, edition: source.edition,
+    hatamText: source.docxPath, englishReference: source.referencePath, hatamAudio: source.audioPath,
+    allFilesPresent: [source.docxPath, source.referencePath, source.audioPath].every(existsSync)
+  };
+  report.textParsing = {
+    chapterTitle: parseChapterTitle(source.docxPath, project.chapter), verseCount: verses.length,
+    verseRange: verses.length ? `${verses[0]!.verse}-${verses.at(-1)!.verse}` : null,
+    verseGroups: groups.length,
+    headings: parseSourceHeadings(source.docxPath)
+  };
+  report.audio = { durationMs: getAudioDurationMs(source.audioPath) };
+} catch (error) {
+  report.sourceCatalog = { status: "blocked", reason: (error as Error).message };
+}
+
+report.databasePresent = existsSync(dbPath);
 if (existsSync(dbPath)) {
   const db = new DatabaseSync(dbPath, { readOnly: true });
   try {

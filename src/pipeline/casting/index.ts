@@ -32,6 +32,7 @@ import {
 import { narrationBudgetFor, resolveNarrationSpans, type NarrationBudget } from "./narration-coverage.js";
 import { buildChapterIntroPlan, type IntroProposal } from "./chapter-intro.js";
 import { buildChapterEndingPlan, type ChapterEndingProposal } from "./chapter-ending.js";
+import { incompleteSpeakerAttributionHold, missingSpeakerAttributionHold } from "../ingestion/speaker-attribution-gate.js";
 
 interface SceneRow {
   id: string;
@@ -323,6 +324,38 @@ const buildCasting: Stage = async (projectId) => {
   }
   if (project.language.toLowerCase() !== "hatam") return { ok: false, reasoning: "Configure and approve the regional canon for this language before storyboard generation." };
 
+  // This must precede both initial casting and plan refinement. A previous
+  // plan is not a reason to let unattributed quoted speech reach any further
+  // production step.
+  let referencePath: string, sourceTextPath: string;
+  try {
+    const paths = resolveAndBindSourcePaths(db, project);
+    referencePath = paths.referencePath;
+    sourceTextPath = paths.docxPath;
+  } catch (error) {
+    return {
+      ok: false,
+      reasoning:
+        `Casting failed: ${(error as Error).message} Stage 3 grounds its shot ` +
+        "descriptions in this text (see NON_GOALS.md) rather than the Hatam source, which an LLM can't read directly."
+    };
+  }
+  if (!existsSync(referencePath)) {
+    return {
+      ok: false,
+      reasoning:
+        `Casting failed: no English reference text found at ${referencePath}. Stage 3 grounds its shot ` +
+        "descriptions in this text (see NON_GOALS.md) rather than the Hatam source, which an LLM can't read directly."
+    };
+  }
+  const verses = parseSourceTextByVerse(referencePath);
+  const sourceSpeakerSegments = db.prepare(
+    "SELECT verse_ref AS verseRef, speaker_character_id AS speakerId, start_ms AS startMs, end_ms AS endMs FROM audio_segments WHERE project_id = ? AND layer = 'original_reading' ORDER BY start_ms"
+  ).all(project.id) as Array<{ verseRef: string | null; speakerId: string | null; startMs: number; endMs: number }>;
+  const attributionHold = incompleteSpeakerAttributionHold(verses, sourceSpeakerSegments) ??
+    missingSpeakerAttributionHold(verses, sourceSpeakerSegments.filter(segment => segment.speakerId !== null).length);
+  if (attributionHold) return { ok: false, reasoning: attributionHold };
+
   // Refinement keeps shot IDs, approved takes, costs and producer edits.
   const existing = db.prepare(`SELECT s.id FROM shots s JOIN scenes sc ON sc.id = s.scene_id
     WHERE sc.project_id = ? LIMIT 1`).get(projectId);
@@ -341,29 +374,6 @@ const buildCasting: Stage = async (projectId) => {
     return { ok: false, reasoning: "Casting failed: no scenes found -- run scene breakdown (stage 2) first." };
   }
 
-  let referencePath: string, sourceTextPath: string;
-  try {
-    const paths = resolveAndBindSourcePaths(db, project);
-    referencePath = paths.referencePath;
-    sourceTextPath = paths.docxPath;
-  }
-  catch (error) {
-    return {
-      ok: false,
-      reasoning:
-        `Casting failed: ${(error as Error).message} Stage 3 grounds its shot ` +
-        "descriptions in this text (see NON_GOALS.md) rather than the Hatam source, which an LLM can't read directly."
-    };
-  }
-  if (!existsSync(referencePath)) {
-    return {
-      ok: false,
-      reasoning:
-        `Casting failed: no English reference text found at ${referencePath}. Stage 3 grounds its shot ` +
-        "descriptions in this text (see NON_GOALS.md) rather than the Hatam source, which an LLM can't read directly."
-    };
-  }
-  const verses = parseSourceTextByVerse(referencePath);
   const chapterTitle = parseChapterTitle(sourceTextPath, project.chapter);
   if (!chapterTitle) return { ok: false, reasoning: "Casting held: the source document has no verifiable chapter title for the opening card." };
   let nextChapter: { ref: string; firstVerse: string } | null = null;

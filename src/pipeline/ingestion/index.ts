@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
 import type { Stage } from "../types.js";
 import { detectSilences, getAudioDurationMs } from "./detect-silences.js";
-import { parseNarratedParagraphTitles, parseSourceText, parseSourceTextByVerse, type VerseRecord } from "./parse-source-text.js";
+import { parseChapterTitle, parseNarratedParagraphTitles, parseSourceText, parseSourceTextByVerse, type VerseRecord } from "./parse-source-text.js";
 import { selectBoundaries } from "./select-boundaries.js";
 import { decodeToPcm16Mono, computePitchTrack } from "./pitch.js";
 import { scoreMark2Utterances } from "./mark-2-acoustic-scoring.js";
@@ -131,8 +131,9 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
   // identities and never removes an unmatched interval; failures are retained
   // as reviewable evidence while the conservative timing fallback remains.
   const verseRecords = parseSourceTextByVerse(docxPath);
+  const chapterTitle = parseChapterTitle(docxPath, project.chapter);
   const narratedTitles = parseNarratedParagraphTitles(docxPath);
-  const sourceHash = alignmentKey(audioPath, verseRecords);
+  const sourceHash = alignmentKey(audioPath, verseRecords, undefined, chapterTitle ?? "");
   let geminiEvidence: Awaited<ReturnType<typeof alignWithGemini>> | null = null;
   const cached = db.prepare("SELECT result_json,status FROM alignment_evidence WHERE project_id=? AND source_hash=?").get(projectId, sourceHash) as {result_json:string;status:string}|undefined;
   if (cached?.status === "submission_started" || cached?.status === "submission_uncertain") {
@@ -144,7 +145,7 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
     // intentionally a producer hold, never an automatic duplicate request.
     db.prepare("INSERT OR REPLACE INTO alignment_evidence(project_id,source_hash,model,result_json,status,created_at) VALUES (?,?,?,?,?,?)").run(projectId,sourceHash,"gemini-text",JSON.stringify({submittedAt:Date.now()}),"submission_started",Date.now());
     try {
-      geminiEvidence = await aligner({ audioPath, verses: verseRecords, titles: narratedTitles, durationMs: totalDurationMs, gaps });
+      geminiEvidence = await aligner({ audioPath, verses: verseRecords, chapterTitle, titles: narratedTitles, durationMs: totalDurationMs, gaps });
       const critical = geminiEvidence.coverage < .95 || geminiEvidence.segments.some(segment => segment.status === "unresolved");
       db.prepare("INSERT OR REPLACE INTO alignment_evidence(project_id,source_hash,model,result_json,status,created_at) VALUES (?,?,?,?,?,?)").run(projectId,sourceHash,geminiEvidence.model,JSON.stringify(geminiEvidence),critical ? "critical_hold" : "provisional",Date.now());
     } catch (error) {

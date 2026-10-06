@@ -84,7 +84,7 @@ export interface VoicingRunResult {
  * whose output file already exists is reused rather than regenerated --
  * pass force=true to regenerate anyway (e.g. after re-casting a voice).
  */
-export async function runVoicing(projectId: string, opts: { force?: boolean } = {}): Promise<VoicingRunResult> {
+export async function runVoicing(projectId: string, opts: { force?: boolean; sourceSegmentIds?: readonly string[] } = {}): Promise<VoicingRunResult> {
   const db = getDb();
   const project = db.prepare(`SELECT id, language, book, chapter FROM projects WHERE id = ?`).get(projectId) as
     | ProjectRow
@@ -94,12 +94,12 @@ export async function runVoicing(projectId: string, opts: { force?: boolean } = 
     return { ok: false, reasoning: `No project with id ${projectId}.`, generated: 0, reused: 0, passthrough: 0, skippedNoVoice: 0 };
   }
 
-  const segments = db
-    .prepare(
-      `SELECT id, source_path, start_ms, end_ms, speaker_character_id, verse_ref
-       FROM audio_segments WHERE project_id = ? AND layer = 'original_reading' ORDER BY start_ms`
-    )
-    .all(project.id) as unknown as OriginalSegmentRow[];
+  const scopedIds = opts.sourceSegmentIds ? [...new Set(opts.sourceSegmentIds)] : null;
+  if (scopedIds && scopedIds.length === 0) return { ok: false, reasoning: "A scoped voicing run needs at least one approved source interval.", generated: 0, reused: 0, passthrough: 0, skippedNoVoice: 0 };
+  const segments = db.prepare(
+    `SELECT id, source_path, start_ms, end_ms, speaker_character_id, verse_ref
+     FROM audio_segments WHERE project_id = ? AND layer = 'original_reading'${scopedIds ? ` AND id IN (${scopedIds.map(() => "?").join(",")})` : ""} ORDER BY start_ms`
+  ).all(project.id, ...(scopedIds ?? [])) as unknown as OriginalSegmentRow[];
 
   if (segments.length === 0) {
     return {
@@ -233,8 +233,14 @@ export async function runVoicing(projectId: string, opts: { force?: boolean } = 
   const now = Date.now();
   db.exec("BEGIN TRANSACTION");
   try {
-    db.prepare(`DELETE FROM composite_audio_source_map WHERE composite_segment_id IN (SELECT id FROM audio_segments WHERE project_id=? AND layer='composite_cast_master')`).run(project.id);
-    db.prepare(`DELETE FROM audio_segments WHERE project_id = ? AND layer = 'composite_cast_master'`).run(project.id);
+    if (scopedIds) {
+      const prior = db.prepare(`SELECT composite_segment_id FROM composite_audio_source_map WHERE original_segment_id IN (${scopedIds.map(() => "?").join(",")})`).all(...scopedIds) as Array<{ composite_segment_id: string }>;
+      db.prepare(`DELETE FROM composite_audio_source_map WHERE original_segment_id IN (${scopedIds.map(() => "?").join(",")})`).run(...scopedIds);
+      if (prior.length) db.prepare(`DELETE FROM audio_segments WHERE id IN (${prior.map(() => "?").join(",")})`).run(...prior.map(row => row.composite_segment_id));
+    } else {
+      db.prepare(`DELETE FROM composite_audio_source_map WHERE composite_segment_id IN (SELECT id FROM audio_segments WHERE project_id=? AND layer='composite_cast_master')`).run(project.id);
+      db.prepare(`DELETE FROM audio_segments WHERE project_id = ? AND layer = 'composite_cast_master'`).run(project.id);
+    }
     const insert = db.prepare(
       `INSERT INTO audio_segments
          (id, project_id, layer, source_path, start_ms, end_ms, speaker_character_id, verse_ref, confidence, created_at)
@@ -245,7 +251,7 @@ export async function runVoicing(projectId: string, opts: { force?: boolean } = 
       db.prepare(`INSERT INTO composite_audio_source_map (composite_segment_id,original_segment_id,source_hash,voice_version_id,created_at) VALUES (?,?,?,?,?)`).run(row.id,row.originalSegmentId,row.sourceHash,row.voiceVersionId,now);
     }
 
-    db.prepare(
+    if (!scopedIds) db.prepare(
       `DELETE FROM review_notes WHERE project_id = ? AND subject_type = 'project' AND source = 'qc' AND note LIKE 'Composite cast master:%'`
     ).run(project.id);
     if (notes.length > 0) {

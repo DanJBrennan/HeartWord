@@ -50,3 +50,16 @@ it("keeps the face-sync preparation video silent before source speech is inserte
   )).rejects.toThrow("Kling scene submit (for face lip-sync) failed");
   expect(submitted?.sound).toBe("off");
 });
+
+it("requests Kling's ten-second supported base when source speech exceeds five seconds", async () => {
+  let submitted: Record<string, unknown> | undefined;
+  vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+    submitted = JSON.parse(init.body as string) as Record<string, unknown>;
+    return { ok: false, status: 400, json: async () => ({ code: 400, message: "offline fixture" }) };
+  }));
+
+  await expect(new KlingFaceLipSyncProvider().generateSceneVideo(
+    { path: "start.png" }, "A longer speaking face", 7
+  )).rejects.toThrow("Kling scene submit (for face lip-sync) failed");
+  expect(submitted?.duration).toBe("10");
+});

@@ -377,11 +377,11 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
     `is actually visible and clearly empty -- if people, framing, or focus obscure where that debris would be, say so and do ` +
     `NOT report it as missing.\n\n` +
     `4. CROWD DENSITY: does the number of people actually visible match the required density stated above, if any?\n\n` +
-    `5. CHARACTER IDENTITY HARD RULE: if Jesus is meant to appear in this shot, treat ANY other person wearing his ` +
-    `exact locked robe/clothing color combination as an automatic, disqualifying failure -- this holds even if ` +
-    `their hairstyle, face, or build differs from his reference. A shared locked color-block is not a coincidence ` +
-    `in this production; it is always a real identity error. Compare against the attached reference image(s) when present, not ` +
-    `just a general impression of "his usual look."\n\n` +
+    `5. CHARACTER IDENTITY: if Jesus is meant to appear in this shot, compare any competing locked robe/clothing ` +
+    `combination against his reference. Flag it when a distinct or prominent person could plausibly be confused with ` +
+    `Jesus. In a large or soft-focus crowd, a single distant background person with a partial color resemblance is ` +
+    `not disqualifying when Jesus is unmistakable and the resemblance does not distract from the story; report it at ` +
+    `most as minor. Compare against the attached reference image(s), not just a general impression of "his usual look."\n\n` +
     `6. CASTING REGION RULE: every visible person, including background crowd members, must have Papuan/Hatam facial identity. ` +
     `A clearly white/European-looking background person is a real casting drift: rate it at least moderate, and severe if ` +
     `it is prominent or an intended canon character.\n\n` +

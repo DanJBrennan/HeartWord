@@ -3,6 +3,8 @@ import { getDb } from "../../db/client.js";
 import type { Stage } from "../types.js";
 import { resolveSourcePaths, type ProjectRow } from "../ingestion/index.js";
 import { parseSourceHeadings, parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
+import { incompleteSpeakerAttributionHold, missingSpeakerAttributionHold } from "../ingestion/speaker-attribution-gate.js";
+import { resolveAndBindSourcePaths } from "../ingestion/source-catalog.js";
 import { buildScenesFromHeadings, type SegmentInfo } from "./build-scenes.js";
 
 /**
@@ -63,13 +65,18 @@ export const runSceneBreakdown: Stage = async (projectId) => {
 
   const segmentRows = db
     .prepare(
-      `SELECT a.verse_ref AS verseRef, c.name AS speakerName
+      `SELECT a.verse_ref AS verseRef, a.start_ms AS startMs, a.end_ms AS endMs, c.name AS speakerName
        FROM audio_segments a
        LEFT JOIN characters c ON c.id = a.speaker_character_id
        WHERE a.project_id = ? AND a.layer = 'original_reading'
        ORDER BY a.start_ms`
     )
-    .all(project.id) as Array<{ verseRef: string | null; speakerName: string | null }>;
+    .all(project.id) as Array<{
+      verseRef: string | null;
+      startMs: number;
+      endMs: number;
+      speakerName: string | null;
+    }>;
 
   if (segmentRows.length === 0) {
     return {
@@ -81,8 +88,22 @@ export const runSceneBreakdown: Stage = async (projectId) => {
     };
   }
 
+  // This runs immediately after source alignment and before any scene or
+  // shot can be created. Quotation marks detect a missing handoff; they never
+  // guess a speaker or turn narration into dialogue.
+  let referenceVerses: ReturnType<typeof parseSourceTextByVerse> = verses;
+  try {
+    const parsed = parseSourceTextByVerse(resolveAndBindSourcePaths(db, project).referencePath);
+    if (parsed.length) referenceVerses = parsed;
+  } catch { /* Minimal source-only fixtures retain the existing source-text fallback. */ }
+  const attributionHold = incompleteSpeakerAttributionHold(referenceVerses, segmentRows.map(segment => ({
+    verseRef: segment.verseRef, speakerId: segment.speakerName,
+    startMs: segment.startMs, endMs: segment.endMs
+  })) ) ?? missingSpeakerAttributionHold(verses, segmentRows.filter((segment) => segment.speakerName !== null).length);
+  if (attributionHold) return { ok: false, reasoning: attributionHold };
+
   const segments: SegmentInfo[] = segmentRows
-    .filter((r): r is { verseRef: string; speakerName: string | null } => r.verseRef !== null)
+    .filter((r): r is { verseRef: string; startMs: number; endMs: number; speakerName: string | null } => r.verseRef !== null)
     .map((r) => ({ verseRef: r.verseRef, speakerName: r.speakerName }));
 
   const { scenes, boundaryStraddlingWarnings } = buildScenesFromHeadings(

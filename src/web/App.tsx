@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ProductionCrew } from "./ProductionCrew";
 import { MediaLibrary } from "./MediaLibrary";
 import { BoundedIntervalAudio } from "./BoundedIntervalAudio";
+import { Dailies } from "./Dailies";
 
 interface Project {
   id: string;
@@ -62,6 +63,9 @@ interface MediaGenerationResult {
   ok: boolean;
   reasoning: string;
 }
+interface ImageGenerationCost { scene_sequence:number; shot_sequence:number; shot_id:string; attempt_id:string; provider:string; model:string; operation:string; status:string; cost_usd:number; created_at:number; }
+interface ImageGenerationCosts { attempts:ImageGenerationCost[]; totalUsd:number; }
+interface VideoGenerationCosts { attempts:ImageGenerationCost[]; totalUsd:number; }
 
 interface PipelineRunResult {
   stoppedAt?: string;
@@ -169,6 +173,9 @@ export default function App() {
   const [mediaGenError, setMediaGenError] = useState<string | null>(null);
   const [mediaGenBusy, setMediaGenBusy] = useState(false);
   const [mediaGenResult, setMediaGenResult] = useState<MediaGenerationResult | null>(null);
+  const [imageGenerationCosts, setImageGenerationCosts] = useState<ImageGenerationCosts | null>(null);
+  const [videoGenerationCosts, setVideoGenerationCosts] = useState<VideoGenerationCosts | null>(null);
+  const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
 
   const [reviewDrafts, setReviewDrafts] = useState<Record<string, string>>({});
   const [reviewBusyShotId, setReviewBusyShotId] = useState<string | null>(null);
@@ -241,7 +248,7 @@ export default function App() {
   }
 
   const activeProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0] ?? null;
-  function selectProject(id: string) { selectionEpochRef.current++; selectedProjectRef.current = id; setSelectedProjectId(id); setScenesWithShots([]); setIntroPlan(null); setEndingPlan(null); setCastMasterSegments([]); setReviewDrafts({}); setReviewError(null); setCastingResult(null); setCastingError(null); setMediaGenResult(null); setMediaGenError(null); setCastMasterResult(null); setCastMasterError(null); setCastingBusy(false); setMediaGenBusy(false); setCastMasterBusy(false); setReviewBusyShotId(null); setZoomedKeyframe(null); setPipelineBusy(false); setPipelineResult(null); setPipelineError(null); setCanonReadiness(null); }
+  function selectProject(id: string) { selectionEpochRef.current++; selectedProjectRef.current = id; setSelectedProjectId(id); setScenesWithShots([]); setIntroPlan(null); setEndingPlan(null); setCastMasterSegments([]); setReviewDrafts({}); setReviewError(null); setCastingResult(null); setCastingError(null); setMediaGenResult(null); setMediaGenError(null); setImageGenerationCosts(null); setVideoGenerationCosts(null); setCastMasterResult(null); setCastMasterError(null); setCastingBusy(false); setMediaGenBusy(false); setCastMasterBusy(false); setReviewBusyShotId(null); setZoomedKeyframe(null); setPipelineBusy(false); setPipelineResult(null); setPipelineError(null); setCanonReadiness(null); }
 
   async function startChapterPreparation() {
     if (!activeProject || pipelineBusy) return;
@@ -292,8 +299,19 @@ export default function App() {
     catch { if(selectedProjectRef.current===projectId) setSourceSegments([]); }
   }
 
+  async function loadImageGenerationCosts(projectId: string) {
+    try { const result=await api<ImageGenerationCosts>(`/projects/${projectId}/image-generation-costs`); if(selectedProjectRef.current===projectId) setImageGenerationCosts(result); }
+    catch { if(selectedProjectRef.current===projectId) setImageGenerationCosts(null); }
+  }
+  async function loadVideoGenerationCosts(projectId: string) {
+    try { const result=await api<VideoGenerationCosts>(`/projects/${projectId}/video-generation-costs`); if(selectedProjectRef.current===projectId) setVideoGenerationCosts(result); }
+    catch { if(selectedProjectRef.current===projectId) setVideoGenerationCosts(null); }
+  }
+
   useEffect(() => { if (activeProject) void loadCanonReadiness(activeProject.id); }, [activeProject?.id]);
   useEffect(() => { if (activeProject) void loadSourceSegments(activeProject.id); }, [activeProject?.id]);
+  useEffect(() => { if (activeProject) void loadImageGenerationCosts(activeProject.id); }, [activeProject?.id]);
+  useEffect(() => { if (activeProject) void loadVideoGenerationCosts(activeProject.id); }, [activeProject?.id]);
 
   async function generateCastMaster() {
     if (!activeProject) return;
@@ -391,7 +409,7 @@ export default function App() {
       if (!result.ok) {
         setMediaGenError(result.reasoning);
       }
-      await loadShots(projectId);
+      await Promise.all([loadShots(projectId), loadImageGenerationCosts(projectId), loadVideoGenerationCosts(projectId)]);
     } catch (err) {
       if (selectedProjectRef.current === projectId && selectionEpochRef.current === epoch) setMediaGenError((err as Error).message);
     } finally {
@@ -535,6 +553,8 @@ export default function App() {
                         <div className="keyframe-review">
                           <img
                             src={`/media/${shot.keyframe_path}`}
+                            loading="lazy"
+                            decoding="async"
                             alt={`Generated keyframe for shot ${shot.sequence}`}
                             title="Click to zoom"
                             style={{ maxWidth: 360, display: "block", marginTop: 4, cursor: "zoom-in" }}
@@ -623,14 +643,34 @@ export default function App() {
             </button>
             {mediaGenResult && <p>{mediaGenResult.reasoning}</p>}
             {mediaGenError && <p className="error">{mediaGenError}</p>}
+            <h3>Image-generation cost</h3>
+            <p className="hint">Every retained image-generation attempt is listed, including retries and held candidates. Video and lip-sync costs are not included here.</p>
+            {imageGenerationCosts && imageGenerationCosts.attempts.length > 0 ? <table>
+              <thead><tr><th>Scene</th><th>Shot</th><th>Image model</th><th>Status</th><th>Cost</th></tr></thead>
+              <tbody>{imageGenerationCosts.attempts.map(attempt => <tr key={attempt.attempt_id}><td>Scene {attempt.scene_sequence}</td><td>Shot {attempt.shot_sequence}</td><td>{attempt.model}</td><td>{attempt.status.replaceAll("_", " ")}</td><td>${attempt.cost_usd.toFixed(2)}</td></tr>)}</tbody>
+              <tfoot><tr><th colSpan={4}>Total image-generation cost</th><th>${imageGenerationCosts.totalUsd.toFixed(2)}</th></tr></tfoot>
+            </table> : <p className="empty">No image-generation attempts recorded for this chapter. Total: $0.00.</p>}
+            <h3>Video-generation cost</h3>
+            <p className="hint">Every retained draft and final-video attempt is listed, including candidates awaiting automated or producer review.</p>
+            {videoGenerationCosts && videoGenerationCosts.attempts.length > 0 ? <table>
+              <thead><tr><th>Scene</th><th>Shot</th><th>Video model</th><th>Operation</th><th>Status</th><th>Cost</th></tr></thead>
+              <tbody>{videoGenerationCosts.attempts.map(attempt => <tr key={attempt.attempt_id}><td>Scene {attempt.scene_sequence}</td><td>Shot {attempt.shot_sequence}</td><td>{attempt.model}</td><td>{attempt.operation.replaceAll("_", " ")}</td><td>{attempt.status.replaceAll("_", " ")}</td><td>${attempt.cost_usd.toFixed(2)}</td></tr>)}</tbody>
+              <tfoot><tr><th colSpan={5}>Total video-generation cost</th><th>${videoGenerationCosts.totalUsd.toFixed(2)}</th></tr></tfoot>
+            </table> : <p className="empty">No video-generation attempts recorded for this chapter. Total: $0.00.</p>}
           </>
         )}
       </section>
 
-      <details>
+      <details onToggle={(event) => setMediaLibraryOpen((event.currentTarget as HTMLDetailsElement).open)}>
         <summary>Reusable media library</summary>
-        <MediaLibrary key={activeProject?.id ?? "no-project"} projectId={activeProject?.id ?? null} targets={scenesWithShots.flatMap(scene => scene.shots.map(shot => ({ id:shot.id, sequence:shot.sequence, action:shot.action })))} />
+        {mediaLibraryOpen && <MediaLibrary key={activeProject?.id ?? "no-project"} projectId={activeProject?.id ?? null} targets={scenesWithShots.flatMap(scene => scene.shots.map(shot => ({ id:shot.id, sequence:shot.sequence, action:shot.action })))} />}
       </details>
+
+      {activeProject && <details>
+        <summary>Generation dailies and rolling reel</summary>
+        <p className="hint">Each retained candidate is shown with its video, five sampled positions, approved keyframe, provider, cost, critic record, and timeline placement. The rolling reel begins only after new restart-pilot clips are accepted.</p>
+        <Dailies projectId={activeProject.id} />
+      </details>}
 
       <section>
         <h2>Voice casting</h2>

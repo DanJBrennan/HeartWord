@@ -284,6 +284,39 @@ CREATE TABLE IF NOT EXISTS chapter_ending_plans (
   updated_at INTEGER NOT NULL
 );
 
+-- Producer-approved material outside the Scripture clock.  These rows make
+-- an approved opening/title or post-source handoff visible to the same media,
+-- QC and timeline tooling as chapter shots without pretending it is a verse.
+CREATE TABLE IF NOT EXISTS editorial_beats (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  sequence INTEGER NOT NULL,
+  placement TEXT NOT NULL CHECK (placement IN ('pre_source','post_source')),
+  beat_type TEXT NOT NULL CHECK (beat_type IN ('title_card','establishing','bridge','arrival','departure','journey','destination_hint')),
+  description TEXT NOT NULL,
+  rationale TEXT NOT NULL,
+  evidence TEXT,
+  duration_ms INTEGER NOT NULL CHECK (duration_ms > 0),
+  timeline_start_ms INTEGER NOT NULL CHECK (timeline_start_ms >= 0),
+  timeline_end_ms INTEGER NOT NULL CHECK (timeline_end_ms > timeline_start_ms),
+  source_label TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('approved_for_generation','generated','accepted','held')),
+  approved_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  UNIQUE(project_id, placement, sequence)
+);
+CREATE INDEX IF NOT EXISTS idx_editorial_beats_project ON editorial_beats(project_id, timeline_start_ms);
+
+-- A restart is a producer decision, not deletion: provider attempts before
+-- this cutover remain evidence and cost history but cannot satisfy new-pilot
+-- selection or dailies queries.
+CREATE TABLE IF NOT EXISTS project_restart_cutovers (
+  project_id TEXT PRIMARY KEY REFERENCES projects(id),
+  started_at INTEGER NOT NULL,
+  approved_by TEXT NOT NULL,
+  reason TEXT NOT NULL
+);
+
 -- Producer-confirmed speech identity for an on-camera speaking shot. A verse
 -- is intentionally insufficient: one speaker may have several utterances in
 -- it. The bound source interval is immutable evidence for voicing, lip sync

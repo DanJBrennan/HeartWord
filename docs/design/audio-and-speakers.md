@@ -55,6 +55,24 @@ separate: it protects the audible end of a speaking turn, not every picture
 cut. A genuinely unresolved content/speaker decision remains eligible for
 qualified language review; routine acoustic crossing does not summon Dan.
 
+## Speaker-attribution gate
+
+Immediately after source alignment, before scene breakdown or storyboard casting,
+HeartWord checks the verified reference text for quoted direct speech. It tracks
+quotation state across verse boundaries, so a quote that opens in one verse and
+closes later exposes every interior verse to review. If a direct-speech run has
+an affected verse with no named source-speaker attribution, casting is held
+before it can create shots, keyframes, voice media, or video. The hold names
+the affected verse numbers and requires exact source-interval speaker review
+and bindings; quotation marks are only a
+detection signal and never evidence of a speaker's identity. A lone attributed
+fragment cannot clear a longer speech run. Once the first named source interval
+inside a quoted run begins, every later alignment interval through that run must
+also carry a named speaker binding, including an otherwise unlabelled alignment
+slice. A narrated lead-in is permitted only before that first named interval.
+Chapters without quoted direct
+speech are not blocked by this specific gate.
+
 ## Open questions
 
 - Final call on cloud GPU rental vs. a dedicated workstation for lip-sync.

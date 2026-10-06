@@ -265,6 +265,92 @@ projectsRouter.get("/:id/audio-segments", (req, res) => {
   res.json({ segments: layer === "original_reading" ? (segments as Array<{ id:string;start_ms:number; end_ms:number;verse_ref?:string|null }>).map(segment => {const correction=corrections.get(segment.id), editorial=editorials.get(segment.id);return correction ? {...segment,automatedVerseRef:segment.verse_ref,verse_ref:correction.verse_ref,assignedText:correction.assigned_text,alignmentStatus:"Human-reviewed correction",alignmentMethod:"human_reviewed",textMatchScore:null,reviewerName:correction.reviewer_name,correctedAt:correction.created_at} : editorial ? {...segment,automatedVerseRef:segment.verse_ref,verse_ref:null,editorialTitle:editorial.title_text,crossReferenceText:editorial.cross_reference_text,editorialNextVerseRef:editorial.next_verse_ref,filmTreatment:editorial.film_treatment,alignmentStatus:editorialAlignmentDisplay(editorial.classification,editorial.film_treatment),alignmentMethod:"human_reviewed_editorial",textMatchScore:null,reviewerName:editorial.reviewer_name,correctedAt:editorial.created_at} : {...segment,...alignmentDisplay(segment,evidence as Parameters<typeof alignmentDisplay>[1])};}) : segments });
 });
 
+// Read-only, attempt-level image-cost report. Every paid image attempt stays
+// visible, including rejected/held retries, so the total is an honest chapter
+// spend rather than only the cost of the currently selected keyframe.
+/** Source-grounded English text and original-audio timing for a frame reviewer. */
+projectsRouter.get("/:id/frame-review-reference", (req, res) => {
+  const db = getDb();
+  const project = db.prepare("SELECT id,language,book,chapter FROM projects WHERE id=?").get(req.params.id) as { id:string; language:string; book:string; chapter:number } | undefined;
+  if (!project) { res.status(404).json({ error:"Project not found." }); return; }
+  try {
+    const byVerse = new Map(parseSourceTextByVerse(discoverSourcePaths(project).referencePath).map(verse => [verse.verse, verse.text]));
+    // The source reviewer may have corrected a verse label without rewriting
+    // the immutable aligner's row.  The on-screen reviewer must use that
+    // human-reviewed label too; otherwise real Scripture can be mislabeled as
+    // an editorial transition merely because the original alignment was null.
+    const corrections = new Map((db.prepare(`SELECT audio_segment_id, verse_ref
+      FROM source_alignment_corrections WHERE project_id=? ORDER BY created_at`).all(project.id) as Array<{ audio_segment_id:string; verse_ref:string }>).map(row => [row.audio_segment_id, row.verse_ref]));
+    const labeledSegments = db.prepare(`SELECT id, verse_ref AS verseRef, start_ms AS startMs, end_ms AS endMs
+      FROM audio_segments WHERE project_id=? AND layer='original_reading' ORDER BY start_ms`).all(project.id) as Array<{ id:string; verseRef:string|null; startMs:number; endMs:number }>;
+    const grouped = new Map<string, { verseRef:string; startMs:number; endMs:number }>();
+    for (const segment of labeledSegments) {
+      const verseRef = corrections.get(segment.id) ?? segment.verseRef;
+      if (!verseRef) continue;
+      const existing = grouped.get(verseRef);
+      if (existing) { existing.startMs = Math.min(existing.startMs, segment.startMs); existing.endMs = Math.max(existing.endMs, segment.endMs); }
+      else grouped.set(verseRef, { verseRef, startMs:segment.startMs, endMs:segment.endMs });
+    }
+    const intervals = [...grouped.values()].sort((left, right) => left.startMs - right.startMs);
+    res.json({ intervals: intervals.flatMap(interval => {
+      const match = interval.verseRef.match(/:(\d+)(?:-(\d+))?$/);
+      if (!match) return [];
+      const first = Number(match[1]), last = Number(match[2] ?? match[1]);
+      const text = Array.from({ length:last - first + 1 }, (_, index) => byVerse.get(first + index)).filter((verse): verse is string => !!verse).join(" ");
+      return text ? [{ ...interval, text }] : [];
+    }) });
+  } catch (error) {
+    res.status(400).json({ error:`Could not load the verified English reference: ${(error as Error).message}` });
+  }
+});
+
+projectsRouter.get("/:id/image-generation-costs", (req, res) => {
+  const db = getDb();
+  if (!db.prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)) { res.status(404).json({ error: "Project not found." }); return; }
+  const attempts = db.prepare(`SELECT scene.sequence AS scene_sequence, shot.sequence AS shot_sequence,
+      shot.id AS shot_id, ga.id AS attempt_id, ga.provider, ga.model, ga.operation, ga.status, ga.cost_usd, ga.created_at
+    FROM generation_attempts ga
+    JOIN shots shot ON shot.id=ga.shot_id
+    JOIN scenes scene ON scene.id=shot.scene_id
+    WHERE scene.project_id=? AND ga.operation IN ('generate','generate_guided','edit_region')
+    ORDER BY scene.sequence,shot.sequence,ga.created_at,ga.id`).all(req.params.id) as Array<{cost_usd:number}>;
+  const totalUsd = attempts.reduce((total, attempt) => total + attempt.cost_usd, 0);
+  res.json({ attempts, totalUsd });
+});
+
+// Video has its own cost surface: draft and final-render provider work are
+// real spend and must not disappear behind the image-only report.
+projectsRouter.get("/:id/video-generation-costs", (req, res) => {
+  const db = getDb();
+  if (!db.prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)) { res.status(404).json({ error: "Project not found." }); return; }
+  const attempts = db.prepare(`SELECT scene.sequence AS scene_sequence, shot.sequence AS shot_sequence,
+      shot.id AS shot_id, ga.id AS attempt_id, ga.provider, ga.model, ga.operation, ga.status, ga.cost_usd, ga.created_at
+    FROM generation_attempts ga
+    JOIN shots shot ON shot.id=ga.shot_id
+    JOIN scenes scene ON scene.id=shot.scene_id
+    WHERE scene.project_id=? AND ga.operation IN ('generate_draft','generate_final_video','generate_guided')
+    ORDER BY scene.sequence,shot.sequence,ga.created_at,ga.id`).all(req.params.id) as Array<{cost_usd:number}>;
+  res.json({ attempts, totalUsd: attempts.reduce((total, attempt) => total + attempt.cost_usd, 0) });
+});
+
+// A review projection, deliberately read-only: each retained candidate stays
+// individually inspectable before a producer accepts it into the rolling reel.
+projectsRouter.get("/:id/dailies", (req,res) => {
+  const db=getDb();
+  if (!db.prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)) { res.status(404).json({error:"Project not found."}); return; }
+  const attempts=db.prepare(`SELECT ga.id attempt_id,ga.provider,ga.model,ga.operation,ga.status,ga.result_asset_path,ga.cost_usd,ga.created_at,
+      sc.sequence scene_sequence,sh.sequence shot_sequence,sh.id shot_id,sh.action,sh.verse_ref,
+      (SELECT result_asset_path FROM generation_attempts k WHERE k.shot_id=sh.id AND k.operation='generate' AND k.status='accepted' AND k.result_asset_path IS NOT NULL ORDER BY k.created_at DESC LIMIT 1) keyframe_path,
+      (SELECT GROUP_CONCAT(rn.note, '\n') FROM review_notes rn WHERE rn.subject_type='shot' AND rn.subject_id=sh.id AND rn.source='qc' ORDER BY rn.created_at DESC) critic_verdict,
+      (SELECT GROUP_CONCAT(CAST(c.timeline_start_ms AS TEXT) || '-' || CAST(c.timeline_end_ms AS TEXT), ', ') FROM clips c WHERE c.generation_attempt_id=ga.id) timeline_positions
+    FROM generation_attempts ga JOIN shots sh ON sh.id=ga.shot_id JOIN scenes sc ON sc.id=sh.scene_id
+    LEFT JOIN project_restart_cutovers cutover ON cutover.project_id=sc.project_id
+    WHERE sc.project_id=? AND ga.operation IN ('generate_draft','generate_final_video','generate_guided','lip_sync') AND ga.result_asset_path IS NOT NULL
+      AND (cutover.started_at IS NULL OR ga.created_at >= cutover.started_at)
+    ORDER BY sc.sequence,sh.sequence,ga.created_at,ga.id`).all(req.params.id) as Array<Record<string,unknown>>;
+  res.json({attempts,frameSamples:["start","quarter","middle","three-quarter","end"],reel:{status:"awaiting_new_accepted_pilot_clips",path:null,note:"The rolling reel will be rendered only from accepted restart-pilot clips; earlier Mark 4 footage remains retained evidence, not reel material."}});
+});
+
 // Runs the composite-cast-master generation (the audio half of stage 5 --
 // see src/pipeline/voicing/index.ts). Costs real ElevenLabs credits for
 // each newly re-voiced segment, so this is only ever run when Dan asks

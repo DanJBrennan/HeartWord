@@ -70,6 +70,26 @@ it("refuses to split a segment with existing evidence unless explicitly acknowle
   expect(db.prepare("SELECT speaker_character_id FROM audio_segments WHERE id=?").get(result.firstSegmentId)).toMatchObject({ speaker_character_id: null });
 });
 
+it("retains and remaps a composite cast-master provenance record before deleting the split source", async () => {
+  const db = setup();
+  db.exec(`
+    INSERT INTO audio_segments (id,project_id,layer,source_path,start_ms,end_ms,speaker_character_id,verse_ref,confidence,created_at)
+      VALUES ('composite','p','composite_cast_master','generated/composite.mp3',0,1000,NULL,'Mark 3:5',NULL,1);
+    INSERT INTO composite_audio_source_map (composite_segment_id,original_segment_id,source_hash,voice_version_id,created_at)
+      VALUES ('composite','seg','source-hash',NULL,1);
+  `);
+  const { recordSegmentSplit } = await import("./segment-splits.js");
+  const result = recordSegmentSplit(db, {
+    projectId: "p", audioSegmentId: "seg", splitAtMs: 1400,
+    reviewerName: "Dan", evidence: "Narration ends before the speaker begins."
+  });
+
+  expect(db.prepare("SELECT id FROM audio_segments WHERE id='seg'").get()).toBeUndefined();
+  expect(db.prepare("SELECT original_segment_id FROM composite_audio_source_map WHERE composite_segment_id='composite'").get())
+    .toEqual({ original_segment_id: result.firstSegmentId });
+  expect(db.prepare("SELECT id FROM audio_segments WHERE id='composite'").get()).toEqual({ id: "composite" });
+});
+
 it("requires a named reviewer and evidence", async () => {
   const db = setup();
   const { recordSegmentSplit } = await import("./segment-splits.js");

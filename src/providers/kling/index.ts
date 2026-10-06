@@ -66,10 +66,17 @@ interface KlingTaskResponse {
  *  providers stay below pipeline in this codebase's layering). */
 function extractAudioClip(sourcePath: string, startMs: number, endMs: number, outPath: string): void {
   const startSec = (startMs / 1000).toFixed(3);
-  const durationSec = ((endMs - startMs) / 1000).toFixed(3);
+  const requestedMs = endMs - startMs;
+  const durationSec = (requestedMs / 1000).toFixed(3);
+  // Kling face-sync rejects shorter audio even when the source interval is
+  // valid.  Pad only *after* the extracted approved utterance: this does not
+  // alter, re-time, or invent speech, and the caller still records the exact
+  // source interval used for the speaking portion.
+  const minDurationSec = Math.max(requestedMs, 2000) / 1000;
+  const padArgs = requestedMs < 2000 ? ["-af", "apad", "-t", minDurationSec.toFixed(3)] : [];
   execFileSync(
     "ffmpeg",
-    ["-y", "-i", sourcePath, "-ss", startSec, "-t", durationSec, "-ar", "44100", "-ac", "1", "-c:a", "libmp3lame", "-q:a", "2", outPath],
+    ["-y", "-i", sourcePath, "-ss", startSec, "-t", durationSec, ...padArgs, "-ar", "44100", "-ac", "1", "-c:a", "libmp3lame", "-q:a", "2", outPath],
     { stdio: ["ignore", "ignore", "pipe"] }
   );
 }
@@ -258,7 +265,7 @@ const KLING_FACE_LIPSYNC_COST_USD = 0.5;
 
 export class KlingFaceLipSyncProvider {
   /** Generates a base scene video via the plain image2video (scene) endpoint -- the real, hosted video_url this flow needs as its input. */
-  async generateSceneVideo(image: AssetRef, prompt: string, durationSec: number): Promise<{ taskId: string; videoUrl: string }> {
+  async generateSceneVideo(image: AssetRef, prompt: string, durationSec: number, onSubmitted?: (taskId: string) => void | Promise<void>): Promise<{ taskId: string; videoUrl: string }> {
     const apiKey = requireApiKey();
     const dataDir = getDataDir();
     const imageAbsPath = join(dataDir, "assets", image.path);
@@ -271,7 +278,10 @@ export class KlingFaceLipSyncProvider {
         model_name: KLING_SCENE_MODEL,
         image: imageBase64,
         prompt,
-        duration: String(Math.max(5, Math.round(durationSec))), // Kling's scene duration only accepts a small fixed set; "5" is its shortest
+        // The real scene endpoint accepts only 5- or 10-second bases.  Round
+        // upward so a source-bound speaking interval is never silently cut
+        // short; assembly still trims to the exact approved source duration.
+        duration: durationSec > 5 ? "10" : "5",
         aspect_ratio: "16:9",
         mode: KLING_SCENE_MODE,
         // HeartWord supplies the real source audio separately.
@@ -283,6 +293,10 @@ export class KlingFaceLipSyncProvider {
       throw new Error(`Kling scene submit (for face lip-sync) failed: ${submitRes.status} -- ${JSON.stringify(submitData).slice(0, 500)}`);
     }
     const taskId = submitData.data.task_id;
+    // Persist the opaque provider handle before polling. A local runner can
+    // then recover the exact paid task after a timeout instead of guessing
+    // whether it is safe to submit another one.
+    await onSubmitted?.(taskId);
 
     const deadline = Date.now() + 15 * 60 * 1000;
     while (Date.now() < deadline) {
@@ -316,7 +330,7 @@ export class KlingFaceLipSyncProvider {
   }
 
   /** Real audio-driven lip-sync of ONE named face in an existing video. Call identifyFaces first and pass its confirmed faceId -- see class header. */
-  async syncFace(videoUrl: string, faceId: string, audio: AudioSegmentRef, soundInsertTimeMs = 0): Promise<GenerationResult> {
+  async syncFace(videoUrl: string, faceId: string, audio: AudioSegmentRef, soundInsertTimeMs = 0, onSubmitted?: (taskId: string) => void | Promise<void>): Promise<GenerationResult> {
     const apiKey = requireApiKey();
     const dataDir = getDataDir();
 
@@ -349,6 +363,7 @@ export class KlingFaceLipSyncProvider {
       throw new Error(`Kling lip-sync submit failed: ${submitRes.status} -- ${JSON.stringify(submitData).slice(0, 500)}`);
     }
     const taskId = submitData.data.task_id;
+    await onSubmitted?.(taskId);
 
     const deadline = Date.now() + 15 * 60 * 1000;
     let finalData: KlingTaskResponse["data"] | undefined;

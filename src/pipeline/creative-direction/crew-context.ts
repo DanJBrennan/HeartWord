@@ -205,6 +205,10 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
 
 /** Spend, output clips and soundtrack additions do not invalidate visual planning. */
 export function crewBriefHash(brief: CrewBrief, phase: CrewPhase): string {
-  if (phase !== "planning") return digest(JSON.stringify(brief));
+  // Cost ledger writes happen during every metered crew run. Cost is vital
+  // provenance, but it is not a creative input; including it here makes an
+  // editing/finishing run invalidate its own brief as soon as its first
+  // metered call is recorded.
+  if (phase !== "planning") return digest(JSON.stringify({ ...brief, spentUsd: 0 }));
   return digest(JSON.stringify({ ...brief, spentUsd: 0, audioAssets: [], render: null, shots: brief.shots.map(s => ({ ...s, clip: null })) }));
 }

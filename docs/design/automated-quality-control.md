@@ -79,6 +79,44 @@ event — see `docs/design/notifications.md`.
 
 ## Candidate checks (assembled video)
 
+### Micro-clip / flash guard (implemented)
+
+A **flash candidate** is any contiguous visual run of five encoded frames or
+fewer (at the chapter's declared frame rate). It becomes a **flash** only when
+the final encoded picture is visually discontinuous from both of its immediate
+neighbours. A short tail continuing the prior close-up, or a short head that
+continues into the next shot, is valid coverage and must pass.
+
+Normal assembly and editorial rendering run the post-render rapid-scene-cut
+audit before promotion. It samples the encoded boundary frames and holds only
+the candidates that break continuity on both sides. The similarity floor is
+calibrated to tolerate continuous camera or subject motion, rather than
+mistaking motion for a new scene. Its findings are a
+hold/review signal, not authorization to modify Scripture, source audio, or
+the edit automatically. The remedy remains intentionally not automatic:
+extend adjacent approved coverage or request a producer-reviewed repair; do
+not invent, duplicate, or freeze picture simply to clear the gate.
+
+### Post-render scorecard recurrence gate (implemented)
+
+Every held chapter render is assessed by the deterministic scorecard gate before
+promotion. It holds—not repairs—the cut when any of the following is present:
+discontinuous flash candidates, near-frozen three-second-or-longer shots,
+non-adjacent duplicate candidates, unintended sub-1.5-second inserts after
+declared storm-impact exemptions, a within-scene colour discontinuity, a named
+previously repaired defect that has recurred, a program minute whose 10th-percentile
+short-term ambience is below -46 dB, editorial breaths outside their audible
+target range, or a delivery
+audio rate other than 48 kHz. The gate takes its facts from the reproducible
+render analysis and records why the cut is held. It does not replace source
+audio, extend shots, or generate media. Set-reference and performance-window
+checks are input-plan gates: before a provider request,
+`assertPerformancePlanReady` requires a new speaking image to cite the exact
+approved set-reference attempt for its scene and requires its source window to
+begin at the end of, and end at the start of, attested source pauses of at
+least 250 ms. A failed plan is held; the gate never trims wording or silently
+substitutes a different set.
+
 ### Whole-cut editorial review rubric (implemented)
 
 The existing Stage 7 finishing review now requires the Picture Editor to

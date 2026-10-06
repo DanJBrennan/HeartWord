@@ -17,18 +17,18 @@ describe("decideGenerationStatus", () => {
     expect(decision.status).toBe("retry_modified");
   });
 
-  it("retries when exactly one automated check fails with no critic concern", () => {
+  it("accepts when the Critic reports no visible concern despite an auxiliary-check disagreement", () => {
     expect(decideGenerationStatus({ criticSeverity: "none", likenessAligned: false, fidelityAligned: true }).status).toBe(
-      "retry_modified"
+      "accepted"
     );
     expect(decideGenerationStatus({ criticSeverity: "none", likenessAligned: true, fidelityAligned: false }).status).toBe(
-      "retry_modified"
+      "accepted"
     );
   });
 
-  it("holds for review when both automated checks fail", () => {
+  it("accepts when both auxiliary checks disagree but the Critic found no visible concern", () => {
     const decision = decideGenerationStatus({ criticSeverity: "none", likenessAligned: false, fidelityAligned: false });
-    expect(decision.status).toBe("hold_for_review");
+    expect(decision.status).toBe("accepted");
   });
 
   it("escalates on a severe critic concern alone, even with passing checks", () => {
@@ -43,14 +43,14 @@ describe("decideGenerationStatus", () => {
     expect(decision.status).toBe("retry_modified");
   });
 
-  it("holds for review when a severe critic concern coincides with a failing check", () => {
+  it("escalates automatically when a severe critic concern coincides with a failing check", () => {
     const decision = decideGenerationStatus({ criticSeverity: "severe", likenessAligned: false, fidelityAligned: true });
-    expect(decision.status).toBe("hold_for_review");
+    expect(decision.status).toBe("escalate");
   });
 
-  it("holds for review when a severe critic concern coincides with both checks failing", () => {
+  it("escalates automatically when a severe critic concern coincides with both checks failing", () => {
     const decision = decideGenerationStatus({ criticSeverity: "severe", likenessAligned: false, fidelityAligned: false });
-    expect(decision.status).toBe("hold_for_review");
+    expect(decision.status).toBe("escalate");
   });
 
   it("always returns a human-readable reasoning string", () => {
@@ -65,17 +65,20 @@ describe("decideGenerationStatus", () => {
     expect(
       decideGenerationStatus({ criticSeverity: "moderate", likenessAligned: true, fidelityAligned: true, priorAttemptCount: 1 }).status
     ).toBe("retry_modified");
+    expect(
+      decideGenerationStatus({ criticSeverity: "moderate", likenessAligned: true, fidelityAligned: true, priorAttemptCount: 2 }).status
+    ).toBe("retry_modified");
   });
 
   it("escalates to hold_for_review once a moderate concern has survived the retry limit", () => {
-    const decision = decideGenerationStatus({ criticSeverity: "moderate", likenessAligned: true, fidelityAligned: true, priorAttemptCount: 2 });
+    const decision = decideGenerationStatus({ criticSeverity: "moderate", likenessAligned: true, fidelityAligned: true, priorAttemptCount: 5 });
     expect(decision.status).toBe("hold_for_review");
-    expect(decision.reasoning).toContain("2 prior attempt");
+    expect(decision.reasoning).toContain("5 prior attempt");
   });
 
-  it("escalates a lone failing check to hold_for_review once it has survived the retry limit", () => {
+  it("accepts a none-severity result even after repeated auxiliary-check disagreement", () => {
     const decision = decideGenerationStatus({ criticSeverity: "none", likenessAligned: false, fidelityAligned: true, priorAttemptCount: 3 });
-    expect(decision.status).toBe("hold_for_review");
+    expect(decision.status).toBe("accepted");
   });
 
   it("defaults priorAttemptCount to 0 when omitted, matching every existing call site", () => {

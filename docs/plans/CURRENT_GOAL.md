@@ -1,5 +1,810 @@
 # Current Goal
 
+## Active: Mark 4 v39 aesthetic-review correction and held ending extension (2026-09-27)
+
+Dan's v39 review identifies residual out-of-sync mouth movement, flashes,
+duplicate coverage, silent editorial breaths, a storm-to-calm picture-timing
+mistake, incomplete canonical-Jesus coverage, and an inconsistent geography
+and phrase rhythm in the private-teaching stretch. The work must remove those
+defects without altering the approved Hatam text, speaker ownership, or
+source-timed cast tracks. It must also keep any newly generated canonical
+performance material held until Dan has reviewed it.
+
+Dan also requested a sixteen-second extension of the approved post-source dawn
+handoff: two eight-second slow pull-aways that remain in the same calm
+shoreline world, with music covering the added time. The first candidate is
+held for review at
+`generated/chapter/mark4-autonomous-overnight-final-v40-ending-extension-held.mp4`.
+It uses two new held keyframes and the resolved tail of the previously reviewed
+finale cue; it does not modify the v39 cut or its source/cast spans.
+
+Acceptance criteria: a frame-addressable held review cut removes every
+confirmed residual mouth-motion, flash, and duplicate; has same-world
+private-teaching coverage and phrase-led rhythm; moves to still water as the
+storm-calm breath begins and supplies suitable non-speech ambience in every
+editorial breath; preserves continuous cast ownership in every attributed
+interval; and includes held, producer-reviewable canonical Jesus performance
+coverage plus the requested held 16-second post-source ending extension.
+
+Goal Guardian check: this remains an editable, source-accountable Hatam
+Scripture film. No repair may invent an event, change Scripture wording,
+replace cast speech with narration, or silently promote newly generated media.
+
+### v45 scorecard production objective (2026-09-28)
+
+Dan supplied the fixed v45 scorecard, exact frame actions, and reproducible
+`film_metrics.py` measurement tool in `HeartWordData/scratch/claude-review-v45/`
+and authorized Codex to proceed with its recommendations without pausing for
+producer approval. The next held cuts must retain the scorecard rules,
+11.5-second source offset, breath list, and source-audio reference so results
+remain comparable to v34, v39, and v45. Work is ordered as: (1) no-generation
+picture regressions and missing approved performances; (2) continuous
+scene-appropriate ambience, purpose-specific music cues, and 48 kHz delivery;
+(3) use the review's recommended single world per scene, storm costume, and
+v40 dawn-extension choices; (4) hold any required new media for review; then
+grade and add post-render QC. Each held cut must be measured and scored before
+the next group.
+
+Goal Guardian check: Dan authorized the stated production recommendations, not
+any alteration to Hatam wording, speaker ownership, source timing, or silent
+promotion. Existing approved media remains recoverable history and any newly
+generated material remains a held review candidate until it is visibly checked.
+
+### Held v41 — documented residual picture defects removed
+
+`generated/chapter/mark4-autonomous-overnight-final-v41-residual-picture-defects-held.mp4`
+retains the 13,447-frame v39 clock and its audio stream byte-for-byte. It
+replaces the 4:14–20 meadow/grove oscillation with olive-grove-only coverage;
+removes the generic readable mouth movement at frames 5,364–5,552 and
+7,236–7,259; replaces the two-frame harvest flash at 8,977–8,978 with
+continuous field coverage; and replaces the second repeated storm-disciple
+tableau at 12,616–12,735 with a different calm-scene listener reaction. This
+is held for review; source-phrase cut refinement remains open.
+
+### Held v42 — ambient editorial breaths and immediate calm
+
+`generated/chapter/mark4-autonomous-overnight-final-v42-ambient-breaths-calm-timing-held.mp4`
+keeps the same 13,447 decoded-frame clock. Five held speech-free ambience
+beds (shore, olive grove, field, dusk lake, storm-to-calm) are mixed only
+inside the seven explicit editorial breaths. The storm-to-calm breath now
+cuts to calm-water imagery at frame 12,169 and remains there through frame
+12,336, before the already-existing calm scene continues. It is held for
+review, pending an audible producer check; no Scripture or cast span was
+edited.
+
+### Held v43 — pause-led private-teaching recut
+
+`generated/chapter/mark4-autonomous-overnight-final-v43-phrase-led-private-teaching-held.mp4`
+keeps v42's 13,447-frame clock and byte-identical mixed audio stream. Its
+Mark 4:14–20 coverage uses thirteen distinct olive-grove takes, with every
+picture cut placed at a measured pause in the Hatam source instead of the
+former fixed seven-to-nine-second cadence. It remains held for visual review:
+the source-bound canonical performance additions are still not placed.
+
+### Held v44 — audible ambience on the phrase-led cut
+
+`generated/chapter/mark4-autonomous-overnight-final-v44-audible-ambient-phrase-led-held.mp4`
+combines the v43 picture with the original v41 program audio and one ambience
+mix per explicit breath. The prior olive-grove effect tested effectively
+silent; it is replaced by a distinct held effect that measures −49.8 dB in
+the one-second final mix window, audible as room tone without approaching
+speech level. It remains held for producer review.
+
+### Canonical Jesus close-performance correction — three approved stills in production
+
+Dan reviewed the first fifteen held Kling lip-sync candidates: twelve were
+accepted as held performances, while three distant takes were rejected because
+their faces were too small for readable mouth articulation. Dan then approved
+three closer, identity-locked replacement keyframes for Mark 4:14–20 beat 1,
+4:26–29 beat 3, and 4:30–32 beat 2. They preserve each approved setting and
+the exact existing source/cast excerpts, but place Jesus's unobstructed face at
+performance scale. The three replacement stills are accepted as keyframes;
+their new base-motion and Kling face-lip-sync candidates are being generated
+serially and will remain held for producer review. None is selected or placed
+in the chapter cut.
+
+Goal Guardian check: the correction responds only to producer-rejected
+performance readability. It changes neither Scripture, speaker ownership,
+source timing, nor the approved canonical identity, and retains all earlier
+takes as review history.
+
+### Held v45 — approved canonical Jesus performances placed for whole-film review
+
+Dan approved all fifteen canonical Jesus performance takes, including the
+three closer replacements required for visible mouth articulation. Held v45
+`generated/chapter/mark4-autonomous-overnight-final-v45-canonical-jesus-performances-held.mp4`
+places only those approved visual performances in their exact source intervals
+over v44. It retains the 13,447-frame clock and v44 audio stream unchanged,
+including the reviewed Hatam narration, cast turns, score, and editorial-breath
+ambience. It remains a frame-addressable review candidate; it is not promoted.
+
+Goal Guardian check: this is a producer-authorized picture-only review
+assembly. It introduces no new dialogue, narration, sound, source-timing
+change, or unapproved visual asset.
+
+## Earlier: Mark 4 v34 aesthetic-direction pass (2026-09-27)
+
+Dan supplied a complete watch-through review of the current v34 cut, including
+shot, timecode, and decoded-frame references. The work is to turn the
+defect-repaired cut into a coherent, editable Scripture film while preserving
+the verified Hatam source clock and the existing approved speaker audio.
+
+Acceptance criteria for this pass are: eliminate the documented residual
+flashes and generic out-of-sync talking-Jesus coverage; recut the long
+teaching stretch on source-phrase boundaries with varied durations; retain a
+single canonical Papuan Jesus identity in visible close coverage; keep one
+geography and a deliberate light arc per scene; and mark any additional
+source-bound lip-sync or generated image needed for producer review rather
+than silently promoting it. Every output must retain a frame-addressable
+review cut and pass source-audio continuity checks.
+
+Goal Guardian check: this is an editorial and continuity refinement of the
+approved Mark 4 recording. It must not invent narrative events, alter the
+verified Hatam Scripture wording, or turn generic mouth movement into a
+substitute for source-bound performance.
+
+### Completed first pass — exact documented residual defects
+
+The v35 review candidate
+`generated/chapter/mark4-autonomous-overnight-final-v35-aesthetic-first-pass-frame-locked.mp4`
+keeps the 13,231 decoded-frame clock and an identical source/cast audio stream.
+It removes the three documented generic, unsynchronised talking-Jesus views:
+the two Mark 4:21–25 boat views are now listener coverage, and the brief
+Mark 4:30 view before the approved mustard illustration is now listener
+coverage. It also removes the three-frame clip-art mustard-tree intrusion at
+frame 9,786 and the 14-frame daytime olive-grove intrusion at frames
+12,654–12,667 by continuing their adjacent canonical coverage. The
+frame-by-frame reviewer now targets v35.
+
+Remaining work in this goal is the source-phrase-led teaching recut, the
+intentional editorial pauses and scene/light arc, and held producer review of
+any new canonical, source-bound Jesus performances needed to satisfy the
+long-speech coverage standard.
+
+### Completed second pass — phrase-led teaching recut held for review
+
+The unpromoted v36 candidate
+`generated/chapter/mark4-autonomous-overnight-final-v36-phrase-led-teaching-recut-v2.mp4`
+replaces the mechanically timed 4:14–29 teaching stretch with 24 distinct,
+scene-matched existing coverage pieces: private-hillside listener/back/wide
+coverage for 4:14–20, shoreline listener coverage for 4:21–25, and field
+illustration for 4:26–29. It removes the inconsistent readable close views
+from that span, leaves the approved Mark 4:30 opening, mustard sequence,
+storm, and ending untouched, and retains the 13,231-frame clock and exact
+audio hash. The post-render flash audit found nine short continuous tails or
+heads and no discontinuous flash. The frame reviewer now targets this held
+candidate.
+
+The next reviewable work is intentional editorial breaths and the held
+fifteen-beat performance batch defined in
+`docs/production/mark4-v34-performance-candidate-plan.md`.
+
+### Source-accountability repair — Mark 4:12 held audio candidate
+
+During the review pass, the frame-reviewer audit exposed three human-confirmed
+Mark 4:12 source intervals that had been given reviewed verse labels but had
+not been assigned to Jesus in the durable speaker map. They are now bound to
+Jesus and prepared through the existing scoped cast-audio stage (one new cast
+render and two verified reuses). The held v37 candidate
+`generated/chapter/mark4-autonomous-overnight-final-v37-verse12-speaker-audio-held.mp4`
+uses the exact v36 picture and 13,231-frame clock, but rebuilds the audio from
+the verified source/cast master so Jesus's voice remains continuous through
+all Mark 4:12 cover shots. The frame reviewer now points to v37.
+
+The reviewer reference endpoint also now uses human-reviewed source-alignment
+corrections when resolving English text. It no longer labels the confirmed
+Mark 4:12 speech as an editorial transition simply because the raw automated
+row had no verse reference.
+
+### Held v38 — explicit editorial breaths
+
+`generated/chapter/mark4-autonomous-overnight-final-v38-editorial-breaths-held.mp4`
+is a 13,447-frame, 560.292-second held candidate built from v37. It preserves
+each source/cast span and adds 216 frames of explicit silence after Mark 4:9,
+4:20, 4:25, 4:29, 4:32, before the Mark 4:35 departure lead-in, and after
+Jesus's Mark 4:39 command. Each marker is recorded with its source boundary,
+exact final-frame range, and same-world picture treatment in the render
+manifest. The reviewer uses that decoded-frame offset map: it identifies the
+seven pauses as editorial breaths and continues to resolve later English text
+against the source clock.
+
+### Held v39 — generic shore mouth-motion removed
+
+The v38 visual audit found a remaining readable, unsynchronised Jesus mouth
+movement in the Mark 4:21–25 shore coverage (frames 7,060–7,235 on the v38
+clock). The held v39 candidate
+`generated/chapter/mark4-autonomous-overnight-final-v39-shore-generic-talk-removed-held.mp4`
+replaces precisely those 176 frames with matching shore listener coverage.
+It keeps the 13,447-frame clock, all seven v38 editorial breaths, and the
+entire v38 audio stream unchanged. The reviewer now targets v39.
+
+### Completion audit — Mark 4 v34 aesthetic-direction pass
+
+The final held review candidate is
+`generated/chapter/mark4-autonomous-overnight-final-v39-shore-generic-talk-removed-held.mp4`.
+It combines the phrase-led, scene-specific v36 picture recut; the v37
+Mark 4:12 speaker-audio correction; seven explicit v38 editorial breaths; and
+the v39 removal of the remaining generic mouth-motion shot. It has 13,447
+decoded frames, both streams, and a 560.292-second duration. Its audio stream
+has the same MD5 as v38 (`7d949b110fe827f6770c0a763edc9a19`), so the v39
+picture correction does not alter the source/cast master or editorial breaths.
+
+The review page is frame-addressable against this exact candidate and accounts
+for every editorial offset. A visual continuity audit confirms the intended
+public shore/boat, private hillside, field, mustard, departure, storm, calm,
+and dawn worlds, while the new fifteen canonical Jesus frames remain held for
+producer review only. No generated frame or performance was silently
+promoted. Type checking and the complete test suite pass: 85 files, 490 tests.
+
+## Mark 4 canonical-identity and storm-geography repair (2026-09-27)
+
+Dan identified two late teaching views that showed an off-canon Jesus, followed
+by a larger storm-sequence assembly defect: land-based teaching footage and
+extreme slow motion reappeared between the approved storm performances. The
+new current candidate is
+`generated/chapter/mark4-autonomous-overnight-final-v33-canon-storm-repair-frame-locked.mp4`.
+
+It replaces the wrong Mark 4:30 visual span with the approved source-bound
+canonical Jesus performance, replaces the off-canon private-teaching view with
+approved canonical private-teaching coverage, and rebuilds the complete storm
+window from Scene 7's approved shoreline, boarding, storm, calm-water, and
+source-bound Peter/Jesus performance media. The repair is picture-only: it
+retains all 13,231 decoded frames and copies the existing source/cast audio
+stream exactly. The frame reviewer now targets this candidate.
+
+Goal Guardian check: the repair removes visual canon and geography failures
+without changing the verified Hatam recording, speaker ownership, Scripture
+sequence, or producer-approved storm performance decisions.
+
+## Mark 4 long-Jesus-speech performance audit (2026-09-27)
+
+Dan set a new producer coverage standard for long, continuous Jesus speeches:
+there must be an on-camera, source-bound Jesus lip-sync view of roughly four
+to five seconds at least once every twenty seconds, and the speech should end
+on such a close performance. Cover shots may change the picture but never
+replace the cast voice.
+
+The audit finds that the current cut does **not** yet meet that standard in
+five extended Jesus turns. Existing approved performances cover the openings,
+but the following intervals need proposed, producer-reviewed performance beats
+before any additional video generation:
+
+- Mark 4:3–8 — about 68 seconds: opening performance exists; add three
+  spaced beats, including a final four-to-five-second close view.
+- Mark 4:13–20 — about 86 seconds: opening performance exists; add four
+  spaced beats, including the final close view.
+- Mark 4:21–25 — about 44 seconds: the approved verse-21 pilot covers the
+  opening; add two later beats, with the final one closing verse 25.
+- Mark 4:26–29 — about 43 seconds: the approved verse-26 take covers the
+  opening; add two later beats, with the final one closing verse 29.
+- Mark 4:30–32 — about 35 seconds: the two approved verse-30 takes cover the
+  opening; add two later beats, with the final one closing verse 32.
+
+Mark 4:11 and the storm already have bounded source-bound performance
+coverage. This is a review and coverage-planning result only: no new
+keyframes, video, source splits, audio, or timeline placements are authorized
+by this audit.
+
+## Mark 4:30 opening performance placed (2026-09-27)
+
+Dan identified the precise narrator-to-Jesus handoff at decoded frame 8,947.
+The current candidate
+`generated/chapter/mark4-autonomous-overnight-final-v34-v30-opening-lipsync-frame-locked.mp4`
+places the existing approved first Mark 4:30 source-bound Jesus performance
+there for 86 frames. It replaces the generic coverage at that handoff while
+leaving the 13,231-frame clock and the full source/cast audio stream unchanged.
+The later generic talking shot is not treated as a performance and remains
+scheduled for replacement by a properly source-bound candidate in the
+long-speech coverage plan.
+
+## Mark 4:31–32 mustard-seed illustration held for producer review (2026-09-27)
+
+Dan approved a replacement for the generic Mark 4:31–32 listener coverage so
+the film visibly follows the comparison in the source: one tiny mustard seed
+in canonical Papuan Jesus's hand, the same seed being planted, a mature broad
+mustard plant, and a final view with birds nesting among its branches. Four
+16:9 held review keyframes have been created with the built-in image workflow
+and copied into the Mark 4 review library. Producer-approved eight-second
+picture-only motion takes now exist for all four beats. A source-timed
+26.6-second review reel holds the current Jesus cast track continuously under
+the sequence. Dan approved the motion reel. It is now selected as the
+picture-only replacement from frames 9148 through 9785 in the v31 review cut,
+while retaining the exact established audio stream and 13,231-frame clock.
+
+Goal Guardian check: this is a visual explanation of the exact Mark 4:31–32
+comparison, not an additional event. The plan preserves the locked Hatam audio,
+the established chapter clock, and the approved Papuan Jesus costume facts.
+The frame-by-frame reviewer now opens the v31 candidate for this exact cut.
+
+## Mark 4 autonomous overnight film ready for producer review (2026-09-27)
+
+Dan authorized an autonomous, producer-reviewable full Mark 4 film overnight.
+The current editable review candidate is
+`generated/chapter/mark4-autonomous-overnight-final-v32-thorn-flash-repair-frame-locked.mp4`
+(551,292 ms, 1280×720, H.264/AAC). It holds the approved lake title for four
+seconds, preserves the repaired distinct parable coverage and all approved
+speaker performances, carries the complete 515,792-ms verified Hatam chapter
+master, and ends with a 24-second editorial dawn handoff. The bridge moves
+from the calm boat, to the dawn shore, to a wide pull-away of Jesus and the
+established disciples walking a few paces toward the Mark 5:1 location. It
+does not depict any later Mark 5 encounter, tombs, or new character.
+
+Two reviewed instrumental assets are recorded in the production audio library:
+a restrained chapter bed and a resolved dawn cue that rises after source speech
+ends. The prior candidates remain retained history. The v13 soundtrack is built
+from original narrator spans and the approved cast-master replacements for all
+21 attributed speaker turns. Thus, a cover, master, or listener view may change
+picture but cannot hand active dialogue back to the narrator. The render manifest
+records that voice ownership for post-render review. Video, audio streams,
+duration, title hold, ending progression, and distinct parable coverage were
+checked before promotion. Producer-directed picture-only continuity revisions
+preserve that locked audio: the birds-on-seed visual holds for two seconds,
+the thorny-soil shot no longer restarts, and the Mark 4:5 rocky-ground
+transition no longer flashes two green sprout frames. The Mark 4:9 boat view
+now uses approved canonical Jesus, and the later frozen seated teaching coverage
+is replaced by an actively gesturing canon-consistent view. A frame-by-frame
+review page exposes a 24-fps timecode, frame number, and the matching verified
+English reference text for precise producer notes. The frame label derives from
+the decoded frame actually displayed rather than a rounded playback clock, so
+producer boundary notes map to the same editorial frame on inspection.
+This is now a reusable review contract: frame 0 is the first decoded image,
+frame labels and timecodes derive together from the decoded-frame callback, and
+frame numbering is disabled rather than approximated if that callback is not
+available.
+
+The normal assembly and editorial-render stages now include a universal
+five-frame flash audit. A five-frame run is only a candidate: the final
+encoded picture must also be discontinuous from both adjacent frames before
+the render is held. A short tail or head that visibly continues its neighbour
+passes. Findings are retained for producer review; the system may recommend
+extending adjacent approved footage, but it never auto-fills a flash.
+Producer-directed frame repair extends the moving birds-on-seed coverage across
+the former discontinuity through frame 1506, preserving the protected audio and
+total runtime. The confirmed short thorn interruption near frame 2312 is now a
+motion-preserving extension of the immediately preceding thorn coverage before
+the intended wheat transition. Both repairs were audited against the shared
+decoded frame clock; short continuous tails and heads remain untouched.
+The opening of Jesus's first Mark 4:3 speech now has a three-second canonical
+wide boat lead-in under the final narration (frames 1051 through 1122), then
+cuts directly to the existing close performance on its original first speaking
+frame. This replaces the abrupt sub-second setup without inserting silence,
+moving Scripture, or changing the protected audio.
+
+The confirmed one-frame green-sprout flash at frame 2074 is replaced by a
+continuous extension of the adjacent withered-thorn coverage. The repair keeps
+the 24-fps, 13,231-frame clock and the full established audio stream unchanged.
+
+Goal Guardian check: this work serves HeartWord's goal of an editable,
+source-accountable Scripture film. Source narration remains continuous between
+the already approved speech performances; no narration was synthesized, no
+speaker binding was bypassed, and the only material outside the source clock is
+explicitly labelled editorial handoff to the verified next-chapter location.
+The speaker-audio safeguard is now enforced by the standard editorial renderer:
+it blocks a render if an attributed interval is not mapped to cast audio, and
+records every selected voice in the render manifest. The attribution gate now
+also follows a verified-reference quotation across verses and blocks any
+interior verse with no named speaker, so a lone bound fragment cannot clear a
+long Jesus speech. Its cover-shot and multi-verse attribution regression tests
+pass; the full suite passes: 85 files, 489 tests.
+
+## Active: Mark 4 post-frame-3034 continuity repair (2026-09-27)
+
+Producer review identified a systemic cut defect after frame 3034: isolated
+Jesus bindings had left continuing direct speech in Mark 4:13–20, 4:21–25,
+4:26–29, and 4:30–32 labelled as narration. The same cut cycled slow or
+frozen coverage, briefly used non-canon figures, and jumped between the
+private hillside teaching and boat geography inside continuous speech.
+
+The repair records the missing Jesus attributions and rebuilds cast-master
+audio for each exact affected source interval. The v25 review candidate
+preserves the existing opening and approved storm/ending, but replaces the
+post-frame-3034 teaching picture with normal-speed approved hillside listener
+coverage, the approved Mark 4:11 and 4:13 performances, and field imagery
+only during the seed-growing parable. It deliberately excludes the rejected
+boat lip-sync takes. The candidate retains the 24-fps, 13,231-frame review
+clock so the producer's existing frame notes remain addressable.
+
+This repair is held for producer review. The next step is to verify the
+repaired teaching stretch in the frame reviewer; no further footage is
+generated or promoted until that review is complete. The source-attribution
+gate now also examines every alignment slice after direct speech begins, not
+just whether a verse has one tagged fragment; a narrator lead-in is allowed
+only before the first named interval. The full suite passes: 85 files, 490
+tests.
+
+## Mark 4 cyclic-coverage repair awaiting producer review (2026-09-27)
+
+Producer review found that the former post-frame-3034 continuity repair used a
+small hillside pool in a fixed cycle, making the same reactions recur through
+the later teaching. The current candidate replaces that fallback with forty-three
+distinct, already approved visual pieces in Scripture order. It uses separate
+private-teaching, field-parable, mustard-teaching, and storm-transition coverage;
+the isolated boat pilot is excluded from the verse-21 repair stretch. Every
+inserted coverage asset is used once—there is no cyclic fallback. The producer's
+requested frames 2759–2774 also now continue the immediately preceding grain
+motion rather than replaying the seed-in-furrow shot.
+
+The output remains 1280×720 at 24 fps with exactly 13,231 review frames. Its
+audio stream is byte-for-byte unchanged from the prior locked candidate. Full
+suite: 85 files, 490 tests. The current candidate remains held for producer
+review; source-alignment display gaps and the requested future Jesus close-up
+coverage are tracked separately and have not been silently changed here.
+
+## Mark 4 short Jesus performance batch approved (2026-09-27)
+
+Dan approved all seven bounded, source-bound short Jesus performances for
+Mark 4:9, 13, the two short retained 4:21 intervals, 26, and the two retained
+4:30 intervals. Each performance uses its producer-approved Papuan-canon
+keyframe, visually confirmed Jesus face target, and exact scoped cast-audio
+excerpt. The review board now presents them as independent takes with the
+exact audio and duration; it does not imply that their different approved
+settings are a continuous edit. The earlier concatenated reel remains only
+review history and is explicitly not a proposed sequence.
+
+No chapter timeline clip, chapter-wide media run, or ambient-sound assembly
+was started. In particular, future timeline assembly must place narration,
+establishing coverage, and editorial transitions between non-contiguous verse
+shots rather than cutting directly between the independent review takes.
+
+Goal Guardian check: this completes the requested bounded short-performance
+review using the recorded Hatam source speech and approved Papuan Jesus canon.
+It does not mistake review ordering for narrative continuity or broaden into
+chapter assembly.
+
+## Mark 4:21 automated two-clip pilot approved (2026-09-26)
+
+Dan approved the bounded Mark 4:21 pilot after automated source-audio analysis
+selected the midpoint of the natural pause at 3.680 seconds. The accepted
+review reel uses the approved mouth-hidden opening master for 0–3.680 seconds
+and the approved Jesus lamp-teaching insert for 3.680–8.396 seconds. The
+speaking insert uses the exact scoped cast-audio slice and the visually
+confirmed Jesus face; the master intentionally has no readable speaking mouth.
+No chapter timeline clip, chapter-wide media run, or ambient-sound assembly
+was started.
+
+Goal Guardian check: this producer-approved pilot confirms that the existing
+source-bound long-speech workflow can make an automated pause cut while
+preserving the Hatam source line and approved Papuan canon. It remains a
+review artifact, not a substitute for full chapter assembly.
+
+## Mark 4:11 automated three-clip pilot approved (2026-09-26)
+
+Dan approved the bounded Mark 4:11 pilot after the source-audio analysis
+selected acoustic-pause midpoint cuts at 3.443 and 8.416 seconds. The
+accepted review reel uses the approved opening master for 0–3.443 seconds,
+the first approved Jesus insert for 3.443–8.416 seconds, and the distinct
+approved final Jesus insert for 8.416–11.068 seconds. The two speaking clips
+use the exact scoped cast-audio slices and visually confirmed Jesus faces;
+the master intentionally remains mouth-hidden. The listener-reaction
+keyframe and all alternate provider takes remain retained history, but are
+not part of this pilot. No chapter timeline clip, chapter-wide media run, or
+ambient-sound assembly was started.
+
+Goal Guardian check: this approved pilot validates the requested automated
+long-speech coverage workflow using the actual Hatam line, its approved
+Papuan canon, and natural source pauses. It does not broaden into a
+chapter-wide generation or substitute the pilot reel for final assembly.
+
+## Remaining Mark 4 Jesus keyframes generated for review (2026-09-26)
+
+The thirteen producer-approved source-bound keyframe requirements are now
+materialized as immutable, held Codex-image candidates: seven single-shot
+Jesus performances, the four Mark 4:11 coverage beats, and the two coverage
+beats for the first Mark 4:21 interval. Each has exact source/canon/prompt
+provenance in the project asset store and remains `hold_for_review`; none is
+selected or accepted. The existing external keyframe and coverage-beat
+handoffs were narrowly extended to this approved Hatam Mark 4 plan, preserving
+their snapshot, source-hash, canon, 16:9, and producer-review gates. No video,
+cast audio, timeline, or unrelated chapter media changed.
+
+Goal Guardian check: these candidates serve the requested source-bound
+speaker coverage with distinct long-speech angles and approved Papuan canon.
+They do not invent dialogue or authorize later media stages. Producer review
+of the thirteen candidates is the remaining gate.
+
+### Composite critic review recorded (2026-09-26)
+
+All thirteen held candidates have now received the existing composite critic,
+canonical-likeness, scene-fidelity, duplicate-population, and coverage
+continuity review. The critic finds broadly sound period setting, Papuan
+casting, readable speaking faces, and varied long-speech coverage. It flags
+the following for producer resolution before acceptance: the Mark 4:21 brief
+lamp phrase incorrectly has Jesus holding a lit lamp rather than the planned
+unlit clay lamp on the boat bench; Mark 4:26 needs its intended shore/field
+context reconciled; and several Mark 4:11 images need the saved arms-lowered
+start pose or possible background-face duplication reviewed. Almost all Jesus
+frames also receive a wardrobe mismatch against the stored reference package:
+their blue patterned edging and tassels differ from the reference's simpler
+blue bands, despite a strong face/hair/region match. Some absent supporting
+cast flags are advisory false positives caused by whole-shot cast checks on
+narrow medium-close frames. All 13 remain `hold_for_review`; none is selected,
+accepted, or used for video.
+
+### Producer approval recorded (2026-09-26)
+
+Dan reviewed and approved all thirteen generated Mark 4 Jesus speaker-coverage
+keyframes: the seven single speaking frames and all six coverage beats. The
+critic reports remain retained advisory evidence; the producer's visual
+decision is the selection authority. The selected assets are the exact
+source-bound candidates generated for this plan. No cast audio, lip-sync,
+ordinary video, timeline edit, or chapter-wide media run was started.
+
+Goal Guardian check: the completed keyframe review supplies visible, varied,
+approved coverage for every remaining attributed Jesus interval while keeping
+the exact source and Papuan canon in view. It does not broaden authorization
+to the next media stage.
+
+## Remaining Mark 4 Jesus speaker coverage approved (2026-09-26)
+
+Nine already-attributed Jesus intervals now have durable source-to-shot
+bindings and review-only speaker-coverage requirements: Mark 4:9, 11, 13,
+all three retained 4:21 intervals, 26, and both retained 4:30 intervals.
+Seven require a new medium-close speaking keyframe. The 11-second verse 11
+teaching has a four-beat plan (master, Jesus insert, listener cutaway, distinct
+Jesus insert), and the 8.4-second first 4:21 interval has a two-beat plan
+(mouth-hidden master, then Jesus insert). The visual cut points are explicitly
+provisional until phrase-boundary review; no media, cast audio, or legacy
+Mark 4 material was selected. Dan approved all thirteen keyframe requirements;
+no media generation is authorized by this planning approval. Typecheck passes.
+
+Goal Guardian check: the plan makes every recorded speaker visibly accountable
+while retaining long-speech editorial variety and source-bound audio. It does
+not invent dialogue or start generation without a subsequent production goal.
+
+## Mark 4 storm source-bound lip-sync pilot approved (2026-09-26)
+
+Four distinct producer-approved lip-sync clips now exist from Dan's approved
+storm keyframes: Peter's Mark 4:38 plea, Jesus's Mark 4:39 command, and both
+separate Mark 4:40 question beats. Each candidate uses only its approved
+source-bound cast-audio interval and the producer-confirmed speaking face.
+Kling requires two seconds of input audio, so intervals shorter than that are
+silently padded only after the extracted source speech; the spoken words,
+approved start/end bounds, and source binding are not changed. Dan accepted
+Peter's full storm plea and Jesus's full command; the first Mark 4:40 question
+beat is trimmed to 2.5 seconds to retain its natural breath, and the second
+question beat ends at its speech endpoint before post-speech mouth movement.
+The original longer takes remain retained history. No chapter-wide media or
+audio run was started.
+
+Dan also approved the standalone four-shot storm performance reel as a
+dialogue-and-cut review. It intentionally contains no ambient sound bed;
+storm effects remain a later controlled assembly decision.
+
+Goal Guardian check: the pilot provides the requested on-camera dialogue
+evidence for the storm without inventing speech, changing Scripture, or
+touching any non-pilot Mark 4 media. Typecheck and the full suite pass
+(479/479).
+
+## Mark 4 storm speaker keyframes approved (2026-09-26)
+
+Dan reviewed and approved all four new source-bound storm speaker keyframes:
+Peter's Mark 4:38 plea, Jesus's Mark 4:39 command, and both distinct Mark
+4:40 question beats. Each immutable Codex-image candidate is now accepted
+against its intended speaker shot with provenance retained. The pre-restart
+Mark 4 footage remains retained history and was not selected or modified.
+No lip-sync or ordinary video was generated.
+
+Goal Guardian check: the accepted stills make each reviewed speaker visibly
+present while preserving the exact source intervals, approved Papuan canon,
+and storm action. They do not alter Scripture or authorize a chapter-wide
+media batch. Typecheck and the full suite pass (479/479).
+
+## Mark 4 storm speaker-coverage proposals prepared (2026-09-26)
+
+Following the recorded storm speaker decisions, Scene 7 now has four
+review-only source-bound speaker-coverage proposals: Peter's final plea in
+Mark 4:38, Jesus's command in Mark 4:39, and two distinct Jesus question
+beats in Mark 4:40. Each proposal requires an on-camera medium-close
+performance; Peter is explicitly visible in the boat for his plea. The two
+Mark 4:40 beats preserve the natural pause between the retained source speech
+intervals rather than treating the question as one unbroken synthetic take.
+
+Existing Mark 4 keyframes, videos, and costs remain immutable history. No
+keyframe or video was generated, selected, or approved. Each proposal is held
+for Dan's keyframe review before a lip-sync request can proceed. Typecheck and
+the full suite pass (479/479).
+
+Goal Guardian check: this corrects the existing storm plan to make the
+reviewed speakers visible and source-synchronized, without inventing dialogue
+or events, silently reusing narration-only media, or authorizing new media.
+
+## Mark 4 storm speaker boundaries recorded from producer review (2026-09-26)
+
+Dan reviewed the storm excerpts and recorded the speaker decisions directly
+against the retained source intervals: the final Mark 4:38 plea is Peter;
+Mark 4:39 is narrator, then Jesus's command, then narrator; and Mark 4:40 is
+narrator followed by Jesus's complete question across its two retained speech
+intervals. The mixed Mark 4:38 source interval was split at 473.234 seconds;
+the narrator first half and Peter second half are preserved as distinct
+source-locked records. No keyframe, coverage still, video, or timeline clip
+was generated.
+
+The split helper now also preserves a dependent composite-audio provenance map
+before deleting a superseded source interval, with a regression test for that
+previously unhandled foreign-key dependency. Typecheck and the full suite pass
+(479/479).
+
+Goal Guardian check: this carries Dan's exact listening decisions into the
+source-to-speaker handoff required for correct casting and later speaker
+coverage. It does not infer words or identities, alter the source recording,
+or authorize storm-scene media generation.
+
+## Early speaker-attribution hold before casting (2026-09-26)
+
+The pipeline now stops after source alignment and before scene breakdown,
+storyboard refinement, keyframes, or paid media when
+the verified reference text contains quoted direct speech but the aligned
+original recording has no speaker attributions. The hold identifies the
+affected verses and requires exact source-interval speaker bindings; it does
+not infer a speaker from quotation marks. Narration-only chapters and chapters
+with recorded attributions continue normally. This closes the Mark 4 failure
+mode where all shots were planned as non-speaking because the source-speaker
+handoff was empty. Typecheck and the full suite pass (478/478).
+
+Goal Guardian check: this protects the source-bound speaker/lip-sync workflow
+before costly or creative work begins. It neither invents dialogue nor changes
+source audio, Scripture, casting, or existing producer decisions.
+
+## Mark 4 dailies and ordinary-coverage cost policy (2026-09-26)
+
+The chapter workspace now has a dedicated read-only dailies view for retained
+draft, final-video, guided-video, and lip-sync candidates. Each card shows the
+video, five sampled positions, approved keyframe, provider/model/cost, critic
+record, and any selected timeline placement. The reel is deliberately empty
+until a *new restart-pilot* clip is accepted; pre-restart Mark 4 footage is
+not presented as pilot material. Ordinary non-speaking final coverage now
+tries Veo and, if it cannot complete, retains the draft-tier result rather
+than silently spending on Kling scene fallback. The recorded QC/cost note
+states the fallback policy outcome. Kling remains available for dedicated
+lip-sync and explicitly approved exceptions.
+
+Goal Guardian check: this makes the producer's required pilot review and
+cost rationale visible without generating media, approving old footage, or
+changing source timing. Typecheck and the full suite pass (475/475).
+
+## Mark 4 restart pilot map and editorial beats materialized (2026-09-26)
+
+Dan confirmed that Mark 4:3 is Jesus speaking and approved the existing
+pre-source opening and post-source ending proposals. The first Jesus close-up
+is now explicitly marked for lip-sync and bound to the exact attested
+Mark 4:3 source interval (35.288–41.257 s), using Jesus's approved Papuan
+canon version and voice mapping. The title card, two opening location beats,
+and two post-source handoff beats are now first-class `editorial_beats` with
+durations and timeline positions, all `approved_for_generation`. Their labels
+preserve the distinction between editorial material and Scripture-timed
+picture; no media, QC decision, or timeline clip was created.
+
+Goal Guardian check: this records only Dan's stated decisions and creates the
+minimum durable plan needed for the Mark 4 pilot. It does not reuse the old
+Mark 4 footage, alter source narration, invent a new narrative action, or
+authorize a chapter-wide paid render. Typecheck passes.
+
+## Durable media-generation watchdog added (2026-09-26)
+
+`scripts/watch-media-generation.ts` supervises an idempotent chapter media
+generation run with a project-exclusive lock, durable JSON-line log, bounded
+exponential backoff, and clean signal handling. It records an individual
+provider/stage failure then resumes from already accepted clips instead of
+letting one unhandled request end an unattended chapter batch. It is started
+detached only after any existing interactive worker for that project exits, so
+two paid queues cannot operate on the same chapter.
+
+Goal Guardian check: this strengthens the existing independently-runnable
+media-generation stage and preserves its immutable attempts, costs, source
+plan, and producer decisions; it does not add a creative stage or alter the
+chapter's editorial content.
+
+## Per-shot image-generation cost report added (2026-09-25)
+
+Each chapter workspace now exposes a read-only image-generation cost table:
+scene, shot, image model, retained attempt status, and exact recorded USD cost,
+with an honest total. It lists every retained image attempt, including retries
+and held candidates, so discarded provider work is not hidden; video and
+lip-sync costs remain outside this specifically requested image table. Mark 4
+currently shows no image attempts and a $0.00 total until its planned shots
+are generated.
+
+Goal Guardian check: this makes the existing immutable provider-cost provenance
+visible to the producer without estimating spend, selecting media, or starting
+generation.
+
+## Mark 4 source alignment attested for scene planning (2026-09-25)
+
+Dan Brennan attested that he reviewed the Hatam Mark 4 source audio and its
+corrected interval alignment, and that it is accurate enough for scene
+planning; all tested intervals were correct. The immutable review binds the
+current source and alignment hashes, including the spoken title and eighteen
+interval-level corrections. It is current and releases the Stage 1 source
+review gate while these inputs remain unchanged. No scene breakdown, casting,
+or media generation has been started by this attestation.
+
+Goal Guardian check: this is the required human review of verified source
+material. It authorizes planning from the attested recording, not changes to
+Scripture or downstream generation.
+
+## Mark 4 interval-level source corrections recorded (2026-09-25)
+
+Dan reviewed and supplied exact Hatam text and verse assignments for eleven
+Mark 4 intervals, including the tails/splits of verses 1–2, 8, all three
+parts of verse 12, and intervals in verses 16, 19, 25, and 28. Each is now an
+append-only, source-hash-and-alignment-hash-bound human correction; the model's
+critical-hold evidence is retained rather than overwritten. The exact record
+script is `scripts/record-mark4-source-review.ts`.
+
+The latest Gemini evidence still reports 94.5% model coverage and names
+verses 2, 8, 12, 16, 19, 21, 25, 28, and 30 as uncovered. Dan subsequently
+confirmed all four retained Mark 4:21 intervals against the verified text.
+Dan subsequently confirmed all three retained Mark 4:30 intervals. Human
+corrections now resolve every model-only coverage flag; complete the named
+chapter source attestation before scene breakdown.
+
+Goal Guardian check: these are Dan's evidence-backed decisions on retained
+audio intervals, not generated Scripture or a waiver of the required chapter
+review gate.
+
+## Mark 4 re-alignment includes the spoken chapter-title anchor (2026-09-25)
+
+Following Dan's opening-title review, the general Gemini alignment context now
+includes a verified chapter title before verse 1 and labels a matched result as
+editorial `chapter_title`, never Scripture. The title is also part of the
+evidence signature, so the prior critical-hold result remains retained while
+the requested Mark 4 re-alignment has its own durable submission and review
+record. Dan's existing title classification is remapped only if the exact
+interval remains stable. The re-alignment is currently in progress; report
+only the newly persisted coverage and unresolved intervals when it completes.
+
+Goal Guardian check: this gives the model the producer-confirmed opening
+context without converting the chapter title into a verse, removing previous
+evidence, or bypassing the human source-review gate.
+
+## Spoken chapter title is a standing opening-source rule (2026-09-25)
+
+Dan directed that the chapter title is always read first. An active global
+producer lesson now instructs every future chapter to treat that opening spoken
+title as editorial material before verse 1: retain and classify its actual
+audio, never align it as Scripture or scene action. Each chapter must still
+verify its retained recording's exact title and wording; the rule does not
+invent a title where source evidence differs.
+
+Goal Guardian check: this carries Dan's source-review decision forward while
+keeping Scripture timing and scene content limited to the verified verses.
+
+## Mark 4 opening title classified by producer (2026-09-25)
+
+Dan listened to source interval 0:00.576–0:03.067 and confirmed it is the
+Hatam spoken chapter title, “Mark Chapter 4,” not Scripture. The append-only
+source-review record classifies it as narrated editorial title material, notes
+that no cross-reference is announced, and anchors the first Scripture interval
+at Mark 4:1. Film treatment is deliberately undecided; this evidence does not
+itself choose whether the title is on-screen, narrated, or omitted.
+
+Goal Guardian check: this preserves the source recording and distinguishes a
+published chapter title from Scripture without inventing any content or
+advancing past the remaining alignment review gate.
+
+## Mark 4 preflight complete; catalog-bound ingestion in progress (2026-09-25)
+
+The Mark 4 readiness report now resolves the same immutable source catalog
+used by ingestion rather than the retired `source/hatam/mark-4` layout. Its
+read-only preflight found the verified Hatam text, English ESV reference, and
+non-drama FCBH recording; it parsed `MARKUS 4`, all 41 verses (14 alignment
+groups), and seven published headings. The recording is 517.864 seconds.
+
+The Hatam/Mark/4 project (`8a5659a4-b033-4d5f-80e2-904b217cf8a0`) has been
+created and its first catalog-bound ingestion has a durable `running` lease.
+Gemini alignment was submitted once and is recorded as `submission_started`;
+no source intervals have been written yet. Do not retry while that lease is
+active: inspect or reconcile the retained provider evidence first. When
+alignment results exist, assess coverage, retained timing intervals, and every
+low-confidence boundary. A preflight or model result cannot satisfy the named
+human source-attestation gate; it must be recorded against the resulting source
+and alignment hashes before scene breakdown proceeds. The Mark 3 ending is
+only a candidate opening anchor and needs separate Mark 4 review.
+
+Goal Guardian check: this starts the next self-contained Hatam Mark chapter
+from the verified corpus without inventing text, selecting an automatic
+handoff, or bypassing human review before planning.
+
 ## Mark 3 r15 review cut producer-approved (2026-09-25)
 
 Dan corrected the reported timestamp to 1:40. Exact frame inspection of r14
@@ -5318,3 +6123,426 @@ It is not a selected timeline clip. The original media, approved binding,
 coverage intervals, and source map remain unchanged. Before final assembly,
 reconcile the source/voice boundary with the following narration so no
 syllable is lost or assigned to the wrong speaker.
+
+## Mark 4 v45 scorecard repair goal (2026-09-28)
+
+Active goal: improve the held Mark 4 v45 cut with the fixed, reproducible v45
+scorecard and `HeartWordData/scratch/claude-review-tools/film_metrics.py`.
+The goal is an editable, held review cut that preserves Hatam/cast wording and
+speaker ownership, uses 48 kHz delivery audio, restores continuity and scene
+worlds, and does not silently promote newly generated media.
+
+Progress: v46 is a 13,447-frame picture-only no-generation repair that restores
+the approved 4:21 and 4:26 performances, replaces frozen breath pictures,
+removes the returned four-disciples tableau, and removes three documented
+duplicates. v53 completes the documented micro-run cleanup; v54 adds the
+authorized 16-second dawn extension; and v55 is a held 48 kHz scene-grade
+candidate. The fixed metrics tool has been rerun for every held candidate.
+The current v55 report still holds promotion for seven near-frozen shots, six
+non-adjacent duplicate candidates, and 10.42 seconds below the ambience floor.
+Input-plan recurrence guards now require both a scene-set reference and
+pause-bounded source windows before a new performance can be sent. Four
+world-consistent replacement keyframes are retained as held candidates only.
+The v56 live-hold experiment is also retained as a held candidate; the
+independent motion metric correctly still flags its seven underlying
+near-frozen source takes, so it is not a claimed remediation. The held scene
+replacement candidates are recorded as Codex attempts `2b4c38ca…`,
+`ea40029c…`, `f10c9641…`, and `216404f0…`; none is accepted, selected,
+animated, or placed in the chapter.
+v58 restores audible field and dusk ambience, calibrates all six documented
+breaths into the -42 to -30 dB range, holds -15.5 LUFS and -1.2 dBFS at 48 kHz,
+and cuts the below--50 dB floor from 10.42 to 3.02 seconds. v59 carries that
+audio forward and replaces all seven scorecard near-frozen holds with retained
+moving same-world coverage; its static-shot result is zero. It remains held:
+five non-adjacent duplicate candidates, 3.02 seconds below the stricter
+post-render ambience floor, and scene/world work remain unresolved.
+v62 completes the no-generation scorecard repair pass while remaining held:
+it has no detected discontinuity flashes, no static shots at or above three
+seconds, no non-adjacent duplicate pairs, six calibrated editorial breaths
+between -40.5 and -29.0 dB, a per-minute ambience p10 floor of -44.9 dB,
+48 kHz delivery audio, and the approved sixteen-second dawn tail. Its 13,831
+decoded-frame clock and 576.292-second duration are recorded with the v62
+metrics report. It is not promoted: world consistency, scene colour matching,
+and required held canonical replacement coverage remain open.
+Outstanding work is to create and review only held scene-consistent canonical
+coverage where the retained library cannot satisfy the review, then apply a
+scene colour grade and phrase-led edit audit before another scored held cut.
+
+The next held scene-world batch adds public boat-to-rocky-shore reverse
+coverage, private olive-grove group coverage, and lakeshore teaching coverage.
+They are recorded as Codex attempts `83006f46…`, `03403a60…`, and `dbef2aea…`.
+They are not accepted, animated, selected, or placed; the review page groups
+them with the four earlier held world-replacement candidates.
+An additional rocky-hillside listener over-the-shoulder candidate is now held
+as `1b6afbd0…`; it adds private Scene 2 coverage without a readable mouth.
+Four silent five-second scene-world motion takes have now been generated from
+the held set references, one at a time with durable provider records: boat
+reverse `933697403817955364`, hillside listeners `933697862691586138`,
+olive-grove group `933698501677027338`, and lakeshore group
+`933698942951362605`. Contact-sheet inspection confirms natural non-speaking
+motion and stable scene geography. They are retained solely for held review at
+`mark4-v63-held-scene-world-motion-review.html`; none has been accepted or
+placed in the chapter.
+
+The recurring post-render hold now also requires review of unintended
+sub-1.5-second inserts, within-scene colour discontinuities, and named
+previously repaired defects returning. This extends the existing flash,
+freeze, duplicate, audible-ambience, breath-level, and 48 kHz checks without
+authorizing an automatic repair.
+
+Held v63 applies a frame-addressed selective colour-match pass to fifteen
+measured within-scene outliers on v62. The reproducible metrics report records
+ten remaining large colour transitions (down from sixteen), while retaining
+zero flash, freeze, or non-adjacent-duplicate candidates; the 48 kHz delivery,
+ambience floor, calibrated breaths, program loudness, peak, and 16-second dawn
+extension remain unchanged. It remains held because colour matching is not yet
+complete and no new held asset may be silently selected.
+
+Goal Guardian check: this work serves HeartWord's source-accountable, editable
+Scripture-film workflow. It leaves source words, approved voice ownership, and
+the producer's approval gate for newly generated media intact.
+
+### Held v66 — real-frame repair (Claude takeover, 2026-09-29)
+
+Codex ran out of usage, and Dan asked Claude (Cowork) to take over the
+v65 action list. Held v66
+`generated/chapter/mark4-autonomous-overnight-final-v66-claude-real-frames-held.mp4`
+keeps the 13,831-frame clock and a byte-identical v65 audio stream (MD5
+`ba3af46b5b5b10a13391102652fa2212`). It was built by
+`HeartWordData/scratch/claude-takeover/patchtool.py` from 39 frame-addressed
+patches listed in `HeartWordData/scratch/claude-takeover/v66-render-manifest.json`.
+Register it in the database on Dan's machine with
+`npx tsx scripts/register-mark4-v66-claude-real-frames.ts`; the Linux review
+session could not safely write the live SQLite file. Review page:
+`/mark4-v66-final-frame-review.html`.
+
+What changed:
+
+- **Frozen holds.** Every frozen hold from v65's micro-shot cleanup and breath
+  pictures (12 by `freeze_holds.py`) is replaced with real, contiguous source
+  frames.
+- **Loops.** Source-frame matching also found nine picture loops or ping-pongs
+  that no metric caught: shots longer than their 8-second (often 5-second
+  usable) source clip. These are the birds, the rocky ground, the thorns, the
+  4:11 back view, the 4:33 crowd wide, the dusk shore, the calm wide, and the
+  4:41 disciples. All are rebuilt from real frames or other same-world
+  retained coverage.
+- **Olive grove.** The olive-grove private teaching (4:14–20) is re-covered
+  without any clip used twice over the same frames.
+- **Tableau.** The last 0.58-second four-disciples tableau is removed.
+- **Mustard.** The mustard planting shot is restored (2.0 s).
+- **Good ground.** The 4:8 good ground now shows shoots growing to crop.
+- **Two new text fits.** At 4:35, Jesus directing the departure now lands on
+  the line. At 4:41, "said one to another" is covered by two disciples
+  whispering.
+
+Where there was not enough real footage, a few wide static-camera shots use
+gentle motion-compensated slow motion (0.63–0.91×). No frame cloning, `tpad`,
+looping or stills are used.
+
+Measured:
+
+- 0 freeze holds and 0 flashes.
+- 0 static shots of 3 seconds or longer.
+- 0 sub-1-second shots.
+- Large colour jumps are down from 4 to 2; both remaining are deliberate
+  dusk/dawn transitions.
+- One intentional listener-angle return is flagged as a near-duplicate.
+- Cut-on-pause is 54%.
+
+Scorecard (rubric v2): 77.1, up from 70.8.
+
+Still open:
+
+- **Scene worlds and identity.** Placing these needs Dan's review of the held
+  world candidates, and new generation. The Gemini, Kling and ElevenLabs APIs
+  are not reachable from the Cowork session, so any generation must run on
+  Dan's machine or after the network allowlist changes.
+- **Cut-on-pause refinement.** About 12 cutaway cuts can move onto pauses.
+  Performance edges are locked.
+
+Goal Guardian check: picture-only, held, and source-accountable. It uses no
+new generated media, and changes no Scripture wording, speaker ownership or
+source timing.
+
+### Held v67 — opening boat extended for the music (Claude, 2026-10-01)
+
+Dan asked for the opening boat shot (about 0:07.5) to run a few seconds
+longer, so the opening music can conclude without regenerating anything.
+Held v67
+`generated/chapter/mark4-autonomous-overnight-final-v67-opening-boat-music-held.mp4`
+inserts 72 frames (3.0 s) at frame 180. The approved boat take
+(`video/editorial-mark4-intro-boat-r1.mp4`, 96 frames) now plays as a
+168-frame gentle slow-motion shot. The chapter bed previously faded at 11.0 s,
+mid-phrase, just before its tonic. It now plays to the E-minor tonic arrival
+(about 12.0 s) and fades from 12.3 to 14.3 s over continuing ambience.
+
+Everything after the boat is v66 shifted by exactly 72 frames (audio offset
+verified at 0 ms). The source clock now starts at 14.5 s, and the breath frames
+have moved by +72. Review page: `/mark4-v67-final-frame-review.html`. Register
+it with `npx tsx scripts/register-mark4-v67-opening-boat-music.ts`. The
+manifest is in `HeartWordData/scratch/claude-takeover/v67-render-manifest.json`.
+
+### Held v68 — opening keeps Jesus in the boat (Claude, 2026-10-01)
+
+Dan reported that 0:18–0:49 of v67 was blurry, that Jesus went from in the boat
+to out of it and back again, and that his wardrobe there was off-canon.
+Held v68
+`generated/chapter/mark4-autonomous-overnight-final-v68-opening-in-boat-held.mp4`
+recuts v67 frames 348–1194 (14.5–49.8 s) from existing, sharp, in-boat
+material. Nothing was generated. The cuts fall on source pauses at frames 441,
+588, 775 and 1025. In order:
+
+1. A slow drift across the crowd on the rocks toward the boat. This uses the
+   approved still `scene1-sailboat-rocky-shore-wide-v1.png`.
+2. The held boat-reverse take, with Jesus seated in the boat facing the crowd.
+   It plays at 0.8× in motion-compensated slow motion.
+3. Jesus in the boat just off the beach, with the whole crowd seated along
+   the shore (`8698ecb1`, 0.62× motion-compensated). Dan chose this shot. It
+   replaced `0e77c34b`, where the figure in the boat did not read as Jesus,
+   and then `86a71cf3`, where Jesus points at a jar, which has nothing to do
+   with 4:1.
+4. A slow push from the wide still to Jesus seated in the boat.
+5. Jesus seated in the boat (`b4f60ed5`), cutting into the 4:3 performance at
+   frame 1195.
+
+Crops of the v34 canonical 3–8 bases were tested and rejected because the crowd
+in those takes is out of focus. The frame count (13,903) and the audio (byte-
+identical to v67) are unchanged, and there are 0 freeze holds. The review page
+is `/mark4-v68-final-frame-review.html`. Register v68 with
+`npx tsx scripts/register-mark4-v68-opening-in-boat.ts`. The manifest is in
+`HeartWordData/scratch/claude-takeover/v68-render-manifest.json`.
+
+### Held v69 — lip-sync drift, Mark 4:12 voice, and picture notes (Claude, 2026-10-01)
+
+Held v69 is
+`generated/chapter/mark4-autonomous-overnight-final-v69-sync-and-voice-repair-held.mp4`.
+It has 13,903 frames, the same clock as v68, and integrated loudness of
+−15.5 LUFS. Every change below responds to a note from Dan's review of v68.
+
+**Soundtrack drift (the lip-sync slip).** The program audio ran progressively
+early against the picture:
+
+- 0 ms at 1:00
+- −90 ms at 3:08
+- −150 ms at 4:39
+- −280 ms from about 6:40 to the end
+
+The cause was that every spliced cast span lost a few milliseconds, and the
+loss accumulated. Each original-reading segment was measured against the
+source reading and moved back onto the source clock by whole samples. Only
+the pauses between segments absorb the change, with at most a 5% rate change
+inside a pause. All segments now measure within ±6 ms. The work is in
+`v69/retime.py` and `v69/retime_map.json` in the scratch takeover folder.
+
+**Mark 4:12 voice.** The v37 scoped cast run named its outputs by their
+position in the scope, so `01-segment-0` and `03-segment-2` collided with
+existing files and were "reused":
+
+- Source 144.878–149.815 s played the disciples' 4:38 line.
+- Source 155.298–169.227 s played the 4:16 line, stretched 1.92× (what Dan
+  heard as Jesus slowing down at 2:52).
+
+Dan ran `scripts/revoice-mark4-verse12-missing-spans.ts`, which made new,
+uniquely named cast masters (`held-mark-4-12-a/b-jesus-elevenlabs-r1.mp3`).
+These were spliced in at the measured cast gain (−1.8 dB), over olive-grove
+ambience at its natural level, with crossfades in the pauses.
+
+**Open bug for Codex:** `src/pipeline/voicing/index.ts` builds the output
+slug from the loop index of a scoped run. It also treats any existing file
+with that name as reusable. Scoped runs must use globally unique names, or
+check the source hash before reusing a file.
+
+**Picture changes:**
+
+- **2:09 boat flash removed.** The 1-second 0e77c34b shot of a distant figure
+  in a boat is gone. The next field shot (3ff6fea1) now starts at the breath,
+  in 0.875× motion-compensated slow motion.
+- **James and John shortened.** The 3:02 shot now runs 4.3 s instead of 8 s,
+  then cuts on a source pause to an olive-path wide (1df48c5d).
+- **Head-covered Jesus removed.** Both 740eb1df shots are replaced:
+  - 3:55.5 → dc9accab, Jesus seated on the wall with two disciples.
+  - 4:26.6 → 744e014d, Jesus seated, with disciples standing.
+- **4:19 close-up replaced.** The 1bd01708 close-up looked like unsynced
+  speech. It is replaced by dbdc468a, Jesus explaining to two disciples,
+  medium-wide.
+- **Storm lip-sync re-timed.** Shots at 8:15, 8:28, 8:43 and 8:46 were
+  730–770 ms late. Each now starts 18 frames earlier. The neighbouring
+  cutaways are trimmed using their own frames, so each full line plays on
+  the speaker.
+- **Small lip-sync nudges.** Shots at 2:32, 3:08 and 4:29 are advanced by one
+  clip frame, and the shot at 4:42 by two.
+
+**Checks:**
+
+- All 26 lip-sync shots measure −30 to +80 ms, audio minus picture. The
+  storm shots measure within ±20 ms.
+- 0 freeze holds.
+
+The review page is `/mark4-v69-final-frame-review.html`. Register v69 with
+`npx tsx scripts/register-mark4-v69-sync-and-voice-repair.ts`.
+
+### Held v70 — clean ambience and two coverage swaps (Claude, 2026-10-01)
+
+Held v70 is `generated/chapter/mark4-autonomous-overnight-final-v70-clean-ambience-held.mp4`.
+It has 13,903 frames, 0 freeze holds, and measures −16.2 LUFS.
+
+**The "female voice" Dan heard every ~5 s from 5:39.** v57 overlaid two
+ElevenLabs sound-effect loops at full level, about −18 dBFS RMS:
+`field-v1.mp3` (5:37–7:21) and `dusk-lake-v1.mp3` (7:19–8:29). Each 5 s loop
+contains a loud event:
+
+- `field-v1.mp3` has a 2-second voice-like burst (F0 about 190 Hz) at
+  1.75–3.75 s.
+- `dusk-lake-v1.mp3` has a loud event at 1.25–2.0 s.
+
+The fix, done in four steps:
+
+1. Rebuilt that region from the v55 program. The speech is identical to v68
+   (residual −50 dB).
+2. Subtracted the v47 copies of the same loops, which sat at −20 dB.
+3. Added clean beds at −38 dBFS: quiet parts of `field-v1.mp3` for the field,
+   and `shore-v1.mp3` for dusk.
+4. Re-applied the v69 retime and the Mark 4:12 splice.
+
+The correlation with the burst template fell from 0.5–0.83 to about 0.
+
+**Do not reuse these assets for beds:** `field-v1.mp3` and `dusk-lake-v1.mp3`
+should not be looped as ambience beds again.
+
+**Picture:**
+
+- **2:40 lawn shot replaced.** The shot of disciples on a lawn (b1b92c1b)
+  is gone. In its place:
+  - The 2:37 lip-sync now runs 12 frames longer, through Jesus's closing
+    pause.
+  - Jesus teaching the seated group in the olive grove by the sea
+    (fc7ed23c, with a gentle 5% push-in).
+  - Jesus with two disciples on the olive path (dc9accab, frames 60–119).
+- **5:23 boat wide replaced.** The boat wide (c650fbc7) is replaced, for
+  the narrator lines, by:
+  - the listening crowd (c50dca30);
+  - two listeners on the shore (e85b706b, frames 0–96).
+
+The review page is `/mark4-v70-final-frame-review.html`. Register v70 with
+`npx tsx scripts/register-mark4-v70-clean-ambience.ts`.
+
+### Held v71 — Jesus-speaking rule and storm continuity (Claude, 2026-10-02)
+
+Held v71 is
+`generated/chapter/mark4-autonomous-overnight-final-v71-speaking-rule-and-storm-held.mp4`.
+It has 13,903 frames and 0 freeze holds. The audio is the same as v70.
+
+**Rule from Dan.** While Jesus's voice plays, his face may only be seen in a
+lip-sync shot. Showing him talking in a non-lip-sync shot breaks the illusion,
+because viewers see that his mouth does not match the words.
+
+All 43 non-lip-sync shots that fall under Jesus's speech were audited. Five
+broke the rule, and each is replaced with a listener framing taken from the
+same take:
+
+- 2:40 — crop of the seated disciples (fc7ed23c)
+- 2:45 — crop of the listeners (dc9accab)
+- 3:55 — crop of the listeners (dc9accab)
+- 4:06.8 — James and John reaction (db0de7b7, frames 104+)
+- 4:15.5 — crop of the two standing disciples, with Jesus's gesturing hand in
+  frame (dbdc468a)
+
+**Storm.**
+
+- **7:46.** The 60c28de3 shot now ends before Jesus sits up (clip frame 92).
+  The last 2.25 s are covered by the unused frames of the bailing shot
+  (0396a389, frames 136–189).
+- **8:19–8:28.** The standing-Jesus insert and the reused sleeping clip are
+  replaced by the unused take 6db6f5f1: two disciples shake Jesus awake and
+  he sits up. It plays at 0.83× and leads into the 4:39 command close-up.
+  Caveat: in this take Jesus wears a tan tunic with a brown sash.
+- **8:30–8:38.** The two-man calm (3af6de74) is replaced by the unused take
+  b631cdf5: Jesus stands in the boat with five or six disciples, a last wave
+  breaks, and the sea flattens to a glassy calm under the moon.
+
+**Pending generation.** Dan runs `scripts/generate-mark4-v71-held.ts`, which
+produces:
+
+- **Peter at 8:15.** A new Kling base of Peter shouting at the sleeping
+  Jesus, plus face lip-sync and an expressive speech-to-speech re-voice.
+  Note that speech-to-speech follows the calm delivery of the source
+  reading, so a true shout would need a recorded shouted source line.
+- **Lively Kling Avatar re-performances at 4:30 and 6:15.** These also cover
+  the 1 s pauses at 4:34 and 6:15.75.
+- **One continuous re-voice of 4:18–19.** The aligner capped that segment at
+  14.000 s mid-phrase, so two separately re-voiced halves are butted together
+  at 4:08.
+
+Optional stages generate storm shots in canonical wardrobe, if Dan prefers
+those to the existing takes.
+
+### Held v72 — lively avatars and a continuous 4:18–19 voice (Claude, 2026-10-02)
+
+Held v72 is
+`generated/chapter/mark4-autonomous-overnight-final-v72-lively-avatars-held.mp4`.
+It has 13,903 frames and 0 freeze holds. All the new inputs are Dan's runs of
+`scripts/generate-mark4-v71-held.ts`.
+
+**Lively Kling Avatar performances.**
+
+- **What was generated.** New performances at 4:29.7 (Mark 4:20) and 6:11.3
+  (Mark 4:29). Each was made with the Kling Avatar API using a
+  liveliness/expression prompt and `mode: "pro"`, and the API accepted both.
+- **Where they come from.** Each starts from the existing close-up's first
+  frame and is driven by the exact cast slice plus 1.0 s and 1.25 s of
+  silence.
+- **Sync.** Measured at +20 ms and +10 ms, audio minus picture.
+- **The 1 s inserts.** Each performance continues through the following
+  editorial pause, so the 1 s inserts at 4:34 and 6:15.75 are gone.
+
+**Mark 4:18–19 voice.** The whole span (source 218.910–236.110 s) is now one
+continuous ElevenLabs re-voice. Its timing matches the source with a
+correlation of 0.97 at 0 ms. This removes the 4:08 seam.
+
+**Pending:**
+
+- Peter's 8:15 shouting lip-sync.
+- An optional comparison of Veo storm clips (canonical wardrobe) against the
+  existing 6db6f5f1/b631cdf5 takes.
+
+### Held v73 — storm rebuilt and a night ending (Claude, 2026-10-02)
+
+Held v73 is
+`generated/chapter/Markus-4.mp4` (renamed by Dan).
+The film now ends at 9:21.83 (13,484 frames). It has 0 freeze holds and
+measures −16.2 LUFS. All generation came from Dan's runs of
+`scripts/generate-mark4-v71-held.ts`.
+
+**Storm sequence:**
+
+- **8:14.75 — Peter shouts at the sleeping Jesus.** A new Kling base was
+  made from the Gemini-edited Peter keyframe and lip-synced to face 0. The
+  voice is the expressive ElevenLabs re-voice, pushed toward a shout (about 3
+  semitones up with formants preserved, compressed, slightly driven) without
+  changing its timing. Sync measures −20 ms.
+- **8:20 — Jesus is woken and rises.** This is a Veo start/end-frame clip
+  with Jesus in his canonical wardrobe.
+- **8:28 — the command.** The existing lip-sync is kept.
+- **8:30–8:42.8 — the storm dies and a great calm follows.** Two Veo clips
+  show the same boat and all six disciples. They are graded from Veo's
+  daylight-like sky to moonlit night. They replace the two-man calm and the
+  404d00a7 shot.
+
+**New ending (Dan's request).** The dawn landing is removed, and the film
+stays in the night. After the 9:02.9 night shot comes a 16 s rising pull-out
+over the dark, moonlit sea, leaving the boat small and alone:
+
+- It is built from two chained Veo clips. The first 1.8 s of clip 1 (a
+  dissolve from the close shot) is skipped.
+- A second rowboat that Veo added was painted out frame by frame
+  (`v73/remove_boat.py`).
+- The footage plays in motion-compensated slow motion at 0.88×.
+
+**Music.** The closing piece still enters at 8:59.6. After 8.25 s it
+crossfades over 1 s into its final section from 40.52 s, where the chroma
+similarity is 0.92. Its natural ending now lands on the last frame instead of
+being faded out partway through.
+
+The review page is `/mark4-v73-final-frame-review.html`. Register v73 with
+`npx tsx scripts/register-mark4-v73-storm-and-night-ending.ts`.

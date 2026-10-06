@@ -45,7 +45,12 @@ export interface DirectorInputs {
  *  attempts escalates to hold_for_review instead -- repeated automatic
  *  retries aren't resolving it, so a human should look rather than spend
  *  another generation call on the same likely outcome. */
-export const MAX_AUTOMATIC_RETRIES = 2;
+// One initial attempt plus up to five corrective attempts gives the
+// standard -> Pro -> alternate-provider escalation path a fair chance while
+// still returning a stubborn shot to the producer before a seventh paid image.
+// Mark 4 producer authorization (Dan Brennan, 2026-09-25) expanded this
+// ceiling by two corrective attempts.
+export const MAX_AUTOMATIC_RETRIES = 5;
 
 export interface DirectorDecision {
   status: GenerationStatus;
@@ -68,12 +73,28 @@ export function decideGenerationStatus(inputs: DirectorInputs): DirectorDecision
   const { criticSeverity, likenessAligned, fidelityAligned, priorAttemptCount = 0 } = inputs;
   const failedChecks = (likenessAligned ? 0 : 1) + (fidelityAligned ? 0 : 1);
 
-  if (criticSeverity === "severe" && failedChecks > 0) {
+  // The Critic is the visual judgment layer. When it explicitly reports no
+  // concern, do not turn an opaque auxiliary-check disagreement into a paid
+  // regeneration with no visible problem for the producer to assess.
+  if (criticSeverity === "none") {
+    return {
+      status: "accepted",
+      reasoning: "Critic reported no visible concern; auxiliary checks alone do not justify a regeneration."
+    };
+  }
+
+  if (priorAttemptCount >= MAX_AUTOMATIC_RETRIES) {
     return {
       status: "hold_for_review",
+      reasoning: `This shot already has ${priorAttemptCount} prior attempt(s) with an unresolved Critic concern; hold for a producer decision before another paid image.`
+    };
+  }
+
+  if (criticSeverity === "severe" && failedChecks > 0) {
+    return {
+      status: "escalate",
       reasoning:
-        "Critic raised a severe, research-grounded concern AND at least one automated check already failed -- " +
-        "independent signals agreeing is a stronger case for a human look than another automatic retry."
+        "Critic raised a severe, research-grounded concern and an automated check agreed -- escalate the next automatic attempt."
     };
   }
   if (criticSeverity === "severe") {
@@ -84,8 +105,8 @@ export function decideGenerationStatus(inputs: DirectorInputs): DirectorDecision
   }
   if (failedChecks === 2) {
     return {
-      status: "hold_for_review",
-      reasoning: "Both canonical-likeness and scene-fidelity failed on this shot -- multiple independent checks agreeing."
+      status: "escalate",
+      reasoning: "Both canonical-likeness and scene-fidelity failed; escalate the next automatic attempt."
     };
   }
   if (criticSeverity === "moderate" || failedChecks === 1) {
@@ -93,14 +114,6 @@ export function decideGenerationStatus(inputs: DirectorInputs): DirectorDecision
       criticSeverity === "moderate"
         ? "Critic raised a moderate concern -- worth a regeneration attempt with a modified prompt."
         : "One automated check failed -- worth a regeneration attempt with a modified prompt.";
-    if (priorAttemptCount >= MAX_AUTOMATIC_RETRIES) {
-      return {
-        status: "hold_for_review",
-        reasoning:
-          `${baseReasoning} But this shot already has ${priorAttemptCount} prior attempt(s) -- another automatic ` +
-          `retry is unlikely to resolve a problem that survived that many already; a human should look instead.`
-      };
-    }
     return { status: "retry_modified", reasoning: baseReasoning };
   }
   return {

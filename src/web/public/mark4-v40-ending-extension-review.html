@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mark 4 v40 ending extension — held review</title>
+  <style>
+    body { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; color: #1b1b1b; }
+    video { width: 100%; background: #000; }
+    .controls { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin:1rem 0; }
+    button, input { font: inherit; padding:.45rem .65rem; }
+    #timecode { font:600 1.25rem ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .note { color:#444; }
+  </style>
+</head>
+<body>
+  <h1>Mark 4 v40 — held 16-second ending extension</h1>
+  <p class="note">Review only. This does not replace the v39 chapter cut. Frame 0 is the first decoded image.</p>
+  <video id="film" controls preload="metadata" src="/media/generated/chapter/mark4-autonomous-overnight-final-v40-ending-extension-held.mp4"></video>
+  <div class="controls">
+    <button type="button" data-step="-1">◀ Previous frame</button>
+    <button type="button" data-step="1">Next frame ▶</button>
+    <button type="button" data-step="-24">−1 second</button>
+    <button type="button" data-step="24">+1 second</button>
+    <label>Jump to seconds <input id="jump" type="number" min="0" step="0.001"></label>
+    <button id="jump-button" type="button">Go</button>
+  </div>
+  <p id="timecode" aria-live="polite">Waiting for decoded frame…</p>
+  <p id="note" class="note" aria-live="polite">Frame labels appear only after the displayed image is decoded.</p>
+  <script type="module">
+    import { decodedFrameClock, formatReviewTimecode } from "/frame-review-clock.js";
+    const film = document.getElementById("film"), jump = document.getElementById("jump"), timecode = document.getElementById("timecode"), note = document.getElementById("note");
+    const fps = 24, firstExtensionFrame = 13447, secondExtensionFrame = 13639;
+    let presented = null;
+    const show = () => {
+      if (!presented) return;
+      const { frameIndex, seconds } = presented;
+      timecode.textContent = `${formatReviewTimecode(seconds)} · frame ${frameIndex}`;
+      jump.value = seconds.toFixed(3);
+      note.textContent = frameIndex < firstExtensionFrame ? "v39 picture and audio — held extension begins after this cut." : frameIndex < secondExtensionFrame ? "Held post-source extension, pull-away 1 of 2 — existing reviewed finale music tail." : "Held post-source extension, pull-away 2 of 2 — existing reviewed finale music tail and final fade.";
+    };
+    const go = frames => { film.pause(); presented = null; film.currentTime = Math.max(0, Math.min(film.duration || 0, film.currentTime + frames / fps)); };
+    document.querySelectorAll("[data-step]").forEach(button => button.addEventListener("click", () => go(Number(button.dataset.step))));
+    document.getElementById("jump-button").addEventListener("click", () => { film.pause(); presented = null; film.currentTime = Math.max(0, Number(jump.value)); });
+    if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
+      const observe = (_now, metadata) => { presented = decodedFrameClock(metadata.mediaTime, fps); show(); film.requestVideoFrameCallback(observe); };
+      film.requestVideoFrameCallback(observe);
+    } else note.textContent = "This browser cannot verify the decoded image; frame-number notes are disabled.";
+  </script>
+</body>
+</html>

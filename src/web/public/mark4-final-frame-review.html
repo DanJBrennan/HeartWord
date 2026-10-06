@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mark 4 final cut — frame review</title>
+  <style>
+    body { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; color: #1b1b1b; }
+    video { width: 100%; background: #000; }
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin: 1rem 0; }
+    button, input { font: inherit; padding: .45rem .65rem; }
+    #timecode { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.25rem; font-weight: 600; }
+    .note { color: #444; }
+  </style>
+</head>
+<body>
+  <h1>Mark 4 final cut — frame-by-frame review</h1>
+  <p class="note">Pause the film, use the frame controls, and report the displayed timecode or decoded frame index. Frame 0 is the first frame.</p>
+  <video id="film" controls preload="metadata" src="/media/generated/chapter/mark4-autonomous-overnight-final-v39-shore-generic-talk-removed-held.mp4"></video>
+  <div class="controls">
+    <button type="button" data-step="-1">◀ Previous frame</button>
+    <button type="button" data-step="1">Next frame ▶</button>
+    <button type="button" data-step="-24">−1 second</button>
+    <button type="button" data-step="24">+1 second</button>
+    <label>Jump to seconds <input id="jump" type="number" min="0" step="0.001" inputmode="decimal"></label>
+    <button type="button" id="jump-button">Go</button>
+  </div>
+  <p id="timecode" aria-live="polite">Waiting for decoded frame…</p>
+  <p id="frame-status" class="note" aria-live="polite">Frame notes are enabled only after the displayed image is decoded.</p>
+  <p id="translation" aria-live="polite">Loading the verified English translation…</p>
+  <script type="module">
+    import { decodedFrameClock, formatReviewTimecode } from "/frame-review-clock.js";
+    const film = document.getElementById('film');
+    const frameRate = 24;
+    const timecode = document.getElementById('timecode');
+    const frameStatus = document.getElementById('frame-status');
+    const jump = document.getElementById('jump');
+    const translation = document.getElementById('translation');
+    const sourceClockStart = 11.5;
+    // v38 adds explicit, no-Scripture editorial breaths. These values use the
+    // same decoded, zero-based frame index shown to the reviewer. Source time
+    // after a breath is therefore never guessed from final-film playback time.
+    const editorialBreaths = [
+      { startFrame: 3034, endFrame: 3057, after: 'Mark 4:9' },
+      { startFrame: 6508, endFrame: 6531, after: 'Mark 4:20' },
+      { startFrame: 7687, endFrame: 7710, after: 'Mark 4:25' },
+      { startFrame: 8946, endFrame: 8975, after: 'Mark 4:29' },
+      { startFrame: 9888, endFrame: 9917, after: 'Mark 4:32' },
+      { startFrame: 10593, endFrame: 10628, after: 'the pre-Mark 4:35 departure transition' },
+      { startFrame: 12169, endFrame: 12216, after: 'Jesus’s Mark 4:39 command' }
+    ];
+    let intervals = [];
+    let presentedClock = null;
+    const clamp = value => Math.max(0, Math.min(Number.isFinite(film.duration) ? film.duration : value, value));
+    const show = () => {
+      if (!presentedClock) {
+        timecode.textContent = 'Waiting for decoded frame…';
+        translation.textContent = 'Frame reference is pending; do not record a frame note yet.';
+        jump.value = (Number.isFinite(film.currentTime) ? film.currentTime : 0).toFixed(3);
+        return;
+      }
+      const seconds = presentedClock.seconds;
+      timecode.textContent = `${formatReviewTimecode(seconds)} · frame ${presentedClock.frameIndex}`;
+      frameStatus.textContent = `Decoded frame index; frame 0 is the first frame (${frameRate} fps).`;
+      jump.value = seconds.toFixed(3);
+      const frame = presentedClock.frameIndex;
+      const breath = editorialBreaths.find(item => frame >= item.startFrame && frame <= item.endFrame);
+      if (breath) {
+        translation.textContent = `Editorial breath after ${breath.after} — no Scripture is spoken in this held pause.`;
+        return;
+      }
+      const insertedFramesBefore = editorialBreaths.filter(item => item.endFrame < frame)
+        .reduce((total, item) => total + item.endFrame - item.startFrame + 1, 0);
+      const sourceMs = (((frame - insertedFramesBefore) / frameRate) - sourceClockStart) * 1000;
+      const interval = intervals.find(item => sourceMs >= item.startMs && sourceMs < item.endMs);
+      translation.textContent = interval ? `${interval.verseRef} — ${interval.text}` : "Editorial opening or transition — no Scripture verse at this frame.";
+    };
+    const resetPresentedFrame = () => { presentedClock = null; show(); };
+    const step = frames => { film.pause(); resetPresentedFrame(); film.currentTime = clamp(film.currentTime + frames / frameRate); };
+    document.querySelectorAll('[data-step]').forEach(button => button.addEventListener('click', () => step(Number(button.dataset.step))));
+    document.getElementById('jump-button').addEventListener('click', () => { film.pause(); resetPresentedFrame(); film.currentTime = clamp(Number(jump.value)); });
+    jump.addEventListener('keydown', event => { if (event.key === 'Enter') document.getElementById('jump-button').click(); });
+    ['loadedmetadata', 'timeupdate', 'seeked', 'pause', 'play'].forEach(event => film.addEventListener(event, show));
+    if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
+      const observePresentedFrame = (_now, metadata) => {
+        presentedClock = decodedFrameClock(metadata.mediaTime, frameRate);
+        show();
+        film.requestVideoFrameCallback(observePresentedFrame);
+      };
+      film.requestVideoFrameCallback(observePresentedFrame);
+    } else {
+      frameStatus.textContent = 'This browser cannot identify the decoded frame on screen; frame-number notes are disabled.';
+    }
+    fetch('/api/projects/8a5659a4-b033-4d5f-80e2-904b217cf8a0/frame-review-reference')
+      .then(response => response.ok ? response.json() : Promise.reject())
+      .then(data => { intervals = data.intervals; show(); })
+      .catch(() => { translation.textContent = 'The verified English translation could not be loaded.'; });
+    show();
+  </script>
+</body>
+</html>

@@ -18,6 +18,7 @@
     "calibrate:control-room-loudness": "tsx scripts/calibrate-control-room-presentation-loudness.ts",
     "evaluate:reviewed-evidence": "tsx scripts/evaluate-reviewed-evidence.ts",
     "report:mark4-readiness": "tsx scripts/report-mark4-readiness.ts",
+    "watch:media": "tsx scripts/watch-media-generation.ts",
     "db:import-control-room-presentation": "python scripts/import-control-room-presentation-library.py C:\\Users\\danbr\\Downloads\\HeartWord_New_Sample_Exchanges.xlsx",
     "test": "vitest run"
   },
