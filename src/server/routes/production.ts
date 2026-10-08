@@ -12,6 +12,8 @@ import { importCutManifest } from "../../pipeline/assembly/import-cut-manifest.j
 import { readCutTimingAudit, recordCutTimingAudit } from "../../pipeline/assembly/cut-timing-audit.js";
 import { buildProductionMonitor, type NegotiationLogEntry, type ProductionMonitorEvent } from "../production-crew.js";
 import { proposeReusableLesson, type LessonScope as SynthesizedLessonScope } from "../../pipeline/creative-direction/lesson-synthesis.js";
+import { exportChapterPackage, inspectChapterPackage } from "../../pipeline/assembly/chapter-package.js";
+import { join } from "node:path";
 
 export const productionRouter = Router({ mergeParams: true });
 const getProjectId = (req: Request): string => req.params.projectId!;
@@ -54,6 +56,17 @@ productionRouter.get("/", (req, res) => {
   // A recorded observation is labelled as such; actual crew loading also
   // verifies both the film hash and current source hashes before using it.
   res.json({ runs, assets, attempts, render, timingAudit: audit });
+});
+productionRouter.get("/preservation", (req, res) => {
+  try { res.json(inspectChapterPackage(getDb(), getDataDir(), getProjectId(req)).manifest); }
+  catch (error) { res.status(409).json({ error: (error as Error).message }); }
+});
+productionRouter.post("/preservation", (req, res) => {
+  try {
+    const path = join(getDataDir(), "chapter-packages", randomUUID());
+    const manifest = exportChapterPackage(getDb(), getDataDir(), getProjectId(req), path);
+    res.json({ path, manifest, summary: `Chapter preserved at ${path}. ${manifest.editability.length ? `${manifest.editability.length} historical editability gaps are listed in the manifest.` : "Assets and production records verified."}` });
+  } catch (error) { res.status(409).json({ error: (error as Error).message }); }
 });
 productionRouter.get("/runs/:runId", (req, res) => {
   const db = getDb();

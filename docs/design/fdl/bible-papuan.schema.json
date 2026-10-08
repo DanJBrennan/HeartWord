@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:heartword:fdl:bible-papuan:1",
+  "title": "Bible/Papuan FDL extension v1 (design)",
+  "type": "object", "additionalProperties": false,
+  "required": ["extensionVersion", "source", "regionalIdentity", "historicalSetting", "gateRecordRefs"],
+  "properties": {
+    "extensionVersion": {"const": 1},
+    "source": {"type": "object", "additionalProperties": false, "required": ["projectId", "sourceBindingRef", "language", "book", "chapter", "verseRefs", "sourceSegmentIds", "referencePurpose"], "properties": {
+      "projectId": {"type": "string"}, "sourceBindingRef": {"type": "string"}, "language": {"type": "string"}, "book": {"type": "string"}, "chapter": {"type": "integer", "minimum": 1},
+      "verseRefs": {"type": "array", "items": {"type": "string"}}, "sourceSegmentIds": {"type": "array", "items": {"type": "string"}}, "referencePurpose": {"const": "semantic_context_only"}
+    }},
+    "regionalIdentity": {"type": "object", "additionalProperties": false, "required": ["region", "medium", "characterVersionRefs"], "properties": {"region": {"const": "Papuan"}, "medium": {"const": "video"}, "characterVersionRefs": {"type": "array", "items": {"type": "string"}}}},
+    "historicalSetting": {"type": "object", "additionalProperties": false, "required": ["period", "place", "setVersionRefs", "reconstructionEvidence", "unknowns"], "properties": {"period": {"type": "string"}, "place": {"type": "string"}, "setVersionRefs": {"type": "array", "items": {"type": "string"}}, "reconstructionEvidence": {"type": "array", "items": {"type": "string"}}, "unknowns": {"type": "array", "items": {"type": "string"}}}},
+    "gateRecordRefs": {"type": "object", "additionalProperties": false, "required": ["videoEligibility", "citationScope", "sourceReview", "canonApproval", "fieldReview", "releaseApproval"], "properties": {"videoEligibility": {"type": ["string", "null"]}, "citationScope": {"type": ["string", "null"]}, "sourceReview": {"type": ["string", "null"]}, "canonApproval": {"type": ["string", "null"]}, "fieldReview": {"type": ["string", "null"]}, "releaseApproval": {"type": ["string", "null"]}}}
+  }
+}

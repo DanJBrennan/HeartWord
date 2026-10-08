@@ -2,7 +2,7 @@
  * It does not alter the chapter timeline, source audio, or selected clips.
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { getDataDir, getDb } from "../src/db/client.js";
 
@@ -21,6 +21,7 @@ const clips = shots.map(([label, shotId]) => {
   return { label, path: join(dataDir, "assets", row.result_asset_path) };
 });
 const output = join(dataDir, "assets", "generated", "review", "mark4-storm-four-performances.mp4");
+if (existsSync(output)) throw new Error("Retained storm review exists; choose a new revision.");
 const manifest = output.replace(/\.mp4$/, ".json");
 mkdirSync(dirname(output), { recursive: true });
 const filters = clips.flatMap((_, index) => [

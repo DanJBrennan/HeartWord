@@ -160,7 +160,7 @@ export class KlingLipSyncProvider implements LipSyncProvider {
 
     const relPath = join("generated", "lipsync", `${taskId}.mp4`);
     mkdirSync(join(dataDir, "assets", "generated", "lipsync"), { recursive: true });
-    writeFileSync(join(dataDir, "assets", relPath), videoBuffer);
+    writeFileSync(join(dataDir, "assets", relPath), videoBuffer, { flag: "wx" });
 
     return {
       status: "accepted",
@@ -388,7 +388,7 @@ export class KlingFaceLipSyncProvider {
 
     const relPath = join("generated", "lipsync-face", `${taskId}.mp4`);
     mkdirSync(join(dataDir, "assets", "generated", "lipsync-face"), { recursive: true });
-    writeFileSync(join(dataDir, "assets", relPath), videoBuffer);
+    writeFileSync(join(dataDir, "assets", relPath), videoBuffer, { flag: "wx" });
 
     return {
       status: "accepted",
@@ -463,7 +463,7 @@ export class KlingVideoProvider implements VideoProvider {
 
     const relPath = join("generated", "video", `kling-${taskId}.mp4`);
     mkdirSync(join(dataDir, "assets", "generated", "video"), { recursive: true });
-    writeFileSync(join(dataDir, "assets", relPath), videoBuffer);
+    writeFileSync(join(dataDir, "assets", relPath), videoBuffer, { flag: "wx" });
 
     return {
       status: "accepted",

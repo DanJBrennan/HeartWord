@@ -23,7 +23,7 @@ for (const beat of selected) {
   const clip = db.prepare("SELECT ga.result_asset_path,c.timeline_end_ms FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE c.shot_id=? AND ga.operation='generate_final_video' AND ga.status='accepted' ORDER BY ga.created_at DESC LIMIT 1")
     .get(beat.shotId) as {result_asset_path:string;timeline_end_ms:number}|undefined;
   if (!shot || !clip || clip.result_asset_path !== beat.path || clip.timeline_end_ms !== beat.end-beat.start || !existsSync(join(root,beat.path))) throw new Error(`Selected beat changed: ${beat.sequence}`);
-  const out = `generated/assembled/${beat.shotId}.mp4`, abs = join(root,out);
+  const out = `generated/assembled/${beat.shotId}-${randomUUID()}.mp4`, abs = join(root,out);
   mkdirSync(join(root,"generated/assembled"),{recursive:true});
   if (shot.needs_lip_sync) {
     const bound = db.prepare(`SELECT ub.source_start_ms,ub.source_end_ms,ub.source_hash,o.source_path AS original_path,o.start_ms AS original_start,o.end_ms AS original_end,

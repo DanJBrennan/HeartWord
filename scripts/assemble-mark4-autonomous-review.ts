@@ -84,6 +84,7 @@ for(const row of audioRows.filter(r=>r.speaker_id)){
 }
 const tmp=mkdtempSync(join(tmpdir(),"heartword-mark4-autonomous-"));
 const outRel="generated/chapter/mark4-autonomous-overnight-review.mp4",out=join(assets,outRel);
+if (existsSync(out) || existsSync(join(assets,"generated/chapter/mark4-autonomous-overnight-review.json"))) throw Error("Retained review exists; choose a new revision instead of overwriting it.");
 mkdirSync(join(assets,"generated","chapter"),{recursive:true});
 try {
   // A concat manifest keeps this Windows invocation below the command-line

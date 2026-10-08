@@ -207,7 +207,7 @@ function groupedReferenceSheets(request: ShotRequest, references: CharacterRefer
       groups.push({ names: [ref.characterName], mimeType: ref.images[0]!.mimeType, data: ref.images[0]!.data });
       continue;
     }
-    const relPath = join("generated", "reference-packs", `${request.shotId}-${offset / 3}.png`);
+    const relPath = join("generated", "reference-packs", `${request.shotId}-${offset / 3}-${randomUUID()}.png`);
     const absPath = join(dataDir, "assets", relPath);
     mkdirSync(join(dataDir, "assets", "generated", "reference-packs"), { recursive: true });
     if (!existsSync(absPath)) {
@@ -216,7 +216,7 @@ function groupedReferenceSheets(request: ShotRequest, references: CharacterRefer
         `[${index}:v]scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=black[p${index}]`
       );
       const stack = group.map((_, index) => `[p${index}]`).join("") + `hstack=inputs=${group.length}[out]`;
-      execFileSync("ffmpeg", ["-y", ...inputs.flatMap((input) => ["-i", input]), "-filter_complex", `${filters.join(";")};${stack}`, "-map", "[out]", "-frames:v", "1", absPath], { stdio: "ignore" });
+      execFileSync("ffmpeg", ["-n", ...inputs.flatMap((input) => ["-i", input]), "-filter_complex", `${filters.join(";")};${stack}`, "-map", "[out]", "-frames:v", "1", absPath], { stdio: "ignore" });
     }
     groups.push({ names: group.map((ref) => ref.characterName), mimeType: "image/png", data: readFileSync(absPath).toString("base64") });
   }
@@ -311,7 +311,7 @@ export class GeminiImageProvider implements ImageProvider {
     // that the producer may need to compare, approve, or restore.
     const relPath = join("generated", "keyframes", `${request.shotId}-${randomUUID().slice(0, 8)}.png`);
     mkdirSync(join(dataDir, "assets", "generated", "keyframes"), { recursive: true });
-    writeFileSync(join(dataDir, "assets", relPath), Buffer.from(imagePart.inlineData.data, "base64"));
+    writeFileSync(join(dataDir, "assets", relPath), Buffer.from(imagePart.inlineData.data, "base64"), { flag: "wx" });
 
     return {
       status: "accepted",
@@ -503,7 +503,7 @@ export class GeminiImageEditor implements ImageEditor {
 
     const relPath = join("generated", "edits", `${basename(absPath, extname(absPath))}-${randomUUID().slice(0, 8)}.jpg`);
     mkdirSync(join(dataDir, "assets", "generated", "edits"), { recursive: true });
-    writeFileSync(join(dataDir, "assets", relPath), Buffer.from(output.data, "base64"));
+    writeFileSync(join(dataDir, "assets", relPath), Buffer.from(output.data, "base64"), { flag: "wx" });
 
     return {
       status: "accepted",
@@ -577,7 +577,7 @@ export class GeminiImageEditor implements ImageEditor {
 
     const relPath = join("generated", "edits", `${basename(absPath, extname(absPath))}-recast-${randomUUID().slice(0, 8)}.jpg`);
     mkdirSync(join(dataDir, "assets", "generated", "edits"), { recursive: true });
-    writeFileSync(join(dataDir, "assets", relPath), Buffer.from(output.data, "base64"));
+    writeFileSync(join(dataDir, "assets", relPath), Buffer.from(output.data, "base64"), { flag: "wx" });
 
     return {
       status: "accepted",
@@ -854,9 +854,9 @@ export class GeminiVideoProvider implements VideoProvider {
       throw new Error(`Veo video sample for shot ${request.shotId} has neither bytesBase64Encoded nor uri.`);
     }
 
-    const relPath = join("generated", "video", `${request.shotId}.mp4`);
+    const relPath = join("generated", "video", `${request.shotId}-${randomUUID()}.mp4`);
     mkdirSync(join(dataDir, "assets", "generated", "video"), { recursive: true });
-    writeFileSync(join(dataDir, "assets", relPath), videoBuffer);
+    writeFileSync(join(dataDir, "assets", relPath), videoBuffer, { flag: "wx" });
 
     return {
       status: "accepted",
@@ -919,10 +919,10 @@ export class GeminiDraftVideoProvider implements DraftVideoProvider {
     });
     const output = extractOutputContent(data, "video", `generateDraft for shot ${request.shotId}`);
 
-    const relPath = join("generated", "drafts", `${request.shotId}.mp4`);
+    const relPath = join("generated", "drafts", `${request.shotId}-${randomUUID()}.mp4`);
     mkdirSync(join(dataDir, "assets", "generated", "drafts"), { recursive: true });
     const absPath = join(dataDir, "assets", relPath);
-    writeFileSync(absPath, Buffer.from(output.data, "base64"));
+    writeFileSync(absPath, Buffer.from(output.data, "base64"), { flag: "wx" });
 
     return {
       status: "accepted",
@@ -957,10 +957,10 @@ export class GeminiDraftVideoProvider implements DraftVideoProvider {
     });
     const output = extractOutputContent(data, "video", `generateGuided for shot ${request.shotId}`);
 
-    const relPath = join("generated", "drafts", `${request.shotId}-guided.mp4`);
+    const relPath = join("generated", "drafts", `${request.shotId}-guided-${randomUUID()}.mp4`);
     mkdirSync(join(dataDir, "assets", "generated", "drafts"), { recursive: true });
     const absPath = join(dataDir, "assets", relPath);
-    writeFileSync(absPath, Buffer.from(output.data, "base64"));
+    writeFileSync(absPath, Buffer.from(output.data, "base64"), { flag: "wx" });
 
     return {
       status: "accepted",

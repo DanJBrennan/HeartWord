@@ -15,10 +15,11 @@ import { detectTruncatedRenewal } from "../qc/audio-tail.js";
 import { assertNoRenderedFlashes } from "../qc/flash-detection.js";
 
 export function assertEditorialRebuildable(db: DatabaseSync, projectId: string): void {
-  const render = db.prepare(`SELECT r.id,m.timeline_json FROM chapter_renders r LEFT JOIN chapter_render_manifests m ON m.render_id=r.id
+  const render = db.prepare(`SELECT r.id,m.timeline_json,m.source_audio_json FROM chapter_renders r LEFT JOIN chapter_render_manifests m ON m.render_id=r.id
     WHERE r.project_id=? ORDER BY r.created_at DESC,r.id DESC LIMIT 1`).get(projectId);
   if (!render) return;
   if (!render.timeline_json) throw new Error("The current hand-edited film has no saved timing manifest. It can be reviewed, but rebuilding requires its existing inserts and pauses to be represented first.");
+  if (!Array.isArray(JSON.parse(String(render.timeline_json))) || !render.source_audio_json || !Array.isArray(JSON.parse(String(render.source_audio_json)))) throw new Error("The current film retains a custom legacy edit recipe. Preserve its editor/scripts and exact source map before automatic picture rebuilding; a saved recipe is not a complete executable timeline.");
   const finish = db.prepare("SELECT json_extract(payload,'$.baseRenderId') AS base FROM edit_commands WHERE project_id=? AND command_type='apply_finishing' AND json_extract(payload,'$.renderId')=? LIMIT 1").get(projectId, String(render.id));
   const baseId = finish?.base ?? render.id;
   if (db.prepare("SELECT id FROM edit_commands WHERE project_id=? AND idempotency_key=?").get(projectId, `cut-timing:${baseId}`)) throw new Error("This imported hand edit is available for review and soundtrack/color finishing. Revise its picture in the existing editor; its supplementary clips are not all represented in the shot database.");

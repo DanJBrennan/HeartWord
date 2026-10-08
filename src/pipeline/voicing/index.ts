@@ -180,7 +180,8 @@ export async function runVoicing(projectId: string, opts: { force?: boolean; sou
 
   for (const [i, seg] of segments.entries()) {
     const absSourcePath = join(dataDir, "assets", seg.source_path);
-    const slug = `${String(i + 1).padStart(2, "0")}-${slugify(seg.verse_ref, i)}`;
+    const sourceHash = createHash("sha256").update(readFileSync(absSourcePath)).digest("hex");
+    const slug = `${seg.id}-${slugify(seg.verse_ref, i)}-${randomUUID()}`;
     const assignment = seg.speaker_character_id ? voiceByCharacter.get(seg.speaker_character_id) : undefined;
 
     const protectedMaster = reviewedByOriginal.get(seg.id);
@@ -195,16 +196,32 @@ export async function runVoicing(projectId: string, opts: { force?: boolean; sou
       continue;
     }
 
+    const mapped = db.prepare(`SELECT a.source_path AS path, m.source_hash AS sourceHash,
+      m.voice_version_id AS voiceVersionId FROM composite_audio_source_map m
+      JOIN audio_segments a ON a.id=m.composite_segment_id WHERE m.original_segment_id=? AND a.project_id=?`)
+      .all(seg.id, project.id) as Array<{path:string;sourceHash:string;voiceVersionId:string|null}>;
+    const reusable = !opts.force && mapped.length === 1 && mapped[0]!.sourceHash === sourceHash &&
+      mapped[0]!.voiceVersionId === (assignment?.versionId ?? null) ? mapped[0] : undefined;
+    if (reusable) {
+      const retainedPath = join(dataDir, "assets", reusable.path);
+      if (!existsSync(retainedPath)) throw new Error(`Missing retained cast master for ${seg.id}: ${reusable.path}. Restore the asset before voicing; no automatic paid regeneration.`);
+      if (existsSync(`${retainedPath}.json`)) {
+        const binding = JSON.parse(readFileSync(`${retainedPath}.json`, "utf8")) as { format?: string; sourceStartMs?: number; sourceEndMs?: number };
+        if (binding.format === "heartword-cast-master" && (binding.sourceStartMs !== seg.start_ms || binding.sourceEndMs !== seg.end_ms)) throw new Error(`Retained cast master for ${seg.id} belongs to different source bounds. Reconcile the saved source mapping before replacing it.`);
+      }
+      newRows.push({ id: randomUUID(), sourcePathRel: reusable.path, durationMs: getAudioDurationMs(retainedPath), speakerCharacterId: seg.speaker_character_id, verseRef: seg.verse_ref, originalSegmentId: seg.id, sourceHash, voiceVersionId: assignment?.versionId ?? null });
+      reused++; continue;
+    }
     const outFileName = assignment ? `${slug}-${assignment.voiceProvider}.mp3` : `${slug}-passthrough.mp3`;
     const outPath = join(outDir, outFileName);
+    let requestSettings: unknown = null;
 
-    if (existsSync(outPath) && !opts.force) {
-      reused++;
-    } else if (assignment) {
+    if (assignment) {
       const tmpClipPath = join(outDir, `${slug}-source-clip.tmp.mp3`);
       extractClip(absSourcePath, seg.start_ms, seg.end_ms, tmpClipPath);
-      const { audioBuffer } = await reVoiceAudio(assignment.voiceId, tmpClipPath);
-      writeFileSync(outPath, audioBuffer);
+      const result = await reVoiceAudio(assignment.voiceId, tmpClipPath);
+      requestSettings = result.requestSettings ?? null;
+      writeFileSync(outPath, result.audioBuffer, { flag: "wx" });
       rmSync(tmpClipPath, { force: true });
       generated++;
     } else {
@@ -220,19 +237,36 @@ export async function runVoicing(projectId: string, opts: { force?: boolean; sou
     }
 
     const durationMs = getAudioDurationMs(outPath);
+    writeFileSync(`${outPath}.json`, JSON.stringify({
+      format: "heartword-cast-master", version: 1, originalSegmentId: seg.id,
+      sourcePath: seg.source_path, sourceHash, sourceStartMs: seg.start_ms, sourceEndMs: seg.end_ms,
+      voiceVersionId: assignment?.versionId ?? null, voiceId: assignment?.voiceId ?? null,
+      provider: assignment?.voiceProvider ?? "local", requestSettings, durationMs,
+      usage: assignment ? "not_reported" : "local_extraction", directCostUsd: assignment ? null : 0
+    }, null, 2), { flag: "wx" });
     newRows.push({
       id: randomUUID(),
       sourcePathRel: join(outDirRel, outFileName),
       durationMs,
       speakerCharacterId: seg.speaker_character_id,
       verseRef: seg.verse_ref
-      ,originalSegmentId:seg.id, sourceHash:createHash("sha256").update(readFileSync(absSourcePath)).digest("hex"), voiceVersionId:assignment?.versionId ?? null
+      ,originalSegmentId:seg.id, sourceHash, voiceVersionId:assignment?.versionId ?? null
     });
   }
 
   const now = Date.now();
   db.exec("BEGIN TRANSACTION");
   try {
+    // Current projections are replaced below; preserve every previous row and
+    // exact mapping before that change, along with the still-retained files.
+    const previousSegments = db.prepare("SELECT * FROM audio_segments WHERE project_id=? AND layer='composite_cast_master'").all(project.id);
+    const previousMappings = db.prepare("SELECT m.* FROM composite_audio_source_map m JOIN audio_segments a ON a.id=m.composite_segment_id WHERE a.project_id=?").all(project.id);
+    const previousReviewNotes = db.prepare("SELECT * FROM review_notes WHERE project_id=? AND subject_type='project' AND source='qc' AND note LIKE 'Composite cast master:%'").all(project.id);
+    if (previousSegments.length) {
+      const sequence = Number(db.prepare("SELECT COALESCE(MAX(sequence),0)+1 AS n FROM edit_commands WHERE project_id=?").get(project.id)!.n);
+      db.prepare("INSERT INTO edit_commands (id,project_id,sequence,command_type,payload,idempotency_key,applied_at) VALUES (?,?,?,'supersede_cast_master',?,?,?)")
+        .run(randomUUID(), project.id, sequence, JSON.stringify({ sourceSegmentIds: scopedIds, previousSegments, previousMappings, previousReviewNotes, originalSegments: segments, nextSegments: newRows }), `cast-master:${randomUUID()}`, now);
+    }
     if (scopedIds) {
       const prior = db.prepare(`SELECT composite_segment_id FROM composite_audio_source_map WHERE original_segment_id IN (${scopedIds.map(() => "?").join(",")})`).all(...scopedIds) as Array<{ composite_segment_id: string }>;
       db.prepare(`DELETE FROM composite_audio_source_map WHERE original_segment_id IN (${scopedIds.map(() => "?").join(",")})`).run(...scopedIds);
@@ -252,7 +286,7 @@ export async function runVoicing(projectId: string, opts: { force?: boolean; sou
     }
 
     if (!scopedIds) db.prepare(
-      `DELETE FROM review_notes WHERE project_id = ? AND subject_type = 'project' AND source = 'qc' AND note LIKE 'Composite cast master:%'`
+      `UPDATE review_notes SET resolved=1 WHERE project_id = ? AND subject_type = 'project' AND source = 'qc' AND note LIKE 'Composite cast master:%'`
     ).run(project.id);
     if (notes.length > 0) {
       db.prepare(

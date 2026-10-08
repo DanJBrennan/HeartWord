@@ -98,6 +98,7 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
       <button disabled={running} onClick={() => void act("edit-cut")}>Build Picture Editor cut</button>
       <button disabled={running || finish?.status !== "awaiting_assets"} onClick={() => finish && void act(`soundtrack/${finish.id}`)}>Generate requested music / effects</button>
       <button disabled={running || finish?.status !== "approved"} onClick={() => finish && void act(`finish/${finish.id}`)}>Apply approved finishing</button>
+      <button disabled={busy} onClick={() => void act("preservation")}>Preserve chapter for later editing</button>
     </div>
     <p className="hint">Planning allows up to 24 role calls; cut review allows up to 16. Music uses Google Gemini; effects use ElevenLabs, with at most eight audio generations per request and an independent listening review. Provider charges apply. Unreported costs are not counted as free.</p>
     {error && <p role="alert" className="error">{error}</p>}

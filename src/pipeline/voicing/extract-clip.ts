@@ -12,7 +12,7 @@ export function extractClip(sourcePath: string, startMs: number, endMs: number, 
   const durationSec = ((endMs - startMs) / 1000).toFixed(3);
   execFileSync(
     "ffmpeg",
-    ["-y", "-i", sourcePath, "-ss", startSec, "-t", durationSec, "-ar", "44100", "-ac", "1", "-c:a", "libmp3lame", "-q:a", "2", outPath],
+    ["-n", "-i", sourcePath, "-ss", startSec, "-t", durationSec, "-ar", "44100", "-ac", "1", "-c:a", "libmp3lame", "-q:a", "2", outPath],
     { stdio: ["ignore", "ignore", "pipe"] }
   );
 }

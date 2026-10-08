@@ -33,11 +33,12 @@ for (const s of sections) {
   if (Number(v?.nb_frames) !== s.frames || v?.width !== 1280 || v?.height !== 720 || !streams.streams.some(x => x.codec_type === "audio")) throw new Error(`Section QC failed: ${s.path}`);
 }
 const output = join(root, "generated/video/review/mark3-full-chapter-source-review-r1.mp4");
+if (existsSync(output) || existsSync(output.replace(/\.mp4$/, ".json"))) throw new Error("Retained chapter output already exists; choose a new revision.");
 const work = mkdtempSync(join(tmpdir(), "heartword-mark3-chapter-"));
 try {
   const list = join(work, "sections.txt");
   writeFileSync(list, sections.map(s => `file '${join(root, s.path).replaceAll("\\", "/")}'`).join("\n"));
-  execFileSync("ffmpeg", ["-v", "error", "-nostats", "-y", "-f", "concat", "-safe", "0", "-i", list,
+  execFileSync("ffmpeg", ["-v", "error", "-nostats", "-n", "-f", "concat", "-safe", "0", "-i", list,
     "-map", "0:v:0", "-map", "0:a:0", "-c", "copy", "-movflags", "+faststart", output],
     { stdio: ["ignore", "ignore", "pipe"], timeout: 1_800_000, maxBuffer: 64 * 1024 * 1024 });
 } finally { rmSync(work, { recursive: true, force: true }); }

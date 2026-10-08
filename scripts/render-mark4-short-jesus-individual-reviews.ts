@@ -22,6 +22,7 @@ for (const item of manifest.items) {
   }
   const duration = (item.endMs - item.startMs) / 1000;
   const rel = join(relDir, `${item.key}.mp4`); const output = join(dataDir, "assets", rel);
+  if (existsSync(output)) throw new Error("Retained individual review exists; choose a new revision.");
   execFileSync("ffmpeg", ["-v", "error", "-y", "-i", join(dataDir, "assets", video.result_asset_path), "-i", join(dataDir, "assets", audio.source_path),
     "-filter_complex", `[0:v]trim=duration=${duration.toFixed(3)},setpts=PTS-STARTPTS[v];[1:a]atrim=duration=${duration.toFixed(3)},asetpts=PTS-STARTPTS[a]`,
     "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "aac", "-movflags", "+faststart", output], { stdio: ["ignore", "ignore", "pipe"] });

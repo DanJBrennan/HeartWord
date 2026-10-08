@@ -97,6 +97,7 @@ export class LtxVideoProvider implements VideoProvider {
     if (extname(output.absolute).toLowerCase() !== ".mp4") throw new Error("LTX output must have an .mp4 extension.");
     mkdirSync(dirname(output.absolute), { recursive: true });
     const metadataPath = `${output.absolute}.json`;
+    if (existsSync(metadataPath)) throw new Error("LTX output metadata already exists. Reconcile that retained attempt or choose a new output path.");
     const metadata: Record<string, unknown> = { generationId, shotId: request.shotId, provider: "ltx_local", model: LTX_MODEL, prompt, requestedPrompt: request.prompt, seed, resolution, durationSeconds: duration, fps, sourceKeyframe: input.relative, localOutputPath: output.absolute, audio: audioMode === "ambient", audioMode, status: "preparing", startedAt: new Date().toISOString() };
     const started = Date.now();
     const save = () => writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));

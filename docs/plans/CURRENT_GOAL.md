@@ -1,5 +1,82 @@
 # Current Goal
 
+## Editable chapter preservation delivered (2026-10-07)
+
+This unit serves the vision's faithful editable chapter and the normal
+language/book/chapter review workflow. It extends assembly, existing records
+and the Production crew controls; the active local-LTX goal and branding
+research below remain intact. Design/operations:
+[chapter preservation](../design/chapter-preservation.md).
+
+Versioned portable packages now retain original source/cast masters and exact
+maps, required historical canon, selected/rejected/superseded media, timeline
+and edit history, soundtracks/cues, finishing, prompts/settings, reviews,
+approvals, cost/provenance records, exact schema and application source/lockfile.
+Export/verify/restore reject missing/changed assets and existing destinations.
+Restoration creates a new data root for the same saved chapter workflow and
+never calls a generation provider. Production preservation is distinct from
+off-machine disaster backup; no backup service/schedule is configured.
+
+Fixed filenames in Gemini final/draft/guided video, assembled shots and scoped
+voicing could lose earlier takes. New takes are unique/exclusive; voice reuse
+requires the exact source/voice mapping, missing mapped audio holds, and typed
+history retains superseded cast rows/maps. Relevant legacy review/chapter
+scripts now refuse overwrite or use unique outputs; raw location-draft pixels
+survive normalization. Older overwritten bytes cannot be recreated from prompts.
+The default storage policy retains essential originals, including rejected and
+superseded work, indefinitely with no automatic deletion. Derived proxies and
+thumbnails are identified separately and remain included by default.
+
+A Blender copy helper inventories textures/linked assets, records version and
+dependency hashes and makes paths relative without saving over the original.
+The real Blender 5.2 restoration test reopens a texture and linked building
+library with the original directories unavailable. Unsupported dependency
+forms hold explicitly instead of producing a false portability claim.
+
+Real Mark 4 package:
+`HeartWordData/chapter-packages/mark4-preserved-2026-10-07` (2,265 files,
+16.122 GiB, no missing/hash failures at export), including the original custom
+edit scratch directory. It was restored under
+`HeartWordData/scratch/mark4-preservation-restored-2026-10-07`; the normal chapter
+loader reopened 41 source verses, 142 audio intervals, 25 canon identities,
+111 shots and 96 selected clips. These are same-disk preservation artifacts,
+not disaster backups. The audit correctly labels 69 historical/custom render
+recipes, including current v73, as needing complete executable timeline/source
+mapping before automatic full picture rebuilding. The guard now prevents a
+custom recipe being mistaken for that map. No live production is rewritten.
+
+The retained real-FFmpeg demonstration at
+`HeartWordData/scratch/chapter-preservation-proof-2026-10-07` exports/restores an
+explicitly synthetic chapter, removes access to original assets, reopens it,
+changes a music cue from -24 to -25 dB and renders a revised three-second
+preview using retained components. The revised data root and saved edit remain
+available alongside the immutable baseline package. Source/cast timing, edit
+history and costs are checked; this is workflow evidence, not a Hatam
+acting-quality review.
+
+At Dan's clarification, the
+[new Film Description Language design](../design/film-description-language.md)
+and separate Bible/Papuan JSON Schema were created from scratch using the
+requirements in “Prompt Kling performance guidance.” They distinguish
+persistent canon/set facts, scene state, camera, keyframes, clip progression,
+provider settings and source/regional/historical authority. Worked successive
+keyframes/clip and owner/objection examples are included. These are design
+artifacts; generators do not yet consume FDL, and historical chapters need not
+be retrofitted before preservation.
+
+Validation and the separate Goal Guardian completion review are recorded in
+the preservation design document: 551 tests across 94 files, TypeScript, web
+build, script syntax and JSON Schema validation pass. The review repaired
+broader lesson matching,
+retained old cast QC notes and added source-bound/provider-setting sidecars for
+new cast takes. It passes the demonstrated portable workflow while explicitly
+leaving legacy v73 full-picture rebuilding unverified. No paid generation or
+new chapter planning was started. Your dot/external ChatGPT/SMS delivery
+capabilities are unavailable in this session; this chat reports results, and
+phone delivery is not claimed.
+Dan's supplied number is already in the referenced chat. No repeated approval
+is needed; actual delivery requires a connected notification capability.
+
 ## Active: integrate local LTX scene-video generation (2026-10-06)
 
 Dan has proven LTX Desktop 1.2.7 / LTX 2.5 Fast on his dedicated M4 Pro Mac mini

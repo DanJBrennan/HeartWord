@@ -181,6 +181,17 @@ against another stage's already-saved output.
 
 ## Data model (v1)
 
+Editable chapter preservation extends assembly through
+`src/pipeline/assembly/chapter-package.ts`; it adds no pipeline stage or
+parallel project model. Versioned packages retain actual source/generated
+bytes, existing relational production records, exact schema, application
+source/lockfile, provenance and edit history. Restore uses a new configurable
+data root and the same chapter loader/producer controls. Missing/changed
+assets hold rather than invoking a provider. Historical custom edit recipes
+are retained and labelled until their complete timeline/source map is
+represented. See [chapter preservation](design/chapter-preservation.md) and
+the separately labelled [FDL design](design/film-description-language.md).
+
 The entities and relationships a v1 implementation needs, expanding the
 list already named in Assets, Versions, and Portability in
 `docs/PRODUCT_VISION.md`. The actual DDL lives in `src/db/schema.sql`; the

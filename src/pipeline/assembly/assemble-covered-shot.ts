@@ -323,7 +323,7 @@ export function assembleCoveredSequenceShot(db: DatabaseSync, shotId: string): A
     forceExactDuration(silentPath, totalDurationMs, exactSilentPath);
 
     const audioAbsPath = join(dataDir, "assets", audioSeg.sourcePath);
-    const relPath = join("generated", "assembled", `${shotId}.mp4`);
+    const relPath = join("generated", "assembled", `${shotId}-${randomUUID()}.mp4`);
     const outPath = join(dataDir, "assets", relPath);
     mkdirSync(join(dataDir, "assets", "generated", "assembled"), { recursive: true });
     muxAudio(exactSilentPath, audioAbsPath, audioSeg.startMs, audioSeg.endMs - audioSeg.startMs, totalDurationMs, outPath);

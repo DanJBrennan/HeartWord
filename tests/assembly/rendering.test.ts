@@ -1,6 +1,6 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { expect, it } from "vitest";
@@ -8,6 +8,7 @@ import { crewBriefHash, digest, loadCrewBrief } from "../../src/pipeline/creativ
 import { renderEditorialCut } from "../../src/pipeline/assembly/render-editorial-cut.js";
 import { applyFinishing, mediaDurationMs } from "../../src/pipeline/assembly/finishing.js";
 import type { CrewResult } from "../../src/pipeline/creative-direction/crew-types.js";
+import { exportChapterPackage, restoreChapterPackage, verifyChapterPackage } from "../../src/pipeline/assembly/chapter-package.js";
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 const ffmpegAvailable = spawnSync("ffmpeg", ["-version"], { stdio: "ignore" }).status === 0;
 function docx(text: string): Buffer {
@@ -80,13 +81,57 @@ it.skipIf(!ffmpegAvailable)("renders real pauses and cast speech, then applies a
     for (let index = 0; index < firstSamples.length; index++) { const delta = Math.abs(firstSamples[index]! - secondSamples[index]!); maxDelta = Math.max(maxDelta, delta); squaredError += delta ** 2; }
     // AAC frame encoding is not sample-deterministic across two independent
     // encodes: a small boundary transient can decode differently even when the
-    // continuous mix is identical. The RMS check below remains the meaningful
-    // signal-level invariant; 128 permits that codec variance while still
-    // rejecting a changed cue, duplicate score, or timing shift.
+    // continuous mix is identical. Eight signed-16-bit RMS units is below
+    // -72 dBFS; the intentional 1 dB cue edit below must exceed that tolerance.
+    // The peak check also rejects a timing shift or duplicate score.
     expect(maxDelta).toBeLessThanOrEqual(128);
-    expect(Math.sqrt(squaredError / firstSamples.length)).toBeLessThanOrEqual(0.1);
+    expect(Math.sqrt(squaredError / firstSamples.length)).toBeLessThanOrEqual(8);
+    // Restore under another root with the original assets unavailable, reopen
+    // through the real crew brief and make a small saved finishing revision.
+    const packaged = join(directory, "portable-chapter"), restored = join(directory, "different-root");
+    exportChapterPackage(db, directory, "p", packaged);
+    restoreChapterPackage(packaged, restored);
+    renameSync(assets, join(directory, "offline-original-assets"));
+    const reopened = new DatabaseSync(join(restored, "db", "heartword.sqlite"));
+    try {
+      const reopenedBrief = loadCrewBrief(reopened, restored, "p", "finishing");
+      expect(reopenedBrief.render!.audioMap).toEqual(revisedBrief.render!.audioMap);
+      const modified = structuredClone(finish);
+      modified.summary = "Lower retained music by 1 dB";
+      modified.contributions.composer!.audioCues![0]!.gainDb = -25;
+      reopened.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('restored-edit','p','finishing',?,?,'approved',?,4)")
+        .run(crewBriefHash(reopenedBrief, "finishing"), JSON.stringify(reopenedBrief), JSON.stringify(modified));
+      const preview = applyFinishing(reopened, restored, "p", "restored-edit");
+      expect(mediaDurationMs(join(restored, "assets", preview.path))).toBeCloseTo(3000, -2);
+      const previewPcm = execFileSync("ffmpeg", ["-v", "error", "-i", join(restored, "assets", preview.path), "-f", "s16le", "-ac", "1", "-ar", "8000", "pipe:1"]);
+      const previewSamples = new Int16Array(previewPcm.buffer, previewPcm.byteOffset, previewPcm.byteLength / 2);
+      expect(previewSamples.length).toBe(firstSamples.length);
+      const editedError = previewSamples.reduce((sum, sample, index) => sum + (sample - firstSamples[index]!) ** 2, 0);
+      expect(Math.sqrt(editedError / firstSamples.length)).toBeGreaterThan(8);
+      expect(reopened.prepare("SELECT COUNT(*) AS n FROM cost_ledger_entries").get()).toEqual(db.prepare("SELECT COUNT(*) AS n FROM cost_ledger_entries").get());
+      expect(reopened.prepare("SELECT payload FROM edit_commands WHERE idempotency_key='finishing:restored-edit'").get()).toBeTruthy();
+      expect(verifyChapterPackage(packaged).files.length).toBeGreaterThan(6);
+      if (process.env.HEARTWORD_PRESERVATION_DEMO_DIR) {
+        const demo = process.env.HEARTWORD_PRESERVATION_DEMO_DIR;
+        if (requireNewDemo(demo)) {
+          mkdirSync(demo);
+          cpSync(packaged, join(demo, "chapter-package"), { recursive: true, errorOnExist: true, force: false });
+          cpSync(join(restored, "assets", preview.path), join(demo, "revised-preview.mp4"), { errorOnExist: true, force: false });
+          const retainedRoot = join(demo, "revised-data");
+          mkdirSync(join(retainedRoot, "db"), { recursive: true });
+          cpSync(join(restored, "assets"), join(retainedRoot, "assets"), { recursive: true, errorOnExist: true, force: false });
+          reopened.exec(`VACUUM INTO '${join(retainedRoot, "db", "heartword.sqlite").replaceAll("'", "''")}'`);
+          const retainedDb = new DatabaseSync(join(retainedRoot, "db", "heartword.sqlite"), { readOnly: true });
+          try { expect(loadCrewBrief(retainedDb, retainedRoot, "p", "finishing").render!.audioMap).toEqual(reopenedBrief.render!.audioMap); }
+          finally { retainedDb.close(); }
+          writeFileSync(join(demo, "evidence.json"), JSON.stringify({ fixture: "Synthetic chapter: red/blue picture, 440 Hz original narration, 880 Hz cast speech, 220 Hz music; no generated or invented Scripture.", originalRootUnavailable: true, restoredRoot: retainedRoot, change: "Music cue -24 dB to -25 dB", preview: preview.path, durationMs: mediaDurationMs(join(restored, "assets", preview.path)), costLedgerUnchanged: true, audioMap: reopenedBrief.render!.audioMap, history: reopened.prepare("SELECT command_type,payload FROM edit_commands ORDER BY sequence").all() }, null, 2));
+        }
+      }
+    } finally { reopened.close(); }
   } finally { db.close(); if (relative(tmpdir(), directory).startsWith("heartword-render-test-")) rmSync(directory, { recursive: true, force: true }); }
 }, 30000);
+
+function requireNewDemo(path: string) { if (existsSync(path)) throw new Error("Choose a new preservation demo directory."); return true; }
 
 it.skipIf(!ffmpegAvailable)("holds an exported audio turn with a renewed onset cut off after silence", () => {
   const directory = mkdtempSync(join(tmpdir(), "heartword-tail-test-")), assets = join(directory, "assets");

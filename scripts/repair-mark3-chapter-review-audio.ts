@@ -12,6 +12,7 @@ const root = join(getDataDir(), "assets");
 const reviewDir = join(root, "generated/video/review");
 const input = join(reviewDir, "mark3-full-chapter-source-review-r1.mp4");
 const output = join(reviewDir, "mark3-full-chapter-source-review-r2.mp4");
+if (existsSync(output)) throw new Error("Retained audio-repair review exists; choose a new revision.");
 const oldManifest = JSON.parse(readFileSync(input.replace(/\.mp4$/, ".json"), "utf8")) as Manifest;
 const sections = oldManifest.sections;
 

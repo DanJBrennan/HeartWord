@@ -73,7 +73,7 @@ export function cropKeyframe(sourcePath: string, box: CropBox, outPath: string):
   execFileSync(
     "ffmpeg",
     [
-      "-y",
+      "-n",
       "-i",
       sourcePath,
       "-vf",

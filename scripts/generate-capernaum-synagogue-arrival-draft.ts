@@ -7,7 +7,7 @@
  */
 import "dotenv/config";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir, getDb } from "../src/db/client.js";
 import { registerStandaloneLibraryAsset } from "../src/pipeline/media-generation/media-library.js";
@@ -23,7 +23,7 @@ const relativeOutput = ambient
   ? "generated/media-library/capernaum-synagogue-arrival-and-town-life-omni-draft-r5-ambient.mp4"
   : "generated/media-library/capernaum-synagogue-arrival-and-town-life-omni-draft-r4-entered-before-end.mp4";
 const outputPath = join(dataDir, "assets", relativeOutput);
-const rawPath = ambient ? outputPath.replace(/\.mp4$/, ".raw.mp4") : outputPath;
+const rawPath = outputPath.replace(/\.mp4$/, ".raw.mp4");
 
 const prompt = `Use case: historical-scene
 Asset type: standalone reusable Hatam/Papuan location-motion reference, ${ambient ? "natural-ambience review draft" : "silent review draft"}
@@ -35,7 +35,7 @@ ${ambient ? "Sound: produce a continuous, clearly audible but restrained outdoor
 Constraints: Jesus is a normal-height adult man, approximately 1.7 metres / 5 ft 7 in. Match his body scale to every other adult and to the existing doorway: his head and shoulders must be comfortably below the lintel, he must never be taller than the doorway or nearby adults, and he must not dominate the façade or appear giant-sized. Keep all townspeople normal adult or child scale as appropriate. Natural independently timed walking and small business motions; varied eyelines, depth, and pace; people remain Papuan/Hatam in appearance; controlled first-century wool/linen palette of cream, brown, charcoal, ochre, muted madder, and restrained indigo. The setting must remain coherent from first to last frame. Jesus appears once only. No spoken dialogue, chanting, singing, lip-sync, subtitles, title cards, text, logos, watermarks, modern objects, modern hinges, metal door hardware, ornate later limestone synagogue, crowds, miracles, confrontation, theatrical bowing, synchronized movement, camera movement, zoom, pan, or reframing.`;
 
 async function main() {
-  if (existsSync(outputPath) || existsSync(rawPath)) throw new Error(`Refusing to overwrite retained video: ${outputPath}`);
+  if (existsSync(outputPath) || existsSync(rawPath) || existsSync(`${outputPath}.normalized.mp4`)) throw new Error(`Refusing to overwrite retained video: ${outputPath}`);
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/interactions?key=${apiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -55,13 +55,14 @@ async function main() {
   const encoded = payload.steps?.find(step => step.type === "model_output")?.content?.find(item => item.type === "video")?.data;
   if (!encoded) throw new Error("Gemini Omni returned no video.");
   mkdirSync(join(dataDir, "assets", "generated", "media-library"), { recursive: true });
-  writeFileSync(rawPath, Buffer.from(encoded, "base64"));
+  writeFileSync(rawPath, Buffer.from(encoded, "base64"), { flag: "wx" });
   if (ambient) {
     const streams = JSON.parse(execFileSync("ffprobe", ["-v", "error", "-show_entries", "stream=codec_type", "-of", "json", rawPath], { encoding: "utf8" })) as { streams: Array<{ codec_type: string }> };
     if (!streams.streams.some(stream => stream.codec_type === "audio")) throw new Error(`Generated take has no audio stream; raw take retained at ${rawPath}`);
   }
   execFileSync("ffmpeg", ["-v", "error", "-y", "-i", rawPath, ...(ambient ? ["-map", "0:v:0", "-map", "0:a:0"] : ["-an"]), "-vf", "fps=24,scale=-2:360", "-c:v", "libx264", "-crf", "25", "-pix_fmt", "yuv420p", ...(ambient ? ["-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"] : []), "-movflags", "+faststart", `${outputPath}.normalized.mp4`]);
-  execFileSync("powershell", ["-NoProfile", "-Command", `Move-Item -LiteralPath '${outputPath}.normalized.mp4' -Destination '${outputPath}' -Force`]);
+  if (existsSync(outputPath)) throw new Error(`Retained output appeared during generation: ${outputPath}`);
+  renameSync(`${outputPath}.normalized.mp4`, outputPath);
   const library = registerStandaloneLibraryAsset(getDb(), dataDir, {
     assetPath: relativeOutput,
     title: "Capernaum synagogue: town life and Jesus entering",

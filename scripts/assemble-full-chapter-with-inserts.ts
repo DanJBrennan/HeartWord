@@ -456,7 +456,7 @@ function run() {
       totalDurationMs += durationMs;
     }
 
-    const relPath = join("generated", "chapter", `${PROJECT_ID}-full-with-inserts.mp4`);
+    const relPath = join("generated", "chapter", `${PROJECT_ID}-full-with-inserts-${randomUUID()}.mp4`);
     const outPath = join(dataDir, "assets", relPath);
     mkdirSync(join(dataDir, "assets", "generated", "chapter"), { recursive: true });
     concatClips(normalizedPaths, outPath, tmpDir);

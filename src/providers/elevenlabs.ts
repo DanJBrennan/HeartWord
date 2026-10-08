@@ -80,6 +80,7 @@ export async function listElevenLabsVoices(): Promise<ElevenLabsVoice[]> {
 export interface ReVoiceResult {
   audioBuffer: Buffer;
   contentType: string;
+  requestSettings: { model_id: string; remove_background_noise: boolean; output_format: string };
 }
 
 /**
@@ -102,12 +103,13 @@ export async function reVoiceAudio(voiceId: string, sourceAudioPath: string): Pr
   }
 
   const audioBytes = await readFile(sourceAudioPath);
+  const requestSettings = { model_id: "eleven_multilingual_sts_v2", remove_background_noise: true, output_format: "mp3_44100_128" };
   const form = new FormData();
   form.append("audio", new Blob([audioBytes]), basename(sourceAudioPath));
-  form.append("model_id", "eleven_multilingual_sts_v2");
-  form.append("remove_background_noise", "true");
+  form.append("model_id", requestSettings.model_id);
+  form.append("remove_background_noise", String(requestSettings.remove_background_noise));
 
-  const url = `https://api.elevenlabs.io/v1/speech-to-speech/${voiceId}?output_format=mp3_44100_128`;
+  const url = `https://api.elevenlabs.io/v1/speech-to-speech/${voiceId}?output_format=${requestSettings.output_format}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "xi-api-key": apiKey },
@@ -122,5 +124,5 @@ export async function reVoiceAudio(voiceId: string, sourceAudioPath: string): Pr
   }
 
   const arrayBuffer = await res.arrayBuffer();
-  return { audioBuffer: Buffer.from(arrayBuffer), contentType: res.headers.get("content-type") ?? "audio/mpeg" };
+  return { audioBuffer: Buffer.from(arrayBuffer), contentType: res.headers.get("content-type") ?? "audio/mpeg", requestSettings };
 }

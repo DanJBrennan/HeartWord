@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:heartword:fdl:core:1",
+  "title": "HeartWord Film Description Language core v1 (design)",
+  "type": "object", "additionalProperties": false,
+  "required": ["fdlVersion", "revision", "inputRevision", "prose", "world", "states", "shots", "keyframes", "clips"],
+  "properties": {
+    "fdlVersion": {"const": 1}, "revision": {"type": "string", "minLength": 1},
+    "inputRevision": {"type": ["string", "null"]}, "parentRevision": {"type": ["string", "null"]},
+    "prose": {"type": "string"},
+    "world": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "states": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "shots": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "keyframes": {"type": "array", "items": {"$ref": "#/$defs/keyframe"}},
+    "clips": {"type": "array", "items": {"$ref": "#/$defs/clip"}},
+    "providerSettings": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["provider", "model", "settings", "supportedFieldsEvidence"], "properties": {"provider": {"type": "string"}, "model": {"type": ["string", "null"]}, "settings": {"type": "object"}, "supportedFieldsEvidence": {"type": "string"}}}},
+    "extensions": {"type": "object"}
+  },
+  "$defs": {
+    "asset": {"type": "object", "additionalProperties": false, "required": ["recordId", "uri", "sha256"], "properties": {"recordId": {"type": "string"}, "uri": {"type": "string"}, "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}}},
+    "fact": {"type": "object", "additionalProperties": false, "required": ["value", "status", "owner", "evidence", "approvalRecord"], "properties": {
+      "value": {}, "status": {"enum": ["unknown", "observed", "proposed", "approved"]},
+      "owner": {"type": "string"}, "units": {"enum": ["m", "mm", "degrees", "ms", "frames", "none"]},
+      "evidence": {"type": "array", "items": {"type": "string"}}, "approvalRecord": {"type": ["string", "null"]}
+    }, "allOf": [{"if": {"properties": {"status": {"const": "unknown"}}}, "then": {"properties": {"value": {"type": "null"}}}}, {"if": {"properties": {"status": {"const": "approved"}}}, "then": {"properties": {"approvalRecord": {"type": "string", "minLength": 1}, "evidence": {"minItems": 1}}}}]},
+    "entity": {"type": "object", "additionalProperties": false, "required": ["id", "kind", "recordRefs", "facts"], "properties": {
+      "id": {"type": "string"}, "kind": {"enum": ["character", "garment", "set", "prop", "scene_state", "shot"]},
+      "recordRefs": {"type": "array", "items": {"type": "string"}},
+      "assets": {"type": "array", "items": {"$ref": "#/$defs/asset"}},
+      "facts": {"type": "object", "additionalProperties": {"$ref": "#/$defs/fact"}}
+    }},
+    "keyframe": {"type": "object", "additionalProperties": false, "required": ["id", "shotId", "stateId", "anchor", "facts"], "properties": {
+      "id": {"type": "string"}, "shotId": {"type": "string"}, "stateId": {"type": "string"}, "anchor": {"enum": ["start", "end", "intermediate"]},
+      "selectedAsset": {"$ref": "#/$defs/asset"}, "facts": {"type": "object", "additionalProperties": {"$ref": "#/$defs/fact"}}
+    }},
+    "clip": {"type": "object", "additionalProperties": false, "required": ["id", "shotId", "startKeyframe", "endKeyframe", "durationMs", "motion", "audioBindings"], "properties": {
+      "id": {"type": "string"}, "shotId": {"type": "string"}, "startKeyframe": {"type": "string"}, "endKeyframe": {"type": ["string", "null"]},
+      "durationMs": {"type": "integer", "minimum": 1}, "motion": {"type": "object", "additionalProperties": {"$ref": "#/$defs/fact"}},
+      "selectedAsset": {"$ref": "#/$defs/asset"},
+      "audioBindings": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["sourceSegmentId", "castSegmentId", "sourceStartMs", "sourceEndMs", "productionStartMs", "productionEndMs"], "properties": {"sourceSegmentId": {"type": "string"}, "castSegmentId": {"type": ["string", "null"]}, "sourceStartMs": {"type": "integer", "minimum": 0}, "sourceEndMs": {"type": "integer", "minimum": 1}, "productionStartMs": {"type": "integer", "minimum": 0}, "productionEndMs": {"type": "integer", "minimum": 1}}}}
+    }}
+  }
+}

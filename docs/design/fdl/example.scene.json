@@ -1,0 +1,44 @@
+{
+  "fdlVersion": 1,
+  "revision": "design-example-2",
+  "inputRevision": "design-example-1",
+  "parentRevision": "design-example-1",
+  "prose": "Illustrative design packet only, not an approved production. Mark 4:1 boat/shore context: preserve seated Jesus, approved identity/wardrobe and boat/shore relation while the camera moves closer. All bind:* references must resolve to existing approved production records before generation. No Hatam words or audio timing are invented here.",
+  "world": [
+    {"id": "jesus", "kind": "character", "recordRefs": ["bind:approved-Papuan-Jesus-character-version"], "facts": {
+      "identityAndWardrobe": {"value": "Inherit exact approved version and reference images without alteration", "status": "proposed", "owner": "casting_canon", "evidence": ["bind:approved-character-assets"], "approvalRecord": null}
+    }},
+    {"id": "shore-boat", "kind": "set", "recordRefs": ["bind:approved-set-or-scene-anchor-version"], "facts": {
+      "boatShoreRelation": {"value": "One boat off the same shoreline; preserve accepted anchor geometry", "status": "proposed", "owner": "staging_designer", "evidence": ["bind:accepted-scene-anchor"], "approvalRecord": null},
+      "hiddenInteriorGeometry": {"value": null, "status": "unknown", "owner": "staging_designer", "evidence": [], "approvalRecord": null}
+    }}
+  ],
+  "states": [{"id": "seated-teaching", "kind": "scene_state", "recordRefs": ["bind:Mark-4-1-scene"], "facts": {
+    "jesusPosture": {"value": "Seated in the boat facing the crowd on shore", "status": "proposed", "owner": "choreographer", "evidence": ["bind:verified-Mark-4-1-source"], "approvalRecord": null},
+    "timeOfDay": {"value": null, "status": "unknown", "owner": "lighting_designer", "evidence": [], "approvalRecord": null}
+  }}],
+  "shots": [{"id": "boat-shore-view", "kind": "shot", "recordRefs": ["bind:existing-shot-id"], "facts": {
+    "framing": {"value": "Wide from shore, moving nearer on the accepted axis", "status": "proposed", "owner": "cinematographer", "evidence": ["bind:accepted-camera-direction"], "approvalRecord": null},
+    "lensFocalLength": {"value": null, "units": "mm", "status": "unknown", "owner": "cinematographer", "evidence": [], "approvalRecord": null}
+  }}],
+  "keyframes": [
+    {"id": "K1", "shotId": "boat-shore-view", "stateId": "seated-teaching", "anchor": "start", "facts": {
+      "cameraView": {"value": "Wide view preserves boat and shore relationship", "status": "proposed", "owner": "cinematographer", "evidence": ["bind:accepted-scene-anchor"], "approvalRecord": null}
+    }},
+    {"id": "K2", "shotId": "boat-shore-view", "stateId": "seated-teaching", "anchor": "end", "facts": {
+      "cameraView": {"value": "Closer view along the same accepted axis; subject and boat do not move", "status": "proposed", "owner": "cinematographer", "evidence": ["design-example:K1", "bind:accepted-camera-direction"], "approvalRecord": null}
+    }}
+  ],
+  "clips": [{"id": "C1", "shotId": "boat-shore-view", "startKeyframe": "K1", "endKeyframe": "K2", "durationMs": 5000, "motion": {
+    "camera": {"value": "Slow continuous push toward K2; five seconds is illustrative pending measured coverage", "status": "proposed", "owner": "cinematographer", "evidence": ["design-example:K1", "design-example:K2"], "approvalRecord": null},
+    "subject": {"value": "Jesus remains seated; no invented speech, arrival, departure or extra boat", "status": "proposed", "owner": "choreographer", "evidence": ["bind:verified-Mark-4-1-source"], "approvalRecord": null}
+  }, "audioBindings": []}],
+  "providerSettings": [],
+  "extensions": {"biblePapuan": {
+    "extensionVersion": 1,
+    "source": {"projectId": "bind:existing-Hatam-Mark-4-project", "sourceBindingRef": "bind:project_source_bindings", "language": "hatam", "book": "mark", "chapter": 4, "verseRefs": ["Mark 4:1"], "sourceSegmentIds": [], "referencePurpose": "semantic_context_only"},
+    "regionalIdentity": {"region": "Papuan", "medium": "video", "characterVersionRefs": ["bind:approved-Papuan-Jesus-character-version"]},
+    "historicalSetting": {"period": "First-century biblical setting", "place": "Galilee, boat and shore", "setVersionRefs": ["bind:approved-set-or-scene-anchor-version"], "reconstructionEvidence": ["bind:approved-set-evidence"], "unknowns": ["Hidden boat interior", "Exact time of day", "Unmeasured camera/lens geometry"]},
+    "gateRecordRefs": {"videoEligibility": null, "citationScope": null, "sourceReview": null, "canonApproval": null, "fieldReview": null, "releaseApproval": null}
+  }}
+}

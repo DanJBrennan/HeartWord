@@ -218,7 +218,7 @@ export function assembleSingleShot(db: DatabaseSync, shotId: string): AssembleSi
     const trimmedPath = join(tmpDir, "trimmed.mp4");
     normalizeAndTrim(join(dataDir, "assets", clip.result_asset_path), durationMs, trimmedPath);
 
-    const relPath = join("generated", "assembled", `${shotId}.mp4`);
+    const relPath = join("generated", "assembled", `${shotId}-${randomUUID()}.mp4`);
     const outPath = join(dataDir, "assets", relPath);
     mkdirSync(join(dataDir, "assets", "generated", "assembled"), { recursive: true });
 

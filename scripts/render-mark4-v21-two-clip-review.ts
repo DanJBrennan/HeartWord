@@ -23,6 +23,7 @@ if (!audio || clips.some(clip => !existsSync(join(dataDir, "assets", clip.path))
 }
 const rel = "generated/chapter/mark4-v21-two-clip-pilot-review.mp4";
 const output = join(dataDir, "assets", rel);
+if (existsSync(output)) throw new Error("Retained two-clip review exists; choose a new revision.");
 mkdirSync(join(dataDir, "assets", "generated", "chapter"), { recursive: true });
 const filter = clips.map((clip, index) =>
   `[${index}:v]trim=duration=${clip.duration.toFixed(3)},setpts=PTS-STARTPTS,scale=1904:1072,setsar=1[v${index}]`,

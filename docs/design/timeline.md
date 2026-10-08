@@ -120,6 +120,14 @@ pixels.
 
 ## Open questions
 
+Editable portability is now implemented through the existing assembly
+package tools and production controls: see [chapter preservation](chapter-preservation.md).
+The package keeps the actual timeline/audio/edit records and retained media;
+it does not derive an editable project from the MP4. An imported/custom recipe
+without the common ordered timeline and exact source map blocks automatic
+picture rebuilding. The [FDL design](film-description-language.md) is a new
+description schema proposal, not a replacement for saved edit history.
+
 - Target output format/container and whether an editable project file
   (e.g. an edit-decision-list style artifact) is produced alongside the video.
 - How manual edits to one scene are reconciled back into the full timeline.

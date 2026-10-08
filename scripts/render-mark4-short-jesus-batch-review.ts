@@ -25,6 +25,7 @@ const items = manifest.items.map(item => {
 const total = items.reduce((sum, item) => sum + item.duration, 0);
 const rel = "generated/chapter/mark4-short-jesus-batch-review.mp4";
 const output = join(dataDir, "assets", rel); mkdirSync(join(dataDir, "assets", "generated", "chapter"), { recursive: true });
+if (existsSync(output)) throw new Error("Retained batch review exists; choose a new revision.");
 const videoFilters = items.map((item, i) => `[${i}:v]trim=duration=${item.duration.toFixed(3)},setpts=PTS-STARTPTS,scale=1904:1072,setsar=1[v${i}]`);
 const audioOffset = items.length;
 const audioFilters = items.map((item, i) => `[${audioOffset + i}:a]atrim=duration=${item.duration.toFixed(3)},asetpts=PTS-STARTPTS[a${i}]`);

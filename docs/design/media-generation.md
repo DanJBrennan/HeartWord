@@ -133,6 +133,16 @@ varied poses, uneven depth, partial occlusion, and story-motivated eyelines.
 
 ## Retained-take library
 
+October 7 preservation update: final/draft/guided provider videos and
+assembled-shot outputs now use unique take filenames; image/video writes are
+exclusive. Source/voice-mapped cast reuse replaces scoped-index filename reuse.
+Rejected and superseded work is retained indefinitely by default and included
+with provenance in the [portable chapter package](chapter-preservation.md).
+This does not authorize a new generation, change selected assets, or claim
+old overwritten pixels can be recovered from a prompt. The new
+[FDL design](film-description-language.md) remains separate from implemented
+provider request contracts.
+
 Every verifiable generated image or video remains at its immutable original
 path, whether it was selected for its origin shot, held for review, escalated,
 or simply not selected for that origin timeline. `generation_attempts` remains

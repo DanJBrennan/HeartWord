@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { getDataDir } from "../src/db/client.js";
 
@@ -14,6 +14,7 @@ const clips=[
   join(assets,"generated/video/1172d540-c778-46af-8c7e-9dfa2cc565a1.mp4")
 ];
 const output=join(assets,"generated","review","mark4-restart-four-clip-narrated-review.mp4");
+if (existsSync(output)) throw new Error("Retained narrated review exists; choose a new revision.");
 const manifest=output.replace(/\.mp4$/,".json");
 mkdirSync(dirname(output),{recursive:true});
 const filter=[

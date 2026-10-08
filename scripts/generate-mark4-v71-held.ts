@@ -32,7 +32,7 @@
  */
 import "dotenv/config";
 import { execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { constants, copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir } from "../src/db/client.js";
 import { GeminiImageEditor } from "../src/providers/gemini/index.js";
@@ -173,7 +173,7 @@ async function keyframes() {
     if (!existsSync(join(assets, k.from))) throw new Error(`missing input ${k.from} (run again after the earlier keyframe exists)`);
     const r = await editor.editRegion({ path: k.from }, k.edit);
     if (!r.media) throw new Error(`no image for ${k.out}`);
-    copyFileSync(join(assets, r.media.path), join(DIR, k.out));
+    copyFileSync(join(assets, r.media.path), join(DIR, k.out), constants.COPYFILE_EXCL);
     log[k.out] = { from: k.from, editAsset: r.media.path }; saveLog();
     console.log(`wrote ${k.out}`);
   }
@@ -206,7 +206,7 @@ async function peterLipsync(faceId: string, voice: string) {
   const ms = Math.round(Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", join(assets, audioRel)], { encoding: "utf8" }).trim()) * 1000);
   const r = await new KlingFaceLipSyncProvider().syncFace(entry.videoUrl, faceId, { path: audioRel, startMs: 0, endMs: ms }, 0);
   if (!r.media) throw new Error("no lip-sync video");
-  copyFileSync(join(assets, r.media.path), join(DIR, out));
+  copyFileSync(join(assets, r.media.path), join(DIR, out), constants.COPYFILE_EXCL);
   log[out] = { faceId, voice, source: r.media.path }; saveLog();
   console.log(`wrote ${out}`);
 }
