@@ -23,6 +23,39 @@ exact source-timed cast audio through the existing `LipSyncProvider` path.
 Local LTX 2.5 Fast is the primary scene-motion generator; selecting it does
 not replace Kling Avatar or authorize LTX-generated speech/lip-sync.
 
+October 14 verified direction support: the existing Avatar adapter accepts
+saved descriptive acting intent compiled into documented `prompt` and optional
+`std`/`pro` mode. It sends no invented numeric controls, model selector or
+replacement speech. Related shots read the same versioned edit-history packet;
+changed source/voice bindings hold. Full supplied audio files are reused byte
+for byte; other exact windows are cut before minimum-duration silence padding,
+without including the following speech. Submitted audio and request/task/usage
+evidence survive for review. Outputs remain candidates. Cost reconciliation,
+outstanding reservations and the cumulative $200 film ceiling guard stage5's
+Avatar requests; failed/lost requests cannot silently retry. See
+[baseline, capabilities, policy and pending comparison](../production/KLING_AVATAR_DIRECTION.md).
+The matching GUI task and uploaded image/audio/prompt are recovered, but its
+original mode/model/submitted JSON remain unknown. Dan clarified that the
+reference was a standalone proof of concept, never used in a film; no film
+binding/approval is inferred. Two bounded comparison requests were rejected for
+insufficient API balance, with no tasks returned or automatic retries.
+No controlled new Hatam-performance comparison or migration has been completed.
+
+Dan's standing preference (October 14): for most neutral and positive lip-sync
+performances, prefer “Smiling warmly at the camera, the character exudes a calm
+and confident demeanor, standing still with a gentle expression.” This is a
+producer-approved creative baseline, not a verified service default or proof
+that the pending API comparison succeeded. Rebuke (“You brood of vipers!”),
+anger, grief, fear and other negative treatments need source-appropriate
+direction instead. The crew must judge the passage in context, not from isolated
+keywords. In the existing saved acting intent, `emotionalRegister: neutral` or
+`positive` makes the preference eligible; omitted/unclassified treatment does
+not. Explicit prompt overrides, including empty text, take precedence. The
+named `dan-neutral-positive-v1` profile holds if used without an eligible
+treatment or appropriate override. Requested/compiled selection evidence is
+retained; approved takes, exact source speech, model/mode and review/cost gates
+remain unchanged. No automatic regeneration follows the preference.
+
 ## Ambience and scene-video audio
 
 Dan reaffirmed on 2026-10-06 that ambience remains part of the soundtrack.

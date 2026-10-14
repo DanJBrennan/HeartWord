@@ -1,5 +1,98 @@
 # Current Goal
 
+## Neutral/positive Avatar prompt adopted (2026-10-14)
+
+Dan approved the recovered “Smiling warmly at the camera…” prompt for most
+neutral and positive lip-sync performances, explicitly excluding negative
+speech such as “You brood of vipers!” This serves PRODUCT_VISION's faithful
+autonomous performance and USER_WORKFLOW's shared review/correction flow.
+
+The existing crew guidance and shared Avatar compiler now prefer that exact
+prompt for saved `emotionalRegister: neutral` or `positive` when no explicit
+prompt is supplied. `dan-neutral-positive-v1` records the producer preference;
+explicit overrides, including empty text, take precedence. The named smiling
+profile holds for negative/unresolved treatment without an appropriate
+override, and existing literal warm prompts hold when their saved treatment
+explicitly identifies rebuke/anger/grief/fear. No keyword classifier infers
+passage emotion. Requested intent and resolved profile selection remain in
+request evidence. No source/audio, canon, accepted media, model/mode or cost/
+review authority is changed; no regeneration or paid request was triggered.
+
+Separate Goal Guardian review: preference is conditional on source-grounded
+treatment, not a blanket smiling default. Existing overrides and approved takes
+remain authoritative, and no new stage, approval requirement or classifier was
+added. The earlier API comparison remains blocked by account balance; this
+producer choice does not imply that it succeeded. Validation: 616 tests / 100
+files pass, TypeScript and web build pass; log:
+`outputs/kling-avatar-preferred-prompt-tests.txt`.
+
+## Kling Avatar direction implemented; controlled comparison held (2026-10-14)
+
+This single concern serves the vision's faithful, editable autonomous chapter
+and USER_WORKFLOW's review/correction of individual performances. The
+[research, capability/default table, policy and implementation record](../production/KLING_AVATAR_DIRECTION.md)
+distinguishes actual provider/production records from declared crew roles,
+historical empirical assumptions and the still-limited FDL integration. Existing
+Mark 4 source/continuity holds, local LTX, preservation and other work remain intact.
+
+Recovered Dan's winning GUI task **317949919322306**: all 304 decoded video
+frames match `Downloads/Best Lip Sync Jesus.mp4`. Original preserved unchanged;
+SHA-256 `6bd47f3b3c72fdbf2983c09407ef9ff5a668b9bfa5128069cb0e46e86733a447`.
+The exact uploaded image/audio and saved prompt are retained under
+`HeartWordData/research/kling-avatar-2026-10-14`, with `gui-baseline.json` and
+`review.html`. The saved prompt begins “Smiling warmly at the camera”; original
+submission JSON, actual model/mode, prompt origin and field omissions remain
+unknown. GUI quality says 720p while actual output is 960×960. Route-version and
+current defaults are not treated as historical backend settings.
+
+Official reference verifies prompt/prose and std/pro mode; no numeric acting
+controls or Avatar model selector. Recommendation: **retain the existing Avatar
+endpoint**, which documents upgrades without parameter changes; no justified
+replacement was found. The adapter now compiles neutral acting descriptions
+through supported inputs, retains explicit/omitted/defaulted fields and exact
+submitted audio/request/task/usage evidence, and rejects required unsupported
+controls. Full audio files are reused byte for byte; exact subwindows precede
+minimum-length silence padding. Historical prompt-dropping fallback is removed.
+
+Related clips share versioned direction in existing edit history, read by both
+manual APIs and stage 5. Changed source/voice bindings hold. A narrow versioned
+FDL provider profile/example preserves all historical core/Bible schemas; a
+general FDL loader/approval resolver remains unimplemented. The Avatar stage
+requires evidenced cost reconciliation, atomically reserves against the $200
+film ceiling including outstanding/unreported charges, and holds duplicate
+requests after lost/rejected responses. Outputs retain ordinary candidate
+review. No routine chapter-plan signature or new crew dispatcher was added.
+
+Dan clarified that the take was a **one-off proof of concept, never part of a
+film**. That resolves attribution; no new chapter or film charge was fabricated.
+Two standalone comparisons were attempted with identical recovered inputs and
+explicit std mode: saved GUI prompt versus restrained technical direction
+preserving its expression/audio. Conservative media ceiling **$2.464**, within
+a **$5 new direct comparison envelope** including any later paid review.
+Both submissions returned **HTTP 429/code 1102: Account balance not enough**.
+Neither returned a task; documented external-ID GETs find neither, and the task
+list remains at 69. Requests/audio/reservations/rejections and free account/task
+queries are retained in `comparison-run.json` and
+`comparison-rejection-reconciliation.json`. No automatic retry or paid critic
+call was made. Actual rejected-request/GUI/assistant billed costs are unreported,
+not asserted free. Live production DB and original baseline hashes are unchanged.
+
+**Comparison acceptance remains held for funded API access and request-charge
+reconciliation**; no new audiovisual or Hatam performance gain/migration benefit
+is claimed. Current GUI credits do not establish API balance. No unanswered
+product decision remains after Dan's POC clarification. Any future film use
+still needs its actual source/cast/canon and cumulative $200 budget gates.
+
+Validation: **606 tests / 100 files pass**, including 19 new control/state/audio/
+budget tests; real shared API→stage→candidate workflow is demonstrated with
+explicitly synthetic media and mocked providers. TypeScript, production web build
+and `git diff --check` pass. Log: `outputs/kling-avatar-tests.txt`.
+Dedicated Goal Guardian review passes scope, source/asset/history preservation
+and guarded support; full acceptance awaits funded controlled audiovisual/cost
+evidence. Your dot/live Mabel and external ChatGPT/SMS transport are unavailable;
+this chat reports the actionable hold, and SMS to the supplied number ending 8114
+is not claimed. Existing field/release approval authority remains intact.
+
 ## Film Description Language design completed (2026-10-14)
 
 This single design concern serves the vision's autonomous faithful editable

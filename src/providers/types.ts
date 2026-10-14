@@ -132,5 +132,5 @@ export interface DraftVideoProvider {
 }
 
 export interface LipSyncProvider {
-  sync(character: CharacterRef, audio: AudioSegmentRef, referenceFrame: AssetRef): Promise<GenerationResult>;
+  sync(character: CharacterRef, audio: AudioSegmentRef, referenceFrame: AssetRef, opts?: { avatarDirection?: import("./kling/avatar-direction.js").AvatarDirection; requestId?:string }): Promise<GenerationResult>;
 }

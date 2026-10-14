@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:heartword:fdl:kling-avatar:1",
+  "title": "FDL providerSettings.settings for Kling Avatar — intent is soft prose",
+  "type": "object", "additionalProperties": false,
+  "required": ["version","baseline","intent","overrides","reason","sourceEvidence","continuityGroup","requiredControls"],
+  "properties": {
+    "version": {"const":1},
+    "baseline": {"type":"object","additionalProperties":false,"required":["id","evidence"],"properties":{
+      "id":{"type":"string","minLength":1},"evidence":{"type":"string","minLength":1},
+      "prompt":{"type":"string","maxLength":2500},"mode":{"enum":["std","pro"]}
+    }},
+    "intent":{"type":"object","additionalProperties":false,"properties":{
+      "emotionalRegister":{"$ref":"#/$defs/description"},"intensity":{"$ref":"#/$defs/description"},"gaze":{"$ref":"#/$defs/description"},
+      "head":{"$ref":"#/$defs/description"},"body":{"$ref":"#/$defs/description"},"hands":{"$ref":"#/$defs/description"},
+      "camera":{"$ref":"#/$defs/description"},"progression":{"$ref":"#/$defs/description"}
+    }},
+    "overrides":{"type":"object","additionalProperties":false,"properties":{"prompt":{"type":"string","maxLength":2500},"mode":{"enum":["std","pro"]}}},
+    "reason":{"$ref":"#/$defs/description"},"sourceEvidence":{"$ref":"#/$defs/description"},"continuityGroup":{"$ref":"#/$defs/description"},
+    "requiredControls":{"type":"array","uniqueItems":true,"items":{"type":"string","minLength":1}}
+  },
+  "$defs":{"description":{"type":"string","minLength":1}}
+}

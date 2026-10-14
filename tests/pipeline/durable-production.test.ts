@@ -113,6 +113,8 @@ describe.skipIf(!ffmpeg)("durable production recovery", () => {
     bindShotUtterance(db, { projectId: "p", shotId: "a", sourceSegmentId: "a-src", startMs: 500, endMs: 1500, characterVersionId: "voice", approvedBy: "producer" });
     bindShotUtterance(db, { projectId: "p", shotId: "b", sourceSegmentId: "b-src", startMs: 1500, endMs: 2500, characterVersionId: "voice", approvedBy: "producer" });
     const { runVoiceLipSync } = await import("../../src/pipeline/voice-lipsync/index.js");
+    const { reconcileAvatarBudget } = await import("../../src/pipeline/voice-lipsync/performance-direction.js");
+    reconcileAvatarBudget(db,{projectId:"p",actor:"Synthetic test",evidence:"All provider calls are mocked in this fixture; no external charges or outstanding work.",unreportedUpperBoundUsd:0,outstandingUpperBoundUsd:0,idempotencyKey:"fixture-avatar-budget"});
     expect((await runVoiceLipSync("p")).ok).toBe(false); expect(sync).toHaveBeenCalledTimes(2);
     expect(db.prepare("SELECT COUNT(*) n FROM generation_attempts WHERE operation='lip_sync'").get()).toMatchObject({ n: 2 });
     const { acceptLipSyncCandidate } = await import("../../src/pipeline/voice-lipsync/candidate-selection.js");

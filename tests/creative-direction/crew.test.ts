@@ -57,6 +57,9 @@ describe("coordinated filmmaking", () => {
     expect(events[1]!.prompt).toContain("creative_director checked the evidence");
     expect(events[0]!.prompt).toContain("IMPLIED EMOTION");
     expect(events[0]!.prompt).toContain("textual action triggers the emotion");
+    expect(events[0]!.prompt).toContain("Dan's approved Kling Avatar preference");
+    expect(events[0]!.prompt).toContain("You brood of vipers!");
+    expect(events[0]!.prompt).toContain("Uncertain treatment is not positive by default");
     const [fidelity, clarity, feasibility, director] = events.slice(-4);
     for (const event of events.slice(0, -4)) for (const text of ["Exact reference words", "Original words", "Roof intact", "Roof is opened", "8000", "Approved robe", "Preserve the approved wardrobe"]) expect(event.prompt).toContain(text);
     // Every challenger and the Director still see the shared story and shot plan.

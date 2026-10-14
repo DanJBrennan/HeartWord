@@ -1,0 +1,21 @@
+{
+  "targetId":"example:speaking-clip",
+  "provider":"kling_avatar",
+  "model":null,
+  "settings":{
+    "version":1,
+    "baseline":{
+      "id":"gui-317949919322306-observable-prompt-v1",
+      "evidence":"docs/production/KLING_AVATAR_DIRECTION.md; decoded winning video matches. Mode and original submitted JSON remain unknown. This is a comparison profile, not certified GUI equivalence.",
+      "prompt":"Smiling warmly at the camera, the character exudes a calm and confident demeanor, standing still with a gentle expression."
+    },
+    "intent":{},
+    "overrides":{},
+    "reason":"Design example retaining the observed task prompt; no new passage treatment or production authority.",
+    "sourceEvidence":"Dan confirms this was a standalone POC, never part of a film. This design fixture grants no production source/cast/canon approval; future film use needs its actual bindings.",
+    "continuityGroup":"example:continuous-teaching-performance",
+    "requiredControls":["image","sound_file","prompt"]
+  },
+  "requiredFields":["image","sound_file","prompt"],
+  "supportedFieldsEvidence":["https://kling.ai/document-api/api/video/avatar"]
+}

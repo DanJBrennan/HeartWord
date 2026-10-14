@@ -14,6 +14,7 @@ import { buildProductionCrewView, type NegotiationLogEntry } from "../production
 import { createReuseCandidate, extractLibraryFrame, registerGeneratedMediaLibraryItems, registerStandaloneLibraryAsset } from "../../pipeline/media-generation/media-library.js";
 import { bindShotUtterance } from "../../pipeline/voice-lipsync/utterance-binding.js";
 import { acceptLipSyncCandidate } from "../../pipeline/voice-lipsync/candidate-selection.js";
+import { readPerformanceDirection,savePerformanceDirection,reconcileAvatarBudget } from "../../pipeline/voice-lipsync/performance-direction.js";
 import { acceptFinalVideoCandidate, generateNonSpeakingVideoCandidate } from "../../pipeline/media-generation/final-video.js";
 import { createVideoProviders, videoBackend } from "../../providers/video-selection.js";
 import { attestSourceAlignment } from "../../pipeline/ingestion/source-review.js";
@@ -402,6 +403,18 @@ projectsRouter.post("/:id/shots/:shotId/utterance-binding", (req,res) => {
     const body=req.body ?? {};
     res.status(201).json(bindShotUtterance(getDb(),{projectId:req.params.id,shotId:req.params.shotId,sourceSegmentId:body.sourceSegmentId,startMs:body.startMs,endMs:body.endMs,characterVersionId:body.characterVersionId,approvedBy:typeof body.approvedBy === "string" ? body.approvedBy : "",speechRunId:body.speechRunId,timingEvidence:body.timingEvidence}));
   } catch (error) { res.status(400).json({error:(error as Error).message}); }
+});
+projectsRouter.get("/:id/shots/:shotId/avatar-direction", (req,res) => {
+  try { res.json({direction:readPerformanceDirection(getDb(),req.params.id,req.params.shotId) ?? null}); }
+  catch (error) { res.status(400).json({error:(error as Error).message}); }
+});
+projectsRouter.post("/:id/avatar-direction", (req,res) => {
+  try { res.status(201).json(savePerformanceDirection(getDb(),{...req.body,projectId:req.params.id})); }
+  catch (error) { res.status(400).json({error:(error as Error).message}); }
+});
+projectsRouter.post("/:id/avatar-budget", (req,res) => {
+  try { reconcileAvatarBudget(getDb(),{...req.body,projectId:req.params.id});res.status(201).json({saved:true}); }
+  catch(error){res.status(400).json({error:(error as Error).message});}
 });
 projectsRouter.post("/:id/lip-sync-candidates/:attemptId/accept", (req,res) => {
   try { res.status(201).json(acceptLipSyncCandidate(getDb(),req.params.id,req.params.attemptId)); }

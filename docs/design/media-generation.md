@@ -143,6 +143,16 @@ old overwritten pixels can be recovered from a prompt. The new
 [FDL v2 design](film-description-language-v2.md) remains separate from implemented
 provider request contracts.
 
+The October 14 [Avatar direction implementation](../production/KLING_AVATAR_DIRECTION.md)
+adds a narrow verified speaking-performance mapping: provider-neutral state
+intent is retained alongside a versioned baseline/override profile and compiled
+only into Avatar `prompt`/`mode`. It does not turn arbitrary FDL into provider
+fields. A separate provider schema/example preserves the existing core and
+Bible/regional schemas. Required unsupported controls hold, and submitted
+parameters/audio, defaults/omissions, outstanding costs and candidate reviews
+remain inspectable through the same saved production state. This does not
+replace LTX, invoke image generation or authorize a paid fallback.
+
 The v2 worked anchors/clip describe continuity intent alongside prose, with
 open choices, unresolved facts and inactive inspection proposals. No generator
 consumes that JSON directly today. A future adapter must resolve the same saved

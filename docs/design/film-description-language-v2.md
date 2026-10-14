@@ -258,7 +258,7 @@ runtime integration would explicitly extend those contracts and their hash.
 | Built-in K1/K2 generation | Save assistant handoff/prompt/ref hashes; authorized assistant generates/imports for ordinary review. Record included usage and unreported monetary costs; no silent paid image API substitution. |
 | C1 motion | Prose to `ShotRequest.prompt`, K1 to `startFrame`, ms to seconds at the adapter, requested supported fps/resolution/audio mode to options. LTX remains primary. Numeric prose is soft direction unless a verified control exists. |
 | Required exact K2 image | Common final-video interface lacks an end-frame field; guided draft accepts two images, while local LTX's end-frame features remain future. Required exact endpoint holds that path. Select an existing supported reviewed path or explicitly revise the requirement; no silent degradation or paid fallback. |
-| Visible speech/performance | Exact cast range + composed scene image to `LipSyncProvider.sync`. Main Kling Avatar adapter currently sends image/audio, not performance parameters. Required head/hand/expression controls need verified adapter support; FDL fields are not Kling API parameters. |
+| Visible speech/performance | Exact cast range + composed scene image to `LipSyncProvider.sync`. At this draft's initial completion the main adapter sent image/audio only. The later [verified Avatar direction work](../production/KLING_AVATAR_DIRECTION.md) maps descriptive intent and a versioned provider profile into documented prompt/mode, retaining unsupported requirements. FDL fields are not native Kling parameters. |
 
 Example compiled prose: “16:9, ease toward the encounter over measured coverage;
 preserve room/openings/garments/pre-healing hand/light/eyelines; no arrival,
@@ -302,6 +302,17 @@ transport capabilities; this chat reports the result, phone delivery is not
 claimed. Naming and other independent architecture concerns are outside scope.
 
 ## Decisions and limitations
+
+Subsequent October 14 integration: [Kling provider schema](fdl/kling-avatar.v1.schema.json)
+and [observable-baseline example](fdl/example.kling-avatar.v1.json) document the
+narrow speaking-performance handoff. Neutral `intent` is a resolved projection
+of core state/progression facts, distinct from vendor prompt/mode and actual
+submission/observations. The shared stage/API persists that handoff in existing
+edit history; it does not load/resolve an arbitrary FDL film, approve source or
+canon, or change the historical core/Bible schemas. The controlled GUI/API
+comparison uses Dan's clarified standalone POC scope; its two bounded requests
+were rejected for insufficient API balance. No film source/canon approval or
+audiovisual benefit is inferred, and actual billed charges remain unreported.
 
 No unanswered product decision blocks this design. JSON is the recommendation
 requested here. Actual new canon/set facts, historical evidence and provider

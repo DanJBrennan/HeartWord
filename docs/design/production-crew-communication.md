@@ -108,3 +108,22 @@ does not expose hidden reasoning or presentation dialogue. A later-resolved
 hold is historical rather than a permanent current alert. No runtime claim
 authorizes generic unimplemented stages, paid generation, or human-approval
 substitution.
+
+Avatar direction handoff (October 14): Kit/Tessa/Rufus's source-grounded acting
+intent and Gus's verified baseline/override settings use the same saved
+`set_avatar_performance` edit-history packet for related shots, manual API
+controls and stage5. Existing exact source/voice bindings remain controlling;
+English supplies semantics rather than Hatam phrase timing. Requests retain
+actual supported parameters and submitted audio separately from desired acting
+and unreviewed results. Required unsupported controls, changed bindings and
+unreconciled/outstanding charges hold before Avatar spending. This adds no
+live Mabel/Your dot worker, routine chapter-plan signature, external notification
+transport or general FDL parser. See the [evidence and limits](../production/KLING_AVATAR_DIRECTION.md).
+
+Dan subsequently approved the recovered warm/gentle prompt as the preferred
+baseline for most neutral/positive speech. The shared crew guidance and Avatar
+compiler now use that preference for explicitly eligible saved treatments;
+rebuke/anger/grief/fear and uncertain passages cannot silently inherit a smile.
+Rufus/Tessa/Kit retain source-grounded treatment and exception reasons. Existing
+prompt overrides take precedence, and no role may infer Hatam timing, alter the
+recording or regenerate accepted media merely to adopt this preference.

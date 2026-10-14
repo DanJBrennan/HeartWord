@@ -97,19 +97,15 @@ async function download(url: string, out: string) {
 async function avatar(item: typeof AVATARS[number]) {
   const image = readFileSync(join(assets, item.image)).toString("base64");
   const sound = readFileSync(join(assets, item.audio)).toString("base64");
-  const base = { image: `data:image/png;base64,${image}`, sound_file: `data:audio/mp3;base64,${sound}` };
+  const base = { image, sound_file: sound };
   const submit = async (body: Record<string, unknown>) => {
     const res = await fetch(`${KLING_HOST}/v1/videos/avatar/image2video`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${klingKey()}` }, body: JSON.stringify(body) });
     return { ok: res.ok, j: await res.json() as { code: number; message?: string; data?: { task_id?: string } } };
   };
-  // Liveliness is requested through the avatar prompt and the pro mode. If this
-  // account's avatar endpoint rejects those fields, fall back to the plain call.
-  let r = await submit({ ...base, prompt: AVATAR_PROMPT, mode: "pro" });
-  let usedPrompt = true;
-  if (!r.ok || r.j.code !== 0 || !r.j.data?.task_id) {
-    console.warn(`avatar ${item.out}: prompt/mode rejected (${JSON.stringify(r.j).slice(0, 200)}); retrying without them`);
-    r = await submit(base); usedPrompt = false;
-  }
+  // Verified controls. A rejection is a held request, never authority to omit
+  // direction or silently incur another charge.
+  const r = await submit({ ...base, prompt: AVATAR_PROMPT, mode: "pro" });
+  const usedPrompt = true;
   const taskId = r.j.data?.task_id; if (!taskId) throw new Error(`avatar submit failed: ${JSON.stringify(r.j).slice(0, 300)}`);
   log[item.out] = { taskId, usedPrompt, submittedAt: new Date().toISOString() }; saveLog();
   await download(await klingPoll("/v1/videos/avatar/image2video", taskId), item.out);
