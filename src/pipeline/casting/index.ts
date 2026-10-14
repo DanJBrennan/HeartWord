@@ -33,6 +33,7 @@ import { narrationBudgetFor, resolveNarrationSpans, type NarrationBudget } from 
 import { buildChapterIntroPlan, type IntroProposal } from "./chapter-intro.js";
 import { buildChapterEndingPlan, type ChapterEndingProposal } from "./chapter-ending.js";
 import { incompleteSpeakerAttributionHold, missingSpeakerAttributionHold } from "../ingestion/speaker-attribution-gate.js";
+import { readConfirmedSpeechRuns, speechCoverageSegments } from "../ingestion/continuous-speech.js";
 
 interface SceneRow {
   id: string;
@@ -349,9 +350,9 @@ const buildCasting: Stage = async (projectId) => {
     };
   }
   const verses = parseSourceTextByVerse(referencePath);
-  const sourceSpeakerSegments = db.prepare(
-    "SELECT verse_ref AS verseRef, speaker_character_id AS speakerId, start_ms AS startMs, end_ms AS endMs FROM audio_segments WHERE project_id = ? AND layer = 'original_reading' ORDER BY start_ms"
-  ).all(project.id) as Array<{ verseRef: string | null; speakerId: string | null; startMs: number; endMs: number }>;
+  let sourceSpeakerSegments: ReturnType<typeof speechCoverageSegments>;
+  try { sourceSpeakerSegments = speechCoverageSegments(db, project.id); }
+  catch (error) { return { ok: false, reasoning: (error as Error).message }; }
   const attributionHold = incompleteSpeakerAttributionHold(verses, sourceSpeakerSegments) ??
     missingSpeakerAttributionHold(verses, sourceSpeakerSegments.filter(segment => segment.speakerId !== null).length);
   if (attributionHold) return { ok: false, reasoning: attributionHold };
@@ -417,11 +418,17 @@ const buildCasting: Stage = async (projectId) => {
        WHERE a.project_id = ? AND a.layer = 'original_reading' AND a.speaker_character_id IS NOT NULL`
     )
     .all(project.id) as unknown as DialogueSegmentRow[];
+  const speechRuns = readConfirmedSpeechRuns(db, project.id);
+  for (const segment of dialogueSegments) {
+    const run = speechRuns.find(r => r.characterId === segment.speaker_character_id && segment.start_ms >= r.startMs && segment.end_ms <= r.endMs);
+    if (run) segment.verse_ref = run.verseRef; // Coverage envelope, never per-verse timing.
+  }
 
   /** Real dialogue-duration lookup for coverage.ts's planCoverage -- uses
    *  stage 1's actual measured segment timing, not a guess at how long a
    *  line takes to read. */
-  function dialogueDurationForShot(characterId: string, verseStart: number, verseEnd: number): number {
+  function dialogueDurationForShot(characterId: string, verseStart: number, verseEnd: number): number | null {
+    if (speechRuns.some(r => r.characterId === characterId && verseRangesRelated(parseVerseRange(r.verseRef), { start: verseStart, end: verseEnd }))) return null;
     const matching = dialogueSegments
       .filter((s) => s.speaker_character_id === characterId && s.verse_ref !== null)
       .filter((s) => verseRangesRelated(parseVerseRange(s.verse_ref!), { start: verseStart, end: verseEnd }))
@@ -583,7 +590,8 @@ const buildCasting: Stage = async (projectId) => {
           try {
             const { start, end } = parseVerseRange(shot.verseRef);
             const durationMs = dialogueDurationForShot(dialogueCharacterId, start, end);
-            const plan = planCoverage(durationMs);
+            const plan = durationMs === null ? { coveragePlan: "covered_sequence" as const,
+              notes: "Confirmed continuous speech; internal verse/phrase timing remains unresolved. Plan picture coverage under the full speech; bind an independently evidenced exact interval for a speaking performance or emotional beat." } : planCoverage(durationMs);
             coveragePlan = plan.coveragePlan;
             coverageNotes = plan.notes;
             if (plan.coveragePlan === "covered_sequence") {

@@ -6,6 +6,7 @@ import { getDb } from "../../db/client.js";
 import { KlingLipSyncProvider } from "../../providers/kling/index.js";
 import { runVoicing } from "../voicing/index.js";
 import type { Stage } from "../types.js";
+import { resolveSpeechRunCastAudio } from "./speech-run-audio.js";
 
 type ReadyShot = { id: string; verse_ref: string | null; dialogue_character_id: string; keyframe: string | null; voice_id: string | null; version_id: string | null; binding_id:string|null; source_segment_id:string|null; start_ms:number|null; end_ms:number|null; source_hash:string|null };
 export const runVoiceLipSync: Stage = async (projectId) => {
@@ -35,10 +36,17 @@ export const runVoiceLipSync: Stage = async (projectId) => {
     // reference alone is not an utterance identity, so choosing the first
     // one would put real speech on the wrong mouth.  Hold until casting has
     // persisted a narrower interval/utterance binding.
-    if (matching.length !== 1 || matching[0]?.source_hash !== shot.source_hash || matching[0]?.voice_version_id !== shot.version_id) return { ok: false, reasoning: `${master.reasoning} Voice/lip-sync is held: speaking shot ${shot.id} lacks a current composite segment matching its approved source and voice-version binding.` };
-    const full = matching[0]!;
-    const scale=(full.end_ms-full.start_ms)/(full.original_end-full.original_start);
-    const audio={path:full.source_path,startMs:Math.round((shot.start_ms!-full.original_start)*scale),endMs:Math.round((shot.end_ms!-full.original_start)*scale)};
+    let audio: { path: string; startMs: number; endMs: number };
+    try {
+      const continuous = resolveSpeechRunCastAudio(db, shot.id, shot.version_id!);
+      if (continuous) audio = continuous;
+      else {
+        if (matching.length !== 1 || matching[0]?.source_hash !== shot.source_hash || matching[0]?.voice_version_id !== shot.version_id) return { ok: false, reasoning: `${master.reasoning} Voice/lip-sync is held: speaking shot ${shot.id} lacks a current composite segment matching its approved source and voice-version binding.` };
+        const full = matching[0]!;
+        const scale=(full.end_ms-full.start_ms)/(full.original_end-full.original_start);
+        audio={path:full.source_path,startMs:full.start_ms+Math.round((shot.start_ms!-full.original_start)*scale),endMs:full.start_ms+Math.round((shot.end_ms!-full.original_start)*scale)};
+      }
+    } catch (error) { return { ok: false, reasoning: (error as Error).message }; }
     const selected = db.prepare(`SELECT c.id FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE ga.shot_id=? AND ga.operation='lip_sync' AND ga.status='accepted'`).get(shot.id) as {id:string}|undefined;
     if (selected) continue;
     const prior = db.prepare(`SELECT id,status FROM generation_attempts WHERE shot_id=? AND operation='lip_sync' ORDER BY created_at DESC LIMIT 1`).get(shot.id) as { id:string; status:string } | undefined;

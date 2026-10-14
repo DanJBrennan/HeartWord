@@ -1,5 +1,138 @@
 # Current Goal
 
+## Real Mark 4 continuous-speech audit (2026-10-14)
+
+Dan requested a read-only check against existing Mark 4 speaker confirmations,
+without changing approved assets or spending. The
+[production audit](../production/mark4-continuous-speech-audit.md) reuses 47
+named confirmations and 18 source corrections. They already answer the
+speaker-attribution question at **22 internal verse boundaries** across Jesus's
+3–8, 11–12, 13–20, confirmed 21–25 portions, 26–29 and 30–32 speech.
+Exact internal word timing remains approximate/unresolved; it is not needed
+solely to retain that attribution. The reviewed projection removes missing
+verse-label findings for 12, 16, 19 and Peter's 38 assignment.
+
+**Live Mark 4 acceptance is incomplete.** The current pure speaker gate still
+holds 35, 41, 11–20, 24–25 and 39. Two causes are existing reviewed narration
+that the new typed projection does not yet reuse (13 and 39); these are not new
+questions for Dan. All 21 labelled same-speaker verse joins also have 748–920 ms
+source-clock gaps, so existing groups fail the new strict contiguous-run
+contract. Preserve that source material without moving reviewed intervals or
+asking Dan to find each ordinary verse edge. Fifteen accepted performance shots
+retain exact source windows in generation provenance but lack formal bindings;
+reuse and reconcile those records without changing the takes. The older source
+attestation matches source bytes but not today's combined alignment/speaker hash.
+
+Three areas remain targeted reconciliation/review: the corrected verse 25 tail
+at 307.458–311.754 source seconds and its true speech end; the verse 35 narrated/
+quoted handoff; and verse 41's group quotation and approved representation.
+Reuse any applicable retained producer decision before asking Dan. Existing
+verse 38 narrator/Peter separation and exact verse 21 phrase/performance timing
+demonstrate why attribution and real edit boundaries must stay distinct.
+
+Validation: read-only/query-only SQLite snapshot; source bindings and all
+speaker source hashes match; database and latest v73 MP4 SHA-256 unchanged;
+516 observed retained assets' sizes/modification times unchanged; no provider,
+stage, render or approval operation, direct incremental cost **$0**. Evidence:
+`outputs/mark4-continuous-speech-audit.json`; reproduction:
+`npx tsx outputs/audit-mark4-continuous-speech.ts`. No runtime changes or
+migration were made by this audit. Existing work below remains intact.
+
+Separate Goal Guardian audit: scope/preservation passes against the vision and
+Dan's chapter review workflow, but the earlier synthetic implementation pass is
+qualified by these real-state compatibility limits. Do not claim live automatic
+resumption or spend clearance. Do not repeat settled verse/narration questions.
+Exact new phrase, emotional beat, safe pause, source/canon/cost, field-review
+and release requirements remain intact. Your dot/Mabel/ChatGPT/SMS dispatch
+was unavailable; delivery to the number ending in 8114 is not claimed.
+
+## Continuous multi-verse speech implementation and synthetic proof (2026-10-14)
+
+This single concern serves the autonomous faithful editable chapter and Dan's
+language/book/chapter review workflow: confirm a continuous speaker once with
+precise outer audio bounds, retain approximate/unresolved internal verse timing,
+and change picture without slicing the soundtrack at ordinary verses. Existing
+local LTX work, disaster-recovery constraints, preservation, naming research and
+reviewed Mark 4 cuts below remain intact.
+
+Implemented: ingestion's existing attributions plus a typed
+`confirm_continuous_speech` history record; shared manual/API/stage reads;
+range-aware early attribution coverage; explicitly reviewed narration
+interruptions; speaker coverage across narrative scene headings; whole-run
+cast extraction/revoicing with per-original offsets in a shared file; mapped
+accepted-asset reuse and partial-map holds before spending; independent exact
+performance-window evidence that may cross internal rows; binding-driven timed
+coverage and editorial lip-sync; guards against fabricating phrase timing or
+inserting pauses at uncertain internal verse edges. Exact-equivalent remaps
+preserve confirmation; changed source, Scripture, bounds or speaker holds.
+Corrections, canon, accepted assets, producer choices and edit history are retained.
+Design: [audio and speakers](../design/audio-and-speakers.md),
+[shot planning](../design/shot-planning.md), [timeline](../design/timeline.md).
+
+The implementation investigation distinguished current saved role/provider/
+review contracts from historical skeleton notes. Mabel/Your dot live dispatch
+and ChatGPT/SMS delivery are unavailable in this session. Existing FDL and
+Bible/Papuan schemas remain design artifacts, not a runtime or a prerequisite
+for this change. No naming/provider/cost-policy/release redesign was added.
+No new chapter plan or paid production was started; direct production cost for
+this work is $0. Synthetic voice calls are mocked and explicitly labelled.
+
+Workflow proof is retained at
+`HeartWordData/scratch/continuous-speech-demo-2026-10-14` with its SQLite state,
+source fixture, cast files/sidecars, exact binding, 14-second FFmpeg render,
+ordered source map and `workflow-evidence.json`. It demonstrates a 0–9s speech
+covering three verses, an independently evidenced 1.8–5.2s performance change
+crossing internal rows, a 9–10s narrator interruption, and two different speakers
+in verse 6 at 10–12s and 12–14s. Measured tonal changes retain their order and
+duration. This is synthetic timing/continuity evidence, not actual Hatam speech
+or an acting/language review, and it has not changed the live Mark 4 film.
+The producer view reopened those same saved runs in the normal chapter UI;
+`outputs/continuous-speech-workflow.json` points to the retained proof and
+`outputs/continuous-speech-producer-view.jpg` records the browser check.
+
+Final validation: **575 tests / 98 files pass**, including 13 new tests under
+`tests/` for the attribution/state workflow and real FFmpeg assembly. TypeScript,
+the production web build and `git diff --check` pass. The tests cover retries,
+reviewed-correction retention, broad existing attributions, scene-heading
+coverage, narration/two-speaker separation, exact performance windows crossing
+internal rows, forced whole-run revision, partial-map holds before calls,
+source/chapter/speaker changes, explicit safe-pause evidence, complete ordered
+render audio, bounded/source-ordered cast playback data, explicit outer-boundary
+supersession with retained history, and local joining of existing cast files
+without revoicing (including changed-cache refusal). Test log:
+`outputs/continuous-speech-tests.txt`.
+
+Initial separate Goal Guardian review: **passed the synthetic scoped workflow** against
+PRODUCT_VISION's continuous source/cast performance, this goal and USER_WORKFLOW's
+chapter navigation, autonomous production and review/correction flow. Attribution
+requires one evidenced run decision rather than exact internal verse boundaries;
+picture, verse labels, semantic phrase timing and audio edit boundaries remain
+distinct. The review additionally corrected bounded cast-file playback and
+source ordering, and required explicit pause-safety evidence instead of inferring
+it from any generic timing correction. An explicitly reviewed outer-boundary
+revision retains its old run snapshot; exact old performance bindings still hold
+for reconciliation. No Scripture wording, speed, live source/canon/assets,
+producer history, generation provider or field/release authority was changed.
+No pipeline stage, extra roster, new chapter-plan approval or unrelated ticket
+collection was introduced. Existing source/canon/cost gates remain required.
+The subsequent real Mark 4 audit above qualifies this result: existing production
+records still require compatibility reconciliation before live acceptance.
+
+Limitations: the retained demonstration proves timing/order and saved-state
+workflow with synthetic tones and mocked voice conversion, not actual Hatam
+phrase accuracy or acting quality. Previously accepted separate cast files are
+preserved; the change does not retroactively replace their historic audio seams.
+Exact intervals that remain materially ambiguous still need qualified evidence.
+No new general product policy decision was required for the synthetic change;
+the real Mark 4 source/casting decisions above remain unresolved in saved records.
+The full
+server's unrelated presentation seeding requires a populated control-room
+fixture, so the browser check used the same real project/character/production
+routes and built UI in an explicitly labelled read-only fixture harness.
+That temporary server/browser were closed after verification. This chat reports
+the result; Your dot/live Mabel/external ChatGPT/SMS transport was unavailable,
+so delivery to the supplied number ending in 8114 is not claimed.
+
 ## Disaster recovery implementation and deployment check (2026-10-07)
 
 This unit protects the vision's faithful editable chapter and normal

@@ -22,6 +22,7 @@ export interface CrewShot {
   /** Approved utterance identity for an on-camera mouth; required to
    * distinguish repeated speaker/verse lines during editorial timing. */
   sourceSegmentId?: string | null;
+  utterance?: { startMs: number; endMs: number; speechRunId?: string };
   beats: Array<{ id: string; sequence: number; notes: string | null; characterId: string | null;
     startMs: number; endMs: number }>;
   clip: { id: string; path: string; durationMs: number } | null;
@@ -31,7 +32,9 @@ export interface CrewBrief {
   source: { text: Array<{ verse: number; text: string }>; reference: Array<{ verse: number; text: string }>;
     hashes: string[] };
   audio: Array<{ id: string; startMs: number; endMs: number; verseRef: string | null;
-    speakerId: string | null; path: string; confidence: number | null; provenance?: "unassigned_source_interval"; sourceSpeakerId?: string }>;
+    speakerId: string | null; path: string; confidence: number | null; provenance?: "unassigned_source_interval"; sourceSpeakerId?: string;
+    speechRun?: { id: string; verseRef: string; startMs: number; endMs: number; internalVerseTiming: "approximate" | "unresolved" };
+    safePauseAfter?: boolean }>;
   canon: Array<{ id: string; name: string; region: string; versionId: string; notes: string | null; joinedAt: string | null }>;
   shots: CrewShot[];
   producerNotes: Array<{ id: string; subjectId: string; note: string }>;

@@ -8,6 +8,10 @@ export function planEditorialCut(brief: CrewBrief, editor: CrewContribution): {
   if (new Set(pauses.map(p => p.afterSegmentId)).size !== pauses.length) throw new Error("Duplicate pause boundary.");
   for (const pause of pauses) if (!Number.isFinite(pause.durationMs) || pause.durationMs <= 0 || pause.durationMs > 120000 ||
       (pause.afterSegmentId !== null && !brief.audio.some(a => a.id === pause.afterSegmentId))) throw new Error("Invalid pause boundary or duration.");
+  for (const pause of pauses) {
+    const boundary = brief.audio.find(a => a.id === pause.afterSegmentId);
+    if (boundary?.speechRun && boundary.endMs < boundary.speechRun.endMs && !boundary.safePauseAfter) throw new Error("Internal continuous-speech pause needs independently reviewed phrase-boundary evidence.");
+  }
   let cursor = pauses.find(p => p.afterSegmentId === null)?.durationMs ?? 0;
   const audioMap = brief.audio.map(a => {
     const startMs = cursor; cursor += a.endMs - a.startMs;
@@ -24,11 +28,17 @@ export function planEditorialCut(brief: CrewBrief, editor: CrewContribution): {
     if (shot.needsLipSync) {
       const matching = audioMap.filter(p => {
         const segment = brief.audio.find(a => a.id === p.segmentId)!;
+        if (shot.utterance?.speechRunId) return segment.speechRun?.id === shot.utterance.speechRunId && segment.endMs > shot.utterance.startMs && segment.startMs < shot.utterance.endMs;
         return shot.sourceSegmentId
           ? segment.id === shot.sourceSegmentId
           : segment.speakerId === shot.dialogueCharacterId && segment.verseRef === shot.verseRef;
       });
-      if (matching.length !== 1 || Math.abs(startMs - edit.sourceStartMs - matching[0]!.startMs) > 50 || cursor > matching[0]!.endMs + 50) throw new Error("Edit would move a lip-synced mouth away from its actual dialogue.");
+      if (!matching.length || (!shot.utterance?.speechRunId && matching.length !== 1)) throw new Error("Edit would move a lip-synced mouth away from its actual dialogue.");
+      const first = matching[0]!, last = matching.at(-1)!;
+      const firstSource = brief.audio.find(a => a.id === first.segmentId)!, lastSource = brief.audio.find(a => a.id === last.segmentId)!;
+      const expectedStart = first.startMs + (shot.utterance ? shot.utterance.startMs - firstSource.startMs : 0);
+      const expectedEnd = last.endMs - (shot.utterance ? lastSource.endMs - shot.utterance.endMs : 0);
+      if (matching.some((p, i) => i > 0 && p.startMs !== matching[i - 1]!.endMs) || Math.abs(startMs - edit.sourceStartMs - expectedStart) > 50 || cursor > expectedEnd + 50) throw new Error("Edit would move a lip-synced mouth away from its actual dialogue.");
     }
     return { shotId: edit.shotId, startMs, endMs: cursor, sourceStartMs: edit.sourceStartMs };
   });

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { readConfirmedSpeechRuns } from "./continuous-speech.js";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
@@ -93,10 +94,14 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
   if (protectedWork.bindings || protectedWork.source_reviews) {
     return { ok: false, reasoning: "Ingestion is held: this chapter has producer-reviewed source segments or approved utterance bindings. Adopt/reconcile a new source version explicitly; no original-reading rows or review evidence were deleted." };
   }
+  let confirmedSpeech: ReturnType<typeof readConfirmedSpeechRuns>;
+  try { confirmedSpeech = readConfirmedSpeechRuns(db, projectId); }
+  catch (error) { return { ok: false, reasoning: (error as Error).message }; }
 
   if (project.language === "hatam" && project.book === "mark" && project.chapter === 2) {
     const vocalsPath = join(getDataDir(), "assets/source/hatam/mark-2/separated/vocals.mp3");
     if (existsSync(vocalsPath)) {
+      if (confirmedSpeech.length) return { ok: false, reasoning: "Quote-aware re-ingestion is held to preserve confirmed continuous-speech evidence; explicitly reconcile the existing source version first." };
       try {
         return await runMark2QuoteAwareIngestion(db, project, docxPath, vocalsPath);
       } catch (err) {
@@ -256,6 +261,10 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
     for(const override of boundaryOverrides){const replacement=replacements.get(`${override.original_start_ms}:${override.original_end_ms}`);if(!replacement)throw new Error(`Cannot safely re-ingest: boundary override ${override.id} has no exactly equivalent replacement interval.`);db.prepare("UPDATE source_alignment_boundary_overrides SET audio_segment_id=? WHERE id=?").run(replacement,override.id);db.prepare("UPDATE audio_segments SET start_ms=?,end_ms=? WHERE id=?").run(override.start_ms,override.end_ms,replacement);}
     const deleteOld=db.prepare("DELETE FROM audio_segments WHERE id=?");
     for(const old of oldSegments) deleteOld.run(old.id);
+    // Narrator confirmations have no character-attribution row to remap.
+    // Validate every run after exact replacement, inside the transaction, so
+    // even those decisions survive or roll back without losing old rows.
+    readConfirmedSpeechRuns(db, projectId);
     db.prepare(`DELETE FROM review_notes WHERE project_id = ? AND subject_type = 'project' AND source = 'qc'`).run(projectId);
 
     const insertBoundaryObservation = db.prepare(`INSERT INTO review_notes

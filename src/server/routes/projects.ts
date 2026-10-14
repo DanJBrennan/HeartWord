@@ -20,6 +20,7 @@ import { attestSourceAlignment } from "../../pipeline/ingestion/source-review.js
 import { recordSourceAlignmentCorrection } from "../../pipeline/ingestion/source-alignment-corrections.js";
 import { editorialAlignmentDisplay, recordSourceAlignmentEditorialClassification } from "../../pipeline/ingestion/source-alignment-editorial-classifications.js";
 import { recordSourceAlignmentSpeakerAttribution } from "../../pipeline/ingestion/source-alignment-speaker-attributions.js";
+import { confirmContinuousSpeech, confirmSpeechRunPauseBoundary, readConfirmedSpeechRuns } from "../../pipeline/ingestion/continuous-speech.js";
 import { recordSegmentSplit } from "../../pipeline/ingestion/segment-splits.js";
 import { recordSegmentMerge } from "../../pipeline/ingestion/segment-merges.js";
 import { computeNarrationCoverage } from "../../pipeline/casting/narration-coverage.js";
@@ -189,6 +190,28 @@ projectsRouter.post("/:id/source-alignment-speaker-attributions", (req,res) => {
   try { res.status(201).json({attributionId:recordSourceAlignmentSpeakerAttribution(getDb(),{projectId:req.params.id,audioSegmentId:String(raw.audioSegmentId??""),characterId:String(raw.characterId??""),verseRef:raw.verseRef ? String(raw.verseRef) : null,reviewerName:String(raw.reviewerName??""),evidence:String(raw.evidence??"")})}); }
   catch(error){res.status(400).json({error:(error as Error).message});}
 });
+projectsRouter.get("/:id/continuous-speech", (req, res) => {
+  if (!getDb().prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)) { res.status(404).json({ error: "Project not found." }); return; }
+  try { res.json({ runs: readConfirmedSpeechRuns(getDb(), req.params.id) }); }
+  catch (error) { res.status(409).json({ error: (error as Error).message }); }
+});
+projectsRouter.post("/:id/continuous-speech", (req, res) => {
+  const raw = req.body ?? {};
+  try { res.status(201).json(confirmContinuousSpeech(getDb(), {
+    projectId: req.params.id, audioSegmentIds: raw.audioSegmentIds,
+    characterId: raw.characterId === null ? null : String(raw.characterId ?? ""), verseRef: String(raw.verseRef ?? ""),
+    internalVerseTiming: raw.internalVerseTiming, reviewerName: String(raw.reviewerName ?? ""),
+    evidence: String(raw.evidence ?? ""), idempotencyKey: String(raw.idempotencyKey ?? ""),
+    supersedesRunId: typeof raw.supersedesRunId === "string" ? raw.supersedesRunId : undefined
+  })); } catch (error) { res.status(400).json({ error: (error as Error).message }); }
+});
+projectsRouter.post("/:id/continuous-speech/:runId/pause-boundaries", (req, res) => {
+  const raw = req.body ?? {};
+  try { res.status(201).json({ reviewId: confirmSpeechRunPauseBoundary(getDb(), { projectId: req.params.id,
+    speechRunId: req.params.runId, boundaryMs: raw.boundaryMs, reviewerName: String(raw.reviewerName ?? ""),
+    evidence: String(raw.evidence ?? ""), idempotencyKey: String(raw.idempotencyKey ?? "") }) }); }
+  catch (error) { res.status(400).json({ error: (error as Error).message }); }
+});
 projectsRouter.post("/:id/segment-splits", (req,res) => {
   const raw=req.body??{};
   if(!getDb().prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)){res.status(404).json({error:"Project not found."});return;}
@@ -240,6 +263,7 @@ projectsRouter.get("/:id/narration-coverage", (req, res) => {
 projectsRouter.get("/:id/audio-segments", (req, res) => {
   const db = getDb();
   const layer = typeof req.query.layer === "string" ? req.query.layer : "composite_cast_master";
+  const order = layer === "composite_cast_master" ? "COALESCE((SELECT o.start_ms FROM composite_audio_source_map m JOIN audio_segments o ON o.id=m.original_segment_id WHERE m.composite_segment_id=a.id),a.start_ms),a.id" : "a.start_ms";
 
   const segments = db
     .prepare(
@@ -248,7 +272,7 @@ projectsRouter.get("/:id/audio-segments", (req, res) => {
        FROM audio_segments a
        LEFT JOIN characters c ON c.id = a.speaker_character_id
        WHERE a.project_id = ? AND a.layer = ?
-       ORDER BY a.start_ms`
+       ORDER BY ${order}`
     )
     .all(req.params.id, layer);
 
@@ -376,7 +400,7 @@ projectsRouter.post("/:id/voicing", async (req, res) => {
 projectsRouter.post("/:id/shots/:shotId/utterance-binding", (req,res) => {
   try {
     const body=req.body ?? {};
-    res.status(201).json(bindShotUtterance(getDb(),{projectId:req.params.id,shotId:req.params.shotId,sourceSegmentId:body.sourceSegmentId,startMs:body.startMs,endMs:body.endMs,characterVersionId:body.characterVersionId,approvedBy:typeof body.approvedBy === "string" ? body.approvedBy : ""}));
+    res.status(201).json(bindShotUtterance(getDb(),{projectId:req.params.id,shotId:req.params.shotId,sourceSegmentId:body.sourceSegmentId,startMs:body.startMs,endMs:body.endMs,characterVersionId:body.characterVersionId,approvedBy:typeof body.approvedBy === "string" ? body.approvedBy : "",speechRunId:body.speechRunId,timingEvidence:body.timingEvidence}));
   } catch (error) { res.status(400).json({error:(error as Error).message}); }
 });
 projectsRouter.post("/:id/lip-sync-candidates/:attemptId/accept", (req,res) => {

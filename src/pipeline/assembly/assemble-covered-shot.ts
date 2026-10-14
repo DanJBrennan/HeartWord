@@ -30,6 +30,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { resolveSpeechRunCastAudio } from "../voice-lipsync/speech-run-audio.js";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -216,6 +217,11 @@ interface CoveredShotAudio {
 /** The producer-approved utterance binding is the audio identity. Composite
  * rows need not carry a verse label, and a verse can contain several lines. */
 export function resolveCoveredShotAudio(db: DatabaseSync, shotId: string, totalDurationMs: number): CoveredShotAudio {
+  const continuous = resolveSpeechRunCastAudio(db, shotId);
+  if (continuous) {
+    if (Math.abs(continuous.endMs - continuous.startMs - totalDurationMs) > 100) throw new Error(`Covered shot ${shotId} picture duration does not match its approved cast-master utterance.`);
+    return { sourcePath: continuous.path, startMs: continuous.startMs, endMs: continuous.endMs };
+  }
   const binding = db.prepare("SELECT id FROM shot_utterance_bindings WHERE shot_id=?").get(shotId);
   if (binding) {
     const matches = db.prepare(`SELECT a.source_path, a.start_ms AS composite_start, a.end_ms AS composite_end,

@@ -84,6 +84,16 @@ were supplied, including scoped target.
 
 ## Runtime truth
 
+Continuous-speech handoff (2026-10-14): the saved brief carries confirmed run
+scope and honest internal verse timing beside individual source intervals,
+plus exact shot utterance windows and independent timing evidence in retained
+history. June's broad speaker attribution is not Kit's phrase-timing proof.
+Pippa/Leon/Nell may change coverage under continuous speech without requesting
+soundtrack splits at ordinary verses. Source-supported emotional performance
+changes need their own exact evidence; a safe internal pause additionally needs
+reviewed boundary evidence. Manual controls and autonomous stages read the same
+saved confirmations. Role runtime classifications and authority stay unchanged.
+
 Current bounded implementation persists crew contributions, handoffs, source
 and canon validation, timing gates, producer corrections, and monitor events.
 The monitor shows only recorded events and full saved structured output; it

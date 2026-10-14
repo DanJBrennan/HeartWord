@@ -6,6 +6,7 @@ import { reVoiceAudio } from "../../providers/elevenlabs.js";
 import { getAudioDurationMs } from "../ingestion/detect-silences.js";
 import type { ProjectRow } from "../ingestion/index.js";
 import { extractClip } from "./extract-clip.js";
+import { readConfirmedSpeechRuns } from "../ingestion/continuous-speech.js";
 
 interface OriginalSegmentRow {
   id: string;
@@ -123,6 +124,18 @@ export async function runVoicing(projectId: string, opts: { force?: boolean; sou
   const voiceByCharacter = new Map(voiceRows.map((v) => [v.characterId, v]));
 
   const dataDir = getDataDir();
+  let speechRuns: ReturnType<typeof readConfirmedSpeechRuns>;
+  try { speechRuns = readConfirmedSpeechRuns(db, projectId); }
+  catch (error) { return { ok: false, reasoning: (error as Error).message, generated: 0, reused: 0, passthrough: 0, skippedNoVoice: 0 }; }
+  for (const run of speechRuns) {
+    if (run.members.some(m => segments.some(s => s.id === m.id)) && !run.members.every(m => segments.some(s => s.id === m.id))) {
+      return { ok: false, reasoning: `Scoped voicing must retain the complete confirmed speech ${run.id}; verse metadata is not a soundtrack boundary.`, generated: 0, reused: 0, passthrough: 0, skippedNoVoice: 0 };
+    }
+    if (run.members.some(m => segments.some(s => s.id === m.id)) && !opts.force) {
+      const mapped = run.members.filter(m => !!db.prepare("SELECT composite_segment_id FROM composite_audio_source_map WHERE original_segment_id=?").get(m.id));
+      if (mapped.length > 0 && mapped.length < run.members.length) return { ok: false, reasoning: `Confirmed speech ${run.id} has a partial retained cast map. Restore/reconcile that map before new voicing; accepted audio was preserved and no request was sent.`, generated: 0, reused: 0, passthrough: 0, skippedNoVoice: 0 };
+    }
+  }
   // A producer-confirmed boundary revision may have an already-reviewed,
   // shortened cast master. Reusing the old provider filename below would
   // resurrect its pre-revision tail on the next stage run. Preserve the
@@ -176,9 +189,12 @@ export async function runVoicing(projectId: string, opts: { force?: boolean; sou
     originalSegmentId: string;
     sourceHash: string;
     voiceVersionId: string | null;
+    castStartMs?: number;
   }> = [];
 
+  const completed = new Set<string>();
   for (const [i, seg] of segments.entries()) {
+    if (completed.has(seg.id)) continue;
     const absSourcePath = join(dataDir, "assets", seg.source_path);
     const sourceHash = createHash("sha256").update(readFileSync(absSourcePath)).digest("hex");
     const slug = `${seg.id}-${slugify(seg.verse_ref, i)}-${randomUUID()}`;
@@ -196,21 +212,57 @@ export async function runVoicing(projectId: string, opts: { force?: boolean; sou
       continue;
     }
 
-    const mapped = db.prepare(`SELECT a.source_path AS path, m.source_hash AS sourceHash,
+    const mapped = db.prepare(`SELECT a.source_path AS path, a.start_ms AS startMs, a.end_ms AS endMs, m.source_hash AS sourceHash,
       m.voice_version_id AS voiceVersionId FROM composite_audio_source_map m
       JOIN audio_segments a ON a.id=m.composite_segment_id WHERE m.original_segment_id=? AND a.project_id=?`)
-      .all(seg.id, project.id) as Array<{path:string;sourceHash:string;voiceVersionId:string|null}>;
+      .all(seg.id, project.id) as Array<{path:string;startMs:number;endMs:number;sourceHash:string;voiceVersionId:string|null}>;
     const reusable = !opts.force && mapped.length === 1 && mapped[0]!.sourceHash === sourceHash &&
       mapped[0]!.voiceVersionId === (assignment?.versionId ?? null) ? mapped[0] : undefined;
     if (reusable) {
       const retainedPath = join(dataDir, "assets", reusable.path);
       if (!existsSync(retainedPath)) throw new Error(`Missing retained cast master for ${seg.id}: ${reusable.path}. Restore the asset before voicing; no automatic paid regeneration.`);
       if (existsSync(`${retainedPath}.json`)) {
-        const binding = JSON.parse(readFileSync(`${retainedPath}.json`, "utf8")) as { format?: string; sourceStartMs?: number; sourceEndMs?: number };
-        if (binding.format === "heartword-cast-master" && (binding.sourceStartMs !== seg.start_ms || binding.sourceEndMs !== seg.end_ms)) throw new Error(`Retained cast master for ${seg.id} belongs to different source bounds. Reconcile the saved source mapping before replacing it.`);
+        const binding = JSON.parse(readFileSync(`${retainedPath}.json`, "utf8")) as { format?: string; sourceStartMs?: number; sourceEndMs?: number; members?: Array<{ start_ms: number; end_ms: number }> };
+        if (binding.format === "heartword-cast-master" && !(binding.members?.some(m => m.start_ms === seg.start_ms && m.end_ms === seg.end_ms) ?? (binding.sourceStartMs === seg.start_ms && binding.sourceEndMs === seg.end_ms))) throw new Error(`Retained cast master for ${seg.id} belongs to different source bounds. Reconcile the saved source mapping before replacing it.`);
       }
-      newRows.push({ id: randomUUID(), sourcePathRel: reusable.path, durationMs: getAudioDurationMs(retainedPath), speakerCharacterId: seg.speaker_character_id, verseRef: seg.verse_ref, originalSegmentId: seg.id, sourceHash, voiceVersionId: assignment?.versionId ?? null });
+      const measured = getAudioDurationMs(retainedPath);
+      if (measured < reusable.endMs - 100 || Math.abs(reusable.endMs - reusable.startMs - (seg.end_ms - seg.start_ms)) > 100) throw new Error(`Retained cast master for ${seg.id} no longer preserves its source duration.`);
+      newRows.push({ id: randomUUID(), sourcePathRel: reusable.path, castStartMs: reusable.startMs, durationMs: reusable.endMs - reusable.startMs, speakerCharacterId: seg.speaker_character_id, verseRef: seg.verse_ref, originalSegmentId: seg.id, sourceHash, voiceVersionId: assignment?.versionId ?? null });
       reused++; continue;
+    }
+    const run = speechRuns.find(r => r.members[0]?.id === seg.id && r.members.length > 1);
+    // Never replace accepted per-interval audio just to consolidate a run.
+    // New complete runs use one provider/extraction call and shared offsets;
+    // existing assets keep their exact mappings and remain reviewable.
+    const canBuildRun = run && run.members.every(m => !reviewedByOriginal.has(m.id) && (opts.force || !db.prepare("SELECT composite_segment_id FROM composite_audio_source_map WHERE original_segment_id=?").get(m.id)));
+    if (canBuildRun) {
+      const outFileName = `${run.id}-${randomUUID()}-${assignment?.voiceProvider ?? "passthrough"}.mp3`;
+      const outPath = join(outDir, outFileName);
+      let requestSettings: unknown = null;
+      if (assignment) {
+        const tmp = join(outDir, `${randomUUID()}-source.tmp.mp3`);
+        extractClip(absSourcePath, run.startMs, run.endMs, tmp);
+        const result = await reVoiceAudio(assignment.voiceId, tmp);
+        requestSettings = result.requestSettings ?? null;
+        writeFileSync(outPath, result.audioBuffer, { flag: "wx" });
+        rmSync(tmp, { force: true }); generated++;
+      } else { extractClip(absSourcePath, run.startMs, run.endMs, outPath); passthrough++; }
+      const durationMs = getAudioDurationMs(outPath);
+      writeFileSync(`${outPath}.json`, JSON.stringify({ format: "heartword-cast-master", version: 1,
+        speechRunId: run.id, members: run.members, sourcePath: seg.source_path, sourceHash,
+        sourceStartMs: run.startMs, sourceEndMs: run.endMs, verseRef: run.verseRef,
+        internalVerseTiming: run.internalVerseTiming, voiceVersionId: assignment?.versionId ?? null,
+        provider: assignment?.voiceProvider ?? "local", requestSettings, durationMs,
+        usage: assignment ? "not_reported" : "local_extraction", directCostUsd: assignment ? null : 0 }, null, 2), { flag: "wx" });
+      if (Math.abs(durationMs - (run.endMs - run.startMs)) > 100) throw new Error(`Continuous cast take ${run.id} does not match the unchanged source speed/duration; retain it for review before retrying.`);
+      for (const member of run.members) {
+        completed.add(member.id);
+        newRows.push({ id: randomUUID(), sourcePathRel: join(outDirRel, outFileName), castStartMs: member.start_ms - run.startMs,
+          durationMs: member.end_ms - member.start_ms, speakerCharacterId: run.characterId, verseRef: member.verse_ref,
+          originalSegmentId: member.id, sourceHash, voiceVersionId: assignment?.versionId ?? null });
+      }
+      if (!assignment && run.characterId) { skippedNoVoice += run.members.length; notes.push(`Continuous speech ${run.verseRef} has no approved voice; retained source performance pending casting.`); }
+      continue;
     }
     const outFileName = assignment ? `${slug}-${assignment.voiceProvider}.mp3` : `${slug}-passthrough.mp3`;
     const outPath = join(outDir, outFileName);
@@ -278,10 +330,10 @@ export async function runVoicing(projectId: string, opts: { force?: boolean; sou
     const insert = db.prepare(
       `INSERT INTO audio_segments
          (id, project_id, layer, source_path, start_ms, end_ms, speaker_character_id, verse_ref, confidence, created_at)
-       VALUES (?, ?, 'composite_cast_master', ?, 0, ?, ?, ?, NULL, ?)`
+       VALUES (?, ?, 'composite_cast_master', ?, ?, ?, ?, ?, NULL, ?)`
     );
     for (const row of newRows) {
-      insert.run(row.id, project.id, row.sourcePathRel, row.durationMs, row.speakerCharacterId, row.verseRef, now);
+      insert.run(row.id, project.id, row.sourcePathRel, row.castStartMs ?? 0, (row.castStartMs ?? 0) + row.durationMs, row.speakerCharacterId, row.verseRef, now);
       db.prepare(`INSERT INTO composite_audio_source_map (composite_segment_id,original_segment_id,source_hash,voice_version_id,created_at) VALUES (?,?,?,?,?)`).run(row.id,row.originalSegmentId,row.sourceHash,row.voiceVersionId,now);
     }
 

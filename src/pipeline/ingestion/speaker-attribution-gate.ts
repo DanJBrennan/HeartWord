@@ -1,3 +1,5 @@
+import { verseNumbers } from "./continuous-speech.js";
+
 /**
  * A chapter with quoted Scripture needs at least one source-speaker
  * attribution before downstream planning starts. Without this guard, casting
@@ -46,6 +48,7 @@ export function directSpeechRuns(verses: ReadonlyArray<{ verse: number; text: st
 export interface SourceSpeakerCoverageSegment {
   verseRef: string | null;
   speakerId: string | null;
+  reviewedNarration?: boolean;
   /**
    * The original-reading source clock, when the caller has it.  Supplying it
    * lets the gate inspect unlabelled alignment slices between two labelled
@@ -53,11 +56,6 @@ export interface SourceSpeakerCoverageSegment {
    */
   startMs?: number;
   endMs?: number;
-}
-
-function verseNumber(verseRef: string | null): number | null {
-  const match = verseRef?.match(/:\s*(\d+)(?:\D|$)/i);
-  return match ? Number(match[1]) : null;
 }
 
 /**
@@ -75,8 +73,7 @@ export function incompleteSpeakerAttributionHold(
   if (!runs.length) return null;
   const attributedVerses = new Set(sourceSegments
     .filter(segment => segment.speakerId !== null)
-    .map(segment => verseNumber(segment.verseRef))
-    .filter((verse): verse is number => verse !== null));
+    .flatMap(segment => verseNumbers(segment.verseRef)));
   const missingVerses = [...new Set(runs.flat().filter(verse => !attributedVerses.has(verse)))];
 
   // A verse-level attribution is necessary but not sufficient.  A source
@@ -98,8 +95,7 @@ export function incompleteSpeakerAttributionHold(
   for (const run of runs) {
     const runVerses = new Set(run);
     const indices = ordered.flatMap((segment, index) => {
-      const verse = verseNumber(segment.verseRef);
-      return verse !== null && runVerses.has(verse) ? [index] : [];
+      return verseNumbers(segment.verseRef).some(verse => runVerses.has(verse)) ? [index] : [];
     });
     if (!indices.length) continue;
     const first = indices[0]!;
@@ -108,13 +104,13 @@ export function incompleteSpeakerAttributionHold(
       index >= first && index <= last && segment.speakerId !== null
     );
     if (firstNamed === -1) continue; // The verse-level check reports this clearly.
-    const hasUnboundTail = ordered.slice(firstNamed, last + 1).some(segment => segment.speakerId === null);
+    const hasUnboundTail = ordered.slice(firstNamed, last + 1).some(segment => segment.speakerId === null && !segment.reviewedNarration);
     if (hasUnboundTail) partialRuns.push(...run);
   }
 
   const missing = [...new Set([...missingVerses, ...partialRuns])];
   if (!missing.length) return null;
-  return `Casting held before storyboard generation: the verified reference text has direct speech whose source-speaker coverage is incomplete in verse(s) ${missing.join(", ")}. Review and bind each affected source interval to its named speaker (or explicitly classify a narrated lead-in before the speech begins) before planning; no keyframes or media were generated.`;
+  return `Casting held before storyboard generation: the verified reference text has direct speech whose source-speaker coverage is incomplete in verse(s) ${missing.join(", ")}. Confirm the continuous speech with its outer audio bounds and covered verse range, or review real speaker/narrator interruptions separately. Internal verse boundaries do not need exact timing solely for attribution; no keyframes or media were generated.`;
 }
 
 export function missingSpeakerAttributionHold(

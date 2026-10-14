@@ -6,6 +6,7 @@ import { parseSourceHeadings, parseSourceTextByVerse } from "../ingestion/parse-
 import { incompleteSpeakerAttributionHold, missingSpeakerAttributionHold } from "../ingestion/speaker-attribution-gate.js";
 import { resolveAndBindSourcePaths } from "../ingestion/source-catalog.js";
 import { buildScenesFromHeadings, type SegmentInfo } from "./build-scenes.js";
+import { speechCoverageSegments } from "../ingestion/continuous-speech.js";
 
 /**
  * Stage 2: Scene breakdown -- groups the chapter's stage-1 audio segments
@@ -96,15 +97,20 @@ export const runSceneBreakdown: Stage = async (projectId) => {
     const parsed = parseSourceTextByVerse(resolveAndBindSourcePaths(db, project).referencePath);
     if (parsed.length) referenceVerses = parsed;
   } catch { /* Minimal source-only fixtures retain the existing source-text fallback. */ }
-  const attributionHold = incompleteSpeakerAttributionHold(referenceVerses, segmentRows.map(segment => ({
-    verseRef: segment.verseRef, speakerId: segment.speakerName,
-    startMs: segment.startMs, endMs: segment.endMs
-  })) ) ?? missingSpeakerAttributionHold(verses, segmentRows.filter((segment) => segment.speakerName !== null).length);
+  let attributionHold: string | null;
+  try { attributionHold = incompleteSpeakerAttributionHold(referenceVerses, speechCoverageSegments(db, project.id)) ?? missingSpeakerAttributionHold(verses, segmentRows.filter(segment => segment.speakerName !== null).length); }
+  catch (error) { return { ok: false, reasoning: (error as Error).message }; }
   if (attributionHold) return { ok: false, reasoning: attributionHold };
+  const coverage = speechCoverageSegments(db, project.id);
+  for (const segment of segmentRows) {
+    const scope = coverage.find(c => c.startMs === segment.startMs && c.endMs === segment.endMs);
+    if (scope) segment.verseRef = scope.verseRef;
+  }
 
   const segments: SegmentInfo[] = segmentRows
     .filter((r): r is { verseRef: string; startMs: number; endMs: number; speakerName: string | null } => r.verseRef !== null)
-    .map((r) => ({ verseRef: r.verseRef, speakerName: r.speakerName }));
+    .map((r) => ({ verseRef: r.verseRef, speakerName: r.speakerName,
+      continuousSpeech: !!coverage.find(c => c.startMs === r.startMs && c.endMs === r.endMs)?.speechRunId }));
 
   const { scenes, boundaryStraddlingWarnings } = buildScenesFromHeadings(
     headings,

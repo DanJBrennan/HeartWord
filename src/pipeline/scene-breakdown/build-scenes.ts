@@ -17,6 +17,7 @@ export interface SceneDescriptor {
 export interface SegmentInfo {
   verseRef: string;
   speakerName: string | null; // null = narration (no character speaks)
+  continuousSpeech?: boolean; // confirmed outer bounds, not a per-scene audio cut
 }
 
 export interface BuildScenesResult {
@@ -78,6 +79,10 @@ export function buildScenesFromHeadings(
     const startScene = sceneIndexOf(start);
     const endScene = sceneIndexOf(end);
     if (startScene === -1) continue; // out of range of any known heading -- shouldn't happen, skip defensively
+    if (seg.continuousSpeech) {
+      for (const [i, range] of ranges.entries()) if (range.verseEnd >= start && range.verseStart <= end && seg.speakerName) speakersByScene[i]!.add(seg.speakerName);
+      continue; // narrative headings do not split a confirmed soundtrack run
+    }
     if (endScene !== -1 && endScene !== startScene) {
       warnings.add(
         `Segment "${seg.verseRef}" spans scene ${startScene + 1} and scene ${endScene + 1} -- the audio was never ` +

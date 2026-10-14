@@ -20,6 +20,7 @@ import { getDb } from "../../db/client.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
 import { planCoverageBeats } from "./coverage-manifest.js";
 import { computeDialogueDurationMs, planCoverage, verseRangesRelated } from "./coverage.js";
+import { readConfirmedSpeechRuns } from "../ingestion/continuous-speech.js";
 
 interface CoveredShotRow {
   id: string;
@@ -36,7 +37,7 @@ interface DialogueSegmentRow {
 export interface ShotManifestResult {
   shotId: string;
   verseRef: string | null;
-  status: "planned" | "skipped_existing_progress" | "skipped_unparseable_verse" | "skipped_no_dialogue";
+  status: "planned" | "skipped_existing_progress" | "skipped_unparseable_verse" | "skipped_no_dialogue" | "needs_exact_interval";
   beatCount: number;
   detail?: string;
 }
@@ -52,8 +53,13 @@ function dialogueDurationForShot(
   projectId: string,
   characterId: string,
   verseStart: number,
-  verseEnd: number
-): number {
+  verseEnd: number,
+  shotId: string
+): number | null {
+  const binding = db.prepare("SELECT source_start_ms,source_end_ms FROM shot_utterance_bindings WHERE shot_id=?").get(shotId) as { source_start_ms: number; source_end_ms: number } | undefined;
+  if (binding) return binding.source_end_ms - binding.source_start_ms;
+  const runs = readConfirmedSpeechRuns(db, projectId);
+  if (runs.some(r => r.characterId === characterId && verseRangesRelated(parseVerseRange(r.verseRef), { start: verseStart, end: verseEnd }))) return null;
   const rows = db
     .prepare(
       `SELECT start_ms, end_ms, verse_ref FROM audio_segments
@@ -63,9 +69,9 @@ function dialogueDurationForShot(
 
   const matching = rows
     .filter((s) => verseRangesRelated(parseVerseRange(s.verse_ref!), { start: verseStart, end: verseEnd }))
-    .map((s) => ({ startMs: s.start_ms, endMs: s.end_ms }));
+  if (matching.some(s => { const ref = parseVerseRange(s.verse_ref!); return ref.start < verseStart || ref.end > verseEnd; })) return null;
 
-  return computeDialogueDurationMs(matching);
+  return computeDialogueDurationMs(matching.map(s => ({ startMs: s.start_ms, endMs: s.end_ms })));
 }
 
 export interface ReconcileResult {
@@ -120,8 +126,8 @@ export function reconcileCoveragePlans(projectId: string): ReconcileResult[] {
       continue; // same unparseable-verse case build-coverage-manifest.ts already reports
     }
 
-    const durationMs = dialogueDurationForShot(db, projectId, shot.dialogue_character_id, verseStart, verseEnd);
-    if (durationMs <= 0) continue;
+    const durationMs = dialogueDurationForShot(db, projectId, shot.dialogue_character_id, verseStart, verseEnd, shot.id);
+    if (durationMs === null || durationMs <= 0) continue;
 
     const recomputed = planCoverage(durationMs);
     // Compare notes too, not just the plan enum -- a duration correction
@@ -215,7 +221,12 @@ export function buildCoverageManifestsForProject(projectId: string): BuildManife
       continue;
     }
 
-    const durationMs = dialogueDurationForShot(db, projectId, shot.dialogue_character_id, verseStart, verseEnd);
+    const durationMs = dialogueDurationForShot(db, projectId, shot.dialogue_character_id, verseStart, verseEnd, shot.id);
+    if (durationMs === null) {
+      results.push({ shotId: shot.id, verseRef: shot.verse_ref, status: "needs_exact_interval", beatCount: 0,
+        detail: "Speaker attribution covers the speech; an exact performance/phrase window is still required for timed coverage. Verse metadata does not partition the soundtrack." });
+      continue;
+    }
     if (durationMs <= 0) {
       results.push({ shotId: shot.id, verseRef: shot.verse_ref, status: "skipped_no_dialogue", beatCount: 0 });
       continue;

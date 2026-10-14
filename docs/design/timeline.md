@@ -57,6 +57,19 @@ from the source narration.
 
 ## Project Identity: Language x Book x Chapter
 
+Continuous-speech update (2026-10-14): confirmed run records retain attribution
+and covered verse metadata separately from the original interval timeline.
+Several composite records may address contiguous offsets in one cast file;
+editorial assembly joins those offsets as one soundtrack span even when picture
+changes. Cast selection prefers the exact source map, including an unlabelled
+internal interval, rather than verse equality. Exact shot performance windows
+may cross internal rows; editorial lip-sync checks use their true source offsets
+and refuse an inserted pause inside the performance. A pause at an internal
+run/verse edge requires separately reviewed safe-boundary evidence. All original
+intervals remain complete, ordered and at source speed in the saved render map.
+These extend the existing edit/assembly records and portable chapter history;
+they create no second timeline or FDL runtime.
+
 Every timeline belongs to exactly one (language, book, chapter) combination
 — e.g. Hatam Mark 2, or English Acts 5. The producer navigates directly to
 any such combination (see the selector in `docs/USER_WORKFLOW.md`) and lands

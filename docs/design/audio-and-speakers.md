@@ -89,15 +89,91 @@ quotation state across verse boundaries, so a quote that opens in one verse and
 closes later exposes every interior verse to review. If a direct-speech run has
 an affected verse with no named source-speaker attribution, casting is held
 before it can create shots, keyframes, voice media, or video. The hold names
-the affected verse numbers and requires exact source-interval speaker review
-and bindings; quotation marks are only a
-detection signal and never evidence of a speaker's identity. A lone attributed
-fragment cannot clear a longer speech run. Once the first named source interval
-inside a quoted run begins, every later alignment interval through that run must
-also carry a named speaker binding, including an otherwise unlabelled alignment
-slice. A narrated lead-in is permitted only before that first named interval.
+the affected verse numbers and requires evidenced speaker coverage; quotation
+marks are only a detection signal and never evidence of a speaker's identity.
+A confirmed multi-verse range covers every verse in that range. A lone
+attributed fragment cannot clear a longer speech. Once the first named source
+interval inside a quoted run begins, later intervals must carry a speaker or
+an explicit reviewed narration decision, including otherwise unlabelled slices.
+A narrated lead-in is permitted before that first named interval.
 Chapters without quoted direct
 speech are not blocked by this specific gate.
+
+## Confirmed continuous speech (implemented 2026-10-14)
+
+Attribution, verse metadata, semantic phrase alignment and actual audio edits
+are separate facts. `confirmContinuousSpeech` extends ingestion's existing
+speaker-attribution records and typed edit history. One confirmation names the
+speaker (or original narrator), existing contiguous source intervals, precise
+outer audio bounds, covered chapter verse range, reviewer and continuity/boundary
+evidence. `internalVerseTiming` is explicitly `approximate` or `unresolved`.
+It neither deletes/merges intervals nor rewrites verse labels, reviewed text,
+confidence, boundary overrides, shot bindings, accepted assets or prior evidence.
+The `confirm_continuous_speech` command retains the complete member snapshot and
+source hashes. A retry reuses its idempotency key. Exact-equivalent re-ingestion
+can remap member IDs; changed bounds, Scripture, audio or speaker holds for
+reconciliation. Covered verses must exist in both supplied source and reference
+Scripture. An explicitly evidenced `supersedesRunId` confirmation retains the
+complete old snapshot; it does not retime accepted audio or transfer an old
+performance-window approval. Narrator confirmations are validated inside ingestion's write
+transaction so a failed remap rolls back. The legacy Mark 2 quote-aware writer
+holds when it would replace confirmed runs.
+
+The producer's **Continuous speech — confirm the whole run** control and
+`GET/POST /api/projects/:id/continuous-speech` use those same records that scene
+planning, voicing and crew briefs consume. A specialist can use the same
+evidenced operation; this does not introduce a per-chapter plan approval gate.
+The coverage projection also reuses existing reviewed range attributions and
+corrections, excluding evidence explicitly superseded by a split/merge.
+Real narrator interruptions, speaker changes (including two speakers in one
+verse), chapter boundaries, gaps and reviewed editorial content cannot be
+silently absorbed into an overlapping run. Use existing exact split/boundary
+review for genuinely mixed intervals. A recorded narration run is positive
+evidence, distinct from an unassigned interval that remains reviewable.
+
+For a **new** complete cast run, stage 5 extracts/revoices the whole outer
+interval once. Its existing per-original composite records point to precise
+offsets in the shared file, so ordinary verse rows do not introduce audio seams.
+Mapped accepted files are reused; a partial retained map holds before spending.
+An explicit forced revision still produces a complete run and retains old takes
+and maps in typed history. Provider timing must match source duration; no speech
+rate change is applied. Unknown provider usage/cost remains unreported, not free.
+
+An exact lip-sync/performance window has its own `bind_speech_run_utterance`
+history record, existing shot binding, approved voice version and independent
+`timingEvidence`. It may cross internal alignment rows of the same run without
+requiring internal verse alignment. Shared cast offsets are reused directly;
+separate retained cast files can be joined locally for that exact provider
+window without revoicing or changing the soundtrack. Cached joins retain and
+verify input/output hashes and duration. Neither range attribution
+nor a broad duration envelope proves a semantic phrase/emotional beat. Internal
+editorial pauses still need independently reviewed safe-boundary evidence,
+recorded as `confirm_speech_pause_boundary` through
+`POST /api/projects/:id/continuous-speech/:runId/pause-boundaries`. An ordinary
+boundary override is not evidence that its ending is safe for an inserted pause.
+Composite review playback is bounded to each saved file offset and ordered by
+its original source map, so a shared file is not replayed in full for each row.
+Existing source/canon/cost, field-review and release gates remain intact.
+
+Validation and retained synthetic workflow evidence are recorded in
+`docs/plans/CURRENT_GOAL.md`. The fixture verifies source order/speed and actual
+rendering; it does not certify Hatam word alignment or acting quality.
+
+The subsequent [real Mark 4 read-only audit](../production/mark4-continuous-speech-audit.md)
+qualifies live acceptance. Existing speaker confirmations already settle 22
+internal verse boundaries, but no typed speech runs exist on that production.
+Its confirmed different-verse rows have 748–920 ms source-clock gaps and cannot
+currently enter the strict contiguous-run contract. Retain the intervening
+source material without moving reviewed bounds or treating the representation
+problem as 21 new producer questions. Explicit legacy narration evidence for
+verse 13 and 39 is not yet projected as `reviewedNarration`; accepted exact-window
+generation provenance also needs reconciliation into existing shot bindings.
+An older source attestation matches source bytes but not the combined current
+alignment/speaker hash. The current speaker gate still holds; the audit made no
+runtime/state migration. The verse 25 tail/end of turn, verse 35 quoted handoff
+and verse 41 group-speech representation remain targeted reconciliation/review.
+These are compatibility limits of the current implementation, not new approval
+policy or permission to regenerate accepted assets.
 
 ## Open questions
 

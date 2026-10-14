@@ -7,6 +7,8 @@ import { discoverSourcePaths } from "../ingestion/source-catalog.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
 import type { CrewBrief, CrewPhase, CrewShot } from "./crew-types.js";
 import { readCutTimingAudit } from "../assembly/cut-timing-audit.js";
+import { readConfirmedSpeechRuns, speechRunPauseIsSafe } from "../ingestion/continuous-speech.js";
+import { speechRunBinding } from "../voice-lipsync/speech-run-audio.js";
 
 export const digest = (value: string | Buffer): string => createHash("sha256").update(value).digest("hex");
 export function productionAssetPath(dataDir: string, path: string): string {
@@ -46,6 +48,14 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
     speaker_character_id AS speakerId, source_path AS path, confidence FROM audio_segments
     WHERE project_id = ? AND layer = 'original_reading' ORDER BY start_ms, id`).all(projectId) as unknown as CrewBrief["audio"];
   if (!alignedAudio.length) throw new Error("Ingest and align the source audio before role planning.");
+  const speechRuns = readConfirmedSpeechRuns(db, projectId, dataDir);
+  for (const segment of alignedAudio) {
+    const run = speechRuns.find(r => r.members.some(m => m.id === segment.id));
+    if (run) {
+      segment.speechRun = { id: run.id, verseRef: run.verseRef, startMs: run.startMs, endMs: run.endMs, internalVerseTiming: run.internalVerseTiming };
+      segment.safePauseAfter = segment.endMs === run.endMs || speechRunPauseIsSafe(db, projectId, run, segment.endMs);
+    }
+  }
   const audio: CrewBrief["audio"] = [];
   let end = 0;
   for (const segment of alignedAudio) {
@@ -96,6 +106,8 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
     WHERE sc.project_id = ? ORDER BY sc.sequence, s.sequence`).all(projectId) as unknown as CrewShot[];
   if (!shots.length) throw new Error("Create the initial shot plan before running the production crew.");
   for (const shot of shots) {
+    const binding = db.prepare("SELECT source_start_ms AS startMs,source_end_ms AS endMs FROM shot_utterance_bindings WHERE shot_id=?").get(shot.id) as { startMs: number; endMs: number } | undefined;
+    if (binding) shot.utterance = { ...binding, speechRunId: speechRunBinding(db, shot.id)?.speechRunId };
     checkRef(shot.verseRef);
     const ref = parseVerseRange(shot.verseRef);
     if (!source.reference.some(v => v.verse === ref.start) || !source.reference.some(v => v.verse === ref.end)) throw new Error(`Shot ${shot.id} has no matching Scripture range.`);

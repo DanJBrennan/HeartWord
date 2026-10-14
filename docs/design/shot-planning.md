@@ -100,6 +100,21 @@ different trigger, not a different output.
 
 ## Implied Emotion within the existing shot plan
 
+Continuous-speech update (2026-10-14): a confirmed run supplies the speaker,
+covered verse range and exact outer audio bounds, while its internal verse
+timing remains approximate/unresolved. Scene headings and picture changes may
+cross that range without splitting the soundtrack or prompting for each verse's
+exact word boundary. A confirmed run spanning a narrative scene heading supplies
+its speaker to both scenes. It does not turn the heading into an audio edit.
+Initial casting marks such coverage as needing an exact performance/phrase
+window rather than claiming the whole speech's duration belongs to each verse
+shot. Coverage-manifest construction uses saved exact shot bindings and reports
+`needs_exact_interval` for unbound run/partial-range timing; existing generated
+or accepted beats are retained. June owns attribution/alignment evidence, Kit
+consumes exact performance windows, and Nell changes picture under continuous
+audio. Emotion inference alone cannot provide phrase timing or authorize a pause.
+See [audio and speakers](audio-and-speakers.md).
+
 The shot planner treats emotion as an inference about **how people respond to
 an event the passage already supplies**, not as permission to add an event,
 line, or theological claim. For every scene its saved reasoning identifies

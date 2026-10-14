@@ -3,6 +3,7 @@ import { ProductionCrew } from "./ProductionCrew";
 import { MediaLibrary } from "./MediaLibrary";
 import { BoundedIntervalAudio } from "./BoundedIntervalAudio";
 import { Dailies } from "./Dailies";
+import { ContinuousSpeechReview } from "./ContinuousSpeechReview";
 import { ChapterEndingPlanView, type ChapterEndingPlan } from "./ChapterEndingPlanView";
 
 interface Project {
@@ -43,6 +44,8 @@ interface CastMasterSegment {
   source_path: string;
   verse_ref: string | null;
   speaker_name: string | null;
+  start_ms: number;
+  end_ms: number;
 }
 interface SourceSegment { id:string; source_path:string; start_ms:number; end_ms:number; verse_ref:string|null; automatedVerseRef?:string|null; alignmentStatus?:string; alignmentMethod?:string; textMatchScore?:number|null; assignedText?:string; editorialTitle?:string; crossReferenceText?:string; editorialNextVerseRef?:string|null; reviewerName?:string; }
 
@@ -464,6 +467,7 @@ export default function App() {
             </p>
             <ol>{pipelineResult.results.map((result) => <li key={result.stage}><strong>{result.stage.replaceAll("_", " ")}</strong> — {result.reasoning}</li>)}</ol>
           </div>}
+          {sourceSegments.length > 0 && <ContinuousSpeechReview key={activeProject.id} projectId={activeProject.id} intervals={sourceSegments} characters={characters} onSaved={() => void loadSourceSegments(activeProject.id)} />}
           {sourceSegments.length > 0 && <details><summary>Source alignment intervals — listen to anything marked uncertain</summary><ul>{sourceSegments.map(segment => <li key={segment.id}><code>{(segment.start_ms/1000).toFixed(2)}–{(segment.end_ms/1000).toFixed(2)}s</code> · {segment.verse_ref ?? (segment.editorialTitle ? "editorial material" : "unassigned")} · {segment.alignmentStatus ?? "Legacy alignment — detailed evidence not recorded"}{segment.reviewerName ? ` · reviewed by ${segment.reviewerName}` : ""}{segment.assignedText ? ` · ${segment.assignedText}` : ""}{segment.editorialTitle ? ` · title: ${segment.editorialTitle}` : ""}{segment.crossReferenceText ? ` · references: (${segment.crossReferenceText})` : ""}{segment.editorialNextVerseRef ? ` · next Scripture begins ${segment.editorialNextVerseRef}` : ""}{segment.automatedVerseRef ? ` · automated span was ${segment.automatedVerseRef}` : ""}{segment.textMatchScore !== null && segment.textMatchScore !== undefined ? ` · local text-match score ${segment.textMatchScore}/100` : ""}<br /><BoundedIntervalAudio src={`/media/${segment.source_path}`} startMs={segment.start_ms} endMs={segment.end_ms} /></li>)}</ul></details>}
         </>}
       </section>
@@ -739,7 +743,7 @@ export default function App() {
                 <li key={s.id}>
                   <strong>{s.verse_ref ?? "—"}</strong> — {s.speaker_name ?? "narration"}
                   <div>
-                    <audio controls src={`/media/${s.source_path}`} style={{ height: 28, verticalAlign: "middle" }} />
+                    <BoundedIntervalAudio src={`/media/${s.source_path}`} startMs={s.start_ms} endMs={s.end_ms} />
                   </div>
                 </li>
               ))}
