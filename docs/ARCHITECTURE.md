@@ -192,6 +192,14 @@ are retained and labelled until their complete timeline/source map is
 represented. See [chapter preservation](design/chapter-preservation.md) and
 the separately labelled [FDL design](design/film-description-language.md).
 
+Whole-data disaster recovery extends those same preservation primitives in
+`src/pipeline/assembly/disaster-backup.ts`. SQLite-supported snapshots of all
+databases are coordinated with hashed media and copied outside live/synced
+storage before completed backups may be published to OneDrive. Local completion
+and cloud delivery remain separate states; source/canon/history/approval gates
+are preserved. See [disaster recovery](design/disaster-recovery.md) and the
+[replacement-computer guide](production/DISASTER_RECOVERY.md).
+
 The entities and relationships a v1 implementation needs, expanding the
 list already named in Assets, Versions, and Portability in
 `docs/PRODUCT_VISION.md`. The actual DDL lives in `src/db/schema.sql`; the

@@ -1,5 +1,52 @@
 # Current Goal
 
+## Disaster recovery implementation and deployment check (2026-10-07)
+
+This unit protects the vision's faithful editable chapter and normal
+language/book/chapter workflow after disk loss. Existing local-LTX work,
+chapter-preservation evidence and branding research below remain intact.
+Design: [disaster recovery](../design/disaster-recovery.md). Operations:
+[replacement-computer guide](../production/DISASTER_RECOVERY.md).
+
+Dan accepts losing up to one working day and selected completed snapshots in
+OneDrive **if at least 750 GiB is free**. The live SQLite data stays outside
+sync. The initial actual data inventory is 86.918 GiB / 28,912 files with six
+SQLite databases; all six pass integrity/foreign-key checks. Mark 3/4's
+reference audits pass. Mark 2 retains missing older source paths; the ten-project
+Blender inventory records 20 absent paths among 1,681 unique dependencies,
+with no present dependency outside HeartWordData. No source is guessed/replaced.
+
+The whole-data backup CLI uses SQLite's backup API, writer reservations,
+copy/source hashes and membership/change checks, and writes completion last.
+It preserves every present take, source, canon, review, producer decision,
+cost and edit-history row, plus app source/lockfile and custom edit materials.
+Restoration uses the existing record/path projection into a new unsynced root.
+The Production crew panel shows backup failures/overdue state. Publication of
+a completed copy remains cloud_pending until actual remote recovery is checked.
+
+Nightly 23:30 Eastern and three daily/four weekly copies are proposed for the
+agreed loss tolerance. No automated deletion or paid work is introduced.
+The nightly runner is prepared, but **scheduling/upload deployment is blocked**:
+the configured OneDrive account shows 495.9 GB used of 1 TB, below Dan's
+750 GiB-free gate. Its actual configured root is `OneDrive - dsc`, not the
+older `OneDrive` repository directory. Dan must choose separate storage,
+another qualifying account, or revised retention/capacity. First remote
+verification remains required afterward.
+No local copy is claimed to survive failure of C:. Your dot/live Mabel dispatch
+and external ChatGPT/SMS transport are unavailable; this chat reports results.
+Local verification passes: 562 tests / 96 files, type checking and web build;
+the full 87 GiB isolated restore passes integrity, all 58 table/schema/history
+checks and a Mark 3 loader/dependency audit without live-data read access.
+The normal selector opens Mark 3 and retained footage plays without paid
+regeneration. Restore fixes preserve path aliases and immutable sidecars;
+historical ending records display without changing their contents or approvals.
+A fresh final snapshot captures the tested tooling; completion/comparison
+evidence is `outputs/disaster-backup-final-evidence.json` when successful.
+The dedicated Goal Guardian review passes scope and local workflow preservation,
+but acceptance remains open until a qualifying separate destination, remote
+restore and schedule activation succeed. See the recovery design for evidence,
+legacy gaps and notification limitations. No C: copy is disaster protection.
+
 ## Editable chapter preservation delivered (2026-10-07)
 
 This unit serves the vision's faithful editable chapter and the normal
@@ -177,6 +224,139 @@ scenes. Audio approval publishes only a sound asset, not a video/timeline or
 release approval. No new product decisions or disconnected tasks were added.
 The live diagnostic has passed. The next production validation is reviewed
 LTX/Veo/Kling comparisons, not a new subsystem or chapter rewrite.
+
+## Branding research ready for Dan (2026-10-07)
+
+The [naming decision memo](../design/branding-review-2026-10-07.md) compares
+HeartWord with three alternatives whose exact .com and .org domains were
+positively offered at standard registration prices on October 7. Dan required
+both extensions, standard registration only, and a primary-domain first-year
+price up to $50; all three pairs were $19.06 at the recorded check. Word in
+Reach is recommended as a shared organization/Studio/Films/Illustrated name;
+two split naming structures are also evaluated. Selection remains Dan's.
+
+This is completed research, not an adopted rebrand or runtime work. No domain
+was registered, no repository or production state was renamed, and no film
+branding, source performance, canon, accepted asset or edit history changed.
+The local LTX work above remains the active engineering goal. Full validation
+passed (539 tests / 91 files, TypeScript and web build). External ChatGPT/SMS
+notification was unavailable; the memo records the delivery limitation.
+The separate Goal Guardian pass confirmed the research serves the established
+purpose, preserves the chapter workflow and adds no runtime or production work.
+
+Follow-up at Dan's request: ten additional candidates are recorded in the
+same memo, each with both exact .com/.org domains positively offered at
+standard prices at 15:29:27 or 15:30:59 EDT on October 7 ($19.06 per pair
+first year). ScriptureReach, Word in View and ScriptureLantern lead this
+additional set. The original overall recommendation remains Word in Reach;
+Dan's selection and naming structure remain open. Nearby naming uses,
+pronunciation limits, evidence and a separate follow-up Goal Guardian review
+are recorded. Documentation checks passed; the earlier suite/type/build
+results were not rerun for this research-only expansion.
+
+Second follow-up at Dan's request: ten further candidates have both exact
+.com/.org domains positively offered at standard registration prices by
+Dynadot, recorded at 15:49:56 EDT on October 7 ($18.87 per pair first year;
+$22.52/year at displayed renewal rates). Word and Scene, Scripture and Light,
+and Source and Frame lead this batch. The memo records exact domains,
+status, prices, source, nearby uses and the separate Goal Guardian review.
+The original Word in Reach recommendation and Dan's open name/structure
+decision remain. This is research only; active engineering and production
+state are preserved. Documentation checks cover this addition; the earlier
+suite/type/build results were not rerun for it.
+
+Dan's Word and Light suggestion was checked at 15:59:35 EDT on October 7:
+Dynadot marked both wordandlight.com and wordandlight.org Taken. The .com
+hosts Word + Light Agency, an existing creative-sector use. The memo records
+why it fails the agreed registration criteria and the narrow Goal Guardian
+review; no acquisition, rebrand or production change follows.
+
+Light-focused follow-up: eight new candidates are recorded in the same memo,
+each with both exact .com/.org domains positively offered by Dynadot at
+16:07:04 EDT on October 7, at standard prices ($18.87 per pair first year;
+$22.52/year displayed renewal). Scripture in Light, Chapter in Light and
+Light Across Languages lead this set. Domain evidence, nearby-use screening
+and a separate Goal Guardian review are retained. Dan's name/structure
+decision remains open; active engineering, production state and established
+branding are preserved. This research-only addition uses documentation
+checks; the earlier suite/type/build results were not rerun for it.
+
+Dan requested a consolidated spreadsheet. The [Excel comparison](../../outputs/01a117c5-85a5-79f1-9a10-553ade7bf4c0/HeartWord-name-comparison.xlsx)
+contains all 33 presented names and 66 exact domain records, with original
+check times, source prices, calculated pair totals, tradeoffs and recorded
+recommendations. Workbook/data/formula checks, saved-XLSX feature checks and
+visual review passed; the memo records the separate Goal Guardian review.
+No new availability check, rebrand or runtime change was made. Dan's name
+and naming-structure selection remains open; active engineering is preserved.
+
+Dan's Wordflix, Wordflix Studio and Crosslight Studio suggestions were checked
+at 17:35:47 EDT on October 7. Only wordflixstudio.com/.org had standard
+registration offers ($18.87 per pair first year; $22.52/year displayed
+renewal). Both wordflix domains and crosslightstudio.com were Taken;
+crosslightstudio.org alone was offered at standard registration. The memo
+records six exact results, prices/status/time/source and existing WordFlix
+uses plus a CrossLight Studio directory listing. Naming overlap weakens
+Wordflix Studio despite its domain pass. Dan's decision remains open and
+the original recommendation is preserved; this is research only.
+The separate Goal Guardian review and domain/documentation checks passed;
+the earlier suite/type/build checks were not rerun for this addition.
+
+Dan's Heartflix and Crossflix suggestions were checked at 17:42:40 EDT on
+October 7. Dynadot marked all four exact .com/.org domains Taken, with no
+standard registration or resale price established. Both have existing media
+uses, including Crossflix's Christian films/Bible courses, so both are
+excluded. The memo retains the exact evidence and branding tradeoffs.
+The earlier recommendation, Dan's open decision and active engineering remain.
+The separate Goal Guardian and documentation checks passed; runtime checks
+were not rerun for this research-only follow-up.
+
+Dan's Crosslight suggestion was checked at 17:44:51 EDT on October 7:
+Dynadot marked crosslight.com and crosslight.org Taken, with no standard
+registration or resale price established. The .com is used by Crosslight
+Software; church-publishing and audiovisual-production uses also surfaced.
+The memo records exact evidence and the exclusion recommendation. This
+research preserves active engineering and Dan's open naming decision.
+The separate Goal Guardian and documentation checks passed; runtime checks
+were not rerun for this research-only check.
+
+Dan narrowed the comparison to Heart Language Media and Word Into Light.
+Both exact .com/.org pairs were positively offered by Dynadot at standard
+prices at 17:55:35 EDT on October 7 ($18.87 per pair first year;
+$22.52/year displayed renewal). Within these two finalists, Word Into Light
+with the existing Scripture/heart-language tagline is recommended for one
+organization/Studio/Films/Illustrated family; Heart Language Media leads
+when direct mission description is the priority. The memo records concrete
+tradeoffs, nearby uses, split-name implications and refreshed evidence,
+while preserving earlier recommendations as research history. Dan's final
+selection/structure, spoken-name feedback and focused naming clearance
+remain open. No brand or runtime change follows; active engineering remains.
+The separate Goal Guardian review and domain/documentation checks passed;
+runtime checks were not rerun for this research-only comparison.
+
+Dan requested twenty names containing Flix. The memo records twenty new
+names and forty exact .com/.org domains positively offered at standard
+prices by Dynadot, recorded at 18:31:28 or 18:31:50 EDT on October 7.
+Each pair was $18.87 first year and $22.52/year at displayed renewal rates,
+with no premium/resale labels. Individual compound/spaced-name searches
+returned no results; this is limited screening, not legal clearance.
+ScriptureFlix, PassageFlix and EveryTongueFlix lead this set. Dan's prior
+two-finalist comparison and open final naming decision are preserved;
+Flix is not inferred as a final requirement. No runtime or production change
+was made, and the active LTX engineering goal remains intact.
+The separate Goal Guardian and domain/documentation checks passed; runtime
+checks were not rerun for this research-only addition.
+
+Dan's HeartWordFlix suggestion had positive standard registration offers
+for heartwordflix.com and heartwordflix.org at 19:03:27 EDT on October 7
+($18.87 per pair first year; $22.52/year displayed renewal). The memo records
+the exact evidence and existing HeartWord Scripture-app uses. It is a
+continuity option for a film label, but retains the spoken heartworm concern
+and is weaker as a shared studio/illustrated umbrella. Word Into Light remains
+the recommendation between Dan's earlier two finalists; selection and naming
+structure remain open. This is research only, with no adopted branding,
+runtime or production change; active LTX work is preserved.
+The separate Goal Guardian review and domain/documentation checks passed;
+runtime checks were not rerun for this research-only follow-up.
 
 ## Previous production context: Mark 4 correction and held cuts
 

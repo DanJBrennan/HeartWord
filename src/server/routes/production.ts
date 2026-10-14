@@ -13,6 +13,7 @@ import { readCutTimingAudit, recordCutTimingAudit } from "../../pipeline/assembl
 import { buildProductionMonitor, type NegotiationLogEntry, type ProductionMonitorEvent } from "../production-crew.js";
 import { proposeReusableLesson, type LessonScope as SynthesizedLessonScope } from "../../pipeline/creative-direction/lesson-synthesis.js";
 import { exportChapterPackage, inspectChapterPackage } from "../../pipeline/assembly/chapter-package.js";
+import { backupStatus } from "../../pipeline/assembly/disaster-backup.js";
 import { join } from "node:path";
 
 export const productionRouter = Router({ mergeParams: true });
@@ -55,7 +56,7 @@ productionRouter.get("/", (req, res) => {
   const audit = render ? readCutTimingAudit(db, getProjectId(req), String(render.id)) : null;
   // A recorded observation is labelled as such; actual crew loading also
   // verifies both the film hash and current source hashes before using it.
-  res.json({ runs, assets, attempts, render, timingAudit: audit });
+  res.json({ runs, assets, attempts, render, timingAudit: audit, backup: backupStatus(getDataDir()) });
 });
 productionRouter.get("/preservation", (req, res) => {
   try { res.json(inspectChapterPackage(getDb(), getDataDir(), getProjectId(req)).manifest); }

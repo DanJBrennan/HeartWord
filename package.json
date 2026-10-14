@@ -21,6 +21,7 @@
     "watch:media": "tsx scripts/watch-media-generation.ts",
     "ltx:test": "tsx scripts/ltx-test.ts",
     "chapter:package": "tsx scripts/chapter-package.ts",
+    "data:backup": "tsx scripts/disaster-backup.ts",
     "db:import-control-room-presentation": "python scripts/import-control-room-presentation-library.py C:\\Users\\danbr\\Downloads\\HeartWord_New_Sample_Exchanges.xlsx",
     "test": "vitest run"
   },

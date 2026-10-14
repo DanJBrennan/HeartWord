@@ -3,6 +3,7 @@ import { ProductionCrew } from "./ProductionCrew";
 import { MediaLibrary } from "./MediaLibrary";
 import { BoundedIntervalAudio } from "./BoundedIntervalAudio";
 import { Dailies } from "./Dailies";
+import { ChapterEndingPlanView, type ChapterEndingPlan } from "./ChapterEndingPlanView";
 
 interface Project {
   id: string;
@@ -111,16 +112,6 @@ interface ChapterIntroPlan {
   titleCard: { title: string; language: string; durationMs: number; audio: string };
   shots: Array<{ role: string; description: string; reason: string; evidence: string; durationMs: number; endpointRule: string; audio: string }>;
   sourceClockStartMs: number;
-  reasoning: string;
-  status: "proposed" | "needs_review";
-  reviewNotes: string[];
-}
-
-interface ChapterEndingPlan {
-  nextChapterRef: string | null;
-  shots: Array<{ role: string; description: string; reason: string; currentEvidence: string; nextEvidence: string; durationMs: number; audio: string }>;
-  sourceClockEndMs: number;
-  postSourceDurationMs: number;
   reasoning: string;
   status: "proposed" | "needs_review";
   reviewNotes: string[];
@@ -616,13 +607,7 @@ export default function App() {
                 </ul>
               </div>
             ))}
-            {endingPlan && <div className="scene-block">
-              <h3>Chapter ending — {endingPlan.status.replaceAll("_", " ")}</h3>
-              <p>After the complete source recording ({(endingPlan.sourceClockEndMs / 1000).toFixed(1)}s), {endingPlan.shots.length} wordless transition shot{endingPlan.shots.length === 1 ? "" : "s"} may hint at {endingPlan.nextChapterRef ?? "the next chapter"} for {(endingPlan.postSourceDurationMs / 1000).toFixed(1)}s. Natural ambience; optional score.</p>
-              <p className="hint">{endingPlan.reasoning} Inferred movement is visual staging, not narrated Scripture.</p>
-              {endingPlan.reviewNotes.map((note, index) => <p className="error" key={index}>{note}</p>)}
-              <ol>{endingPlan.shots.map((shot, index) => <li key={index}><strong>{shot.role}</strong> ({(shot.durationMs / 1000).toFixed(1)}s) — {shot.description} Purpose: {shot.reason} Current: “{shot.currentEvidence}”; next: “{shot.nextEvidence}”. Media is not assigned; reuse requires target-shot review.</li>)}</ol>
-            </div>}
+            <ChapterEndingPlanView plan={endingPlan} />
             {reviewError && <p className="error">{reviewError}</p>}
           </>
         )}

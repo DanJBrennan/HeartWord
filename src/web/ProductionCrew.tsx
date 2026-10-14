@@ -6,7 +6,7 @@ import type { CrewContribution as Contribution } from "../pipeline/creative-dire
 import type { CutTimingAudit } from "../pipeline/assembly/cut-timing-audit";
 interface Asset { id: string; kind: string; description: string; path: string }
 interface Attempt { id: string; kind: string; status: string; path: string | null; error: string | null; cost_usd: number | null }
-interface Snapshot { runs: Run[]; assets: Asset[]; attempts: Attempt[]; render: { id: string; path: string } | null; timingAudit?: CutTimingAudit | null }
+interface Snapshot { runs: Run[]; assets: Asset[]; attempts: Attempt[]; render: { id: string; path: string } | null; timingAudit?: CutTimingAudit | null; backup?: { stale: boolean; summary: string } }
 interface MonitorEvent { id:string; runId?:string; kind:string; sender:string; round:number; status:"active"|"completed"|"held"|"error"; context:string; summary:string; createdAt:number }
 interface Monitor { events: MonitorEvent[]; outstanding: MonitorEvent[]; state:string; note:string }
 interface Lesson { id:string; scope_kind:string; requested_change:string; rationale:string|null; status:string; subject_id?:string|null }
@@ -28,6 +28,7 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [render, setRender] = useState<Snapshot["render"]>(null);
   const [timingAudit, setTimingAudit] = useState<CutTimingAudit | null>(null);
+  const [backup, setBackup] = useState<Snapshot["backup"]>();
   const [selected, setSelected] = useState<string | null>(null), [busy, setBusy] = useState(false);
   const [error, setError] = useState(""), [notice, setNotice] = useState("");
   const [guidance, setGuidance] = useState("");
@@ -43,7 +44,7 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
   const [asset, setAsset] = useState({ path: "", kind: "music", description: "" });
   async function refresh() {
     const data = await request<Snapshot>(base);
-    setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null);
+    setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setBackup(data.backup);
     setMonitor(await request<Monitor>(`${base}/monitor`));
     const lessonData = await request<LessonResponse>(`${base}/lessons`);
     setLessons(lessonData.lessons); setApplicableLessons(lessonData.applicableLessons); setLessonHistory(lessonData.history);
@@ -51,7 +52,7 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
   }
   useEffect(() => {
     let active = true;
-    const load = () => Promise.all([request<Snapshot>(base), request<Monitor>(`${base}/monitor`), request<LessonResponse>(`${base}/lessons`), request<Roster>("/api/control-room/roster", undefined, "GET")]).then(([data, monitor, lessonData, rosterData]) => { if (active) { setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setMonitor(monitor); setLessons(lessonData.lessons); setApplicableLessons(lessonData.applicableLessons); setLessonHistory(lessonData.history); setRoster(rosterData.roster); } }).catch(e => { if (active) setError(e.message); });
+    const load = () => Promise.all([request<Snapshot>(base), request<Monitor>(`${base}/monitor`), request<LessonResponse>(`${base}/lessons`), request<Roster>("/api/control-room/roster", undefined, "GET")]).then(([data, monitor, lessonData, rosterData]) => { if (active) { setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setBackup(data.backup); setMonitor(monitor); setLessons(lessonData.lessons); setApplicableLessons(lessonData.applicableLessons); setLessonHistory(lessonData.history); setRoster(rosterData.roster); } }).catch(e => { if (active) setError(e.message); });
     void load();
     const timer = window.setInterval(load, 5000);
     return () => { active = false; window.clearInterval(timer); };
@@ -80,6 +81,7 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
   return <section className="production-crew" aria-label="Production crew">
     <h2>Production crew</h2>
     <p>Plan the chapter together, review the assembled film, and inspect why each choice was made. Approved takes and the source recording are retained.</p>
+    {backup && <p role="status"><strong>Disaster backup{backup.stale ? " overdue" : ""}:</strong> {backup.summary}</p>}
     <details className="crew-roster"><summary>Production roster ({roster.length} declared roles and reviewers)</summary><p>Implemented labels identify bounded recorded calls. Declared roles describe ownership and handoffs; they do not imply a live autonomous worker.</p><div className="crew-map">{roster.map(role => <article key={role.id} className="department-card"><strong>{role.label}</strong><p>{role.owner} · {role.authority.replaceAll("_", " ")} · {role.runtime}</p><p>Owns: {role.owns}</p><small>Cannot: {role.cannot}</small></article>)}</div></details>
     <section className="production-monitor" aria-label="Production interaction monitor">
       <h3>Chapter interaction monitor</h3>

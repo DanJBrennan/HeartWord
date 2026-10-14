@@ -19,3 +19,9 @@ Local video generation defaults to LTX Desktop on the dedicated Mac mini.
 See [`docs/production/LTX_LOCAL.md`](docs/production/LTX_LOCAL.md) for session
 authentication, SSH access, diagnostics (`npm run ltx:test -- --health`),
 supported settings, and selectable Veo/Kling comparison runs.
+
+For data protection and replacement-computer recovery, see
+[`docs/production/DISASTER_RECOVERY.md`](docs/production/DISASTER_RECOVERY.md).
+`npm run data:backup -- inventory` measures the data; completed SQLite/media
+snapshots may be published to OneDrive. Local copies do not establish verified
+cloud protection.

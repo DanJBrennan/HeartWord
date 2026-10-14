@@ -20,7 +20,7 @@ export interface ChapterPackageManifest {
   sourceRoot: string; schemaFile: string; recordsFile: string; recordsSha256: string;
   files: PreservedFile[]; problems: string[]; editability: string[];
 }
-export interface PackageOptions { extraFiles?: string[] }
+export interface PackageOptions { extraFiles?: string[]; includeApplication?: boolean }
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
 const slash = (value: string) => value.replaceAll("\\", "/");
 const quote = (name: string) => `"${name.replaceAll('"', '""')}"`;
@@ -44,7 +44,7 @@ function portablePath(root: string, path: string): string {
 
 /** Retain project-owned rows, their children, and the exact shared dependencies.
  * Never pull another chapter in through a shared character or reusable take. */
-function chapterRecords(db: DatabaseSync, projectId: string): { tables: Tables; schema: string } {
+export function productionRecords(db: DatabaseSync, projectId?: string): { tables: Tables; schema: string } {
   const definitions = db.prepare("SELECT name,sql FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all() as Array<{ name: string; sql: string }>;
   const all: Tables = {}, selected: Record<string, Set<Row>> = {}, keys: Record<string, ForeignKey[]> = {};
   for (const { name } of definitions) {
@@ -52,6 +52,9 @@ function chapterRecords(db: DatabaseSync, projectId: string): { tables: Tables; 
     selected[name] = new Set(all[name]!.filter(row => name === "projects" ? row.id === projectId : row.project_id === projectId));
     keys[name] = db.prepare(`PRAGMA foreign_key_list(${quote(name)})`).all() as unknown as ForeignKey[];
   }
+  const indexes = db.prepare("SELECT sql FROM sqlite_master WHERE type IN ('index','trigger') AND sql IS NOT NULL ORDER BY type,name").all() as Array<{ sql: string }>;
+  const schema = [...definitions, ...indexes].map(d => `${d.sql};`).join("\n");
+  if (projectId === undefined) return { tables: all, schema };
   if (!selected.projects?.size) throw new Error("Project not found.");
   let changed = true;
   const owners: Record<string, string> = { shots: "scene_id", shot_characters: "shot_id", generation_attempts: "shot_id",
@@ -102,8 +105,7 @@ function chapterRecords(db: DatabaseSync, projectId: string): { tables: Tables; 
   // Donor dependencies may have brought their project identity/scene along;
   // only their referenced records are retained, never their whole chapter.
   const tables = Object.fromEntries(definitions.map(({ name }) => [name, all[name]!.filter(row => selected[name]!.has(row))]));
-  const indexes = db.prepare("SELECT sql FROM sqlite_master WHERE type IN ('index','trigger') AND sql IS NOT NULL ORDER BY type,name").all() as Array<{ sql: string }>;
-  return { tables, schema: [...definitions, ...indexes].map(d => `${d.sql};`).join("\n") };
+  return { tables, schema };
 }
 
 const pathKey = /(?:path|file|keyframe|^source$|^src$|^inputs$|^references$|^pictureBase$|^audioBase$|^basePath$)/i;
@@ -114,16 +116,24 @@ const fileSuffix = /\.(?:mp4|mov|mkv|webm|wav|mp3|flac|m4a|aac|ogg|png|jpe?g|web
 export function inspectChapterPackage(db: DatabaseSync, dataDir: string, projectId: string, options: PackageOptions = {}) {
   // Read a consistent SQLite snapshot; immutable files are rehashed when copied.
   db.exec("BEGIN");
-  let snapshot: ReturnType<typeof chapterRecords>;
-  try { snapshot = chapterRecords(db, projectId); db.exec("COMMIT"); }
+  let snapshot: ReturnType<typeof productionRecords>;
+  try { snapshot = productionRecords(db, projectId); db.exec("COMMIT"); }
   catch (error) { db.exec("ROLLBACK"); throw error; }
   const { tables, schema } = snapshot;
   const project = tables.projects!.find(p => p.id === projectId)!;
   const assets = resolve(dataDir, "assets"), bySource = new Map<string, PreservedFile>();
   const problems: string[] = [], editability: string[] = [];
   const pendingJson: string[] = [];
+  // Immutable sidecars can name the old computer's absolute paths. Whole-data
+  // restoration records their retained targets without rewriting/hash-changing
+  // those source documents. The same saved projection serves later audits.
+  const projectionFile = resolve(dataDir, "logs/disaster-recovery-paths.json");
+  const projection = existsSync(projectionFile) ? JSON.parse(readFileSync(projectionFile, "utf8")) as { version: number; references: Array<[string, string]> } : null;
+  if (projection && (projection.version !== 1 || !Array.isArray(projection.references))) throw new Error("Invalid saved recovery path projection.");
+  const restoredReferences = new Map(projection?.references ?? []);
   function add(value: string, reference: string, role: PreservedFile["role"] = "original", lockedDependency = false) {
-    const full = isAbsolute(value) ? resolve(value) : resolve(assets, value);
+    const retained = restoredReferences.get(value);
+    const full = retained ? portablePath(dataDir, retained) : isAbsolute(value) ? resolve(value) : resolve(assets, value);
     if (!existsSync(full) || !statSync(full).isFile()) { problems.push(`Missing asset: ${value} (${reference})`); return; }
     const actual = realpathSync(full);
     if (inside(resolve(dataDir, "db"), actual)) throw new Error("The live database is represented by its consistent record snapshot; do not copy live database files into the package.");
@@ -207,7 +217,7 @@ export function inspectChapterPackage(db: DatabaseSync, dataDir: string, project
       bySource.set(full, { path: `application/${slash(relative(resolve("."), full))}`, bytes, sha256: hash(readFileSync(full)), originals: [full], references: ["application source snapshot"], role: "original" });
     }
   }
-  for (const path of ["src", "scripts", "package.json", "package-lock.json", "tsconfig.json", "tsconfig.base.json", "vite.config.ts", "vitest.config.ts", "docs/design/fdl"]) addApplication(resolve(path));
+  if (options.includeApplication !== false) for (const path of ["src", "scripts", "package.json", "package-lock.json", "tsconfig.json", "tsconfig.base.json", "vite.config.ts", "vitest.config.ts", "docs/design/fdl"]) addApplication(resolve(path));
   // Earlier voicing used fixed names and left superseded files unregistered.
   const castDirectory = resolve(assets, "generated", String(project.language), `${project.book}-${project.chapter}`, "composite_cast_master");
   if (inside(assets, castDirectory) && existsSync(castDirectory)) for (const name of readdirSync(castDirectory)) if (statSync(resolve(castDirectory, name)).isFile()) add(resolve(castDirectory, name), "retained cast-master history");
@@ -297,27 +307,42 @@ export function restoreChapterPackage(directory: string, destination: string): C
     const target = file.path.startsWith("assets/") ? rel : resolve(destination, file.path);
     relocations.set(original, target);
   }
-  function relocate(value: unknown): unknown {
-    if (typeof value === "string") {
-      if (relocations.has(value)) return relocations.get(value)!;
-      if (value.startsWith("{") || value.startsWith("[")) { try { return JSON.stringify(relocate(JSON.parse(value))); } catch { return value; } }
-      return value;
-    }
-    if (Array.isArray(value)) return value.map(relocate);
-    if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, originKey.test(key) ? child : relocate(child)]));
-    return value;
-  }
   mkdirSync(resolve(destination, "db"), { recursive: true });
   for (const file of manifest.files) {
     const target = portablePath(destination, file.path); mkdirSync(dirname(target), { recursive: true });
     copyFileSync(portablePath(directory, file.path), target, constants.COPYFILE_EXCL);
     if (hash(readFileSync(target)) !== file.sha256) throw new Error(`Restore integrity failed: ${file.path}`);
   }
+  restoreProductionRecords(resolve(destination, "db", "heartword.sqlite"), tables, readFileSync(portablePath(directory, manifest.schemaFile), "utf8"), relocations);
+  writeFileSync(resolve(destination, "restored-from.json"), JSON.stringify({ package: resolve(directory), recordsSha256: manifest.recordsSha256, restoredAt: new Date().toISOString(), noGeneration: true }, null, 2), { flag: "wx" });
+  return manifest;
+}
+
+/** Shared path projection for chapter packages and whole-data recovery. The
+ * unchanged baseline remains in the package/SQLite snapshot. Never update an
+ * immutable history row in place to relocate a restored working database. */
+export function restoreProductionRecords(path: string, tables: Tables, schema: string, relocations: Map<string, string>): void {
+  if (existsSync(path)) throw new Error("Restored database already exists.");
+  function relocate(value: unknown): unknown {
+    if (typeof value === "string") {
+      if (relocations.has(value)) return relocations.get(value)!;
+      if (value.startsWith("{") || value.startsWith("[")) {
+        try {
+          const parsed: unknown = JSON.parse(value), projected = relocate(parsed);
+          return JSON.stringify(parsed) === JSON.stringify(projected) ? value : JSON.stringify(projected);
+        } catch { return value; }
+      }
+      return value;
+    }
+    if (Array.isArray(value)) return value.map(relocate);
+    if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, originKey.test(key) ? child : relocate(child)]));
+    return value;
+  }
   const { DatabaseSync: SQLite } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
-  const db = new SQLite(resolve(destination, "db", "heartword.sqlite"));
+  const db = new SQLite(path);
   try {
     db.exec("PRAGMA foreign_keys=OFF; BEGIN IMMEDIATE;");
-    db.exec(readFileSync(portablePath(directory, manifest.schemaFile), "utf8"));
+    db.exec(schema);
     db.exec("PRAGMA defer_foreign_keys=ON;");
     for (const [table, rows] of Object.entries(tables)) for (const original of rows) {
       const row = relocate(original) as Row, columns = Object.keys(row);
@@ -327,6 +352,4 @@ export function restoreChapterPackage(directory: string, destination: string): C
     db.exec("COMMIT");
   } catch (error) { if (db.isTransaction) db.exec("ROLLBACK"); throw error; }
   finally { db.close(); }
-  writeFileSync(resolve(destination, "restored-from.json"), JSON.stringify({ package: resolve(directory), recordsSha256: manifest.recordsSha256, restoredAt: new Date().toISOString(), noGeneration: true }, null, 2), { flag: "wx" });
-  return manifest;
 }

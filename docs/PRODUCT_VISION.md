@@ -53,6 +53,11 @@ warning sign, not progress. See `AGENTS.md` and `docs/NON_GOALS.md`.
   Distribution" below.
 - HeartWord Illustrated is part of HeartWord's architecture, but is explicitly lower priority than HeartWord Films while the video lane is under active development. Its strategy (recovered from a prior attempt's Mark/Acts illustrated work) is recorded in `docs/design/illustrated-scripture.md`.
 
+Naming research (2026-10-07): the [branding decision memo](design/branding-review-2026-10-07.md)
+compares HeartWord with a shortlist checked for standard-registration .com
+and .org domains. It is a recommendation for Dan, not an adopted rebrand;
+the established names and existing film branding above remain authoritative.
+
 ## Why HeartWord Exists
 
 The Mark 2:1-12 pilot (produced under BVET) required more than 50 editing

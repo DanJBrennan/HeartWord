@@ -2,7 +2,9 @@
 
 Implemented October 7, 2026 in assembly's `chapter-package.ts`. This is a
 portable production snapshot, not a new pipeline stage or disaster-backup
-service. The product goal is the faithful, editable chapter described in
+service. Whole-data disk-loss protection now has a separate
+[disaster-recovery workflow](disaster-recovery.md), using these same saved
+records and restoration primitives. The product goal is the faithful, editable chapter described in
 PRODUCT_VISION, CURRENT_GOAL and USER_WORKFLOW: reopen a chapter months or
 years later, inspect its source/asset lineage and revise retained components
 without buying another generation or reverse-engineering an MP4.
