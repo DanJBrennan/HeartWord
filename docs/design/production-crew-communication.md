@@ -84,6 +84,13 @@ were supplied, including scoped target.
 
 ## Runtime truth
 
+The [FDL v2 design](film-description-language-v2.md) defines proposed shared
+meaning beside prose, with canonical owner IDs and immutable input/context
+references. It does not add a property to today's crew contracts or turn
+declared roles into live workers. Runtime integration would extend the same
+saved briefs, contributions, review/objection records and producer controls;
+manual/autonomous operation must not acquire separate mutable FDL authorities.
+
 Continuous-speech handoff (2026-10-14): the saved brief carries confirmed run
 scope and honest internal verse timing beside individual source intervals,
 plus exact shot utterance windows and independent timing evidence in retained

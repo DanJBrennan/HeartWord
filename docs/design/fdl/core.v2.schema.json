@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:heartword:fdl:core:2",
+  "title": "HeartWord FDL core v2 — design contract, not generation authorization",
+  "type": "object", "additionalProperties": false,
+  "required": ["fdlVersion", "purpose", "revision", "parentRevision", "inputRevision", "context", "prose", "world", "states", "shots", "keyframes", "clips"],
+  "properties": {
+    "fdlVersion": {"const": 2},
+    "purpose": {"enum": ["design_example", "production"]},
+    "revision": {"$ref": "#/$defs/id"},
+    "parentRevision": {"type": ["string", "null"], "minLength": 1},
+    "inputRevision": {"$ref": "#/$defs/id"},
+    "context": {"type": "object", "additionalProperties": false, "required": ["projectId", "sceneId", "briefSha256"], "properties": {
+      "projectId": {"$ref": "#/$defs/id"}, "sceneId": {"$ref": "#/$defs/id"}, "briefSha256": {"$ref": "#/$defs/hash"}
+    }},
+    "prose": {"$ref": "#/$defs/id"},
+    "world": {"type": "array", "items": {"$ref": "#/$defs/worldEntity"}},
+    "states": {"type": "array", "items": {"$ref": "#/$defs/state"}},
+    "shots": {"type": "array", "items": {"$ref": "#/$defs/shot"}},
+    "keyframes": {"type": "array", "items": {"$ref": "#/$defs/keyframe"}},
+    "clips": {"type": "array", "items": {"$ref": "#/$defs/clip"}},
+    "providerSettings": {"type": "array", "items": {"$ref": "#/$defs/providerSettings"}},
+    "extensions": {"type": "object", "additionalProperties": false, "properties": {
+      "bibleRegional": {"$ref": "urn:heartword:fdl:bible-regional:2"}
+    }}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1},
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+    "owner": {"enum": ["coordinator", "creative_director", "source_alignment", "scripture_cultural_reviewer", "casting_canon", "storyboard", "cinematographer", "choreographer", "staging_designer", "costume_designer", "lighting_designer", "script_supervisor", "generation", "media_quality", "dialogue_lipsync", "picture_editor", "sound_designer", "composer", "colorist"]},
+    "record": {"type": "object", "additionalProperties": false, "required": ["table", "id", "version", "snapshotSha256"], "properties": {
+      "table": {"$ref": "#/$defs/id"}, "id": {"$ref": "#/$defs/id"},
+      "version": {"type": ["string", "null"], "minLength": 1, "not": {"enum": ["latest", "current"]}}, "snapshotSha256": {"anyOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]}
+    }, "anyOf": [{"properties": {"version": {"type": "string"}}}, {"properties": {"snapshotSha256": {"type": "string"}}}]},
+    "asset": {"type": "object", "additionalProperties": false, "required": ["record", "uri", "sha256"], "properties": {
+      "record": {"$ref": "#/$defs/record"}, "uri": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*\\\\)(?!.*:)[^\\s]+$"}, "sha256": {"$ref": "#/$defs/hash"}
+    }},
+    "evidence": {"type": "object", "additionalProperties": false, "required": ["ref", "limitations"], "properties": {
+      "ref": {"$ref": "#/$defs/id"}, "limitations": {"type": "string"},
+      "region": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number", "minimum": 0, "maximum": 1}},
+      "atMs": {"type": "integer", "minimum": 0}
+    }},
+    "vector3": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "number"}},
+    "fact": {"type": "object", "additionalProperties": false, "required": ["value", "units", "status", "owner", "reason", "evidence", "approvalRecord"], "properties": {
+      "value": {"type": ["string", "number", "boolean", "array", "null"], "minLength": 1, "items": {"type": ["number", "string"]}, "minItems": 1},
+      "units": {"enum": ["none", "m", "mm", "degrees", "ms", "K", "lux", "ratio"]},
+      "status": {"enum": ["unknown", "open", "observed", "proposed", "approved"]},
+      "owner": {"$ref": "#/$defs/owner"}, "reason": {"$ref": "#/$defs/id"},
+      "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+      "approvalRecord": {"type": ["string", "null"], "minLength": 1}
+    }, "allOf": [
+      {"if": {"properties": {"status": {"enum": ["unknown", "open"]}}}, "then": {"properties": {"value": {"type": "null"}}}, "else": {"properties": {"value": {"not": {"type": "null"}}}}},
+      {"if": {"properties": {"status": {"const": "approved"}}}, "then": {"properties": {"approvalRecord": {"type": "string", "minLength": 1}, "evidence": {"type": "array", "minItems": 1}}}, "else": {"properties": {"approvalRecord": {"type": "null"}}}},
+      {"if": {"properties": {"status": {"const": "observed"}}}, "then": {"properties": {"evidence": {"type": "array", "minItems": 1}}}},
+      {"if": {"properties": {"units": {"enum": ["m", "degrees"]}}}, "then": {"properties": {"value": {"anyOf": [{"type": "null"}, {"type": "number"}, {"$ref": "#/$defs/vector3"}]}}}},
+      {"if": {"properties": {"units": {"enum": ["mm", "K", "lux"]}}}, "then": {"properties": {"value": {"type": ["number", "null"], "exclusiveMinimum": 0}}}},
+      {"if": {"properties": {"units": {"const": "ms"}}}, "then": {"properties": {"value": {"type": ["integer", "null"], "minimum": 0}}}},
+      {"if": {"properties": {"units": {"const": "ratio"}}}, "then": {"properties": {"value": {"type": ["number", "null"], "minimum": 0, "maximum": 1}}}},
+      {"if": {"properties": {"units": {"const": "none"}}}, "then": {"properties": {"value": {"type": ["string", "boolean", "array", "null"], "items": {"type": "string"}}}}}
+    ]},
+    "facts": {"type": "object", "propertyNames": {"pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"}, "additionalProperties": {"$ref": "#/$defs/fact"}},
+    "worldEntity": {"type": "object", "additionalProperties": false, "required": ["id", "kind", "recordRefs", "facts"], "properties": {
+      "id": {"$ref": "#/$defs/id"}, "kind": {"enum": ["character", "garment", "set", "prop"]},
+      "recordRefs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/record"}},
+      "assets": {"type": "array", "items": {"$ref": "#/$defs/asset"}}, "facts": {"$ref": "#/$defs/facts"}
+    }},
+    "state": {"type": "object", "additionalProperties": false, "required": ["id", "worldIds", "facts"], "properties": {
+      "id": {"$ref": "#/$defs/id"}, "worldIds": {"$ref": "#/$defs/ids"}, "facts": {"$ref": "#/$defs/facts"}
+    }},
+    "shot": {"type": "object", "additionalProperties": false, "required": ["id", "recordRefs", "facts"], "properties": {
+      "id": {"$ref": "#/$defs/id"}, "recordRefs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/record"}}, "facts": {"$ref": "#/$defs/facts"}
+    }},
+    "keyframe": {"type": "object", "additionalProperties": false, "required": ["id", "shotId", "stateId", "anchor", "facts"], "properties": {
+      "id": {"$ref": "#/$defs/id"}, "shotId": {"$ref": "#/$defs/id"}, "stateId": {"$ref": "#/$defs/id"},
+      "anchor": {"enum": ["start", "end", "intermediate"]}, "facts": {"$ref": "#/$defs/facts"}, "selectedAsset": {"$ref": "#/$defs/asset"}
+    }},
+    "motion": {"type": "object", "additionalProperties": false, "required": ["subjectId", "property", "startMs", "endMs", "from", "to", "interpolation", "reason"], "properties": {
+      "subjectId": {"$ref": "#/$defs/id"}, "property": {"$ref": "#/$defs/id"},
+      "startMs": {"type": "integer", "minimum": 0}, "endMs": {"type": "integer", "minimum": 1},
+      "from": {"$ref": "#/$defs/fact"}, "to": {"$ref": "#/$defs/fact"},
+      "interpolation": {"enum": ["linear", "ease_in_out", "hold", "unspecified"]}, "reason": {"$ref": "#/$defs/id"}
+    }},
+    "clip": {"type": "object", "additionalProperties": false, "required": ["id", "shotId", "startKeyframe", "endKeyframe", "endStateId", "durationMs", "motion", "audio"], "properties": {
+      "id": {"$ref": "#/$defs/id"}, "shotId": {"$ref": "#/$defs/id"}, "startKeyframe": {"$ref": "#/$defs/id"},
+      "endKeyframe": {"type": ["string", "null"], "minLength": 1}, "endStateId": {"$ref": "#/$defs/id"},
+      "durationMs": {"type": "integer", "minimum": 1}, "motion": {"type": "array", "items": {"$ref": "#/$defs/motion"}},
+      "audio": {"type": "object", "additionalProperties": false, "required": ["mode", "bindingRefs", "safePauseRef", "spokenSpeed"], "properties": {
+        "mode": {"enum": ["source_under_picture", "visible_speech", "editorial_pause"]}, "bindingRefs": {"$ref": "#/$defs/ids"},
+        "safePauseRef": {"type": ["string", "null"], "minLength": 1}, "spokenSpeed": {"const": 1}
+      }, "allOf": [
+        {"if": {"properties": {"mode": {"const": "editorial_pause"}}}, "then": {"properties": {"safePauseRef": {"type": "string", "minLength": 1}}}, "else": {"properties": {"safePauseRef": {"type": "null"}, "bindingRefs": {"type": "array", "minItems": 1}}}}
+      ]},
+      "selectedAsset": {"$ref": "#/$defs/asset"}
+    }},
+    "providerSettings": {"type": "object", "additionalProperties": false, "required": ["targetId", "provider", "model", "settings", "requiredFields", "supportedFieldsEvidence"], "properties": {
+      "targetId": {"$ref": "#/$defs/id"}, "provider": {"$ref": "#/$defs/id"}, "model": {"type": ["string", "null"], "minLength": 1},
+      "settings": {"type": "object"}, "requiredFields": {"$ref": "#/$defs/ids"}, "supportedFieldsEvidence": {"$ref": "#/$defs/ids"}
+    }}
+  }
+}

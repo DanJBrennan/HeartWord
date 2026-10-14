@@ -1,5 +1,10 @@
 # Film Description Language (FDL), v1 design
 
+**Historical draft retained.** The current recommendation, contracts, worked
+examples and validation are in [FDL v2](film-description-language-v2.md),
+refined October 14, 2026. The v1 schemas/example below remain unchanged for
+preservation and comparison; neither version is a runtime generator interface.
+
 Status: new design and worked examples, requested October 7, 2026. This is
 not an implemented generator interface, approval gate, or another pipeline.
 Context: Dan's “Prompt Kling performance guidance” chat, especially its

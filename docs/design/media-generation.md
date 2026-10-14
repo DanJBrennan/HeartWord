@@ -140,8 +140,15 @@ Rejected and superseded work is retained indefinitely by default and included
 with provenance in the [portable chapter package](chapter-preservation.md).
 This does not authorize a new generation, change selected assets, or claim
 old overwritten pixels can be recovered from a prompt. The new
-[FDL design](film-description-language.md) remains separate from implemented
+[FDL v2 design](film-description-language-v2.md) remains separate from implemented
 provider request contracts.
+
+The v2 worked anchors/clip describe continuity intent alongside prose, with
+open choices, unresolved facts and inactive inspection proposals. No generator
+consumes that JSON directly today. A future adapter must resolve the same saved
+production/canon/review state and compile supported inputs. In particular, the
+current final-video interface has no end-frame field; an exact endpoint cannot
+be promised by adding it to prose or silently dropping the requirement.
 
 Every verifiable generated image or video remains at its immutable original
 path, whether it was selected for its origin shot, held for review, escalated,

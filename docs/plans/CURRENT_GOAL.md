@@ -1,5 +1,43 @@
 # Current Goal
 
+## Film Description Language design completed (2026-10-14)
+
+This single design concern serves the vision's autonomous faithful editable
+film and Dan's existing chapter review/correction workflow. The
+[FDL v2 design](../design/film-description-language-v2.md) records Dan's located
+original attachment and subsequent no-prior-specification clarification,
+distinguishes implemented records/providers from declared roles/historical
+notes, and recommends versioned JSON plus prose over a custom grammar.
+The October 7 v1 schemas/example remain unchanged and available.
+
+Delivered: a minimal core and separate Bible/regional schema; explicit
+persistent canon/set facts, local state, composition, timed changes, provider
+settings, owner IDs, units/coordinates, pinned references, open choices and
+unknowns. Worked synagogue K1 → K2/C1 fixtures preserve character/garments,
+architecture, story state, gaze, light and source performance while the camera
+moves. A separate hypothetical anchor inspection proposes visible furnishing
+facts for approval without promoting mistakes, hidden geometry or uncertain
+observations. Papuan character identity stays distinct from Galilean setting.
+
+These are design artifacts and executable contract tests, **not a runtime
+integration, live chapter plan or actual image inspection**. Provider mappings
+use existing interfaces and disclose unsupported exact end-frame/performance
+controls. Future integration must extend the same saved briefs, contributions,
+attempts/reviews and producer controls for manual/autonomous use. No new stage,
+chapter-plan signature, generation call or production spending is introduced.
+Existing Mark 4 holds, LTX, preservation and other active work below remain intact.
+
+Validation: 12 new contract/example tests under `tests/media-generation/`;
+full suite **587 tests / 99 files passes**, TypeScript and production web build
+pass, and `git diff --check` passes. Log: `outputs/fdl-design-tests.txt`.
+Separate Goal Guardian review passes **design-only acceptance** against the
+vision, this goal and USER_WORKFLOW. It corrected screen-space vs physical
+continuity, clarified angle conventions and rejected mutable version labels.
+Runtime/canon/source/cost/field/release authority remains unchanged. No Dan
+decision blocks this design; actual new set/canon facts need their existing
+applicable approval when used. Your dot/live Mabel and external ChatGPT/SMS
+delivery are unavailable; this chat reports the result, SMS is not claimed.
+
 ## Real Mark 4 continuous-speech audit (2026-10-14)
 
 Dan requested a read-only check against existing Mark 4 speaker confirmations,

@@ -190,6 +190,13 @@ not just the final shot list.
 
 ### Shared scene-space plan
 
+The [FDL v2 design](film-description-language-v2.md) proposes a small versioned
+JSON snapshot plus prose for this existing handoff: persistent canon/set facts,
+local scene state, composition and timed clip changes remain separate. Its
+anchor-inspection example records observations and proposals for approval;
+accepting an image does not promote every depicted detail to canon. This is a
+design contract only, not an additional stage or a new chapter-plan signature.
+
 Before the individual shots for a recurring location are finalized, planning
 records one shared spatial-continuity description: the location's relative
 scale, stable architectural anchors, and staging zones. This is a

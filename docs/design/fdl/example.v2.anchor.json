@@ -1,0 +1,489 @@
+{
+  "fdlVersion": 2,
+  "purpose": "design_example",
+  "revision": "example:synagogue-r1",
+  "parentRevision": null,
+  "inputRevision": "example:crew-brief-v1",
+  "context": {
+    "projectId": "bind:Hatam-Mark-3-project",
+    "sceneId": "bind:Mark-3-synagogue-scene",
+    "briefSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "prose": "DESIGN EXAMPLE ONLY. IDs, approvals, coordinates, hashes and timing are illustrative, not live evidence. Mark 3:1–2, inside the synagogue after the entry: a quiet listening moment, no invented words or new arrival. Canon face, hair, build, garment cut/layers/drape, color blocks, tassels and footwear come from exact approved Papuan video versions. The approved first-century Galilean set remains fixed. Keep bodies naturally oriented toward the encounter, readable daylight, no posed portrait. Bench arrangement may be chosen within the existing set constraints; hidden geometry stays unknown. All bind:* and example:* references must be replaced and checked before production.",
+  "world": [
+    {
+      "id": "jesus",
+      "kind": "character",
+      "recordRefs": [
+        {
+          "table": "character_versions",
+          "id": "bind:Jesus-approved-version",
+          "version": "bind:exact-version-id",
+          "snapshotSha256": null
+        }
+      ],
+      "facts": {
+        "appearance": {
+          "value": "Exact approved face, hair, beard, age, build and silhouette, with supplied head/body references.",
+          "units": "none",
+          "status": "approved",
+          "owner": "casting_canon",
+          "reason": "Inherit this exact illustrative baseline; resolve real records before production.",
+          "evidence": [
+            {
+              "ref": "bind:Jesus-canon-approval",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": "bind:Jesus-canon-approval"
+        }
+      }
+    },
+    {
+      "id": "jesus-garment",
+      "kind": "garment",
+      "recordRefs": [
+        {
+          "table": "character_versions",
+          "id": "bind:Jesus-approved-version",
+          "version": "bind:exact-version-id",
+          "snapshotSha256": null
+        }
+      ],
+      "facts": {
+        "garment": {
+          "value": "Exact approved garment cut, neckline, layers, mantle drape, color blocks, corner tassels and footwear; no garment redesign.",
+          "units": "none",
+          "status": "approved",
+          "owner": "casting_canon",
+          "reason": "Inherit this exact illustrative baseline; resolve real records before production.",
+          "evidence": [
+            {
+              "ref": "bind:Jesus-canon-approval",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": "bind:Jesus-canon-approval"
+        }
+      }
+    },
+    {
+      "id": "withered-hand-man",
+      "kind": "character",
+      "recordRefs": [
+        {
+          "table": "character_versions",
+          "id": "bind:Man-with-Withered-Hand-version",
+          "version": "bind:approved-pre-healing-state-version",
+          "snapshotSha256": null
+        }
+      ],
+      "facts": {
+        "appearance": {
+          "value": "Approved pre-healing identity and visible hand state; no restored hand before the source-supported healing.",
+          "units": "none",
+          "status": "approved",
+          "owner": "casting_canon",
+          "reason": "Inherit this exact illustrative baseline; resolve real records before production.",
+          "evidence": [
+            {
+              "ref": "bind:man-canon-story-state-approval",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": "bind:man-canon-story-state-approval"
+        }
+      }
+    },
+    {
+      "id": "synagogue",
+      "kind": "set",
+      "recordRefs": [
+        {
+          "table": "production_runs",
+          "id": "bind:shared-scene-space-plan",
+          "version": "bind:accepted-plan-revision",
+          "snapshotSha256": null
+        }
+      ],
+      "facts": {
+        "architecture": {
+          "value": "Inherit the approved walls, openings, materials, doorway construction and room scale; no moving windows or new doors.",
+          "units": "none",
+          "status": "approved",
+          "owner": "staging_designer",
+          "reason": "Inherit this exact illustrative baseline; resolve real records before production.",
+          "evidence": [
+            {
+              "ref": "bind:shared-scene-space-approval",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": "bind:shared-scene-space-approval"
+        },
+        "coordinateFrame": {
+          "value": "Origin at the planned encounter; +X set-right, +Y toward the rear wall, +Z up. Metres, right-handed. Exact transform comes from the approved set plan.",
+          "units": "none",
+          "status": "approved",
+          "owner": "staging_designer",
+          "reason": "Inherit this exact illustrative baseline; resolve real records before production.",
+          "evidence": [
+            {
+              "ref": "example:set-frame-plan",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": "example:set-frame-plan"
+        },
+        "furnishings": {
+          "value": null,
+          "units": "none",
+          "status": "open",
+          "owner": "staging_designer",
+          "reason": "Placement of background benches may be chosen within the baseline constraints; inspection will propose visible details.",
+          "evidence": [],
+          "approvalRecord": null
+        },
+        "hiddenGeometry": {
+          "value": null,
+          "units": "none",
+          "status": "unknown",
+          "owner": "staging_designer",
+          "reason": "Unseen room/back-wall geometry has no evidence.",
+          "evidence": [],
+          "approvalRecord": null
+        }
+      }
+    },
+    {
+      "id": "bench",
+      "kind": "prop",
+      "recordRefs": [
+        {
+          "table": "production_runs",
+          "id": "bind:shared-scene-space-plan",
+          "version": "bind:accepted-plan-revision",
+          "snapshotSha256": null
+        }
+      ],
+      "facts": {
+        "material": {
+          "value": null,
+          "units": "none",
+          "status": "open",
+          "owner": "staging_designer",
+          "reason": "No approved material detail beyond the historical set constraints.",
+          "evidence": [],
+          "approvalRecord": null
+        }
+      }
+    }
+  ],
+  "states": [
+    {
+      "id": "listening",
+      "worldIds": [
+        "jesus",
+        "jesus-garment",
+        "withered-hand-man",
+        "synagogue",
+        "bench"
+      ],
+      "facts": {
+        "jesus.pose": {
+          "value": "Inside the established encounter, naturally standing; this pose is staging, not a claim about words absent from Scripture.",
+          "units": "none",
+          "status": "proposed",
+          "owner": "choreographer",
+          "reason": "Preserve the source-grounded scene rather than stage another entry.",
+          "evidence": [
+            {
+              "ref": "bind:Mark-3-1-2-source",
+              "limitations": ""
+            },
+            {
+              "ref": "example:staging-plan",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": null
+        },
+        "jesus.gaze": {
+          "value": "Toward the man; not camera-facing.",
+          "units": "none",
+          "status": "proposed",
+          "owner": "choreographer",
+          "reason": "Keep attention within the encounter.",
+          "evidence": [
+            {
+              "ref": "example:staging-plan",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": null
+        },
+        "withered-hand-man.pose": {
+          "value": "Remain in his established position, with the approved pre-healing hand state.",
+          "units": "none",
+          "status": "proposed",
+          "owner": "choreographer",
+          "reason": "No healing or departure occurs in this coverage.",
+          "evidence": [
+            {
+              "ref": "bind:Mark-3-1-2-source",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": null
+        },
+        "bench.position": {
+          "value": null,
+          "units": "none",
+          "status": "open",
+          "owner": "staging_designer",
+          "reason": "Only an observed visible relation can be proposed after the anchor; no hidden metric coordinates.",
+          "evidence": [],
+          "approvalRecord": null
+        },
+        "light.direction": {
+          "value": "Motivated daylight from the existing openings; readable faces and action.",
+          "units": "none",
+          "status": "proposed",
+          "owner": "lighting_designer",
+          "reason": "Follow the approved lighting direction across the move.",
+          "evidence": [
+            {
+              "ref": "bind:scene-lighting-direction",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": null
+        },
+        "timeOfDay": {
+          "value": null,
+          "units": "none",
+          "status": "unknown",
+          "owner": "lighting_designer",
+          "reason": "The passage does not supply an exact hour.",
+          "evidence": [],
+          "approvalRecord": null
+        },
+        "weather": {
+          "value": null,
+          "units": "none",
+          "status": "unknown",
+          "owner": "lighting_designer",
+          "reason": "No weather change is needed; outdoor weather is not visible.",
+          "evidence": [],
+          "approvalRecord": null
+        },
+        "performance": {
+          "value": "Quiet attention, restrained breathing; no visible talking in narration coverage.",
+          "units": "none",
+          "status": "proposed",
+          "owner": "creative_director",
+          "reason": "The performance is a bounded staging proposal, not added dialogue.",
+          "evidence": [
+            {
+              "ref": "bind:Mark-3-1-2-source",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": null
+        }
+      }
+    }
+  ],
+  "shots": [
+    {
+      "id": "synagogue-listening",
+      "recordRefs": [
+        {
+          "table": "shots",
+          "id": "bind:existing-listening-coverage-shot",
+          "version": "bind:shot-snapshot-revision",
+          "snapshotSha256": null
+        }
+      ],
+      "facts": {
+        "framing": {
+          "value": "16:9 wide-to-medium view of the encounter, preserving the established axis.",
+          "units": "none",
+          "status": "proposed",
+          "owner": "cinematographer",
+          "reason": "Orient the viewer before the closer view.",
+          "evidence": [
+            {
+              "ref": "example:camera-plan-v1",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": null
+        },
+        "lensFocalLength": {
+          "value": 35,
+          "units": "mm",
+          "status": "proposed",
+          "owner": "cinematographer",
+          "reason": "Intended equivalent focal length, not an inferred lens from an image.",
+          "evidence": [
+            {
+              "ref": "example:camera-plan-v1",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": null
+        },
+        "sensorWidth": {
+          "value": 36,
+          "units": "mm",
+          "status": "proposed",
+          "owner": "cinematographer",
+          "reason": "Pairs with focal length to define the intended field of view.",
+          "evidence": [
+            {
+              "ref": "example:camera-plan-v1",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": null
+        },
+        "cameraTarget": {
+          "value": [
+            0,
+            0,
+            1.2
+          ],
+          "units": "m",
+          "status": "proposed",
+          "owner": "cinematographer",
+          "reason": "Aim at the planned encounter; keep the set axis.",
+          "evidence": [
+            {
+              "ref": "example:camera-plan-v1",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": null
+        }
+      }
+    }
+  ],
+  "keyframes": [
+    {
+      "id": "K1",
+      "shotId": "synagogue-listening",
+      "stateId": "listening",
+      "anchor": "start",
+      "facts": {
+        "cameraPosition": {
+          "value": [
+            0,
+            -6,
+            1.6
+          ],
+          "units": "m",
+          "status": "proposed",
+          "owner": "cinematographer",
+          "reason": "Illustrative planned coordinates in the declared set frame; never measured from generated pixels.",
+          "evidence": [
+            {
+              "ref": "example:camera-plan-v1",
+              "limitations": ""
+            }
+          ],
+          "approvalRecord": null
+        }
+      }
+    }
+  ],
+  "clips": [],
+  "providerSettings": [],
+  "extensions": {
+    "bibleRegional": {
+      "extensionVersion": 2,
+      "source": {
+        "sourceBindingRef": "bind:project_source_bindings",
+        "language": "hatam",
+        "book": "mark",
+        "chapter": 3,
+        "verseRefs": [
+          "Mark 3:1–2"
+        ],
+        "sourceIntervalRefs": [
+          "bind:exact-source-interval-or-run"
+        ],
+        "referencePurpose": "semantic_context_only",
+        "internalVerseTiming": "unresolved"
+      },
+      "regionalIdentity": {
+        "region": "Papuan",
+        "medium": "video",
+        "appliesTo": "character_identity",
+        "canonContextRef": "bind:approved-project-canon-context",
+        "characterVersionRefs": [
+          "bind:Jesus-approved-version",
+          "bind:Man-with-Withered-Hand-version"
+        ]
+      },
+      "historicalSetting": {
+        "period": "First century",
+        "place": "Galilee, established synagogue; not Papua",
+        "setVersionRefs": [
+          "bind:shared-scene-space-plan"
+        ],
+        "approvedReconstructionRefs": [
+          "bind:shared-scene-space-approval"
+        ],
+        "unknowns": [
+          "Exact hour",
+          "Hidden wall geometry",
+          "Bench material and arrangement"
+        ]
+      },
+      "grounding": [
+        {
+          "target": "scene",
+          "authority": "verified_source",
+          "refs": [
+            "bind:Mark-3-1-2-source"
+          ],
+          "limitations": "The verified source establishes the synagogue and pre-healing man, not a bench count, exact hour or lens."
+        },
+        {
+          "target": "world/jesus",
+          "authority": "regional_canon",
+          "refs": [
+            "bind:Jesus-canon-approval"
+          ],
+          "limitations": "Papuan identity concerns people; it does not authorize Papuan buildings, garments or landscape."
+        },
+        {
+          "target": "world/synagogue/architecture",
+          "authority": "approved_reconstruction",
+          "refs": [
+            "bind:shared-scene-space-approval"
+          ],
+          "limitations": "Production reconstruction rather than Scripture or certainty about ancient geometry."
+        },
+        {
+          "target": "states/listening",
+          "authority": "visual_staging",
+          "refs": [
+            "example:staging-plan"
+          ],
+          "limitations": "Quiet pose and gaze are bounded visual choices needing the applicable review."
+        }
+      ],
+      "gateRecordRefs": {
+        "videoEligibility": null,
+        "citationScope": null,
+        "sourceReview": null,
+        "canonApproval": null,
+        "historicalReconstruction": null,
+        "fieldReview": null,
+        "releaseApproval": null
+      }
+    }
+  }
+}

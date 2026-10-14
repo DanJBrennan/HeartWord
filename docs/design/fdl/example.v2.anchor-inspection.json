@@ -1,0 +1,69 @@
+{
+  "status": "illustrative_proposal_only",
+  "inputRevision": "example:synagogue-r1",
+  "sourceAsset": {
+    "record": {
+      "table": "generation_attempts",
+      "id": "example:reviewed-K1-attempt",
+      "version": "example:immutable-attempt",
+      "snapshotSha256": null
+    },
+    "uri": "assets/example-only/K1.png",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "summary": "Hypothetical inspection result, not an actual image viewing. Retain the review with its real asset hash and locator before use.",
+  "observations": [
+    {
+      "value": "Two bench ends are visible beside the near wall.",
+      "units": "none",
+      "status": "observed",
+      "owner": "staging_designer",
+      "reason": "Report only what is visible; do not infer bench length or unseen seating.",
+      "evidence": [
+        {
+          "ref": "example:reviewed-K1-attempt",
+          "region": [
+            0.05,
+            0.55,
+            0.28,
+            0.35
+          ],
+          "limitations": "Partial visibility; this region does not prove material, dimensions or total bench count."
+        }
+      ],
+      "approvalRecord": null
+    },
+    {
+      "value": null,
+      "units": "none",
+      "status": "unknown",
+      "owner": "staging_designer",
+      "reason": "Camera crop hides the far wall. An unseen door is not a discovered fact.",
+      "evidence": [],
+      "approvalRecord": null
+    }
+  ],
+  "proposals": [
+    {
+      "value": "Preserve the visible near-wall bench-end arrangement where it is shown; projected positions and scale may change with camera perspective.",
+      "units": "none",
+      "status": "proposed",
+      "owner": "staging_designer",
+      "reason": "Propose scene-local continuity only after compliance review; wider reusable set canon needs its own approved reconstruction.",
+      "evidence": [
+        {
+          "ref": "example:reviewed-K1-attempt",
+          "limitations": ""
+        }
+      ],
+      "approvalRecord": null
+    }
+  ],
+  "objections": [
+    {
+      "role": "script_supervisor",
+      "reason": "If a bench obstructs the approved blocking, or the anchor contains a moved window or wrong garment, repair the anchor. Do not lock the generated defect into the set or character canon."
+    }
+  ],
+  "nextAction": "Use existing proposal → objection → revision → resolution and producer reconstruction/canon approval. Record accepted facts in a new immutable saved version; retain observations and rejected proposals. K2/C1 currently inherit no proposal from this inspection."
+}
