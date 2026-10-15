@@ -243,6 +243,23 @@ plans continue automatically when existing applicable reviews/gates pass.
 
 ## Adapters and saved-state integration
 
+Subsequent runtime update (October 14): the
+[crew integration](production-crew-communication.md#runtime-integration-2026-10-14)
+now projects a bounded qualitative subset of this model into saved run results,
+with explicit owner-reviewed contributions, objection history, producer
+successors and revision-bound generation. Actual snapshots/envelopes are checked
+against the existing schemas in runtime integration tests. The generic numeric/
+motion compiler and automatic anchor inspection below remain proposed; core and
+Bible/regional schemas and all old production records are preserved.
+
+The [structured crew exchange decision](production-crew-communication.md#structured-film-information-beside-prose-2026-10-14)
+now specifies the recommended accepted-record/snapshot approach, role-owned
+contribution envelope, relevant prior disagreement context and conflict/stale
+resolution, using this FDL's facts without changing its schemas. Executable
+camera/blocking and rejected-wardrobe examples are design evidence only. They
+do not deploy the generic resolver/compiler described below or change the
+separately implemented narrow Avatar profile.
+
 This mapping is proposed. Extend stage 3/4 packets and provider adapters, not
 a worker/table for FDL. Snapshots belong with immutable briefs/handoffs and
 role outputs; producer corrections use existing decision/edit history. Manual

@@ -36,7 +36,7 @@ vi.mock("../../src/providers/gemini-text.js", () => {
     }
     if (role === "colorist") base.colorAdjustments = [];
     if (role === "sound_designer" || role === "composer") Object.assign(base, { audioCues: [], generationRequests: [] });
-    if (role === "production_director") base.decision = "approve";
+    if (role === "production_director") Object.assign(base,{decision:"approve",decisionConfidence:88,decisionLimitations:"Synthetic fixture only.",acceptedContributionIds:[]});
     return base;
   };
   return { GEMINI_TEXT_MODEL: "synthetic", generateJson: vi.fn(async (p: string, s: any) => contribution(p, s)), generateJsonWithImages: vi.fn(async (p: string, _m: any, s: any) => contribution(p, s)),
@@ -76,11 +76,13 @@ it("takes a fresh reviewed chapter through real common stages without provider c
   const afterVideo=await runPipeline("fresh-full"); expect(afterVideo.stoppedAt, JSON.stringify(db.prepare("SELECT note FROM review_notes WHERE note LIKE 'REVIEW STATUS:%'").all())).toBe("voice_lipsync");
   const shots=db.prepare("SELECT id,verse_ref FROM shots WHERE needs_lip_sync=1 ORDER BY sequence").all() as Array<{id:string;verse_ref:string}>; const { bindShotUtterance }=await import("../../src/pipeline/voice-lipsync/utterance-binding.js"); for(const [i,shot] of shots.entries()) { const sourceSegment=segments[i+1]!; const row=db.prepare("SELECT start_ms,end_ms FROM audio_segments WHERE id=?").get(sourceSegment.id) as {start_ms:number;end_ms:number}; bindShotUtterance(db,{projectId:"fresh-full",shotId:shot.id,sourceSegmentId:sourceSegment.id,startMs:row.start_ms,endMs:row.end_ms,characterVersionId:"voice",approvedBy:"Synthetic producer"}); }
   const budget=await fetch(`http://127.0.0.1:${port}/api/projects/fresh-full/avatar-budget`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({actor:"Synthetic cost reviewer",evidence:"Mocked fixture providers only; external and outstanding charges positively zero.",unreportedUpperBoundUsd:0,outstandingUpperBoundUsd:0,idempotencyKey:"fixture-avatar-costs"})});expect(budget.status).toBe(201);
+  const {runProductionCrew}=await import("../../src/pipeline/creative-direction/crew-store.js");
+  expect((await runProductionCrew("fresh-full","planning")).status).toBe("approved");
   const direction={version:1,baseline:{id:"synthetic-default",evidence:"Fixture profile; no real GUI equivalence claimed."},intent:{gaze:"Keep the same fixture listener eyeline"},overrides:{},reason:"Maintain continuity across the synthetic clips",sourceEvidence:"Synthetic reviewed bindings and reference text",continuityGroup:"fixture-teaching",requiredControls:["image","sound_file"]};
   const savedDirection=await fetch(`http://127.0.0.1:${port}/api/projects/fresh-full/avatar-direction`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({shotIds:shots.map(s=>s.id),direction,actor:"Synthetic Kit",idempotencyKey:"fixture-direction"})});expect(savedDirection.status).toBe(201);
   const reopened=await fetch(`http://127.0.0.1:${port}/api/projects/fresh-full/shots/${shots[0]!.id}/avatar-direction`);expect(await reopened.json()).toMatchObject({direction});
   expect((await runPipeline("fresh-full")).stoppedAt).toBe("voice_lipsync");
-  expect(sync.mock.calls.at(-1)?.[3]).toEqual({avatarDirection:direction,requestId:expect.any(String)});
+  expect(sync.mock.calls.at(-1)?.[3]).toMatchObject({avatarDirection:direction,requestId:expect.any(String),authorizeSubmission:expect.any(Function),productionRevision:{runId:expect.any(String),briefHash:expect.any(String)}});
   const { acceptLipSyncCandidate }=await import("../../src/pipeline/voice-lipsync/candidate-selection.js"); for(const row of db.prepare("SELECT id FROM generation_attempts WHERE operation='lip_sync'").all() as Array<{id:string}>) acceptLipSyncCandidate(db,"fresh-full",row.id);
   const { assembleSingleShot }=await import("../../src/pipeline/assembly/assemble-single-shot.js"); for(const row of db.prepare("SELECT id FROM shots ORDER BY sequence").all() as Array<{id:string}>) assembleSingleShot(db,row.id);
   const finished=await runPipeline("fresh-full"); expect(finished.stoppedAt, finished.results.at(-1)?.reasoning).toBeUndefined(); expect(db.prepare("SELECT COUNT(*) n FROM chapter_renders WHERE project_id='fresh-full'").get()).toMatchObject({n:expect.any(Number)}); expect(sync).toHaveBeenCalledTimes(2);

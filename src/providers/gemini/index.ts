@@ -225,6 +225,7 @@ function groupedReferenceSheets(request: ShotRequest, references: CharacterRefer
 
 export class GeminiImageProvider implements ImageProvider {
   async generate(request: ShotRequest, opts?: { tier?: "standard" | "pro" }): Promise<GenerationResult> {
+    if(request.productionRevision)throw new Error("Film keyframes require the assistant-operated built-in image handoff. Paid image API substitution is not authorized.");
     const apiKey = requireApiKey();
     const tier = opts?.tier ?? "standard";
     const model = tier === "pro" ? NANO_BANANA_PRO_MODEL : NANO_BANANA_MODEL;
@@ -270,6 +271,7 @@ export class GeminiImageProvider implements ImageProvider {
     }
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    request.authorizeSubmission?.();
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -776,6 +778,7 @@ export class GeminiVideoProvider implements VideoProvider {
     const startImageBase64 = readFileSync(keyframePath).toString("base64");
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${tierModel}:predictLongRunning?key=${apiKey}`;
+    request.authorizeSubmission?.();
     const submitRes = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -911,6 +914,7 @@ export class GeminiDraftVideoProvider implements DraftVideoProvider {
     }
     content.push({ type: "text", text: request.prompt });
 
+    request.authorizeSubmission?.();
     const data = await callInteractions(apiKey, INTERACTIONS_VIDEO_VERSION, OMNI_MODEL, content, {
       type: "video",
       resolution: "360p",
@@ -949,6 +953,7 @@ export class GeminiDraftVideoProvider implements DraftVideoProvider {
       { type: "text", text: request.prompt }
     ];
 
+    request.authorizeSubmission?.();
     const data = await callInteractions(apiKey, INTERACTIONS_VIDEO_VERSION, OMNI_MODEL, content, {
       type: "video",
       resolution: "360p",

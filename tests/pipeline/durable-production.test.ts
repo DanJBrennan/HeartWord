@@ -24,7 +24,7 @@ async function fixtureCrewContribution(prompt: string) {
     ], pauses: [] } : {}),
     ...(role === "colorist" ? { colorAdjustments: [] } : {}),
     ...(role === "sound_designer" || role === "composer" ? { audioCues: [], generationRequests: [] } : {}),
-    ...(role === "production_director" ? { decision: "approve" } : {})
+    ...(role === "production_director" ? { decision: "approve",decisionConfidence:88,decisionLimitations:"Synthetic fixture only." } : {})
   };
 }
 // The crew model is the sole external boundary in this assembly acceptance
@@ -112,6 +112,12 @@ describe.skipIf(!ffmpeg)("durable production recovery", () => {
     const { bindShotUtterance } = await import("../../src/pipeline/voice-lipsync/utterance-binding.js");
     bindShotUtterance(db, { projectId: "p", shotId: "a", sourceSegmentId: "a-src", startMs: 500, endMs: 1500, characterVersionId: "voice", approvedBy: "producer" });
     bindShotUtterance(db, { projectId: "p", shotId: "b", sourceSegmentId: "b-src", startMs: 1500, endMs: 2500, characterVersionId: "voice", approvedBy: "producer" });
+    const {runProductionCrew}=await import("../../src/pipeline/creative-direction/crew-store.js");
+    const reviewed=await runProductionCrew("p","planning",{db,dataDir,call:async(prompt)=>{
+      const role=prompt.match(/HeartWord's ([^.]+)\./)?.[1]?.replaceAll(" ","_");
+      return {summary:"Synthetic planning review",directions:["narrator","a","b"].map(shotId=>({shotId,instruction:"Preserve exact fixture performance",scriptureBasis:"Mark 1:1"})),findings:[],
+        ...(role==="picture_editor"?{coverageRequests:[],edits:[],pauses:[],editorialChecks:[]}:{}),...(role==="production_director"?{decision:"approve",decisionConfidence:88,decisionLimitations:"Synthetic planning evidence."}:{})};
+    }});expect(reviewed.status,reviewed.summary).toBe("approved");
     const { runVoiceLipSync } = await import("../../src/pipeline/voice-lipsync/index.js");
     const { reconcileAvatarBudget } = await import("../../src/pipeline/voice-lipsync/performance-direction.js");
     reconcileAvatarBudget(db,{projectId:"p",actor:"Synthetic test",evidence:"All provider calls are mocked in this fixture; no external charges or outstanding work.",unreportedUpperBoundUsd:0,outstandingUpperBoundUsd:0,idempotencyKey:"fixture-avatar-budget"});

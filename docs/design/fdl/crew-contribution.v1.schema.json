@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:heartword:crew:contribution:1",
+  "title": "Crew contribution envelope — design only, outside creative FDL",
+  "description": "Reuses FDL facts. Shape validation cannot establish current inputs, role authority, evidence truth or production approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "kind", "inputRevision", "inputBriefSha256", "owner", "scope", "proposedChanges", "rationale", "evidence", "objections", "destination", "relatedContributions", "supersedes", "finding", "resolution"],
+  "properties": {
+    "id": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"},
+    "kind": {"enum": ["proposal", "objection", "revision", "resolution"]},
+    "inputRevision": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"},
+    "inputBriefSha256": {"$ref": "urn:heartword:fdl:core:2#/$defs/hash"},
+    "owner": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"},
+    "scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["projectId", "sceneIds", "shotIds", "verseRefs", "audioBindingRefs"],
+      "properties": {
+        "projectId": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"},
+        "sceneIds": {"$ref": "urn:heartword:fdl:core:2#/$defs/ids"},
+        "shotIds": {"$ref": "urn:heartword:fdl:core:2#/$defs/ids"},
+        "verseRefs": {"$ref": "urn:heartword:fdl:core:2#/$defs/ids"},
+        "audioBindingRefs": {"$ref": "urn:heartword:fdl:core:2#/$defs/ids"}
+      }
+    },
+    "proposedChanges": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["target", "before", "after"],
+        "properties": {
+          "target": {
+            "type": "object", "additionalProperties": false,
+            "required": ["layer", "entityId", "fact"],
+            "properties": {
+              "layer": {"enum": ["world", "states", "shots", "keyframes"]},
+              "entityId": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"},
+              "fact": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"}
+            }
+          },
+          "before": {"$ref": "urn:heartword:fdl:core:2#/$defs/fact"},
+          "after": {"$ref": "urn:heartword:fdl:core:2#/$defs/fact"}
+        }
+      }
+    },
+    "rationale": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"},
+    "evidence": {"type": "array", "items": {"$ref": "urn:heartword:fdl:core:2#/$defs/evidence"}},
+    "objections": {"$ref": "urn:heartword:fdl:core:2#/$defs/ids"},
+    "destination": {
+      "type": "object", "additionalProperties": false,
+      "required": ["roles", "stage", "subjectId"],
+      "properties": {
+        "roles": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"}},
+        "stage": {"enum": ["ingestion", "scene-breakdown", "casting", "media-generation", "voice-lipsync", "assembly", "qc"]},
+        "subjectId": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"}
+      }
+    },
+    "relatedContributions": {"$ref": "urn:heartword:fdl:core:2#/$defs/ids"},
+    "supersedes": {"type": ["string", "null"], "minLength": 1},
+    "finding": {
+      "anyOf": [
+        {"type": "null"},
+        {"type": "object", "additionalProperties": false, "required": ["severity", "confidence", "limitations"], "properties": {
+          "severity": {"enum": ["blocking", "advisory"]},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 100},
+          "limitations": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"}
+        }}
+      ]
+    },
+    "resolution": {
+      "anyOf": [
+        {"type": "null"},
+        {"type": "object", "additionalProperties": false,
+          "required": ["outcome", "contributions", "objectionDispositions", "acceptedRevision"],
+          "properties": {
+            "outcome": {"enum": ["accepted", "rejected", "held", "stale"]},
+            "confidence": {"type": "number", "minimum": 0, "maximum": 100},
+            "limitations": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"},
+            "contributions": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"}},
+            "objectionDispositions": {"type": "array", "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["objectionId", "outcome", "reason"],
+              "properties": {
+                "objectionId": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"},
+                "outcome": {"enum": ["resolved", "carried"]},
+                "reason": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"}
+              }
+            }},
+            "acceptedRevision": {"type": ["string", "null"], "minLength": 1}
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {"if": {"properties": {"owner": {"const": "production_director"}, "kind": {"const": "resolution"}}}, "then": {"properties": {"resolution": {"type": "object", "required": ["confidence", "limitations"], "properties": {"confidence": {"type": "number", "minimum": 0, "maximum": 100}, "limitations": {"$ref": "urn:heartword:fdl:core:2#/$defs/id"}}}}}},
+    {"if": {"properties": {"kind": {"const": "revision"}}}, "then": {"properties": {"supersedes": {"type": "string", "minLength": 1}}}},
+    {"if": {"properties": {"kind": {"const": "objection"}}}, "then": {"properties": {"finding": {"type": "object"}, "proposedChanges": {"type": "array", "maxItems": 0}}}},
+    {"if": {"properties": {"kind": {"const": "resolution"}}}, "then": {"properties": {"resolution": {"type": "object"}, "proposedChanges": {"type": "array", "maxItems": 0}}}, "else": {"properties": {"resolution": {"type": "null"}}}}
+  ]
+}

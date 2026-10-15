@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { crewBriefHash, loadCrewBrief } from "../../src/pipeline/creative-direction/crew-context.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { acceptKeyframe, assetPath, getKeyframeContext, importKeyframe, keyframeStatus, readLandscapePng, recordProducerOverride, referenceBoardFilter, sha256,
   type KeyframeBrief } from "../../src/pipeline/media-generation/external-keyframes.js";
@@ -18,7 +19,10 @@ function png(width = 2048, height = 1152): Buffer {
 }
 function brief(): KeyframeBrief {
   const context = getKeyframeContext(db, dir, "shot");
-  return { schemaVersion: 1, id: "test-attempt", createdAt: 1, context, contextHash: sha256(JSON.stringify(context)),
+  const reviewed=loadCrewBrief(db,dir,"project","planning");
+  db.prepare("INSERT OR IGNORE INTO production_runs(id,project_id,phase,brief_hash,brief_json,status,result_json,created_at)VALUES('fixture-plan','project','planning',?,?,'approved',?,1)")
+    .run(crewBriefHash(reviewed,"planning"),JSON.stringify(reviewed),JSON.stringify({status:"approved",summary:"Synthetic fixture plan",calls:0,contributions:{production_director:{summary:"Synthetic",directions:[{shotId:"shot",instruction:"Retain fixture context",scriptureBasis:"Mark 2:1-2"}],findings:[],decision:"approve"}}}));
+  return { schemaVersion: 1, id: "test-attempt", createdAt: 1, context, productionRunId:"fixture-plan", contextHash: sha256(JSON.stringify(context)),
     sources: [], prompt: "16:9 test", promptHash: sha256("16:9 test"), rationale: "Test", generationInputs: [] };
 }
 beforeEach(() => {
@@ -35,6 +39,10 @@ beforeEach(() => {
     INSERT INTO character_assets (id,character_version_id,category,path,created_at) VALUES ('asset','version','body_pose','ref.png',1);`);
   writeFileSync(join(dir, "assets", "ref.png"), png(1024, 1024));
   writeFileSync(join(dir, "result.png"), png());
+  db.exec("UPDATE characters SET scope_book='mark' WHERE id='person';INSERT INTO audio_segments(id,project_id,layer,source_path,start_ms,end_ms,verse_ref,created_at)VALUES('audio','project','original_reading','source.wav',0,8000,'Mark 2:1-2',1)");
+  writeFileSync(join(dir,"assets/source.wav"),"synthetic source");
+  const docx=(text:string)=>{const name=Buffer.from("word/document.xml"),bytes=Buffer.from(`<w:document><w:p><w:r><w:t>${text}</w:t></w:r></w:p></w:document>`);const local=Buffer.alloc(30);local.writeUInt32LE(0x04034b50);local.writeUInt16LE(name.length,26);const central=Buffer.alloc(46);central.writeUInt32LE(0x02014b50);central.writeUInt32LE(bytes.length,20);central.writeUInt16LE(name.length,28);const end=Buffer.alloc(22);end.writeUInt32LE(0x06054b50);end.writeUInt16LE(1,10);end.writeUInt32LE(local.length+name.length+bytes.length,16);return Buffer.concat([local,name,bytes,central,name,end]);};
+  for(const path of ["source/hatam/mark-2/mark-2-text.docx","reference/english/mark-2/mark-2-text.docx"]){const target=join(dir,"assets",path);mkdirSync(join(target,".."),{recursive:true});writeFileSync(target,docx("1Synthetic words. 2More synthetic words."));}
 });
 afterEach(() => db.close());
 
@@ -72,14 +80,14 @@ describe("external keyframe handoff", () => {
   it("rejects stale shot plans and changed prompts before writing an attempt", () => {
     const b = brief();
     db.exec("UPDATE shots SET action='Different action'");
-    expect(() => importKeyframe(db, dir, b, join(dir, "result.png"), "Reviewed")).toThrow("changed after");
+    expect(() => importKeyframe(db, dir, b, join(dir, "result.png"), "Reviewed")).toThrow("stale");
     expect(() => importKeyframe(db, dir, { ...b, prompt: "changed" }, join(dir, "result.png"), "Reviewed")).toThrow("Brief changed");
     expect(db.prepare("SELECT COUNT(*) AS n FROM generation_attempts").get()?.n).toBe(0);
   });
   it("detects reference changes even when the database has no hash", () => {
     const b = brief();
     writeFileSync(join(dir, "assets", "ref.png"), png(512, 512));
-    expect(() => importKeyframe(db, dir, b, join(dir, "result.png"), "Reviewed")).toThrow("Shot/canon changed");
+    expect(() => importKeyframe(db, dir, b, join(dir, "result.png"), "Reviewed")).toThrow("stale");
   });
   it("records an idempotent candidate without modifying earlier attempts or inventing billing", () => {
     db.exec(`INSERT INTO generation_attempts (id,shot_id,provider,model,operation,status,cost_usd,created_at)
@@ -106,7 +114,7 @@ describe("external keyframe handoff", () => {
     importKeyframe(db, dir, b, join(dir, "result.png"), "Reviewed");
     db.exec(`INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at)
       VALUES ('unrelated','project','shot','shot','qc','Earlier concern',0,1)`);
-    expect(acceptKeyframe(db, b.id)).toEqual({ attemptId: b.id, shotId: "shot" });
+    expect(acceptKeyframe(db, b.id, dir)).toEqual({ attemptId: b.id, shotId: "shot" });
     expect(db.prepare("SELECT status FROM generation_attempts WHERE id=?").get(b.id)?.status).toBe("accepted");
     expect(db.prepare("SELECT status FROM shots WHERE id='shot'").get()?.status).toBe("keyframe_approved");
     expect(db.prepare("SELECT resolved FROM review_notes WHERE id='unrelated'").get()?.resolved).toBe(0);

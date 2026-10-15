@@ -10,7 +10,7 @@ import type { ProjectRow } from "../ingestion/index.js";
 import { loadSuggestedFix, runShotReview, type SuggestedFix } from "../qc/director.js";
 import { MAX_AUTOMATIC_RETRIES } from "../qc/director-verdict.js";
 import { matchesBeatScope, tagNote } from "../qc/beat-scope.js";
-import { requireCurrentPlan, directionsFromRun } from "../creative-direction/crew-store.js";
+import { requireCurrentPlan, directionsFromRun, productionAuthorization, bindAttemptRevision } from "../creative-direction/crew-store.js";
 import type { StageResult } from "../types.js";
 import { acceptFinalVideoCandidate, generateNonSpeakingVideoCandidate } from "./final-video.js";
 import { chooseShotDraft, generateShotDraft } from "./draft-room.js";
@@ -552,7 +552,9 @@ export const generateKeyframes = async (projectId: string, onlyShotIds?: string[
     );
 
     try {
-      const result = await imageProvider.generate({ shotId: shot.id, prompt, characters: characterRefs,
+      const authorization=productionAuthorization(db,dataDir,projectId);
+      authorization.assertCurrent();
+      const result = await imageProvider.generate({ shotId: shot.id, prompt, characters: characterRefs,authorizeSubmission:authorization.assertCurrent,productionRevision:{runId:authorization.runId,briefHash:authorization.briefHash},
         sceneReferences: sceneReference ? [{ path: sceneReference.result_asset_path }] : [] }, { tier });
       const now = Date.now();
       const attemptId = randomUUID();
@@ -568,6 +570,12 @@ export const generateKeyframes = async (projectId: string, onlyShotIds?: string[
         now
       );
       insertCostEntry.run(randomUUID(), project.id, attemptId, result.cost.usd, now);
+      bindAttemptRevision(db,projectId,attemptId,authorization);
+      try { authorization.assertCurrent(); } catch(error) {
+        db.prepare("UPDATE generation_attempts SET status='hold_for_review' WHERE id=?").run(attemptId);
+        insertReviewNote.run(randomUUID(),project.id,shot.id,`Stale production candidate retained: ${(error as Error).message}`,now);
+        awaitingHuman++; awaitingHumanShots.push(shot.id); continue;
+      }
       updateShotStatus.run("keyframe_generated", shot.id);
       generated++;
 

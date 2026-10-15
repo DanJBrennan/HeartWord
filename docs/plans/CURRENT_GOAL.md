@@ -1,5 +1,140 @@
 # Current Goal
 
+## In-app crew workflow demonstrated on an isolated test film (2026-10-14)
+
+The existing HeartWord app at `http://127.0.0.1:4016` now shows a clearly
+labeled synthetic TEST film in its own saved database/assets directory,
+`HeartWordData/scratch/crew-app-demo-2026-10-14`. The test-only launcher is
+`outputs/crew-app-demo.ts`; production runtime/UI code is unchanged for this
+walkthrough. External/provider requests and unrelated mutations are disabled
+in that process. Mark 4 and previous films are not connected.
+
+Screen-verified workflow: the app's storyboard button first saved a held crew
+review with Tessa's camera/blocking objection and Orion's rejection of blue
+wardrobe. The next review selected Leon's clear right-aisle camera, preserved
+blocking, recorded Costume's withdrawal and explicit original-owner resolutions,
+and retained cream. A producer shot PATCH appended a seated-witness successor;
+the separate autonomous crew caller read that same database and preserved the
+edit, camera, wardrobe and both objections. All earlier demo briefs/results
+remain unchanged. The final app view shows its accepted revision linked to
+the producer revision, with 46 saved lifecycle records and prior runs available.
+
+The producer action edit used the existing API; the main app displays it but
+does not yet provide a direct action-edit form. This demonstration adds no such
+UI and is not a generated film, Hatam/source validation or field/release approval.
+Provider submissions/charges were zero; assistant usage cost remains unreported.
+Screenshots and checkpoint JSON are under `outputs/crew-demo-*`; the isolated
+directory retains `workflow-evidence.json`, SQLite and synthetic assets. See the
+[walkthrough](../design/production-crew-communication.md#in-app-test-film-walkthrough-2026-10-14).
+Final validation: **643 tests / 102 files pass**, TypeScript, web build and
+diff checks pass. A read-only demo check also rejects a handoff pinned to the
+earlier accepted revision and excludes blue/actor-move alternatives from current
+generation direction. The live production DB checksum and all 89 retained render
+inventories are unchanged (`outputs/crew-app-demo-preservation.json`). Separate
+Goal Guardian review passes this bounded demonstration; no Dan decision is
+needed. The API-based edit and absence of real-film quality evidence remain
+explicit limitations.
+
+## Structured crew exchange implemented without changing previous films (2026-10-14)
+
+This single concern implements the preceding design for PRODUCT_VISION's
+faithful editable autonomous chapter and USER_WORKFLOW's shared chapter
+review/correction flow. See the
+[runtime contract](../design/production-crew-communication.md#runtime-integration-2026-10-14).
+Existing Avatar, Mark 4 holds, local LTX, preservation and other work below
+remain intact. No live production stage, historical backfill or migration ran.
+
+New crew runs save versioned qualitative FDL snapshots and linked role-owned
+contributions inside existing run/event JSON. Exact input revision/hash,
+before-facts, domain consent, retained objections and explicit resolutions
+control acceptance. Empty findings cannot erase an earlier hold. Current accepted
+revisions alone authorize new ordinary generation; adapter callbacks recheck at
+submission, including after LTX upload. New candidates retain revision bindings,
+and stale/unbound work stays a candidate. Declared roles remain declared.
+
+Producer shot/scene controls append successor runs and typed old/new history
+atomically, preserving old briefs/results, original attempt approval and bytes,
+unaffected specialist facts, and Dan's precedence over old Director prose.
+Edit replays are idempotent and an expected revision detects stale edits.
+Manual API planning and autonomous callers share the same saved state. Late
+blocking replies remain visible on newer revisions through read-only event
+hydration. Source/canon/performance cannot be changed through a creative edit.
+Interrupted-run recovery preserves the saved contributions and objections.
+
+Fourteen new runtime tests demonstrate camera/blocking disagreement, wardrobe
+withdrawal and continuity rejection, cross-owner consent, persistent and late
+objections, source/canon protection, malformed replies, producer edit/replay/
+reopen/recovery, and stale/missing candidate bindings. An additional LTX adapter test
+proves that a revision change after upload prevents the actual generation POST.
+The full chapter fixture still traverses common stages with mocked providers.
+Retained isolated proof: `HeartWordData/scratch/crew-runtime-proof-2026-10-14`,
+including SQLite, fixture source/assets and `workflow-evidence.json`.
+
+Validation: **643 tests / 102 files pass**, TypeScript, production web build and
+`git diff --check` pass. Logs: `outputs/crew-runtime-tests.txt` and
+`outputs/crew-runtime-workflow-tests.txt`. Separate Goal Guardian review passes
+bounded runtime acceptance against vision/current goal/workflow. Live production
+DB checksum and all 89 render file inventories are checked for preservation.
+No paid model/media call or real film change is claimed. Included assistant
+usage/billed cost is unreported. Existing cumulative $200/outstanding-charge,
+safe-pause, field/release and source/canon requirements remain controlling.
+
+Limits: qualitative FDL only; generic geometry/motion compilation and automatic
+anchor inspection remain unimplemented. Assistant-operated built-in keyframes
+remain a real handoff, with existing scope restrictions; new-film image requests
+cannot silently fall back to a paid image API. No Dan product decision blocks
+this unit. Your dot/live Mabel and SMS transport were unavailable; this chat
+reports completion, and SMS to the supplied number ending in 8114 is not claimed.
+
+## Structured crew exchange design completed (2026-10-14)
+
+Historical design checkpoint; the runtime implementation and validation are
+recorded above.
+
+This single concern serves PRODUCT_VISION's autonomous faithful editable film
+and USER_WORKFLOW's chapter review/correction and selective rerun. The
+[existing crew protocol](../design/production-crew-communication.md#structured-film-information-beside-prose-2026-10-14)
+now recommends a central accepted production record with immutable FDL
+snapshots and role-owned contributions beside prose, compared with independent
+mutable agent copies. At this checkpoint, FDL v2 core/Bible-regional schemas
+and runtime were unchanged; crew/FDL design documents linked the decision.
+
+Delivered: a small contribution-envelope schema reusing FDL facts, explicit
+input revision/context, owner/scope/change/rationale/evidence/objections and
+destination, retained lifecycle links, domain-owner review, atomic acceptance,
+conflict/stale/duplicate handling, later-role disagreement visibility and
+current accepted intent at generation. Transport/status/authority remain outside
+creative FDL. Costs cover tokens, rigidity, false precision, maintenance,
+coordination and mistaking completed fields for a successful film.
+
+The executable design exchange has two hypothetical snapshots and twelve
+events: Leon revises camera placement after Tessa rejects changing blocking;
+Orion rejects a blue-mantle proposal and records Costume's withdrawal while the
+approved cream baseline survives; late r1 work is retained as stale; a phone-size
+readability advisory reaches the generation handoff. Placeholder refs/hashes do
+not authorize live production. New contract tests also exercise rejected/deleted
+facts, missing owner consent, lost history and stale/unaccepted dispatch.
+
+Runtime inspection identified genuine limits: prompts retain each role's latest
+output rather than an explicit linked objection history, producer edits re-stamp
+an approved brief in place, and legacy handoffs retain an exemption. These are
+documented integration boundaries, not silently repaired or claimed deployed.
+No new stage, worker, orchestration service, producer signature gate or paid
+production was introduced. Existing Avatar, Mark 4 source/continuity, LTX,
+preservation and other active work below remain intact.
+
+Validation: **628 tests / 101 files pass**, including 12 new tests under
+`tests/creative-direction/`; TypeScript, production web build and
+`git diff --check` pass. Log: `outputs/crew-communication-design-tests.txt`.
+Separate dedicated Goal Guardian review passes design acceptance against the
+vision, this goal and user workflow, with runtime enforcement/actual-film review
+explicitly unproven. No Dan decision blocks the design. Incremental provider
+production spend is $0; assistant included usage/billed cost remains unreported.
+Existing cumulative $200 spending/outstanding-charge, source/canon, safe-pause,
+field/release requirements remain intact. Your dot/live Mabel and external
+ChatGPT/SMS transport are unavailable; this chat reports the result, and SMS
+to the supplied number ending in 8114 is not claimed.
+
 ## Neutral/positive Avatar prompt adopted (2026-10-14)
 
 Dan approved the recovered “Smiling warmly at the camera…” prompt for most

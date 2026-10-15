@@ -11,6 +11,7 @@ import { LtxVideoProvider } from "../../src/providers/ltx/index.js";
 import { productionRouter } from "../../src/server/routes/production.js";
 import type { VideoGenerationOptions } from "../../src/providers/types.js";
 import { generateJsonWithImagesMetered } from "../../src/providers/gemini-text.js";
+vi.mock("../../src/pipeline/creative-direction/crew-store.js",async original=>({...await original<object>(),...(await import("../helpers/reviewed-plan-gate.js")).reviewedPlanGateFixture}));
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 let db: import("node:sqlite").DatabaseSync, root: string, server: ReturnType<express.Express["listen"]> | undefined;

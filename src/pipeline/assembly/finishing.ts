@@ -41,7 +41,8 @@ export function finishingRecipe(brief: CrewBrief, result: CrewResult): { inputs:
   for (const role of ["colorist", "sound_designer", "composer"] as const) {
     const contribution = result.contributions[role];
     if (!contribution) throw new Error(`Missing ${role} review.`);
-    validateContribution(contribution, role, brief);
+    const {exchange:_savedExchange,...wireContribution}=contribution;
+    validateContribution(wireContribution, role, brief);
   }
   const colors = result.contributions.colorist!.colorAdjustments!;
   const cues = [...result.contributions.sound_designer!.audioCues!, ...result.contributions.composer!.audioCues!];

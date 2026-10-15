@@ -5,6 +5,7 @@ import { getDataDir } from "../../db/client.js";
 import type { DraftVideoProvider } from "../../providers/types.js";
 import { reviewGeneratedVideo, videoReviewPassed } from "../qc/video-review.js";
 import { shotRiskFor } from "./shot-risk-lookup.js";
+import { productionAuthorization, bindAttemptRevision, directionsFromRun, requireCurrentPlan, validateAttemptRevision } from "../creative-direction/crew-store.js";
 
 /**
  * The draft room: cheap 360p Omni passes a producer can compare before
@@ -97,10 +98,12 @@ export async function generateShotDraft(
 NON-SPEAKING VIDEO RULE: This is a non-speaking shot. Do not generate dialogue, narration, singing, lip-sync performance, intelligible words, or visible mouth movements that suggest speech from any person. Preserve only natural nonverbal action and background ambience. The chapter narration is a separate audio layer and must not be visually performed here. Every visible person must retain the approved Papuan/Hatam casting; named characters must retain their exact approved canon face, hair, skin tone, build, and wardrobe throughout the entire clip. Do not drift toward Caucasian, Levantine, or generic substitute identities.
 
 NATURAL CROWD MOTION RULE: People in a crowd move on independent, staggered timings. At most a few people may reach, shift, or react at once while others hold, breathe, look, edge forward, or respond subtly at different moments. Never generate a synchronized wave of arms, a repeated group gesture, mirrored movement, or a mass simultaneous reach-and-retract.`;
+  const authorization=productionAuthorization(db,dataDir,projectId);
+  authorization.assertCurrent();
   const result = await draftProvider.generateDraft(
     // Do not attach named canonical reference sheets: the accepted frame is
     // the identity reference for video generation and avoids Gemini's block.
-    { shotId: `${shot.id}-draft-${id}`, prompt: draftPrompt, characters: [] },
+    { shotId: `${shot.id}-draft-${id}`, prompt: draftPrompt+directionsFromRun(requireCurrentPlan(db,dataDir,projectId),shot.id), characters: [],authorizeSubmission:authorization.assertCurrent,productionRevision:{runId:authorization.runId,briefHash:authorization.briefHash} },
     { startFrame: { path: keyframe.result_asset_path } }
   );
 
@@ -110,6 +113,7 @@ NATURAL CROWD MOTION RULE: People in a crowd move on independent, staggered timi
      VALUES (?, ?, ?, ?, 'generate_draft', '360p', ?, 'hold_for_review', ?, ?, ?)`
   ).run(id, shotId, result.provenance.provider, result.provenance.model, result.provenance.prompt,
     result.media?.path ?? null, result.cost.usd, now);
+  bindAttemptRevision(db,projectId,id,authorization);
   db.prepare(
     "INSERT INTO cost_ledger_entries (id, project_id, generation_attempt_id, amount_usd, created_at) VALUES (?, ?, ?, ?, ?)"
   ).run(randomUUID(), projectId, id, result.cost.usd, now);
@@ -173,6 +177,7 @@ export function chooseShotDraft(db: DatabaseSync, projectId: string, attemptId: 
      WHERE ga.id = ? AND s.project_id = ? AND ga.operation = 'generate_draft'`
   ).get(attemptId, projectId) as { id: string; shot_id: string; status: string } | undefined;
   if (!row) throw new Error("That draft is not in this project.");
+  if(row.status!=="accepted")validateAttemptRevision(db,getDataDir(),projectId,attemptId);
   if (row.status !== "hold_for_review") throw new Error("Only a held draft can be chosen.");
 
   const alreadyChosen = db.prepare(

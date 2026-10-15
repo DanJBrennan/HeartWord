@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { Router, type Request } from "express";
 import { getDataDir, getDb } from "../../db/client.js";
 import { runCasting } from "../../pipeline/casting/index.js";
-import { recoverInterruptedCrew, runProductionCrew } from "../../pipeline/creative-direction/crew-store.js";
+import { recoverInterruptedCrew, runProductionCrew, latestCrewRun, productionRecordForRun } from "../../pipeline/creative-direction/crew-store.js";
 import { digest, loadCrewBrief, productionAssetPath } from "../../pipeline/creative-direction/crew-context.js";
 import { applyFinishing, mediaDurationMs, reviewChapter } from "../../pipeline/assembly/finishing.js";
 import { runAssembly } from "../../pipeline/assembly/index.js";
@@ -56,7 +56,7 @@ productionRouter.get("/", (req, res) => {
   const audit = render ? readCutTimingAudit(db, getProjectId(req), String(render.id)) : null;
   // A recorded observation is labelled as such; actual crew loading also
   // verifies both the film hash and current source hashes before using it.
-  res.json({ runs, assets, attempts, render, timingAudit: audit, backup: backupStatus(getDataDir()) });
+  res.json({ runs, assets, attempts, render, timingAudit: audit, backup: backupStatus(getDataDir()), productionRecord:productionRecordForRun(db,latestCrewRun(db,getProjectId(req),"planning"))??null });
 });
 productionRouter.get("/preservation", (req, res) => {
   try { res.json(inspectChapterPackage(getDb(), getDataDir(), getProjectId(req)).manifest); }

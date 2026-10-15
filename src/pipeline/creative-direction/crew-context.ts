@@ -101,6 +101,7 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
   const shots = db.prepare(`SELECT s.id, s.scene_id AS sceneId, sc.sequence AS sceneSequence, s.sequence,
     s.verse_ref AS verseRef, s.action, s.framing, s.camera_movement AS cameraMovement,
     s.continuity_notes AS continuity, sc.lighting_continuity AS lighting, s.needs_lip_sync AS needsLipSync,
+    sc.spatial_continuity AS spatialContinuity, s.spatial_view AS spatialView, s.crowd_density AS crowdDensity,
     s.dialogue_character_id AS dialogueCharacterId,
     (SELECT source_audio_segment_id FROM shot_utterance_bindings ub WHERE ub.shot_id=s.id) AS sourceSegmentId FROM shots s JOIN scenes sc ON sc.id = s.scene_id
     WHERE sc.project_id = ? ORDER BY sc.sequence, s.sequence`).all(projectId) as unknown as CrewShot[];
@@ -144,8 +145,12 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
   const regions = [...new Set(canon.map(character => character.region).filter(region => region.trim().length > 0))];
   if (regions.length !== 1) throw new Error("A crew brief requires one approved regional canon context for its visible cast.");
   const region = regions[0]!;
-  const producerNotes = db.prepare(`SELECT id, subject_id AS subjectId, note FROM review_notes
-    WHERE project_id = ? AND (source = 'human' OR (source = 'qc' AND note LIKE 'Production Director approved edit:%')) ORDER BY created_at, id`).all(projectId) as CrewBrief["producerNotes"];
+  // A typed asset-acceptance receipt is retained history, not a creative edit
+  // that should invalidate other candidates in the same accepted revision.
+  const producerNotes = db.prepare(`SELECT r.id, r.subject_id AS subjectId, r.note FROM review_notes r
+    WHERE r.project_id = ? AND (r.source = 'human' OR (r.source = 'qc' AND r.note LIKE 'Production Director approved edit:%'))
+    AND NOT EXISTS (SELECT 1 FROM edit_commands e WHERE e.project_id=r.project_id AND e.command_type='accept_media_candidate' AND json_extract(e.payload,'$.reviewNoteId')=r.id)
+    ORDER BY r.created_at, r.id`).all(projectId) as CrewBrief["producerNotes"];
     if (phase === "planning") {
       const opening = db.prepare("SELECT plan_json FROM chapter_intro_plans WHERE project_id=?").get(projectId) as { plan_json: string } | undefined;
       if (opening) producerNotes.push({ id: "chapter-intro-plan", subjectId: projectId,

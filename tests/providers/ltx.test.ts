@@ -69,6 +69,11 @@ function provider() { return new LtxVideoProvider({transport,dataDir:root,sleep:
 const options = {startFrame:{path:"key frame.png"},durationSeconds:5,seed:42};
 
 describe("LTX Desktop adapter", () => {
+  it("rechecks revision authority after upload and before the actual generation POST",async()=>{
+    let stale=false;transport.upload.mockImplementationOnce(async()=>{stale=true;});
+    await expect(provider().generateFinal({...request,authorizeSubmission:()=>{if(stale)throw new Error("Production revision became stale");}},options)).rejects.toThrow("revision became stale");
+    expect(requests.filter(r=>r.path==="/api/generate")).toHaveLength(0);
+  });
   it("uploads a unique keyframe, authenticates every request, returns the exact MP4 and retains metadata",async()=>{
     delayed = true;
     const output = join(root,"assets","generated","scene","shot.mp4"), progress = vi.fn();

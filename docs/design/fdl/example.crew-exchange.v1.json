@@ -1,0 +1,1530 @@
+{
+  "purpose": "design_example",
+  "notice": "No production records, media or approvals. Zero hashes and bind:/example: refs cannot authorize generation.",
+  "acceptedRecord": {
+    "currentRevision": "example:crew-r2",
+    "inputBriefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "acceptanceRef": "example:camera-acceptance"
+  },
+  "snapshots": [
+    {
+      "fdlVersion": 2,
+      "purpose": "design_example",
+      "revision": "example:crew-r1",
+      "parentRevision": null,
+      "inputRevision": "example:crew-brief-v1",
+      "context": {
+        "projectId": "bind:Hatam-Mark-3-project",
+        "sceneId": "bind:Mark-3-synagogue-scene",
+        "briefSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "prose": "DESIGN ONLY. Hypothetical accepted listening coverage, not live Mark 3 approval. Preserve source wording/speed, Papuan video identity, first-century set, cream mantle and established actor space. Coordinates are illustrative planning intent, not measured geometry. No new arrival, healing, speech or pause.",
+      "world": [
+        {
+          "id": "jesus",
+          "kind": "character",
+          "recordRefs": [
+            {
+              "table": "character_versions",
+              "id": "bind:Jesus-approved-version",
+              "version": "bind:exact-version-id",
+              "snapshotSha256": null
+            }
+          ],
+          "facts": {
+            "appearance": {
+              "value": "Exact approved face, hair, beard, age, build and silhouette, with supplied head/body references.",
+              "units": "none",
+              "status": "approved",
+              "owner": "casting_canon",
+              "reason": "Inherit this exact illustrative baseline; resolve real records before production.",
+              "evidence": [
+                {
+                  "ref": "bind:Jesus-canon-approval",
+                  "limitations": ""
+                }
+              ],
+              "approvalRecord": "bind:Jesus-canon-approval"
+            }
+          }
+        },
+        {
+          "id": "jesus-garment",
+          "kind": "garment",
+          "recordRefs": [
+            {
+              "table": "character_versions",
+              "id": "bind:Jesus-approved-version",
+              "version": "bind:exact-version-id",
+              "snapshotSha256": null
+            }
+          ],
+          "facts": {
+            "garment": {
+              "value": "Approved cream mantle; preserve its cut, neckline, layers, drape, tassels and footwear.",
+              "units": "none",
+              "status": "approved",
+              "owner": "casting_canon",
+              "reason": "Inherit this exact illustrative baseline; resolve real records before production.",
+              "evidence": [
+                {
+                  "ref": "bind:Jesus-canon-approval",
+                  "limitations": ""
+                }
+              ],
+              "approvalRecord": "bind:Jesus-canon-approval"
+            }
+          }
+        },
+        {
+          "id": "synagogue",
+          "kind": "set",
+          "recordRefs": [
+            {
+              "table": "production_runs",
+              "id": "bind:shared-scene-space-plan",
+              "version": "bind:accepted-plan-revision",
+              "snapshotSha256": null
+            }
+          ],
+          "facts": {
+            "architecture": {
+              "value": "Inherit the approved walls, openings, materials, doorway construction and room scale; no moving windows or new doors.",
+              "units": "none",
+              "status": "approved",
+              "owner": "staging_designer",
+              "reason": "Inherit this exact illustrative baseline; resolve real records before production.",
+              "evidence": [
+                {
+                  "ref": "bind:shared-scene-space-approval",
+                  "limitations": ""
+                }
+              ],
+              "approvalRecord": "bind:shared-scene-space-approval"
+            },
+            "coordinateFrame": {
+              "value": "Origin at the planned encounter; +X set-right, +Y toward the rear wall, +Z up. Metres, right-handed. Exact transform comes from the approved set plan.",
+              "units": "none",
+              "status": "approved",
+              "owner": "staging_designer",
+              "reason": "Inherit this exact illustrative baseline; resolve real records before production.",
+              "evidence": [
+                {
+                  "ref": "example:set-frame-plan",
+                  "limitations": ""
+                }
+              ],
+              "approvalRecord": "example:set-frame-plan"
+            },
+            "furnishings": {
+              "value": null,
+              "units": "none",
+              "status": "open",
+              "owner": "staging_designer",
+              "reason": "Placement of background benches may be chosen within the baseline constraints; inspection will propose visible details.",
+              "evidence": [],
+              "approvalRecord": null
+            },
+            "hiddenGeometry": {
+              "value": null,
+              "units": "none",
+              "status": "unknown",
+              "owner": "staging_designer",
+              "reason": "Unseen room/back-wall geometry has no evidence.",
+              "evidence": [],
+              "approvalRecord": null
+            }
+          }
+        }
+      ],
+      "states": [
+        {
+          "id": "listening",
+          "worldIds": [
+            "jesus",
+            "jesus-garment",
+            "synagogue"
+          ],
+          "facts": {
+            "jesus.pose": {
+              "value": "Inside the established encounter, naturally standing; this pose is staging, not a claim about words absent from Scripture.",
+              "units": "none",
+              "status": "approved",
+              "owner": "choreographer",
+              "reason": "Preserve the source-grounded scene rather than stage another entry.",
+              "evidence": [
+                {
+                  "ref": "example:baseline-blocking-review",
+                  "limitations": "Design fixture only; no live record or actual media inspection."
+                }
+              ],
+              "approvalRecord": "example:baseline-blocking-review"
+            },
+            "jesus.gaze": {
+              "value": "Toward the man; not camera-facing.",
+              "units": "none",
+              "status": "approved",
+              "owner": "choreographer",
+              "reason": "Keep attention within the encounter.",
+              "evidence": [
+                {
+                  "ref": "example:baseline-blocking-review",
+                  "limitations": "Design fixture only; no live record or actual media inspection."
+                }
+              ],
+              "approvalRecord": "example:baseline-blocking-review"
+            }
+          }
+        }
+      ],
+      "shots": [
+        {
+          "id": "synagogue-listening",
+          "recordRefs": [
+            {
+              "table": "shots",
+              "id": "bind:existing-listening-coverage-shot",
+              "version": "bind:shot-snapshot-revision",
+              "snapshotSha256": null
+            }
+          ],
+          "facts": {
+            "framing": {
+              "value": "16:9 wide-to-medium view of the encounter, preserving the established axis.",
+              "units": "none",
+              "status": "approved",
+              "owner": "cinematographer",
+              "reason": "Orient the viewer before the closer view.",
+              "evidence": [
+                {
+                  "ref": "example:baseline-camera-review",
+                  "limitations": "Design fixture only; no live record or actual media inspection."
+                }
+              ],
+              "approvalRecord": "example:baseline-camera-review"
+            }
+          }
+        }
+      ],
+      "keyframes": [
+        {
+          "id": "K1",
+          "shotId": "synagogue-listening",
+          "stateId": "listening",
+          "anchor": "start",
+          "facts": {
+            "cameraPosition": {
+              "value": [
+                0,
+                -6,
+                1.6
+              ],
+              "units": "m",
+              "status": "approved",
+              "owner": "cinematographer",
+              "reason": "Illustrative planned coordinates in the declared set frame; never measured from generated pixels.",
+              "evidence": [
+                {
+                  "ref": "example:baseline-camera-review",
+                  "limitations": "Design fixture only; no live record or actual media inspection."
+                }
+              ],
+              "approvalRecord": "example:baseline-camera-review"
+            }
+          }
+        }
+      ],
+      "clips": [],
+      "providerSettings": [],
+      "extensions": {
+        "bibleRegional": {
+          "extensionVersion": 2,
+          "source": {
+            "sourceBindingRef": "bind:project_source_bindings",
+            "language": "hatam",
+            "book": "mark",
+            "chapter": 3,
+            "verseRefs": [
+              "Mark 3:1–2"
+            ],
+            "sourceIntervalRefs": [
+              "bind:exact-source-interval-or-run"
+            ],
+            "referencePurpose": "semantic_context_only",
+            "internalVerseTiming": "unresolved"
+          },
+          "regionalIdentity": {
+            "region": "Papuan",
+            "medium": "video",
+            "appliesTo": "character_identity",
+            "canonContextRef": "bind:approved-project-canon-context",
+            "characterVersionRefs": [
+              "bind:Jesus-approved-version",
+              "bind:Man-with-Withered-Hand-version"
+            ]
+          },
+          "historicalSetting": {
+            "period": "First century",
+            "place": "Galilee, established synagogue; not Papua",
+            "setVersionRefs": [
+              "bind:shared-scene-space-plan"
+            ],
+            "approvedReconstructionRefs": [
+              "bind:shared-scene-space-approval"
+            ],
+            "unknowns": [
+              "Exact hour",
+              "Hidden wall geometry",
+              "Bench material and arrangement"
+            ]
+          },
+          "grounding": [
+            {
+              "target": "scene",
+              "authority": "verified_source",
+              "refs": [
+                "bind:Mark-3-1-2-source"
+              ],
+              "limitations": "The verified source establishes the synagogue and pre-healing man, not a bench count, exact hour or lens."
+            },
+            {
+              "target": "world/jesus",
+              "authority": "regional_canon",
+              "refs": [
+                "bind:Jesus-canon-approval"
+              ],
+              "limitations": "Papuan identity concerns people; it does not authorize Papuan buildings, garments or landscape."
+            },
+            {
+              "target": "world/synagogue/architecture",
+              "authority": "approved_reconstruction",
+              "refs": [
+                "bind:shared-scene-space-approval"
+              ],
+              "limitations": "Production reconstruction rather than Scripture or certainty about ancient geometry."
+            },
+            {
+              "target": "states/listening",
+              "authority": "visual_staging",
+              "refs": [
+                "example:staging-plan"
+              ],
+              "limitations": "Quiet pose and gaze are bounded visual choices needing the applicable review."
+            }
+          ],
+          "gateRecordRefs": {
+            "videoEligibility": null,
+            "citationScope": null,
+            "sourceReview": null,
+            "canonApproval": null,
+            "historicalReconstruction": null,
+            "fieldReview": null,
+            "releaseApproval": null
+          }
+        }
+      }
+    },
+    {
+      "fdlVersion": 2,
+      "purpose": "design_example",
+      "revision": "example:crew-r2",
+      "parentRevision": "example:crew-r1",
+      "inputRevision": "example:crew-r1",
+      "context": {
+        "projectId": "bind:Hatam-Mark-3-project",
+        "sceneId": "bind:Mark-3-synagogue-scene",
+        "briefSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "prose": "DESIGN ONLY. Accepted camera moves to the revised position outside established actor space; blocking, gaze, source wording/speed, canon, cream mantle and set remain fixed. No alternative actor move or blue wardrobe is accepted. Evaluate actual media before use.",
+      "world": [
+        {
+          "id": "jesus",
+          "kind": "character",
+          "recordRefs": [
+            {
+              "table": "character_versions",
+              "id": "bind:Jesus-approved-version",
+              "version": "bind:exact-version-id",
+              "snapshotSha256": null
+            }
+          ],
+          "facts": {
+            "appearance": {
+              "value": "Exact approved face, hair, beard, age, build and silhouette, with supplied head/body references.",
+              "units": "none",
+              "status": "approved",
+              "owner": "casting_canon",
+              "reason": "Inherit this exact illustrative baseline; resolve real records before production.",
+              "evidence": [
+                {
+                  "ref": "bind:Jesus-canon-approval",
+                  "limitations": ""
+                }
+              ],
+              "approvalRecord": "bind:Jesus-canon-approval"
+            }
+          }
+        },
+        {
+          "id": "jesus-garment",
+          "kind": "garment",
+          "recordRefs": [
+            {
+              "table": "character_versions",
+              "id": "bind:Jesus-approved-version",
+              "version": "bind:exact-version-id",
+              "snapshotSha256": null
+            }
+          ],
+          "facts": {
+            "garment": {
+              "value": "Approved cream mantle; preserve its cut, neckline, layers, drape, tassels and footwear.",
+              "units": "none",
+              "status": "approved",
+              "owner": "casting_canon",
+              "reason": "Inherit this exact illustrative baseline; resolve real records before production.",
+              "evidence": [
+                {
+                  "ref": "bind:Jesus-canon-approval",
+                  "limitations": ""
+                }
+              ],
+              "approvalRecord": "bind:Jesus-canon-approval"
+            }
+          }
+        },
+        {
+          "id": "synagogue",
+          "kind": "set",
+          "recordRefs": [
+            {
+              "table": "production_runs",
+              "id": "bind:shared-scene-space-plan",
+              "version": "bind:accepted-plan-revision",
+              "snapshotSha256": null
+            }
+          ],
+          "facts": {
+            "architecture": {
+              "value": "Inherit the approved walls, openings, materials, doorway construction and room scale; no moving windows or new doors.",
+              "units": "none",
+              "status": "approved",
+              "owner": "staging_designer",
+              "reason": "Inherit this exact illustrative baseline; resolve real records before production.",
+              "evidence": [
+                {
+                  "ref": "bind:shared-scene-space-approval",
+                  "limitations": ""
+                }
+              ],
+              "approvalRecord": "bind:shared-scene-space-approval"
+            },
+            "coordinateFrame": {
+              "value": "Origin at the planned encounter; +X set-right, +Y toward the rear wall, +Z up. Metres, right-handed. Exact transform comes from the approved set plan.",
+              "units": "none",
+              "status": "approved",
+              "owner": "staging_designer",
+              "reason": "Inherit this exact illustrative baseline; resolve real records before production.",
+              "evidence": [
+                {
+                  "ref": "example:set-frame-plan",
+                  "limitations": ""
+                }
+              ],
+              "approvalRecord": "example:set-frame-plan"
+            },
+            "furnishings": {
+              "value": null,
+              "units": "none",
+              "status": "open",
+              "owner": "staging_designer",
+              "reason": "Placement of background benches may be chosen within the baseline constraints; inspection will propose visible details.",
+              "evidence": [],
+              "approvalRecord": null
+            },
+            "hiddenGeometry": {
+              "value": null,
+              "units": "none",
+              "status": "unknown",
+              "owner": "staging_designer",
+              "reason": "Unseen room/back-wall geometry has no evidence.",
+              "evidence": [],
+              "approvalRecord": null
+            }
+          }
+        }
+      ],
+      "states": [
+        {
+          "id": "listening",
+          "worldIds": [
+            "jesus",
+            "jesus-garment",
+            "synagogue"
+          ],
+          "facts": {
+            "jesus.pose": {
+              "value": "Inside the established encounter, naturally standing; this pose is staging, not a claim about words absent from Scripture.",
+              "units": "none",
+              "status": "approved",
+              "owner": "choreographer",
+              "reason": "Preserve the source-grounded scene rather than stage another entry.",
+              "evidence": [
+                {
+                  "ref": "example:baseline-blocking-review",
+                  "limitations": "Design fixture only; no live record or actual media inspection."
+                }
+              ],
+              "approvalRecord": "example:baseline-blocking-review"
+            },
+            "jesus.gaze": {
+              "value": "Toward the man; not camera-facing.",
+              "units": "none",
+              "status": "approved",
+              "owner": "choreographer",
+              "reason": "Keep attention within the encounter.",
+              "evidence": [
+                {
+                  "ref": "example:baseline-blocking-review",
+                  "limitations": "Design fixture only; no live record or actual media inspection."
+                }
+              ],
+              "approvalRecord": "example:baseline-blocking-review"
+            }
+          }
+        }
+      ],
+      "shots": [
+        {
+          "id": "synagogue-listening",
+          "recordRefs": [
+            {
+              "table": "shots",
+              "id": "bind:existing-listening-coverage-shot",
+              "version": "bind:shot-snapshot-revision",
+              "snapshotSha256": null
+            }
+          ],
+          "facts": {
+            "framing": {
+              "value": "16:9 wide-to-medium view of the encounter, preserving the established axis.",
+              "units": "none",
+              "status": "approved",
+              "owner": "cinematographer",
+              "reason": "Orient the viewer before the closer view.",
+              "evidence": [
+                {
+                  "ref": "example:baseline-camera-review",
+                  "limitations": "Design fixture only; no live record or actual media inspection."
+                }
+              ],
+              "approvalRecord": "example:baseline-camera-review"
+            }
+          }
+        }
+      ],
+      "keyframes": [
+        {
+          "id": "K1",
+          "shotId": "synagogue-listening",
+          "stateId": "listening",
+          "anchor": "start",
+          "facts": {
+            "cameraPosition": {
+              "value": [
+                1,
+                -6,
+                1.6
+              ],
+              "units": "m",
+              "status": "approved",
+              "owner": "cinematographer",
+              "reason": "Maintain the encounter while improving separation from a safe camera position.",
+              "evidence": [
+                {
+                  "ref": "example:camera-acceptance",
+                  "limitations": "Design fixture only; no live record or actual media inspection."
+                }
+              ],
+              "approvalRecord": "example:camera-acceptance"
+            }
+          }
+        }
+      ],
+      "clips": [],
+      "providerSettings": [],
+      "extensions": {
+        "bibleRegional": {
+          "extensionVersion": 2,
+          "source": {
+            "sourceBindingRef": "bind:project_source_bindings",
+            "language": "hatam",
+            "book": "mark",
+            "chapter": 3,
+            "verseRefs": [
+              "Mark 3:1–2"
+            ],
+            "sourceIntervalRefs": [
+              "bind:exact-source-interval-or-run"
+            ],
+            "referencePurpose": "semantic_context_only",
+            "internalVerseTiming": "unresolved"
+          },
+          "regionalIdentity": {
+            "region": "Papuan",
+            "medium": "video",
+            "appliesTo": "character_identity",
+            "canonContextRef": "bind:approved-project-canon-context",
+            "characterVersionRefs": [
+              "bind:Jesus-approved-version",
+              "bind:Man-with-Withered-Hand-version"
+            ]
+          },
+          "historicalSetting": {
+            "period": "First century",
+            "place": "Galilee, established synagogue; not Papua",
+            "setVersionRefs": [
+              "bind:shared-scene-space-plan"
+            ],
+            "approvedReconstructionRefs": [
+              "bind:shared-scene-space-approval"
+            ],
+            "unknowns": [
+              "Exact hour",
+              "Hidden wall geometry",
+              "Bench material and arrangement"
+            ]
+          },
+          "grounding": [
+            {
+              "target": "scene",
+              "authority": "verified_source",
+              "refs": [
+                "bind:Mark-3-1-2-source"
+              ],
+              "limitations": "The verified source establishes the synagogue and pre-healing man, not a bench count, exact hour or lens."
+            },
+            {
+              "target": "world/jesus",
+              "authority": "regional_canon",
+              "refs": [
+                "bind:Jesus-canon-approval"
+              ],
+              "limitations": "Papuan identity concerns people; it does not authorize Papuan buildings, garments or landscape."
+            },
+            {
+              "target": "world/synagogue/architecture",
+              "authority": "approved_reconstruction",
+              "refs": [
+                "bind:shared-scene-space-approval"
+              ],
+              "limitations": "Production reconstruction rather than Scripture or certainty about ancient geometry."
+            },
+            {
+              "target": "states/listening",
+              "authority": "visual_staging",
+              "refs": [
+                "example:staging-plan"
+              ],
+              "limitations": "Quiet pose and gaze are bounded visual choices needing the applicable review."
+            }
+          ],
+          "gateRecordRefs": {
+            "videoEligibility": null,
+            "citationScope": null,
+            "sourceReview": null,
+            "canonApproval": null,
+            "historicalReconstruction": null,
+            "fieldReview": null,
+            "releaseApproval": null
+          }
+        }
+      }
+    }
+  ],
+  "contributions": [
+    {
+      "id": "example:camera-proposal",
+      "kind": "proposal",
+      "inputRevision": "example:crew-r1",
+      "inputBriefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "owner": "cinematographer",
+      "scope": {
+        "projectId": "bind:Hatam-Mark-3-project",
+        "sceneIds": [
+          "bind:Mark-3-synagogue-scene"
+        ],
+        "shotIds": [
+          "synagogue-listening"
+        ],
+        "verseRefs": [
+          "Mark 3:1–2"
+        ],
+        "audioBindingRefs": []
+      },
+      "proposedChanges": [
+        {
+          "target": {
+            "layer": "keyframes",
+            "entityId": "K1",
+            "fact": "cameraPosition"
+          },
+          "before": {
+            "value": [
+              0,
+              -6,
+              1.6
+            ],
+            "units": "m",
+            "status": "approved",
+            "owner": "cinematographer",
+            "reason": "Illustrative planned coordinates in the declared set frame; never measured from generated pixels.",
+            "evidence": [
+              {
+                "ref": "example:baseline-camera-review",
+                "limitations": "Design fixture only; no live record or actual media inspection."
+              }
+            ],
+            "approvalRecord": "example:baseline-camera-review"
+          },
+          "after": {
+            "value": [
+              -1,
+              0,
+              1.6
+            ],
+            "units": "m",
+            "status": "proposed",
+            "owner": "cinematographer",
+            "reason": "Side-angle alternative needing blocking review.",
+            "evidence": [
+              {
+                "ref": "example:crew-r1",
+                "limitations": "Design fixture only; no live record or actual media inspection."
+              }
+            ],
+            "approvalRecord": null
+          }
+        },
+        {
+          "target": {
+            "layer": "states",
+            "entityId": "listening",
+            "fact": "jesus.pose"
+          },
+          "before": {
+            "value": "Inside the established encounter, naturally standing; this pose is staging, not a claim about words absent from Scripture.",
+            "units": "none",
+            "status": "approved",
+            "owner": "choreographer",
+            "reason": "Preserve the source-grounded scene rather than stage another entry.",
+            "evidence": [
+              {
+                "ref": "example:baseline-blocking-review",
+                "limitations": "Design fixture only; no live record or actual media inspection."
+              }
+            ],
+            "approvalRecord": "example:baseline-blocking-review"
+          },
+          "after": {
+            "value": "Shift Jesus two steps sideways from the established encounter for camera clearance.",
+            "units": "none",
+            "status": "proposed",
+            "owner": "choreographer",
+            "reason": "Requested by Leon; Tessa still owns blocking.",
+            "evidence": [
+              {
+                "ref": "example:crew-r1",
+                "limitations": "Design fixture only; no live record or actual media inspection."
+              }
+            ],
+            "approvalRecord": null
+          }
+        }
+      ],
+      "rationale": "A side camera could clarify the encounter; propose moving Jesus out of its sightline. This crosses blocking ownership and is an alternative, not an accepted action.",
+      "evidence": [
+        {
+          "ref": "example:crew-r1",
+          "limitations": "Design fixture only; no live record or actual media inspection."
+        }
+      ],
+      "objections": [],
+      "destination": {
+        "roles": [
+          "choreographer",
+          "script_supervisor",
+          "production_director"
+        ],
+        "stage": "casting",
+        "subjectId": "synagogue-listening"
+      },
+      "relatedContributions": [],
+      "supersedes": null,
+      "finding": null,
+      "resolution": null
+    },
+    {
+      "id": "example:blocking-objection",
+      "kind": "objection",
+      "inputRevision": "example:crew-r1",
+      "inputBriefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "owner": "choreographer",
+      "scope": {
+        "projectId": "bind:Hatam-Mark-3-project",
+        "sceneIds": [
+          "bind:Mark-3-synagogue-scene"
+        ],
+        "shotIds": [
+          "synagogue-listening"
+        ],
+        "verseRefs": [
+          "Mark 3:1–2"
+        ],
+        "audioBindingRefs": []
+      },
+      "proposedChanges": [],
+      "rationale": "The proposed camera occupies the established actor space. Moving the actor to accommodate it breaks the accepted encounter and adjacent coverage; keep the blocking and move the camera.",
+      "evidence": [
+        {
+          "ref": "example:crew-r1",
+          "limitations": "Design fixture only; no live record or actual media inspection."
+        }
+      ],
+      "objections": [],
+      "destination": {
+        "roles": [
+          "cinematographer",
+          "production_director"
+        ],
+        "stage": "casting",
+        "subjectId": "synagogue-listening"
+      },
+      "relatedContributions": [
+        "example:camera-proposal"
+      ],
+      "supersedes": null,
+      "finding": {
+        "severity": "blocking",
+        "confidence": 86,
+        "limitations": "Hypothetical staging-plan conflict; not a measurement of a real set."
+      },
+      "resolution": null
+    },
+    {
+      "id": "example:camera-revision",
+      "kind": "revision",
+      "inputRevision": "example:crew-r1",
+      "inputBriefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "owner": "cinematographer",
+      "scope": {
+        "projectId": "bind:Hatam-Mark-3-project",
+        "sceneIds": [
+          "bind:Mark-3-synagogue-scene"
+        ],
+        "shotIds": [
+          "synagogue-listening"
+        ],
+        "verseRefs": [
+          "Mark 3:1–2"
+        ],
+        "audioBindingRefs": []
+      },
+      "proposedChanges": [
+        {
+          "target": {
+            "layer": "keyframes",
+            "entityId": "K1",
+            "fact": "cameraPosition"
+          },
+          "before": {
+            "value": [
+              0,
+              -6,
+              1.6
+            ],
+            "units": "m",
+            "status": "approved",
+            "owner": "cinematographer",
+            "reason": "Illustrative planned coordinates in the declared set frame; never measured from generated pixels.",
+            "evidence": [
+              {
+                "ref": "example:baseline-camera-review",
+                "limitations": "Design fixture only; no live record or actual media inspection."
+              }
+            ],
+            "approvalRecord": "example:baseline-camera-review"
+          },
+          "after": {
+            "value": [
+              1,
+              -6,
+              1.6
+            ],
+            "units": "m",
+            "status": "proposed",
+            "owner": "cinematographer",
+            "reason": "Maintain the encounter while improving separation from a safe camera position.",
+            "evidence": [
+              {
+                "ref": "example:crew-r1",
+                "limitations": "Design fixture only; no live record or actual media inspection."
+              }
+            ],
+            "approvalRecord": null
+          }
+        }
+      ],
+      "rationale": "Withdraw the actor move. Place the camera outside the established actor space, preserving pose, gaze and axis; this remains intended composition, not a provider guarantee.",
+      "evidence": [
+        {
+          "ref": "example:crew-r1",
+          "limitations": "Design fixture only; no live record or actual media inspection."
+        }
+      ],
+      "objections": [
+        "example:blocking-objection"
+      ],
+      "destination": {
+        "roles": [
+          "choreographer",
+          "script_supervisor",
+          "production_director"
+        ],
+        "stage": "casting",
+        "subjectId": "synagogue-listening"
+      },
+      "relatedContributions": [
+        "example:camera-proposal",
+        "example:blocking-objection"
+      ],
+      "supersedes": "example:camera-proposal",
+      "finding": null,
+      "resolution": null
+    },
+    {
+      "id": "example:blocking-resolution",
+      "kind": "resolution",
+      "inputRevision": "example:crew-r1",
+      "inputBriefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "owner": "choreographer",
+      "scope": {
+        "projectId": "bind:Hatam-Mark-3-project",
+        "sceneIds": [
+          "bind:Mark-3-synagogue-scene"
+        ],
+        "shotIds": [
+          "synagogue-listening"
+        ],
+        "verseRefs": [
+          "Mark 3:1–2"
+        ],
+        "audioBindingRefs": []
+      },
+      "proposedChanges": [],
+      "rationale": "The revised camera no longer occupies the actor space. The rejected pose change is absent; blocking and gaze remain the accepted baseline.",
+      "evidence": [
+        {
+          "ref": "example:crew-r1",
+          "limitations": "Design fixture only; no live record or actual media inspection."
+        }
+      ],
+      "objections": [
+        "example:blocking-objection"
+      ],
+      "destination": {
+        "roles": [
+          "cinematographer",
+          "production_director"
+        ],
+        "stage": "casting",
+        "subjectId": "synagogue-listening"
+      },
+      "relatedContributions": [
+        "example:camera-revision",
+        "example:blocking-objection"
+      ],
+      "supersedes": null,
+      "finding": null,
+      "resolution": {
+        "outcome": "accepted",
+        "contributions": [
+          "example:camera-revision"
+        ],
+        "objectionDispositions": [
+          {
+            "objectionId": "example:blocking-objection",
+            "outcome": "resolved",
+            "reason": "Original objector confirms that retaining blocking and revising the camera addresses this conflict."
+          }
+        ],
+        "acceptedRevision": null
+      }
+    },
+    {
+      "id": "example:camera-acceptance",
+      "kind": "resolution",
+      "inputRevision": "example:crew-r1",
+      "inputBriefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "owner": "production_director",
+      "scope": {
+        "projectId": "bind:Hatam-Mark-3-project",
+        "sceneIds": [
+          "bind:Mark-3-synagogue-scene"
+        ],
+        "shotIds": [
+          "synagogue-listening"
+        ],
+        "verseRefs": [
+          "Mark 3:1–2"
+        ],
+        "audioBindingRefs": []
+      },
+      "proposedChanges": [],
+      "rationale": "Accept only Leon's revised camera after Tessa's explicit resolution and the illustrative required reviews. Exclude the original side camera and actor move. No source, canon, wardrobe, audio or asset change.",
+      "evidence": [
+        {
+          "ref": "example:blocking-resolution",
+          "limitations": "Design fixture only; no live record or actual media inspection."
+        }
+      ],
+      "objections": [
+        "example:blocking-objection"
+      ],
+      "destination": {
+        "roles": [
+          "storyboard",
+          "generation"
+        ],
+        "stage": "casting",
+        "subjectId": "synagogue-listening"
+      },
+      "relatedContributions": [
+        "example:camera-proposal",
+        "example:blocking-objection",
+        "example:camera-revision",
+        "example:blocking-resolution"
+      ],
+      "supersedes": null,
+      "finding": null,
+      "resolution": {
+        "outcome": "accepted",
+        "contributions": [
+          "example:camera-revision",
+          "example:blocking-resolution"
+        ],
+        "objectionDispositions": [
+          {
+            "objectionId": "example:blocking-objection",
+            "outcome": "resolved",
+            "reason": "Use Tessa's linked resolution; do not waive her finding."
+          }
+        ],
+        "acceptedRevision": "example:crew-r2",
+        "confidence": 88,
+        "limitations": "Uncalibrated estimate for this hypothetical local resolution only; placeholders do not prove live source/canon/review or generation readiness."
+      }
+    },
+    {
+      "id": "example:phone-readability-note",
+      "kind": "objection",
+      "inputRevision": "example:crew-r2",
+      "inputBriefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "owner": "script_supervisor",
+      "scope": {
+        "projectId": "bind:Hatam-Mark-3-project",
+        "sceneIds": [
+          "bind:Mark-3-synagogue-scene"
+        ],
+        "shotIds": [
+          "synagogue-listening"
+        ],
+        "verseRefs": [
+          "Mark 3:1–2"
+        ],
+        "audioBindingRefs": []
+      },
+      "proposedChanges": [],
+      "rationale": "Check that the encounter remains readable at phone size when real pixels exist. This is a review lead, not evidence that an unviewed image is defective.",
+      "evidence": [
+        {
+          "ref": "example:crew-r2",
+          "limitations": "Design fixture only; no live record or actual media inspection."
+        }
+      ],
+      "objections": [],
+      "destination": {
+        "roles": [
+          "generation",
+          "media_quality"
+        ],
+        "stage": "casting",
+        "subjectId": "synagogue-listening"
+      },
+      "relatedContributions": [],
+      "supersedes": null,
+      "finding": {
+        "severity": "advisory",
+        "confidence": 52,
+        "limitations": "No real image has been viewed. Exact visibility and quality remain unverified."
+      },
+      "resolution": null
+    },
+    {
+      "id": "example:wardrobe-proposal",
+      "kind": "proposal",
+      "inputRevision": "example:crew-r2",
+      "inputBriefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "owner": "costume_designer",
+      "scope": {
+        "projectId": "bind:Hatam-Mark-3-project",
+        "sceneIds": [
+          "bind:Mark-3-synagogue-scene"
+        ],
+        "shotIds": [
+          "synagogue-listening"
+        ],
+        "verseRefs": [
+          "Mark 3:1–2"
+        ],
+        "audioBindingRefs": []
+      },
+      "proposedChanges": [
+        {
+          "target": {
+            "layer": "world",
+            "entityId": "jesus-garment",
+            "fact": "garment"
+          },
+          "before": {
+            "value": "Approved cream mantle; preserve its cut, neckline, layers, drape, tassels and footwear.",
+            "units": "none",
+            "status": "approved",
+            "owner": "casting_canon",
+            "reason": "Inherit this exact illustrative baseline; resolve real records before production.",
+            "evidence": [
+              {
+                "ref": "bind:Jesus-canon-approval",
+                "limitations": ""
+              }
+            ],
+            "approvalRecord": "bind:Jesus-canon-approval"
+          },
+          "after": {
+            "value": "Blue mantle instead of the approved cream mantle.",
+            "units": "none",
+            "status": "proposed",
+            "owner": "casting_canon",
+            "reason": "Contrast suggestion only; no canon approval.",
+            "evidence": [
+              {
+                "ref": "example:crew-r1",
+                "limitations": "Design fixture only; no live record or actual media inspection."
+              }
+            ],
+            "approvalRecord": null
+          }
+        }
+      ],
+      "rationale": "A blue mantle might separate the figure from the background. This would change a casting_canon-owned fixed identity fact and is proposed for review only.",
+      "evidence": [
+        {
+          "ref": "example:crew-r2",
+          "limitations": "Design fixture only; no live record or actual media inspection."
+        }
+      ],
+      "objections": [],
+      "destination": {
+        "roles": [
+          "casting_canon",
+          "script_supervisor"
+        ],
+        "stage": "casting",
+        "subjectId": "synagogue-listening"
+      },
+      "relatedContributions": [],
+      "supersedes": null,
+      "finding": null,
+      "resolution": null
+    },
+    {
+      "id": "example:wardrobe-objection",
+      "kind": "objection",
+      "inputRevision": "example:crew-r2",
+      "inputBriefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "owner": "script_supervisor",
+      "scope": {
+        "projectId": "bind:Hatam-Mark-3-project",
+        "sceneIds": [
+          "bind:Mark-3-synagogue-scene"
+        ],
+        "shotIds": [
+          "synagogue-listening"
+        ],
+        "verseRefs": [
+          "Mark 3:1–2"
+        ],
+        "audioBindingRefs": []
+      },
+      "proposedChanges": [],
+      "rationale": "Reject blue: the pinned canon and adjacent accepted view require the cream mantle. Visual attractiveness cannot override approved identity/continuity.",
+      "evidence": [
+        {
+          "ref": "bind:Jesus-canon-approval",
+          "limitations": "Design fixture only; no live record or actual media inspection."
+        },
+        {
+          "ref": "example:adjacent-accepted-view",
+          "limitations": "Design fixture only; no live record or actual media inspection."
+        }
+      ],
+      "objections": [],
+      "destination": {
+        "roles": [
+          "costume_designer",
+          "casting_canon",
+          "production_director"
+        ],
+        "stage": "casting",
+        "subjectId": "synagogue-listening"
+      },
+      "relatedContributions": [
+        "example:wardrobe-proposal"
+      ],
+      "supersedes": null,
+      "finding": {
+        "severity": "blocking",
+        "confidence": 97,
+        "limitations": "Illustrative canon/view references; not a real wardrobe inspection or field approval."
+      },
+      "resolution": null
+    },
+    {
+      "id": "example:wardrobe-withdrawal",
+      "kind": "revision",
+      "inputRevision": "example:crew-r2",
+      "inputBriefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "owner": "costume_designer",
+      "scope": {
+        "projectId": "bind:Hatam-Mark-3-project",
+        "sceneIds": [
+          "bind:Mark-3-synagogue-scene"
+        ],
+        "shotIds": [
+          "synagogue-listening"
+        ],
+        "verseRefs": [
+          "Mark 3:1–2"
+        ],
+        "audioBindingRefs": []
+      },
+      "proposedChanges": [],
+      "rationale": "Withdraw the blue redesign and retain the approved cream mantle. Any later contrast improvement belongs in an owned camera/light proposal, not a silent garment change.",
+      "evidence": [
+        {
+          "ref": "example:crew-r2",
+          "limitations": "Design fixture only; no live record or actual media inspection."
+        }
+      ],
+      "objections": [
+        "example:wardrobe-objection"
+      ],
+      "destination": {
+        "roles": [
+          "script_supervisor",
+          "production_director"
+        ],
+        "stage": "casting",
+        "subjectId": "synagogue-listening"
+      },
+      "relatedContributions": [
+        "example:wardrobe-proposal",
+        "example:wardrobe-objection"
+      ],
+      "supersedes": "example:wardrobe-proposal",
+      "finding": null,
+      "resolution": null
+    },
+    {
+      "id": "example:wardrobe-rejection",
+      "kind": "resolution",
+      "inputRevision": "example:crew-r2",
+      "inputBriefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "owner": "script_supervisor",
+      "scope": {
+        "projectId": "bind:Hatam-Mark-3-project",
+        "sceneIds": [
+          "bind:Mark-3-synagogue-scene"
+        ],
+        "shotIds": [
+          "synagogue-listening"
+        ],
+        "verseRefs": [
+          "Mark 3:1–2"
+        ],
+        "audioBindingRefs": []
+      },
+      "proposedChanges": [],
+      "rationale": "Reject the wardrobe proposal. Costume withdrew it and no blue fact entered the accepted snapshot; the blocking continuity concern is resolved by exclusion, with r2 unchanged.",
+      "evidence": [
+        {
+          "ref": "example:crew-r2",
+          "limitations": "Design fixture only; no live record or actual media inspection."
+        }
+      ],
+      "objections": [
+        "example:wardrobe-objection"
+      ],
+      "destination": {
+        "roles": [
+          "generation",
+          "costume_designer",
+          "production_director"
+        ],
+        "stage": "casting",
+        "subjectId": "synagogue-listening"
+      },
+      "relatedContributions": [
+        "example:wardrobe-proposal",
+        "example:wardrobe-objection",
+        "example:wardrobe-withdrawal"
+      ],
+      "supersedes": null,
+      "finding": null,
+      "resolution": {
+        "outcome": "rejected",
+        "contributions": [
+          "example:wardrobe-proposal",
+          "example:wardrobe-withdrawal"
+        ],
+        "objectionDispositions": [
+          {
+            "objectionId": "example:wardrobe-objection",
+            "outcome": "resolved",
+            "reason": "Original reviewer verifies withdrawal and unchanged cream baseline. No canon decision is overridden."
+          }
+        ],
+        "acceptedRevision": null
+      }
+    },
+    {
+      "id": "example:late-camera-proposal",
+      "kind": "proposal",
+      "inputRevision": "example:crew-r1",
+      "inputBriefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "owner": "cinematographer",
+      "scope": {
+        "projectId": "bind:Hatam-Mark-3-project",
+        "sceneIds": [
+          "bind:Mark-3-synagogue-scene"
+        ],
+        "shotIds": [
+          "synagogue-listening"
+        ],
+        "verseRefs": [
+          "Mark 3:1–2"
+        ],
+        "audioBindingRefs": []
+      },
+      "proposedChanges": [
+        {
+          "target": {
+            "layer": "keyframes",
+            "entityId": "K1",
+            "fact": "cameraPosition"
+          },
+          "before": {
+            "value": [
+              0,
+              -6,
+              1.6
+            ],
+            "units": "m",
+            "status": "approved",
+            "owner": "cinematographer",
+            "reason": "Illustrative planned coordinates in the declared set frame; never measured from generated pixels.",
+            "evidence": [
+              {
+                "ref": "example:baseline-camera-review",
+                "limitations": "Design fixture only; no live record or actual media inspection."
+              }
+            ],
+            "approvalRecord": "example:baseline-camera-review"
+          },
+          "after": {
+            "value": [
+              0,
+              -5,
+              1.6
+            ],
+            "units": "m",
+            "status": "proposed",
+            "owner": "cinematographer",
+            "reason": "An older camera alternative, not reviewed against r2.",
+            "evidence": [
+              {
+                "ref": "example:crew-r1",
+                "limitations": "Design fixture only; no live record or actual media inspection."
+              }
+            ],
+            "approvalRecord": null
+          }
+        }
+      ],
+      "rationale": "Late alternative drafted before r2: a centered closer camera. Receipt order is not acceptance; its before-value still refers to r1.",
+      "evidence": [
+        {
+          "ref": "example:crew-r1",
+          "limitations": "Design fixture only; no live record or actual media inspection."
+        }
+      ],
+      "objections": [],
+      "destination": {
+        "roles": [
+          "production_director"
+        ],
+        "stage": "casting",
+        "subjectId": "synagogue-listening"
+      },
+      "relatedContributions": [],
+      "supersedes": null,
+      "finding": null,
+      "resolution": null
+    },
+    {
+      "id": "example:stale-receipt",
+      "kind": "resolution",
+      "inputRevision": "example:crew-r2",
+      "inputBriefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "owner": "coordinator",
+      "scope": {
+        "projectId": "bind:Hatam-Mark-3-project",
+        "sceneIds": [
+          "bind:Mark-3-synagogue-scene"
+        ],
+        "shotIds": [
+          "synagogue-listening"
+        ],
+        "verseRefs": [
+          "Mark 3:1–2"
+        ],
+        "audioBindingRefs": []
+      },
+      "proposedChanges": [],
+      "rationale": "Retain the late proposal as stale and return r2 plus the relevant objections/resolutions to its owner for explicit revision. This describes coordination only; Mabel is not dispatched by this example.",
+      "evidence": [
+        {
+          "ref": "example:crew-r2",
+          "limitations": "Design fixture only; no live record or actual media inspection."
+        }
+      ],
+      "objections": [],
+      "destination": {
+        "roles": [
+          "cinematographer"
+        ],
+        "stage": "casting",
+        "subjectId": "synagogue-listening"
+      },
+      "relatedContributions": [
+        "example:late-camera-proposal",
+        "example:camera-acceptance"
+      ],
+      "supersedes": null,
+      "finding": null,
+      "resolution": {
+        "outcome": "stale",
+        "contributions": [
+          "example:late-camera-proposal"
+        ],
+        "objectionDispositions": [],
+        "acceptedRevision": null
+      }
+    }
+  ],
+  "handoff": {
+    "inputRevision": "example:crew-r2",
+    "inputBriefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "acceptanceRef": "example:camera-acceptance",
+    "destination": {
+      "roles": [
+        "generation"
+      ],
+      "stage": "media-generation",
+      "subjectId": "synagogue-listening"
+    },
+    "relevantContributionIds": [
+      "example:camera-proposal",
+      "example:blocking-objection",
+      "example:camera-revision",
+      "example:blocking-resolution",
+      "example:camera-acceptance",
+      "example:phone-readability-note",
+      "example:wardrobe-proposal",
+      "example:wardrobe-objection",
+      "example:wardrobe-withdrawal",
+      "example:wardrobe-rejection",
+      "example:late-camera-proposal",
+      "example:stale-receipt"
+    ],
+    "unresolvedObjectionIds": [
+      "example:phone-readability-note"
+    ],
+    "prose": "Use accepted r2 camera, fixed blocking and cream canon wardrobe. Inspect readability in real output. Camera/wardrobe alternatives are history, not prompt instructions.",
+    "productionStatus": "held_on_design_placeholders_and_unresolved_live_gates"
+  },
+  "dispatchChecks": [
+    {
+      "label": "accepted current with visible advisory",
+      "revision": "example:crew-r2",
+      "briefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "acceptanceRef": "example:camera-acceptance",
+      "unresolvedObjections": [
+        "example:phone-readability-note"
+      ],
+      "expected": "accepted_intent_only"
+    },
+    {
+      "label": "old accepted revision after r2",
+      "revision": "example:crew-r1",
+      "briefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "acceptanceRef": "example:baseline-camera-review",
+      "unresolvedObjections": [],
+      "expected": "hold"
+    },
+    {
+      "label": "unaccepted alternative",
+      "revision": "example:camera-revision",
+      "briefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "acceptanceRef": null,
+      "unresolvedObjections": [],
+      "expected": "hold"
+    },
+    {
+      "label": "context changed despite same revision",
+      "revision": "example:crew-r2",
+      "briefSha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "acceptanceRef": "example:camera-acceptance",
+      "unresolvedObjections": [],
+      "expected": "hold"
+    },
+    {
+      "label": "blocking continuity unresolved",
+      "revision": "example:crew-r2",
+      "briefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "acceptanceRef": "example:camera-acceptance",
+      "unresolvedObjections": [
+        "example:wardrobe-objection"
+      ],
+      "expected": "hold"
+    },
+    {
+      "label": "missing acceptance",
+      "revision": "example:crew-r2",
+      "briefSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "acceptanceRef": null,
+      "unresolvedObjections": [],
+      "expected": "hold"
+    }
+  ]
+}

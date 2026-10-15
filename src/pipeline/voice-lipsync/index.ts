@@ -2,7 +2,8 @@
  * Narration is never sent to lip-sync: only an on-camera, cast speaker with
  * an approved voice, accepted keyframe, and aligned source segment is eligible. */
 import { randomUUID } from "node:crypto";
-import { getDb } from "../../db/client.js";
+import { getDb, getDataDir } from "../../db/client.js";
+import { productionAuthorization, bindAttemptRevision } from "../creative-direction/crew-store.js";
 import { KlingLipSyncProvider } from "../../providers/kling/index.js";
 import { runVoicing } from "../voicing/index.js";
 import type { Stage } from "../types.js";
@@ -33,7 +34,7 @@ export const runVoiceLipSync: Stage = async (projectId) => {
     const prior=db.prepare("SELECT id FROM generation_attempts WHERE shot_id=? AND operation='lip_sync' LIMIT 1").get(shot.id);
     if(prior)return {ok:false,reasoning:`Lip-sync candidate ${prior.id} is retained for ${shot.id}; resolve its existing review before new spending.`};
   }
-  if(pendingShots.length)try { checkAvatarSpend(db,projectId,0); }catch(error){return {ok:false,reasoning:(error as Error).message};}
+  if(pendingShots.length)try { productionAuthorization(db,getDataDir(),projectId); checkAvatarSpend(db,projectId,0); }catch(error){return {ok:false,reasoning:(error as Error).message};}
   // Only after every speaking shot has safe, explicit source identity may the
   // stage build/reuse the cast master (which can involve paid re-voicing).
   const master = await runVoicing(projectId);
@@ -66,12 +67,15 @@ export const runVoiceLipSync: Stage = async (projectId) => {
     if (prior) return { ok: false, reasoning: `${master.reasoning} Voice/lip-sync is held: shot ${shot.id} already has retained lip-sync candidate ${prior.id} (${prior.status}); review or explicitly supersede it before another paid request.` };
     const upperBoundUsd=Math.ceil(Math.max(2000,audio.endMs-audio.startMs)/1000)*AVATAR_RESERVATION_RATE_USD;
     let reservationId:string;
+    let authorization:ReturnType<typeof productionAuthorization>;
+    try { authorization=productionAuthorization(db,getDataDir(),projectId); }
+    catch(error){return {ok:false,reasoning:(error as Error).message};}
     try { reservationId=reserveAvatarSpend(db,projectId,shot.id,upperBoundUsd); }
     catch(error){return {ok:false,reasoning:(error as Error).message};}
     // Lost/rejected responses leave their reservation outstanding. No implicit
     // retry or debit-to-zero; the next run holds for reconciliation.
     let result;
-    try { result = await sync.sync({ characterId: shot.dialogue_character_id, characterVersionId: shot.version_id!,lockedVisualFacts:shot.locked_visual_facts ? JSON.parse(shot.locked_visual_facts) : undefined }, audio, { path: shot.keyframe! }, {avatarDirection:directions.get(shot.id),requestId:reservationId}); }
+    try { authorization.assertCurrent(); result = await sync.sync({ characterId: shot.dialogue_character_id, characterVersionId: shot.version_id!,lockedVisualFacts:shot.locked_visual_facts ? JSON.parse(shot.locked_visual_facts) : undefined }, audio, { path: shot.keyframe! }, {avatarDirection:directions.get(shot.id),requestId:reservationId,authorizeSubmission:authorization.assertCurrent,productionRevision:{runId:authorization.runId,briefHash:authorization.briefHash}}); }
     catch(error){return {ok:false,reasoning:`Avatar request remains outstanding (${reservationId}): ${(error as Error).message}`};}
     if (!result.media) return { ok: false, reasoning: `Lip-sync provider returned no media for ${shot.id}; no clip was selected.` };
     const now = Date.now(), attempt = randomUUID();
@@ -83,6 +87,7 @@ export const runVoiceLipSync: Stage = async (projectId) => {
       db.prepare(`INSERT INTO generation_attempts (id,shot_id,provider,model,operation,prompt,status,result_asset_path,cost_usd,created_at) VALUES (?,?,?,?,?,?,'hold_for_review',?,?,?)`).run(attempt, shot.id, result.provenance.provider, result.provenance.model, "lip_sync", result.provenance.prompt,result.media.path, result.cost.usd, now);
       db.prepare(`INSERT INTO cost_ledger_entries (id,project_id,generation_attempt_id,amount_usd,created_at) VALUES (?,?,?,?,?)`).run(randomUUID(), projectId, attempt, result.cost.usd, now);
       settleAvatarSpend(db,projectId,reservationId,attempt);
+      bindAttemptRevision(db,projectId,attempt,authorization);
       db.prepare(`INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'qc',?,0,?)`).run(randomUUID(), projectId, shot.id, `Lip-sync candidate ${attempt} returned by ${result.provenance.provider}; producer review is required before it can become a clip.`, now);
       db.exec("COMMIT");
     }catch(error){db.exec("ROLLBACK");throw error;}

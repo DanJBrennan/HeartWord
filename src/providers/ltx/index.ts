@@ -133,6 +133,8 @@ export class LtxVideoProvider implements VideoProvider {
       await this.transport.upload(input.absolute, remoteInput);
       const body = { prompt, resolution, model: "fast", cameraMotion: "none", negativePrompt: "speech, dialogue, narration, words, gibberish voices, singing, vocals, music, visible talking", duration, fps, audio: audioMode === "ambient", imagePath: remoteInput, lastImagePath: null, keyframes: [], audioPath: null, aspectRatio: "16:9", seed, loras: [] };
       metadata.request = body;
+      request.authorizeSubmission?.();
+      metadata.productionRevision = request.productionRevision;
       metadata.status = "running";
       emit({ phase: "submitted", percentage: null, currentStep: null, totalSteps: null });
       submitted = true;

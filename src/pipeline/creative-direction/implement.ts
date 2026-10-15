@@ -12,7 +12,7 @@ import { assembleSingleShot } from "../assembly/assemble-single-shot.js";
 import { mediaDurationMs } from "../assembly/finishing.js";
 import { registerVideoAmbience } from "../assembly/soundtrack.js";
 import { loadCrewBrief, productionAssetPath } from "./crew-context.js";
-import { directionsFromRun, requireCurrentPlan, runProductionCrew } from "./crew-store.js";
+import { directionsFromRun, requireCurrentPlan, runProductionCrew, productionAuthorization, bindAttemptRevision } from "./crew-store.js";
 import type { CrewBrief } from "./crew-types.js";
 import type { GapFillIdea } from "./index.js";
 
@@ -87,15 +87,18 @@ export async function implementApprovedIdeas(db: DatabaseSync, projectId: string
       const keyframe = db.prepare("SELECT result_asset_path,status,cost_usd FROM generation_attempts WHERE shot_id=? AND operation='generate' ORDER BY created_at DESC,rowid DESC LIMIT 1").get(idea.id);
       if (keyframe?.status !== "accepted" || !keyframe.result_asset_path) throw new Error("Keyframe must pass Critic review before video generation.");
       const current = requireCurrentPlan(db, dataDir, projectId);
+      const authorization=productionAuthorization(db,dataDir,projectId);
       const prompt = idea.description + directionsFromRun(current, idea.id);
       db.prepare("INSERT INTO directed_video_jobs (shot_id,project_id,status,created_at) VALUES (?,?,'running',?)").run(idea.id, projectId, Date.now());
       const providers = createVideoProviders();
       if (providers.primaryBackend === "ltx") liveJob = beginVideoJob(db,projectId,idea.id,"ltx");
-      const video = await generateSelectedFinalVideo(providers, { shotId: idea.id, prompt, characters: [] },
+      authorization.assertCurrent();
+      const video = await generateSelectedFinalVideo(providers, { shotId: idea.id, prompt, characters: [],authorizeSubmission:authorization.assertCurrent,productionRevision:{runId:authorization.runId,briefHash:authorization.briefHash} },
         { resolution: "720p", startFrame: { path: String(keyframe.result_asset_path) }, durationSeconds: providers.primaryBackend === "ltx" ? (idea.estimatedDurationSec <= 5 ? 5 : 8) : (idea.estimatedDurationSec <= 4 ? 4 : 8), onProgress: progress => { if(progress.phase === "submitted") submitted = true; liveJob?.progress(progress); } });
       const attemptId = randomUUID();
       db.prepare(`INSERT INTO generation_attempts (id,shot_id,provider,model,operation,resolution,prompt,status,result_asset_path,cost_usd,created_at)
         VALUES (?,?,?,?,'generate_directed_video','720p',?,'hold_for_review',?,?,?)`).run(attemptId, idea.id, video.provenance.provider, video.provenance.model, prompt, video.media?.path ?? null, video.cost.usd, Date.now());
+      bindAttemptRevision(db,projectId,attemptId,authorization);
       if (video.ambientAudio) {
         liveJob?.progress({ phase: "reviewing_ambience", percentage: null, currentStep: null, totalSteps: null });
         const ambienceReview = await registerVideoAmbience(db, projectId, attemptId, video);

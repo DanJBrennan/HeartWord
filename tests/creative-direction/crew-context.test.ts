@@ -192,7 +192,7 @@ describe("immutable project brief", () => {
   });
   it("invalidates an external handoff when a different crew plan is introduced", () => {
     const b = loadCrewBrief(db, directory, "p", "planning");
-    expect(() => validateHandoffPlan(db, directory, "p")).not.toThrow();
+    expect(() => validateHandoffPlan(db, directory, "p")).toThrow("production crew");
     db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,created_at) VALUES ('run','p','planning',?,?,'approved',1)").run(crewBriefHash(b, "planning"), JSON.stringify(b));
     expect(() => validateHandoffPlan(db, directory, "p")).toThrow("direction changed");
     expect(() => validateHandoffPlan(db, directory, "p", "run")).not.toThrow();

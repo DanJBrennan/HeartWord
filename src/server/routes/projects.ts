@@ -26,7 +26,7 @@ import { recordSegmentSplit } from "../../pipeline/ingestion/segment-splits.js";
 import { recordSegmentMerge } from "../../pipeline/ingestion/segment-merges.js";
 import { computeNarrationCoverage } from "../../pipeline/casting/narration-coverage.js";
 import { renderCanonReviewPage } from "../canon-review-page.js";
-import { reapproveCurrentPlanAfterProducerEdit } from "../../pipeline/creative-direction/crew-store.js";
+import { applyProducerCreativeEdit } from "../../pipeline/creative-direction/crew-store.js";
 
 export const projectsRouter = Router();
 
@@ -636,23 +636,12 @@ projectsRouter.patch("/:id/shots/:shotId", (req, res) => {
   }
   if (fields.length === 0) { res.status(400).json({ error: "No editable fields provided." }); return; }
 
-  db.prepare(`UPDATE shots SET ${fields.join(", ")} WHERE id = ?`).run(...values, req.params.shotId);
-
-  db.prepare(
-    `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
-     VALUES (?, ?, 'shot', ?, 'human', ?, 1, ?)`
-  ).run(randomUUID(), req.params.id, req.params.shotId, `Producer edit: ${note.trim()}`, Date.now());
-
-  const latest = db.prepare(
-    `SELECT id, status FROM generation_attempts WHERE shot_id = ? AND operation = 'generate' ORDER BY created_at DESC LIMIT 1`
-  ).get(req.params.shotId) as { id: string; status: string } | undefined;
-  if (latest && (latest.status === "accepted" || latest.status === "hold_for_review" || latest.status === "escalate")) {
-    db.prepare(`UPDATE generation_attempts SET status = 'retry_modified' WHERE id = ?`).run(latest.id);
-  }
-
-  reapproveCurrentPlanAfterProducerEdit(db, getDataDir(), req.params.id);
-
-  res.json({ ok: true, shot: db.prepare(`SELECT * FROM shots WHERE id = ?`).get(req.params.shotId) });
+  try {
+    const saved=applyProducerCreativeEdit(db,getDataDir(),req.params.id,{kind:"shot",subjectId:req.params.shotId,
+      fields:Object.fromEntries(fields.map((field,index)=>[field.split(" = ")[0]!,values[index]!])),note:note.trim(),
+      idempotencyKey:req.body.idempotencyKey,expectedRevision:req.body.expectedRevision});
+    res.json({ ok:true,...saved,shot:db.prepare("SELECT * FROM shots WHERE id=?").get(req.params.shotId) });
+  }catch(error){res.status(409).json({error:(error as Error).message});}
 });
 
 // Producer-directed edit to a scene's lighting, threaded into every shot's
@@ -670,16 +659,11 @@ projectsRouter.patch("/:id/scenes/:sceneId", (req, res) => {
   if (typeof note !== "string" || !note.trim()) { res.status(400).json({ error: "A note explaining the producer's change is required." }); return; }
   if (typeof lightingContinuity !== "string" || !lightingContinuity.trim()) { res.status(400).json({ error: "lightingContinuity is required." }); return; }
 
-  db.prepare(`UPDATE scenes SET lighting_continuity = ? WHERE id = ?`).run(lightingContinuity.trim(), req.params.sceneId);
-
-  db.prepare(
-    `INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
-     VALUES (?, ?, 'project', ?, 'human', ?, 1, ?)`
-  ).run(randomUUID(), req.params.id, req.params.id, `Producer edit to scene ${req.params.sceneId} lighting: ${note.trim()}`, Date.now());
-
-  reapproveCurrentPlanAfterProducerEdit(db, getDataDir(), req.params.id);
-
-  res.json({ ok: true, scene: db.prepare(`SELECT * FROM scenes WHERE id = ?`).get(req.params.sceneId) });
+  try {
+    const saved=applyProducerCreativeEdit(db,getDataDir(),req.params.id,{kind:"scene",subjectId:req.params.sceneId,
+      fields:{lighting_continuity:lightingContinuity.trim()},note:note.trim(),idempotencyKey:req.body.idempotencyKey,expectedRevision:req.body.expectedRevision});
+    res.json({ok:true,...saved,scene:db.prepare("SELECT * FROM scenes WHERE id=?").get(req.params.sceneId)});
+  }catch(error){res.status(409).json({error:(error as Error).message});}
 });
 
 // Records Dan's own review decision on a shot's current keyframe --

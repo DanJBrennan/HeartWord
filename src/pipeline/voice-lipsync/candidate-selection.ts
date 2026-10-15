@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
+import { getDataDir } from "../../db/client.js";
+import { validateAttemptRevision, recordMediaAcceptance } from "../creative-direction/crew-store.js";
 
 /** Explicit producer selection. A returned provider candidate has no timeline
  * authority until this action; retrying afterwards reuses the selected clip. */
@@ -14,9 +16,12 @@ export function acceptLipSyncCandidate(db: DatabaseSync, projectId: string, atte
   const clipId=randomUUID(), now=Date.now();
   db.exec("BEGIN IMMEDIATE");
   try {
+    validateAttemptRevision(db,getDataDir(),projectId,attemptId);
     db.prepare("UPDATE generation_attempts SET status='accepted' WHERE id=? AND status='hold_for_review'").run(attemptId);
     db.prepare("INSERT INTO clips (id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at) VALUES (?,?,?,0,?,?)").run(clipId,attempt.shot_id,attemptId,attempt.duration_ms,now);
-    db.prepare("INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'human',?,1,?)").run(randomUUID(),projectId,attempt.shot_id,`Producer accepted lip-sync candidate ${attemptId}.`,now);
+    const reviewNoteId=randomUUID();
+    db.prepare("INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'human',?,1,?)").run(reviewNoteId,projectId,attempt.shot_id,`Producer accepted lip-sync candidate ${attemptId}.`,now);
+    recordMediaAcceptance(db,projectId,attemptId,reviewNoteId);
     db.exec("COMMIT");
   } catch(error) { db.exec("ROLLBACK"); throw error; }
   return {clipId,reused:false};
@@ -51,7 +56,9 @@ export function acceptCoveredLipSyncCandidate(db: DatabaseSync, projectId: strin
   try {
     db.prepare("UPDATE generation_attempts SET status='accepted' WHERE id=? AND status='hold_for_review'").run(attemptId);
     db.prepare("INSERT INTO clips (id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at) VALUES (?,?,?,?,?,?)").run(clipId,row.shot_id,attemptId,row.audio_start_ms,row.audio_end_ms,now);
-    db.prepare("INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'human',?,1,?)").run(randomUUID(),projectId,row.shot_id,`Producer accepted lip-sync candidate ${attemptId} for coverage beat ${beatId} at ${row.audio_start_ms}-${row.audio_end_ms} ms.`,now);
+    const reviewNoteId=randomUUID();
+    db.prepare("INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'human',?,1,?)").run(reviewNoteId,projectId,row.shot_id,`Producer accepted lip-sync candidate ${attemptId} for coverage beat ${beatId} at ${row.audio_start_ms}-${row.audio_end_ms} ms.`,now);
+    recordMediaAcceptance(db,projectId,attemptId,reviewNoteId);
     db.exec("COMMIT");
   } catch(error) { db.exec("ROLLBACK"); throw error; }
   return {clipId,reused:false};

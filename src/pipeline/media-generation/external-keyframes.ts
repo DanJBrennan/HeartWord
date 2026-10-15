@@ -4,7 +4,8 @@ import { constants, copyFileSync, mkdirSync, readFileSync, writeFileSync } from 
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
-import { latestCrewRun, requireCurrentPlan, directionsFromRun, validateHandoffPlan } from "../creative-direction/crew-store.js";
+import { latestCrewRun, requireCurrentPlan, directionsFromRun, validateHandoffPlan, bindAttemptRevision, validateAttemptRevision } from "../creative-direction/crew-store.js";
+import { getDataDir } from "../../db/client.js";
 import { sortAssetsByFreshness } from "../../characters/asset-freshness.js";
 
 const REFERENCE_CATEGORY_RANK: Record<string, number> = { headshot: 0, body_pose: 1, turnaround: 2 };
@@ -125,9 +126,7 @@ export function prepareKeyframe(db: DatabaseSync, dataDir: string, shotId: strin
   if (!prompt.trim() || !rationale.trim()) throw new Error("Prompt and production rationale are required.");
   if (!/16\s*:\s*9/.test(prompt)) throw new Error("Explicit 16:9 framing is required.");
   const context = getKeyframeContext(db, dataDir, shotId);
-  if (latestCrewRun(db, context.project.id, "planning")) {
-    prompt += directionsFromRun(requireCurrentPlan(db, dataDir, context.project.id), shotId);
-  }
+  prompt += directionsFromRun(requireCurrentPlan(db, dataDir, context.project.id), shotId);
   const sources = (context.project.chapter === 4
     ? [
         { role: "verified Hatam source", path: "source/hatam/text/Mark/Mark 4.docx" },
@@ -215,6 +214,8 @@ export function importKeyframe(db: DatabaseSync, dataDir: string, brief: Keyfram
       (id, shot_id, provider, model, operation, resolution, prompt, status, result_asset_path, cost_usd, created_at)
       VALUES (?, ?, 'codex_imagegen', 'not_reported', 'generate', ?, ?, 'hold_for_review', ?, 0, ?)`)
       .run(brief.id, current.shot.id, `${dimensions.width}x${dimensions.height}`, brief.prompt, resultPath, Date.now());
+    const plan=requireCurrentPlan(db,dataDir,current.project.id);
+    bindAttemptRevision(db,current.project.id,brief.id,{runId:plan.id,briefHash:plan.brief_hash});
     db.prepare(`UPDATE shots SET status = 'keyframe_generated' WHERE id = ?`).run(current.shot.id);
     db.prepare(`INSERT INTO review_notes (id, project_id, subject_type, subject_id, source, note, resolved, created_at)
       VALUES (?, ?, 'shot', ?, 'qc', ?, 0, ?)`)
@@ -228,7 +229,7 @@ export function importKeyframe(db: DatabaseSync, dataDir: string, brief: Keyfram
   return { attemptId: brief.id, imagePath: saved, provenancePath };
 }
 
-export function acceptKeyframe(db: DatabaseSync, attemptId: string): { attemptId: string; shotId: string } {
+export function acceptKeyframe(db: DatabaseSync, attemptId: string, dataDir=getDataDir()): { attemptId: string; shotId: string } {
   const attempt = db.prepare(`SELECT ga.id, ga.shot_id, ga.status, ga.provider
     FROM generation_attempts ga WHERE ga.id = ?`).get(attemptId) as
     { id: string; shot_id: string; status: string; provider: string } | undefined;
@@ -238,6 +239,10 @@ export function acceptKeyframe(db: DatabaseSync, attemptId: string): { attemptId
   }
   db.exec("BEGIN IMMEDIATE");
   try {
+    if(attempt.status!=="accepted"){
+      const project=db.prepare("SELECT sc.project_id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=?").get(attempt.shot_id)!;
+      validateAttemptRevision(db,dataDir,String(project.project_id),attemptId);
+    }
     db.prepare(`UPDATE generation_attempts SET status='accepted' WHERE id=?`).run(attempt.id);
     db.prepare(`UPDATE shots SET status='keyframe_approved' WHERE id=?`).run(attempt.shot_id);
     db.prepare(`UPDATE review_notes SET resolved=1 WHERE subject_type='shot' AND subject_id=?

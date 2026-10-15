@@ -225,9 +225,7 @@ export function prepareCoverageBeatBrief(
   if (!prompt.trim() || !rationale.trim()) throw new Error("Prompt and production rationale are required.");
   if (!/16\s*:\s*9/.test(prompt)) throw new Error("Explicit 16:9 framing is required.");
   const context = getCoverageBeatContext(db, dataDir, beatId);
-  if (latestCrewRun(db, context.project.id, "planning")) {
-    prompt += directionsFromRun(requireCurrentPlan(db, dataDir, context.project.id), context.shot.id, beatId);
-  }
+  prompt += directionsFromRun(requireCurrentPlan(db, dataDir, context.project.id), context.shot.id, beatId);
   if (context.beat.status !== "planned" && context.beat.status !== "generated") {
     throw new Error(`Beat ${beatId} is already '${context.beat.status}' -- only a planned or unaccepted generated beat can be prepared.`);
   }

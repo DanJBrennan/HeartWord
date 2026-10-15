@@ -9,6 +9,7 @@ import { generateSelectedFinalVideo } from "./select-final-video.js";
 import { beginVideoJob } from "./video-job-status.js";
 import { shotRiskFor, tierForRisk } from "./shot-risk-lookup.js";
 import { registerVideoAmbience } from "../assembly/soundtrack.js";
+import { productionAuthorization, directionsFromRun, requireCurrentPlan, bindAttemptRevision, validateAttemptRevision } from "../creative-direction/crew-store.js";
 
 export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, projectId:string, shotId:string, providers:VideoProviders, policy:{allowDraftFallback?:boolean}={}) {
   const shot=db.prepare(`SELECT sh.id,sh.action FROM shots sh JOIN scenes s ON s.id=sh.scene_id WHERE sh.id=? AND s.project_id=? AND sh.needs_lip_sync=0`).get(shotId,projectId) as {id:string;action:string}|undefined;
@@ -55,11 +56,14 @@ export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, project
 NON-SPEAKING VIDEO RULE: Do not generate dialogue, narration, singing, lip-sync performance, intelligible words, or visible speech from any person. Preserve natural nonverbal action and background ambience only. Keep every visible person in the approved Papuan/Hatam canon identity and wardrobe throughout; never drift toward Caucasian, Levantine, European, or generic substitute identities.
 
 NATURAL CROWD MOTION RULE: Crowd movement is independently timed and irregular. At most a few people reach, shift, or react at once while others hold, breathe, look, edge forward, or respond subtly at different moments. Never generate a synchronized wave of arms, a repeated group gesture, mirrored movement, or a mass simultaneous reach-and-retract.`;
+  const authorization=productionAuthorization(db,getDataDir(),projectId);
+  const acceptedPrompt=redactCharacterNames(prompt+directionsFromRun(requireCurrentPlan(db,getDataDir(),projectId),shotId),characters.map(c=>c.name));
   const job = local ? beginVideoJob(db,projectId,shotId,"ltx") : undefined;
   let submitted = false;
   let result;
   try {
-    result = await generateSelectedFinalVideo(providers,{shotId,prompt,characters:[]},{resolution:"720p",startFrame:{path:keyframe.result_asset_path},durationSeconds:8,tier,allowKlingSceneFallback:false,allowDraftFallback:policy.allowDraftFallback,onProgress:(progress:GenerationProgress) => { if(progress.phase === "submitted") submitted = true; job?.progress(progress); }});
+    authorization.assertCurrent();
+    result = await generateSelectedFinalVideo(providers,{shotId,prompt:acceptedPrompt,characters:[],authorizeSubmission:authorization.assertCurrent,productionRevision:{runId:authorization.runId,briefHash:authorization.briefHash}},{resolution:"720p",startFrame:{path:keyframe.result_asset_path},durationSeconds:8,tier,allowKlingSceneFallback:false,allowDraftFallback:policy.allowDraftFallback,onProgress:(progress:GenerationProgress) => { if(progress.phase === "submitted") submitted = true; job?.progress(progress); }});
   } catch(error) {
     job?.finish(submitted ? "held" : "error",{error:(error as Error).message,submissionMayHaveStarted:submitted});
     throw error;
@@ -81,6 +85,7 @@ NATURAL CROWD MOTION RULE: Crowd movement is independently timed and irregular. 
     } catch(error) { reviewNote=`final video review unavailable: ${(error as Error).message}`; }
   }
   db.prepare("INSERT INTO generation_attempts (id,shot_id,provider,model,operation,resolution,prompt,status,result_asset_path,cost_usd,created_at) VALUES (?,?,?,?,?,'720p',?,'hold_for_review',?,?,?)").run(id,shotId,result.provenance.provider,result.provenance.model,"generate_final_video",result.provenance.prompt,result.media?.path ?? null,result.cost.usd,now);
+  bindAttemptRevision(db,projectId,id,authorization);
   if (result.ambientAudio) {
     job?.progress({ phase: "reviewing_ambience", percentage: null, currentStep: null, totalSteps: null });
     const ambienceReview = await registerVideoAmbience(db, projectId, id, result);
@@ -111,5 +116,5 @@ export function acceptFinalVideoCandidate(db:DatabaseSync, projectId:string, att
   if (!row?.result_asset_path) throw new Error("Final-video candidate is not retained in this project.");
   const old=db.prepare("SELECT id FROM clips WHERE generation_attempt_id=?").get(attemptId) as {id:string}|undefined; if(old)return {clipId:old.id,reused:true};
   if(row.status!=="hold_for_review"&&row.status!=="accepted")throw new Error("Only a held final-video candidate can be accepted.");
-  const id=randomUUID(); db.exec("BEGIN IMMEDIATE"); try { db.prepare("UPDATE generation_attempts SET status='accepted' WHERE id=? AND status='hold_for_review'").run(attemptId); db.prepare("INSERT INTO clips (id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at) VALUES (?,?,?,0,?,?)").run(id,row.shot_id,attemptId,durationMs,Date.now()); db.exec("COMMIT"); }catch(e){db.exec("ROLLBACK");throw e;} return {clipId:id,reused:false};
+  const id=randomUUID(); db.exec("BEGIN IMMEDIATE"); try { validateAttemptRevision(db,getDataDir(),projectId,attemptId); db.prepare("UPDATE generation_attempts SET status='accepted' WHERE id=? AND status='hold_for_review'").run(attemptId); db.prepare("INSERT INTO clips (id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at) VALUES (?,?,?,0,?,?)").run(id,row.shot_id,attemptId,durationMs,Date.now()); db.exec("COMMIT"); }catch(e){db.exec("ROLLBACK");throw e;} return {clipId:id,reused:false};
 }

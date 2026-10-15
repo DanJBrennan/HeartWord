@@ -4,9 +4,10 @@ interface Run { id: string; phase: string; status: string; result_json: string |
 interface Event { id: string; role: string; round: number; prompt: string; output_json: string | null; error: string | null }
 import type { CrewContribution as Contribution } from "../pipeline/creative-direction/crew-types";
 import type { CutTimingAudit } from "../pipeline/assembly/cut-timing-audit";
+import type { ProductionRecord } from "../pipeline/creative-direction/production-record";
 interface Asset { id: string; kind: string; description: string; path: string }
 interface Attempt { id: string; kind: string; status: string; path: string | null; error: string | null; cost_usd: number | null }
-interface Snapshot { runs: Run[]; assets: Asset[]; attempts: Attempt[]; render: { id: string; path: string } | null; timingAudit?: CutTimingAudit | null; backup?: { stale: boolean; summary: string } }
+interface Snapshot { runs: Run[]; assets: Asset[]; attempts: Attempt[]; render: { id: string; path: string } | null; timingAudit?: CutTimingAudit | null; backup?: { stale: boolean; summary: string }; productionRecord?:ProductionRecord|null }
 interface MonitorEvent { id:string; runId?:string; kind:string; sender:string; round:number; status:"active"|"completed"|"held"|"error"; context:string; summary:string; createdAt:number }
 interface Monitor { events: MonitorEvent[]; outstanding: MonitorEvent[]; state:string; note:string }
 interface Lesson { id:string; scope_kind:string; requested_change:string; rationale:string|null; status:string; subject_id?:string|null }
@@ -29,6 +30,7 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
   const [render, setRender] = useState<Snapshot["render"]>(null);
   const [timingAudit, setTimingAudit] = useState<CutTimingAudit | null>(null);
   const [backup, setBackup] = useState<Snapshot["backup"]>();
+  const [productionRecord,setProductionRecord]=useState<ProductionRecord|null>(null);
   const [selected, setSelected] = useState<string | null>(null), [busy, setBusy] = useState(false);
   const [error, setError] = useState(""), [notice, setNotice] = useState("");
   const [guidance, setGuidance] = useState("");
@@ -44,7 +46,7 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
   const [asset, setAsset] = useState({ path: "", kind: "music", description: "" });
   async function refresh() {
     const data = await request<Snapshot>(base);
-    setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setBackup(data.backup);
+    setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setBackup(data.backup); setProductionRecord(data.productionRecord??null);
     setMonitor(await request<Monitor>(`${base}/monitor`));
     const lessonData = await request<LessonResponse>(`${base}/lessons`);
     setLessons(lessonData.lessons); setApplicableLessons(lessonData.applicableLessons); setLessonHistory(lessonData.history);
@@ -52,7 +54,7 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
   }
   useEffect(() => {
     let active = true;
-    const load = () => Promise.all([request<Snapshot>(base), request<Monitor>(`${base}/monitor`), request<LessonResponse>(`${base}/lessons`), request<Roster>("/api/control-room/roster", undefined, "GET")]).then(([data, monitor, lessonData, rosterData]) => { if (active) { setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setBackup(data.backup); setMonitor(monitor); setLessons(lessonData.lessons); setApplicableLessons(lessonData.applicableLessons); setLessonHistory(lessonData.history); setRoster(rosterData.roster); } }).catch(e => { if (active) setError(e.message); });
+    const load = () => Promise.all([request<Snapshot>(base), request<Monitor>(`${base}/monitor`), request<LessonResponse>(`${base}/lessons`), request<Roster>("/api/control-room/roster", undefined, "GET")]).then(([data, monitor, lessonData, rosterData]) => { if (active) { setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setBackup(data.backup); setProductionRecord(data.productionRecord??null); setMonitor(monitor); setLessons(lessonData.lessons); setApplicableLessons(lessonData.applicableLessons); setLessonHistory(lessonData.history); setRoster(rosterData.roster); } }).catch(e => { if (active) setError(e.message); });
     void load();
     const timer = window.setInterval(load, 5000);
     return () => { active = false; window.clearInterval(timer); };
@@ -82,6 +84,14 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
     <h2>Production crew</h2>
     <p>Plan the chapter together, review the assembled film, and inspect why each choice was made. Approved takes and the source recording are retained.</p>
     {backup && <p role="status"><strong>Disaster backup{backup.stale ? " overdue" : ""}:</strong> {backup.summary}</p>}
+    {productionRecord && <section aria-label="Saved production revision">
+      <h3>Saved production revision · {productionRecord.status}</h3>
+      <p>{productionRecord.revision}{productionRecord.parentRevision ? ` · Previous: ${productionRecord.parentRevision}` : ""}</p>
+      {productionRecord.objections.some(o=>o.status==="open"&&o.severity==="blocking")&&<p role="alert">New generation is held while the blocking objections below need resolution.</p>}
+      {productionRecord.objections.filter(o=>o.status==="open").map(o=><article key={o.id}><strong>{o.severity} · {o.owner.replaceAll("_"," ")}</strong><p>{o.requestedChange}</p><p>{o.evidence}</p><small>{o.limitations} · {o.id}</small></article>)}
+      <details><summary>Proposals, objections and resolutions ({productionRecord.history.length})</summary>{productionRecord.history.map(h=><article key={h.id}><strong>{h.kind} · {h.owner.replaceAll("_"," ")}</strong><p>{h.rationale}</p><small>{h.id} · Input: {h.inputRevision}{h.resolution ? ` · ${h.resolution.outcome}` : ""}</small><pre>{JSON.stringify({changes:h.proposedChanges,objections:h.objections,resolution:h.resolution},null,2)}</pre></article>)}</details>
+      <details><summary>Saved FDL snapshot · {productionRecord.status}</summary><pre>{JSON.stringify(productionRecord.snapshots,null,2)}</pre></details>
+    </section>}
     <details className="crew-roster"><summary>Production roster ({roster.length} declared roles and reviewers)</summary><p>Implemented labels identify bounded recorded calls. Declared roles describe ownership and handoffs; they do not imply a live autonomous worker.</p><div className="crew-map">{roster.map(role => <article key={role.id} className="department-card"><strong>{role.label}</strong><p>{role.owner} · {role.authority.replaceAll("_", " ")} · {role.runtime}</p><p>Owns: {role.owns}</p><small>Cannot: {role.cannot}</small></article>)}</div></details>
     <section className="production-monitor" aria-label="Production interaction monitor">
       <h3>Chapter interaction monitor</h3>
@@ -135,6 +145,7 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
               {output.colorAdjustments?.map((c, i) => <p key={`color-${i}`}>Color correction: {c.reason} · brightness {c.brightness}, contrast {c.contrast}, saturation {c.saturation}</p>)}
               {output.directions.map(d => <p key={d.shotId}><strong>{d.shotId}</strong>: {d.instruction}<br /><em>{d.scriptureBasis}</em></p>)}</>}
             <details><summary>Full recorded context</summary><pre>{event.prompt}</pre></details>
+            {output && <details><summary>Full saved role output</summary><pre>{JSON.stringify(output,null,2)}</pre></details>}
           </details>;
         })}
       </article>;

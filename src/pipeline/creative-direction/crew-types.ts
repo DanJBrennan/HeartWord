@@ -1,5 +1,6 @@
 import type { SavedCutTimingAudit } from "../assembly/cut-timing-audit.js";
 import type { EditorialCheck } from "../qc/editorial-review.js";
+import type { FilmChange, OwnerResponse, ObjectionResponse, ProductionRecord, SavedContribution } from "./production-record.js";
 
 export const PLANNING_ROLES = [
   "creative_director", "cinematographer", "choreographer", "staging_designer",
@@ -18,6 +19,7 @@ export interface CrewShot {
   id: string; sceneId: string; sceneSequence: number; sequence: number;
   verseRef: string; action: string; framing: string | null; cameraMovement: string | null;
   continuity: string | null; lighting: string | null; needsLipSync: boolean;
+  spatialContinuity?: string | null; spatialView?: string | null; crowdDensity?: string | null;
   characterIds: string[]; dialogueCharacterId: string | null;
   /** Approved utterance identity for an on-camera mouth; required to
    * distinguish repeated speaker/verse lines during editorial timing. */
@@ -66,11 +68,21 @@ export interface CrewContribution {
   audioCues?: Array<{ assetId: string; startMs: number; endMs: number; sourceStartMs: number; gainDb: number; reason: string }>;
   generationRequests?: Array<{ prompt: string; durationMs: number; loop: boolean; startMs: number; gainDb: number; reason: string }>;
   decision?: "approve" | "revise" | "hold";
+  decisionConfidence?: number; decisionLimitations?: string;
+  /** Proposals use the FDL fact model; receiving owners explicitly review them. */
+  filmChanges?: FilmChange[];
+  ownerResponses?: OwnerResponse[];
+  objectionResponses?: ObjectionResponse[];
+  withdrawals?: Array<{contributionId:string;rationale:string;evidence:string}>;
+  acceptedContributionIds?: string[];
+  /** Assigned by the runtime, never trusted from a model reply. */
+  exchange?: SavedContribution[];
 }
-export interface CrewEvent { role: CrewRole; round: number; prompt: string; output: CrewContribution | null; error: string | null }
+export interface CrewEvent { role: CrewRole; round: number; prompt: string; output: CrewContribution | null; error: string | null; rejectedOutput?:unknown }
 export interface CrewResult {
   status: "approved" | "awaiting_assets" | "held" | "incomplete"; summary: string; calls: number;
   contributions: Partial<Record<CrewRole, CrewContribution>>;
+  productionRecord?: ProductionRecord;
 }
 /** `caption`, when present, is rendered as its own text part immediately
  *  before this image (see generateJsonWithImages) -- otherwise a model

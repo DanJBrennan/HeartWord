@@ -70,6 +70,17 @@ The Critic/QC coordinator remains separate: planning approval is not image
 acceptance. Historical Critic fixes are preserved. Generation still passes
 through existing attempts, cost and review records.
 
+The [structured-exchange contract](production-crew-communication.md#structured-film-information-beside-prose-2026-10-14)
+recommends accepted FDL snapshots plus role-owned contributions beside prose,
+with linked proposal/objection/revision/resolution, stale-input handling and
+worked camera/blocking and rejected-wardrobe exchanges. The
+[bounded runtime integration](production-crew-communication.md#runtime-integration-2026-10-14)
+now saves qualitative FDL snapshots, explicit lifecycle history and current
+revision-bound generation in the existing run/event/edit records. Producer edits
+append immutable successor runs, retaining prior decisions and unaffected
+specialist facts. Existing stage ownership, producer authority and automatic
+progress under passing gates remain controlling; old films were not migrated.
+
 Gap ideas now require an exact chapter shot as their editorial anchor and
 exact approved cast names. New ideas become stable shot records, receive
 crew direction, pass keyframe Critic review, and receive a video viewing

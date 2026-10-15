@@ -89,7 +89,7 @@ function extractAudioClip(sourcePath: string, startMs: number, endMs: number, ou
 }
 
 export class KlingLipSyncProvider implements LipSyncProvider {
-  async sync(_character: CharacterRef, audio: AudioSegmentRef, referenceFrame: AssetRef, opts?: { avatarDirection?: AvatarDirection; requestId?:string }): Promise<GenerationResult> {
+  async sync(_character: CharacterRef, audio: AudioSegmentRef, referenceFrame: AssetRef, opts?: { avatarDirection?: AvatarDirection; requestId?:string; authorizeSubmission?:()=>void; productionRevision?:{runId:string;briefHash:string} }): Promise<GenerationResult> {
     if (opts?.avatarDirection) validateAvatarDirection(opts.avatarDirection);
     const settings = compileAvatarSettings(opts?.avatarDirection);
     const conflicts = _character.lockedVisualFacts?.prohibitedPromptPhrases.filter(p=>(settings.settings.prompt ?? "").toLowerCase().includes(p.toLowerCase())) ?? [];
@@ -135,6 +135,7 @@ export class KlingLipSyncProvider implements LipSyncProvider {
       submittedAt:new Date().toISOString(),actualUsd:null,status:"submission may incur charges; reconcile before retry"
     },null,2),{flag:"wx"});
 
+    opts?.authorizeSubmission?.();
     const submitRes = await fetch(HOST + SUBMIT_PATH, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -188,7 +189,7 @@ export class KlingLipSyncProvider implements LipSyncProvider {
     const relPath = join("generated", "lipsync", `${taskId}.mp4`);
     mkdirSync(join(dataDir, "assets", "generated", "lipsync"), { recursive: true });
     writeFileSync(join(dataDir, "assets", relPath), videoBuffer, { flag: "wx" });
-    const metadata = { version:1, endpoint:SUBMIT_PATH, taskId,requestId,capabilitySource:AVATAR_CAPABILITY_SOURCE,
+    const metadata = { version:1, endpoint:SUBMIT_PATH, taskId,requestId,capabilitySource:AVATAR_CAPABILITY_SOURCE,productionRevision:opts?.productionRevision,
       requestedDirection:opts?.avatarDirection ?? null, submitted:actualSettings, submittedParameterFields:["image","sound_file",...Object.keys(actualSettings)], omitted:actualOmitted, defaults:settings.defaults,baselineSelection:settings.baselineSelection,
       image:{...referenceFrame,sha256:createHash("sha256").update(Buffer.from(imageBase64,"base64")).digest("hex")},
       audio:{...audio,submittedPath:join("generated","lipsync",submittedAudioPath),exactInputFileReused:reuseExactFile,submittedSha256:createHash("sha256").update(Buffer.from(audioBase64,"base64")).digest("hex"), trailingSilenceMs:Math.max(0,2000-(audio.endMs-audio.startMs)), spokenSpeed:1},
@@ -443,6 +444,7 @@ export class KlingVideoProvider implements VideoProvider {
     const imageAbsPath = join(dataDir, "assets", opts.startFrame.path);
     const imageBase64 = readFileSync(imageAbsPath).toString("base64");
 
+    request.authorizeSubmission?.();
     const submitRes = await fetch(HOST + SCENE_SUBMIT_PATH, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },

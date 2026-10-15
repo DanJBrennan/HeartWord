@@ -4,6 +4,7 @@ import { expect, it, vi } from "vitest";
 import { generateNonSpeakingVideoCandidate } from "./final-video.js";
 import { chooseShotDraft, generateShotDraft } from "./draft-room.js";
 import type { DraftVideoProvider, VideoProvider } from "../../providers/types.js";
+vi.mock("../creative-direction/crew-store.js",async original=>({...await original<object>(),...(await import("../../../tests/helpers/reviewed-plan-gate.js")).reviewedPlanGateFixture}));
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 

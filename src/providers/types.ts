@@ -39,6 +39,9 @@ export interface ShotRequest {
   shotId: string;
   prompt: string;
   characters: CharacterRef[];
+  /** Local transport gate, called immediately before submission; never sent to a vendor. */
+  authorizeSubmission?: () => void;
+  productionRevision?: { runId:string; briefHash:string };
   /** Approved earlier view of the same location, used only to preserve its
    * production design and geography -- never as a character-canon source. */
   sceneReferences?: AssetRef[];
@@ -132,5 +135,5 @@ export interface DraftVideoProvider {
 }
 
 export interface LipSyncProvider {
-  sync(character: CharacterRef, audio: AudioSegmentRef, referenceFrame: AssetRef, opts?: { avatarDirection?: import("./kling/avatar-direction.js").AvatarDirection; requestId?:string }): Promise<GenerationResult>;
+  sync(character: CharacterRef, audio: AudioSegmentRef, referenceFrame: AssetRef, opts?: { avatarDirection?: import("./kling/avatar-direction.js").AvatarDirection; requestId?:string; authorizeSubmission?:()=>void; productionRevision?:{runId:string;briefHash:string} }): Promise<GenerationResult>;
 }
