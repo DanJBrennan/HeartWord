@@ -190,9 +190,14 @@ time elapsed.
 
 Optional non-secret settings are `LTX_SSH_HOST`, `LTX_SSH_USER`, `LTX_INBOX_DIR`
 and `LTX_GENERATION_TIMEOUT_SECONDS`. Defaults target
-`danieljbrennan@192.168.77.2` and that user's `~/LTX-Inbox`. Ending-frame,
-multiple-keyframe, supplied-audio and reference conditioning can extend this adapter
-and the existing interfaces later; this path does not enable or simulate them.
+`danieljbrennan@192.168.77.2` and that user's `~/LTX-Inbox`. October 14:
+`VideoGenerationOptions.endFrame` / diagnostic `--end-image` now supplies a second
+**composed ending picture** through `lastImagePath`. Both uploads/hashes and
+cleanup/uncertain-response behavior are retained. Never use this slot for a
+canon contact sheet. Installed Desktop also supports up to ten timed anchors,
+but arbitrary multiple-keyframe orchestration, supplied audio and general
+reference conditioning remain outside this adapter. See
+[reference workflow and test evidence](CODEX_LTX_REFERENCE_WORKFLOW.md).
 
 The Desktop's [official generated API schema](https://github.com/Lightricks/LTX-Desktop/blob/main/frontend/generated/backend-openapi.json)
 was checked for request/progress field names. Dan's proven local Fast matrix

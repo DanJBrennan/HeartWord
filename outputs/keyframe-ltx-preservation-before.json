@@ -1,0 +1,440 @@
+{
+  "database": "F0732977D63D640CEAD9830785F63CFD63F76528CA4A29F3E450043C5CD88BF1",
+  "renders": [
+    {
+      "Name": "fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "Length": 204198843,
+      "LastWriteTimeUtc": "2026-09-11T01:35:26.5499037Z"
+    },
+    {
+      "Name": "fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-with-pilot-intro.mp4",
+      "Length": 119219734,
+      "LastWriteTimeUtc": "2026-09-10T01:06:09.8038137Z"
+    },
+    {
+      "Name": "fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d.mp4",
+      "Length": 112038086,
+      "LastWriteTimeUtc": "2026-09-09T23:30:34.0361261Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v10-title-hold.mp4",
+      "Length": 118030398,
+      "LastWriteTimeUtc": "2026-09-27T04:47:04.5063589Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v11-speaking-restored.mp4",
+      "Length": 144540744,
+      "LastWriteTimeUtc": "2026-09-27T04:54:17.1198977Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v12-speaker-continuous-audio.mp4",
+      "Length": 144499809,
+      "LastWriteTimeUtc": "2026-09-27T04:58:52.520918Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v13-parable-voice-repaired.mp4",
+      "Length": 144515114,
+      "LastWriteTimeUtc": "2026-09-27T05:07:19.7652209Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v14-bird-coverage.mp4",
+      "Length": 142181897,
+      "LastWriteTimeUtc": "2026-09-27T05:18:39.5237931Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v15-rocky-ground-continuity.mp4",
+      "Length": 70516784,
+      "LastWriteTimeUtc": "2026-09-27T05:22:56.5257342Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v16-thorny-soil-continuity.mp4",
+      "Length": 139924058,
+      "LastWriteTimeUtc": "2026-09-27T05:25:23.641685Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v17-rocky-ground-continuity.mp4",
+      "Length": 137222425,
+      "LastWriteTimeUtc": "2026-09-27T05:32:17.9586004Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v18-rocky-ground-continuity.mp4",
+      "Length": 137318064,
+      "LastWriteTimeUtc": "2026-09-27T05:35:08.2629988Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v19-canon-and-motion.mp4",
+      "Length": 137181544,
+      "LastWriteTimeUtc": "2026-09-27T05:45:23.8951324Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v2.mp4",
+      "Length": 116370878,
+      "LastWriteTimeUtc": "2026-09-27T04:21:21.1129192Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v20-bird-frame-extension.mp4",
+      "Length": 135743486,
+      "LastWriteTimeUtc": "2026-09-27T17:12:58.5076526Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v21-wide-before-mark4-3-speaking.mp4",
+      "Length": 134285472,
+      "LastWriteTimeUtc": "2026-09-27T17:26:32.690012Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v22-confirmed-flash-repairs.mp4",
+      "Length": 132478071,
+      "LastWriteTimeUtc": "2026-09-27T18:33:34.636572Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v23-thorn-continuity-repair.mp4",
+      "Length": 130577989,
+      "LastWriteTimeUtc": "2026-09-27T18:39:33.5904384Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v24-post3034-continuity.mp4",
+      "Length": 274302487,
+      "LastWriteTimeUtc": "2026-09-27T19:43:33.5762253Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v25-post3034-continuity-frame-locked.mp4",
+      "Length": 274300949,
+      "LastWriteTimeUtc": "2026-09-27T19:43:35.739108Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v26-grain-continuation-frame-locked.mp4",
+      "Length": 170655792,
+      "LastWriteTimeUtc": "2026-09-27T21:21:50.9545392Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v27-distinct-coverage.mp4",
+      "Length": 241687439,
+      "LastWriteTimeUtc": "2026-09-27T21:25:38.7062408Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v28-distinct-coverage-frame-locked.mp4",
+      "Length": 241680450,
+      "LastWriteTimeUtc": "2026-09-27T21:26:34.4619579Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v29-distinct-coverage-grain-repair-frame-locked.mp4",
+      "Length": 227393371,
+      "LastWriteTimeUtc": "2026-09-27T21:29:48.571621Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v3.mp4",
+      "Length": 117654433,
+      "LastWriteTimeUtc": "2026-09-27T04:24:32.9617345Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v30-mustard-illustration-frame-locked.mp4",
+      "Length": 221843956,
+      "LastWriteTimeUtc": "2026-09-27T22:00:26.2008161Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v31-mustard-illustration-frame-locked.mp4",
+      "Length": 221841829,
+      "LastWriteTimeUtc": "2026-09-27T22:02:30.9979133Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v32-thorn-flash-repair-frame-locked.mp4",
+      "Length": 209089182,
+      "LastWriteTimeUtc": "2026-09-27T22:11:56.8955389Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v33-canon-storm-repair-frame-locked.mp4",
+      "Length": 260248701,
+      "LastWriteTimeUtc": "2026-09-27T22:40:29.2507196Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v34-v30-opening-lipsync-frame-locked.mp4",
+      "Length": 247236073,
+      "LastWriteTimeUtc": "2026-09-27T23:03:42.4459024Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v35-aesthetic-first-pass-frame-locked.mp4",
+      "Length": 252321147,
+      "LastWriteTimeUtc": "2026-09-28T01:22:27.590646Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v36-phrase-led-teaching-recut-v2.mp4",
+      "Length": 279104518,
+      "LastWriteTimeUtc": "2026-09-28T02:03:32.1820965Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v36-phrase-led-teaching-recut.mp4",
+      "Length": 274914370,
+      "LastWriteTimeUtc": "2026-09-28T01:58:19.314094Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v37-verse12-speaker-audio-held.mp4",
+      "Length": 279105553,
+      "LastWriteTimeUtc": "2026-09-28T02:36:02.0810096Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v38-editorial-breaths-held.mp4",
+      "Length": 271043353,
+      "LastWriteTimeUtc": "2026-09-28T02:43:18.1843825Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v39-shore-generic-talk-removed-held.mp4",
+      "Length": 263462539,
+      "LastWriteTimeUtc": "2026-09-28T02:51:16.2424316Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v4-narration-priority.mp4",
+      "Length": 117722092,
+      "LastWriteTimeUtc": "2026-09-27T04:30:02.8453833Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v40-ending-extension-held.mp4",
+      "Length": 270639318,
+      "LastWriteTimeUtc": "2026-09-28T03:28:03.6063988Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v41-residual-picture-defects-held.mp4",
+      "Length": 245488851,
+      "LastWriteTimeUtc": "2026-09-28T03:42:44.6300944Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v42-ambient-breaths-calm-timing-held.mp4",
+      "Length": 235614293,
+      "LastWriteTimeUtc": "2026-09-28T03:47:51.2552135Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v43-phrase-led-private-teaching-held.mp4",
+      "Length": 231860886,
+      "LastWriteTimeUtc": "2026-09-28T04:07:20.9188833Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v44-audible-ambient-phrase-led-held.mp4",
+      "Length": 222225608,
+      "LastWriteTimeUtc": "2026-09-28T04:15:15.1233239Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v45-canonical-jesus-performances-held.mp4",
+      "Length": 208753630,
+      "LastWriteTimeUtc": "2026-09-28T20:21:15.7235328Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v46-group1-picture-fixes-held.mp4",
+      "Length": 205669858,
+      "LastWriteTimeUtc": "2026-09-28T22:04:21.3694155Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v47-continuous-ambience-48k-held.mp4",
+      "Length": 205526105,
+      "LastWriteTimeUtc": "2026-09-28T22:09:39.3669793Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v48-calibrated-ambience-48k-held.mp4",
+      "Length": 205457831,
+      "LastWriteTimeUtc": "2026-09-28T22:12:11.349159Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v49-calibrated-ambience-48k-held.mp4",
+      "Length": 205477399,
+      "LastWriteTimeUtc": "2026-09-28T22:14:51.7501477Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v5-approved-intro.mp4",
+      "Length": 121283468,
+      "LastWriteTimeUtc": "2026-09-27T04:32:46.882727Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v50-calibrated-ambience-48k-held.mp4",
+      "Length": 205475885,
+      "LastWriteTimeUtc": "2026-09-28T22:18:11.9379972Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v51-calibrated-ambience-48k-held.mp4",
+      "Length": 205477339,
+      "LastWriteTimeUtc": "2026-09-28T22:24:37.4521264Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v52-authorized-dawn-extension-held.mp4",
+      "Length": 203011836,
+      "LastWriteTimeUtc": "2026-09-28T22:29:29.5388464Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v53-short-run-cleanup-held.mp4",
+      "Length": 196517757,
+      "LastWriteTimeUtc": "2026-09-28T22:34:46.9947299Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v54-cleanup-and-dawn-extension-held.mp4",
+      "Length": 195125566,
+      "LastWriteTimeUtc": "2026-09-28T22:38:34.6886625Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v55-scene-grade-held.mp4",
+      "Length": 190642872,
+      "LastWriteTimeUtc": "2026-09-28T22:47:29.2325233Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v56-live-holds-held.mp4",
+      "Length": 186890038,
+      "LastWriteTimeUtc": "2026-09-28T22:58:11.1567213Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v57-audible-scene-ambience-held.mp4",
+      "Length": 190607903,
+      "LastWriteTimeUtc": "2026-09-28T23:06:13.9991428Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v58-calibrated-ambience-held.mp4",
+      "Length": 190605335,
+      "LastWriteTimeUtc": "2026-09-28T23:08:47.4598427Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v59-moving-coverage-held.mp4",
+      "Length": 199803758,
+      "LastWriteTimeUtc": "2026-09-28T23:12:34.8290451Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v6-continuity.mp4",
+      "Length": 120979919,
+      "LastWriteTimeUtc": "2026-09-27T04:35:12.9849118Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v60-duplicate-coverage-held.mp4",
+      "Length": 194005403,
+      "LastWriteTimeUtc": "2026-09-28T23:18:20.5992072Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v61-olive-duplicates-held.mp4",
+      "Length": 195162250,
+      "LastWriteTimeUtc": "2026-09-28T23:22:54.5582646Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v62-no-duplicate-coverage-held.mp4",
+      "Length": 187852143,
+      "LastWriteTimeUtc": "2026-09-28T23:26:37.8072388Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v63-selective-scene-grade-held.mp4",
+      "Length": 183466200,
+      "LastWriteTimeUtc": "2026-09-28T23:39:04.4342859Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v64-outlier-colour-match-held.mp4",
+      "Length": 179032584,
+      "LastWriteTimeUtc": "2026-09-29T00:01:26.8100099Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v65-scene-colour-held.mp4",
+      "Length": 175205740,
+      "LastWriteTimeUtc": "2026-09-29T00:05:18.993186Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v66-claude-real-frames-held.mp4",
+      "Length": 226491076,
+      "LastWriteTimeUtc": "2026-09-29T01:26:38.4743686Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v67-opening-boat-music-held.mp4",
+      "Length": 226321181,
+      "LastWriteTimeUtc": "2026-10-01T18:11:19.3686839Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v68-opening-in-boat-held.mp4",
+      "Length": 225755206,
+      "LastWriteTimeUtc": "2026-10-01T22:45:14.7370666Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v69-sync-and-voice-repair-held.mp4",
+      "Length": 228173843,
+      "LastWriteTimeUtc": "2026-10-02T01:07:26.9318278Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v7-opening-fade.mp4",
+      "Length": 120979919,
+      "LastWriteTimeUtc": "2026-09-27T04:37:57.4616071Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v70-clean-ambience-held.mp4",
+      "Length": 223996149,
+      "LastWriteTimeUtc": "2026-10-02T02:47:48.9079867Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v71-speaking-rule-and-storm-held.mp4",
+      "Length": 224896914,
+      "LastWriteTimeUtc": "2026-10-02T03:50:07.4651142Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v72-lively-avatars-held.mp4",
+      "Length": 220872483,
+      "LastWriteTimeUtc": "2026-10-02T18:01:19.9818294Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v73-storm-and night-ending.mp4",
+      "Length": 222492777,
+      "LastWriteTimeUtc": "2026-10-02T19:05:37.4318721Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v8-normal-level.mp4",
+      "Length": 120951009,
+      "LastWriteTimeUtc": "2026-09-27T04:39:55.5827338Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final-v9-mastered.mp4",
+      "Length": 121229946,
+      "LastWriteTimeUtc": "2026-09-27T04:41:53.9470906Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-final.mp4",
+      "Length": 116370894,
+      "LastWriteTimeUtc": "2026-09-27T04:20:05.8760653Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-review.json",
+      "Length": 39031,
+      "LastWriteTimeUtc": "2026-09-27T04:13:05.9258938Z"
+    },
+    {
+      "Name": "mark4-autonomous-overnight-review.mp4",
+      "Length": 107664595,
+      "LastWriteTimeUtc": "2026-09-27T04:13:05.791457Z"
+    },
+    {
+      "Name": "mark4-short-jesus-batch-review.mp4",
+      "Length": 24896030,
+      "LastWriteTimeUtc": "2026-09-27T03:15:57.7859575Z"
+    },
+    {
+      "Name": "mark4-v11-three-clip-pilot-review.mp4",
+      "Length": 7988362,
+      "LastWriteTimeUtc": "2026-09-27T02:00:48.7153849Z"
+    },
+    {
+      "Name": "mark4-v21-two-clip-pilot-review.mp4",
+      "Length": 6560927,
+      "LastWriteTimeUtc": "2026-09-27T02:19:08.8326165Z"
+    },
+    {
+      "Name": "Markus-4-whatsapp.mp4",
+      "Length": 135627384,
+      "LastWriteTimeUtc": "2026-10-02T20:10:24.7983898Z"
+    },
+    {
+      "Name": "Markus-4.mp4",
+      "Length": 222492777,
+      "LastWriteTimeUtc": "2026-10-02T19:05:37.4318721Z"
+    },
+    {
+      "Name": "Markus-4.zip",
+      "Length": 222340153,
+      "LastWriteTimeUtc": "2026-10-02T19:53:20.0164242Z"
+    },
+    {
+      "Name": "v12-check-47.jpg",
+      "Length": 117763,
+      "LastWriteTimeUtc": "2026-09-27T04:59:24.0970654Z"
+    },
+    {
+      "Name": "v12-check-49.jpg",
+      "Length": 111044,
+      "LastWriteTimeUtc": "2026-09-27T04:59:24.3059447Z"
+    }
+  ]
+}

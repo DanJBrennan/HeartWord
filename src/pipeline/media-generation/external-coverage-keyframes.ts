@@ -15,13 +15,14 @@
  * coverage_beats.keyframe_asset_path/status instead of shots/generation_attempts.
  */
 import { randomUUID } from "node:crypto";
-import { execFileSync } from "node:child_process";
 import { constants, copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
-import { latestCrewRun, requireCurrentPlan, directionsFromRun, validateHandoffPlan } from "../creative-direction/crew-store.js";
+import { requireCurrentPlan, directionsFromRun, validateHandoffPlan } from "../creative-direction/crew-store.js";
 import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
-import { assetPath, readLandscapePng, referenceBoardFilter, sha256 } from "./external-keyframes.js";
+import { assetPath, readLandscapePng, sha256, keyframeSetReferences, keyframeFilmInput, keyframeFilmDirection, validateKeyframeFilm, validateReferenceFiles, prepareReferencePacket, type FilmInput, type SetReference } from "./external-keyframes.js";
+import { getDataDir } from "../../db/client.js";
+import { sceneReferenceAssetsForVerse } from "../../providers/story-state-assets.js";
 import { sortAssetsByFreshness } from "../../characters/asset-freshness.js";
 
 const REFERENCE_CATEGORY_RANK: Record<string, number> = { headshot: 0, body_pose: 1, turnaround: 2 };
@@ -62,6 +63,7 @@ export interface CoverageBeatContext {
     path: string;
     sha256: string;
   }>;
+  sceneReferences?: SetReference[];
 }
 
 export interface CoverageBeatBrief {
@@ -76,6 +78,7 @@ export interface CoverageBeatBrief {
   promptHash: string;
   rationale: string;
   generationInputs: Array<{ path: string; sha256: string; referenceNumbers: number[] }>;
+  filmInput?: FilmInput;
 }
 
 /**
@@ -156,14 +159,15 @@ export function getCoverageBeatContext(db: DatabaseSync, dataDir: string, beatId
     const version = versions[0]!;
     const rawAssets = db
       .prepare(
-        `SELECT category, path, content_hash, imported_from AS importedFrom FROM character_assets WHERE character_version_id = ?
+        `SELECT category, path, content_hash, imported_from AS importedFrom,
+         story_state, available_from_verse, available_through_verse, asset_role FROM character_assets WHERE character_version_id = ?
          AND category IN ('headshot','body_pose','turnaround','approved_source')`
       )
       .all(version.id) as Array<{ category: string; path: string; content_hash: string | null; importedFrom: string | null }>;
     // See asset-freshness.ts: prefers an asset a promotion didn't leave
     // carried-forward, so a same-category sibling that was never
     // regenerated can't silently outrank the one that was.
-    const assets = sortAssetsByFreshness(rawAssets, REFERENCE_CATEGORY_RANK);
+    const assets = sortAssetsByFreshness(sceneReferenceAssetsForVerse(rawAssets,shot.verse_ref ?? undefined), REFERENCE_CATEGORY_RANK);
     const isSpeaker = speakingCharacter?.id === character.id;
     const chosen = (
       isSpeaker && assets.some((a) => a.category === "headshot")
@@ -203,7 +207,8 @@ export function getCoverageBeatContext(db: DatabaseSync, dataDir: string, beatId
       status: beat.status
     },
     speakingCharacter,
-    references
+    references,
+    ...(() => { const sceneReferences = keyframeSetReferences(db,dataDir,shot.id); return sceneReferences.length ? {sceneReferences} : {}; })()
   };
 }
 
@@ -225,7 +230,10 @@ export function prepareCoverageBeatBrief(
   if (!prompt.trim() || !rationale.trim()) throw new Error("Prompt and production rationale are required.");
   if (!/16\s*:\s*9/.test(prompt)) throw new Error("Explicit 16:9 framing is required.");
   const context = getCoverageBeatContext(db, dataDir, beatId);
-  prompt += directionsFromRun(requireCurrentPlan(db, dataDir, context.project.id), context.shot.id, beatId);
+  const plan = requireCurrentPlan(db,dataDir,context.project.id);
+  prompt += directionsFromRun(plan, context.shot.id, beatId);
+  const filmInput = keyframeFilmInput(plan,context.shot.id);
+  prompt += keyframeFilmDirection(filmInput);
   if (context.beat.status !== "planned" && context.beat.status !== "generated") {
     throw new Error(`Beat ${beatId} is already '${context.beat.status}' -- only a planned or unaccepted generated beat can be prepared.`);
   }
@@ -245,38 +253,13 @@ export function prepareCoverageBeatBrief(
   });
 
   const id = randomUUID();
-  const generationInputs: CoverageBeatBrief["generationInputs"] = [];
-  const groupSize = Math.ceil(context.references.length / 5) || 1;
-  for (let i = 0; i < context.references.length; i += groupSize) {
-    const group = context.references.slice(i, i + groupSize);
-    let path = group[0]!.path;
-    if (group.length > 1) {
-      path = `generated/coverage-beat-briefs/${id}/references-${i + 1}-${i + group.length}.png`;
-      const out = assetPath(dataDir, path);
-      mkdirSync(dirname(out), { recursive: true });
-      const paths = group.map((r) => assetPath(dataDir, r.path));
-      execFileSync("ffmpeg", [
-        "-v",
-        "error",
-        "-n",
-        ...paths.flatMap((p) => ["-i", p]),
-        "-filter_complex",
-        referenceBoardFilter(paths),
-        "-frames:v",
-        "1",
-        out
-      ]);
-    }
-    generationInputs.push({
-      path,
-      sha256: sha256(readFileSync(assetPath(dataDir, path))),
-      referenceNumbers: group.map((_, j) => i + j + 1)
-    });
-  }
+  const packet = prepareReferencePacket(dataDir,id,context.references,context.sceneReferences);
+  prompt += packet.direction;
+  if (context.beat.needs_lip_sync) prompt += "\nPrefer the speaking character's approved headshot likeness in a scene-context head-and-shoulders image with visible mouth; Jesus facing or near the camera is preferred, with reasonable alternate angles/distances permitted by the accepted shot.\n";
 
   return {
     schemaVersion: 1,
-    productionRunId: latestCrewRun(db, context.project.id, "planning")?.id,
+    productionRunId: plan.id,
     id,
     createdAt: Date.now(),
     context,
@@ -285,7 +268,8 @@ export function prepareCoverageBeatBrief(
     prompt,
     promptHash: sha256(prompt),
     rationale,
-    generationInputs
+    generationInputs:packet.inputs,
+    ...(filmInput ? {filmInput} : {})
   };
 }
 
@@ -311,6 +295,7 @@ export function importCoverageBeatKeyframe(
   }
   const current = getCoverageBeatContext(db, dataDir, brief.context.beat.id);
   validateHandoffPlan(db, dataDir, current.project.id, brief.productionRunId);
+  validateKeyframeFilm(requireCurrentPlan(db,dataDir,current.project.id),current.shot.id,brief.filmInput);
   if (sha256(JSON.stringify(current)) !== brief.contextHash) {
     throw new Error("Beat/shot/canon changed after preparation. Prepare a new brief.");
   }
@@ -408,7 +393,7 @@ export function importCoverageBeatKeyframe(
  *  turn into a Veo/Omni video clip (master/cutaway) or a Kling lip-sync
  *  input (lip_sync_insert). Mirrors acceptKeyframe's shot-level meaning
  *  at beat granularity. */
-export function acceptCoverageBeatKeyframe(db: DatabaseSync, beatId: string): { beatId: string; shotId: string } {
+export function acceptCoverageBeatKeyframe(db: DatabaseSync, beatId: string, dataDir=getDataDir()): { beatId: string; shotId: string } {
   const beat = db.prepare(`SELECT id, shot_id, status, keyframe_asset_path FROM coverage_beats WHERE id = ?`).get(beatId) as
     | { id: string; shot_id: string; status: string; keyframe_asset_path: string | null }
     | undefined;
@@ -418,6 +403,15 @@ export function acceptCoverageBeatKeyframe(db: DatabaseSync, beatId: string): { 
   }
   db.exec("BEGIN IMMEDIATE");
   try {
+    const image=assetPath(dataDir,beat.keyframe_asset_path);
+    const saved=JSON.parse(readFileSync(image.replace(/\.png$/,".json"),"utf8")) as CoverageBeatBrief & {resultHash:string};
+    validateReferenceFiles(dataDir,saved);
+    const current=getCoverageBeatContext(db,dataDir,beatId);
+    // Planned -> generated is this candidate's lifecycle, not a creative edit.
+    const comparison={...current,beat:{...current.beat,status:saved.context.beat.status}};
+    if(saved.context.beat.id!==beatId || sha256(JSON.stringify(comparison))!==saved.contextHash || sha256(readFileSync(image))!==saved.resultHash)throw new Error("Coverage candidate/reference context changed before acceptance.");
+    validateHandoffPlan(db,dataDir,current.project.id,saved.productionRunId);
+    validateKeyframeFilm(requireCurrentPlan(db,dataDir,current.project.id),current.shot.id,saved.filmInput);
     db.prepare(`UPDATE coverage_beats SET status = 'accepted' WHERE id = ?`).run(beat.id);
     db.prepare(`UPDATE coverage_keyframe_attempts SET status='accepted'
       WHERE coverage_beat_id=? AND result_asset_path=?`).run(beat.id, beat.keyframe_asset_path);

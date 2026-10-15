@@ -388,6 +388,16 @@ recording. Generated dialogue, including unintelligible voices, is held.
 
 ## Generation Providers, Models, and Cost
 
+Producer update (2026-10-14): prefer assistant-operated built-in Codex image
+generation for keyframes, consuming included usage without a separate image
+API call. Never silently substitute paid image APIs. Five-slot canon/set packets,
+existing FDL/Bible-regional intent, optional composed LTX ending frames and
+Blender camera-view preparation are described in
+[the reference workflow](production/CODEX_LTX_REFERENCE_WORKFLOW.md).
+Historical image-provider preferences below do not override this decision.
+Kling Avatar prefers a contextual head-and-shoulders image, especially Jesus
+facing/near the camera; reasonable other angles/distances remain permitted.
+
 Producer update (2026-10-06): use local LTX 2.5 Fast on the dedicated M4 Pro
 Mac mini as the primary scene-video provider because it has no per-call API
 cost. Keep Veo and Kling selectable for an extended testing/comparison period.

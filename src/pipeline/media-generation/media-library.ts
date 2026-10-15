@@ -97,3 +97,35 @@ export function createReuseCandidate(db: DatabaseSync, dataDir: string, itemId: 
   const id=randomUUID(); db.prepare("INSERT INTO media_reuse_candidates (id,library_item_id,target_shot_id,note,created_at) VALUES (?,?,?,?,?)").run(id,itemId,targetShotId,[note,context].filter(Boolean).join(" "),Date.now());
   return { id, existing:false };
 }
+
+/** Producer's scoped set-reference review. It grants no identity, reusable
+ * reconstruction, picture selection or release approval. */
+export function reviewSetReference(db: DatabaseSync, dataDir: string, projectId: string, shotId: string, candidateId: string,
+  decision: "approved_for_generation" | "dismissed", note: string) {
+  if (!["approved_for_generation","dismissed"].includes(decision) || !note.trim()) throw new Error("An explicit set-reference decision and review evidence are required.");
+  const row=db.prepare(`SELECT r.status,r.library_item_id,m.asset_path,m.provenance_json,m.library_status,m.kind
+    FROM media_reuse_candidates r JOIN media_library_items m ON m.id=r.library_item_id
+    JOIN shots s ON s.id=r.target_shot_id JOIN scenes sc ON sc.id=s.scene_id
+    WHERE r.id=? AND r.target_shot_id=? AND sc.project_id=?`).get(candidateId,shotId,projectId);
+  if(!row || row.library_status!=="reusable_reference" || !["image","frame"].includes(String(row.kind)))throw new Error("A retained location-image candidate in this shot/project is required.");
+  // Recheck the existing language/canon/file guards even when the candidate
+  // was created before a source/canon change.
+  createReuseCandidate(db,dataDir,String(row.library_item_id),shotId,note);
+  const provenance=JSON.parse(String(row.provenance_json));
+  if(provenance.origin?.language!=="hatam" || provenance.origin?.canonRegion!=="Papuan" ||
+    provenance.generation?.contentHash!==sha256(productionAssetPath(dataDir,String(row.asset_path))))throw new Error("Set reference lacks matching pinned production provenance.");
+  const payload=JSON.stringify({candidateId,shotId,from:row.status,to:decision,note:note.trim(),assetPath:row.asset_path,sha256:provenance.generation.contentHash,scope:"Set-view reference only; no new building canon or geometry approval"});
+  const existing=db.prepare("SELECT id,payload FROM edit_commands WHERE project_id=? AND command_type='review_set_reference' AND json_extract(payload,'$.candidateId')=? ORDER BY sequence DESC LIMIT 1").get(projectId,candidateId);
+  const previous=existing ? JSON.parse(String(existing.payload)) : undefined;
+  if(existing && row.status===decision && previous.note===note.trim() && previous.sha256===provenance.generation.contentHash)return {candidateId,status:decision,editId:String(existing.id)};
+  db.exec("BEGIN IMMEDIATE");
+  try{
+    const id=randomUUID(),now=Date.now();
+    const sequence=Number(db.prepare("SELECT COALESCE(MAX(sequence),0)+1 n FROM edit_commands WHERE project_id=?").get(projectId)!.n);
+    db.prepare("INSERT INTO edit_commands(id,project_id,sequence,command_type,payload,idempotency_key,applied_at)VALUES(?,?,?,'review_set_reference',?,?,?)").run(id,projectId,sequence,payload,`set-reference:${id}`,now);
+    const changed=db.prepare("UPDATE media_reuse_candidates SET status=?,note=? WHERE id=? AND status=?").run(decision,note.trim(),candidateId,String(row.status));
+    if(Number(changed.changes)!==1)throw new Error("Set-reference decision changed; refresh the review.");
+    db.prepare("INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at)VALUES(?,?,'shot',?,'human',?,1,?)").run(randomUUID(),projectId,shotId,`Set reference ${candidateId}: ${decision}. ${note.trim()}\n${payload}`,now);
+    db.exec("COMMIT");return {candidateId,status:decision,editId:id};
+  }catch(error){db.exec("ROLLBACK");throw error;}
+}

@@ -96,6 +96,9 @@ export interface GenerationProgress {
 export interface VideoGenerationOptions {
   resolution?: "540p" | "720p" | "1080p";
   startFrame?: AssetRef;
+  /** A composed ending frame, never a contact sheet or identity-reference slot.
+   * Adapters without this capability must reject it before submission. */
+  endFrame?: AssetRef;
   durationSeconds?: number;
   fps?: number;
   seed?: number;

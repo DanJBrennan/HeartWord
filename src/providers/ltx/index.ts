@@ -1,5 +1,5 @@
-import { randomInt, randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { createHash, randomInt, randomUUID } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
 import type { GenerationProgress, GenerationResult, ShotRequest, VideoGenerationOptions, VideoProvider } from "../types.js";
@@ -8,7 +8,7 @@ import { latestLogCommand, shellQuote, sharedLtxTransport, type LtxTransport } f
 import { prepareLtxVideoOutput } from "./output.js";
 
 export const LTX_MODEL = "ltx-2.5-fast";
-export const LTX_AMBIENT_DIRECTION = "AUDIO AND PERFORMANCE RULE: Only natural environmental ambience consistent with the supplied image and scene. No speech, dialogue, narration, spoken words, gibberish voices, singing, vocals or music. People remain non-speaking; no visible talking or lip-sync performance. Character speech is supplied separately by HeartWord.";
+export const LTX_AMBIENT_DIRECTION = "AUDIO AND PERFORMANCE RULE: Only natural environmental ambience consistent with the supplied image and scene, including appropriate nonverbal animal calls when requested. No human speech, dialogue, narration, spoken words, gibberish voices, singing, human vocals or music. People remain non-speaking; no visible talking or lip-sync performance. Character speech is supplied separately by HeartWord.";
 export const LTX_DURATIONS = { "540p": [5, 6, 8, 10, 20], "720p": [5, 6, 8, 10], "1080p": [5] } as const;
 export function validateLtxOptions(resolution: string, duration: number, fps: number): asserts resolution is keyof typeof LTX_DURATIONS {
   if (fps !== 24) throw new Error("Local LTX 2.5 Fast currently supports 24 fps in HeartWord.");
@@ -88,6 +88,11 @@ export class LtxVideoProvider implements VideoProvider {
     if (!existsSync(input.absolute) || !statSync(input.absolute).isFile() || statSync(input.absolute).size === 0) throw new Error("LTX source keyframe is missing or empty.");
     const suffix = extname(input.absolute).toLowerCase();
     if (![".png", ".jpg", ".jpeg", ".webp"].includes(suffix)) throw new Error("LTX keyframe must be PNG, JPEG, or WebP.");
+    const endInput = opts.endFrame ? assetPath(dataDir, opts.endFrame.path) : undefined;
+    if (endInput && (!existsSync(endInput.absolute) || !statSync(endInput.absolute).isFile() || statSync(endInput.absolute).size === 0 ||
+        ![".png", ".jpg", ".jpeg", ".webp"].includes(extname(endInput.absolute).toLowerCase()))) throw new Error("LTX ending keyframe is missing, empty or not PNG, JPEG or WebP.");
+    const hashImage=(path:string)=>createHash("sha256").update(readFileSync(path)).digest("hex");
+    const inputHash=hashImage(input.absolute),endHash=endInput ? hashImage(endInput.absolute) : undefined;
     const generationId = randomUUID();
     const fileId = `${request.shotId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 80)}-ltx-${generationId}`;
     const output = assetPath(dataDir, opts.outputPath ?? `generated/video/${fileId}.mp4`);
@@ -98,7 +103,7 @@ export class LtxVideoProvider implements VideoProvider {
     mkdirSync(dirname(output.absolute), { recursive: true });
     const metadataPath = `${output.absolute}.json`;
     if (existsSync(metadataPath)) throw new Error("LTX output metadata already exists. Reconcile that retained attempt or choose a new output path.");
-    const metadata: Record<string, unknown> = { generationId, shotId: request.shotId, provider: "ltx_local", model: LTX_MODEL, prompt, requestedPrompt: request.prompt, seed, resolution, durationSeconds: duration, fps, sourceKeyframe: input.relative, localOutputPath: output.absolute, audio: audioMode === "ambient", audioMode, status: "preparing", startedAt: new Date().toISOString() };
+    const metadata: Record<string, unknown> = { generationId, shotId: request.shotId, provider: "ltx_local", model: LTX_MODEL, prompt, requestedPrompt: request.prompt, seed, resolution, durationSeconds: duration, fps, sourceKeyframe: input.relative, sourceKeyframeSha256:inputHash, localOutputPath: output.absolute, audio: audioMode === "ambient", audioMode, status: "preparing", startedAt: new Date().toISOString() };
     const started = Date.now();
     const save = () => writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
     const emit = (progress: GenerationProgress) => {
@@ -108,7 +113,7 @@ export class LtxVideoProvider implements VideoProvider {
       opts.onProgress?.(safe);
     };
     save();
-    let remoteInput: string | undefined, lease: string | undefined, submitted = false, responseReceived = false;
+    let remoteInput: string | undefined, remoteEndInput: string | undefined, lease: string | undefined, submitted = false, responseReceived = false;
     const tempOutput = `${output.absolute}.${generationId}.part`;
     const preparedOutput = `${tempOutput}.video.mp4`;
     const tempAmbient = `${tempOutput}.ambience.wav`;
@@ -131,8 +136,16 @@ export class LtxVideoProvider implements VideoProvider {
       metadata.remoteInputPath = remoteInput;
       emit({ phase: "uploading_keyframe", percentage: null, currentStep: null, totalSteps: null });
       await this.transport.upload(input.absolute, remoteInput);
-      const body = { prompt, resolution, model: "fast", cameraMotion: "none", negativePrompt: "speech, dialogue, narration, words, gibberish voices, singing, vocals, music, visible talking", duration, fps, audio: audioMode === "ambient", imagePath: remoteInput, lastImagePath: null, keyframes: [], audioPath: null, aspectRatio: "16:9", seed, loras: [] };
+      if (endInput) {
+        remoteEndInput = `${inbox}/${fileId}-end${extname(endInput.absolute).toLowerCase()}`;
+        metadata.sourceEndKeyframe = endInput.relative;
+        metadata.sourceEndKeyframeSha256 = endHash;
+        metadata.remoteEndInputPath = remoteEndInput;
+        await this.transport.upload(endInput.absolute, remoteEndInput);
+      }
+      const body = { prompt, resolution, model: "fast", cameraMotion: "none", negativePrompt: "human speech, dialogue, narration, words, gibberish voices, singing, human vocals, music, visible talking", duration, fps, audio: audioMode === "ambient", imagePath: remoteInput, lastImagePath: remoteEndInput ?? null, keyframes: [], audioPath: null, aspectRatio: "16:9", seed, loras: [] };
       metadata.request = body;
+      if(hashImage(input.absolute)!==inputHash || (endInput && hashImage(endInput.absolute)!==endHash))throw new Error("LTX input image changed during upload; prepare a new request.");
       request.authorizeSubmission?.();
       metadata.productionRevision = request.productionRevision;
       metadata.status = "running";
@@ -199,6 +212,7 @@ export class LtxVideoProvider implements VideoProvider {
       rmSync(tempAmbient, { force: true });
       if (!submitted || responseReceived) {
         if (remoteInput) await this.transport.remote(`rm -f ${shellQuote(remoteInput)}`).catch(() => undefined);
+        if (remoteEndInput) await this.transport.remote(`rm -f ${shellQuote(remoteEndInput)}`).catch(() => undefined);
         // Remove only a lease this generation owns; failed mkdir never grants ownership.
         if (lease) await this.transport.remote(`if [ "$(cat ${shellQuote(`${lease}/owner`)} 2>/dev/null)" = ${shellQuote(generationId)} ]; then rm -f ${shellQuote(`${lease}/owner`)}; rmdir ${shellQuote(lease)}; fi`).catch(() => undefined);
       }

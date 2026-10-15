@@ -243,6 +243,16 @@ plans continue automatically when existing applicable reviews/gates pass.
 
 ## Adapters and saved-state integration
 
+October 14 reference extension: both existing assistant keyframe briefs now carry
+the actual accepted qualitative FDL snapshot and Bible/regional extension plus
+its hash, compile its applicable world/grounding/unknown context beside existing
+reconciled local direction, and compare it on import. Local LTX's shared options
+now accept a composed `endFrame`, verified against the installed backend's
+`lastImagePath`; unsupported cloud adapters refuse it. This supersedes the
+missing-end-frame statements in the original design mapping below. It is no
+general numeric/motion compiler and changes no core/Bible schemas. See
+[reference workflow](../production/CODEX_LTX_REFERENCE_WORKFLOW.md).
+
 Subsequent runtime update (October 14): the
 [crew integration](production-crew-communication.md#runtime-integration-2026-10-14)
 now projects a bounded qualitative subset of this model into saved run results,

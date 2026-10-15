@@ -8,8 +8,8 @@ import { LtxVideoProvider, validateLtxOptions } from "../src/providers/ltx/index
 import { closeLtxTunnel } from "../src/providers/ltx/transport.js";
 import { nativeAmbiencePassed, reviewNativeAmbience, type NativeAmbienceResult } from "../src/pipeline/assembly/soundtrack.js";
 
-const { values } = parseArgs({ options: { image: {type:"string"}, prompt: {type:"string"}, duration: {type:"string",default:"5"}, resolution: {type:"string",default:"720p"}, seed: {type:"string"}, output: {type:"string"}, audio: {type:"string",default:"ambient"}, health: {type:"boolean"}, help: {type:"boolean"} } });
-const usage = 'npm run ltx:test -- --image "C:\\path\\keyframe.png" --prompt "Natural cinematic movement..." --duration 5 --resolution 720p\nHealth only: npm run ltx:test -- --health\nAudio defaults to environmental ambience with a listening review (uses existing GEMINI_API_KEY); --audio none produces a silent clip.\nOutput defaults to HeartWordData/assets/generated/video; --output must stay inside HeartWordData/assets. Set LTX_TOKEN in this shell, never in a project file.';
+const { values } = parseArgs({ options: { image: {type:"string"}, "end-image": {type:"string"}, prompt: {type:"string"}, duration: {type:"string",default:"5"}, resolution: {type:"string",default:"720p"}, seed: {type:"string"}, output: {type:"string"}, audio: {type:"string",default:"ambient"}, health: {type:"boolean"}, help: {type:"boolean"} } });
+const usage = 'npm run ltx:test -- --image "C:\\path\\keyframe.png" [--end-image "C:\\path\\composed-ending.png"] --prompt "Natural cinematic movement..." --duration 5 --resolution 720p\nThe optional second image is the ending composition, never a canon/contact sheet.\nHealth only: npm run ltx:test -- --health\nAudio defaults to environmental ambience with a listening review (uses existing GEMINI_API_KEY); --audio none produces a silent clip.\nOutput defaults to HeartWordData/assets/generated/video; --output must stay inside HeartWordData/assets. Set LTX_TOKEN in this shell, never in a project file.';
 if (values.help) console.log(usage);
 else {
   try {
@@ -26,7 +26,9 @@ else {
       const relativeInput = `generated/ltx-diagnostics/${id}${extname(source)}`;
       mkdirSync(join(dataDir,"assets","generated","ltx-diagnostics"),{recursive:true});
       copyFileSync(source,join(dataDir,"assets",relativeInput));
-      const result = await provider.generateFinal({shotId:id,prompt:values.prompt,characters:[]},{startFrame:{path:relativeInput},durationSeconds,resolution,fps:24,audioMode:values.audio,seed:values.seed === undefined ? undefined : Number(values.seed),outputPath:values.output ? resolve(values.output) : undefined,onProgress:progress=>console.log(JSON.stringify({at:new Date().toISOString(),...progress}))});
+      let endFrame: {path:string} | undefined;
+      if(values["end-image"]){const endSource=resolve(values["end-image"]);const path=`generated/ltx-diagnostics/${id}-end${extname(endSource)}`;copyFileSync(endSource,join(dataDir,"assets",path));endFrame={path};}
+      const result = await provider.generateFinal({shotId:id,prompt:values.prompt,characters:[]},{startFrame:{path:relativeInput},endFrame,durationSeconds,resolution,fps:24,audioMode:values.audio,seed:values.seed === undefined ? undefined : Number(values.seed),outputPath:values.output ? resolve(values.output) : undefined,onProgress:progress=>console.log(JSON.stringify({at:new Date().toISOString(),...progress}))});
       if (result.ambientAudio) {
         const metadataPath = `${result.ambientAudio.path}.review.json`;
         let ambienceReview: NativeAmbienceResult;

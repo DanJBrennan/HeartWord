@@ -5,6 +5,11 @@ import { join } from "node:path";
 import { crewBriefHash, loadCrewBrief } from "../../src/pipeline/creative-direction/crew-context.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { fixtureTreatment } from "../helpers/crew-treatment.js";
+import { prepareKeyframe, referenceGroups, keyframeSetReferences, keyframeFilmDirection, keyframeFilmInput, validateKeyframeFilm, prepareReferencePacket } from "../../src/pipeline/media-generation/external-keyframes.js";
+import { newProductionRecord } from "../../src/pipeline/creative-direction/production-record.js";
+import { execFileSync } from "node:child_process";
+import { registerStandaloneLibraryAsset, createReuseCandidate, reviewSetReference } from "../../src/pipeline/media-generation/media-library.js";
+import { prepareCoverageBeatBrief, importCoverageBeatKeyframe, acceptCoverageBeatKeyframe } from "../../src/pipeline/media-generation/external-coverage-keyframes.js";
 import { acceptKeyframe, assetPath, getKeyframeContext, importKeyframe, keyframeStatus, readLandscapePng, recordProducerOverride, referenceBoardFilter, sha256,
   type KeyframeBrief } from "../../src/pipeline/media-generation/external-keyframes.js";
 
@@ -48,6 +53,97 @@ beforeEach(() => {
 afterEach(() => db.close());
 
 describe("external keyframe handoff", () => {
+  it("uses the same reviewed set state for shot/coverage preparation and holds withdrawn references at acceptance",()=>{
+    const item=registerStandaloneLibraryAsset(db,dir,{assetPath:"ref.png",title:"Fixture set",location:"Fixture room",tags:["set"],language:"hatam",canonRegion:"Papuan",provenance:{}});
+    const reuse=createReuseCandidate(db,dir,item.id,"shot",null);
+    expect(()=>reviewSetReference(db,dir,"wrong-project","shot",reuse.id,"approved_for_generation","Wrong scope")).toThrow("in this shot/project");
+    const decision=reviewSetReference(db,dir,"project","shot",reuse.id,"approved_for_generation","Synthetic target fit; no building canon approval");
+    expect(reviewSetReference(db,dir,"project","shot",reuse.id,"approved_for_generation","Synthetic target fit; no building canon approval")).toEqual(decision);
+    db.exec("INSERT INTO coverage_beats(id,shot_id,sequence,beat_type,audio_start_ms,audio_end_ms,needs_lip_sync,requires_new_keyframe,notes,status,created_at)VALUES('beat','shot',1,'master',0,8000,0,1,'Synthetic room view','planned',1)");
+    brief();
+    // No multi-input board is needed here: both roles refer to one retained fixture file.
+    // Distinct set and identity input slots still preserve role separation.
+    const shotBrief=prepareKeyframe(db,dir,"shot","16:9 synthetic room","Target reference test");
+    const beatBrief=prepareCoverageBeatBrief(db,dir,"beat","16:9 synthetic room","Coverage reference test");
+    expect(shotBrief.context.sceneReferences).toEqual(beatBrief.context.sceneReferences);
+    importKeyframe(db,dir,shotBrief,join(dir,"result.png"),"Synthetic fixture only");
+    importCoverageBeatKeyframe(db,dir,beatBrief,join(dir,"result.png"),"Synthetic fixture only");
+    reviewSetReference(db,dir,"project","shot",reuse.id,"dismissed","Producer withdraws this set view");
+    expect(()=>acceptKeyframe(db,shotBrief.id,dir)).toThrow(/reference context changed|plan is stale/);
+    expect(()=>acceptCoverageBeatKeyframe(db,"beat",dir)).toThrow("reference context changed");
+    expect(db.prepare("SELECT status FROM generation_attempts WHERE id=?").get(shotBrief.id)!.status).toBe("hold_for_review");
+    expect(db.prepare("SELECT COUNT(*) n FROM clips").get()!.n).toBe(0);
+    const again=reviewSetReference(db,dir,"project","shot",reuse.id,"approved_for_generation","Synthetic target fit; no building canon approval");
+    expect(again.editId).not.toBe(decision.editId);
+    expect(db.prepare("SELECT COUNT(*) n FROM edit_commands WHERE command_type='review_set_reference'").get()!.n).toBe(3);
+    writeFileSync(join(dir,"assets/ref.png"),"changed set bytes");
+    expect(()=>reviewSetReference(db,dir,"project","shot",reuse.id,"approved_for_generation","Changed bytes")).toThrow("changed");
+  });
+  it("accepts a current coverage candidate through the same saved plan without an extra plan signature",()=>{
+    db.exec("INSERT INTO coverage_beats(id,shot_id,sequence,beat_type,audio_start_ms,audio_end_ms,needs_lip_sync,requires_new_keyframe,notes,status,created_at)VALUES('beat','shot',1,'master',0,8000,0,1,'Synthetic room view','planned',1)");
+    brief();
+    const prepared=prepareCoverageBeatBrief(db,dir,"beat","16:9 synthetic room","Current coverage test");
+    importCoverageBeatKeyframe(db,dir,prepared,join(dir,"result.png"),"Synthetic fixture");
+    expect(acceptCoverageBeatKeyframe(db,"beat",dir)).toEqual({beatId:"beat",shotId:"shot"});
+    expect(db.prepare("SELECT status FROM coverage_beats WHERE id='beat'").get()!.status).toBe("accepted");
+  });
+  it("fits Jesus, twelve distinct disciples and set views in five explicitly mapped slots",()=>{
+    const refs=Array.from({length:13},(_,i)=>({character_id:`c${i}`,name:i===0?"Jesus":`Disciple ${i}`,version_id:`v${i}`,version_label:"approved fixture",category:"body_pose",path:"ref.png",sha256:"a".repeat(64)}));
+    refs.unshift({...refs[0]!,category:"headshot"});
+    const groups=referenceGroups(refs,[{path:"room.png",sha256:"b".repeat(64),recordRef:"generation_attempts:approved-view",role:"accepted_scene_view"}]);
+    expect(groups).toEqual([[1,2],[3,4,5,6],[7,8,9,10],[11,12,13,14],[15]]);
+    expect(()=>referenceGroups([...refs,...Array.from({length:8},(_,i)=>({...refs[2]!,character_id:`extra${i}`,name:`Extra ${i}`}))])).toThrow("exceeds five");
+  });
+  it("keeps pre-healing/proof images out of an earlier shot reference packet",()=>{
+    db.exec("UPDATE character_assets SET story_state='healed',available_from_verse='Mark 2:12';INSERT INTO character_assets(id,character_version_id,category,path,asset_role,created_at)VALUES('proof','version','body_pose','ref.png','comparison_proof',2)");
+    expect(()=>getKeyframeContext(db,dir,"shot")).toThrow("Missing approved reference");
+  });
+  it("uses accepted earlier set views and target-reviewed library references, never unreviewed catalog entries",()=>{
+    db.exec("INSERT INTO shots(id,scene_id,sequence,action,created_at)VALUES('earlier','scene',0,'Fixture room',1);INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('view','earlier','fixture','fixture','generate','accepted','ref.png',0,1)");
+    writeFileSync(join(dir,"assets/older-view.png"),readFileSync(join(dir,"assets/ref.png")));
+    db.exec("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('older-same-angle','earlier','fixture','fixture','generate','accepted','older-view.png',0,0)");
+    const provenance=JSON.stringify({origin:{language:"hatam",canonRegion:"Papuan"},generation:{contentHash:sha256(readFileSync(join(dir,"assets/ref.png")))}});
+    db.prepare("INSERT INTO media_library_items(id,kind,asset_path,library_status,provenance_json,created_at)VALUES('set','image','set.png','reusable_reference',?,1)").run(provenance);
+    writeFileSync(join(dir,"assets/set.png"),readFileSync(join(dir,"assets/ref.png")));
+    db.exec("INSERT INTO media_reuse_candidates(id,library_item_id,target_shot_id,status,created_at)VALUES('reuse','set','shot','candidate',1)");
+    expect(keyframeSetReferences(db,dir,"shot")).toHaveLength(1);
+    db.exec("UPDATE media_reuse_candidates SET status='approved_for_generation'");
+    expect(keyframeSetReferences(db,dir,"shot").map(r=>r.role)).toEqual(["accepted_scene_view","reviewed_set_reference"]);
+    writeFileSync(join(dir,"assets/set.png"),"changed");
+    expect(()=>keyframeSetReferences(db,dir,"shot")).toThrow("hash mismatch");
+  });
+  it("pins the existing FDL/Bible-regional snapshot and uses it beside the reference map",()=>{
+    brief();
+    const run=db.prepare("SELECT * FROM production_runs WHERE id='fixture-plan'").get()! as any;
+    const record=newProductionRecord(JSON.parse(run.brief_json),run.id,run.brief_hash);record.status="accepted";
+    const result=JSON.parse(run.result_json);result.productionRecord=record;
+    db.prepare("UPDATE production_runs SET result_json=? WHERE id='fixture-plan'").run(JSON.stringify(result));
+    const prepared=prepareKeyframe(db,dir,"shot","16:9 retain the witness","Fixture workflow");
+    expect(prepared.filmInput!.snapshot.extensions.bibleRegional).toMatchObject({regionalIdentity:{region:"Papuan",medium:"video"},historicalSetting:{period:"First century"}});
+    expect(prepared.prompt).toContain("PINNED FDL WORLD / BIBLE-REGIONAL CONTEXT");
+    expect(prepared.prompt).toContain("Image 1, cells in row-major order: Witness");
+    expect(keyframeFilmDirection(prepared.filmInput)).not.toContain("architecture: null");
+    const current={...run,result_json:JSON.stringify(result)};
+    expect(keyframeFilmInput(current,"shot")).toEqual(prepared.filmInput);
+    const tampered=structuredClone(prepared.filmInput!);tampered.snapshot.prose="changed intent";
+    expect(()=>validateKeyframeFilm(current,"shot",tampered)).toThrow("FDL changed");
+    expect(importKeyframe(db,dir,prepared,join(dir,"result.png"),"Synthetic metadata import; no media quality claim").attemptId).toBe(prepared.id);
+  });
+  it("creates a real letterboxed reference board without changing source pixels",()=>{
+    const refs=["red","blue"].map((color,i)=>{
+      const path=`real-${i}.png`;
+      execFileSync("ffmpeg",["-v","error","-f","lavfi","-i",`color=${color}:s=32x64`,"-frames:v","1",join(dir,"assets",path)],{windowsHide:true});
+      return {character_id:`c${i}`,name:`Fixture ${i}`,version_id:`v${i}`,version_label:"v1",category:"body_pose",path,sha256:sha256(readFileSync(join(dir,"assets",path)))};
+    });
+    const packet=prepareReferencePacket(dir,"fixture-real-board",refs);
+    expect(packet.inputs).toHaveLength(1);
+    const raw=execFileSync("ffmpeg",["-v","error","-i",join(dir,"assets",packet.inputs[0]!.path),"-f","rawvideo","-pix_fmt","rgb24","pipe:1"]);
+    // 128x64 grid, white letterbox, red first person, blue second person.
+    expect(raw.length).toBe(128*64*3);
+    expect([...raw.subarray(0,3)]).toEqual([255,255,255]);
+    expect(raw[24*3]).toBeGreaterThan(240);expect(raw[88*3+2]).toBeGreaterThan(240);
+    for(const ref of refs)expect(sha256(readFileSync(join(dir,"assets",ref.path)))).toBe(ref.sha256);
+  });
   it("rejects paths that escape the managed asset area", () => {
     expect(() => assetPath(dir, "../outside.png")).toThrow("within");
     expect(() => assetPath(dir, join(dir, "elsewhere.png"))).toThrow("within");

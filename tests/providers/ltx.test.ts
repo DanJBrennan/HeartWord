@@ -7,6 +7,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { LtxVideoProvider, LTX_AMBIENT_DIRECTION, ltxProgress, validateLtxOptions } from "../../src/providers/ltx/index.js";
 import { parseBackendPort, shellQuote, type LtxTransport } from "../../src/providers/ltx/transport.js";
 import { ltxJson } from "../../src/providers/ltx/http.js";
+import { GeminiVideoProvider } from "../../src/providers/gemini/index.js";
+import { KlingVideoProvider } from "../../src/providers/kling/index.js";
 
 const token = "synthetic-session-secret";
 let root: string, server: Server | undefined;
@@ -69,6 +71,38 @@ function provider() { return new LtxVideoProvider({transport,dataDir:root,sleep:
 const options = {startFrame:{path:"key frame.png"},durationSeconds:5,seed:42};
 
 describe("LTX Desktop adapter", () => {
+  it("holds changed input bytes after upload and does not silently drop ending frames on cloud adapters",async()=>{
+    transport.upload.mockImplementationOnce(async()=>writeFileSync(join(root,"assets","key frame.png"),"changed during transfer"));
+    await expect(provider().generateFinal(request,options)).rejects.toThrow("changed during upload");
+    expect(requests.filter(r=>r.path==="/api/generate")).toHaveLength(0);
+    for(const cloud of [new GeminiVideoProvider(),new KlingVideoProvider()])await expect(cloud.generateFinal(request,{...options,endFrame:{path:"ending.png"}})).rejects.toThrow("ending-frame control");
+  });
+  it("passes a second composed image as the ending frame and retains both inputs after an uncertain submission",async()=>{
+    writeFileSync(join(root,"assets","ending.png"),"synthetic ending composition");
+    disconnect=true;
+    await expect(provider().generateFinal(request,{...options,endFrame:{path:"ending.png"}})).rejects.toThrow("Submission may still be running");
+    expect(transport.upload).toHaveBeenCalledTimes(2);
+    const body=requests.find(r=>r.path==="/api/generate")!.body;
+    expect(body.lastImagePath).toMatch(/-end\.png$/);
+    expect(body.imagePath).not.toBe(body.lastImagePath);
+    expect(body.keyframes).toEqual([]);
+    expect(transport.remote.mock.calls.some(([c])=>c.startsWith("rm -f"))).toBe(false);
+  });
+  it("rejects a missing ending image before SSH and checks freshness after the second upload",async()=>{
+    await expect(provider().generateFinal(request,{...options,endFrame:{path:"absent.png"}})).rejects.toThrow("ending keyframe");
+    expect(transport.connect).not.toHaveBeenCalled();
+    writeFileSync(join(root,"assets","ending.png"),"synthetic ending composition");
+    let uploads=0;transport.upload.mockImplementation(async()=>{uploads++;});
+    await expect(provider().generateFinal({...request,authorizeSubmission:()=>{if(uploads===2)throw new Error("stale after both uploads");}},{...options,endFrame:{path:"ending.png"}})).rejects.toThrow("stale after both uploads");
+    expect(requests.filter(r=>r.path==="/api/generate")).toHaveLength(0);
+    expect(transport.remote.mock.calls.filter(([c])=>c.startsWith("rm -f"))).toHaveLength(2);
+  });
+  it("records the ending image and cleans both uploads after definitive completion",async()=>{
+    writeFileSync(join(root,"assets","ending.png"),"synthetic ending composition");
+    const result=await provider().generateFinal(request,{...options,endFrame:{path:"ending.png"}});
+    expect(result.metadata).toMatchObject({sourceEndKeyframe:"ending.png",request:{lastImagePath:expect.stringMatching(/-end\.png$/)}});
+    expect(transport.remote.mock.calls.filter(([c])=>c.startsWith("rm -f"))).toHaveLength(2);
+  });
   it("rechecks revision authority after upload and before the actual generation POST",async()=>{
     let stale=false;transport.upload.mockImplementationOnce(async()=>{stale=true;});
     await expect(provider().generateFinal({...request,authorizeSubmission:()=>{if(stale)throw new Error("Production revision became stale");}},options)).rejects.toThrow("revision became stale");

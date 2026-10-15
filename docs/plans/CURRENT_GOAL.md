@@ -1,5 +1,64 @@
 # Current Goal
 
+## Built-in canon packets and local LTX reference inputs (2026-10-14)
+
+This single concern serves PRODUCT_VISION's affordable, faithful editable chapter
+and USER_WORKFLOW's shared chapter review/correction/selective rerun. Existing
+emotional-treatment, crew, Avatar, Mark 4 holds, preservation and other work below
+remain intact. See [implementation and capability evidence](../production/CODEX_LTX_REFERENCE_WORKFLOW.md).
+
+Both assistant keyframe handoffs now keep Jesus separate, group up to four other
+identities per uncropped board, and reserve a set-only board: Jesus + twelve
+disciples + set uses five inputs. Five recent conversation references are
+explicitly supported by this session's tool; no file-array maximum is declared,
+so five is a working bound, not a universal maximum claim. State/proof exclusions,
+cell/identity maps and source/reference hashes remain controlling. The accepted
+qualitative FDL/Bible-regional snapshot now travels in the brief, contributes
+world/grounding/unknown context to prompts and is compared on import/acceptance.
+
+Existing library/reuse records gain target-set review/withdrawal with retained
+human notes and typed history. A changed/withdrawn reference holds pending
+shot/coverage acceptance; accepted historical takes remain retained. The
+assistant-operated Blender snapshot tool pins a retained model and accepted
+planning revision, records camera/target/metre scale/lens/sensor and dependencies,
+and never saves the original model. Cycles CPU avoids a reproduced Intel OpenGL
+driver crash. Pippa remains declared; no new automatic worker is claimed.
+
+Installed Mac source confirms start/end and up to ten temporal anchors. LTX now
+supports the optional composed ending image through `endFrame`/`lastImagePath`,
+with two unique transfers/hashes, post-upload freshness, cleanup and uncertain
+submission retention. A canon board is never an ending frame. Unsupported cloud
+adapters reject that control; explicit video fallback choices and Kling Avatar
+remain available. Contextual head-and-shoulders/near-frontal Jesus is preferred
+for Avatar, with reasonable alternative angles/distances permitted.
+
+Validation: **666 tests / 105 files pass**, TypeScript, web build and diff checks
+pass. Real FFmpeg boards and a real 1280x720 Blender camera render are tested;
+the other workflow evidence is synthetic, not actual Scripture/acting approval.
+Log: `outputs/keyframe-ltx-tests.txt`. Production DB checksum and all 87 existing
+chapter-render inventory entries match baseline
+(`outputs/keyframe-ltx-preservation-final.json`). No production migration or
+historical-film rerun occurred. The requested isolated pony test uses one built-in
+image and local LTX, with no paid image/video fallback. Live generation completed
+in about 13m52s: native 1280x704/121 frames/5.041667s plus a separate exact
+1280x720/120-frame/5.000000s viewing copy with sound. Inspected samples show the
+head lift/mouth opening/settle, with some upper-muzzle clipping at the high lift.
+The retained corrected listening review passes at 95/100 and identifies the
+neigh/snort/wind with no speech/music. Both listening attempts are retained
+(first used a rejected fractional confidence), combined estimated cost $0.002586.
+Exact artifacts and limits are in the workflow document's live-proof section.
+Included assistant/image usage is consumed
+but exact quota/billed attribution is unreported. The $200 cumulative film ceiling
+and outstanding-charge, source/canon, safe-pause, field/release gates remain intact.
+
+Dedicated Goal Guardian review checks the implementation separately against the
+vision, this goal and the user workflow. The review found and corrected stale
+reference acceptance. No new Dan product decision is required; exact numeric FDL
+compilation, automatic assistant image dispatch and historical chapter-scope
+expansion remain explicit limits. Your dot/live Mabel and SMS transport are not
+available here; this chat reports the result and SMS to the supplied number ending
+8114 is not claimed.
+
 ## Advance emotional treatment integrated with chapter planning (2026-10-14)
 
 This single concern serves PRODUCT_VISION's faithful editable autonomous film

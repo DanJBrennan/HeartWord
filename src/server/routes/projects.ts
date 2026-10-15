@@ -11,7 +11,7 @@ import { discoverSourcePaths } from "../../pipeline/ingestion/source-catalog.js"
 import { alignmentDisplay } from "../../pipeline/ingestion/alignment-display.js";
 import { parseVerseRange } from "../../pipeline/scene-breakdown/build-scenes.js";
 import { buildProductionCrewView, type NegotiationLogEntry } from "../production-crew.js";
-import { createReuseCandidate, extractLibraryFrame, registerGeneratedMediaLibraryItems, registerStandaloneLibraryAsset } from "../../pipeline/media-generation/media-library.js";
+import { createReuseCandidate, extractLibraryFrame, registerGeneratedMediaLibraryItems, registerStandaloneLibraryAsset, reviewSetReference } from "../../pipeline/media-generation/media-library.js";
 import { bindShotUtterance } from "../../pipeline/voice-lipsync/utterance-binding.js";
 import { acceptLipSyncCandidate } from "../../pipeline/voice-lipsync/candidate-selection.js";
 import { readPerformanceDirection,savePerformanceDirection,reconcileAvatarBudget } from "../../pipeline/voice-lipsync/performance-direction.js";
@@ -591,6 +591,12 @@ projectsRouter.post("/:id/shots/:shotId/reuse-candidates", (req,res) => {
   if (typeof req.body?.libraryItemId !== "string") { res.status(400).json({error:"A library item is required."}); return; }
   try { res.status(201).json(createReuseCandidate(db,getDataDir(),req.body.libraryItemId,req.params.shotId,typeof req.body?.note === "string" ? req.body.note.trim() || null : null)); }
   catch (error) { res.status(409).json({error:(error as Error).message}); }
+});
+
+projectsRouter.patch("/:id/shots/:shotId/reuse-candidates/:candidateId", (req,res) => {
+  if(!["approved_for_generation","dismissed"].includes(req.body?.decision) || typeof req.body?.note!=="string") {res.status(400).json({error:"A set-reference decision and review note are required."});return;}
+  try{res.json(reviewSetReference(getDb(),getDataDir(),req.params.id,req.params.shotId,req.params.candidateId,req.body.decision,req.body.note));}
+  catch(error){res.status(409).json({error:(error as Error).message});}
 });
 
 // Producer-directed edit to a shot's own creative fields (action,

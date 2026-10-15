@@ -364,6 +364,14 @@ specific source/canon/unsupported-control decisions remain required when used.
 
 ## Runtime integration (2026-10-14)
 
+Reference handoff extension: approved qualitative FDL/Bible-regional snapshots
+now travel in both assistant keyframe briefs and their prompts/import checks.
+Jesus/other-cast/set input roles remain explicit; reviewed set-reference changes
+use existing library/reuse/review/edit records. Leon's guidance can request an
+assistant-operated Blender camera snapshot; this does not activate a declared
+Pippa/Gus/Mabel worker. See the
+[implemented reference workflow](../production/CODEX_LTX_REFERENCE_WORKFLOW.md).
+
 Implemented in the existing `crew.ts` / `crew-store.ts` paths, with a bounded
 [FDL projection and contribution validator](../../src/pipeline/creative-direction/production-record.ts).
 There is no schema migration, new table, queue, dispatcher, roster or historical

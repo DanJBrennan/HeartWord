@@ -251,6 +251,14 @@ not just the final shot list.
 
 ### Shared scene-space plan
 
+October 14: the [reference workflow](../production/CODEX_LTX_REFERENCE_WORKFLOW.md)
+gives the authorized assistant a Blender snapshot helper for the Shot Planner.
+Leon supplies source-grounded camera intent, Arlo the retained set evidence;
+explicit model/version/hash, metre-space camera/target, lens/sensor and scale
+are retained with the candidate. The original model is never saved over.
+Pippa remains declared; no automatic worker/geometry reconstruction is claimed.
+Existing target-set review and canon authority still control use.
+
 The [FDL v2 design](film-description-language-v2.md) proposes a small versioned
 JSON snapshot plus prose for this existing handoff: persistent canon/set facts,
 local scene state, composition and timed clip changes remain separate. Its

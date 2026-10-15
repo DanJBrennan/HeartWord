@@ -435,7 +435,8 @@ export class KlingFaceLipSyncProvider {
 }
 
 export class KlingVideoProvider implements VideoProvider {
-  async generateFinal(request: ShotRequest, opts?: { resolution?: "720p" | "1080p"; startFrame?: AssetRef }): Promise<GenerationResult> {
+  async generateFinal(request: ShotRequest, opts?: { resolution?: "720p" | "1080p"; startFrame?: AssetRef; endFrame?: AssetRef }): Promise<GenerationResult> {
+    if (opts?.endFrame) throw new Error("This Kling scene adapter has no verified ending-frame control. Use LTX or review the requirement before submission.");
     const apiKey = requireApiKey();
     const dataDir = getDataDir();
     if (!opts?.startFrame) {

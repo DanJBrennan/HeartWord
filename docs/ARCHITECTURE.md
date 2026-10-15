@@ -253,6 +253,15 @@ next stage starts, so:
 
 ## Provider interface (v1 shape)
 
+October 14 extension: the actual `VideoGenerationOptions` also has optional
+`endFrame`. LTX uploads it as a final-frame anchor, preserving both inputs and
+the existing submission/candidate gates; cloud adapters reject unsupported
+endpoint requests. Assistant keyframe preparation now packages separately
+labelled identity/set boards and the existing hash-pinned qualitative FDL /
+Bible-regional snapshot. A bounded Blender camera-view helper extends media
+preparation, not the dispatcher or production model. See
+[the reference workflow](production/CODEX_LTX_REFERENCE_WORKFLOW.md).
+
 **Confirmed v1 providers:** Google Nano Banana / Nano Banana Pro (images),
 Google Veo 3.1 Lite (video, 720p/1080p), and Google Gemini Omni 1.1 (draft
 tier, keyframe-guided generation, targeted image editing) all sit behind

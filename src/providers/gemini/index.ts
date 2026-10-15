@@ -725,8 +725,9 @@ export async function generateVeoFromFrames(request: VeoFrameGenerationRequest):
 export class GeminiVideoProvider implements VideoProvider {
   async generateFinal(
     request: ShotRequest,
-    opts?: { resolution?: "720p" | "1080p"; startFrame?: AssetRef; durationSeconds?: number; tier?: VideoTier }
+    opts?: { resolution?: "720p" | "1080p"; startFrame?: AssetRef; endFrame?: AssetRef; durationSeconds?: number; tier?: VideoTier }
   ): Promise<GenerationResult> {
+    if (opts?.endFrame) throw new Error("This Veo adapter has no verified ending-frame control. Use LTX or the existing guided draft path; do not silently omit the endpoint.");
     const apiKey = requireApiKey();
     const { model: tierModel, usdPerSecond } = VEO_TIERS[opts?.tier ?? "economy"];
     const resolution = opts?.resolution ?? "720p";

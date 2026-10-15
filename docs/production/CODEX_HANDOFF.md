@@ -1,5 +1,12 @@
 # Codex production handoff
 
+October 14 update: [the current reference workflow](CODEX_LTX_REFERENCE_WORKFLOW.md)
+supersedes the historical board/default-provider descriptions below. Both
+handoffs now group up to four non-Jesus identities per board, reserve Jesus and
+set inputs separately, apply story-state/proof exclusions and pin/use accepted
+FDL/Bible-regional context. Ordinary new-film paid image substitution remains
+blocked. Existing chapter scopes and candidate-review requirements are retained.
+
 Updated 2026-09-08. Active work is Hatam Mark 2, starting with Scene 1,
 Shot 1. Product authority remains PRODUCT_VISION, CURRENT_GOAL, USER_WORKFLOW
 and the subsystem design docs. This file describes the assistant-operated

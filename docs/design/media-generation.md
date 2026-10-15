@@ -45,10 +45,22 @@ slot. Lost responses retain inputs/leases and hold for reconciliation, with
 no automatic paid fallback or duplicate submission.
 
 See [local LTX operations](../production/LTX_LOCAL.md) for configuration,
-diagnostics, settings and recovery. Future ending-frame/keyframe/audio-input/reference
-features extend the adapter and capability contracts rather than the pipeline.
+diagnostics, settings and recovery. The October 14 ending-frame extension below
+uses this same adapter. Arbitrary timed-keyframe/audio-input/reference features
+remain future adapter work rather than another pipeline.
 
 ## Inputs
+
+October 14 extension: both existing assistant keyframe handoffs share a five-slot
+packet builder: Jesus separately, up to four other identities per uncropped
+board, and set-only references separately. Story-state/proof guards and explicit
+identity/cell maps preserve canon. Existing accepted FDL/Bible-regional snapshots
+are hash-pinned and used in prompts/import validation. Target-reviewed library
+set images extend existing reuse candidates, review notes and edit history.
+An assistant-operated Blender tool prepares retained camera-view candidates;
+it does not activate Pippa or approve new geometry. Local LTX now maps optional
+`endFrame` to its verified `lastImagePath`; a contact sheet never belongs there.
+See [workflow, evidence and limits](../production/CODEX_LTX_REFERENCE_WORKFLOW.md).
 
 Producer update, 2026-09-08: Dan asked Codex to take over keyframe generation,
 starting with Hatam Mark 2 Scene 1 Shot 1, using its built-in image tool.
