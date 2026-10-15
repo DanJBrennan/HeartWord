@@ -1,5 +1,55 @@
 # Current Goal
 
+## Advance emotional treatment integrated with chapter planning (2026-10-14)
+
+This single concern serves PRODUCT_VISION's faithful editable autonomous film
+and USER_WORKFLOW's chapter review/correction/selective rerun. The
+[implementation, proof and separate Goal Guardian review](../production/ADVANCE_EMOTIONAL_TREATMENT.md)
+distinguish implemented behavior, declared roles, historical notes and proposals.
+All other active work and existing Mark 4 holds below remain intact.
+
+Normal planning now saves Rufus's ordered source-grounded emotional treatment:
+major beats, audience experience, character response, intensity, filmable means,
+progression and purposeful/timed/coverage/cost-accountable pauses and cues.
+Nell, Sam, Composer, Miriam and Ada/Theo/Cora review before keyframes, including
+revisions within two passes / 30 calls. Explicit concerns use existing retained
+objections/resolutions. Applicable passing reviews permit automatic continuation;
+there is no new producer chapter-plan signature or separate production state.
+The chapter crew panel shows the plan and verdict in advance.
+
+Current accepted treatment reaches reconciled generation prompts and run/hash-
+pinned editing/finishing briefs. Producer overrides, exact source/cast wording,
+order/speed, approved canon, accepted media and edit history remain controlling.
+Pauses use existing safe boundaries/wordless coverage, never extended mouths or
+slower speech. Finishing assesses every beat's actual-cut effect and sound/music
+fit, transitions, levels, releases and mobile clarity. Unintelligible voices
+also hold new soundtrack admission. Historical films gain no invented treatment;
+incomplete new treatment runs cannot bypass the later review contract.
+
+Crew calls now reserve through the existing cumulative $200 film gate,
+including outstanding Avatar/crew work and evidenced unreported liabilities;
+new unreported crew/media/soundtrack costs require reconciliation. An evidenced
+conservative `HEARTWORD_CREW_CALL_UPPER_BOUND_USD` is required before paid calls.
+No guessed price, paid image fallback, live setting change or production spend
+was introduced. No model/media submission occurred; assistant cost is unreported.
+
+Validation: **654 tests / 104 files pass**, TypeScript, web build and diff checks
+pass. Real FFmpeg proof at
+`HeartWordData/scratch/emotional-treatment-proof-final-2026-10-14` retains the
+planning record, exact source map, five-second cut and reopen/effect-review
+evidence: four source seconds in order/at original tone frequencies plus one
+explicit silent second. It is synthetic picture/audio with scripted model replies,
+not real Hatam or dramatic-quality approval. Existing manual API/producer-edit/
+autonomous saved-state and fresh-chapter workflow tests also pass.
+
+Dedicated Goal Guardian review passes this implementation against vision,
+current goal and user workflow, and fixed an interrupted-new-plan/legacy fallback.
+No new Dan product decision is needed; actual chapter quality, evidenced budget
+inputs, source/canon gates and field/release review remain required. Live DB/render
+preservation is checked separately. Your dot/live Mabel and direct SMS are not
+available in this session; plugin discovery found no suitable SMS transport.
+This chat reports completion; SMS to the supplied number ending 8114 is not claimed.
+
 ## In-app crew workflow demonstrated on an isolated test film (2026-10-14)
 
 The existing HeartWord app at `http://127.0.0.1:4016` now shows a clearly

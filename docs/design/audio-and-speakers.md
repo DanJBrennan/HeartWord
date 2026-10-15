@@ -58,6 +58,17 @@ remain unchanged. No automatic regeneration follows the preference.
 
 ## Ambience and scene-video audio
 
+Advance treatment now records planned ambience/music purposes, timing basis,
+entrances/releases, coverage and cost implications before keyframes; see
+[shot planning](shot-planning.md#advance-emotional-treatment-implemented-2026-10-14).
+This is planning intent, consumed by existing sound/finishing controls against
+the actual spaced cut. Continuous or sectional music must fit the scene/action
+and never overwhelm narration or dialogue. Fuller cues may occupy suitable
+speech-free space. New soundtrack listening reviews, like native-video ambience
+reviews, explicitly reject any speech including unintelligible voices; absence
+of intelligible words alone does not pass. No source wording, rate or cast
+binding is changed.
+
 Dan reaffirmed on 2026-10-06 that ambience remains part of the soundtrack.
 Non-speaking video may have appropriate environmental sound, but must not
 invent intelligible speech, narration, singing or a visible speech performance.

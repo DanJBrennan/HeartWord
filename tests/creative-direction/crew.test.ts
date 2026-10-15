@@ -8,6 +8,9 @@ import { finishingRecipe, structuralCutFindings } from "../../src/pipeline/assem
 import { FINISHING_ROLES, PLANNING_ROLES, type CrewBrief, type CrewContribution, type CrewEvent, type CrewRole, type CrewResult } from "../../src/pipeline/creative-direction/crew-types.js";
 import { executableProductionRolesFor } from "../../src/pipeline/creative-direction/role-registry.js";
 import { EDITORIAL_CHECKS, editorialReviewTargets } from "../../src/pipeline/qc/editorial-review.js";
+import { fixtureTreatment, fixtureTreatmentReview } from "../helpers/crew-treatment.js";
+import { TREATMENT_REVIEW_ROLES } from "../../src/pipeline/creative-direction/emotional-treatment.js";
+import { reconcileAvatarBudget } from "../../src/pipeline/voice-lipsync/performance-direction.js";
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 function brief(): CrewBrief {
@@ -27,6 +30,8 @@ function brief(): CrewBrief {
 }
 function response(role: CrewRole): CrewContribution {
   return { summary: `${role} checked the evidence.`, directions: [1,2].map(n => ({ shotId: `s${n}`, instruction: n === 1 ? "Preserve the intact roof" : "Show the opened roof", scriptureBasis: "Mark 2:1" })), findings: [],
+    ...(role === "creative_director" ? {emotionalTreatment:fixtureTreatment(brief())} : {}),
+    ...(TREATMENT_REVIEW_ROLES.includes(role) ? {treatmentReview:fixtureTreatmentReview()} : {}),
     ...(role === "production_director" ? { decision: "approve" as const } : {}),
     ...(role === "picture_editor" ? { coverageRequests: [], edits: [], pauses: [], editorialChecks: EDITORIAL_CHECKS.map(name => ({ name, status: "clear" as const, startMs: 0, endMs: 8000, evidence: "Inspected the complete audiovisual cut", requestedChange: "None" })) } : {}),
     ...(role === "colorist" ? { colorAdjustments: [] } : {}),
@@ -114,8 +119,8 @@ describe("coordinated filmmaking", () => {
       return out;
     } });
     expect(result.status).toBe("held");
-    expect(result.calls).toBe(23);
-    expect(events[13]!.prompt).toContain("Resolve the eyeline mismatch");
+    expect(result.calls).toBe(30);
+    expect(events[15]!.prompt).toContain("Resolve the eyeline mismatch");
   });
   it("stops at the overall call budget with an incomplete result", async () => {
     const call = vi.fn(async (prompt: string) => response(roleFromPrompt(prompt)));
@@ -137,7 +142,8 @@ describe("coordinated filmmaking", () => {
     expect(() => validateContribution({ ...out, directions: [{ ...out.directions[0], shotId: "foreign" }] }, "creative_director", brief())).toThrow("foreign");
     expect(() => validateContribution({ ...out, directions: [out.directions[0], out.directions[0]] }, "creative_director", brief())).toThrow("Duplicate");
     expect(() => validateContribution({ ...out, colorAdjustments: [] }, "creative_director", brief())).toThrow("Unexpected");
-    expect(() => validateContribution(out, "production_director", brief())).toThrow("decision");
+    const {emotionalTreatment:_treatment,...withoutDecision}=out;
+    expect(() => validateContribution(withoutDecision, "production_director", brief())).toThrow("decision");
   });
   it("requires bounded confidence and stated limits for each newly reported finding", () => {
     const finding = { shotId:"s1", severity:"advisory", evidence:"Visible continuity mismatch", requestedChange:"Inspect the adjacent shots", confidence:65, limitations:"The compressed proxy cannot establish fine detail." };
@@ -228,6 +234,7 @@ describe("coordinated filmmaking", () => {
     const db = new DatabaseSync(":memory:");
     const originalKey = process.env.GEMINI_API_KEY;
     process.env.GEMINI_API_KEY = "test-key";
+    vi.stubEnv("HEARTWORD_CREW_CALL_UPPER_BOUND_USD", "1");
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({
       candidates: [{ content: { parts: [{ text: JSON.stringify(response("creative_director")) }] } }],
       usageMetadata: { promptTokenCount: 500, candidatesTokenCount: 100, totalTokenCount: 600 }
@@ -235,6 +242,7 @@ describe("coordinated filmmaking", () => {
     try {
       db.exec(readFileSync("src/db/schema.sql", "utf8"));
       db.exec("INSERT INTO projects (id,language,book,chapter,created_at,updated_at) VALUES ('p','hatam','mark',2,1,1)");
+      reconcileAvatarBudget(db,{projectId:"p",actor:"Synthetic reviewer",evidence:"No external fixture costs or liabilities.",unreportedUpperBoundUsd:0,outstandingUpperBoundUsd:0,idempotencyKey:"fixture-budget"});
       // maxCalls: 1 means only the first role (creative_director) is actually
       // called before the second role hits the budget and the run reports
       // incomplete -- exactly one real call, so one event and one ledger row.
@@ -251,6 +259,7 @@ describe("coordinated filmmaking", () => {
     } finally {
       db.close();
       vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
       if (originalKey === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = originalKey;
     }
   });

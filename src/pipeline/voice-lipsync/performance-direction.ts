@@ -54,7 +54,10 @@ export function avatarComparisonBudget(costs:{recordedUsd:number;unreportedUpper
 }
 
 function unknownCostFingerprint(db:DatabaseSync,projectId:string) {
-  return digest(db.prepare(`SELECT e.id FROM production_events e JOIN production_runs r ON r.id=e.run_id WHERE r.project_id=? AND e.cost_usd IS NULL ORDER BY e.id`).all(projectId));
+  const events = db.prepare(`SELECT e.id FROM production_events e JOIN production_runs r ON r.id=e.run_id WHERE r.project_id=? AND e.cost_usd IS NULL ORDER BY e.id`).all(projectId);
+  const media = db.prepare(`SELECT ga.id FROM generation_attempts ga JOIN shots s ON s.id=ga.shot_id JOIN scenes sc ON sc.id=s.scene_id WHERE sc.project_id=? AND ga.cost_usd IS NULL ORDER BY ga.id`).all(projectId);
+  const soundtrack = db.prepare("SELECT id FROM soundtrack_attempts WHERE project_id=? AND cost_usd IS NULL ORDER BY id").all(projectId);
+  return digest([...events,...media.map(r=>({id:`media:${r.id}`})),...soundtrack.map(r=>({id:`soundtrack:${r.id}`}))]);
 }
 function append(db:DatabaseSync,projectId:string,type:string,payload:unknown,key:string) {
   db.prepare(`INSERT INTO edit_commands (id,project_id,sequence,command_type,payload,idempotency_key,applied_at)
@@ -71,17 +74,19 @@ export function reconcileAvatarBudget(db:DatabaseSync,input:{projectId:string;ac
   if(previous){if(previous.project_id!==input.projectId || digest(JSON.parse(String(previous.payload)).input)!==digest(input))throw new Error("Budget idempotency key conflict.");return;}
   append(db,input.projectId,"reconcile_avatar_budget",{input,unknownCostFingerprint:unknownCostFingerprint(db,input.projectId)},input.idempotencyKey);
 }
-export function checkAvatarSpend(db:DatabaseSync,projectId:string,upperBoundUsd:number) {
+export function checkFilmSpend(db:DatabaseSync,projectId:string,upperBoundUsd:number) {
   const latest=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='reconcile_avatar_budget' AND undone=0 ORDER BY sequence DESC LIMIT 1").get(projectId);
-  if(!latest)throw new Error("Avatar spending held: reconcile cumulative film costs and outstanding charges first; no per-chapter plan signature is required.");
+  if(!latest)throw new Error("Film spending held: reconcile cumulative film costs and outstanding charges first; no per-chapter plan signature is required.");
   const saved=JSON.parse(String(latest.payload));
-  if(saved.unknownCostFingerprint!==unknownCostFingerprint(db,projectId))throw new Error("New unreported review costs require budget reconciliation before Avatar spending.");
-  const pending=db.prepare(`SELECT payload FROM edit_commands r WHERE project_id=? AND command_type='reserve_avatar_spend'
-    AND NOT EXISTS(SELECT 1 FROM edit_commands s WHERE s.project_id=r.project_id AND s.command_type='settle_avatar_spend' AND json_extract(s.payload,'$.reservationId')=json_extract(r.payload,'$.reservationId'))`).all(projectId);
+  if(saved.unknownCostFingerprint!==unknownCostFingerprint(db,projectId))throw new Error("New unreported production costs require budget reconciliation before further spending.");
+  const pending=db.prepare(`SELECT payload FROM edit_commands r WHERE project_id=? AND command_type IN ('reserve_avatar_spend','reserve_crew_spend')
+    AND NOT EXISTS(SELECT 1 FROM edit_commands s WHERE s.project_id=r.project_id AND s.command_type IN ('settle_avatar_spend','settle_crew_spend') AND json_extract(s.payload,'$.reservationId')=json_extract(r.payload,'$.reservationId'))`).all(projectId);
   const pendingUsd=pending.reduce((sum,r)=>sum+Number(JSON.parse(String(r.payload)).upperBoundUsd),0);
   const ledger=Number(db.prepare("SELECT COALESCE(SUM(amount_usd),0) total FROM cost_ledger_entries WHERE project_id=?").get(projectId)!.total);
   return avatarComparisonBudget({recordedUsd:ledger,unreportedUpperBoundUsd:saved.input.unreportedUpperBoundUsd,outstandingUpperBoundUsd:saved.input.outstandingUpperBoundUsd+pendingUsd,comparisonUpperBoundUsd:upperBoundUsd});
 }
+/** Historical API name retained for existing stage-5 and producer callers. */
+export const checkAvatarSpend = checkFilmSpend;
 export function reserveAvatarSpend(db:DatabaseSync,projectId:string,shotId:string,upperBoundUsd:number) {
   db.exec("BEGIN IMMEDIATE");
   try {

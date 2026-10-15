@@ -51,8 +51,8 @@ and an autonomous run use the same implementation and saved decisions.
 role identity, historical aliases, authority boundary, phase participation,
 contract, and tool availability. The producer view derives from it. The crew
 runner dispatches only roles marked `implemented`; declared and presentation
-roles fail closed. Ada, Theo, and Cora run as separate first-pass evidence
-challengers at planning, editing, and finishing milestones. Their findings can
+roles fail closed. Ada, Theo, and Cora run as separate evidence
+challengers on both planning passes and the first editing/finishing pass. Their findings can
 hold a run but never approve it or override source, canon, producer, or human
 review authority. `production_director` is an internal decision handler, not
 an additional producer-facing crew member or Mabel impersonation.
@@ -128,8 +128,23 @@ finishing cycle: review, generate up to eight requested assets, review again,
 mix once, and view/listen to the result. It uses at most three reviews of 14
 role calls each, plus eight generation/listening-review pairs. Remaining
 changes hold for another deliberate run. Planning uses at most two complete
-11-role passes; editing uses two 5-role passes. UI limits are 24 planning
-calls and 16 cut-review calls (the teams themselves require at most 22 and 14).
+15-call passes, including Sam/Composer's advance treatment review and all three
+critics on revisions; editing/finishing keep their existing bounded rosters.
+UI limits are 30 planning calls and 16 cut-review calls. See the
+[advance treatment](shot-planning.md#advance-emotional-treatment-implemented-2026-10-14).
+
+Crew calls now reserve an explicitly configured, evidenced conservative
+`HEARTWORD_CREW_CALL_UPPER_BOUND_USD` before submission, using the existing
+film cost reconciliation/history (the retained API is named `avatar-budget`).
+No price default is invented. The $200 cumulative direct film ceiling includes
+planning, reviews, generation, rejected work and retries, plus outstanding
+Avatar/crew reservations and evidenced bounds for other unreported liabilities.
+New unreported crew/media/soundtrack costs invalidate old reconciliation.
+Reported token-derived estimates enter the ledger/events; absent usage stays
+NULL, with its reservation outstanding, as does a lost/failed response. These
+are conservative bounds/estimates rather than invoice reconciliation or a new
+spending authority. No silent paid retry follows a failed review. Synthetic
+injected calls in tests do not submit or reserve provider work.
 
 Provider references: [Google music generation](https://ai.google.dev/gemini-api/docs/music-generation)
 and [ElevenLabs sound effects API](https://elevenlabs.io/docs/api-reference/text-to-sound-effects/convert).

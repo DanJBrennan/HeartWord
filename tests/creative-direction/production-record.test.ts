@@ -8,14 +8,17 @@ import Ajv2020 from "ajv/dist/2020.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CrewContribution, CrewRole } from "../../src/pipeline/creative-direction/crew-types.js";
 import type { ProductionRecord, FilmChange } from "../../src/pipeline/creative-direction/production-record.js";
+import { withFixtureTreatment } from "../helpers/crew-treatment.js";
+import { reconcileAvatarBudget } from "../../src/pipeline/voice-lipsync/performance-direction.js";
 
 const state=vi.hoisted(()=>({db:null as any,dir:"",reply:null as any}));
 vi.mock("../../src/db/client.js",()=>({getDb:()=>state.db,getDataDir:()=>state.dir}));
-vi.mock("../../src/providers/gemini-text.js",async original=>({...await original<object>(),generateJsonWithImagesMetered:vi.fn(async(prompt:string)=>({result:await state.reply(prompt),costUsd:0}))}));
+vi.mock("../../src/providers/gemini-text.js",async original=>({...await original<object>(),generateJsonWithImagesMetered:vi.fn(async(prompt:string)=>({result:await state.reply(prompt),usage:{totalTokenCount:2},costUsd:0}))}));
 vi.mock("../../src/pipeline/qc/video-review.js",()=>({reviewGeneratedVideo:vi.fn(async()=>({verdict:{reason:"Synthetic review only",confidence:99},costUsd:0})),videoReviewPassed:()=>true}));
 import { runProductionCrew, requireCurrentPlan, productionRecordForRun, latestCrewRun, directionsFromRun, applyProducerCreativeEdit, productionAuthorization, validateHandoffPlan, recoverInterruptedCrew } from "../../src/pipeline/creative-direction/crew-store.js";
 import { generateNonSpeakingVideoCandidate, acceptFinalVideoCandidate } from "../../src/pipeline/media-generation/final-video.js";
 import { productionRouter } from "../../src/server/routes/production.js";
+import { loadCrewBrief } from "../../src/pipeline/creative-direction/crew-context.js";
 import { projectsRouter } from "../../src/server/routes/projects.js";
 const {DatabaseSync}=createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 let db:InstanceType<typeof DatabaseSync>,server:Server|undefined;
@@ -39,7 +42,7 @@ function reply(prompt:string):CrewContribution{
   const out:CrewContribution={summary:`${role} reviewed a synthetic fixture, not actual Hatam media.`,directions:["shot1","shot2"].map(shotId=>({shotId,instruction:"Preserve the established encounter, fixed wardrobe and source performance.",scriptureBasis:"Synthetic Mark 5:1–2 fixture context."})),findings:[]};
   if(role==="picture_editor")Object.assign(out,{coverageRequests:[],edits:[],pauses:[],editorialChecks:[]});
   if(role==="production_director")Object.assign(out,{decision:"approve",decisionConfidence:88,decisionLimitations:"Synthetic local intent review; no actual media or language validation.",acceptedContributionIds:[]});
-  return out;
+  return withFixtureTreatment(prompt,out);
 }
 const change=(record:ProductionRecord,layer:FilmChange["target"]["layer"],entityId:string,name:string,value:string):FilmChange=>{
   const before=record.snapshots.flatMap(s=>s[layer]).find(e=>e.id===entityId)!.facts[name]!;
@@ -54,6 +57,7 @@ const validate=ajv.compile(JSON.parse(readFileSync("docs/design/fdl/core.v2.sche
 const validateEnvelope=ajv.compile(JSON.parse(readFileSync("docs/design/fdl/crew-contribution.v1.schema.json","utf8")));
 beforeEach(()=>{
   state.dir=mkdtempSync(join(tmpdir(),"hw-crew-runtime-"));
+  vi.stubEnv("HEARTWORD_CREW_CALL_UPPER_BOUND_USD","1");
   db=new DatabaseSync(join(state.dir,"state.sqlite"));state.db=db;db.exec(readFileSync("src/db/schema.sql","utf8"));state.reply=reply;
   db.exec(`INSERT INTO projects(id,language,book,chapter,created_at,updated_at)VALUES('${projectId}','hatam','mark',5,1,1);
     INSERT INTO scenes(id,project_id,sequence,verse_start,verse_end,spatial_continuity,lighting_continuity,created_at)VALUES('scene','${projectId}',1,'Mark 5:1','Mark 5:2','Retained room and aisle','Readable daylight',1);
@@ -67,10 +71,23 @@ beforeEach(()=>{
   file("source/hatam/mark-5/mark-5-text.docx",docx("1Original fixture words. 2More original words."));
   file("reference/english/mark-5/mark-5-text.docx",docx("1Reference fixture words. 2More reference words."));
   file("canon.png",Buffer.from("89504e470d0a1a0a0000000d494844520000078000000438","hex"));file("source.wav","synthetic immutable audio bytes");file("key.png","synthetic accepted pixels");file("returned.mp4","synthetic video, not playable media");
+  reconcileAvatarBudget(db,{projectId,actor:"Synthetic reviewer",evidence:"Only mocked providers; positively no fixture liabilities.",unreportedUpperBoundUsd:0,outstandingUpperBoundUsd:0,idempotencyKey:"fixture-budget"});
 });
-afterEach(async()=>{if(server){await new Promise<void>(resolve=>server!.close(()=>resolve()));server=undefined;}db.close();if(state.dir.startsWith(join(tmpdir(),"hw-crew-runtime-")))rmSync(state.dir,{recursive:true,force:true});});
+afterEach(async()=>{vi.unstubAllEnvs();if(server){await new Promise<void>(resolve=>server!.close(()=>resolve()));server=undefined;}db.close();if(state.dir.startsWith(join(tmpdir(),"hw-crew-runtime-")))rmSync(state.dir,{recursive:true,force:true});});
 
 describe("saved crew production runtime",()=>{
+  it("pins accepted treatment into later briefs and retains legacy plans without authorizing new generation",async()=>{
+    const result=await plan();expect(result.status,result.summary).toBe("approved");
+    const later=loadCrewBrief(db,state.dir,projectId,"editing");
+    expect(later.acceptedEmotionalTreatment).toMatchObject({runId:result.runId,treatment:result.contributions.creative_director!.emotionalTreatment});
+    const original=db.prepare("SELECT * FROM production_runs WHERE id=?").get(result.runId)!;
+    db.prepare("INSERT INTO production_runs(id,project_id,phase,brief_hash,brief_json,status,result_json,created_at)VALUES('incomplete-treatment',?,'planning',?,?,'incomplete',?,?)").run(projectId,original.brief_hash,original.brief_json,JSON.stringify({emotionalTreatmentRequired:true,contributions:{}}),Number(original.created_at)+1);
+    expect(()=>loadCrewBrief(db,state.dir,projectId,"editing")).toThrow("treatment is incomplete");
+    db.prepare("INSERT INTO production_runs(id,project_id,phase,brief_hash,brief_json,status,result_json,created_at)VALUES('legacy',?,'planning',?,?,'approved',?,?)").run(projectId,original.brief_hash,original.brief_json,JSON.stringify({contributions:{},summary:"Historical plan; no advance treatment"}),Number(original.created_at)+1);
+    expect(()=>requireCurrentPlan(db,state.dir,projectId)).toThrow("advance emotional treatment");
+    expect(loadCrewBrief(db,state.dir,projectId,"editing").acceptedEmotionalTreatment).toBeUndefined();
+    expect(db.prepare("SELECT * FROM production_runs WHERE id=?").get(result.runId)).toEqual(original);
+  });
   it("saves schema-compatible FDL and contribution envelopes without changing sources, canon or accepted media",async()=>{
     const source=readFileSync(join(state.dir,"assets/source.wav")),key=readFileSync(join(state.dir,"assets/key.png"));
     const result=await plan();expect(result.status,result.summary).toBe("approved");
@@ -170,7 +187,7 @@ describe("saved crew production runtime",()=>{
     expect(current.status).toBe("approved"); // the prior accepted row is immutable
     expect(productionRecordForRun(db,current)!.objections.some(o=>o.status==="open"&&o.evidence.includes("Late evidence"))).toBe(true);
     expect(()=>requireCurrentPlan(db,state.dir,projectId)).toThrow("unresolved blocking");
-    state.reply=reply;const next=await plan();expect(next.status).toBe("held");expect(next.productionRecord!.objections.some(o=>o.evidence.includes("Late evidence"))).toBe(true);
+    state.reply=reply;const next=await runProductionCrew(projectId,"planning",{db,dataDir:state.dir,call:async p=>reply(p)});expect(next.status).toBe("held");expect(next.productionRecord!.objections.some(o=>o.evidence.includes("Late evidence"))).toBe(true);
   });
 
   it("cannot reapprove a source/canon change as a producer creative edit and rolls back the edit",async()=>{

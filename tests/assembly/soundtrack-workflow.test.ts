@@ -23,8 +23,15 @@ beforeEach(() => {
 });
 afterEach(() => { db.close(); if (relative(tmpdir(), directory).startsWith("heartword-soundtrack-test-")) rmSync(directory, { recursive: true, force: true }); });
 const provider = () => ({ generate: vi.fn(async () => ({ bytes: Buffer.from("audio fixture"), mimeType: "audio/mpeg", provider: "test", model: "test", usage: { samples: 1 }, requestId: "request" })) });
-const pass = async () => ({ matchesBrief: true, intelligibleSpeech: false, technicalPass: true, confidence: 90, reason: "Instrumental and fits the requested development." });
+const pass = async () => ({ matchesBrief: true, speechDetected: false, intelligibleSpeech: false, technicalPass: true, confidence: 90, reason: "Instrumental and fits the requested development." });
 describe("directed soundtrack generation", () => {
+  it("holds unintelligible ambience voices even when no dialogue words are understood", async () => {
+    const music=provider();
+    const options={db,dataDir:directory,brief,music,review:async()=>({...await pass(),speechDetected:true,reason:"Unintelligible background voices"}),duration:()=>4000};
+    expect((await generateRequestedSoundtrack("p","run",options)).accepted).toBe(0);
+    expect(db.prepare("SELECT COUNT(*) n FROM production_audio_assets").get()!.n).toBe(0);
+    await generateRequestedSoundtrack("p","run",options);expect(music.generate).toHaveBeenCalledTimes(1);
+  });
   it("records provider usage, reviews the audio, and reuses a completed request after its asset enters the brief", async () => {
     const music = provider();
     const options = { db, dataDir: directory, brief, music, review: pass, duration: () => 4000 };

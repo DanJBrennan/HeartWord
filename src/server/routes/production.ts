@@ -98,7 +98,7 @@ productionRouter.post("/plan", async (req, res) => {
   const projectId = getProjectId(req);
   try {
     const hasShots = getDb().prepare("SELECT s.id FROM shots s JOIN scenes sc ON sc.id = s.scene_id WHERE sc.project_id = ? LIMIT 1").get(projectId);
-    res.json(hasShots ? await runProductionCrew(projectId, "planning", { maxCalls: req.body?.maxCalls ?? 24 }) : await runCasting(projectId));
+    res.json(hasShots ? await runProductionCrew(projectId, "planning", { maxCalls: req.body?.maxCalls ?? 30 }) : await runCasting(projectId));
   } catch (error) { res.status(409).json({ error: (error as Error).message }); }
 });
 productionRouter.post("/recover/:runId", (req, res) => {

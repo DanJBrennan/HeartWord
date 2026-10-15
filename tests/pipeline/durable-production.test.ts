@@ -4,6 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { withFixtureTreatment } from "../helpers/crew-treatment.js";
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 let db: import("node:sqlite").DatabaseSync;
@@ -32,12 +33,12 @@ async function fixtureCrewContribution(prompt: string) {
 vi.mock("../../src/providers/gemini-text.js", () => ({
   GEMINI_TEXT_MODEL: "fixture-crew",
   generateJsonWithImages: vi.fn(async (prompt: string) => fixtureCrewContribution(prompt)),
-  generateJsonWithImagesMetered: vi.fn(async (prompt: string) => ({ result: await fixtureCrewContribution(prompt), usage: { promptTokenCount: 0, candidatesTokenCount: 0, thoughtsTokenCount: 0, totalTokenCount: 0 }, costUsd: 0 }))
+  generateJsonWithImagesMetered: vi.fn(async (prompt: string) => ({ result: withFixtureTreatment(prompt, await fixtureCrewContribution(prompt) as any), usage: { promptTokenCount: 1, candidatesTokenCount: 1, thoughtsTokenCount: 0, totalTokenCount: 2 }, costUsd: 0 }))
 }));
 
 const ffmpeg = spawnSync("ffmpeg", ["-version"], { stdio: "ignore" }).status === 0;
 const cleanup: string[] = [];
-afterEach(() => { db?.close(); for (const path of cleanup.splice(0)) rmSync(path, { recursive: true, force: true }); });
+afterEach(() => { vi.unstubAllEnvs(); db?.close(); for (const path of cleanup.splice(0)) rmSync(path, { recursive: true, force: true }); });
 
 function video(path: string, color: string) {
   mkdirSync(dirname(path), { recursive: true });
@@ -115,12 +116,13 @@ describe.skipIf(!ffmpeg)("durable production recovery", () => {
     const {runProductionCrew}=await import("../../src/pipeline/creative-direction/crew-store.js");
     const reviewed=await runProductionCrew("p","planning",{db,dataDir,call:async(prompt)=>{
       const role=prompt.match(/HeartWord's ([^.]+)\./)?.[1]?.replaceAll(" ","_");
-      return {summary:"Synthetic planning review",directions:["narrator","a","b"].map(shotId=>({shotId,instruction:"Preserve exact fixture performance",scriptureBasis:"Mark 1:1"})),findings:[],
-        ...(role==="picture_editor"?{coverageRequests:[],edits:[],pauses:[],editorialChecks:[]}:{}),...(role==="production_director"?{decision:"approve",decisionConfidence:88,decisionLimitations:"Synthetic planning evidence."}:{})};
+      return withFixtureTreatment(prompt,{summary:"Synthetic planning review",directions:["narrator","a","b"].map(shotId=>({shotId,instruction:"Preserve exact fixture performance",scriptureBasis:"Mark 1:1"})),findings:[],
+        ...(role==="picture_editor"?{coverageRequests:[],edits:[],pauses:[],editorialChecks:[]}:{}),...(role==="production_director"?{decision:"approve",decisionConfidence:88,decisionLimitations:"Synthetic planning evidence."}:{})});
     }});expect(reviewed.status,reviewed.summary).toBe("approved");
     const { runVoiceLipSync } = await import("../../src/pipeline/voice-lipsync/index.js");
     const { reconcileAvatarBudget } = await import("../../src/pipeline/voice-lipsync/performance-direction.js");
     reconcileAvatarBudget(db,{projectId:"p",actor:"Synthetic test",evidence:"All provider calls are mocked in this fixture; no external charges or outstanding work.",unreportedUpperBoundUsd:0,outstandingUpperBoundUsd:0,idempotencyKey:"fixture-avatar-budget"});
+    vi.stubEnv("HEARTWORD_CREW_CALL_UPPER_BOUND_USD","1");
     expect((await runVoiceLipSync("p")).ok).toBe(false); expect(sync).toHaveBeenCalledTimes(2);
     expect(db.prepare("SELECT COUNT(*) n FROM generation_attempts WHERE operation='lip_sync'").get()).toMatchObject({ n: 2 });
     const { acceptLipSyncCandidate } = await import("../../src/pipeline/voice-lipsync/candidate-selection.js");

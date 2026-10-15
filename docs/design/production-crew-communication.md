@@ -68,6 +68,29 @@ authority.
 
 ## Learning from corrections
 
+Advance emotional treatment (October 14 implementation) extends handoffs 2–5,
+not the roster or dispatcher: Rufus owns the ordered source-grounded progression;
+Nell, Sam, Composer, Miriam and milestone challengers review it before keyframes.
+Both bounded planning passes challenge revisions; new runs retain treatment
+concerns through the existing explicit objection/resolution history. Accepted
+treatment stays in immutable crew contributions/results, with run/hash-pinned
+downstream brief context and relevant generation prose beside existing FDL
+facts. It does not define replacement camera/pose semantics or a second audio
+timeline. Exact source/canon, producer edits and existing accepted media retain
+authority. New generation requires this reviewed plan; old films acquire no
+invented historical treatment. See the full
+[planning contract](shot-planning.md#advance-emotional-treatment-implemented-2026-10-14).
+
+The producer sees the plan and verdict in the existing chapter crew panel.
+Applicable passing reviews permit automatic continuation under source, canon,
+cost and approval gates; showing the plan is not a new chapter signature gate.
+Finishing reviews each beat's effect on the actual audiovisual cut, and sound
+reviews explicitly assess speech priority, cue entrances/releases, transitions,
+levels and mobile clarity. Missing/uncertain evidence holds, without claiming
+field, native-speaker or physical-device validation. No optional demo dialogue
+is transferred by this implementation; such a transfer remains a proposal
+requiring Dan's explicit adoption.
+
 A producer correction is retained with source note, project, language, book,
 chapter, regional canon and approved canon-version context. One bounded
 text-model call may propose a reusable principle; it is inactive until the

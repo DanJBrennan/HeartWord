@@ -6,6 +6,8 @@ import { dirname, join } from "node:path";
 import express from "express";
 import { afterEach, expect, it, vi } from "vitest";
 import { EDITORIAL_CHECKS } from "../../src/pipeline/qc/editorial-review.js";
+import { withFixtureTreatment } from "../helpers/crew-treatment.js";
+import { reconcileAvatarBudget } from "../../src/pipeline/voice-lipsync/performance-direction.js";
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 let db: import("node:sqlite").DatabaseSync, root = "", server: ReturnType<express.Express["listen"]> | undefined;
@@ -31,16 +33,16 @@ vi.mock("../../src/providers/gemini-text.js", () => {
     const base: any = { summary: `Synthetic ${role} approval.`, directions, findings: [] };
     if (role === "picture_editor") {
       const timeline = (brief.shots ?? []).every((s: any) => s.clip) ? (brief.shots ?? []).map((s: any, i: number) => ({ shotId: s.id, sourceStartMs: 0, durationMs: brief.audio[i].endMs - brief.audio[i].startMs })) : [];
-      Object.assign(base, { coverageRequests: [], edits: timeline, pauses: [] });
+      Object.assign(base, { coverageRequests: [], edits: prompt.includes("Phase: planning") ? [] : timeline, pauses: [] });
       if (prompt.includes("Phase: finishing")) base.editorialChecks = EDITORIAL_CHECKS.map(name => ({ name, status: "clear", startMs: 0, endMs: brief.render.durationMs, evidence: "Synthetic fixture review of the complete cut", requestedChange: "None" }));
     }
     if (role === "colorist") base.colorAdjustments = [];
     if (role === "sound_designer" || role === "composer") Object.assign(base, { audioCues: [], generationRequests: [] });
     if (role === "production_director") Object.assign(base,{decision:"approve",decisionConfidence:88,decisionLimitations:"Synthetic fixture only.",acceptedContributionIds:[]});
-    return base;
+    return withFixtureTreatment(prompt,base);
   };
   return { GEMINI_TEXT_MODEL: "synthetic", generateJson: vi.fn(async (p: string, s: any) => contribution(p, s)), generateJsonWithImages: vi.fn(async (p: string, _m: any, s: any) => contribution(p, s)),
-    generateJsonWithImagesMetered: vi.fn(async (p: string, _m: any, s: any) => ({ result: contribution(p, s), usage: { promptTokenCount: 0, candidatesTokenCount: 0, thoughtsTokenCount: 0, totalTokenCount: 0 }, costUsd: 0 })),
+    generateJsonWithImagesMetered: vi.fn(async (p: string, _m: any, s: any) => ({ result: contribution(p, s), usage: { promptTokenCount: 1, candidatesTokenCount: 1, thoughtsTokenCount: 0, totalTokenCount: 2 }, costUsd: 0 })),
     generateGroundedText: vi.fn(async () => ({ text: "No issue.\nSEVERITY: none\nSUGGESTED FIX: none\nPRESERVE: everything\nFINDINGS_JSON: {\"findings\":[]}", sources: [], searchQueries: [] })) };
 });
 
@@ -68,6 +70,8 @@ it("takes a fresh reviewed chapter through real common stages without provider c
   db.prepare("UPDATE audio_segments SET speaker_character_id='speaker' WHERE id IN (?,?)").run(segments[1]!.id,segments[2]!.id);
   const { projectsRouter }=await import("../../src/server/routes/projects.js"); const app=express(); app.use(express.json()); app.use("/api/projects",projectsRouter); await new Promise<void>(resolve=>{server=app.listen(0,resolve);}); const port=(server.address() as any).port;
   const review=await fetch(`http://127.0.0.1:${port}/api/projects/fresh-full/source-alignment-review`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reviewerName:"Synthetic language reviewer",attestation:"confirm",evidence:"Compared each fixture interval with the supplied DOCX, audio, and English reference."})}); expect(review.status).toBe(201);
+  vi.stubEnv("HEARTWORD_CREW_CALL_UPPER_BOUND_USD","1");
+  reconcileAvatarBudget(db,{projectId:"fresh-full",actor:"Synthetic reviewer",evidence:"Mocked provider fixture; no external charges or liabilities.",unreportedUpperBoundUsd:0,outstandingUpperBoundUsd:0,idempotencyKey:"fixture-planning-budget"});
   const planned=await runPipeline("fresh-full"); expect(planned.stoppedAt, planned.results.at(-1)?.reasoning).toBe("media_generation");
   const { acceptFinalVideoCandidate }=await import("../../src/pipeline/media-generation/final-video.js");
   const videoCandidates=db.prepare("SELECT id FROM generation_attempts WHERE operation='generate_final_video'").all() as Array<{id:string}>;

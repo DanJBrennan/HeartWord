@@ -9,6 +9,7 @@ import { importCutManifest } from "../../src/pipeline/assembly/import-cut-manife
 import { assertEditorialRebuildable } from "../../src/pipeline/assembly/render-editorial-cut.js";
 import { recordCutTimingAudit, type CutTimingAudit } from "../../src/pipeline/assembly/cut-timing-audit.js";
 import { structuralCutFindings } from "../../src/pipeline/assembly/finishing.js";
+import { fixtureTreatment } from "../helpers/crew-treatment.js";
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 let db: InstanceType<typeof DatabaseSync>, directory: string;
@@ -150,7 +151,7 @@ describe("immutable project brief", () => {
   });
   it("blocks missing/changed source and canon before generation", () => {
     const b = loadCrewBrief(db, directory, "p", "planning");
-    db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,created_at) VALUES ('run','p','planning',?,?,'approved',1)").run(crewBriefHash(b, "planning"), JSON.stringify(b));
+    db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('run','p','planning',?,?,'approved',?,1)").run(crewBriefHash(b, "planning"), JSON.stringify(b),JSON.stringify({contributions:{creative_director:{emotionalTreatment:fixtureTreatment(b)}}}));
     expect(requireCurrentPlan(db, directory, "p").id).toBe("run");
     file("ref.png", "changed reference");
     expect(() => requireCurrentPlan(db, directory, "p")).toThrow("stale");
@@ -193,7 +194,7 @@ describe("immutable project brief", () => {
   it("invalidates an external handoff when a different crew plan is introduced", () => {
     const b = loadCrewBrief(db, directory, "p", "planning");
     expect(() => validateHandoffPlan(db, directory, "p")).toThrow("production crew");
-    db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,created_at) VALUES ('run','p','planning',?,?,'approved',1)").run(crewBriefHash(b, "planning"), JSON.stringify(b));
+    db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('run','p','planning',?,?,'approved',?,1)").run(crewBriefHash(b, "planning"), JSON.stringify(b),JSON.stringify({contributions:{creative_director:{emotionalTreatment:fixtureTreatment(b)}}}));
     expect(() => validateHandoffPlan(db, directory, "p")).toThrow("direction changed");
     expect(() => validateHandoffPlan(db, directory, "p", "run")).not.toThrow();
     expect(() => validateHandoffPlan(db, directory, "p", "older-run")).toThrow("direction changed");

@@ -11,17 +11,17 @@ import { latestCrewRun } from "../creative-direction/crew-store.js";
 import type { CrewBrief, CrewResult } from "../creative-direction/crew-types.js";
 import { mediaDurationMs } from "./finishing.js";
 
-export interface SoundtrackReview { matchesBrief: boolean; intelligibleSpeech: boolean; technicalPass: boolean; confidence: number; reason: string }
+export interface SoundtrackReview { matchesBrief: boolean; speechDetected: boolean; intelligibleSpeech: boolean; technicalPass: boolean; confidence: number; reason: string }
 const SOUNDTRACK_REVIEW_SCHEMA = {
-  type: "object", properties: { matchesBrief: { type: "boolean" }, intelligibleSpeech: { type: "boolean" }, technicalPass: { type: "boolean" }, confidence: { type: "number" }, reason: { type: "string" } },
-  required: ["matchesBrief", "intelligibleSpeech", "technicalPass", "confidence", "reason"]
+  type: "object", properties: { matchesBrief: { type: "boolean" }, speechDetected: { type: "boolean" }, intelligibleSpeech: { type: "boolean" }, technicalPass: { type: "boolean" }, confidence: { type: "number" }, reason: { type: "string" } },
+  required: ["matchesBrief", "speechDetected", "intelligibleSpeech", "technicalPass", "confidence", "reason"]
 };
 function soundtrackReviewPassed(verdict: SoundtrackReview) {
-  return verdict.matchesBrief === true && verdict.intelligibleSpeech === false && verdict.technicalPass === true &&
+  return verdict.matchesBrief === true && verdict.speechDetected === false && verdict.intelligibleSpeech === false && verdict.technicalPass === true &&
     Number.isFinite(verdict.confidence) && verdict.confidence >= 80 && verdict.confidence <= 100 && typeof verdict.reason === "string" && Boolean(verdict.reason.trim());
 }
 
-export interface NativeAmbienceReview extends SoundtrackReview { speechDetected: boolean }
+export interface NativeAmbienceReview extends SoundtrackReview {}
 export function nativeAmbiencePassed(verdict: NativeAmbienceReview) {
   return verdict?.speechDetected === false && soundtrackReviewPassed(verdict);
 }
@@ -32,7 +32,7 @@ export async function reviewNativeAmbience(path: string, direction: string): Pro
     "Check that environmental sounds fit the scene without inventing an event, contain no score/music, and have no objectionable artifacts. " +
     "Silence is not useful ambience. If voices cannot be ruled out, return low confidence and do not approve. This audio must never replace the approved Scripture/cast recording.",
     [{ mimeType: "audio/wav", data: readFileSync(path).toString("base64") }],
-    { ...SOUNDTRACK_REVIEW_SCHEMA, properties: { ...SOUNDTRACK_REVIEW_SCHEMA.properties, speechDetected: { type: "boolean" } }, required: [...SOUNDTRACK_REVIEW_SCHEMA.required, "speechDetected"] }
+    SOUNDTRACK_REVIEW_SCHEMA
   );
   return { verdict: result, costUsd };
 }
@@ -133,7 +133,7 @@ export async function generateRequestedSoundtrack(projectId: string, runId: stri
       const durationMs = (options.duration ?? mediaDurationMs)(absolute);
       if (durationMs + 50 < item.request.durationMs) throw new Error("Generated audio is shorter than its planned cue; do not stretch or silently loop it.");
       const verdict = await review(`Independently review this generated ${kind} by listening to it. Brief: ${JSON.stringify(item.request)}. ` +
-        "Check audible artifacts, fit to requested mood, development/crescendo, instruments or concrete effect, and absence of intelligible speech/lyrics. " +
+        "Check audible artifacts, fit to requested mood, development/crescendo, instruments or concrete effect. Detect ANY speech, including unintelligible dialogue, gibberish voices, narration, lyrics or singing: speechDetected=true even when no words are understood. " +
         "Do not assert native-cultural authenticity you cannot verify. Return false or low confidence when uncertain; this recording must not replace Scripture.", generated.mimeType, generated.bytes);
       const pass = soundtrackReviewPassed(verdict);
       if (!pass) {

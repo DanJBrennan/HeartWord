@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { crewBriefHash, loadCrewBrief } from "../../src/pipeline/creative-direction/crew-context.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { fixtureTreatment } from "../helpers/crew-treatment.js";
 import { acceptKeyframe, assetPath, getKeyframeContext, importKeyframe, keyframeStatus, readLandscapePng, recordProducerOverride, referenceBoardFilter, sha256,
   type KeyframeBrief } from "../../src/pipeline/media-generation/external-keyframes.js";
 
@@ -21,7 +22,7 @@ function brief(): KeyframeBrief {
   const context = getKeyframeContext(db, dir, "shot");
   const reviewed=loadCrewBrief(db,dir,"project","planning");
   db.prepare("INSERT OR IGNORE INTO production_runs(id,project_id,phase,brief_hash,brief_json,status,result_json,created_at)VALUES('fixture-plan','project','planning',?,?,'approved',?,1)")
-    .run(crewBriefHash(reviewed,"planning"),JSON.stringify(reviewed),JSON.stringify({status:"approved",summary:"Synthetic fixture plan",calls:0,contributions:{production_director:{summary:"Synthetic",directions:[{shotId:"shot",instruction:"Retain fixture context",scriptureBasis:"Mark 2:1-2"}],findings:[],decision:"approve"}}}));
+    .run(crewBriefHash(reviewed,"planning"),JSON.stringify(reviewed),JSON.stringify({status:"approved",summary:"Synthetic fixture plan",calls:0,contributions:{creative_director:{summary:"Synthetic advance treatment",directions:[],findings:[],emotionalTreatment:fixtureTreatment(reviewed)},production_director:{summary:"Synthetic",directions:[{shotId:"shot",instruction:"Retain fixture context",scriptureBasis:"Mark 2:1-2"}],findings:[],decision:"approve"}}}));
   return { schemaVersion: 1, id: "test-attempt", createdAt: 1, context, productionRunId:"fixture-plan", contextHash: sha256(JSON.stringify(context)),
     sources: [], prompt: "16:9 test", promptHash: sha256("16:9 test"), rationale: "Test", generationInputs: [] };
 }

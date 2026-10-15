@@ -1,0 +1,6 @@
+{
+  "databaseSha256Unchanged": true,
+  "chapterRenderInventoryUnchanged": true,
+  "retainedRenderFileCount": 178,
+  "comparison": "Read-only live DB hash and chapter-render path/size/modification inventory before/after final validation. No production stage was run."
+}

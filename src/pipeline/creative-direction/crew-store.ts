@@ -8,6 +8,8 @@ import type { CrewBrief, CrewPhase, CrewResult, CrewContribution } from "./crew-
 import { saveDeliberationExport } from "./deliberation-export.js";
 import { canonReferenceMedia } from "./visual-reference-media.js";
 import { acceptedFilmDirection, newProductionRecord, same, type ProductionRecord } from "./production-record.js";
+import { emotionalDirection, validateEmotionalTreatment } from "./emotional-treatment.js";
+import { reserveCrewModelSpend, settleCrewModelSpend } from "./model-spend.js";
 
 export interface StoredCrewRun { id: string; project_id: string; phase: CrewPhase; brief_hash: string;
   brief_json: string; status: string; result_json: string | null; created_at: number }
@@ -76,7 +78,7 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
   }
   db.prepare(`INSERT INTO production_runs (id, project_id, phase, brief_hash, brief_json, status, result_json, created_at, worker_pid)
     VALUES (?, ?, ?, ?, ?, 'running', ?, ?, ?)`).run(id, projectId, phase, hash, JSON.stringify(brief),
-      JSON.stringify({status:"incomplete",summary:"Crew review started; retained objections remain current until explicitly resolved.",calls:0,contributions:{},productionRecord}),Date.now(),process.pid);
+      JSON.stringify({status:"incomplete",summary:"Crew review started; retained objections remain current until explicitly resolved.",calls:0,contributions:{},productionRecord,emotionalTreatmentRequired:phase==="planning"?true:undefined}),Date.now(),process.pid);
   let sequence = 0;
   let result: CrewResult;
   // Set only by the real default `call` below, from Gemini's own reported
@@ -86,6 +88,7 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
   // before making the next one (see crew.ts). Stays null for a
   // caller-supplied `call` (tests, recovery), same as before this change.
   let lastCallCostUsd: number | null = null;
+  let callReservation: {id:string;eventId:string} | null = null;
   try {
     result = await runCrew({ phase, brief, maxCalls: options.maxCalls, media: options.media, productionRecord,
       visualMedia: canonReferenceMedia(db, dataDir, brief),
@@ -95,8 +98,14 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
           throw new Error("Production inputs/revision changed during review; stale work is retained and no further call is authorized.");
         }
         if (options.call) return options.call(prompt,schema,media);
+        const role = prompt.match(/^You are HeartWord's (.*?)\. Phase:/)![1]!.replaceAll(" ", "_");
+        const round = prompt.match(/pass (\d)\/2/)![1]!;
+        const eventId = `${id}:${role}:${round}`;
+        lastCallCostUsd = 0; // A local pre-submission hold incurs no provider charge.
+        callReservation = {id:reserveCrewModelSpend(db,projectId,eventId),eventId};
+        lastCallCostUsd = null; // Submission/result/usage may now be uncertain.
         const metered = await generateJsonWithImagesMetered(prompt, media, schema);
-        lastCallCostUsd = metered.costUsd;
+        lastCallCostUsd = metered.usage?.totalTokenCount > 0 ? metered.costUsd : null;
         return metered.result;
       },
       log: event => {
@@ -106,16 +115,18 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
           (id, run_id, sequence, role, round, prompt, output_json, error, model, cost_usd, created_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(`${id}:${event.role}:${event.round}`, id, ++sequence, event.role,
             event.round, event.prompt, event.output ? JSON.stringify(event.output) : event.rejectedOutput===undefined ? null : JSON.stringify({summary:"Rejected malformed role reply; not a contribution or approval.",directions:[],findings:[],rejectedOutput:event.rejectedOutput}), event.error, GEMINI_TEXT_MODEL, costUsd, Date.now());
-        db.prepare("UPDATE production_runs SET result_json=? WHERE id=? AND status='running'").run(JSON.stringify({status:"incomplete",summary:"Review in progress; saved exchanges are not approval.",calls:sequence,contributions:{},productionRecord}),id);
+        db.prepare("UPDATE production_runs SET result_json=? WHERE id=? AND status='running'").run(JSON.stringify({status:"incomplete",summary:"Review in progress; saved exchanges are not approval.",calls:sequence,contributions:{},productionRecord,emotionalTreatmentRequired:phase==="planning"?true:undefined}),id);
         if (costUsd !== null) db.prepare(`INSERT INTO cost_ledger_entries (id, project_id, generation_attempt_id, amount_usd, created_at) VALUES (?, ?, NULL, ?, ?)`)
           .run(randomUUID(), projectId, costUsd, Date.now());
+        if (callReservation) settleCrewModelSpend(db,projectId,callReservation.id,callReservation.eventId,costUsd);
+        callReservation = null;
       } });
     // Reject a model result produced against inputs changed by another request.
     if ((!options.brief && crewBriefHash(loadCrewBrief(db, dataDir, projectId, phase), phase) !== hash) || latestCrewRun(db, projectId, phase)?.id !== id) {
       result = { ...result, status: "held", summary: "Production inputs changed during review. Run the crew against the current brief." };
     }
   } catch (error) {
-    result = { status: "incomplete", summary: (error as Error).message, calls: sequence, contributions: {}, productionRecord };
+    result = { status: "incomplete", summary: (error as Error).message, calls: sequence, contributions: {}, productionRecord, emotionalTreatmentRequired:phase==="planning"?true:undefined };
   }
   db.exec("BEGIN IMMEDIATE");
   try {
@@ -144,7 +155,7 @@ export function recoverInterruptedCrew(db: DatabaseSync, projectId: string, runI
       const calls = Number(db.prepare("SELECT COUNT(*) AS n FROM production_events WHERE run_id=?").get(runId)!.n);
       const prior=run.result_json?JSON.parse(String(run.result_json)) as CrewResult:undefined;
       if(prior?.productionRecord)prior.productionRecord.status="held";
-      const result: CrewResult = { status: "incomplete", summary: "The worker stopped before this review completed. Saved exchanges were retained; start a new review when ready.", calls, contributions:prior?.contributions??{},productionRecord:prior?.productionRecord };
+      const result: CrewResult = { status: "incomplete", summary: "The worker stopped before this review completed. Saved exchanges were retained; start a new review when ready.", calls, contributions:prior?.contributions??{},productionRecord:prior?.productionRecord,emotionalTreatmentRequired:prior?.emotionalTreatmentRequired };
       db.prepare("UPDATE production_runs SET status='incomplete',result_json=?,completed_at=? WHERE id=? AND status='running'").run(JSON.stringify(result), Date.now(), runId);
       return;
     } throw error; }
@@ -157,6 +168,9 @@ export function requireCurrentPlan(db: DatabaseSync, dataDir: string, projectId:
   const run = latestCrewRun(db, projectId, "planning");
   if (!run || run.status !== "approved") throw new Error("Run the production crew and resolve its findings before generating new media.");
   if (crewBriefHash(loadCrewBrief(db, dataDir, projectId, "planning"), "planning") !== run.brief_hash) throw new Error("The production plan is stale; review the changed source, canon or shot plan first.");
+  const result = JSON.parse(run.result_json!) as CrewResult;
+  if (!result?.contributions?.creative_director?.emotionalTreatment) throw new Error("Review an advance emotional treatment before generating new media; existing film assets and history remain retained.");
+  validateEmotionalTreatment(result.contributions.creative_director.emotionalTreatment, JSON.parse(run.brief_json) as CrewBrief);
   const record = productionRecordForRun(db,run);
   if (record && (record.revision !== run.id || record.briefHash !== run.brief_hash || record.status !== "accepted" || record.objections.some(o => o.status === "open" && o.severity === "blocking"))) {
     throw new Error("The saved production revision is not accepted or has unresolved blocking objections.");
@@ -319,5 +333,6 @@ export function directionsFromRun(run: StoredCrewRun, shotId: string, beatId?: s
   return `\n\nAPPROVED FILM DIRECTION (${run.id}):\n` +
     (record?.producerOverrideShotIds.includes(shotId) ? `Producer's saved edit controls this shot. ${shot.action}\n${shot.continuity ?? ""}\n${shot.lighting ?? ""}\n` : `production director: ${direction.instruction}\nPurpose: ${direction.scriptureBasis}\n`) +
     (record ? acceptedFilmDirection(record, shotId) : "") +
+    (record?.producerOverrideShotIds.includes(shotId) ? "\nEmotional treatment remains in history; the producer's saved shot edit takes precedence.\n" : emotionalDirection(result.contributions.creative_director?.emotionalTreatment, shotId)) +
     (beat ? `This is coverage beat ${beat.id}, not the whole parent action. Show only: ${beat.notes ?? beat.id}. Chosen subject: ${beat.characterId ?? "no singled-out character"}. Apply parent continuity only where visible in this angle.\n` : "");
 }

@@ -1,11 +1,12 @@
 import type { SavedCutTimingAudit } from "../assembly/cut-timing-audit.js";
 import type { EditorialCheck } from "../qc/editorial-review.js";
 import type { FilmChange, OwnerResponse, ObjectionResponse, ProductionRecord, SavedContribution } from "./production-record.js";
+import type { AcceptedEmotionalTreatment, EmotionalTreatment, EmotionalBeatCheck, TreatmentReview } from "./emotional-treatment.js";
 
 export const PLANNING_ROLES = [
   "creative_director", "cinematographer", "choreographer", "staging_designer",
   "production_designer", "costume_designer", "lighting_designer",
-  "script_supervisor", "picture_editor", "scripture_cultural_reviewer"
+  "script_supervisor", "picture_editor", "sound_designer", "composer", "scripture_cultural_reviewer"
 ] as const;
 export const FINISHING_ROLES = ["picture_editor", "script_supervisor", "colorist", "sound_designer", "composer",
   "scripture_cultural_reviewer"] as const;
@@ -30,6 +31,8 @@ export interface CrewShot {
   clip: { id: string; path: string; durationMs: number } | null;
 }
 export interface CrewBrief {
+  /** Read from the accepted planning run; never inferred for historical films. */
+  acceptedEmotionalTreatment?: AcceptedEmotionalTreatment;
   project: { id: string; language: string; book: string; chapter: number };
   source: { text: Array<{ verse: number; text: string }>; reference: Array<{ verse: number; text: string }>;
     hashes: string[] };
@@ -56,6 +59,9 @@ export interface CrewFinding {
   confidence: number; limitations: string;
 }
 export interface CrewContribution {
+  emotionalTreatment?: EmotionalTreatment;
+  treatmentReview?: TreatmentReview;
+  emotionalBeatChecks?: EmotionalBeatCheck[];
   summary: string;
   directions: Array<{ shotId: string; instruction: string; scriptureBasis: string }>;
   findings: CrewFinding[];
@@ -80,6 +86,8 @@ export interface CrewContribution {
 }
 export interface CrewEvent { role: CrewRole; round: number; prompt: string; output: CrewContribution | null; error: string | null; rejectedOutput?:unknown }
 export interface CrewResult {
+  /** Explicit new-run contract; absent on historical plans, never backfilled. */
+  emotionalTreatmentRequired?: true;
   status: "approved" | "awaiting_assets" | "held" | "incomplete"; summary: string; calls: number;
   contributions: Partial<Record<CrewRole, CrewContribution>>;
   productionRecord?: ProductionRecord;

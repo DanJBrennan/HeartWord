@@ -5,7 +5,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { parseNarratedParagraphTitles, parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
 import { discoverSourcePaths } from "../ingestion/source-catalog.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
-import type { CrewBrief, CrewPhase, CrewShot } from "./crew-types.js";
+import type { CrewBrief, CrewPhase, CrewShot, CrewResult } from "./crew-types.js";
 import { readCutTimingAudit } from "../assembly/cut-timing-audit.js";
 import { readConfirmedSpeechRuns, speechRunPauseIsSafe } from "../ingestion/continuous-speech.js";
 import { speechRunBinding } from "../voice-lipsync/speech-run-audio.js";
@@ -217,7 +217,19 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
       render.finishing = { baseRenderId: baseId, basePath: String(base.path), baseSha256: digest(readFileSync(productionAssetPath(dataDir, String(base.path)))), previousDecisions: JSON.parse(String(reviewed.result_json)).contributions };
     }
   }
-  return { project, source, audio, canon, shots, producerNotes, appliedLessons, spentUsd, audioAssets, render };
+  const brief: CrewBrief = { project, source, audio, canon, shots, producerNotes, appliedLessons, spentUsd, audioAssets, render };
+  if (phase !== "planning") {
+    const plan = db.prepare("SELECT id,brief_hash,status,result_json FROM production_runs WHERE project_id=? AND phase='planning' ORDER BY created_at DESC,rowid DESC LIMIT 1").get(projectId);
+    const result = plan?.result_json ? JSON.parse(String(plan.result_json)) as CrewResult : undefined;
+    const treatment = result?.contributions?.creative_director?.emotionalTreatment;
+    if (result?.emotionalTreatmentRequired && !treatment) throw new Error("Advance emotional treatment is incomplete; finish the current planning review before applying it to the cut.");
+    if (treatment) {
+      if (plan!.status !== "approved" || crewBriefHash(loadCrewBrief(db, dataDir, projectId, "planning"), "planning") !== plan!.brief_hash) throw new Error("Emotional treatment is held or stale; reconcile the current planning record before applying it.");
+      brief.acceptedEmotionalTreatment = { runId: String(plan!.id), briefHash: String(plan!.brief_hash), treatment,
+        producerOverrideShotIds: result?.productionRecord?.producerOverrideShotIds ?? [] };
+    }
+  }
+  return brief;
 }
 
 /** Spend, output clips and soundtrack additions do not invalidate visual planning. */
@@ -227,5 +239,6 @@ export function crewBriefHash(brief: CrewBrief, phase: CrewPhase): string {
   // editing/finishing run invalidate its own brief as soon as its first
   // metered call is recorded.
   if (phase !== "planning") return digest(JSON.stringify({ ...brief, spentUsd: 0 }));
-  return digest(JSON.stringify({ ...brief, spentUsd: 0, audioAssets: [], render: null, shots: brief.shots.map(s => ({ ...s, clip: null })) }));
+  const { acceptedEmotionalTreatment: _treatment, ...planning } = brief;
+  return digest(JSON.stringify({ ...planning, spentUsd: 0, audioAssets: [], render: null, shots: brief.shots.map(s => ({ ...s, clip: null })) }));
 }

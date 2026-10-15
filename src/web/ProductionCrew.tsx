@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 interface Run { id: string; phase: string; status: string; result_json: string | null; brief_json: string; calls: number; created_at: number }
 interface Event { id: string; role: string; round: number; prompt: string; output_json: string | null; error: string | null }
-import type { CrewContribution as Contribution } from "../pipeline/creative-direction/crew-types";
+import type { CrewContribution as Contribution, CrewResult } from "../pipeline/creative-direction/crew-types";
 import type { CutTimingAudit } from "../pipeline/assembly/cut-timing-audit";
 import type { ProductionRecord } from "../pipeline/creative-direction/production-record";
 interface Asset { id: string; kind: string; description: string; path: string }
@@ -80,10 +80,28 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
   }
   const running = busy || runs.some(r => r.status === "running");
   const finish = runs.find(r => r.phase === "finishing");
+  const plan = runs.find(r => r.phase === "planning");
+  const planResult = plan?.result_json ? JSON.parse(plan.result_json) as CrewResult : null;
+  const treatment = planResult?.contributions?.creative_director?.emotionalTreatment;
   return <section className="production-crew" aria-label="Production crew">
     <h2>Production crew</h2>
     <p>Plan the chapter together, review the assembled film, and inspect why each choice was made. Approved takes and the source recording are retained.</p>
     {backup && <p role="status"><strong>Disaster backup{backup.stale ? " overdue" : ""}:</strong> {backup.summary}</p>}
+    <section aria-label="Advance emotional treatment">
+      <h3>Advance emotional treatment · {plan?.status ?? "not planned"}</h3>
+      {treatment ? <>
+        <p>{treatment.progression}</p>
+        <p><strong>Verdict:</strong> {planResult?.summary} Passing reviews allow production to continue under the existing gates. Add corrections through chapter guidance below.</p>
+        {treatment.beats.map(beat => <details key={beat.id}><summary>{beat.sourceTrigger.verseRef} · {beat.audienceExperience}</summary>
+          <blockquote>{beat.sourceTrigger.quote}</blockquote><p>{beat.characterResponse}</p>
+          <p><strong>Intensity:</strong> {beat.intensity} <strong>Progression:</strong> {beat.progression}</p>
+          <p><strong>Picture:</strong> {beat.filmableMeans}</p><p>{beat.limitations}</p>
+          <p>Shots: {beat.shotIds.join(", ")}{productionRecord?.producerOverrideShotIds.some(id => beat.shotIds.includes(id)) ? " · Producer edits take precedence over earlier craft direction." : ""}</p>
+        </details>)}
+        <details><summary>Pause and sound purposes, timing, coverage and cost</summary><pre>{JSON.stringify({pauses:treatment.pauses,cues:treatment.cues},null,2)}</pre></details>
+        <details><summary>Treatment reviews</summary>{Object.entries(planResult?.contributions ?? {}).filter(([, c]) => c?.treatmentReview).map(([role,c]) => <p key={role}><strong>{role.replaceAll("_"," ")} · {c!.treatmentReview!.status}:</strong> {c!.treatmentReview!.evidence} {c!.treatmentReview!.requestedChange}</p>)}</details>
+      </> : <p>No advance treatment recorded for this plan. Previous film records remain available in review history.</p>}
+    </section>
     {productionRecord && <section aria-label="Saved production revision">
       <h3>Saved production revision · {productionRecord.status}</h3>
       <p>{productionRecord.revision}{productionRecord.parentRevision ? ` · Previous: ${productionRecord.parentRevision}` : ""}</p>
@@ -105,14 +123,14 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
       <p>{timingAudit.picture.length} picture intervals recorded. These observations do not approve the film or enable automatic finishing.</p>
     </details>}
     <div className="crew-actions">
-      <button disabled={running} onClick={() => void act("plan", { maxCalls: 24 })}>{running ? "Crew working…" : "Create / review storyboard"}</button>
+      <button disabled={running} onClick={() => void act("plan", { maxCalls: 30 })}>{running ? "Crew working…" : "Create / review storyboard"}</button>
       <button disabled={running} onClick={() => void act("review-cut", { maxCalls: 16 })}>Review assembled cut</button>
       <button disabled={running} onClick={() => void act("edit-cut")}>Build Picture Editor cut</button>
       <button disabled={running || finish?.status !== "awaiting_assets"} onClick={() => finish && void act(`soundtrack/${finish.id}`)}>Generate requested music / effects</button>
       <button disabled={running || finish?.status !== "approved"} onClick={() => finish && void act(`finish/${finish.id}`)}>Apply approved finishing</button>
       <button disabled={busy} onClick={() => void act("preservation")}>Preserve chapter for later editing</button>
     </div>
-    <p className="hint">Planning allows up to 24 role calls; cut review allows up to 16. Music uses Google Gemini; effects use ElevenLabs, with at most eight audio generations per request and an independent listening review. Provider charges apply. Unreported costs are not counted as free.</p>
+    <p className="hint">Planning allows up to 30 role calls, including sound, music and critic review of revisions; cut review allows up to 16. Music uses Google Gemini; effects use ElevenLabs, with at most eight audio generations per request and an independent listening review. Provider charges apply. Unreported costs are not counted as free.</p>
     {error && <p role="alert" className="error">{error}</p>}
     {notice && <p role="status">{notice}</p>}
     <label>Producer guidance / decision<textarea value={guidance} onChange={e => setGuidance(e.target.value)} placeholder="A scoped correction, creative preference, or decision for the next review" /></label>
@@ -138,6 +156,8 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
             {output && <><p>{output.summary}</p>
               {output.findings.map((f, i) => <p key={i}><strong>{f.severity}{f.shotId ? ` · ${f.shotId}` : ""}:</strong> {f.evidence}<br />Confidence: {typeof f.confidence === "number" ? `${f.confidence}/100 agent estimate (uncalibrated)` : "not reported (legacy record)"}<br />Limitations: {f.limitations ?? "not reported (legacy record)"}<br />Requested change: {f.requestedChange}</p>)}
               {output.coverageRequests?.map((c, i) => <p key={i}>Coverage needed: {(c.additionalMs / 1000).toFixed(1)}s · {c.description} · {c.reason}</p>)}
+              {output.treatmentReview && <p><strong>Treatment · {output.treatmentReview.status}:</strong> {output.treatmentReview.evidence} {output.treatmentReview.requestedChange}<br />{output.treatmentReview.limitations}</p>}
+              {output.emotionalBeatChecks?.map(c => <p key={c.beatId}><strong>Effect · {c.beatId} · {c.status}:</strong> {c.startMs / 1000}–{c.endMs / 1000}s · {c.evidence}<br />{c.requestedChange} · {c.limitations}</p>)}
               {output.pauses?.map((p, i) => <p key={`pause-${i}`}>Breathing room: {p.durationMs / 1000}s · {p.reason}</p>)}
               {output.edits?.length ? <p>{output.edits.length} shots selected, {output.edits.reduce((sum, e) => sum + e.durationMs, 0) / 1000}s of footage.</p> : null}
               {output.generationRequests?.map((g, i) => <p key={`request-${i}`}><strong>Generate {event.role === "composer" ? "music" : "sound effect"}:</strong> {g.prompt}<br />At {g.startMs / 1000}s for {g.durationMs / 1000}s, {g.gainDb} dB{g.loop ? ", seamless loop" : ""}. {g.reason}</p>)}

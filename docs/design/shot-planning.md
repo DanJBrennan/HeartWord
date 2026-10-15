@@ -89,6 +89,67 @@ must confirm the source recording plays fully before any post-source tail.
 
 ## Manual Trigger
 
+### Advance emotional treatment (implemented 2026-10-14)
+
+Normal chapter planning now requires Rufus's versioned `emotionalTreatment`
+inside the existing crew contribution/run. It records the chapter's progression
+and ordered major passage beats: exact supplied source/reference trigger,
+linked shots, intended audience experience, character response, qualitative
+intensity, filmable means, the transition from the preceding beat and limitations.
+Every source verse and planned shot must be represented; that coverage check
+does not prove that the interpretation or beat divisions are good. The existing
+specialists and independent critics judge those choices.
+
+Consider motivated close-ups, anticipation, reactions, context/establishing
+views, openings/endings, ambience, musical entrances/releases and wordless
+space. Explain selected and omitted options. A 24-second introduction or
+pull-away ending is an example to justify for a passage, never a quota. Existing
+separate opening/ending plans and producer corrections remain controlling.
+
+Each proposed pause names its beat, complete source-segment boundary, duration,
+purpose, timing basis, wordless coverage shots/need and cost implication. Internal
+continuous-speech boundaries still require independent safe-boundary evidence;
+an exact supplied speaking performance cannot be split by a proposed pause.
+Unassigned source intervals are not safe-pause evidence. Unknown necessary
+timing raises a finding, rather than being guessed from English. Stretch means
+additional presentation time through safe pauses and picture, preserving all
+spoken wording, order and speed. A speaking face cannot fill that extra space.
+
+Each music/ambience cue carries beat, purpose, timing basis, entrance, release,
+coverage need, cost implication and speech-priority direction. Continuous or
+sectional music is permitted when scene/action appropriate. Fuller music may
+use suitable speech-free moments. Transitions, levels, arrangement and mobile
+clarity remain reviewable; ambience cannot introduce invented dialogue.
+Treatment cue timing is intent, not another executable timeline or permission
+to generate an asset.
+
+Nell, Sam and Composer participate before keyframes alongside Miriam and
+Ada/Theo/Cora. Their explicit treatment verdicts and the Director's decision
+are saved in the existing events/results. A concern or unverified assessment
+becomes an existing blocking objection; clearing it needs the original owner's
+explicit evidenced resolution. Both bounded planning passes include critics,
+so a revised treatment is challenged before acceptance. There are at most
+30 calls, no additional pass and no routine producer chapter-plan signature.
+
+New generation requires a current accepted treatment. Its relevant beats and
+pause/cue intent accompany reconciled Director/FDL direction; producer shot
+overrides take precedence. Existing accepted assets are retained without
+regeneration. Later editing/finishing briefs pin the treatment to the accepted
+planning run/hash and consume the same saved record for manual/autonomous
+triggers. Nell applies pauses/picture through the existing editorial objects;
+Sam/Composer resolve sound cues against the actual spaced cut. Finishing
+requires Nell's timestamped effect verdict for every beat and Sam/Composer's
+actual-cut assessment of fit, transitions, levels, release and mobile clarity.
+Insufficient evidence holds; a proxy never proves native-language, real-device,
+field or release approval. Producer guidance and immutable successors retain
+the same correction/history workflow.
+
+The Production Crew panel shows the advance plan, current run status/verdict,
+pause/cue costs and specialist reviews before keyframes. No demo conversation
+is adopted into a production by this feature. Synthetic tests/proofs are not
+live film decisions; any optional demo-agent transfer still requires a summary
+and Dan's explicit adoption.
+
 Alongside the autonomous default (HeartWord proposes a storyboard and shot
 plan on its own, per `docs/PRODUCT_VISION.md`'s Product Behavior and Quality
 Standard), the UI should provide an explicit **"Create Storyboard"** action

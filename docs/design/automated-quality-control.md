@@ -143,6 +143,21 @@ must be reported as unverified. In particular, a dramatic pause may be
 suggested only when source timing and producer direction support it; QC never
 inserts silence into a source utterance on its own.
 
+Advance-treatment extension (October 14): for new plans with an accepted
+emotional treatment, Nell additionally returns `emotionalBeatChecks`, one
+actual-cut timestamped effect assessment per accepted beat. Missing, duplicate,
+foreign or unverified beat evidence cannot approve a cut. Sam and Composer
+return treatment verdicts for scene fit, cue transitions/levels/releases,
+speech priority and mobile listening clarity. These extend existing finishing
+contributions, findings and holds; the eight-item rubric remains intact.
+Metadata and scripted fixture replies do not establish dramatic success or
+real-phone approval. Existing accepted treatment/run/hash accompanies the cut.
+
+New soundtrack listening reviews also require `speechDetected=false`, separate
+from `intelligibleSpeech=false`: unintelligible voices/gibberish remain speech
+and hold ambience/music admission. Historical accepted sound assets are not
+retroactively relabelled. Source/cast speech stays independent of these assets.
+
 - A speaking turn that becomes active again after a substantial pause, then
   ends abruptly on that new onset. Check the actual rendered speech asset at
   speaker changes and chapter end, not at every visual cut; allow a continuing
