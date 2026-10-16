@@ -1,0 +1,18 @@
+{
+  "purpose": "isolated saved-state browser walkthrough",
+  "synthetic": true,
+  "source": "actual CreativeFeedback React component rendered from the tested saved result",
+  "reopenedFromDisk": true,
+  "verified": [
+    "selected earlier acceptable pass",
+    "plateau stop reason",
+    "hard checks separate from craft scores",
+    "confidence and limitations separate from quality",
+    "routed finding and response IDs",
+    "expand and collapse"
+  ],
+  "screenshot": "outputs/creative-feedback-browser-proof.png",
+  "productionDataConnected": false,
+  "providerCalls": 0,
+  "numericCalibrationClaim": false
+}

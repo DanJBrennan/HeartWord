@@ -7,7 +7,7 @@ import { crewBriefHash, loadCrewBrief } from "./crew-context.js";
 import { runCrew, type CrewRunnerOptions } from "./crew.js";
 import type { CrewBrief, CrewPhase, CrewResult, CrewContribution } from "./crew-types.js";
 import { saveDeliberationExport } from "./deliberation-export.js";
-import { canonReferenceMedia } from "./visual-reference-media.js";
+import { canonReferenceMedia, acceptedCoverageMedia } from "./visual-reference-media.js";
 import { acceptedFilmDirection, newProductionRecord, same, type ProductionRecord } from "./production-record.js";
 import { emotionalDirection, validateEmotionalTreatment } from "./emotional-treatment.js";
 import { reserveCrewModelSpend, settleCrewModelSpend } from "./model-spend.js";
@@ -92,7 +92,10 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
   let lastCallCostUsd: number | null = null;
   let callReservation: {id:string;eventId:string} | null = null;
   try {
-    result = await runCrew({ phase, brief, maxCalls: options.maxCalls, media: options.media, productionRecord,
+    const configuredBound = Number(process.env.HEARTWORD_CREW_CALL_UPPER_BOUND_USD);
+    result = await runCrew({ phase, brief, maxCalls: options.maxCalls, media: options.media, productionRecord, creativeFeedback: true,
+      callUpperBoundUsd: options.call ? null : Number.isFinite(configuredBound) && configuredBound > 0 ? configuredBound : null,
+      coverageMedia: phase === "editing" ? acceptedCoverageMedia(dataDir,brief) : [],
       visualMedia: canonReferenceMedia(db, dataDir, brief),
       call: async (prompt, schema, media) => {
         lastCallCostUsd = null;

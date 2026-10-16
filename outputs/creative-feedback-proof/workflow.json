@@ -1,0 +1,2911 @@
+{
+  "synthetic": true,
+  "productionDataConnected": false,
+  "providerCalls": 0,
+  "reopenedFromDisk": true,
+  "result": {
+    "status": "approved",
+    "summary": "Plateau: no comparable dimension improved without regression; retain the best acceptable pass. Selected pass 1. Creative shortfall remains visible in retained findings.",
+    "calls": 30,
+    "contributions": {
+      "creative_director": {
+        "summary": "creative_director fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "creativeResponses": [],
+        "emotionalTreatment": {
+          "version": 1,
+          "progression": "Synthetic chapter: orient to the stated event, observe the response, allow reflection. Real progression requires source review.",
+          "beats": [
+            {
+              "id": "beat-1",
+              "shotIds": [
+                "s"
+              ],
+              "sourceTrigger": {
+                "verseRef": "mark 5:1",
+                "textKind": "reference",
+                "quote": "Supplied event"
+              },
+              "audienceExperience": "Follow the stated event clearly",
+              "characterResponse": "Restrained listening to the supplied event",
+              "intensity": "Restrained",
+              "filmableMeans": "Use the planned angle; do not add an event",
+              "progression": "Retain source order and the next turn",
+              "limitations": "Synthetic fixture, not linguistic or dramatic proof"
+            }
+          ],
+          "pauses": [],
+          "cues": []
+        },
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:creative_director:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "creative_director",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "creative_director fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:creative_director:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      },
+      "scripture_cultural_reviewer": {
+        "summary": "scripture_cultural_reviewer fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "creativeResponses": [],
+        "treatmentReview": {
+          "status": "clear",
+          "evidence": "Synthetic treatment checked against the supplied fixture; not a real film review.",
+          "requestedChange": "None for this fixture.",
+          "confidence": 88,
+          "limitations": "Scripted fixture only; no Hatam or mobile listening approval."
+        },
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:scripture_cultural_reviewer:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "scripture_cultural_reviewer",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "scripture_cultural_reviewer fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:scripture_cultural_reviewer:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      },
+      "cinematographer": {
+        "summary": "cinematographer fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "creativeResponses": [],
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:cinematographer:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "cinematographer",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "cinematographer fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:cinematographer:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      },
+      "choreographer": {
+        "summary": "choreographer fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "creativeResponses": [],
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:choreographer:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "choreographer",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "choreographer fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:choreographer:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      },
+      "staging_designer": {
+        "summary": "staging_designer fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "creativeResponses": [],
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:staging_designer:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "staging_designer",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "staging_designer fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:staging_designer:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      },
+      "costume_designer": {
+        "summary": "costume_designer fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "creativeResponses": [],
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:costume_designer:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "costume_designer",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "costume_designer fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:costume_designer:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      },
+      "lighting_designer": {
+        "summary": "lighting_designer fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "creativeResponses": [],
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:lighting_designer:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "lighting_designer",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "lighting_designer fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:lighting_designer:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      },
+      "script_supervisor": {
+        "summary": "script_supervisor fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "creativeResponses": [],
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:script_supervisor:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "script_supervisor",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "script_supervisor fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:script_supervisor:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      },
+      "sound_designer": {
+        "summary": "sound_designer fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "audioCues": [],
+        "generationRequests": [],
+        "creativeResponses": [],
+        "treatmentReview": {
+          "status": "clear",
+          "evidence": "Synthetic treatment checked against the supplied fixture; not a real film review.",
+          "requestedChange": "None for this fixture.",
+          "confidence": 88,
+          "limitations": "Scripted fixture only; no Hatam or mobile listening approval."
+        },
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:sound_designer:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "sound_designer",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "sound_designer fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:sound_designer:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      },
+      "composer": {
+        "summary": "composer fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "audioCues": [],
+        "generationRequests": [],
+        "creativeResponses": [],
+        "treatmentReview": {
+          "status": "clear",
+          "evidence": "Synthetic treatment checked against the supplied fixture; not a real film review.",
+          "requestedChange": "None for this fixture.",
+          "confidence": 88,
+          "limitations": "Scripted fixture only; no Hatam or mobile listening approval."
+        },
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:composer:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "composer",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "composer fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:composer:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      },
+      "picture_editor": {
+        "summary": "picture_editor fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "coverageRequests": [],
+        "edits": [],
+        "pauses": [],
+        "editorialChecks": [],
+        "craftAssessment": {
+          "rubric": "heartword-craft-v1",
+          "recommendation": "revise",
+          "dimensions": [
+            {
+              "name": "clarity",
+              "score": 2,
+              "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+              "shotIds": [],
+              "startMs": null,
+              "endMs": null,
+              "confidence": 80,
+              "limitations": "Scripted fixture; no audience or field inference."
+            },
+            {
+              "name": "emotional_development",
+              "score": 2,
+              "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+              "shotIds": [],
+              "startMs": null,
+              "endMs": null,
+              "confidence": 80,
+              "limitations": "Scripted fixture; no audience or field inference."
+            },
+            {
+              "name": "pacing",
+              "score": 2,
+              "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+              "shotIds": [],
+              "startMs": null,
+              "endMs": null,
+              "confidence": 80,
+              "limitations": "Scripted fixture; no audience or field inference."
+            },
+            {
+              "name": "continuity",
+              "score": 2,
+              "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+              "shotIds": [],
+              "startMs": null,
+              "endMs": null,
+              "confidence": 80,
+              "limitations": "Scripted fixture; no audience or field inference."
+            },
+            {
+              "name": "feasibility",
+              "score": 2,
+              "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+              "shotIds": [],
+              "startMs": null,
+              "endMs": null,
+              "confidence": 80,
+              "limitations": "Scripted fixture; no audience or field inference."
+            }
+          ],
+          "concerns": [
+            {
+              "owner": "creative_director",
+              "shotId": "s",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "requestedChange": "Give the transition a source-grounded visual purpose."
+            }
+          ]
+        },
+        "creativeResponses": [],
+        "treatmentReview": {
+          "status": "clear",
+          "evidence": "Synthetic treatment checked against the supplied fixture; not a real film review.",
+          "requestedChange": "None for this fixture.",
+          "confidence": 88,
+          "limitations": "Scripted fixture only; no Hatam or mobile listening approval."
+        },
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:picture_editor:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "picture_editor",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "picture_editor fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:picture_editor:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      },
+      "fidelity_challenger": {
+        "summary": "fidelity_challenger fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "creativeResponses": [],
+        "treatmentReview": {
+          "status": "clear",
+          "evidence": "Synthetic treatment checked against the supplied fixture; not a real film review.",
+          "requestedChange": "None for this fixture.",
+          "confidence": 88,
+          "limitations": "Scripted fixture only; no Hatam or mobile listening approval."
+        },
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:fidelity_challenger:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "fidelity_challenger",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "fidelity_challenger fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:fidelity_challenger:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      },
+      "clarity_challenger": {
+        "summary": "clarity_challenger fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "creativeResponses": [],
+        "treatmentReview": {
+          "status": "clear",
+          "evidence": "Synthetic treatment checked against the supplied fixture; not a real film review.",
+          "requestedChange": "None for this fixture.",
+          "confidence": 88,
+          "limitations": "Scripted fixture only; no Hatam or mobile listening approval."
+        },
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:clarity_challenger:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "clarity_challenger",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "clarity_challenger fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:clarity_challenger:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      },
+      "feasibility_challenger": {
+        "summary": "feasibility_challenger fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "creativeResponses": [],
+        "treatmentReview": {
+          "status": "clear",
+          "evidence": "Synthetic treatment checked against the supplied fixture; not a real film review.",
+          "requestedChange": "None for this fixture.",
+          "confidence": 88,
+          "limitations": "Scripted fixture only; no Hatam or mobile listening approval."
+        },
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:feasibility_challenger:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "feasibility_challenger",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "feasibility_challenger fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:feasibility_challenger:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      },
+      "production_director": {
+        "summary": "production_director fixture",
+        "directions": [
+          {
+            "shotId": "s",
+            "instruction": "Original instruction",
+            "scriptureBasis": "Mark 5:1"
+          }
+        ],
+        "findings": [],
+        "filmChanges": [],
+        "ownerResponses": [],
+        "objectionResponses": [],
+        "withdrawals": [],
+        "decision": "approve",
+        "decisionConfidence": 80,
+        "decisionLimitations": "Fixture only.",
+        "acceptedContributionIds": [],
+        "acceptanceChecks": {
+          "status": "clear",
+          "evidence": "Synthetic applicable acceptance checks; not actual production approval."
+        },
+        "creativeResponses": [],
+        "exchange": [
+          {
+            "id": "87d58d49-f468-48ae-95f8-07ad8476d828:production_director:1",
+            "kind": "proposal",
+            "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+            "owner": "production_director",
+            "scope": {
+              "projectId": "p",
+              "sceneIds": [
+                "scene"
+              ],
+              "shotIds": [
+                "s"
+              ],
+              "verseRefs": [
+                "Mark 5:1"
+              ],
+              "audioBindingRefs": []
+            },
+            "proposedChanges": [],
+            "rationale": "production_director fixture",
+            "evidence": [
+              {
+                "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:production_director:1",
+                "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+              }
+            ],
+            "objections": [],
+            "destination": {
+              "roles": [
+                "production_director"
+              ],
+              "stage": "casting",
+              "subjectId": "p"
+            },
+            "relatedContributions": [],
+            "supersedes": null,
+            "finding": null,
+            "resolution": null
+          }
+        ]
+      }
+    },
+    "creativeFeedback": {
+      "version": 1,
+      "rubric": "heartword-craft-v1",
+      "policy": "continue_best_acceptable",
+      "scope": "5783cc24dc9492405c35761cde8ebdc52453c20bf23ddf98cc4de4c4f71901c6",
+      "milestone": "planning",
+      "maxPasses": 2,
+      "maxCalls": 30,
+      "callUpperBoundUsd": null,
+      "reviewUpperBoundUsd": null,
+      "passes": [
+        {
+          "round": 1,
+          "assessment": {
+            "rubric": "heartword-craft-v1",
+            "recommendation": "revise",
+            "dimensions": [
+              {
+                "name": "clarity",
+                "score": 2,
+                "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+                "shotIds": [],
+                "startMs": null,
+                "endMs": null,
+                "confidence": 80,
+                "limitations": "Scripted fixture; no audience or field inference."
+              },
+              {
+                "name": "emotional_development",
+                "score": 2,
+                "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+                "shotIds": [],
+                "startMs": null,
+                "endMs": null,
+                "confidence": 80,
+                "limitations": "Scripted fixture; no audience or field inference."
+              },
+              {
+                "name": "pacing",
+                "score": 2,
+                "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+                "shotIds": [],
+                "startMs": null,
+                "endMs": null,
+                "confidence": 80,
+                "limitations": "Scripted fixture; no audience or field inference."
+              },
+              {
+                "name": "continuity",
+                "score": 2,
+                "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+                "shotIds": [],
+                "startMs": null,
+                "endMs": null,
+                "confidence": 80,
+                "limitations": "Scripted fixture; no audience or field inference."
+              },
+              {
+                "name": "feasibility",
+                "score": 2,
+                "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+                "shotIds": [],
+                "startMs": null,
+                "endMs": null,
+                "confidence": 80,
+                "limitations": "Scripted fixture; no audience or field inference."
+              }
+            ],
+            "concerns": [
+              {
+                "owner": "creative_director",
+                "shotId": "s",
+                "evidence": "The supplied event's transition is abrupt in the treatment.",
+                "requestedChange": "Give the transition a source-grounded visual purpose."
+              }
+            ]
+          },
+          "score": 50,
+          "hardChecks": "passed",
+          "concerns": [
+            {
+              "owner": "creative_director",
+              "shotId": "s",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "requestedChange": "Give the transition a source-grounded visual purpose.",
+              "id": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0"
+            }
+          ],
+          "responses": [],
+          "reason": "Applicable acceptance checks passed; craft quality and confidence remain separate."
+        },
+        {
+          "round": 2,
+          "assessment": {
+            "rubric": "heartword-craft-v1",
+            "recommendation": "revise",
+            "dimensions": [
+              {
+                "name": "clarity",
+                "score": 2,
+                "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+                "shotIds": [],
+                "startMs": null,
+                "endMs": null,
+                "confidence": 80,
+                "limitations": "Scripted fixture; no audience or field inference."
+              },
+              {
+                "name": "emotional_development",
+                "score": 2,
+                "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+                "shotIds": [],
+                "startMs": null,
+                "endMs": null,
+                "confidence": 80,
+                "limitations": "Scripted fixture; no audience or field inference."
+              },
+              {
+                "name": "pacing",
+                "score": 2,
+                "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+                "shotIds": [],
+                "startMs": null,
+                "endMs": null,
+                "confidence": 80,
+                "limitations": "Scripted fixture; no audience or field inference."
+              },
+              {
+                "name": "continuity",
+                "score": 2,
+                "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+                "shotIds": [],
+                "startMs": null,
+                "endMs": null,
+                "confidence": 80,
+                "limitations": "Scripted fixture; no audience or field inference."
+              },
+              {
+                "name": "feasibility",
+                "score": 2,
+                "evidence": "Synthetic supplied plan/coverage examined; not real film evidence.",
+                "shotIds": [],
+                "startMs": null,
+                "endMs": null,
+                "confidence": 80,
+                "limitations": "Scripted fixture; no audience or field inference."
+              }
+            ],
+            "concerns": [
+              {
+                "owner": "creative_director",
+                "shotId": "s",
+                "evidence": "The supplied event's transition is abrupt in the treatment.",
+                "requestedChange": "Give the transition a source-grounded visual purpose."
+              }
+            ]
+          },
+          "score": 50,
+          "hardChecks": "passed",
+          "concerns": [
+            {
+              "owner": "creative_director",
+              "shotId": "s",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "requestedChange": "Give the transition a source-grounded visual purpose.",
+              "id": "87d58d49-f468-48ae-95f8-07ad8476d828:2:craft:0"
+            }
+          ],
+          "responses": [
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "creative_director"
+            },
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "scripture_cultural_reviewer"
+            },
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "cinematographer"
+            },
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "choreographer"
+            },
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "staging_designer"
+            },
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "costume_designer"
+            },
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "lighting_designer"
+            },
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "script_supervisor"
+            },
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "sound_designer"
+            },
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "composer"
+            },
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "picture_editor"
+            },
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "fidelity_challenger"
+            },
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "clarity_challenger"
+            },
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "feasibility_challenger"
+            },
+            {
+              "findingId": "87d58d49-f468-48ae-95f8-07ad8476d828:1:craft:0",
+              "change": "Fixture owner revises the affected instruction and retains source/canon.",
+              "evidence": "The supplied event's transition is abrupt in the treatment.",
+              "owner": "production_director"
+            }
+          ],
+          "reason": "Applicable acceptance checks passed; craft quality and confidence remain separate."
+        }
+      ],
+      "selectedRound": 1,
+      "stopReason": "Plateau: no comparable dimension improved without regression; retain the best acceptable pass."
+    },
+    "emotionalTreatmentRequired": true,
+    "productionRecord": {
+      "version": 1,
+      "revision": "87d58d49-f468-48ae-95f8-07ad8476d828",
+      "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+      "parentRevision": null,
+      "briefHash": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+      "status": "accepted",
+      "snapshots": [
+        {
+          "fdlVersion": 2,
+          "purpose": "production",
+          "revision": "87d58d49-f468-48ae-95f8-07ad8476d828:scene",
+          "parentRevision": null,
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "context": {
+            "projectId": "p",
+            "sceneId": "scene",
+            "briefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8"
+          },
+          "prose": "Saved chapter intent beside prose. Scripture, measured source/cast audio, approved regional identity, producer decisions and accepted assets remain controlling. Unknowns are not permission to invent facts.",
+          "world": [
+            {
+              "id": "c",
+              "kind": "character",
+              "recordRefs": [
+                {
+                  "table": "character_versions",
+                  "id": "v",
+                  "version": "v",
+                  "snapshotSha256": null
+                }
+              ],
+              "facts": {
+                "appearance": {
+                  "value": "Use the exact approved Papuan video identity and references. Locked wardrobe",
+                  "units": "none",
+                  "status": "approved",
+                  "owner": "casting_canon",
+                  "reason": "Retain the supplied saved production decision; do not infer additional detail.",
+                  "evidence": [
+                    {
+                      "ref": "character_versions:v",
+                      "limitations": "Saved intent/reference, not proof of generated pixels or new source/canon approval."
+                    }
+                  ],
+                  "approvalRecord": "character_versions:v"
+                },
+                "garment": {
+                  "value": "Locked wardrobe",
+                  "units": "none",
+                  "status": "approved",
+                  "owner": "casting_canon",
+                  "reason": "Retain the supplied saved production decision; do not infer additional detail.",
+                  "evidence": [
+                    {
+                      "ref": "character_versions:v",
+                      "limitations": "Saved intent/reference, not proof of generated pixels or new source/canon approval."
+                    }
+                  ],
+                  "approvalRecord": "character_versions:v"
+                }
+              }
+            },
+            {
+              "id": "set:scene",
+              "kind": "set",
+              "recordRefs": [
+                {
+                  "table": "production_runs",
+                  "id": "87d58d49-f468-48ae-95f8-07ad8476d828",
+                  "version": "87d58d49-f468-48ae-95f8-07ad8476d828",
+                  "snapshotSha256": null
+                }
+              ],
+              "facts": {
+                "architecture": {
+                  "value": null,
+                  "units": "none",
+                  "status": "unknown",
+                  "owner": "staging_designer",
+                  "reason": "Not established by saved production evidence.",
+                  "evidence": [
+                    {
+                      "ref": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief",
+                      "limitations": "Saved intent/reference, not proof of generated pixels or new source/canon approval."
+                    }
+                  ],
+                  "approvalRecord": null
+                },
+                "hiddenGeometry": {
+                  "value": null,
+                  "units": "none",
+                  "status": "unknown",
+                  "owner": "staging_designer",
+                  "reason": "Not established by saved production evidence.",
+                  "evidence": [
+                    {
+                      "ref": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief",
+                      "limitations": "Saved intent/reference, not proof of generated pixels or new source/canon approval."
+                    }
+                  ],
+                  "approvalRecord": null
+                }
+              }
+            }
+          ],
+          "states": [
+            {
+              "id": "state:s",
+              "worldIds": [
+                "c",
+                "set:scene"
+              ],
+              "facts": {
+                "performance": {
+                  "value": "Supplied event",
+                  "units": "none",
+                  "status": "approved",
+                  "owner": "creative_director",
+                  "reason": "Retain the supplied saved production decision; do not infer additional detail.",
+                  "evidence": [
+                    {
+                      "ref": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief",
+                      "limitations": "Saved intent/reference, not proof of generated pixels or new source/canon approval."
+                    }
+                  ],
+                  "approvalRecord": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:acceptance"
+                },
+                "light.direction": {
+                  "value": null,
+                  "units": "none",
+                  "status": "unknown",
+                  "owner": "lighting_designer",
+                  "reason": "Not established by saved production evidence.",
+                  "evidence": [
+                    {
+                      "ref": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief",
+                      "limitations": "Saved intent/reference, not proof of generated pixels or new source/canon approval."
+                    }
+                  ],
+                  "approvalRecord": null
+                },
+                "c.pose": {
+                  "value": null,
+                  "units": "none",
+                  "status": "unknown",
+                  "owner": "choreographer",
+                  "reason": "Not established by saved production evidence.",
+                  "evidence": [
+                    {
+                      "ref": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief",
+                      "limitations": "Saved intent/reference, not proof of generated pixels or new source/canon approval."
+                    }
+                  ],
+                  "approvalRecord": null
+                },
+                "c.gaze": {
+                  "value": null,
+                  "units": "none",
+                  "status": "unknown",
+                  "owner": "choreographer",
+                  "reason": "Not established by saved production evidence.",
+                  "evidence": [
+                    {
+                      "ref": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief",
+                      "limitations": "Saved intent/reference, not proof of generated pixels or new source/canon approval."
+                    }
+                  ],
+                  "approvalRecord": null
+                }
+              }
+            }
+          ],
+          "shots": [
+            {
+              "id": "s",
+              "recordRefs": [
+                {
+                  "table": "shots",
+                  "id": "s",
+                  "version": null,
+                  "snapshotSha256": "65c5a47dec91d763d047149e693ff39475c93e5c7c7382e9f01d54093f67863c"
+                }
+              ],
+              "facts": {
+                "framing": {
+                  "value": "wide",
+                  "units": "none",
+                  "status": "approved",
+                  "owner": "cinematographer",
+                  "reason": "Retain the supplied saved production decision; do not infer additional detail.",
+                  "evidence": [
+                    {
+                      "ref": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief",
+                      "limitations": "Saved intent/reference, not proof of generated pixels or new source/canon approval."
+                    }
+                  ],
+                  "approvalRecord": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:acceptance"
+                },
+                "cameraPosition": {
+                  "value": null,
+                  "units": "none",
+                  "status": "unknown",
+                  "owner": "cinematographer",
+                  "reason": "Not established by saved production evidence.",
+                  "evidence": [
+                    {
+                      "ref": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief",
+                      "limitations": "Saved intent/reference, not proof of generated pixels or new source/canon approval."
+                    }
+                  ],
+                  "approvalRecord": null
+                },
+                "cameraMovement": {
+                  "value": "static",
+                  "units": "none",
+                  "status": "approved",
+                  "owner": "cinematographer",
+                  "reason": "Retain the supplied saved production decision; do not infer additional detail.",
+                  "evidence": [
+                    {
+                      "ref": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief",
+                      "limitations": "Saved intent/reference, not proof of generated pixels or new source/canon approval."
+                    }
+                  ],
+                  "approvalRecord": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:acceptance"
+                },
+                "continuity": {
+                  "value": null,
+                  "units": "none",
+                  "status": "unknown",
+                  "owner": "script_supervisor",
+                  "reason": "Not established by saved production evidence.",
+                  "evidence": [
+                    {
+                      "ref": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief",
+                      "limitations": "Saved intent/reference, not proof of generated pixels or new source/canon approval."
+                    }
+                  ],
+                  "approvalRecord": null
+                },
+                "crowdDensity": {
+                  "value": null,
+                  "units": "none",
+                  "status": "unknown",
+                  "owner": "staging_designer",
+                  "reason": "Not established by saved production evidence.",
+                  "evidence": [
+                    {
+                      "ref": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief",
+                      "limitations": "Saved intent/reference, not proof of generated pixels or new source/canon approval."
+                    }
+                  ],
+                  "approvalRecord": null
+                }
+              }
+            }
+          ],
+          "keyframes": [],
+          "clips": [],
+          "extensions": {
+            "bibleRegional": {
+              "extensionVersion": 2,
+              "source": {
+                "sourceBindingRef": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief:source",
+                "language": "hatam",
+                "book": "mark",
+                "chapter": 5,
+                "verseRefs": [
+                  "Mark 5:1"
+                ],
+                "sourceIntervalRefs": [
+                  "a"
+                ],
+                "referencePurpose": "semantic_context_only",
+                "internalVerseTiming": "unresolved"
+              },
+              "regionalIdentity": {
+                "region": "Papuan",
+                "medium": "video",
+                "appliesTo": "character_identity",
+                "canonContextRef": "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief:canon",
+                "characterVersionRefs": [
+                  "v"
+                ]
+              },
+              "historicalSetting": {
+                "period": "First century",
+                "place": "Biblical setting from the verified passage; regional identity does not relocate it.",
+                "setVersionRefs": [
+                  "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief"
+                ],
+                "approvedReconstructionRefs": [],
+                "unknowns": [
+                  "Unrecorded geometry and historical details"
+                ]
+              },
+              "grounding": [
+                {
+                  "target": "scene",
+                  "authority": "verified_source",
+                  "refs": [
+                    "production_runs:87d58d49-f468-48ae-95f8-07ad8476d828:brief"
+                  ],
+                  "limitations": "Source context does not establish unstated staging or geometry."
+                }
+              ],
+              "gateRecordRefs": {
+                "videoEligibility": null,
+                "citationScope": null,
+                "sourceReview": null,
+                "canonApproval": null,
+                "historicalReconstruction": null,
+                "fieldReview": null,
+                "releaseApproval": null
+              }
+            }
+          }
+        }
+      ],
+      "history": [
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:creative_director:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "creative_director",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "creative_director fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:creative_director:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:scripture_cultural_reviewer:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "scripture_cultural_reviewer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "scripture_cultural_reviewer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:scripture_cultural_reviewer:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:cinematographer:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "cinematographer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "cinematographer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:cinematographer:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:choreographer:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "choreographer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "choreographer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:choreographer:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:staging_designer:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "staging_designer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "staging_designer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:staging_designer:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:costume_designer:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "costume_designer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "costume_designer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:costume_designer:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:lighting_designer:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "lighting_designer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "lighting_designer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:lighting_designer:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:script_supervisor:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "script_supervisor",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "script_supervisor fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:script_supervisor:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:sound_designer:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "sound_designer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "sound_designer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:sound_designer:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:composer:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "composer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "composer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:composer:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:picture_editor:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "picture_editor",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "picture_editor fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:picture_editor:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:fidelity_challenger:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "fidelity_challenger",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "fidelity_challenger fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:fidelity_challenger:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:clarity_challenger:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "clarity_challenger",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "clarity_challenger fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:clarity_challenger:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:feasibility_challenger:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "feasibility_challenger",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "feasibility_challenger fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:feasibility_challenger:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:production_director:1",
+          "kind": "proposal",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "production_director",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "production_director fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:production_director:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [],
+          "supersedes": null,
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:acceptance",
+          "kind": "resolution",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "production_director",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "production_director fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:production_director:1",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:production_director:1"
+          ],
+          "supersedes": null,
+          "finding": null,
+          "resolution": {
+            "outcome": "accepted",
+            "contributions": [
+              "87d58d49-f468-48ae-95f8-07ad8476d828:production_director:1"
+            ],
+            "objectionDispositions": [],
+            "acceptedRevision": "87d58d49-f468-48ae-95f8-07ad8476d828",
+            "confidence": 80,
+            "limitations": "Fixture only."
+          }
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:creative_director:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "creative_director",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "creative_director fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:creative_director:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:creative_director:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:creative_director:1",
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:scripture_cultural_reviewer:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "scripture_cultural_reviewer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "scripture_cultural_reviewer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:scripture_cultural_reviewer:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:scripture_cultural_reviewer:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:scripture_cultural_reviewer:1",
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:cinematographer:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "cinematographer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "cinematographer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:cinematographer:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:cinematographer:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:cinematographer:1",
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:choreographer:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "choreographer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "choreographer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:choreographer:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:choreographer:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:choreographer:1",
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:staging_designer:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "staging_designer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "staging_designer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:staging_designer:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:staging_designer:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:staging_designer:1",
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:costume_designer:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "costume_designer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "costume_designer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:costume_designer:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:costume_designer:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:costume_designer:1",
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:lighting_designer:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "lighting_designer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "lighting_designer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:lighting_designer:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:lighting_designer:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:lighting_designer:1",
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:script_supervisor:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "script_supervisor",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "script_supervisor fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:script_supervisor:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:script_supervisor:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:script_supervisor:1",
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:sound_designer:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "sound_designer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "sound_designer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:sound_designer:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:sound_designer:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:sound_designer:1",
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:composer:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "composer",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "composer fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:composer:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:composer:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:composer:1",
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:picture_editor:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "picture_editor",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "picture_editor fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:picture_editor:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:picture_editor:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:picture_editor:1",
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:fidelity_challenger:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "fidelity_challenger",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "fidelity_challenger fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:fidelity_challenger:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:fidelity_challenger:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:fidelity_challenger:1",
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:clarity_challenger:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "clarity_challenger",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "clarity_challenger fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:clarity_challenger:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:clarity_challenger:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:clarity_challenger:1",
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:feasibility_challenger:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "feasibility_challenger",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "feasibility_challenger fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:feasibility_challenger:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:feasibility_challenger:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:feasibility_challenger:1",
+          "finding": null,
+          "resolution": null
+        },
+        {
+          "id": "87d58d49-f468-48ae-95f8-07ad8476d828:production_director:2",
+          "kind": "revision",
+          "inputRevision": "brief:d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "inputBriefSha256": "d5ec1afb6d532e70e60b1d28da63f0eecf7f91b489ebe548b833cb1dda9e14f8",
+          "owner": "production_director",
+          "scope": {
+            "projectId": "p",
+            "sceneIds": [
+              "scene"
+            ],
+            "shotIds": [
+              "s"
+            ],
+            "verseRefs": [
+              "Mark 5:1"
+            ],
+            "audioBindingRefs": []
+          },
+          "proposedChanges": [],
+          "rationale": "production_director fixture",
+          "evidence": [
+            {
+              "ref": "production_events:87d58d49-f468-48ae-95f8-07ad8476d828:production_director:2",
+              "limitations": "Retained role output and its reported rationale/evidence; not independent approval."
+            }
+          ],
+          "objections": [],
+          "destination": {
+            "roles": [
+              "production_director"
+            ],
+            "stage": "casting",
+            "subjectId": "p"
+          },
+          "relatedContributions": [
+            "87d58d49-f468-48ae-95f8-07ad8476d828:production_director:1"
+          ],
+          "supersedes": "87d58d49-f468-48ae-95f8-07ad8476d828:production_director:1",
+          "finding": null,
+          "resolution": null
+        }
+      ],
+      "objections": [],
+      "acceptedContributionIds": [],
+      "producerOverrideShotIds": []
+    }
+  }
+}

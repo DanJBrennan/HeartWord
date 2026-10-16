@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CreativeFeedback } from "./CreativeFeedback";
 
 interface Run { id: string; phase: string; status: string; result_json: string | null; brief_json: string; calls: number; created_at: number }
 interface Event { id: string; role: string; round: number; prompt: string; output_json: string | null; error: string | null }
@@ -127,7 +128,7 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
     <div className="crew-actions">
       {lessonUnavailable && <p className="hint">Correction lessons unavailable: {lessonUnavailable} Other chapter review controls remain available.</p>}
       <button disabled={running} onClick={() => void act("plan", { maxCalls: 30 })}>{running ? "Crew working…" : "Create / review storyboard"}</button>
-      <button disabled={running} onClick={() => void act("review-cut", { maxCalls: 16 })}>Review assembled cut</button>
+      <button disabled={running} onClick={() => void act("review-cut", { maxCalls: 17 })}>Review assembled cut</button>
       <button disabled={running} onClick={() => void act("edit-cut")}>Build Picture Editor cut</button>
       <button disabled={running || finish?.status !== "awaiting_assets"} onClick={() => finish && void act(`soundtrack/${finish.id}`)}>Generate requested music / effects</button>
       <button disabled={running || finish?.status !== "approved"} onClick={() => finish && void act(`finish/${finish.id}`)}>Apply approved finishing</button>
@@ -142,13 +143,15 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
     <button disabled={running || !guidance.trim() || (reusable && !principle.trim())} onClick={() => void act("guidance", { note: guidance, reusable, principle, scope: lessonScope }).then(saved => { if (saved) { setGuidance(""); setReusable(false); setPrinciple(""); setLessonScope("chapter"); } })}>Record guidance</button>
     <details><summary>Correction lessons ({lessons.length})</summary><p>HeartWord proposes a narrowly scoped candidate from each recorded correction. Inspect, edit, and activate it before it can guide matching work; disabled and superseded lessons remain history.</p>{applicableLessons.length > 0 && <p>Guidance currently applicable to this project: {applicableLessons.map(lesson => `${lesson.scope_kind}: ${lesson.requested_change}`).join(" · ")}</p>}{lessons.map(lesson => { const draft = lessonDrafts[lesson.id] ?? { principle: lesson.requested_change, rationale: lesson.rationale ?? "", scope: lesson.scope_kind }; const editable = lesson.status === "candidate" || lesson.status === "active"; return <article key={lesson.id}><strong>{lesson.status} · {lesson.scope_kind}</strong><p>{lesson.requested_change}</p>{lesson.rationale && <small>{lesson.rationale}</small>} {editable && <><label>Reusable principle<input value={draft.principle} onChange={e => setLessonDrafts({ ...lessonDrafts, [lesson.id]: { ...draft, principle:e.target.value } })} /></label><label>Reason<input value={draft.rationale} onChange={e => setLessonDrafts({ ...lessonDrafts, [lesson.id]: { ...draft, rationale:e.target.value } })} /></label><label>Scope<select value={draft.scope} onChange={e => setLessonDrafts({ ...lessonDrafts, [lesson.id]: { ...draft, scope:e.target.value } })}><option value="chapter">This chapter</option><option value="book">Book</option><option value="language">Language</option><option value="region">Region</option><option value="global">Explicit global</option></select></label><button disabled={running || !draft.principle.trim()} onClick={() => void request(`${base}/lessons/${lesson.id}`, { requestedChange:draft.principle, rationale:draft.rationale, scope:draft.scope }, "PATCH").then(refresh).catch(e => setError(e.message))}>{lesson.status === "active" ? "Save superseding revision" : "Activate reviewed principle"}</button></>} {lesson.status !== "disabled" && <button disabled={running} onClick={() => void act(`lessons/${lesson.id}/status`, { status:"disabled" })}>Disable</button>} {lesson.status === "active" && <button disabled={running} onClick={() => void act(`lessons/${lesson.id}/status`, { status:"superseded" })}>Supersede</button>}</article>; })}{lessonHistory.length > 0 && <details><summary>Lesson history ({lessonHistory.length})</summary>{lessonHistory.map(event => <p key={event.id}><small>{new Date(event.created_at).toLocaleString()} · {event.kind}{event.detail ? ` · ${event.detail}` : ""}</small></p>)}</details>}</details>
     <div className="crew-runs">{runs.map(run => {
-      const result = run.result_json ? JSON.parse(run.result_json) as { summary: string } : null;
+      const result = run.result_json ? JSON.parse(run.result_json) as CrewResult : null;
       const appliedLessons = JSON.parse(run.brief_json).appliedLessons as Array<{ id:string; subjectId:string|null; scopeKind:string; requestedChange:string }> | undefined;
       return <article key={run.id}>
         <button aria-expanded={selected === run.id} onClick={() => setSelected(selected === run.id ? null : run.id)}>
           {run.phase === "planning" ? "Storyboard" : run.phase === "editing" ? "Picture editing" : "Cut review"} · {run.status.replaceAll("_", " ")} · {run.calls} calls · {new Date(run.created_at).toLocaleString()}
         </button>
         {result && <p>{result.summary}</p>}
+        {result?.creativeFeedback && <CreativeFeedback feedback={result.creativeFeedback} />}
+        {result && !result.creativeFeedback && <p className="hint">Creative feedback scores were not recorded for this run.</p>}
         {appliedLessons?.length ? <p className="hint">Applied lessons: {appliedLessons.map(lesson => `${lesson.scopeKind}${lesson.subjectId ? ` (${lesson.subjectId})` : ""}: ${lesson.requestedChange}`).join(" · ")}</p> : null}
         {run.status === "running" && <button disabled={busy} onClick={() => void act(`recover/${run.id}`)}>Recover interrupted review</button>}
         {selected === run.id && events.map(event => {

@@ -125,12 +125,16 @@ against speech. These conservative limits do not substitute for listening.
 
 Manual controls share the stage implementations. Stage 7 can run one bounded
 finishing cycle: review, generate up to eight requested assets, review again,
-mix once, and view/listen to the result. It uses at most three reviews of 14
+mix once, and view/listen to the result. It uses at most three reviews of 17
 role calls each, plus eight generation/listening-review pairs. Remaining
 changes hold for another deliberate run. Planning uses at most two complete
 15-call passes, including Sam/Composer's advance treatment review and all three
 critics on revisions; editing/finishing keep their existing bounded rosters.
-UI limits are 30 planning calls and 16 cut-review calls. See the
+October 15 limits are 30 planning calls, 16 editing calls and 17 finishing /
+cut-review calls; finishing's former 14/16 limits could not fund its 10-call
+initial plus seven-call complete revision. The outer cycle now permits at
+most 51 role calls, with the existing cost and outstanding-charge gates.
+See the
 [advance treatment](shot-planning.md#advance-emotional-treatment-implemented-2026-10-14).
 
 Crew calls now reserve an explicitly configured, evidenced conservative
@@ -172,6 +176,18 @@ its existing editor until all supplementary footage is represented. The new
 automatic Picture Editor renderer works with database-backed footage.
 
 ## Verification and limits
+
+October 15: [bounded craft feedback](automated-quality-control.md#bounded-production-craft-feedback-october-15-implementation)
+extends these same saved crew runs. Nell owns the evidenced craft assessment,
+after other production specialists and before independent challengers/Director.
+Separate acceptance checks, ordinal scores and confidence remain visible.
+Stable findings route revisions to owners; initial review plus at most one
+complete revision stays within existing call/cost limits. At a plateau Dan's
+agreed policy retains the best acceptable version with a visible shortfall;
+failed or unverified hard checks hold. Vera remains declared, and presentation
+critics have no authority. Existing FDL snapshots, accepted media, source
+performance and producer successors remain authoritative. Numeric cutoff
+calibration is explicitly insufficient; no new numeric gate is introduced.
 
 An incomplete existing film can now receive an `observed_cut_timing` audit
 through the same timing endpoint or `scripts/import-cut-timing.ts`. Its typed

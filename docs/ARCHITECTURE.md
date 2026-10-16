@@ -272,6 +272,16 @@ schema file itself for exact fields, types, and constraints.
 
 ## Stage orchestration
 
+October 15 craft feedback extends the existing saved crew loop within planning,
+editing and finishing. Nell assesses a versioned evidence rubric; separate hard
+checks retain authority. One evidenced revision at most is bounded by 30 / 16 /
+17 phase calls and existing spending reservations. The 17-call finishing cap
+funds its complete 10+7 roster; the outer cycle remains three reviews, eight
+asset/listening pairs and one mix. Best-acceptable selection, routed finding
+responses and stop reasons stay in existing run/event results and FDL history.
+No new stage, worker, queue or production state is introduced. See the
+[bounded feedback policy](design/automated-quality-control.md#bounded-production-craft-feedback-october-15-implementation).
+
 No message queue or job scheduler for v1 — one producer, one machine, and
 stages run one after another for a given chapter. A simple in-process
 orchestrator calls each stage in sequence; each stage records its own

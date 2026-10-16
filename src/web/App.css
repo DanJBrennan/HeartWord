@@ -129,6 +129,10 @@ input {
 .production-crew pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 30rem; overflow: auto; }
 .crew-runs article { border-top: 1px solid #556; padding: .75rem 0; }
 .crew-runs details { margin: .5rem 0 .5rem .75rem; }
+.creative-feedback { max-width:100%; overflow-x:auto; }
+.creative-feedback table { width:100%; border-collapse:collapse; font-size:.85rem; }
+.creative-feedback th,.creative-feedback td { padding:.5rem; border:1px solid #465b66; text-align:left; vertical-align:top; }
+.creative-feedback small { overflow-wrap:anywhere; }
 /* Producer console: fixed workspace; each panel owns its scrolling. */
 html { height:100%; background:#14191e; }
 body { max-width:none; margin:0; padding:0; height:100dvh; overflow:hidden; display:flex; flex-direction:column; }

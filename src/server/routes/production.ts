@@ -118,7 +118,7 @@ productionRouter.post("/recover/:runId", (req, res) => {
   catch (error) { res.status(409).json({ error: (error as Error).message }); }
 });
 productionRouter.post("/review-cut", async (req, res) => {
-  try { res.json(await reviewChapter(getProjectId(req), req.body?.maxCalls ?? 16)); }
+  try { res.json(await reviewChapter(getProjectId(req), req.body?.maxCalls ?? 17)); }
   catch (error) { res.status(409).json({ error: (error as Error).message }); }
 });
 productionRouter.post("/edit-cut", async (req, res) => {

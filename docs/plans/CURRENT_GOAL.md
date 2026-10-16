@@ -1,5 +1,71 @@
 # Current Goal
 
+## Bounded evidence-based creative feedback (2026-10-15)
+
+This single concern serves PRODUCT_VISION's faithful autonomous editable
+chapter and USER_WORKFLOW's chapter inspection/correction/selective rerun.
+Acceptance: retained evidence for every requested revision, comparable craft
+assessments, finite calls/spending and a producer-visible reason to continue or
+stop, preserving source performance, approved canon, accepted media and edit
+history. Other active work and all Mark 4 holds below remain intact.
+
+Nell's existing executable Picture Editor call owns craft assessment; Theo
+remains an independent clarity challenger. Vera remains declared, and the
+presentation-only critic pair receives no production authority. Saved crew
+runs now separate non-negotiable acceptance checks, five ordinal craft
+dimensions and confidence. Review spans treatment/storyboard before keyframes,
+bounded selected-media evidence during editing, and the actual audiovisual cut
+in finishing. Existing per-asset QC, FDL/Bible-regional snapshots, objections,
+producer controls, provider interfaces and source/canon/cost/approval gates stay
+controlling. No new stage, worker, provider, automatic paid repair or plan
+signature is introduced. Built-in assistant keyframe handoff remains unchanged.
+
+Dan chose **continue the best acceptable version and show the creative
+shortfall** at a plateau/limit in this chat. Initial review plus at most one
+complete revision uses 30 planning / 16 editing / 17 finishing calls at most;
+insufficient remaining calls stop before a partial revision. Finishing's old
+16/14 caps could not fund its 10-call initial plus seven-call complete revision.
+The outer cycle remains three reviews, eight asset/listening pairs and one mix;
+its worst-case role-call bound rises from 42 to 51 only within existing cost
+and outstanding-charge gates. Stable run-scoped finding IDs route
+changes to accountable owners. Responses identify changes and evidence;
+substantive creative changes require retained feedback or existing explicit
+owner/objection responses. Dimensional ties/regressions/unscored comparisons
+retain the earlier acceptable version. Hard/unverified failures and Director
+holds still hold; later alternatives and raw replies remain history.
+
+[Policy and comparison](../design/automated-quality-control.md#bounded-production-craft-feedback-october-15-implementation)
+and the [calibration audit](../production/CREATIVE_FEEDBACK_CALIBRATION.md)
+distinguish executable behavior, declared roles, historical choices and the
+future audience-facing critic proposal. Read-only inspection found zero
+producer-adjudicated evaluation cases. Mark 4's recorded selected/rejected
+comparisons ground qualitative criteria but cannot calibrate a numeric cutoff.
+Equal 20% weights and 0–4 anchors are explicit conventions; a 75/100 target is
+proposed/inactive and never predicts audience approval. Future numeric gating
+needs Dan-adjudicated same-rubric evidence and unseen-chapter evaluation.
+
+Validation: **738 tests / 112 files pass**, including 15 new craft-feedback
+cases, with `npm test -- --maxWorkers=2 --minWorkers=1`. TypeScript, web build
+and diff checks pass. Complete log: `outputs/creative-feedback-final-tests.txt`.
+The isolated workflow saves/reopens the same result from disk and renders the
+actual producer component; browser proof verifies selected pass, plateau reason,
+score/confidence separation, finding/response links and expand/collapse. The
+offline proof is `outputs/creative-feedback-proof/index.html`; screenshot and
+observations are `outputs/creative-feedback-browser-proof.*`. These are
+explicitly synthetic mechanics, not real-film quality or numeric calibration.
+
+The [separate Goal Guardian review](../production/CREATIVE_FEEDBACK_CALIBRATION.md#separate-goal-guardian-review)
+passes the product/workflow scope. It corrected reviewer ordering, run-scoped
+finding identity and structural/stale-cut explanation, and checked the justified
+17-call finishing bound. No product-policy decision remains for this loop;
+future numeric gating needs producer-adjudicated evidence. Read-only preservation
+confirms an identical production database hash, all **89** retained render
+inventory entries and three valid chapter projections. Evidence is under
+`outputs/creative-feedback-preservation-*`. No live production dispatch or paid
+provider repair was used as a test. Included assistant usage/billed attribution
+remains unreported. Your dot/live Mabel and SMS tools are unavailable; completion
+is reported here, without claiming SMS delivery to the supplied number ending 8114.
+
 ## Normal producer interface with production/edit controls (2026-10-15)
 
 Dan authorized making the real chapter inventory/console the normal HeartWord

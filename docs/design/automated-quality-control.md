@@ -173,6 +173,96 @@ retroactively relabelled. Source/cast speech stays independent of these assets.
 - Scene action doesn't contradict the source text (guards against the "not
   free-form content generation" non-goal in `docs/NON_GOALS.md`).
 
+## Bounded production craft feedback (October 15 implementation)
+
+This extends the existing crew runs in stages 3, 6 and 7. Nell, the executable
+Picture Editor who already owns whole-cut editorial assessment, owns the craft
+rubric. Her existing call follows the other production specialists, before the
+independent challengers and Production Director. Theo remains an independent
+clarity challenger. Vera remains declared; presentation-only critics acquire
+no production authority. The future audience-facing pair below remains proposed.
+
+Three kinds of evidence stay separate:
+
+| Record | Meaning / authority |
+|---|---|
+| `acceptanceChecks`, deterministic checks, specialist findings and retained objections | Non-negotiable source wording/order/speed, safe pause/coverage, approved canon, producer decisions and applicable prerequisite gates. Failed/unverified checks hold; scores cannot compensate. Director `clear` cannot waive an independent check. |
+| Nell's `craftAssessment` | Five evidenced ordinal judgments and up to three creative findings routed to accountable production owners. These can request a bounded revision, never dispatch a paid repair. |
+| Dimension/finding confidence and limitations | Uncalibrated certainty in the particular claim; not quality, severity, weight or audience approval. Missing observations stay unscored. |
+
+`heartword-craft-v1` assesses clarity, emotional development, pacing,
+continuity of presentation, and feasibility with equal 20% weights. Scores
+are 0 seriously ineffective, 1 weak, 2 mixed, 3 adequate for stated intent,
+4 strong. Exact-source and canon continuity remain hard checks independently
+of creative flow. Each dimension retains evidence, shot IDs, optional actual-cut
+timestamps, confidence and limitations. A missing dimension is `null`; it
+does not become zero or a renormalized comparable total. Full totals span
+0–100, with five points per ordinal step in one dimension.
+
+The [calibration audit](../production/CREATIVE_FEEDBACK_CALIBRATION.md) compares
+Dan's recorded rejected/selected work. No producer-adjudicated evaluation cases
+or matched numeric craft ratings exist in the inspected production database.
+An example target of 3/4 in each dimension (75/100) is **proposed and inactive**.
+No numeric cutoff is used to approve, hold or predict audience approval. Nell's
+evidence-backed recommendation drives the bounded creative revision request.
+
+Milestones use the existing records and calls:
+
+- Planning: review Rufus's treatment and the specialist storyboard before
+  keyframe spending. Existing treatment reviews, objections and generation
+  authorization remain controlling; no additional chapter-plan signature.
+- Editing/media: Nell examines accepted coverage/assembly intent and up to
+  three selected MP4s, totaling at most 18 MiB, within her existing call.
+  Captions retain shot/clip IDs and byte hashes and label omitted footage
+  unobserved. Existing per-image/per-video QC and its saved notes remain
+  separate gates; up to 50 retained chapter-scoped asset-review notes enter
+  editing/finishing briefs as evidence, never producer instructions or current
+  acceptance. A clip sample does not establish whole-cut pacing or source sync.
+- Assembled cut: existing finishing review supplies the actual compressed
+  audiovisual cut; timestamps must fit its bounds. Proxy limitations, the
+  whole-cut checklist, emotional beat checks, source map and structural gates
+  remain. Structural or stale-cut failure also updates the feedback explanation.
+
+Policy comparison and limits:
+
+| Concern | Existing behavior | This extension |
+|---|---|---|
+| Planning | Initial complete pass + one revision, 15 calls each; UI cap 30 | Same two passes / 30-call ceiling. |
+| Editing | Eight-call first pass, five-call revision; UI cap 16 | Same roster and ceiling, at most 13 calls for both passes. |
+| Finishing | Ten-call first pass, seven-call second; UI cap 16, autonomous calls capped at 14 | Cap/default becomes 17 for both manual and autonomous review, exactly funding one complete revision. Lower explicit budgets stop before a partial pass. No third pass. |
+| Stage 7 cycle | Up to three reviews capped at 14 calls each (42 role calls), eight asset/listening pairs, one mix | Same outer cycle, now at most 51 role calls (3 × 17); nine more potential calls only when evidenced revisions need them and spending gates permit. No additional media generation pairs or mixes. |
+| Image retries / gap negotiation | Existing five-correction image ceiling and ten-revision gap negotiation | Unchanged; no new retry budget or paid-image fallback. |
+| Money | Existing evidenced per-call bound, reservations, ledger, outstanding-charge reconciliation and $200 cumulative film ceiling | Same gates before each real call; save configured per-call and derived run bound. Missing bound/cost stays unreported and cannot authorize a paid call. Test injection creates no provider spending. |
+
+A new saved crew run requires the assessment and separate acceptance verdict.
+An initial acceptable version may receive one creative revision when concrete
+findings and the remaining complete-pass budget justify it. Stable finding IDs
+route changes to owners. Owners must answer their assigned findings with change
+and evidence; other affected roles may cite the same finding for a dependent
+adjustment. A substantive creative change must cite retained creative feedback
+or an existing explicit owner/objection response. The next review sees the
+prior assessment and responses. Malformed, missing or foreign evidence cannot
+pass. Existing hard-objection revision behavior remains protected.
+
+Comparisons stay within the same run, milestone, input/media scope and rubric.
+Improvement requires at least one higher ordinal dimension with none lower.
+Ties, regressions and unscored comparisons are plateaus; ties retain the earlier
+acceptable version. After the single possible revision there is no third pass.
+Source/canon/producer changes during review still invalidate it through existing
+hash/revision checks. A new deliberate run is not an implicit paid retry.
+
+Dan selected **continue the best acceptable version and show the shortfall**
+in this chat on October 15. At a plateau or call limit, apply that policy only
+when all applicable hard checks and saved objections pass. Hard failure or
+uncertain review holds, even when an earlier candidate was acceptable. An
+explicit Director hold remains a hold. Best-version selection preserves its
+directions, treatment and FDL snapshot; every later event/alternative remains
+history. The saved result and existing producer panel show scores, evidence,
+responses, selected pass, limits, and why production continued or stopped.
+Old records acquire no invented scores or new approvals. Producer edits remain
+authorized through their existing immutable-successor workflow; an earlier
+assessment is evidence of its own input scope, not a new score for edited work.
+
 ## Future audience-facing whole-film review pair
 
 After HeartWord assembles a first rough cut, a future two-house review pair

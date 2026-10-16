@@ -75,6 +75,17 @@ authority. Missing timing/footage and stale connections remain explicit.
 
 ## Review and edit
 
+The chapter crew panel also shows bounded creative feedback: separate hard
+acceptance checks, Nell's evidenced craft dimensions, reviewer confidence,
+findings routed to production owners, their revision responses, call/cost
+limits and the selected pass. Reviews run before keyframes, against selected
+coverage during editing and against the assembled audiovisual cut. At a
+creative plateau or limit, passing hard checks allow the best acceptable
+version to continue with its shortfall visible, following Dan's agreed policy.
+Failed/unverified checks hold. Existing source, canon, spending, field and
+release gates remain, without a separate producer chapter-plan signature.
+Numeric scores have no calibrated acceptance cutoff or audience prediction.
+
 The user watches the assembled chapter video. Because it's built from
 independently generated scenes and stages (see `docs/ARCHITECTURE.md`), the
 user can go back and adjust an individual scene's casting, action, or visuals

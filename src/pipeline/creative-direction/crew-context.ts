@@ -218,6 +218,10 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
     }
   }
   const brief: CrewBrief = { project, source, audio, canon, shots, producerNotes, appliedLessons, spentUsd, audioAssets, render };
+  if (phase !== "planning") brief.mediaReviewEvidence = db.prepare(`SELECT r.id,r.subject_id shotId,r.note,r.created_at createdAt FROM review_notes r
+    JOIN shots sh ON sh.id=r.subject_id JOIN scenes sc ON sc.id=sh.scene_id
+    WHERE r.project_id=? AND sc.project_id=? AND r.source='qc' AND r.subject_type='shot'
+    ORDER BY r.created_at DESC,r.id DESC LIMIT 50`).all(projectId,projectId) as unknown as NonNullable<CrewBrief["mediaReviewEvidence"]>;
   if (phase !== "planning") {
     const plan = db.prepare("SELECT id,brief_hash,status,result_json FROM production_runs WHERE project_id=? AND phase='planning' ORDER BY created_at DESC,rowid DESC LIMIT 1").get(projectId);
     const result = plan?.result_json ? JSON.parse(String(plan.result_json)) as CrewResult : undefined;

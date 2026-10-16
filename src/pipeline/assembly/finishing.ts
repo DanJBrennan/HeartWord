@@ -72,7 +72,7 @@ export function finishingRecipe(brief: CrewBrief, result: CrewResult): { inputs:
   return { inputs, filter: filters.join(";"), videoLabel: "[picture]", audioLabel: "[sound]" };
 }
 
-export async function reviewChapter(projectId: string, maxCalls = 16): Promise<CrewResult & { runId: string }> {
+export async function reviewChapter(projectId: string, maxCalls = 17): Promise<CrewResult & { runId: string }> {
   const db = getDb(), dataDir = getDataDir();
   const brief = loadCrewBrief(db, dataDir, projectId, "finishing");
   const sourcePath = productionAssetPath(dataDir, brief.render!.path);
@@ -91,6 +91,12 @@ export async function reviewChapter(projectId: string, maxCalls = 16): Promise<C
     if (issues.length || crewBriefHash(loadCrewBrief(db, dataDir, projectId, "finishing"), "finishing") !== crewBriefHash(brief, "finishing")) {
       result.status = "held";
       result.summary += ` Structural review: ${issues.join(" ") || "The cut changed while the review proxy was being prepared."}`;
+      if (result.productionRecord) result.productionRecord.status = "held";
+      if (result.creativeFeedback) {
+        result.creativeFeedback.selectedRound = null;
+        result.creativeFeedback.stopReason = result.summary;
+        for (const pass of result.creativeFeedback.passes) { pass.hardChecks = "failed"; pass.reason = "Structural or stale-cut checks hold this review: " + result.summary; }
+      }
       db.prepare("UPDATE production_runs SET status = ?, result_json = ? WHERE id = ?").run(result.status, JSON.stringify(result), result.runId);
     }
     return result;

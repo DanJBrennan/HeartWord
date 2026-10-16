@@ -1,0 +1,35 @@
+{
+  "readOnly": true,
+  "syntheticCasesUsed": false,
+  "numericThresholdCalibrated": false,
+  "numericThresholdActive": false,
+  "evaluationCases": [],
+  "humanReviewNotes": [
+    {
+      "resolved": 0,
+      "count": 59
+    },
+    {
+      "resolved": 1,
+      "count": 307
+    }
+  ],
+  "crewRuns": [
+    {
+      "phase": "editing",
+      "status": "held",
+      "count": 3
+    },
+    {
+      "phase": "planning",
+      "status": "approved",
+      "count": 10
+    },
+    {
+      "phase": "planning",
+      "status": "held",
+      "count": 2
+    }
+  ],
+  "basis": "Historical producer contrasts are documented in docs/production/CREATIVE_FEEDBACK_CALIBRATION.md; no numeric ratings were inferred."
+}

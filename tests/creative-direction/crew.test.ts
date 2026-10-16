@@ -8,7 +8,7 @@ import { finishingRecipe, structuralCutFindings } from "../../src/pipeline/assem
 import { FINISHING_ROLES, PLANNING_ROLES, type CrewBrief, type CrewContribution, type CrewEvent, type CrewRole, type CrewResult } from "../../src/pipeline/creative-direction/crew-types.js";
 import { executableProductionRolesFor } from "../../src/pipeline/creative-direction/role-registry.js";
 import { EDITORIAL_CHECKS, editorialReviewTargets } from "../../src/pipeline/qc/editorial-review.js";
-import { fixtureTreatment, fixtureTreatmentReview } from "../helpers/crew-treatment.js";
+import { fixtureTreatment, fixtureTreatmentReview, fixtureCraftAssessment } from "../helpers/crew-treatment.js";
 import { TREATMENT_REVIEW_ROLES } from "../../src/pipeline/creative-direction/emotional-treatment.js";
 import { reconcileAvatarBudget } from "../../src/pipeline/voice-lipsync/performance-direction.js";
 
@@ -32,7 +32,8 @@ function response(role: CrewRole): CrewContribution {
   return { summary: `${role} checked the evidence.`, directions: [1,2].map(n => ({ shotId: `s${n}`, instruction: n === 1 ? "Preserve the intact roof" : "Show the opened roof", scriptureBasis: "Mark 2:1" })), findings: [],
     ...(role === "creative_director" ? {emotionalTreatment:fixtureTreatment(brief())} : {}),
     ...(TREATMENT_REVIEW_ROLES.includes(role) ? {treatmentReview:fixtureTreatmentReview()} : {}),
-    ...(role === "production_director" ? { decision: "approve" as const } : {}),
+    ...(role === "production_director" ? { decision: "approve" as const, acceptanceChecks:{status:"clear" as const,evidence:"Synthetic checks passed."} } : {}),
+    ...(role === "picture_editor" ? {craftAssessment:fixtureCraftAssessment()} : {}),
     ...(role === "picture_editor" ? { coverageRequests: [], edits: [], pauses: [], editorialChecks: EDITORIAL_CHECKS.map(name => ({ name, status: "clear" as const, startMs: 0, endMs: 8000, evidence: "Inspected the complete audiovisual cut", requestedChange: "None" })) } : {}),
     ...(role === "colorist" ? { colorAdjustments: [] } : {}),
     ...(role === "sound_designer" || role === "composer" ? { audioCues: [], generationRequests: [] } : {}) };

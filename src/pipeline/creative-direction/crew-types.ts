@@ -2,6 +2,7 @@ import type { SavedCutTimingAudit } from "../assembly/cut-timing-audit.js";
 import type { EditorialCheck } from "../qc/editorial-review.js";
 import type { FilmChange, OwnerResponse, ObjectionResponse, ProductionRecord, SavedContribution } from "./production-record.js";
 import type { AcceptedEmotionalTreatment, EmotionalTreatment, EmotionalBeatCheck, TreatmentReview } from "./emotional-treatment.js";
+import type { CraftAssessment, CraftResponse, CreativeFeedback } from "./creative-feedback.js";
 
 export const PLANNING_ROLES = [
   "creative_director", "cinematographer", "choreographer", "staging_designer",
@@ -31,6 +32,8 @@ export interface CrewShot {
   clip: { id: string; path: string; durationMs: number } | null;
 }
 export interface CrewBrief {
+  /** Saved QC evidence, not producer direction or current asset acceptance. */
+  mediaReviewEvidence?: Array<{ id: string; shotId: string; note: string; createdAt: number }>;
   /** Read from the accepted planning run; never inferred for historical films. */
   acceptedEmotionalTreatment?: AcceptedEmotionalTreatment;
   project: { id: string; language: string; book: string; chapter: number };
@@ -59,6 +62,9 @@ export interface CrewFinding {
   confidence: number; limitations: string;
 }
 export interface CrewContribution {
+  craftAssessment?: CraftAssessment;
+  creativeResponses?: CraftResponse[];
+  acceptanceChecks?: { status: "clear" | "hold" | "unverified"; evidence: string };
   emotionalTreatment?: EmotionalTreatment;
   treatmentReview?: TreatmentReview;
   emotionalBeatChecks?: EmotionalBeatCheck[];
@@ -86,6 +92,7 @@ export interface CrewContribution {
 }
 export interface CrewEvent { role: CrewRole; round: number; prompt: string; output: CrewContribution | null; error: string | null; rejectedOutput?:unknown }
 export interface CrewResult {
+  creativeFeedback?: CreativeFeedback;
   /** Explicit new-run contract; absent on historical plans, never backfilled. */
   emotionalTreatmentRequired?: true;
   status: "approved" | "awaiting_assets" | "held" | "incomplete"; summary: string; calls: number;

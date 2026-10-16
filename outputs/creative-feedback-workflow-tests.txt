@@ -1,0 +1,12 @@
+
+ RUN  v2.1.9 C:/Users/danbr/OneDrive/Documents/HeartWord
+
+(node:150380) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/creative-direction/creative-feedback.test.ts (15 tests) 1181ms
+   ✓ bounded evidence-based craft feedback > saves and reopens the same assessments/selection through the existing production records 964ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  23:34:43
+   Duration  2.39s (transform 499ms, setup 0ms, collect 783ms, tests 1.18s, environment 0ms, prepare 156ms)

@@ -47,6 +47,17 @@ authority.
 
 ## Required handoffs
 
+October 15 extension: Nell's existing milestone call records `craftAssessment`
+under `heartword-craft-v1`, separately from Director `acceptanceChecks` and
+per-claim confidence. `creativeResponses` name exact retained finding IDs,
+changes and evidence from the accountable role (or a dependent adjustment).
+`CrewResult.creativeFeedback` retains comparisons, limits, selected pass and
+stop/continue reason in the existing result; original events remain intact.
+The [bounded policy](automated-quality-control.md#bounded-production-craft-feedback-october-15-implementation)
+uses existing two-pass/cost bounds and Dan's continue-best-acceptable plateau
+choice. It adds no worker, stage, provider, transport or FDL dialect; no reviewer
+dispatches paid repair. Historic unreported ratings stay unreported.
+
 1. June, Miriam, and Dottie establish source/alignment, fidelity, and canon
    readiness. Missing source, unapproved canon, or unresolved ambiguity is a
    producer hold.

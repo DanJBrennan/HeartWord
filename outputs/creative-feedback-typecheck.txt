@@ -1,0 +1,3 @@
+
+> heartword@0.1.0 typecheck
+> tsc -p src/server/tsconfig.json --noEmit && tsc -p src/web/tsconfig.json --noEmit

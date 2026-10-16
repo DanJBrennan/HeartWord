@@ -1,9 +1,28 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
+import { createHash } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { productionAssetPath } from "./crew-context.js";
 import type { CrewBrief, ReviewMedia } from "./crew-types.js";
 
 const MIME_BY_EXTENSION: Record<string, string> = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg" };
+
+/** Bounded samples of already selected coverage, inside Nell's existing call.
+ * This never generates a proxy or approves missing/unseen footage. */
+export function acceptedCoverageMedia(dataDir: string, brief: CrewBrief): ReviewMedia[] {
+  const selected = brief.shots.filter(s => s.clip), media: ReviewMedia[] = [];
+  let bytesUsed = 0;
+  for (const shot of selected) {
+    if (media.length >= 3) break;
+    const path = productionAssetPath(dataDir, shot.clip!.path);
+    try {
+      const size = statSync(path).size;
+      if (bytesUsed + size > 18 * 1024 * 1024 || !/\.mp4$/i.test(path)) continue;
+      const bytes = readFileSync(path); bytesUsed += bytes.length;
+      media.push({mimeType:"video/mp4",data:bytes.toString("base64"),caption:`Accepted coverage sample: shot ${shot.id}, clip ${shot.clip!.id}, SHA256 ${createHash("sha256").update(bytes).digest("hex")}. ${shot.clip!.durationMs} ms. At most three selected clips / 18 MiB are sampled from ${selected.length} selections; omitted footage is unobserved. This is not an assembled cut. Provider audio is not the approved source/cast performance; judge picture only.`});
+    } catch { /* Missing or inaccessible coverage remains unobserved, not approved. */ }
+  }
+  return media;
+}
 
 /**
  * One captioned reference image per chapter character, for the planning
