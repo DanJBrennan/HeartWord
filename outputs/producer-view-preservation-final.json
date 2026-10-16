@@ -1,0 +1,637 @@
+{
+  "root": "C:\\Users\\danbr\\HeartWordData",
+  "readOnly": true,
+  "databaseHashBefore": "f0732977d63d640cead9830785f63cfd63f76528ca4a29f3e450043c5cd88bf1",
+  "databaseHashAfter": "f0732977d63d640cead9830785f63cfd63f76528ca4a29f3e450043c5cd88bf1",
+  "databaseUnchanged": true,
+  "summaries": [
+    {
+      "project": {
+        "id": "0b386bfc-7919-4f40-91af-e198508a8267",
+        "language": "hatam",
+        "book": "mark",
+        "chapter": 3,
+        "stage": "media_generation",
+        "status": "held",
+        "updated_at": 1789853300645
+      },
+      "state": "uncertain",
+      "currentStage": "media_generation",
+      "shots": 73,
+      "reel": 73,
+      "holds": 207,
+      "costs": {
+        "ceilingUsd": 200,
+        "recordedUsd": 79.756615,
+        "outstandingReservedUsd": 0,
+        "committedUsd": null,
+        "remainingUsd": null,
+        "hold": "Film spending held: reconcile cumulative film costs and outstanding charges first; no per-chapter plan signature is required.",
+        "note": "Recorded estimates and reservations are not reconciled invoices. Included assistant/image usage and unreported charges are not asserted free. This view authorizes no spending."
+      },
+      "render": null
+    },
+    {
+      "project": {
+        "id": "8a5659a4-b033-4d5f-80e2-904b217cf8a0",
+        "language": "hatam",
+        "book": "mark",
+        "chapter": 4,
+        "stage": "media_generation",
+        "status": "held",
+        "updated_at": 1790326042944
+      },
+      "state": "uncertain",
+      "currentStage": "media_generation",
+      "shots": 111,
+      "reel": 8,
+      "holds": 221,
+      "costs": {
+        "ceilingUsd": 200,
+        "recordedUsd": 160.663757,
+        "outstandingReservedUsd": 0,
+        "committedUsd": null,
+        "remainingUsd": null,
+        "hold": "Film spending held: reconcile cumulative film costs and outstanding charges first; no per-chapter plan signature is required.",
+        "note": "Recorded estimates and reservations are not reconciled invoices. Included assistant/image usage and unreported charges are not asserted free. This view authorizes no spending."
+      },
+      "render": {
+        "id": "deefa536-62f9-41b3-bbac-e9e8fb244206",
+        "result_asset_path": "generated/chapter/Markus-4.mp4",
+        "total_duration_ms": 561833,
+        "created_at": 1790969532682,
+        "available": true,
+        "historical": false
+      }
+    },
+    {
+      "project": {
+        "id": "fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d",
+        "language": "hatam",
+        "book": "mark",
+        "chapter": 2,
+        "stage": "ingestion",
+        "status": "not_started",
+        "updated_at": 1788572929173
+      },
+      "state": "uncertain",
+      "currentStage": "media_generation",
+      "shots": 35,
+      "reel": 35,
+      "holds": 176,
+      "costs": {
+        "ceilingUsd": 200,
+        "recordedUsd": 70.44,
+        "outstandingReservedUsd": 0,
+        "committedUsd": null,
+        "remainingUsd": null,
+        "hold": "Film spending held: reconcile cumulative film costs and outstanding charges first; no per-chapter plan signature is required.",
+        "note": "Recorded estimates and reservations are not reconciled invoices. Included assistant/image usage and unreported charges are not asserted free. This view authorizes no spending."
+      },
+      "render": {
+        "id": "dfbf0745-9719-4b5b-a97d-7412fa6b8b06",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "total_duration_ms": 473999,
+        "created_at": 1789090526557,
+        "available": true,
+        "historical": false
+      }
+    }
+  ],
+  "renders": [
+    {
+      "id": "0138938f-c8b6-4ed6-87a9-a3bffa3b7de4",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v29-distinct-coverage-grain-repair-frame-locked.mp4",
+      "bytes": 227393371,
+      "modifiedMs": 1790544588571.621
+    },
+    {
+      "id": "02743551-9c4a-4176-8b48-f6ab56c58516",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v22-confirmed-flash-repairs.mp4",
+      "bytes": 132478071,
+      "modifiedMs": 1790534014636.572
+    },
+    {
+      "id": "04d8199e-14a7-4f1e-a12e-407dca53cefd",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "059aa3fc-e72e-44a1-b2a6-0d027a90a1b6",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v41-residual-picture-defects-held.mp4",
+      "bytes": 245488851,
+      "modifiedMs": 1790566964630.0945
+    },
+    {
+      "id": "0b0a8ed0-9f4a-4a0c-a0d9-2f1e4da0c9f0",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "127a438f-6e6d-4e64-a0a0-f6f0bf882fbb",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v38-editorial-breaths-held.mp4",
+      "bytes": 271043353,
+      "modifiedMs": 1790563398184.3826
+    },
+    {
+      "id": "150a7944-420d-4984-8efa-6754eaef5cfe",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "18749e86-6313-4866-a4af-679e10e0dc17",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v44-audible-ambient-phrase-led-held.mp4",
+      "bytes": 222225608,
+      "modifiedMs": 1790568915123.324
+    },
+    {
+      "id": "18c4cb05-88e1-4232-a7e6-246383233ea1",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "19b8265f-3924-4623-9ffa-0a55a260393d",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v63-selective-scene-grade-held.mp4",
+      "bytes": 183466200,
+      "modifiedMs": 1790638744434.286
+    },
+    {
+      "id": "1aa0824c-6b6e-440a-96d4-0ff7845bad58",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v53-short-run-cleanup-held.mp4",
+      "bytes": 196517757,
+      "modifiedMs": 1790634886994.73
+    },
+    {
+      "id": "20c98f03-401d-4853-9944-dc2d9837977e",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v59-moving-coverage-held.mp4",
+      "bytes": 199803758,
+      "modifiedMs": 1790637154829.0452
+    },
+    {
+      "id": "22314432-fae6-47a6-8eb8-d74f284fd8b2",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v58-calibrated-ambience-held.mp4",
+      "bytes": 190605335,
+      "modifiedMs": 1790636927459.8428
+    },
+    {
+      "id": "29877091-e1e8-4af8-99c1-57cad559bd0d",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "2a7f5247-d5c2-48e9-b98e-a738bcb446be",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v61-olive-duplicates-held.mp4",
+      "bytes": 195162250,
+      "modifiedMs": 1790637774558.2646
+    },
+    {
+      "id": "2efeab16-c25e-4f2d-a309-e137aedcc011",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "30f80bca-a1cd-41a6-8ca5-3066144503cc",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "339866aa-f92a-401d-a78c-6a9ea3e02f29",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v49-calibrated-ambience-48k-held.mp4",
+      "bytes": 205477399,
+      "modifiedMs": 1790633691750.1477
+    },
+    {
+      "id": "388bfdfe-7930-4960-91ef-5f394f0d892d",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v54-cleanup-and-dawn-extension-held.mp4",
+      "bytes": 195125566,
+      "modifiedMs": 1790635114688.6626
+    },
+    {
+      "id": "3a8479bd-e91b-416b-bcaf-9087ca755fa5",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v19-canon-and-motion.mp4",
+      "bytes": 137181544,
+      "modifiedMs": 1790487923895.1323
+    },
+    {
+      "id": "3fdec247-06bb-423f-af30-8b1e4c177cfd",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v4-narration-priority.mp4",
+      "bytes": 117722092,
+      "modifiedMs": 1790483402845.3833
+    },
+    {
+      "id": "40930fd9-469c-4c53-aa0b-704555771ed8",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "42e0f3b1-c422-41a2-b3b3-befddd1285eb",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d.mp4",
+      "bytes": 112038086,
+      "modifiedMs": 1788996634036.1262
+    },
+    {
+      "id": "43f76d13-f703-4332-b7fc-b44fd5de1b02",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v52-authorized-dawn-extension-held.mp4",
+      "bytes": 203011836,
+      "modifiedMs": 1790634569538.8464
+    },
+    {
+      "id": "45321a4a-13ea-4639-bb6a-845f758a9ed1",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "466d6474-b8f0-4068-9e19-a1a0a90848f1",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v36-phrase-led-teaching-recut.mp4",
+      "bytes": 274914370,
+      "modifiedMs": 1790560699314.094
+    },
+    {
+      "id": "46dce22a-8fc9-48bc-bf64-b5d6a00d9019",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "4969d05a-e63e-4c4f-8a99-df06e5580fbb",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v28-distinct-coverage-frame-locked.mp4",
+      "bytes": 241680450,
+      "modifiedMs": 1790544394461.958
+    },
+    {
+      "id": "4d95881c-683c-4aea-a4f1-ac9024bf6b81",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "4ebe7988-da11-4dbc-8622-6b1853cf78af",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v16-thorny-soil-continuity.mp4",
+      "bytes": 139924058,
+      "modifiedMs": 1790486723641.685
+    },
+    {
+      "id": "524c1387-6117-4201-bbdc-5425d0af8750",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v64-outlier-colour-match-held.mp4",
+      "bytes": 179032584,
+      "modifiedMs": 1790640086810.01
+    },
+    {
+      "id": "540c52e6-0c0f-42a6-889c-aa7742f5fe53",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "570c52cd-11d3-4214-9695-2ab1f1df8d2a",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v31-mustard-illustration-frame-locked.mp4",
+      "bytes": 221841829,
+      "modifiedMs": 1790546550997.9133
+    },
+    {
+      "id": "5730ddf0-1a45-4f17-af32-72472a93d3f2",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v39-shore-generic-talk-removed-held.mp4",
+      "bytes": 263462539,
+      "modifiedMs": 1790563876242.4316
+    },
+    {
+      "id": "5863c364-cf56-4be8-a48a-65b1cbd913fe",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v42-ambient-breaths-calm-timing-held.mp4",
+      "bytes": 235614293,
+      "modifiedMs": 1790567271255.2134
+    },
+    {
+      "id": "5fad3c0d-2d85-4e42-a59f-d04f0bbe2362",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v43-phrase-led-private-teaching-held.mp4",
+      "bytes": 231860886,
+      "modifiedMs": 1790568440918.8833
+    },
+    {
+      "id": "6043c852-8b77-4c2f-8427-cd54d50af5de",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v51-calibrated-ambience-48k-held.mp4",
+      "bytes": 205477339,
+      "modifiedMs": 1790634277452.1265
+    },
+    {
+      "id": "61d7ec0d-7131-45d0-a345-721c12ee9ce2",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v20-bird-frame-extension.mp4",
+      "bytes": 135743486,
+      "modifiedMs": 1790529178507.6526
+    },
+    {
+      "id": "644c8985-7c7f-45af-8a5f-24416d28b7b6",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v32-thorn-flash-repair-frame-locked.mp4",
+      "bytes": 209089182,
+      "modifiedMs": 1790547116895.5388
+    },
+    {
+      "id": "6613b16a-4f3b-4a8d-a582-7fffda126feb",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v47-continuous-ambience-48k-held.mp4",
+      "bytes": 205526105,
+      "modifiedMs": 1790633379366.9792
+    },
+    {
+      "id": "662d54e9-e591-4da4-ba8b-c0c62293fbec",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v35-aesthetic-first-pass-frame-locked.mp4",
+      "bytes": 252321147,
+      "modifiedMs": 1790558547590.646
+    },
+    {
+      "id": "7b5c2f64-4c33-4afe-b11a-ef9807925992",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v24-post3034-continuity.mp4",
+      "bytes": 274302487,
+      "modifiedMs": 1790538213576.2253
+    },
+    {
+      "id": "7e756380-2de4-48cc-ad44-c4636366347f",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v46-group1-picture-fixes-held.mp4",
+      "bytes": 205669858,
+      "modifiedMs": 1790633061369.4155
+    },
+    {
+      "id": "81e73fa3-caad-45ad-9547-4c6d80a345d0",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v8-normal-level.mp4",
+      "bytes": 120951009,
+      "modifiedMs": 1790483995582.734
+    },
+    {
+      "id": "8403161c-b209-4a3b-82a3-fa49cd529376",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "84eb5ed9-2eba-4b00-91ae-ea54c23ae198",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v62-no-duplicate-coverage-held.mp4",
+      "bytes": 187852143,
+      "modifiedMs": 1790637997807.2388
+    },
+    {
+      "id": "8861b02c-d8d6-48dc-a1e5-f92b4d17bb7f",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final.mp4",
+      "bytes": 116370894,
+      "modifiedMs": 1790482805876.0652
+    },
+    {
+      "id": "8db17ea7-4709-4d59-98d9-cf83323dea09",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-with-pilot-intro.mp4",
+      "bytes": 119219734,
+      "modifiedMs": 1789002369803.8137
+    },
+    {
+      "id": "9054cfa9-9555-48e6-94c6-691b0b3516b3",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "909a7f61-403c-4258-8f62-8d92184a56cb",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v33-canon-storm-repair-frame-locked.mp4",
+      "bytes": 260248701,
+      "modifiedMs": 1790548829250.7195
+    },
+    {
+      "id": "a63d326d-c704-4e20-af49-c2ddfe66245b",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v9-mastered.mp4",
+      "bytes": 121229946,
+      "modifiedMs": 1790484113947.0906
+    },
+    {
+      "id": "a7e6628d-fb87-4e29-8852-6aa6db355e12",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v7-opening-fade.mp4",
+      "bytes": 120979919,
+      "modifiedMs": 1790483877461.6072
+    },
+    {
+      "id": "ab86a9c1-959b-4285-af26-c197232f98f1",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-review.mp4",
+      "bytes": 107664595,
+      "modifiedMs": 1790482385791.457
+    },
+    {
+      "id": "ac10200e-3412-4a33-beb3-b1471e42b697",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v50-calibrated-ambience-48k-held.mp4",
+      "bytes": 205475885,
+      "modifiedMs": 1790633891937.9973
+    },
+    {
+      "id": "ac21c333-f3a1-4dbc-9aa2-ba759e5d2eaa",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "ae755a88-ba80-4e8c-9eb7-531f7c1e7bcb",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v23-thorn-continuity-repair.mp4",
+      "bytes": 130577989,
+      "modifiedMs": 1790534373590.4385
+    },
+    {
+      "id": "b2b3b9fe-1fdb-4f59-ab23-335ab0aa173e",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v2.mp4",
+      "bytes": 116370878,
+      "modifiedMs": 1790482881112.9192
+    },
+    {
+      "id": "b8578ba3-7020-486d-9b90-3401e572eb4f",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v57-audible-scene-ambience-held.mp4",
+      "bytes": 190607903,
+      "modifiedMs": 1790636773999.1428
+    },
+    {
+      "id": "b90d8c8d-545c-49e8-a977-989a434fdbb4",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v14-bird-coverage.mp4",
+      "bytes": 142181897,
+      "modifiedMs": 1790486319523.7932
+    },
+    {
+      "id": "b97a402c-ccb6-4c5d-a6e1-b178966532dc",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "ba71df05-ab1f-462b-a3a1-7f857e10ee5a",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v5-approved-intro.mp4",
+      "bytes": 121283468,
+      "modifiedMs": 1790483566882.727
+    },
+    {
+      "id": "bfa03a94-cc83-43aa-af93-d73bfd571175",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v11-speaking-restored.mp4",
+      "bytes": 144540744,
+      "modifiedMs": 1790484857119.8977
+    },
+    {
+      "id": "c124d3e1-80e5-4939-9a13-07bb0077a460",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v25-post3034-continuity-frame-locked.mp4",
+      "bytes": 274300949,
+      "modifiedMs": 1790538215739.108
+    },
+    {
+      "id": "c8976bda-999f-41fc-a440-5b5364bd7b87",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v56-live-holds-held.mp4",
+      "bytes": 186890038,
+      "modifiedMs": 1790636291156.7212
+    },
+    {
+      "id": "ca28e466-d8d8-4c41-8e5b-ce9e51ce9174",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v12-speaker-continuous-audio.mp4",
+      "bytes": 144499809,
+      "modifiedMs": 1790485132520.918
+    },
+    {
+      "id": "cbd86845-0c60-4f87-aaa7-e9ec02353b96",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v3.mp4",
+      "bytes": 117654433,
+      "modifiedMs": 1790483072961.7346
+    },
+    {
+      "id": "cdac0be5-e2a6-42d8-9ebe-951941b4cafe",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v21-wide-before-mark4-3-speaking.mp4",
+      "bytes": 134285472,
+      "modifiedMs": 1790529992690.012
+    },
+    {
+      "id": "cfd6502a-a9e9-4147-aaad-4c5a14c82666",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v27-distinct-coverage.mp4",
+      "bytes": 241687439,
+      "modifiedMs": 1790544338706.2407
+    },
+    {
+      "id": "d15fc950-d9b8-4476-8178-be902a63829f",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v40-ending-extension-held.mp4",
+      "bytes": 270639318,
+      "modifiedMs": 1790566083606.3987
+    },
+    {
+      "id": "d16652e9-9536-4067-88fa-6f81e7ef2f74",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v34-v30-opening-lipsync-frame-locked.mp4",
+      "bytes": 247236073,
+      "modifiedMs": 1790550222445.9023
+    },
+    {
+      "id": "d16c018e-c874-4801-b2fa-ad3532d0f9e2",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v48-calibrated-ambience-48k-held.mp4",
+      "bytes": 205457831,
+      "modifiedMs": 1790633531349.159
+    },
+    {
+      "id": "d287feee-4f02-4272-a719-3a65a15acb4b",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v6-continuity.mp4",
+      "bytes": 120979919,
+      "modifiedMs": 1790483712984.9119
+    },
+    {
+      "id": "d58d688c-2375-476b-8310-028c7dbba45e",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v10-title-hold.mp4",
+      "bytes": 118030398,
+      "modifiedMs": 1790484424506.359
+    },
+    {
+      "id": "d59451fb-2f98-4bd9-8570-ce0b3508eccc",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v57-audible-scene-ambience-held.mp4",
+      "bytes": 190607903,
+      "modifiedMs": 1790636773999.1428
+    },
+    {
+      "id": "d7c8572c-c63a-4fa5-b3f4-80765f08f472",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v25-post3034-continuity-frame-locked.mp4",
+      "bytes": 274300949,
+      "modifiedMs": 1790538215739.108
+    },
+    {
+      "id": "d80e1984-e293-4798-b883-ddc0e99f739a",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v17-rocky-ground-continuity.mp4",
+      "bytes": 137222425,
+      "modifiedMs": 1790487137958.6003
+    },
+    {
+      "id": "da7185fd-f4fe-4aa1-8371-4a3df080e1c2",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "deefa536-62f9-41b3-bbac-e9e8fb244206",
+      "result_asset_path": "generated/chapter/Markus-4.mp4",
+      "bytes": 222492777,
+      "modifiedMs": 1790967937431.872
+    },
+    {
+      "id": "dfbf0745-9719-4b5b-a97d-7412fa6b8b06",
+      "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+      "bytes": 204198843,
+      "modifiedMs": 1789090526549.9038
+    },
+    {
+      "id": "e1bcf580-adeb-4b9c-bdd6-468028622cd2",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v60-duplicate-coverage-held.mp4",
+      "bytes": 194005403,
+      "modifiedMs": 1790637500599.2073
+    },
+    {
+      "id": "e40c2d16-bd98-4273-8c56-b753be169340",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v36-phrase-led-teaching-recut-v2.mp4",
+      "bytes": 279104518,
+      "modifiedMs": 1790561012182.0964
+    },
+    {
+      "id": "ea1f1cb7-35be-4f7a-aaaf-1aa2457dbec2",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v13-parable-voice-repaired.mp4",
+      "bytes": 144515114,
+      "modifiedMs": 1790485639765.221
+    },
+    {
+      "id": "ee5a65f3-fa2d-4de2-98a2-8368b97f3e3d",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v18-rocky-ground-continuity.mp4",
+      "bytes": 137318064,
+      "modifiedMs": 1790487308262.9988
+    },
+    {
+      "id": "f8e68114-d5b3-4a16-82ca-966838e23bd3",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v37-verse12-speaker-audio-held.mp4",
+      "bytes": 279105553,
+      "modifiedMs": 1790562962081.0095
+    },
+    {
+      "id": "f996735b-2edb-4fd3-a267-da948bdd450f",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v26-grain-continuation-frame-locked.mp4",
+      "bytes": 170655792,
+      "modifiedMs": 1790544110954.5393
+    },
+    {
+      "id": "fb6da1a1-2dac-4948-ab9b-4c8fca50756b",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v45-canonical-jesus-performances-held.mp4",
+      "bytes": 208753630,
+      "modifiedMs": 1790626875723.5327
+    },
+    {
+      "id": "fe437137-f59d-4530-8329-c42fea7a27fd",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v55-scene-grade-held.mp4",
+      "bytes": 190642872,
+      "modifiedMs": 1790635649232.5232
+    },
+    {
+      "id": "fea96cad-dce9-4c5f-b448-e6576d286347",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v65-scene-colour-held.mp4",
+      "bytes": 175205740,
+      "modifiedMs": 1790640318993.186
+    },
+    {
+      "id": "ff2fa3ed-d502-42f6-80b1-aee27904573b",
+      "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v24-post3034-continuity.mp4",
+      "bytes": 274302487,
+      "modifiedMs": 1790538213576.2253
+    }
+  ]
+}

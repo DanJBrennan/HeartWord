@@ -46,6 +46,41 @@ below.
 
 ## Design principles
 
+The [live producer view](design/live-producer-view.md) extends the existing
+chapter workspace/monitor with a read-only projection of saved stage, crew,
+attempt, coverage, clip, audio, render, review, cost and decision records.
+In-process entry-point observations provide actual liveness; retained running
+records without ownership remain uncertain after restart. Serial polling and
+explicit stale-state display preserve chapter isolation. The menu-driven native
+console uses resizable panels and a zoomable review timeline. Immutable render
+manifests supply exact chapter/source/cast placement; applied finishing decisions
+supply optional sound cues. Browser track toggles/layout are inspection
+preferences, never another saved cut or authority. This adds no stage,
+queue, dispatcher, parallel saved production state or external-editor dependency.
+
+The chapter inventory extends that projection across source-catalog chapter
+ranges, including chapters without workspaces. `source-catalog.ts` shares the
+existing input path rules with a non-mutating availability inspector. Exact
+saved bindings retain precedence; no reference text, cast audio or alternate
+edition fills a missing raw input. `chapter-inventory.ts` reads saved stage,
+character/canon, generation and restart evidence. `chapter-discussion.ts` merges
+actual production-role events with retained director negotiations in original
+chronological order. Both have no-store GET routes on the existing project /
+production routers. Five-second serial polling uses the same stale/identity
+guards as the chapter console. Browser replay pacing, filters and portrait
+animation are presentation state; they never run agents or change dispositions.
+
+`npm start` builds that frontend and starts the normal server (`index.ts`),
+which initializes the existing schema and presentation-only seeds before
+mounting `createHeartWordApp` from `app.ts`. The inventory, console, media and
+all existing production/edit routes are served from one loopback origin at
+`127.0.0.1:4000` by default. There is no read-only-preview restriction on this
+entry point. Route/stage source, canon, cost and approval checks retain authority;
+startup performs no production dispatch. Unknown API paths return JSON 404
+instead of the frontend HTML. Vite development proxies to the same loopback
+backend. The app factory permits integration tests against those exact mounted
+routes without starting a separate server or production data migration on import.
+
 Producer update (2026-10-06): LTX Desktop on Dan's dedicated Mac mini supplies
 the primary local scene-video backend behind the existing `VideoProvider`.
 `src/providers/video-selection.ts` selects LTX, Veo or Kling for stage 4,

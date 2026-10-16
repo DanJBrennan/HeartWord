@@ -1,0 +1,8 @@
+{
+  "databaseHashMatches": true,
+  "databaseUnchangedDuringReads": true,
+  "renderInventoryMatches": true,
+  "renderCount": 89,
+  "projects": 3,
+  "projectionErrors": []
+}

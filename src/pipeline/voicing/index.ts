@@ -86,6 +86,9 @@ export interface VoicingRunResult {
  * pass force=true to regenerate anyway (e.g. after re-casting a voice).
  */
 export async function runVoicing(projectId: string, opts: { force?: boolean; sourceSegmentIds?: readonly string[] } = {}): Promise<VoicingRunResult> {
+  return observeWork(projectId, "voice_lipsync", () => runVoicingImpl(projectId, opts));
+}
+async function runVoicingImpl(projectId: string, opts: { force?: boolean; sourceSegmentIds?: readonly string[] }): Promise<VoicingRunResult> {
   const db = getDb();
   const project = db.prepare(`SELECT id, language, book, chapter FROM projects WHERE id = ?`).get(projectId) as
     | ProjectRow
@@ -372,3 +375,4 @@ export async function runVoicing(projectId: string, opts: { force?: boolean; sou
     skippedNoVoice
   };
 }
+import { observeWork } from "../observed-work.js";

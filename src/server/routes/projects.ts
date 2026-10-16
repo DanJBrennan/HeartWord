@@ -7,7 +7,8 @@ import { runVoicing } from "../../pipeline/voicing/index.js";
 import { runCasting } from "../../pipeline/casting/index.js";
 import { runMediaGeneration } from "../../pipeline/media-generation/index.js";
 import { parseSourceTextByVerse } from "../../pipeline/ingestion/parse-source-text.js";
-import { discoverSourcePaths } from "../../pipeline/ingestion/source-catalog.js";
+import { discoverSourcePaths, WORKSPACE_BOOKS } from "../../pipeline/ingestion/source-catalog.js";
+import { readChapterInventory } from "../chapter-inventory.js";
 import { alignmentDisplay } from "../../pipeline/ingestion/alignment-display.js";
 import { parseVerseRange } from "../../pipeline/scene-breakdown/build-scenes.js";
 import { buildProductionCrewView, type NegotiationLogEntry } from "../production-crew.js";
@@ -34,6 +35,12 @@ projectsRouter.get("/", (_req, res) => {
   const db = getDb();
   const projects = db.prepare(`SELECT * FROM projects ORDER BY created_at DESC`).all();
   res.json({ projects });
+});
+
+projectsRouter.get("/inventory", (req,res) => {
+  res.setHeader("Cache-Control","no-store");
+  try { res.json(readChapterInventory(getDb(),getDataDir(),typeof req.query.language==="string"?req.query.language:"hatam",typeof req.query.book==="string"?req.query.book:"mark")); }
+  catch(error) { res.status(503).json({error:(error as Error).message}); }
 });
 
 // Global, read-only discovery projection over retained generation attempts.
@@ -78,8 +85,7 @@ projectsRouter.post("/", (req, res) => {
     return;
   }
   const language = raw.language.trim().toLowerCase(), book = raw.book.trim().toLowerCase(), chapter = raw.chapter as number;
-  const chapterCounts: Record<string, number> = { mark:16, acts:28, genesis:50 };
-  if (!language || !book || !chapterCounts[book] || chapter < 1 || chapter > chapterCounts[book]) { res.status(400).json({error:"Use a supported book and a chapter within its canonical range."}); return; }
+  if (!language || !Object.hasOwn(WORKSPACE_BOOKS,book) || chapter < 1 || chapter > WORKSPACE_BOOKS[book]!) { res.status(400).json({error:"Use a supported book and a chapter within its canonical range."}); return; }
 
   const db = getDb();
   const existing = db.prepare("SELECT * FROM projects WHERE lower(language)=lower(?) AND lower(book)=lower(?) AND chapter=?").get(language, book, chapter);

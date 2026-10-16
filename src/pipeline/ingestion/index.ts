@@ -64,7 +64,7 @@ export function resolveSourcePaths(project: ProjectRow): { docxPath: string; aud
  *   language specialist to confirm — see "Ingestion & alignment (v1)" in
  *   docs/ARCHITECTURE.md for the full approach and its known limitations.
  */
-export const runIngestion: Stage = async (projectId) => runIngestionWithAlignment(projectId);
+export const runIngestion: Stage = (projectId) => observeWork(projectId, "ingestion", () => runIngestionWithAlignment(projectId));
 
 /** Injectable seam keeps tests offline; production always uses the provider. */
 export async function runIngestionWithAlignment(projectId: string, aligner = alignWithGemini) {
@@ -428,3 +428,4 @@ async function runMark2QuoteAwareIngestion(
       `isolation achieved" section and clips-alignment-Mark-2-version-3.txt for the full corroboration writeup.`
   };
 }
+import { observeWork } from "../observed-work.js";

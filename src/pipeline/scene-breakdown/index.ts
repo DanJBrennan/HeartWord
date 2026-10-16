@@ -29,7 +29,8 @@ import { speechCoverageSegments } from "../ingestion/continuous-speech.js";
  * chapter whose source text has no such headings fails clearly rather
  * than silently inventing scene divisions.
  */
-export const runSceneBreakdown: Stage = async (projectId) => {
+export const runSceneBreakdown: Stage = projectId => observeWork(projectId, "scene_breakdown", () => runSceneBreakdownImpl(projectId));
+const runSceneBreakdownImpl: Stage = async (projectId) => {
   const db = getDb();
   const project = db.prepare(`SELECT id, language, book, chapter FROM projects WHERE id = ?`).get(projectId) as
     | ProjectRow
@@ -195,3 +196,4 @@ export const runSceneBreakdown: Stage = async (projectId) => {
       `camera, or action content, which is stage 3's (casting & direction's) job.`
   };
 };
+import { observeWork } from "../observed-work.js";

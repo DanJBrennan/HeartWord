@@ -5,7 +5,8 @@ import { runProductionCrew } from "../creative-direction/crew-store.js";
 import { assertEditorialRebuildable, renderEditorialCut } from "./render-editorial-cut.js";
 
 /** Stage 6: a reviewed Picture Editor cut with protected source performance. */
-export const runAssembly: Stage = async (projectId) => {
+export const runAssembly: Stage = projectId => observeWork(projectId, "assembly", () => runAssemblyImpl(projectId));
+const runAssemblyImpl: Stage = async (projectId) => {
   const db = getDb();
   try {
     assertEditorialRebuildable(db, projectId);
@@ -21,3 +22,4 @@ export const runAssembly: Stage = async (projectId) => {
     return { ok: false, reasoning: `Chapter assembly failed for project ${projectId}: ${(err as Error).message}` };
   }
 };
+import { observeWork } from "../observed-work.js";

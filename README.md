@@ -15,6 +15,19 @@ Start here:
 
 For AI agent working conventions, see [`AGENTS.md`](AGENTS.md).
 
+Run the normal HeartWord interface with `npm start`, then open
+[HeartWord Studio](http://127.0.0.1:4000/). This builds the current frontend and
+starts the existing production server on loopback, using
+`C:\Users\danbr\HeartWordData` by default (`HEARTWORD_DATA_DIR` overrides it;
+`PORT` overrides port 4000). The chapter inventory is the entry screen; open a
+chapter for the producer console and existing production/editing controls.
+These controls use the same source, canon, budget and approval gates. Starting
+or browsing the app does not dispatch a film or authorize a charge.
+
+For development, `npm run dev` runs Vite with the same backend. The earlier
+port-4027 read-only preview and port-4026 synthetic demonstration are optional
+diagnostic scripts, not the normal application entry point.
+
 Local video generation defaults to LTX Desktop on the dedicated Mac mini.
 See [`docs/production/LTX_LOCAL.md`](docs/production/LTX_LOCAL.md) for session
 authentication, SSH access, diagnostics (`npm run ltx:test -- --health`),

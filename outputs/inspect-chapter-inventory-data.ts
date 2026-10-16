@@ -1,0 +1,7 @@
+import {createRequire} from 'node:module';
+const {DatabaseSync}=createRequire(import.meta.url)('node:sqlite');
+const db=new DatabaseSync('C:/Users/danbr/HeartWordData/db/heartword.sqlite',{readOnly:true}); db.exec('PRAGMA query_only=ON');
+for(const [name,sql] of Object.entries({projects:'SELECT id,language,book,chapter,stage,status FROM projects',operations:'SELECT operation,provider,status,COUNT(*) n,SUM(result_asset_path IS NOT NULL) paths FROM generation_attempts GROUP BY operation,provider,status',coverage:'SELECT status,COUNT(*) n FROM coverage_keyframe_attempts GROUP BY status',stages:'SELECT project_id,stage,status,reason FROM stage_executions ORDER BY started_at DESC LIMIT 8',runs:'SELECT project_id,phase,status,COUNT(*) n FROM production_runs GROUP BY project_id,phase,status',events:'SELECT r.project_id,e.role,COUNT(*) n FROM production_events e JOIN production_runs r ON r.id=e.run_id GROUP BY r.project_id,e.role',sourceBindings:'SELECT project_id,docx_path,audio_path,audio_edition FROM project_source_bindings',log:'SELECT project_id,role,verdict,COUNT(*) n FROM director_negotiation_log GROUP BY project_id,role,verdict'})) {
+ try {console.log(JSON.stringify({name,rows:db.prepare(sql).all()}));} catch(e) {console.log(JSON.stringify({name,error:e.message}));}
+}
+console.log(JSON.stringify({tables:db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND (name LIKE '%cast%' OR name LIKE '%align%')").all()})); db.close();

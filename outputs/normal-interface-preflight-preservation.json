@@ -1,0 +1,1449 @@
+{
+  "root": "C:\\Users\\danbr\\HeartWordData\\backups\\normal-interface-2026-10-16T01-07-06-168Z\\preflight",
+  "changedExistingTables": [],
+  "productionRecordsUnchanged": true,
+  "newTables": [
+    {
+      "name": "video_generation_jobs",
+      "rows": 0
+    }
+  ],
+  "foreignKeysUnchanged": true,
+  "rendersUnchanged": true,
+  "retainedRenders": 89,
+  "after": {
+    "databaseHash": "d7950d0a8105c65c7a0086220454160b1673ebf2d0354c13081c199d3b1f6e95",
+    "records": {
+      "alignment_evidence": {
+        "columns": [
+          "project_id",
+          "source_hash",
+          "model",
+          "result_json",
+          "status",
+          "created_at"
+        ],
+        "rows": 3,
+        "sha256": "43ea332acf3760624d636463a4ca036f81454292a8dbd24071ae901054466b9d"
+      },
+      "audio_segments": {
+        "columns": [
+          "id",
+          "project_id",
+          "layer",
+          "source_path",
+          "start_ms",
+          "end_ms",
+          "speaker_character_id",
+          "verse_ref",
+          "confidence",
+          "created_at"
+        ],
+        "rows": 292,
+        "sha256": "b14c9de91cdda45cecfabe58a38dfbac7c2e6f1225937637e758e04677f78300"
+      },
+      "chapter_ending_plans": {
+        "columns": [
+          "project_id",
+          "plan_json",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "rows": 2,
+        "sha256": "bc1df7a34369a6f4235e1d21b91bfaf897e525523a17dcdd50f00412a9fe8e27"
+      },
+      "chapter_intro_plans": {
+        "columns": [
+          "project_id",
+          "plan_json",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "rows": 1,
+        "sha256": "dba2f39a154fe6b92fc099f9b92b1247913b2cef9cb2a4ada1d24de892edb5f4"
+      },
+      "chapter_render_manifests": {
+        "columns": [
+          "render_id",
+          "timeline_json",
+          "source_audio_json"
+        ],
+        "rows": 69,
+        "sha256": "a0b61d9892de26eb302770420d07a5cc970d390aaa5a937e996025dc3df25f9e"
+      },
+      "chapter_renders": {
+        "columns": [
+          "id",
+          "project_id",
+          "result_asset_path",
+          "total_duration_ms",
+          "shot_count",
+          "created_at"
+        ],
+        "rows": 89,
+        "sha256": "cbfd5b3b5179f645aa7b3972649f5d5da49e2b75db73075caf207080a03d9173"
+      },
+      "character_assets": {
+        "columns": [
+          "id",
+          "character_version_id",
+          "category",
+          "path",
+          "content_hash",
+          "imported_from",
+          "created_at",
+          "story_state",
+          "available_from_verse",
+          "available_through_verse",
+          "asset_role",
+          "narrative_state"
+        ],
+        "rows": 329,
+        "sha256": "64b2354962b5e6d8d71ac68a98be7a57ea5e262c0ff028a5083456440f99fed1"
+      },
+      "character_groups": {
+        "columns": [
+          "id",
+          "name",
+          "scope_kind",
+          "scope_book",
+          "scope_chapter",
+          "notes",
+          "created_at"
+        ],
+        "rows": 3,
+        "sha256": "bdd93e210035d62c103f33e247101340380d241c35bb7dfc3bbfc1b9abf37ac2"
+      },
+      "character_versions": {
+        "columns": [
+          "id",
+          "character_id",
+          "version_label",
+          "status",
+          "voice_provider",
+          "voice_id",
+          "notes",
+          "created_at",
+          "locked_visual_facts"
+        ],
+        "rows": 91,
+        "sha256": "f6dd7c6b9e04fa45b432309336c5325fdda8a2e97c6389372c423865ba9e0d5a"
+      },
+      "characters": {
+        "columns": [
+          "id",
+          "name",
+          "scope_kind",
+          "scope_book",
+          "scope_chapter",
+          "canon_status",
+          "region",
+          "legacy_identity_id",
+          "created_at",
+          "updated_at",
+          "group_id",
+          "is_spokesperson",
+          "joined_narrative_at"
+        ],
+        "rows": 33,
+        "sha256": "1c4d1db113dfd57496ccf506dfdd8ebb250621fc52e7387e59843496614f8df7"
+      },
+      "clips": {
+        "columns": [
+          "id",
+          "shot_id",
+          "generation_attempt_id",
+          "timeline_start_ms",
+          "timeline_end_ms",
+          "created_at"
+        ],
+        "rows": 486,
+        "sha256": "458afdb0a987251a5cbb605b527c32e0fad26268c5ef7692b7c616cbaaac52ac"
+      },
+      "composite_audio_source_map": {
+        "columns": [
+          "composite_segment_id",
+          "original_segment_id",
+          "source_hash",
+          "voice_version_id",
+          "created_at"
+        ],
+        "rows": 122,
+        "sha256": "58238d6281b479ff380a38becc77ae024db915b48593dedbd71aa926ec302a16"
+      },
+      "control_room_presentation_briefs": {
+        "columns": [
+          "id",
+          "agent_name",
+          "title",
+          "context",
+          "source_references_json",
+          "snapshot_date",
+          "presentation_only",
+          "created_at",
+          "updated_at"
+        ],
+        "rows": 21,
+        "sha256": "89ebca287ef5882a0d4cc24c7eb5de13c6035ec8f654ecfccd6c8346f5f6c194"
+      },
+      "control_room_presentation_items": {
+        "columns": [
+          "id",
+          "kind",
+          "category",
+          "cue",
+          "callback_group",
+          "callback_note",
+          "agents_json",
+          "source_workbook",
+          "source_sheet",
+          "source_row",
+          "presentation_only",
+          "created_at"
+        ],
+        "rows": 692,
+        "sha256": "aa7a5d5c0fc39b900698ce64cf2e7a3c993661e0f4a3ffe9678333b8c01ac489"
+      },
+      "control_room_presentation_lines": {
+        "columns": [
+          "id",
+          "item_id",
+          "line_number",
+          "speaker_name",
+          "text"
+        ],
+        "rows": 1778,
+        "sha256": "ec8a712f72f5791a29069416f4350fff7ae85189a1b037118260611822af7a8d"
+      },
+      "control_room_red_team_findings": {
+        "columns": [
+          "id",
+          "reviewer",
+          "review_area",
+          "finding",
+          "evidence",
+          "severity",
+          "recommendation",
+          "source_references_json",
+          "audit_scope",
+          "presentation_only",
+          "created_at",
+          "updated_at"
+        ],
+        "rows": 9,
+        "sha256": "9fd522a08d13575275702b3c0335351a8abdd3b00b0d2e83a0d8877cc09cef6e"
+      },
+      "control_room_voice_profiles": {
+        "columns": [
+          "agent_name",
+          "role",
+          "tier_status",
+          "voice_provider",
+          "voice_id",
+          "delivery_instructions",
+          "presentation_only",
+          "source_reference",
+          "created_at",
+          "updated_at"
+        ],
+        "rows": 21,
+        "sha256": "a61243512527f4083f273d5c58fce408ada1f7a4769346db2abd7ac84f8909a7"
+      },
+      "cost_ledger_entries": {
+        "columns": [
+          "id",
+          "project_id",
+          "generation_attempt_id",
+          "amount_usd",
+          "created_at"
+        ],
+        "rows": 1283,
+        "sha256": "31b6f7f4bb088846d13347c6d4163dbf0e8bb02ba98e744b12a9e026c37af707"
+      },
+      "coverage_beats": {
+        "columns": [
+          "id",
+          "shot_id",
+          "sequence",
+          "beat_type",
+          "audio_start_ms",
+          "audio_end_ms",
+          "audio_confidence",
+          "needs_lip_sync",
+          "character_id",
+          "requires_new_keyframe",
+          "keyframe_asset_path",
+          "notes",
+          "status",
+          "created_at"
+        ],
+        "rows": 57,
+        "sha256": "3d33000ef7ad9a4d5f12abdfb7130e2f6408c82abe87666296d3fd26465f2b03"
+      },
+      "coverage_keyframe_attempts": {
+        "columns": [
+          "id",
+          "coverage_beat_id",
+          "provider",
+          "model",
+          "prompt",
+          "status",
+          "result_asset_path",
+          "created_at"
+        ],
+        "rows": 51,
+        "sha256": "8c9810e281aeb48c0a02c6ebb84553c6fa0443625950e5ba895c93629cb838e2"
+      },
+      "creative_direction_proposals": {
+        "columns": [
+          "id",
+          "project_id",
+          "narration_span_verse_ref",
+          "gap_ms",
+          "ideas_json",
+          "model",
+          "created_at",
+          "context_json"
+        ],
+        "rows": 40,
+        "sha256": "c3abcc0c1e7c6c67a2aac2dd205778c002bec28e18be5fd0978f699a6e14ea21"
+      },
+      "directed_video_jobs": {
+        "columns": [
+          "shot_id",
+          "project_id",
+          "status",
+          "result_json",
+          "error",
+          "created_at"
+        ],
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "director_negotiation_log": {
+        "columns": [
+          "id",
+          "project_id",
+          "narration_span_verse_ref",
+          "idea_id",
+          "round",
+          "role",
+          "verdict",
+          "content",
+          "created_at"
+        ],
+        "rows": 184,
+        "sha256": "f0275d9ffc8e0d6fed955f65ed572200dd62ba053e6e9c14f9bfbd13d8e59438"
+      },
+      "director_resolutions": {
+        "columns": [
+          "id",
+          "project_id",
+          "narration_span_verse_ref",
+          "approved_ideas_json",
+          "rounds_used",
+          "forced_final_count",
+          "created_at"
+        ],
+        "rows": 37,
+        "sha256": "3ae860edb722a59267fda3f82afb63a24b654c657fde978365f97bb3f7b0fcbd"
+      },
+      "edit_commands": {
+        "columns": [
+          "id",
+          "project_id",
+          "sequence",
+          "command_type",
+          "payload",
+          "idempotency_key",
+          "applied_at",
+          "undone"
+        ],
+        "rows": 13,
+        "sha256": "f86e067af51fb7590949e6638e369b0bbca2a1996b3f286b14dc615f5db63198"
+      },
+      "editorial_beats": {
+        "columns": [
+          "id",
+          "project_id",
+          "sequence",
+          "placement",
+          "beat_type",
+          "description",
+          "rationale",
+          "evidence",
+          "duration_ms",
+          "timeline_start_ms",
+          "timeline_end_ms",
+          "source_label",
+          "status",
+          "approved_by",
+          "created_at"
+        ],
+        "rows": 8,
+        "sha256": "6f98aac26fd3f332cabbf7cdb42d96df56c7facdf972124410c7b04a1d6abcbc"
+      },
+      "evaluation_cases": {
+        "columns": [
+          "id",
+          "project_id",
+          "subject_type",
+          "subject_id",
+          "artifact_hash",
+          "evidence_json",
+          "label",
+          "factual",
+          "protected",
+          "synthetic",
+          "created_at"
+        ],
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "evaluation_predictions": {
+        "columns": [
+          "id",
+          "evaluation_case_id",
+          "version",
+          "label",
+          "confidence",
+          "cost_usd",
+          "evidence",
+          "training_case_ids_json",
+          "created_at",
+          "content_hash"
+        ],
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "evaluation_runs": {
+        "columns": [
+          "id",
+          "baseline_version",
+          "candidate_version",
+          "case_ids_json",
+          "held_out_project_id",
+          "result_json",
+          "recommendation",
+          "created_at"
+        ],
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "generation_attempt_references": {
+        "columns": [
+          "generation_attempt_id",
+          "character_id",
+          "character_asset_id",
+          "asset_path",
+          "asset_hash",
+          "narrative_state"
+        ],
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "generation_attempts": {
+        "columns": [
+          "id",
+          "shot_id",
+          "provider",
+          "model",
+          "operation",
+          "resolution",
+          "prompt",
+          "status",
+          "result_asset_path",
+          "cost_usd",
+          "created_at"
+        ],
+        "rows": 1403,
+        "sha256": "88ad9c8d07da27e7331d9cd5cdfb1d8291afb7301a0960ee1b5cd35fe6471fe9"
+      },
+      "media_library_items": {
+        "columns": [
+          "id",
+          "generation_attempt_id",
+          "project_id",
+          "shot_id",
+          "kind",
+          "asset_path",
+          "parent_item_id",
+          "parent_time_ms",
+          "title",
+          "location",
+          "tags_json",
+          "library_status",
+          "provenance_json",
+          "created_at"
+        ],
+        "rows": 858,
+        "sha256": "3f21791cf6d336ca2d3e1ed24594c719550b5b988500da36d6640639b299dd79"
+      },
+      "media_reuse_candidates": {
+        "columns": [
+          "id",
+          "library_item_id",
+          "target_shot_id",
+          "status",
+          "note",
+          "created_at"
+        ],
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "production_audio_assets": {
+        "columns": [
+          "id",
+          "project_id",
+          "kind",
+          "description",
+          "path",
+          "sha256",
+          "duration_ms",
+          "created_at"
+        ],
+        "rows": 8,
+        "sha256": "c2e54350079e6271ee6d052e4dda8e83f2e3b2f18d58dcd2836b05caeb8f893d"
+      },
+      "production_events": {
+        "columns": [
+          "id",
+          "run_id",
+          "sequence",
+          "role",
+          "round",
+          "prompt",
+          "output_json",
+          "error",
+          "model",
+          "cost_usd",
+          "created_at"
+        ],
+        "rows": 196,
+        "sha256": "2f6754eb32ae85e4dcf2ed30035e41ae7c1088e43030db826d425fc1455e9851"
+      },
+      "production_lesson_events": {
+        "columns": [
+          "id",
+          "lesson_id",
+          "action",
+          "detail",
+          "created_at"
+        ],
+        "rows": 1,
+        "sha256": "7e2c5dcfe194a849b76189eadf124196e84f60f96268087a215fb40cf0670786"
+      },
+      "production_lessons": {
+        "columns": [
+          "id",
+          "project_id",
+          "scope_kind",
+          "scope_value",
+          "subject_id",
+          "issue",
+          "requested_change",
+          "rationale",
+          "status",
+          "source_note_id",
+          "supersedes_id",
+          "created_at",
+          "updated_at",
+          "source_language",
+          "source_book",
+          "source_chapter",
+          "source_region"
+        ],
+        "rows": 1,
+        "sha256": "b9a25945cfccccdf0cc65063a58588be0679e697e745cf8724439b97706fd2cb"
+      },
+      "production_runs": {
+        "columns": [
+          "id",
+          "project_id",
+          "phase",
+          "brief_hash",
+          "brief_json",
+          "status",
+          "result_json",
+          "created_at",
+          "completed_at",
+          "worker_pid"
+        ],
+        "rows": 15,
+        "sha256": "ca55eedf70d93c800eb378405409a467275de3da3fb45956894ecbfaa872a5db"
+      },
+      "project_restart_cutovers": {
+        "columns": [
+          "project_id",
+          "started_at",
+          "approved_by",
+          "reason"
+        ],
+        "rows": 1,
+        "sha256": "8a8ba95f2c3f1274952bc8d9c1171ff6d5f0ee10bdb30aa363e8478731c84485"
+      },
+      "project_source_bindings": {
+        "columns": [
+          "project_id",
+          "docx_path",
+          "audio_path",
+          "reference_path",
+          "audio_edition",
+          "docx_hash",
+          "audio_hash",
+          "reference_hash",
+          "provenance",
+          "bound_at"
+        ],
+        "rows": 2,
+        "sha256": "66f5796f8b726c2eb86099ff0ad8aa3826ceff9bf4b16cc4ded3fccd67ce95eb"
+      },
+      "projects": {
+        "columns": [
+          "id",
+          "language",
+          "book",
+          "chapter",
+          "stage",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "rows": 3,
+        "sha256": "6c05642fb363d0f9be7b2d658cfe0dcd7c6bf40dc5c1ee7151ea45759668f51b"
+      },
+      "review_notes": {
+        "columns": [
+          "id",
+          "project_id",
+          "subject_type",
+          "subject_id",
+          "source",
+          "note",
+          "resolved",
+          "created_at"
+        ],
+        "rows": 1527,
+        "sha256": "b94124b8f3d10b5868993eccecdda0eda35d55f9e564985bb5050a2412df5d8a"
+      },
+      "scenes": {
+        "columns": [
+          "id",
+          "project_id",
+          "sequence",
+          "verse_start",
+          "verse_end",
+          "summary",
+          "reasoning",
+          "created_at",
+          "lighting_continuity",
+          "spatial_continuity"
+        ],
+        "rows": 16,
+        "sha256": "59745ab39f2e0146da20486bb61cb37e710c5fcb0295a4d673f79e1d9d7f6240"
+      },
+      "shot_character_states": {
+        "columns": [
+          "shot_id",
+          "character_id",
+          "required_state",
+          "reference_asset_id",
+          "state_proof_asset_id",
+          "created_at"
+        ],
+        "rows": 1,
+        "sha256": "24d3decada51022780ad7adf8d2ac7a347743e9a534978302f00caee622ee28e"
+      },
+      "shot_characters": {
+        "columns": [
+          "shot_id",
+          "character_id"
+        ],
+        "rows": 723,
+        "sha256": "ea455bb6cd0ceafc2e10e3a3b8fafc4a0bacaa4cf8d9cbdb5c52b795088dafc0"
+      },
+      "shot_performance_briefs": {
+        "columns": [
+          "shot_id",
+          "starting_pose",
+          "legibility_requirement",
+          "transition_goal",
+          "framing_guidance",
+          "source",
+          "created_at",
+          "updated_at"
+        ],
+        "rows": 1,
+        "sha256": "bc0dbd0b7299ac50165640bb9c0b4351b6978ed82fb085aa733656011585c436"
+      },
+      "shot_utterance_bindings": {
+        "columns": [
+          "id",
+          "shot_id",
+          "source_audio_segment_id",
+          "source_start_ms",
+          "source_end_ms",
+          "character_version_id",
+          "source_hash",
+          "approved_at",
+          "approved_by"
+        ],
+        "rows": 29,
+        "sha256": "47d96db1f61463633df9f527614c8ed1a7c7ca1abec35a5859fc5209637754bb"
+      },
+      "shots": {
+        "columns": [
+          "id",
+          "scene_id",
+          "sequence",
+          "action",
+          "status",
+          "created_at",
+          "verse_ref",
+          "framing",
+          "camera_movement",
+          "needs_lip_sync",
+          "dialogue_character_id",
+          "coverage_plan",
+          "coverage_notes",
+          "crowd_density",
+          "continuity_notes",
+          "spatial_view"
+        ],
+        "rows": 219,
+        "sha256": "817d7772ac649008940056a4533d63d13a34598eed5ec315413583038f4383b9"
+      },
+      "soundtrack_attempts": {
+        "columns": [
+          "id",
+          "project_id",
+          "run_id",
+          "request_key",
+          "kind",
+          "request_json",
+          "status",
+          "provider",
+          "model",
+          "path",
+          "usage_json",
+          "cost_usd",
+          "review_json",
+          "error",
+          "created_at"
+        ],
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "source_alignment_boundary_overrides": {
+        "columns": [
+          "id",
+          "project_id",
+          "audio_segment_id",
+          "original_start_ms",
+          "original_end_ms",
+          "start_ms",
+          "end_ms",
+          "reviewer_name",
+          "evidence",
+          "created_at"
+        ],
+        "rows": 4,
+        "sha256": "03e05b669914cb88a54240d9ce84939c2e5923fe0bb115ff97ef87ae178ed2f8"
+      },
+      "source_alignment_corrections": {
+        "columns": [
+          "id",
+          "project_id",
+          "audio_segment_id",
+          "verse_ref",
+          "assigned_text",
+          "reviewer_name",
+          "evidence",
+          "source_hash",
+          "alignment_hash",
+          "created_at"
+        ],
+        "rows": 23,
+        "sha256": "d1b1f84d0707fc39dbaa7e5188e37a5523aeea5ac918fde7e6a02264ad5469fd"
+      },
+      "source_alignment_editorial_classifications": {
+        "columns": [
+          "id",
+          "project_id",
+          "audio_segment_id",
+          "classification",
+          "title_text",
+          "cross_reference_text",
+          "next_verse_ref",
+          "reviewer_name",
+          "evidence",
+          "source_hash",
+          "alignment_hash",
+          "created_at",
+          "film_treatment"
+        ],
+        "rows": 5,
+        "sha256": "1538b7837736d31aaf89a352e1190bb2e6252ff8cbcb674a65266facaa4ded06"
+      },
+      "source_alignment_reviews": {
+        "columns": [
+          "id",
+          "project_id",
+          "reviewer_name",
+          "reviewer_attestation",
+          "source_hash",
+          "alignment_hash",
+          "evidence",
+          "created_at"
+        ],
+        "rows": 3,
+        "sha256": "6bcc9900b48236ce9840dad372530a2b88492a26fbca6dd1b10653fc916364f3"
+      },
+      "source_alignment_segment_merges": {
+        "columns": [
+          "id",
+          "project_id",
+          "first_segment_id",
+          "second_segment_id",
+          "first_start_ms",
+          "first_end_ms",
+          "second_start_ms",
+          "second_end_ms",
+          "merged_segment_id",
+          "superseded_correction_ids",
+          "superseded_editorial_classification_ids",
+          "superseded_speaker_attribution_ids",
+          "superseded_boundary_override_ids",
+          "reviewer_name",
+          "evidence",
+          "source_hash",
+          "alignment_hash",
+          "created_at"
+        ],
+        "rows": 2,
+        "sha256": "6a7f868c87bc6e4292bed7d68a125e1c70a6eaeac3e5cb6670856de215e73c55"
+      },
+      "source_alignment_segment_splits": {
+        "columns": [
+          "id",
+          "project_id",
+          "original_segment_id",
+          "original_start_ms",
+          "original_end_ms",
+          "split_at_ms",
+          "first_segment_id",
+          "second_segment_id",
+          "superseded_correction_ids",
+          "superseded_editorial_classification_ids",
+          "superseded_speaker_attribution_ids",
+          "superseded_boundary_override_ids",
+          "reviewer_name",
+          "evidence",
+          "source_hash",
+          "alignment_hash",
+          "created_at"
+        ],
+        "rows": 5,
+        "sha256": "74602df546e46e956381e1afe5233f5db4ff8c5a8fe3cbfd63699990d781c132"
+      },
+      "source_alignment_speaker_attributions": {
+        "columns": [
+          "id",
+          "project_id",
+          "audio_segment_id",
+          "character_id",
+          "verse_ref",
+          "reviewer_name",
+          "evidence",
+          "source_hash",
+          "alignment_hash",
+          "created_at"
+        ],
+        "rows": 66,
+        "sha256": "9d4c957ea128a7636cb38ede01f6d28eab787f5514d6d558086676276294a20d"
+      },
+      "stage_executions": {
+        "columns": [
+          "id",
+          "project_id",
+          "stage",
+          "input_hash",
+          "dependency_hash",
+          "status",
+          "attempt",
+          "reason",
+          "output_json",
+          "started_at",
+          "completed_at",
+          "worker_token"
+        ],
+        "rows": 19,
+        "sha256": "a8e9c251b86c4a03785998d91ee07650219ddceab2ce5377d6787c00fba4b27f"
+      },
+      "tracks": {
+        "columns": [
+          "id",
+          "project_id",
+          "kind",
+          "muted",
+          "volume"
+        ],
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "video_generation_jobs": {
+        "columns": [
+          "id",
+          "project_id",
+          "shot_id",
+          "backend",
+          "status",
+          "progress_json",
+          "metadata_json",
+          "updated_at"
+        ],
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "foreignKeys": [],
+    "renders": [
+      {
+        "id": "0138938f-c8b6-4ed6-87a9-a3bffa3b7de4",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v29-distinct-coverage-grain-repair-frame-locked.mp4",
+        "bytes": 227393371,
+        "modifiedMs": 1790544588571.621
+      },
+      {
+        "id": "02743551-9c4a-4176-8b48-f6ab56c58516",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v22-confirmed-flash-repairs.mp4",
+        "bytes": 132478071,
+        "modifiedMs": 1790534014636.572
+      },
+      {
+        "id": "04d8199e-14a7-4f1e-a12e-407dca53cefd",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "059aa3fc-e72e-44a1-b2a6-0d027a90a1b6",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v41-residual-picture-defects-held.mp4",
+        "bytes": 245488851,
+        "modifiedMs": 1790566964630.0945
+      },
+      {
+        "id": "0b0a8ed0-9f4a-4a0c-a0d9-2f1e4da0c9f0",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "127a438f-6e6d-4e64-a0a0-f6f0bf882fbb",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v38-editorial-breaths-held.mp4",
+        "bytes": 271043353,
+        "modifiedMs": 1790563398184.3826
+      },
+      {
+        "id": "150a7944-420d-4984-8efa-6754eaef5cfe",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "18749e86-6313-4866-a4af-679e10e0dc17",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v44-audible-ambient-phrase-led-held.mp4",
+        "bytes": 222225608,
+        "modifiedMs": 1790568915123.324
+      },
+      {
+        "id": "18c4cb05-88e1-4232-a7e6-246383233ea1",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "19b8265f-3924-4623-9ffa-0a55a260393d",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v63-selective-scene-grade-held.mp4",
+        "bytes": 183466200,
+        "modifiedMs": 1790638744434.286
+      },
+      {
+        "id": "1aa0824c-6b6e-440a-96d4-0ff7845bad58",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v53-short-run-cleanup-held.mp4",
+        "bytes": 196517757,
+        "modifiedMs": 1790634886994.73
+      },
+      {
+        "id": "20c98f03-401d-4853-9944-dc2d9837977e",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v59-moving-coverage-held.mp4",
+        "bytes": 199803758,
+        "modifiedMs": 1790637154829.0452
+      },
+      {
+        "id": "22314432-fae6-47a6-8eb8-d74f284fd8b2",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v58-calibrated-ambience-held.mp4",
+        "bytes": 190605335,
+        "modifiedMs": 1790636927459.8428
+      },
+      {
+        "id": "29877091-e1e8-4af8-99c1-57cad559bd0d",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "2a7f5247-d5c2-48e9-b98e-a738bcb446be",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v61-olive-duplicates-held.mp4",
+        "bytes": 195162250,
+        "modifiedMs": 1790637774558.2646
+      },
+      {
+        "id": "2efeab16-c25e-4f2d-a309-e137aedcc011",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "30f80bca-a1cd-41a6-8ca5-3066144503cc",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "339866aa-f92a-401d-a78c-6a9ea3e02f29",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v49-calibrated-ambience-48k-held.mp4",
+        "bytes": 205477399,
+        "modifiedMs": 1790633691750.1477
+      },
+      {
+        "id": "388bfdfe-7930-4960-91ef-5f394f0d892d",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v54-cleanup-and-dawn-extension-held.mp4",
+        "bytes": 195125566,
+        "modifiedMs": 1790635114688.6626
+      },
+      {
+        "id": "3a8479bd-e91b-416b-bcaf-9087ca755fa5",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v19-canon-and-motion.mp4",
+        "bytes": 137181544,
+        "modifiedMs": 1790487923895.1323
+      },
+      {
+        "id": "3fdec247-06bb-423f-af30-8b1e4c177cfd",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v4-narration-priority.mp4",
+        "bytes": 117722092,
+        "modifiedMs": 1790483402845.3833
+      },
+      {
+        "id": "40930fd9-469c-4c53-aa0b-704555771ed8",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "42e0f3b1-c422-41a2-b3b3-befddd1285eb",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d.mp4",
+        "bytes": 112038086,
+        "modifiedMs": 1788996634036.1262
+      },
+      {
+        "id": "43f76d13-f703-4332-b7fc-b44fd5de1b02",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v52-authorized-dawn-extension-held.mp4",
+        "bytes": 203011836,
+        "modifiedMs": 1790634569538.8464
+      },
+      {
+        "id": "45321a4a-13ea-4639-bb6a-845f758a9ed1",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "466d6474-b8f0-4068-9e19-a1a0a90848f1",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v36-phrase-led-teaching-recut.mp4",
+        "bytes": 274914370,
+        "modifiedMs": 1790560699314.094
+      },
+      {
+        "id": "46dce22a-8fc9-48bc-bf64-b5d6a00d9019",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "4969d05a-e63e-4c4f-8a99-df06e5580fbb",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v28-distinct-coverage-frame-locked.mp4",
+        "bytes": 241680450,
+        "modifiedMs": 1790544394461.958
+      },
+      {
+        "id": "4d95881c-683c-4aea-a4f1-ac9024bf6b81",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "4ebe7988-da11-4dbc-8622-6b1853cf78af",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v16-thorny-soil-continuity.mp4",
+        "bytes": 139924058,
+        "modifiedMs": 1790486723641.685
+      },
+      {
+        "id": "524c1387-6117-4201-bbdc-5425d0af8750",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v64-outlier-colour-match-held.mp4",
+        "bytes": 179032584,
+        "modifiedMs": 1790640086810.01
+      },
+      {
+        "id": "540c52e6-0c0f-42a6-889c-aa7742f5fe53",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "570c52cd-11d3-4214-9695-2ab1f1df8d2a",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v31-mustard-illustration-frame-locked.mp4",
+        "bytes": 221841829,
+        "modifiedMs": 1790546550997.9133
+      },
+      {
+        "id": "5730ddf0-1a45-4f17-af32-72472a93d3f2",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v39-shore-generic-talk-removed-held.mp4",
+        "bytes": 263462539,
+        "modifiedMs": 1790563876242.4316
+      },
+      {
+        "id": "5863c364-cf56-4be8-a48a-65b1cbd913fe",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v42-ambient-breaths-calm-timing-held.mp4",
+        "bytes": 235614293,
+        "modifiedMs": 1790567271255.2134
+      },
+      {
+        "id": "5fad3c0d-2d85-4e42-a59f-d04f0bbe2362",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v43-phrase-led-private-teaching-held.mp4",
+        "bytes": 231860886,
+        "modifiedMs": 1790568440918.8833
+      },
+      {
+        "id": "6043c852-8b77-4c2f-8427-cd54d50af5de",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v51-calibrated-ambience-48k-held.mp4",
+        "bytes": 205477339,
+        "modifiedMs": 1790634277452.1265
+      },
+      {
+        "id": "61d7ec0d-7131-45d0-a345-721c12ee9ce2",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v20-bird-frame-extension.mp4",
+        "bytes": 135743486,
+        "modifiedMs": 1790529178507.6526
+      },
+      {
+        "id": "644c8985-7c7f-45af-8a5f-24416d28b7b6",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v32-thorn-flash-repair-frame-locked.mp4",
+        "bytes": 209089182,
+        "modifiedMs": 1790547116895.5388
+      },
+      {
+        "id": "6613b16a-4f3b-4a8d-a582-7fffda126feb",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v47-continuous-ambience-48k-held.mp4",
+        "bytes": 205526105,
+        "modifiedMs": 1790633379366.9792
+      },
+      {
+        "id": "662d54e9-e591-4da4-ba8b-c0c62293fbec",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v35-aesthetic-first-pass-frame-locked.mp4",
+        "bytes": 252321147,
+        "modifiedMs": 1790558547590.646
+      },
+      {
+        "id": "7b5c2f64-4c33-4afe-b11a-ef9807925992",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v24-post3034-continuity.mp4",
+        "bytes": 274302487,
+        "modifiedMs": 1790538213576.2253
+      },
+      {
+        "id": "7e756380-2de4-48cc-ad44-c4636366347f",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v46-group1-picture-fixes-held.mp4",
+        "bytes": 205669858,
+        "modifiedMs": 1790633061369.4155
+      },
+      {
+        "id": "81e73fa3-caad-45ad-9547-4c6d80a345d0",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v8-normal-level.mp4",
+        "bytes": 120951009,
+        "modifiedMs": 1790483995582.734
+      },
+      {
+        "id": "8403161c-b209-4a3b-82a3-fa49cd529376",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "84eb5ed9-2eba-4b00-91ae-ea54c23ae198",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v62-no-duplicate-coverage-held.mp4",
+        "bytes": 187852143,
+        "modifiedMs": 1790637997807.2388
+      },
+      {
+        "id": "8861b02c-d8d6-48dc-a1e5-f92b4d17bb7f",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final.mp4",
+        "bytes": 116370894,
+        "modifiedMs": 1790482805876.0652
+      },
+      {
+        "id": "8db17ea7-4709-4d59-98d9-cf83323dea09",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-with-pilot-intro.mp4",
+        "bytes": 119219734,
+        "modifiedMs": 1789002369803.8137
+      },
+      {
+        "id": "9054cfa9-9555-48e6-94c6-691b0b3516b3",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "909a7f61-403c-4258-8f62-8d92184a56cb",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v33-canon-storm-repair-frame-locked.mp4",
+        "bytes": 260248701,
+        "modifiedMs": 1790548829250.7195
+      },
+      {
+        "id": "a63d326d-c704-4e20-af49-c2ddfe66245b",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v9-mastered.mp4",
+        "bytes": 121229946,
+        "modifiedMs": 1790484113947.0906
+      },
+      {
+        "id": "a7e6628d-fb87-4e29-8852-6aa6db355e12",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v7-opening-fade.mp4",
+        "bytes": 120979919,
+        "modifiedMs": 1790483877461.6072
+      },
+      {
+        "id": "ab86a9c1-959b-4285-af26-c197232f98f1",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-review.mp4",
+        "bytes": 107664595,
+        "modifiedMs": 1790482385791.457
+      },
+      {
+        "id": "ac10200e-3412-4a33-beb3-b1471e42b697",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v50-calibrated-ambience-48k-held.mp4",
+        "bytes": 205475885,
+        "modifiedMs": 1790633891937.9973
+      },
+      {
+        "id": "ac21c333-f3a1-4dbc-9aa2-ba759e5d2eaa",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "ae755a88-ba80-4e8c-9eb7-531f7c1e7bcb",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v23-thorn-continuity-repair.mp4",
+        "bytes": 130577989,
+        "modifiedMs": 1790534373590.4385
+      },
+      {
+        "id": "b2b3b9fe-1fdb-4f59-ab23-335ab0aa173e",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v2.mp4",
+        "bytes": 116370878,
+        "modifiedMs": 1790482881112.9192
+      },
+      {
+        "id": "b8578ba3-7020-486d-9b90-3401e572eb4f",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v57-audible-scene-ambience-held.mp4",
+        "bytes": 190607903,
+        "modifiedMs": 1790636773999.1428
+      },
+      {
+        "id": "b90d8c8d-545c-49e8-a977-989a434fdbb4",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v14-bird-coverage.mp4",
+        "bytes": 142181897,
+        "modifiedMs": 1790486319523.7932
+      },
+      {
+        "id": "b97a402c-ccb6-4c5d-a6e1-b178966532dc",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "ba71df05-ab1f-462b-a3a1-7f857e10ee5a",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v5-approved-intro.mp4",
+        "bytes": 121283468,
+        "modifiedMs": 1790483566882.727
+      },
+      {
+        "id": "bfa03a94-cc83-43aa-af93-d73bfd571175",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v11-speaking-restored.mp4",
+        "bytes": 144540744,
+        "modifiedMs": 1790484857119.8977
+      },
+      {
+        "id": "c124d3e1-80e5-4939-9a13-07bb0077a460",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v25-post3034-continuity-frame-locked.mp4",
+        "bytes": 274300949,
+        "modifiedMs": 1790538215739.108
+      },
+      {
+        "id": "c8976bda-999f-41fc-a440-5b5364bd7b87",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v56-live-holds-held.mp4",
+        "bytes": 186890038,
+        "modifiedMs": 1790636291156.7212
+      },
+      {
+        "id": "ca28e466-d8d8-4c41-8e5b-ce9e51ce9174",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v12-speaker-continuous-audio.mp4",
+        "bytes": 144499809,
+        "modifiedMs": 1790485132520.918
+      },
+      {
+        "id": "cbd86845-0c60-4f87-aaa7-e9ec02353b96",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v3.mp4",
+        "bytes": 117654433,
+        "modifiedMs": 1790483072961.7346
+      },
+      {
+        "id": "cdac0be5-e2a6-42d8-9ebe-951941b4cafe",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v21-wide-before-mark4-3-speaking.mp4",
+        "bytes": 134285472,
+        "modifiedMs": 1790529992690.012
+      },
+      {
+        "id": "cfd6502a-a9e9-4147-aaad-4c5a14c82666",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v27-distinct-coverage.mp4",
+        "bytes": 241687439,
+        "modifiedMs": 1790544338706.2407
+      },
+      {
+        "id": "d15fc950-d9b8-4476-8178-be902a63829f",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v40-ending-extension-held.mp4",
+        "bytes": 270639318,
+        "modifiedMs": 1790566083606.3987
+      },
+      {
+        "id": "d16652e9-9536-4067-88fa-6f81e7ef2f74",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v34-v30-opening-lipsync-frame-locked.mp4",
+        "bytes": 247236073,
+        "modifiedMs": 1790550222445.9023
+      },
+      {
+        "id": "d16c018e-c874-4801-b2fa-ad3532d0f9e2",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v48-calibrated-ambience-48k-held.mp4",
+        "bytes": 205457831,
+        "modifiedMs": 1790633531349.159
+      },
+      {
+        "id": "d287feee-4f02-4272-a719-3a65a15acb4b",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v6-continuity.mp4",
+        "bytes": 120979919,
+        "modifiedMs": 1790483712984.9119
+      },
+      {
+        "id": "d58d688c-2375-476b-8310-028c7dbba45e",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v10-title-hold.mp4",
+        "bytes": 118030398,
+        "modifiedMs": 1790484424506.359
+      },
+      {
+        "id": "d59451fb-2f98-4bd9-8570-ce0b3508eccc",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v57-audible-scene-ambience-held.mp4",
+        "bytes": 190607903,
+        "modifiedMs": 1790636773999.1428
+      },
+      {
+        "id": "d7c8572c-c63a-4fa5-b3f4-80765f08f472",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v25-post3034-continuity-frame-locked.mp4",
+        "bytes": 274300949,
+        "modifiedMs": 1790538215739.108
+      },
+      {
+        "id": "d80e1984-e293-4798-b883-ddc0e99f739a",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v17-rocky-ground-continuity.mp4",
+        "bytes": 137222425,
+        "modifiedMs": 1790487137958.6003
+      },
+      {
+        "id": "da7185fd-f4fe-4aa1-8371-4a3df080e1c2",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "deefa536-62f9-41b3-bbac-e9e8fb244206",
+        "result_asset_path": "generated/chapter/Markus-4.mp4",
+        "bytes": 222492777,
+        "modifiedMs": 1790967937431.872
+      },
+      {
+        "id": "dfbf0745-9719-4b5b-a97d-7412fa6b8b06",
+        "result_asset_path": "generated\\chapter\\fe1408a5-d515-4d5b-b5c1-5fc55d0ae32d-full-with-inserts.mp4",
+        "bytes": 204198843,
+        "modifiedMs": 1789090526549.9038
+      },
+      {
+        "id": "e1bcf580-adeb-4b9c-bdd6-468028622cd2",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v60-duplicate-coverage-held.mp4",
+        "bytes": 194005403,
+        "modifiedMs": 1790637500599.2073
+      },
+      {
+        "id": "e40c2d16-bd98-4273-8c56-b753be169340",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v36-phrase-led-teaching-recut-v2.mp4",
+        "bytes": 279104518,
+        "modifiedMs": 1790561012182.0964
+      },
+      {
+        "id": "ea1f1cb7-35be-4f7a-aaaf-1aa2457dbec2",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v13-parable-voice-repaired.mp4",
+        "bytes": 144515114,
+        "modifiedMs": 1790485639765.221
+      },
+      {
+        "id": "ee5a65f3-fa2d-4de2-98a2-8368b97f3e3d",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v18-rocky-ground-continuity.mp4",
+        "bytes": 137318064,
+        "modifiedMs": 1790487308262.9988
+      },
+      {
+        "id": "f8e68114-d5b3-4a16-82ca-966838e23bd3",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v37-verse12-speaker-audio-held.mp4",
+        "bytes": 279105553,
+        "modifiedMs": 1790562962081.0095
+      },
+      {
+        "id": "f996735b-2edb-4fd3-a267-da948bdd450f",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v26-grain-continuation-frame-locked.mp4",
+        "bytes": 170655792,
+        "modifiedMs": 1790544110954.5393
+      },
+      {
+        "id": "fb6da1a1-2dac-4948-ab9b-4c8fca50756b",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v45-canonical-jesus-performances-held.mp4",
+        "bytes": 208753630,
+        "modifiedMs": 1790626875723.5327
+      },
+      {
+        "id": "fe437137-f59d-4530-8329-c42fea7a27fd",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v55-scene-grade-held.mp4",
+        "bytes": 190642872,
+        "modifiedMs": 1790635649232.5232
+      },
+      {
+        "id": "fea96cad-dce9-4c5f-b448-e6576d286347",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v65-scene-colour-held.mp4",
+        "bytes": 175205740,
+        "modifiedMs": 1790640318993.186
+      },
+      {
+        "id": "ff2fa3ed-d502-42f6-80b1-aee27904573b",
+        "result_asset_path": "generated/chapter/mark4-autonomous-overnight-final-v24-post3034-continuity.mp4",
+        "bytes": 274302487,
+        "modifiedMs": 1790538213576.2253
+      }
+    ]
+  }
+}

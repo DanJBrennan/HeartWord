@@ -1,0 +1,65 @@
+{
+  "url": "http://127.0.0.1:4027/",
+  "chapter3Replay": {
+    "advancedKicker": "SAVED ENTRY · 4 / 297",
+    "pausedAt": "00:22 / 41:35",
+    "savedSummary": "Detailed physical choreography for Mark 3, defining precise sequential motion mechanics (initial pose, contact, weight, movement, final pose) for every shot while maintaining causal scripture action and physical plausibility.",
+    "originalTimestamp": "9/19/2026, 5:41:17 PM"
+  },
+  "checks": {
+    "chapter2Legacy": {
+      "heading": "Cast & crew discussion\n\nAnimated replay of saved production replies · hatam / mark 2\n\nRECORDED · NOT LIVE AGENTS",
+      "entries": "SAVED ENTRY · 1 / 50"
+    },
+    "unstartedChapter": "No saved discussion for Mark 1\n\nThis chapter has no workspace or saved production replies. No conversation is invented.\n\nChoose a chapter with saved work",
+    "chapter3Restored": "SAVED ENTRY · 1 / 297",
+    "exactSavedSummary": true,
+    "chapter3Filtered": {
+      "entry": "SAVED ENTRY · 1 / 13",
+      "summary": "The visual staging for Mark 3 accurately reflects first-century Jewish cultural contexts, including synagogue customs, multi-regional crowd demographics, mountain apostolic commissioning, Capernaum domestic architecture, and familial honor dynamics. All shots align with the Hatam text and regional canon requirements."
+    },
+    "affectedShotNavigation": {
+      "workspace": "hatam / mark 3",
+      "inspector": "SCENE 1 / SHOT 2\nMark 3:1\nAccepted material available\nShot inspection · release status unchanged"
+    },
+    "currentRows": [
+      "1not startedNo workspaceReadyAudio ✓ · Text ✓Not runNot identifiedNot plannedNot run———",
+      "2uncertainmedia generationReadyAudio ✓ · Text ✓uncertain24 source intervals24 saved IDs23 visual cast23 / 23Execution unreported35 saved shots115 available115 generated · 0 reused138 retries*46 available46 generated · 0 reused22 retries*52 available52 generated · 0 reused37 retries*",
+      "3uncertainmedia generationReadyAudio ✓ · Text ✓Recorded complete48 source intervals27 saved IDs27 visual cast27 / 27Recorded complete73 saved shots69 available60 generated · 6 reused86 retries*146 available90 generated · 51 reused53 retries*28 available28 generated · 0 reused16 retries*",
+      "4uncertainmedia generationReadyAudio ✓ · Text ✓Recorded complete74 source intervals25 saved IDs25 visual cast25 / 25Recorded complete111 saved shots36 available36 generated · 0 reused7 retries*51 available51 generated · 0 reused9 retries*42 available39 generated · 0 reused7 retries*"
+    ],
+    "historyRows": [
+      "1not startedNo workspaceReadyAudio ✓ · Text ✓Not runNot identifiedNot plannedNot run———",
+      "2uncertainmedia generationReadyAudio ✓ · Text ✓uncertain24 source intervals24 saved IDs23 visual cast23 / 23Execution unreported35 saved shots115 available115 generated · 0 reused138 retries*46 available46 generated · 0 reused22 retries*52 available52 generated · 0 reused37 retries*",
+      "3uncertainmedia generationReadyAudio ✓ · Text ✓Recorded complete48 source intervals27 saved IDs27 visual cast27 / 27Recorded complete73 saved shots69 available60 generated · 6 reused86 retries*146 available90 generated · 51 reused53 retries*28 available28 generated · 0 reused16 retries*",
+      "4uncertainmedia generationReadyAudio ✓ · Text ✓Recorded complete74 source intervals25 saved IDs25 visual cast25 / 25Recorded complete111 saved shots133 available133 generated · 0 reused227 retries*182 available182 generated · 0 reused16 retries*42 available39 generated · 0 reused7 retries*"
+    ],
+    "disconnect": {
+      "alerts": [
+        "Failed to fetch · Last inventory is stale. Reconnecting automatically; completion and file readiness are unverified.",
+        "Failed to fetch · Saved snapshot is stale. Replay paused; reconnecting."
+      ],
+      "replay": "SAVED ENTRY · 1 / 297",
+      "playEnabled": false
+    },
+    "reconnect": {
+      "alerts": [],
+      "heading": "Cast & crew discussion\n\nAnimated replay of saved production replies · hatam / mark 3\n\nRECORDED · NOT LIVE AGENTS",
+      "replay": "SAVED ENTRY · 1 / 297",
+      "position": "00:07 / 41:35",
+      "playEnabled": true
+    },
+    "seekEnd": {
+      "position": "41:35 / 41:35",
+      "entry": "SAVED ENTRY · 297 / 297",
+      "nextEnabled": false
+    },
+    "compact": {
+      "tableOverflow": {
+        "clientWidth": 585,
+        "scrollWidth": 1060
+      },
+      "bookSelectorVisible": true
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { beginObservedWork } from "../observed-work.js";
 import type { DatabaseSync } from "node:sqlite";
 import { getDataDir, getDb } from "../../db/client.js";
 import { generateJsonWithImagesMetered, GEMINI_TEXT_MODEL } from "../../providers/gemini-text.js";
@@ -79,6 +80,7 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
   db.prepare(`INSERT INTO production_runs (id, project_id, phase, brief_hash, brief_json, status, result_json, created_at, worker_pid)
     VALUES (?, ?, ?, ?, ?, 'running', ?, ?, ?)`).run(id, projectId, phase, hash, JSON.stringify(brief),
       JSON.stringify({status:"incomplete",summary:"Crew review started; retained objections remain current until explicitly resolved.",calls:0,contributions:{},productionRecord,emotionalTreatmentRequired:phase==="planning"?true:undefined}),Date.now(),process.pid);
+  const stopObserving = beginObservedWork(projectId, phase === "planning" ? "casting" : phase === "editing" ? "assembly" : "qc", id);
   let sequence = 0;
   let result: CrewResult;
   // Set only by the real default `call` below, from Gemini's own reported
@@ -127,7 +129,7 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
     }
   } catch (error) {
     result = { status: "incomplete", summary: (error as Error).message, calls: sequence, contributions: {}, productionRecord, emotionalTreatmentRequired:phase==="planning"?true:undefined };
-  }
+  } finally { stopObserving(); }
   db.exec("BEGIN IMMEDIATE");
   try {
     if (latestCrewRun(db,projectId,phase)?.id !== id || (!options.brief && crewBriefHash(loadCrewBrief(db,dataDir,projectId,phase),phase) !== hash)) {

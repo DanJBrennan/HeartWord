@@ -1,0 +1,41 @@
+Use case: ui-mockup.
+Create a crisp, high-fidelity product design image for HeartWord Studio, an existing Scripture video producer control site. This is a NEW static interface concept, not a screenshot of actual runtime. Large high-resolution landscape canvas, approximately 3:2. Flat straight-on UI artboards, sharp legible typography, no laptop, no desk, no photographic backdrop, no perspective distortion.
+
+Show TWO distinct tab-state artboards stacked on one presentation image: the upper, larger artboard (about 60% of the canvas) is the Chapter Status tab; the lower artboard (about 36%) is the Cast & Crew Discussion tab of the SAME application. Small captions outside them: "01 / Chapter status" and "02 / Discussion tab". Do not make the two tabs appear to be simultaneously open inside one scrolling webpage. Both artboards use the existing HeartWord style: dark navy/charcoal surfaces, restrained sage/teal accents, off-white primary text, amber holds, red failures, soft green ready states. Premium practical production software, subtle thin borders, excellent alignment, comfortable whitespace. Avoid futuristic glowing control-room decorations.
+
+Global header: "HeartWord Studio" and "Producer Control". Language selector "Hatam". Small prominent badge "CONCEPT • SAMPLE DATA" so all illustrative chapter metrics and conversation are clearly proposals. Main tabs: "Chapter Status" and "Cast & Crew Discussion".
+
+UPPER ARTBOARD:
+A narrow book-navigation sidebar with the heading "Bible books", a "Find book…" search field, expandable "Old Testament" and "New Testament" groups, visible named books "Matthew", "Mark", "Luke", "John", "Acts", and "Revelation". Mark selected, with chapter count 16. Indicate a scrollable complete book library; do not cram every Bible book onto the canvas.
+Main heading "Mark · chapter production", secondary "16 chapters". A compact row of numbered chapter pills 1 through 16, color-coded to their saved/sample statuses, with chapter 2 selected. The detailed table below shows Mark chapters 1–6 and a clear "Show all 16 chapters" control, so all chapters are addressable rather than pretending six are the whole book.
+
+Table must have these exact column headings with enough room for readable text:
+"Chapter"
+"Status"
+"Source Material Ready"
+"Alignment"
+"Character ID"
+"Canon"
+"Cast Run"
+"Keyframes"
+"Clips"
+"Lip Sync"
+
+Use readable text plus status icons, not only colored dots.
+Chapter 1: "Reviewed"; source "Ready" with smaller "Audio ✓  Text ✓"; alignment "Verified"; character ID "8 identified"; canon "8 / 8"; cast "Complete"; keyframes "24" with smaller "2 retries"; clips "22" with "3 retries"; lip sync "8" with "1 retry".
+Chapter 2: "Generating"; source "Ready" / "Audio ✓  Text ✓"; alignment "Verified"; character ID "7 identified"; canon "7 / 7"; cast "Complete"; keyframes "18" / "1 retry"; clips "11" / "2 retries"; lip sync "4" / "1 retry". Slightly highlight this selected row.
+Chapter 3: "Canon hold"; source "Ready" / "Audio ✓  Text ✓"; alignment "Verified"; character ID "9 identified"; canon amber "7 / 9"; cast "Not run"; keyframes "0" / "0 retries"; clips "0" / "0 retries"; lip sync "0" / "0 retries".
+Chapter 4: "Alignment review"; source "Ready" / "Audio ✓  Text ✓"; alignment amber "Needs review"; character ID "Pending"; canon "Pending"; cast "Not run"; all generation counts 0 with 0 retries.
+Chapter 5: "Missing text"; source amber "Not ready" / "Audio ✓  Text —"; all later fields "Not started" or em dash; generation counts 0.
+Chapter 6: "Missing audio"; source amber "Not ready" / "Audio —  Text ✓"; all later fields "Not started" or em dash; generation counts 0.
+
+Below the table, one compact explanatory strip with an automatic/database icon and this exact text: "Source Material Ready is automatic: raw audio + chapter text both available." A second smaller line: "File availability is separate from source verification. Counts include accepted and retained attempts; retries stay visible." Keep this legible and restrained.
+A small selected-chapter action bar: "Mark 2" • "11 clips available" • "Next: review incoming clips" • button "Open producer workspace". No invented remaining-budget estimate, release approval, or automatic false completion. It should feel like a master production inventory, not another video editor.
+
+LOWER ARTBOARD:
+Same header and tabs, but "Cast & Crew Discussion" selected. Context selector "Hatam / Mark / Chapter 2" and scope pill "Shot 07".
+Left portion: a few small friendly cartoon production-role portraits, with names and role labels "Leon · Cinematographer", "Miriam · Scripture Reviewer", "Nell · Picture Editor". A status caption "Recorded discussion playback" so these portraits do not imply currently running agents.
+Center: a clean readable discussion with example saved review entries, clearly under the heading "Illustrative saved exchange". Leon: "Keep the composition clear." A highlighted finding: "Retain the established subject; adjust the camera." Miriam entry: "Review the change against the source." Preserve a visible disagreement/finding and an explicit unresolved status; never display a fabricated resolution as actual approval. Include a small "Inspect affected shot" link.
+Right: an "Animated discussion log" preview, a vertical chronological event track with a highlighted playhead, time-stamped events "Proposal", "Finding", "Revision requested", and a pending "Resolution". Clearly indicate this is playback of saved events, not invented live chat. Include play/pause, replay-speed "1×", and scrub controls labeled "00:18 / 01:26". The active cartoon speaker gets a subtle teal outline and a speaking indicator. Render the animation controls and one representative animation state within the STATIC image; do not claim this PNG itself animates.
+
+Prioritize accurate hierarchy, all requested fields, and legible wording over ornamental detail. No Scripture quotations, no religious illustrations, no generated film stills, no new branding or names, no extra sidebar features. This is a visual proposal; no real production or cast statistics are asserted.

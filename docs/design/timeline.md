@@ -2,6 +2,15 @@
 
 ## Scope
 
+October 15 implementation: the [live producer console](live-producer-view.md)
+extends the chapter workspace with resizable storyboard/monitor/inspector panels,
+menus for existing controls, and a zoomable inspection timeline. Valid immutable
+render manifests supply chapter timing and mutually exclusive source/cast speech
+plus applied music/effects auditions; gaps remain explicit. The accepted subset
+reel has a separate picture-only clock. Review toggles and browser-local layout
+preferences do not create another editable timeline or change saved mix/history.
+Legacy custom maps stay in their existing editor; no source timing is invented.
+
 Combines per-scene generated video (with lip-synced audio already applied) into
 one continuous, watchable chapter video, in scene order, with continuous audio
 from the source narration.

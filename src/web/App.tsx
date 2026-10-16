@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { ProductionCrew } from "./ProductionCrew";
+import { ProductionView } from "./ProductionView";
+import { ChapterInventory } from "./ChapterInventory";
+import { playbackGroup } from "./producer-timeline";
 import { MediaLibrary } from "./MediaLibrary";
 import { BoundedIntervalAudio } from "./BoundedIntervalAudio";
-import { Dailies } from "./Dailies";
 import { ContinuousSpeechReview } from "./ContinuousSpeechReview";
 import { ChapterEndingPlanView, type ChapterEndingPlan } from "./ChapterEndingPlanView";
 
@@ -141,6 +143,30 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export default function App() {
+  const [studioPage,setStudioPage] = useState<"inventory"|"console">("inventory");
+  const [inspectShotId,setInspectShotId] = useState<string|null>(null);
+  const [workspaceTool, setWorkspaceTool] = useState<string | null>(null);
+  const toolsRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!workspaceTool) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const drawer = toolsRef.current;
+    drawer?.querySelector<HTMLButtonElement>("button")?.focus();
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setWorkspaceTool(null);
+      if (event.key !== "Tab" || !drawer) return;
+      const focusable = [...drawer.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),summary,[tabindex="0"]')].filter(element => element.getClientRects().length > 0);
+      const first = focusable[0], last = focusable.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener("keydown",keydown);
+    return () => { document.removeEventListener("keydown",keydown); drawer?.querySelectorAll<HTMLMediaElement>("audio,video").forEach(media=>media.pause()); previous?.focus(); };
+  },[workspaceTool]);
+  useEffect(()=> {
+    const play=(event:Event)=> {if(event.target instanceof HTMLMediaElement) playbackGroup(event.target,document.querySelectorAll<HTMLMediaElement>("audio,video"));};
+    document.addEventListener("play",play,true); return ()=>document.removeEventListener("play",play,true);
+  },[]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -243,7 +269,14 @@ export default function App() {
   }
 
   const activeProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0] ?? null;
-  function selectProject(id: string) { selectionEpochRef.current++; selectedProjectRef.current = id; setSelectedProjectId(id); setScenesWithShots([]); setIntroPlan(null); setEndingPlan(null); setCastMasterSegments([]); setReviewDrafts({}); setReviewError(null); setCastingResult(null); setCastingError(null); setMediaGenResult(null); setMediaGenError(null); setImageGenerationCosts(null); setVideoGenerationCosts(null); setCastMasterResult(null); setCastMasterError(null); setCastingBusy(false); setMediaGenBusy(false); setCastMasterBusy(false); setReviewBusyShotId(null); setZoomedKeyframe(null); setPipelineBusy(false); setPipelineResult(null); setPipelineError(null); setCanonReadiness(null); }
+  function selectProject(id: string) {
+    setStudioPage("console"); setInspectShotId(null);
+    // Opening the current workspace is navigation, not a chapter switch.
+    // Invalidating its epoch here would strand the existing polling effect
+    // (which is keyed by chapter ID) and clear the producer's loaded controls.
+    if(selectedProjectRef.current===id)return;
+    selectionEpochRef.current++; selectedProjectRef.current = id; setSelectedProjectId(id); setScenesWithShots([]); setIntroPlan(null); setEndingPlan(null); setCastMasterSegments([]); setReviewDrafts({}); setReviewError(null); setCastingResult(null); setCastingError(null); setMediaGenResult(null); setMediaGenError(null); setImageGenerationCosts(null); setVideoGenerationCosts(null); setCastMasterResult(null); setCastMasterError(null); setCastingBusy(false); setMediaGenBusy(false); setCastMasterBusy(false); setReviewBusyShotId(null); setZoomedKeyframe(null); setPipelineBusy(false); setPipelineResult(null); setPipelineError(null); setCanonReadiness(null);
+  }
 
   async function startChapterPreparation() {
     if (!activeProject || pipelineBusy) return;
@@ -339,10 +372,24 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (activeProject) {
-      loadShots(activeProject.id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!activeProject) return;
+    const projectId = activeProject.id, epoch = selectionEpochRef.current;
+    let open = true, timer: ReturnType<typeof setTimeout>;
+    const load = async () => {
+      const results = await Promise.allSettled([
+        api<{ scenes: SceneWithShots[]; introPlan: ChapterIntroPlan | null; endingPlan: ChapterEndingPlan | null }>(`/projects/${projectId}/shots`),
+        api<{ segments: CastMasterSegment[] }>(`/projects/${projectId}/audio-segments?layer=composite_cast_master`),
+        api<{ projects: Project[] }>("/projects")
+      ]);
+      if (!open || selectedProjectRef.current !== projectId || selectionEpochRef.current !== epoch) return;
+      const [shots, cast, projectList] = results;
+      if (shots.status === "fulfilled") { setScenesWithShots(shots.value.scenes); setIntroPlan(shots.value.introPlan); setEndingPlan(shots.value.endingPlan); }
+      if (cast.status === "fulfilled") setCastMasterSegments(cast.value.segments);
+      if (projectList.status === "fulfilled") setProjects(projectList.value.projects);
+      timer = setTimeout(() => void load(), 5000);
+    };
+    void load();
+    return () => { open = false; clearTimeout(timer); };
   }, [activeProject?.id]);
 
   async function submitShotReview(shotId: string, decision: "approved" | "flagged") {
@@ -413,13 +460,19 @@ export default function App() {
   }
 
   return (
-    <main>
-      <h1>HeartWord</h1>
-      <p className="tagline">Scripture media for every heart language.</p>
+    <main className="studio-shell">
+      <header className="studio-titlebar"><div className="studio-brand"><span className="studio-logo">H<span>W</span></span><strong>HeartWord <small>STUDIO</small></strong></div>
+        <label className="chapter-picker">Workspace <select aria-label="Open chapter" value={activeProject?.id ?? ""} onChange={event => selectProject(event.target.value)}>{!projects.length && <option value="">No chapter open</option>}{projects.map(project => <option key={project.id} value={project.id}>{project.language} / {project.book} {project.chapter}</option>)}</select></label>
+        <button onClick={() => setStudioPage(studioPage === "inventory" ? "console" : "inventory")}>{studioPage === "inventory" ? "Producer console" : "Chapter inventory"}</button><button onClick={() => setWorkspaceTool("chapter")}>Open / create…</button><span className="studio-local">LOCAL PRODUCTION RECORDS</span>
+      </header>
 
       {error && <p className="error">{error}</p>}
 
-      <section>
+      {studioPage === "inventory" ? <ChapterInventory projectId={activeProject?.id??null} paused={Boolean(workspaceTool)} onOpenProject={(id,shotId)=>{selectProject(id);setInspectShotId(shotId??null);}} onCreateWorkspace={async identity=>{const {project}=await api<{project:Project}>("/projects",{method:"POST",body:JSON.stringify(identity)});await refresh();selectProject(project.id);}} /> : activeProject ? <ProductionView key={`producer-${activeProject.id}`} projectId={activeProject.id} initialShotId={inspectShotId} onOpenTool={setWorkspaceTool} suspended={Boolean(workspaceTool)} /> : <div className="console-welcome"><h1>HeartWord Studio</h1><p>Open a language, book and chapter to inspect its production.</p><button onClick={() => setWorkspaceTool("chapter")}>Open chapter workspace</button></div>}
+      <div className="workspace-scrim" hidden={!workspaceTool} onClick={() => setWorkspaceTool(null)} />
+      <aside ref={toolsRef} className="workspace-tools" data-tool={workspaceTool ?? ""} hidden={!workspaceTool} role={workspaceTool ? "dialog" : undefined} aria-modal={workspaceTool ? true : undefined} aria-label="Chapter tools">
+        <header className="workspace-tools-heading"><strong>Chapter tools · {workspaceTool}</strong><button autoFocus onClick={() => setWorkspaceTool(null)}>Return to console ×</button></header>
+      <section data-tool-panel="chapter">
         <h2>Projects</h2>
         <ul>
           {projects.map((p) => (
@@ -452,7 +505,7 @@ export default function App() {
         {activeProject && <p className="hint">Open workspace: {activeProject.language} / {activeProject.book} {activeProject.chapter}. A new chapter begins empty and never inherits another chapter’s shots, takes, timing, or provider work.</p>}
       </section>
 
-      <section>
+      <section data-tool-panel="source">
         <h2>Chapter preparation</h2>
         {!activeProject && <p className="empty">Open a chapter workspace first.</p>}
         {activeProject && <>
@@ -472,7 +525,7 @@ export default function App() {
         </>}
       </section>
 
-      <details key={activeProject?.id ?? "no-project"} open={Boolean(canonReadiness?.planned && !canonReadiness.allApproved)}>
+      <details data-tool-panel="canon" key={activeProject?.id ?? "no-project"} open={Boolean(canonReadiness?.planned && !canonReadiness.allApproved)}>
         <summary>{canonReadiness?.allApproved ? "All identified chapter characters are approved." : canonReadiness?.planned ? `Character canon needs attention: ${canonReadiness.gaps.length} gap${canonReadiness.gaps.length === 1 ? "" : "s"}.` : "Character canon — needs will be checked after storyboard planning."}</summary>
       <section>
         <h2>Character canon</h2>
@@ -494,7 +547,7 @@ export default function App() {
       </section>
       </details>
 
-      <section>
+      <section data-tool-panel="production">
         <h2>Casting &amp; direction</h2>
         <p className="hint">
           Creates the initial shots from the chapter’s reference text, then brings in the filmmaking specialists.
@@ -617,13 +670,12 @@ export default function App() {
         )}
       </section>
 
-      <section>
+      <section data-tool-panel="media">
         <h2>Media generation</h2>
         <p className="hint">
-          Generates one keyframe still image per shot via Nano Banana (Gemini) -- Nano Banana Pro for any shot
-          needing lip-sync, standard tier otherwise -- grounded in each visible character's approved canon
-          reference image. Costs one real Gemini image call per shot not already generated; re-running reuses
-          any shot whose keyframe already exists on disk. Reviewed keyframes become video candidates through the selected backend.
+          Keyframes use the assistant-operated built-in image handoff with approved canon and current planning references.
+          Included usage and unreported costs stay visible; no paid image API is silently substituted.
+          Reviewed keyframes become video candidates through the selected backend.
         </p>
         {!activeProject && <p className="empty">No project yet — create one above first.</p>}
         {activeProject && (
@@ -654,18 +706,13 @@ export default function App() {
         )}
       </section>
 
-      <details onToggle={(event) => setMediaLibraryOpen((event.currentTarget as HTMLDetailsElement).open)}>
+      <details data-tool-panel="library" open={workspaceTool === "library"} onToggle={(event) => setMediaLibraryOpen((event.currentTarget as HTMLDetailsElement).open)}>
         <summary>Reusable media library</summary>
         {mediaLibraryOpen && <MediaLibrary key={activeProject?.id ?? "no-project"} projectId={activeProject?.id ?? null} targets={scenesWithShots.flatMap(scene => scene.shots.map(shot => ({ id:shot.id, sequence:shot.sequence, action:shot.action })))} />}
       </details>
 
-      {activeProject && <details>
-        <summary>Generation dailies and rolling reel</summary>
-        <p className="hint">Each retained candidate is shown with its video, five sampled positions, approved keyframe, provider, cost, critic record, and timeline placement. The rolling reel begins only after new restart-pilot clips are accepted.</p>
-        <Dailies projectId={activeProject.id} />
-      </details>}
 
-      <section>
+      <section data-tool-panel="voices">
         <h2>Voice casting</h2>
         <p className="hint">
           Voices come from your ElevenLabs account (needs <code>ELEVENLABS_API_KEY</code> in{" "}
@@ -722,7 +769,7 @@ export default function App() {
         </ul>
       </section>
 
-      <section>
+      <section data-tool-panel="voices">
         <h2>Composite cast master</h2>
         <p className="hint">
           Re-voices each speaking segment of the real Hatam reading into its approved character voice via
@@ -755,6 +802,7 @@ export default function App() {
         )}
       </section>
 
+      </aside>
       {zoomedKeyframe && (
         <div
           role="button"

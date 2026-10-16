@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { getDataDir } from "../../db/client.js";
 
@@ -10,8 +10,46 @@ export type SourcePaths = { docxPath: string; audioPath: string; referencePath: 
 const books = ["matthew", "mark", "luke", "john", "acts", "romans", "1-corinthians", "2-corinthians", "galatians", "ephesians", "philippians", "colossians", "1-thessalonians", "2-thessalonians", "1-timothy", "2-timothy", "titus", "philemon", "hebrews", "james", "1-peter", "2-peter", "1-john", "2-john", "3-john", "jude", "revelation"];
 const display: Record<string, string> = { "1-corinthians": "1 Corinthians", "2-corinthians": "2 Corinthians", "1-thessalonians": "1 Thessalonians", "2-thessalonians": "2 Thessalonians", "1-timothy": "1 Timothy", "2-timothy": "2 Timothy", "1-peter": "1 Peter", "2-peter": "2 Peter", "1-john": "1 John", "2-john": "2 John", "3-john": "3 John" };
 const title = (book: string) => display[book] ?? book.split("-").map(word => word[0]!.toUpperCase() + word.slice(1)).join(" ");
+// Navigation metadata for the books already understood by this source catalog.
+// Listing a corpus book does not enable a new ingestion/casting implementation.
+const chapterCounts = [28,16,24,21,28,16,16,13,6,6,4,4,5,3,6,4,3,1,13,5,5,3,5,1,1,1,22];
+export const SOURCE_CATALOG_BOOKS = [{ id:"genesis", title:"Genesis", chapters:50 }, ...books.map((id,index) => ({id,title:title(id),chapters:chapterCounts[index]!}))];
+export const WORKSPACE_BOOKS: Readonly<Record<string,number>> = { mark:16, acts:28, genesis:50 };
 const digest = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
 const relativeToAssets = (assets: string, path: string) => path.replace(`${assets}\\`, "").replaceAll("\\", "/");
+
+function sourceCandidates(project: SourceProject, edition: "non_drama" | "drama", dataDir: string, includeCatalog = true): SourcePaths[] {
+  const assets = join(dataDir,"assets"), legacy = join(assets,"source",project.language,`${project.book}-${project.chapter}`);
+  const candidates: SourcePaths[] = [{docxPath:join(legacy,`${project.book}-${project.chapter}-text.docx`),audioPath:join(legacy,`${project.book}-${project.chapter}-fcbh-audio.mp3`),referencePath:join(assets,"reference","english",`${project.book}-${project.chapter}`,`${project.book}-${project.chapter}-text.docx`),audioRelPath:`source/${project.language}/${project.book}-${project.chapter}/${project.book}-${project.chapter}-fcbh-audio.mp3`,edition:"non_drama",provenance:"legacy"}];
+  if (!includeCatalog || project.language !== "hatam") return candidates;
+  const index=books.indexOf(project.book); if(index<0 && project.book!=="genesis") return candidates;
+  const book=title(project.book), chapter=String(project.chapter), fileset=edition==="drama"?"HADLAIN2DA":"HADLAIN1DA";
+  const audioDir=join(assets,"source","hatam","audio",edition==="drama"?"Hatam_had_LAI_NT_Drama":"Hatam_had_LAI_NT_Non-Drama");
+  const prefix=index>=0?`B${String(index+1).padStart(2,"0")}___${chapter.padStart(2,"0")}_`:"no-fcbh-genesis-";
+  const audioName=existsSync(audioDir)?readdirSync(audioDir).find(name=>name.startsWith(prefix)&&name.endsWith(`______${fileset}.mp3`)):undefined;
+  const audioPath=join(audioDir,audioName??`${prefix}missing______${fileset}.mp3`);
+  candidates.push({docxPath:join(assets,"source","hatam","text",book,`${book} ${chapter}.docx`),audioPath,referencePath:join(assets,"source","english-esv","text",book,`${book} ${chapter}.docx`),audioRelPath:relativeToAssets(assets,audioPath),edition,provenance:"catalog"});
+  return candidates;
+}
+
+export function sourceFileEvidence(dataDir: string, assetPath: string) {
+  const root=resolve(dataDir,"assets"), absolute=resolve(root,assetPath), local=relative(root,absolute);
+  if(isAbsolute(assetPath)||local===".."||local.startsWith(`..${sep}`)||isAbsolute(local)) return {path:assetPath,available:false,error:"Path is outside chapter assets."};
+  try {const stat=statSync(absolute);return {path:assetPath,available:stat.isFile()&&stat.size>0,error:null};}
+  catch(error) {return {path:assetPath,available:false,error:(error as NodeJS.ErrnoException).code==="ENOENT"?null:"File availability could not be inspected."};}
+}
+
+/** File availability only, with no binding, migration, parsing, attestation or
+ * fallback from an explicitly bound source. References/stems are not raw audio. */
+export function inspectSourceAvailability(db: DatabaseSync, project: SourceProject, dataDir: string) {
+  const assets=join(dataDir,"assets");
+  const binding=project.id ? db.prepare("SELECT docx_path,audio_path,audio_edition FROM project_source_bindings WHERE project_id=?").get(project.id) as {docx_path:string;audio_path:string;audio_edition:string}|undefined : undefined;
+  if(binding) return {selection:"bound",edition:binding.audio_edition,text:sourceFileEvidence(dataDir,binding.docx_path),audio:sourceFileEvidence(dataDir,binding.audio_path)};
+  const candidates=sourceCandidates(project,"non_drama",dataDir).map(candidate=>({selection:candidate.provenance,edition:candidate.edition,text:sourceFileEvidence(dataDir,relative(assets,candidate.docxPath)),audio:sourceFileEvidence(dataDir,relative(assets,candidate.audioPath))}));
+  // Complete legacy pairs retain ingestion precedence; incomplete pairs never
+  // borrow another edition's audio or the English reference to look ready.
+  return candidates.find(item=>item.text.available&&item.audio.available) ?? candidates.find(item=>item.selection==="catalog"&&(item.text.available||item.audio.available)) ?? candidates.find(item=>item.text.available||item.audio.available) ?? candidates.at(-1)!;
+}
 
 /**
  * Locate immutable corpus inputs. Generated assets and separated stems are
@@ -31,32 +69,15 @@ const relativeToAssets = (assets: string, path: string) => path.replace(`${asset
  * actually what's present.
  */
 export function discoverSourcePaths(project: SourceProject, edition: "non_drama" | "drama" = "non_drama", dataDir: string = getDataDir(), requireAudio = true): SourcePaths {
-  const assets = join(dataDir, "assets");
-  const legacy = join(assets, "source", project.language, `${project.book}-${project.chapter}`);
-  const legacyDocx = join(legacy, `${project.book}-${project.chapter}-text.docx`);
-  const legacyAudio = join(legacy, `${project.book}-${project.chapter}-fcbh-audio.mp3`);
-  const legacyReference = join(assets, "reference", "english", `${project.book}-${project.chapter}`, `${project.book}-${project.chapter}-text.docx`);
-  // Preserve old projects' ingestion behavior. Source review still requires
-  // referencePath to exist before a low-confidence source can be approved.
-  if (existsSync(legacyDocx) && (!requireAudio || existsSync(legacyAudio))) return { docxPath: legacyDocx, audioPath: legacyAudio, referencePath: legacyReference, audioRelPath: relativeToAssets(assets, legacyAudio), edition: "non_drama", provenance: "legacy" };
-  if (project.language !== "hatam") throw new Error(`No source catalog is configured for language '${project.language}'.`);
-  const index = books.indexOf(project.book);
-  if (index < 0 && project.book !== "genesis") throw new Error(`No Hatam FCBH catalog entry exists for ${project.book} ${project.chapter}.`);
-  const book = title(project.book), chapter = String(project.chapter);
-  const docxPath = join(assets, "source", "hatam", "text", book, `${book} ${chapter}.docx`);
-  const referencePath = join(assets, "source", "english-esv", "text", book, `${book} ${chapter}.docx`);
-  const fileset = edition === "drama" ? "HADLAIN2DA" : "HADLAIN1DA";
-  const editionDir = edition === "drama" ? "Hatam_had_LAI_NT_Drama" : "Hatam_had_LAI_NT_Non-Drama";
-  const audioDir = join(assets, "source", "hatam", "audio", editionDir);
-  const prefix = index >= 0 ? `B${String(index + 1).padStart(2, "0")}___${chapter.padStart(2, "0")}_` : "no-fcbh-genesis-";
-  // The FCBH filename's localized book title varies (Matius, Lukas, Markus,
-  // etc.); only the fileset/chapter identifier is catalog authority.
-  const audioName = existsSync(audioDir) ? readdirSync(audioDir).find(name => name.startsWith(prefix) && name.endsWith(`______${fileset}.mp3`)) : undefined;
-  const audioPath = audioName ? join(audioDir, audioName) : join(audioDir, `${prefix}missing______${fileset}.mp3`);
-  const candidates: Array<[string, string]> = [["Hatam text", docxPath], ["English reference", referencePath], ...(requireAudio ? [["Hatam FCBH audio", audioPath] as [string, string]] : [])];
-  const missing = candidates.filter(([, path]) => !existsSync(path)).map(([label]) => label);
-  if (missing.length) throw new Error(`Source catalog is incomplete for Hatam ${book} ${chapter}: missing ${missing.join(", ")}.`);
-  return { docxPath, audioPath, referencePath, audioRelPath: relativeToAssets(assets, audioPath), edition, provenance: "catalog" };
+  const legacy=sourceCandidates(project,edition,dataDir,false)[0]!;
+  if(existsSync(legacy.docxPath)&&(!requireAudio||existsSync(legacy.audioPath))) return legacy;
+  if(project.language!=="hatam") throw new Error(`No source catalog is configured for language '${project.language}'.`);
+  const catalog=sourceCandidates(project,edition,dataDir)[1];
+  if(!catalog) throw new Error(`No Hatam FCBH catalog entry exists for ${project.book} ${project.chapter}.`);
+  const candidates: Array<[string,string]> = [["Hatam text",catalog.docxPath],["English reference",catalog.referencePath],...(requireAudio?[["Hatam FCBH audio",catalog.audioPath] as [string,string]]:[])];
+  const missing=candidates.filter(([,path])=>!existsSync(path)).map(([name])=>name);
+  if(missing.length) throw new Error(`Source catalog is incomplete for Hatam ${title(project.book)} ${project.chapter}: missing ${missing.join(", ")}.`);
+  return catalog;
 }
 
 /**

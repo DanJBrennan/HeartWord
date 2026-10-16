@@ -7,7 +7,8 @@ import { loadCrewBrief } from "../creative-direction/crew-context.js";
 /**
  * Stage 7: structural checks and specialist viewing/listening of the actual cut.
  */
-export const runQualityControl: Stage = async (projectId) => {
+export const runQualityControl: Stage = projectId => observeWork(projectId, "qc", () => runQualityControlImpl(projectId));
+const runQualityControlImpl: Stage = async (projectId) => {
   try {
     // One bounded finishing cycle: review, obtain approved cues if needed,
     // mix once, then independently view/listen to the resulting film.
@@ -29,3 +30,4 @@ export const runQualityControl: Stage = async (projectId) => {
     return { ok: true, reasoning: finalReview.summary };
   } catch (error) { return { ok: false, reasoning: `Chapter review incomplete: ${(error as Error).message}` }; }
 };
+import { observeWork } from "../observed-work.js";

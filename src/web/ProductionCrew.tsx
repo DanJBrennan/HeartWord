@@ -12,7 +12,7 @@ interface MonitorEvent { id:string; runId?:string; kind:string; sender:string; r
 interface Monitor { events: MonitorEvent[]; outstanding: MonitorEvent[]; state:string; note:string }
 interface Lesson { id:string; scope_kind:string; requested_change:string; rationale:string|null; status:string; subject_id?:string|null }
 interface LessonEvent { id:string; lesson_id:string; kind:string; detail:string|null; created_at:number }
-interface LessonResponse { lessons:Lesson[]; applicableLessons:Lesson[]; history:LessonEvent[] }
+interface LessonResponse { lessons:Lesson[]; applicableLessons:Lesson[]; history:LessonEvent[]; unavailable?: string }
 interface CrewRole { id:string; label:string; owner:string; authority:string; runtime:string; owns:string; cannot:string }
 interface Roster { roster: CrewRole[] }
 const mediaUrl = (path: string) => `/media/${path.replaceAll("\\", "/").split("/").map(encodeURIComponent).join("/")}`;
@@ -38,6 +38,7 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [applicableLessons, setApplicableLessons] = useState<Lesson[]>([]);
   const [lessonHistory, setLessonHistory] = useState<LessonEvent[]>([]);
+  const [lessonUnavailable, setLessonUnavailable] = useState("");
   const [reusable, setReusable] = useState(false);
   const [principle, setPrinciple] = useState("");
   const [lessonScope, setLessonScope] = useState("chapter");
@@ -48,13 +49,14 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
     const data = await request<Snapshot>(base);
     setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setBackup(data.backup); setProductionRecord(data.productionRecord??null);
     setMonitor(await request<Monitor>(`${base}/monitor`));
-    const lessonData = await request<LessonResponse>(`${base}/lessons`);
+    const lessonData = await request<LessonResponse>(`${base}/lessons`).catch(e => ({ lessons: [], applicableLessons: [], history: [], unavailable: e.message }));
+    setLessonUnavailable(lessonData.unavailable ?? "");
     setLessons(lessonData.lessons); setApplicableLessons(lessonData.applicableLessons); setLessonHistory(lessonData.history);
     setRoster((await request<Roster>("/api/control-room/roster", undefined, "GET")).roster);
   }
   useEffect(() => {
     let active = true;
-    const load = () => Promise.all([request<Snapshot>(base), request<Monitor>(`${base}/monitor`), request<LessonResponse>(`${base}/lessons`), request<Roster>("/api/control-room/roster", undefined, "GET")]).then(([data, monitor, lessonData, rosterData]) => { if (active) { setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setBackup(data.backup); setProductionRecord(data.productionRecord??null); setMonitor(monitor); setLessons(lessonData.lessons); setApplicableLessons(lessonData.applicableLessons); setLessonHistory(lessonData.history); setRoster(rosterData.roster); } }).catch(e => { if (active) setError(e.message); });
+    const load = () => Promise.all([request<Snapshot>(base), request<Monitor>(`${base}/monitor`), request<LessonResponse>(`${base}/lessons`).catch(e => ({ lessons: [], applicableLessons: [], history: [], unavailable: e.message })), request<Roster>("/api/control-room/roster", undefined, "GET")]).then(([data, monitor, lessonData, rosterData]) => { if (active) { setRuns(data.runs); setAssets(data.assets); setAttempts(data.attempts); setRender(data.render); setTimingAudit(data.timingAudit ?? null); setBackup(data.backup); setProductionRecord(data.productionRecord??null); setMonitor(monitor); setLessons(lessonData.lessons); setApplicableLessons(lessonData.applicableLessons); setLessonHistory(lessonData.history); setLessonUnavailable(lessonData.unavailable ?? ""); setRoster(rosterData.roster); } }).catch(e => { if (active) setError(e.message); });
     void load();
     const timer = window.setInterval(load, 5000);
     return () => { active = false; window.clearInterval(timer); };
@@ -111,18 +113,19 @@ export function ProductionCrew({ projectId, onUpdated }: { projectId: string; on
       <details><summary>Saved FDL snapshot · {productionRecord.status}</summary><pre>{JSON.stringify(productionRecord.snapshots,null,2)}</pre></details>
     </section>}
     <details className="crew-roster"><summary>Production roster ({roster.length} declared roles and reviewers)</summary><p>Implemented labels identify bounded recorded calls. Declared roles describe ownership and handoffs; they do not imply a live autonomous worker.</p><div className="crew-map">{roster.map(role => <article key={role.id} className="department-card"><strong>{role.label}</strong><p>{role.owner} · {role.authority.replaceAll("_", " ")} · {role.runtime}</p><p>Owns: {role.owns}</p><small>Cannot: {role.cannot}</small></article>)}</div></details>
-    <section className="production-monitor" aria-label="Production interaction monitor">
-      <h3>Chapter interaction monitor</h3>
+    <details className="production-monitor" aria-label="Production interaction history">
+      <summary>Recorded chapter interaction history</summary>
       <p>{monitor?.note ?? "Loading recorded workflow events…"}</p>
-      {monitor?.outstanding.length ? <><h4>Producer input needed</h4>{monitor.outstanding.map(event => <article key={`hold-${event.id}`}><strong>{event.sender.replaceAll("_", " ")} · {event.status}</strong><p>{event.context} — {event.summary}</p>{event.runId && <button onClick={() => setSelected(event.runId!)}>Open recorded contribution</button>}</article>)}</> : <p>No recorded producer decision is outstanding for this chapter.</p>}
+      <p>Current pipeline work, holds and available footage are shown in the live producer view above. These are retained interaction records.</p>
       <div className="monitor-stream" aria-live="polite">{monitor?.events.map(event => <article key={event.id} className={`monitor-event ${event.status}`}><small>{event.kind === "negotiation" ? "Recorded negotiation" : "Recorded role exchange"} · {event.sender.replaceAll("_", " ")} · pass {event.round} · {new Date(event.createdAt).toLocaleString()}</small><p><strong>{event.context}</strong> — {event.summary}</p>{event.runId && <button onClick={() => setSelected(event.runId!)}>Open recorded contribution</button>}</article>)}</div>
-    </section>
-    {render && <video key={render.id} controls preload="metadata" src={mediaUrl(render.path)} aria-label="Current chapter cut" style={{ width: "100%", maxHeight: "30rem" }} />}
+    </details>
+    {render && <p>Recorded chapter cut: {render.id}. Inspect availability, restart status and playback in the live producer view above.</p>}
     {timingAudit && <details><summary>Recorded timing audit — source coverage needs review</summary>
       <p>{timingAudit.summary}</p><ul>{timingAudit.findings.map((f, i) => <li key={i}>{f}</li>)}</ul>
       <p>{timingAudit.picture.length} picture intervals recorded. These observations do not approve the film or enable automatic finishing.</p>
     </details>}
     <div className="crew-actions">
+      {lessonUnavailable && <p className="hint">Correction lessons unavailable: {lessonUnavailable} Other chapter review controls remain available.</p>}
       <button disabled={running} onClick={() => void act("plan", { maxCalls: 30 })}>{running ? "Crew working…" : "Create / review storyboard"}</button>
       <button disabled={running} onClick={() => void act("review-cut", { maxCalls: 16 })}>Review assembled cut</button>
       <button disabled={running} onClick={() => void act("edit-cut")}>Build Picture Editor cut</button>

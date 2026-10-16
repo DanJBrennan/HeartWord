@@ -5,6 +5,7 @@
   "description": "Autonomous pipeline for Scripture videos in low-resource heart languages.",
   "type": "module",
   "scripts": {
+    "start": "npm run build:web && tsx src/server/index.ts",
     "dev:server": "tsx watch src/server/index.ts",
     "dev:web": "vite",
     "dev": "concurrently -n server,web -c blue,green \"npm:dev:server\" \"npm:dev:web\"",

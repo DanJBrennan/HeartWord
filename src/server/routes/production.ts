@@ -15,6 +15,8 @@ import { proposeReusableLesson, type LessonScope as SynthesizedLessonScope } fro
 import { exportChapterPackage, inspectChapterPackage } from "../../pipeline/assembly/chapter-package.js";
 import { backupStatus } from "../../pipeline/assembly/disaster-backup.js";
 import { join } from "node:path";
+import { readProductionView } from "../production-view.js";
+import { readChapterDiscussion } from "../chapter-discussion.js";
 
 export const productionRouter = Router({ mergeParams: true });
 const getProjectId = (req: Request): string => req.params.projectId!;
@@ -45,6 +47,11 @@ productionRouter.use((req, res, next) => {
   }
   next();
 });
+productionRouter.get("/discussion",(req,res)=> {
+  res.setHeader("Cache-Control","no-store");
+  try {res.json(readChapterDiscussion(getDb(),getProjectId(req)));}
+  catch(error) {res.status(503).json({error:(error as Error).message});}
+});
 productionRouter.get("/", (req, res) => {
   const db = getDb();
   const runs = db.prepare(`SELECT r.id, r.phase, r.status, r.result_json, r.brief_json, r.created_at,
@@ -61,6 +68,11 @@ productionRouter.get("/", (req, res) => {
 productionRouter.get("/preservation", (req, res) => {
   try { res.json(inspectChapterPackage(getDb(), getDataDir(), getProjectId(req)).manifest); }
   catch (error) { res.status(409).json({ error: (error as Error).message }); }
+});
+productionRouter.get("/view", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  try { res.json(readProductionView(getDb(), getDataDir(), getProjectId(req))); }
+  catch (error) { res.status(503).json({ error: `Production evidence unavailable: ${(error as Error).message}` }); }
 });
 productionRouter.post("/preservation", (req, res) => {
   try {

@@ -1,0 +1,25 @@
+{
+  "purpose": "Synthetic console workflow proof; no production data/provider calls",
+  "heldLane": [
+    "▸ Scene 1 · Shot 1 · Mark 5:1",
+    "▧ Awaiting accepted coverage",
+    "▧ Awaiting accepted coverage",
+    "▧ Awaiting accepted coverage"
+  ],
+  "chapterClock": "00:07.0 / 00:07.0",
+  "acceptedLane": [
+    "▸ Scene 1 · Shot 1 · Mark 5:1",
+    "▧ Awaiting accepted coverage",
+    "▸ Scene 1 · Shot 2 · Mark 5:2",
+    "▧ Awaiting accepted coverage"
+  ],
+  "activeSummary": "NEXT\n\nWait for the existing external task; inspect its recorded progress.\n\n1 in progress · 2 holds ↗",
+  "activeEvidence": "Pipeline & active work\nIn progress (1)\nAWAITING EXTERNALmedia generation\n\nsynthetic-external: submitted · 25%\n\n10/15/2026, 3:43:23 PM · demo-shot3\nHolds & required action (2)\nHELDmedia generation\n\nSYNTHETIC stage awaiting candidate review\n\nchapter · 10/15/2026, 12:44:48 AM\nHELDcasting\n\nScripted plan disagreement retained\n\ndemo-run · 10/15/2026, 12:38:21 AM\nStage evidence\ningestionQUEUED\n\nNo stage execution recorded. Pending work is not dispatched or completed.\n\nNot recorded · No execution\nscene breakdownQUEUED\n\nNo stage execution recorded. Pending work is not dispatched or completed.\n\nNot recorded · No execution\ncastingHELD\n\nScripted plan disagreement retained\n\nNot recorded · No execution\nmedia generationAWAITING EXTERNAL\n\nsynthetic-external: submitted · 25%\n\n10/15/2026, 12:44:48 AM · demo-stage\nvoice lipsyncQUEUED\n\nNo stage execution recorded. Pending work is not dispatched or completed.\n\nNot recorded · No execution\nassemblyQUEUED\n\nNo stage execution recorded. Pending work is not dispatched or completed.\n\nNot recorded · No execution\nqcQUEUED\n\nNo stage execution recorded. Pending work is not dispatched or completed.\n\nNot recorded · No execution\nPreview evidence\n\nSaved production records are authoritative. Working requires execution ownership in this process; old running records are uncertain. Queued stages without an execution are planned, not submitted. Finishing is not field or release approval.",
+  "reelEnd": "00:02.0 / 00:02.0",
+  "failureEvidence": "Pipeline & active work\nIn progress (0)\n\nNo executing work is evidenced in this process.\n\nHolds & required action (5)\nHELDmedia generation\n\nSYNTHETIC stage awaiting candidate review\n\nchapter · 10/15/2026, 12:44:48 AM\nHELDcasting\n\nScripted plan disagreement retained\n\ndemo-run · 10/15/2026, 12:38:21 AM\nFAILEDmedia generation\n\nsynthetic-external: Synthetic external failure — no file returned · 25%\n\ndemo-shot3 · 10/15/2026, 3:43:29 PM\nAWAITING DANqc\n\nSynthetic producer hold: inspect framing before acceptance\n\ndemo-shot2 · 10/15/2026, 12:38:21 AM\nUNCERTAINassembly\n\nSelected clip is missing or lacks accepted video evidence. Excluded from the developing reel; original selection retained.\n\ndemo-shot2 · 10/15/2026, 12:38:21 AM\nStage evidence\ningestionQUEUED\n\nNo stage execution recorded. Pending work is not dispatched or completed.\n\nNot recorded · No execution\nscene breakdownQUEUED\n\nNo stage execution recorded. Pending work is not dispatched or completed.\n\nNot recorded · No execution\ncastingHELD\n\nScripted plan disagreement retained\n\nNot recorded · No execution\nmedia generationFAILED\n\nSYNTHETIC stage awaiting candidate review\n\n10/15/2026, 12:44:48 AM · demo-stage\nvoice lipsyncQUEUED\n\nNo stage execution recorded. Pending work is not dispatched or completed.\n\nNot recorded · No execution\nassemblyUNCERTAIN\n\nSelected clip is missing or lacks accepted video evidence. Excluded from the developing reel; original selection retained.\n\nNot recorded · No execution\nqcAWAITING DAN\n\nSynthetic producer hold: inspect framing before acceptance\n\nNot recorded · No execution\nPreview evidence\n\nSaved production records are authoritative. Working requires execution ownership in this process; old running records are uncertain. Queued stages without an execution are planned, not submitted. Finishing is not field or release approval.",
+  "reelAfterArrival": "00:04.0 / 00:04.0",
+  "acceptedAfterArrival": [
+    "▸ Scene 1 · Shot 1 · Mark 5:1",
+    "▸ Scene 1 · Shot 2 · Mark 5:2"
+  ]
+}

@@ -1,0 +1,366 @@
+
+> heartword@0.1.0 test
+> vitest run
+
+
+ RUN  v2.1.9 C:/Users/danbr/OneDrive/Documents/HeartWord
+
+(node:165344) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:148108) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:155716) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:164096) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:149448) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:163012) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:162484) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:132588) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/server/control-room-listener.test.ts (22 tests) 119ms
+(node:161068) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:158288) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/creative-direction/crew.test.ts (27 tests) 236ms
+(node:160296) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:164372) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/web/production-view.test.ts (20 tests) 1835ms
+   ✓ uses the shared route for live changes/reconnect, rejects another chapter and sets no-store 904ms
+ ✓ tests/creative-direction/crew-communication-design.test.ts (12 tests) 126ms
+(node:159232) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:163428) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/creative-direction/emotional-treatment.test.ts (8 tests) 173ms
+ ✓ tests/creative-direction/crew-context.test.ts (19 tests) 3787ms
+   ✓ immutable project brief > rejects cross-project verse references and incomplete source coverage 318ms
+   ✓ immutable project brief > invalidates an external handoff when a different crew plan is introduced 605ms
+   ✓ immutable project brief > attaches timing to a hand-edited cut only when it preserves every source segment 733ms
+ ✓ tests/pipeline/continuous-speech.test.ts (12 tests) 4659ms
+   ✓ keeps narration interruption and two speakers sharing a verse separately evidenced 799ms
+   ✓ manual producer control and stage readers reopen the same saved run through HTTP 2578ms
+(node:165560) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/voice-lipsync/avatar-direction.test.ts (29 tests) 6328ms
+   ✓ verified controls and FDL mapping > validates the additive provider extension without rewriting historical core/Bible schemas 300ms
+   ✓ extracts exact window +0–1000 before silence; no fallback or adjacent speech 1551ms
+   ✓ extracts exact window 1000–1500 before silence; no fallback or adjacent speech 1286ms
+   ✓ reuses and retains a complete supplied audio file byte for byte 2893ms
+(node:166652) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/providers/ltx.test.ts (26 tests) 7267ms
+   ✓ LTX Desktop adapter > records the ending image and cleans both uploads after definitive completion 329ms
+   ✓ LTX Desktop adapter > uploads a unique keyframe, authenticates every request, returns the exact MP4 and retains metadata 403ms
+   ✓ LTX Desktop adapter > retains native ambience separately for review without changing the original MP4 733ms
+   ✓ LTX Desktop adapter > removes unexpected Desktop audio for an explicitly silent request while preserving every encoded picture frame 1215ms
+   ✓ LTX Desktop adapter > uses distinct immutable paths for repeated shots 572ms
+   ✓ LTX Desktop adapter > keeps polling failures secondary and uses log diagnostics only after the endpoint fails 533ms
+   ✓ LTX Desktop adapter > does not tail logs while authenticated progress works 360ms
+   ✓ LTX Desktop adapter > serializes concurrent calls against Desktop's single progress slot 1318ms
+ ✓ tests/media-generation/fdl-design.test.ts (12 tests) 125ms
+(node:166408) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pipeline/casting/narration-coverage.test.ts (14 tests) 273ms
+(node:165976) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/media-generation/external-keyframes.test.ts (22 tests) 8748ms
+   ✓ external keyframe handoff > uses the same reviewed set state for shot/coverage preparation and holds withdrawn references at acceptance 932ms
+   ✓ external keyframe handoff > accepts a current coverage candidate through the same saved plan without an extra plan signature 458ms
+   ✓ external keyframe handoff > pins the existing FDL/Bible-regional snapshot and uses it beside the reference map 446ms
+   ✓ external keyframe handoff > creates a real letterboxed reference board without changing source pixels 1816ms
+   ✓ external keyframe handoff > rejects stale shot plans and changed prompts before writing an attempt 649ms
+   ✓ external keyframe handoff > records an idempotent candidate without modifying earlier attempts or inventing billing 429ms
+   ✓ external keyframe handoff > will not reuse a generation id for a different take 1541ms
+   ✓ external keyframe handoff > records a producer acceptance without resolving unrelated shot notes 1391ms
+(node:149024) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:152696) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/assembly/native-ambience.test.ts (13 tests) 1090ms
+(node:166816) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:159608) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/web/chapter-inventory.test.ts (11 tests) 2327ms
+   ✓ exposes no-store live source arrival over the real inventory route and never auto-creates a project 1112ms
+ ✓ src/pipeline/ingestion/segment-merges.test.ts (9 tests) 994ms
+ ✓ tests/pipeline/fresh-chapter.test.ts (6 tests) 13946ms
+   ✓ ingests an isolated new chapter from real fixture files then holds before invented scene planning 4814ms
+   ✓ moves an unreviewed source boundary into a clear pause without blocking on crossing activity 3548ms
+   ✓ does not hold a high-confidence alignment when audio continues without a pause 1382ms
+   ✓ re-ingests safely when a correction targets a segment that also has a boundary override 1492ms
+   ✓ re-ingests safely when a speaker attribution targets a segment that also has a boundary override 1940ms
+   ✓ uses a synthetic published heading to build an isolated fresh scene plan 766ms
+(node:166340) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/architecture/media-stage-integration.test.ts (3 tests) 449ms
+   ✓ common media stage > creates a held non-speaking candidate then resumes the selected clip without another provider call 387ms
+ ✓ src/pipeline/media-generation/generate-final-with-fallback.test.ts (9 tests) 25ms
+(node:166388) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:163972) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:160148) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/media-generation/ltx-pipeline.test.ts (8 tests) 1010ms
+ ❯ tests/pipeline/fresh-chapter-full-production.test.ts (1 test | 1 failed) 14742ms
+   × takes a fresh reviewed chapter through real common stages without provider calls 14738ms
+     → fetch failed
+ ✓ src/pipeline/ingestion/segment-splits.test.ts (6 tests) 2850ms
+   ✓ refuses to split a segment with existing evidence unless explicitly acknowledged 1879ms
+   ✓ retains and remaps a composite cast-master provenance record before deleting the split source 380ms
+ ✓ tests/pipeline/source-review-endpoint.test.ts (2 tests) 3171ms
+   ✓ records only an explicit named source attestation bound to current artifacts 1976ms
+   ✓ preserves editorial-only and mixed transitions as review-held material 1192ms
+(node:166028) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pipeline/media-generation/scene-space.test.ts (13 tests) 18ms
+(node:166276) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:166452) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/assembly/rendering.test.ts (2 tests | 1 failed) 22119ms
+   × renders real pauses and cast speech, then applies a reviewed score without shifting the cut 14380ms
+     → expected 20.72116207217717 to be less than or equal to 8
+   ✓ holds an exported audio turn with a renewed onset cut off after silence 7736ms
+ ✓ src/server/control-room-red-team-findings.test.ts (5 tests) 63ms
+ ✓ tests/pipeline/durable-production.test.ts (2 tests) 21883ms
+   ✓ durable production recovery > adopts only complete retained work and then resumes without executing a stage 2348ms
+   ✓ durable production recovery > builds real cast-master intervals, never syncs narration, and resumes accepted exact utterances 19532ms
+(node:146372) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:166752) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pipeline/media-generation/draft-room.test.ts (8 tests) 425ms
+(node:148224) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/web/chapter-discussion.test.ts (10 tests) 764ms
+   ✓ returns no-store chapter-scoped discussion over the existing production router 484ms
+ ✓ src/pipeline/media-generation/media-library.test.ts (5 tests) 2783ms
+   ✓ retains verifiable unselected takes idempotently and only creates guarded reuse candidates 368ms
+   ✓ extracts a frame with immutable parent-video provenance 1004ms
+   ✓ extracts a reusable frame from standalone b-roll video and keeps its location metadata 1339ms
+(node:165644) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:166228) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:159220) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/server/routes/production-correction-flow.test.ts (1 test) 509ms
+   ✓ recorded correction learning > rejects invalid guidance without writing, then promotes an immutable reviewed successor for a matching later chapter 504ms
+ ✓ tests/assembly/soundtrack-workflow.test.ts (5 tests) 314ms
+ ✓ src/pipeline/qc/canonical-likeness.test.ts (21 tests) 25ms
+(node:164456) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/server/routes/projects-navigation.test.ts (4 tests) 808ms
+   ✓ opens distinct normalized chapter workspaces without mutating existing records 550ms
+ ✓ tests/pipeline/voicing-preservation.test.ts (4 tests) 403ms
+ ✓ tests/web/normal-interface.test.ts (4 tests) 2444ms
+   ✓ serves the normal built app with the same live inventory, media and chapter routes, without preview restrictions or implicit production 2112ms
+ ✓ src/pipeline/qc/critic.test.ts (22 tests) 24ms
+(node:166272) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:165232) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:166552) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/server/canon-review-page.test.ts (8 tests) 242ms
+(node:166752) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:166904) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pipeline/creative-direction/deliberation-export.test.ts (4 tests) 106ms
+ ✓ src/pipeline/ingestion/source-alignment-speaker-attributions.test.ts (5 tests) 389ms
+ ✓ src/pipeline/media-generation/draft-review.test.ts (4 tests) 524ms
+ ✓ tests/web/producer-timeline.test.ts (8 tests) 20ms
+(node:163732) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:156088) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pipeline/media-generation/draft-gate.test.ts (4 tests) 140ms
+ ✓ src/pipeline/qc/director-verdict.test.ts (14 tests) 15ms
+ ✓ tests/architecture/evaluation.test.ts (3 tests) 126ms
+(node:166248) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/creative-direction/negotiation.test.ts (4 tests) 171ms
+ ✓ src/pipeline/ingestion/mark-2-segments.test.ts (5 tests) 15ms
+ ✓ tests/casting/chapter-intro.test.ts (4 tests) 36ms
+ ✓ tests/assembly/emotional-treatment-workflow.test.ts (1 test) 21807ms
+   ✓ retains a reviewed advance treatment through generation, a real pause render, reopen and effect review 21804ms
+ ✓ src/pipeline/qc/scene-fidelity.test.ts (15 tests) 15ms
+ ✓ src/pipeline/casting/coverage.test.ts (18 tests) 26ms
+ ✓ src/pipeline/qc/beat-scope.test.ts (9 tests) 18ms
+(node:163636) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/assembly/disaster-backup.test.ts (9 tests) 27068ms
+   ✓ whole production disaster recovery > snapshots committed WAL state, all databases and originals; restores history into a new isolated root without original access 7488ms
+   ✓ whole production disaster recovery > makes failures visible and never commits a completion marker when production is active 679ms
+   ✓ whole production disaster recovery > reserves database writers until media completion and detects assets created while copying 1625ms
+   ✓ whole production disaster recovery > refuses corrupt copies, unsafe paths and existing restore destinations 4861ms
+   ✓ whole production disaster recovery > fails visibly if an existing asset is changed by overwrite during capture 2168ms
+   ✓ whole production disaster recovery > fails visibly if an existing asset is changed by delete during capture 1693ms
+   ✓ whole production disaster recovery > reports preflight failure while preserving earlier completed copies and tolerates a damaged status record 2811ms
+   ✓ whole production disaster recovery > publishes only a completed verified copy and never calls a local sync copy protected 3362ms
+   ✓ whole production disaster recovery > records pre-existing missing dependencies without suppressing backup of recoverable work 2366ms
+ ✓ src/pipeline/casting/shot-risk.test.ts (9 tests) 25ms
+ ✓ src/pipeline/casting/coverage-manifest.test.ts (10 tests) 26ms
+(node:163948) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pipeline/creative-direction/visual-reference-media.test.ts (5 tests) 81ms
+ ✓ tests/casting/chapter-ending.test.ts (4 tests) 21ms
+ ✓ tests/providers/ltx-transport.test.ts (3 tests) 127ms
+(node:164912) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pipeline/ingestion/speaker-attribution-gate.test.ts (5 tests) 16ms
+ ✓ tests/assembly/build-narration-audio-block.test.ts (1 test) 5960ms
+   ✓ trims to the requested source interval, never letting the following audio section bleed into the padded tail 5958ms
+ ✓ tests/assembly/continuous-speech-workflow.test.ts (1 test) 28423ms
+   ✓ renders changing picture over a continuous multi-verse performance, with narration, two speakers in a verse and an evidenced emphasis 28419ms
+(node:166528) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/assembly/editorial-plan.test.ts (4 tests) 17ms
+ ✓ tests/architecture/covered-lip-sync-selection.test.ts (1 test) 37ms
+(node:166288) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:159888) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/pipeline/source-catalog.test.ts (2 tests) 123ms
+(node:165524) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/providers/gemini-text.test.ts (4 tests) 24ms
+ ✓ tests/assembly/covered-shot-audio.test.ts (3 tests) 70ms
+ ✓ tests/creative-direction/gap-implementation.test.ts (3 tests) 68ms
+ ✓ tests/assembly/finishing-cycle.test.ts (4 tests) 11ms
+ ✓ src/pipeline/ingestion/boundary-integrity.test.ts (5 tests) 67ms
+ ✓ src/providers/kling/sound.test.ts (3 tests) 43ms
+(node:157352) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pipeline/media-generation/shot-risk-lookup.test.ts (4 tests) 93ms
+ ✓ tests/assembly/soundtrack-provider.test.ts (4 tests) 39ms
+ ✓ src/pipeline/casting/disciple-timeline.test.ts (13 tests) 17ms
+(node:166856) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pipeline/scene-breakdown/build-scenes.test.ts (9 tests) 22ms
+ ✓ src/pipeline/qc/canon-critic.test.ts (4 tests) 37ms
+ ✓ tests/web/production-playback.test.ts (4 tests) 32ms
+ ✓ tests/assembly/continuous-audio.test.ts (3 tests) 10ms
+(node:148868) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/architecture/role-registry.test.ts (4 tests) 25ms
+(node:166584) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/architecture/lip-sync-selection.test.ts (1 test) 42ms
+ ✓ src/pipeline/qc/director-confidence.test.ts (2 tests) 47ms
+(node:166320) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/server/control-room-voice-profiles.test.ts (1 test) 14ms
+(node:165920) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pipeline/ingestion/select-boundaries.test.ts (5 tests) 15ms
+ ✓ src/pipeline/qc/video-review.test.ts (5 tests) 78ms
+ ✓ tests/architecture/final-video-candidate.test.ts (1 test) 36ms
+ ✓ src/pipeline/media-generation/crop-keyframe.test.ts (5 tests) 10ms
+(node:165128) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/server/production-crew.test.ts (4 tests) 13ms
+(node:165524) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pipeline/ingestion/parse-narrated-titles.test.ts (1 test) 23ms
+ ✓ src/pipeline/ingestion/source-alignment-editorial-classifications.test.ts (3 tests) 6ms
+ ✓ src/pipeline/creative-direction/lesson-synthesis.test.ts (2 tests) 16ms
+ ✓ src/pipeline/ingestion/alignment-display.test.ts (4 tests) 11ms
+ ✓ tests/web/chapter-ending-recovery.test.ts (2 tests) 20ms
+ ✓ src/pipeline/ingestion/gemini-alignment.test.ts (4 tests) 4778ms
+   ✓ uses ordered anchors then strong bounded fill without silently losing text 1608ms
+   ✓ treats malformed model output as unresolved evidence 1012ms
+   ✓ accepts a structurally identified narrated title without assigning it to Scripture 1232ms
+   ✓ uses a spoken chapter title as editorial context before verse one 922ms
+ ✓ src/pipeline/qc/flash-detection.test.ts (4 tests) 13ms
+(node:152192) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pipeline/qc/audio-tail.test.ts (3 tests) 54ms
+ ✓ tests/pipeline/reviewed-cast-master.test.ts (3 tests) 6ms
+C:\Users\danbr\AppData\Local\Temp\hw-omni-cost-does-not-exist.mp4: No such file or directory
+ ✓ src/providers/gemini/omni-draft-cost.test.ts (3 tests) 1676ms
+   ✓ prices a draft against the clip's real measured length, not a flat rate 548ms
+   ✓ scales with duration, so a longer draft costs proportionally more 978ms
+(node:142668) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/pipeline/ingestion/boundary-overrides.test.ts (1 test) 9ms
+ ✓ tests/creative-direction/production-record.test.ts (15 tests) 36790ms
+   ✓ saved crew production runtime > pins accepted treatment into later briefs and retains legacy plans without authorizing new generation 2074ms
+   ✓ saved crew production runtime > saves schema-compatible FDL and contribution envelopes without changing sources, canon or accepted media 1576ms
+   ✓ saved crew production runtime > resolves camera versus blocking while retaining the original proposal, objection and owner resolution 2516ms
+   ✓ saved crew production runtime > rejects a wardrobe redesign through continuity and carries the disagreement forward 3412ms
+   ✓ saved crew production runtime > does not clear an old blocking objection just because later findings are empty 4308ms
+   ✓ saved crew production runtime > holds cross-domain proposals without consent and accepts only a fresh owner-reviewed proposal 3065ms
+   ✓ saved crew production runtime > retains a late review without replacing the producer's newer accepted revision 2041ms
+   ✓ saved crew production runtime > shares manual API, autonomous caller, immutable producer edits, replay and reopened state 4305ms
+   ✓ saved crew production runtime > keeps late blocking evidence visible on a newer immutable producer revision 3312ms
+   ✓ saved crew production runtime > cannot reapprove a source/canon change as a producer creative edit and rolls back the edit 1791ms
+   ✓ saved crew production runtime > preserves an interrupted run's objections and supplies them to the next review 2737ms
+   ✓ saved crew production runtime > retains malformed replies and rejects an agent impersonating another objection owner 937ms
+   ✓ saved crew production runtime > does not substitute a paid image API for a production keyframe 672ms
+   ✓ saved crew production runtime > holds a new candidate whose revision provenance was not saved 1702ms
+   ✓ saved crew production runtime > holds absent/stale plans before provider submission and preserves a stale returned candidate 2336ms
+(node:161040) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/providers/gemini/veo-frame-generation.test.ts (2 tests) 8ms
+ ✓ src/pipeline/qc/post-render-scorecard.test.ts (2 tests) 8ms
+ ✓ src/web/BoundedIntervalAudio.test.ts (3 tests) 12ms
+ ✓ src/providers/story-state-assets.test.ts (1 test) 8ms
+ ✓ src/pipeline/ingestion/correction-remap.test.ts (3 tests) 8ms
+ ✓ src/pipeline/ingestion/editorial-omit.test.ts (3 tests) 7ms
+(node:128048) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/architecture/voice-lipsync-stage.test.ts (1 test) 206ms
+ ✓ src/pipeline/qc/performance-plan-guards.test.ts (2 tests) 10ms
+ ✓ src/pipeline/qc/canonical-likeness-row.test.ts (1 test) 7ms
+ ✓ src/web/FrameReviewClock.test.ts (2 tests) 9ms
+ ✓ tests/architecture/provider-boundaries.test.ts (1 test) 884ms
+   ✓ provider layering > keeps pipeline independent from server adapters and providers below both layers 881ms
+ ✓ tests/media-generation/set-snapshot.test.ts (1 test) 25898ms
+   ✓ renders a real pinned set view with exact camera provenance and leaves its Blender source untouched 25897ms
+ ✓ tests/assembly/blender-preservation.test.ts (1 test) 36876ms
+   ✓ restores a Blender texture and linked library under another root without the originals 36874ms
+ ✓ tests/assembly/chapter-package.test.ts (7 tests) 66388ms
+   ✓ editable chapter preservation > retains rejected takes, old canon, source authority, producer history and lineage without copying unrelated chapters 40999ms
+   ✓ editable chapter preservation > holds missing originals, changed source/canon, and a Blender file without a dependency inventory 8759ms
+   ✓ editable chapter preservation > fails missing/corrupt assets at verification and protects existing destinations 8261ms
+   ✓ editable chapter preservation > reports missing historical timing instead of claiming the MP4 is editable 2738ms
+   ✓ editable chapter preservation > rejects manifest traversal and changed record payloads before restoring 3507ms
+   ✓ editable chapter preservation > preserves applicable global producer guidance with its history, without pulling in its donor chapter media 1075ms
+   ✓ editable chapter preservation > preserves broader lessons with the same case-insensitive context matching used by the crew 1046ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/assembly/rendering.test.ts > renders real pauses and cast speech, then applies a reviewed score without shifting the cut
+AssertionError: expected 20.72116207217717 to be less than or equal to 8
+ ❯ tests/assembly/rendering.test.ts:88:59
+     86|     // The peak check also rejects a timing shift or duplicate score.
+     87|     expect(maxDelta).toBeLessThanOrEqual(128);
+     88|     expect(Math.sqrt(squaredError / firstSamples.length)).toBeLessThan…
+       |                                                           ^
+     89|     // Restore under another root with the original assets unavailable…
+     90|     // through the real crew brief and make a small saved finishing re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/pipeline/fresh-chapter-full-production.test.ts > takes a fresh reviewed chapter through real common stages without provider calls
+TypeError: fetch failed
+Caused by: Error: read ECONNRESET
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4077, code: 'ECONNRESET', syscall: 'read' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+ Test Files  2 failed | 109 passed (111)
+      Tests  2 failed | 721 passed (723)
+   Start at  23:09:45
+   Duration  78.81s (transform 28.50s, setup 0ms, collect 58.27s, tests 386.98s, environment 75ms, prepare 46.84s)

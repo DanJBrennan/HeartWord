@@ -12,7 +12,8 @@ import { checkAvatarSpend,readPerformanceDirection,reserveAvatarSpend,settleAvat
 import { AVATAR_RESERVATION_RATE_USD } from "../../providers/kling/avatar-direction.js";
 
 type ReadyShot = { id: string; verse_ref: string | null; dialogue_character_id: string; keyframe: string | null; voice_id: string | null; version_id: string | null; locked_visual_facts:string|null; binding_id:string|null; source_segment_id:string|null; start_ms:number|null; end_ms:number|null; source_hash:string|null };
-export const runVoiceLipSync: Stage = async (projectId) => {
+export const runVoiceLipSync: Stage = projectId => observeWork(projectId, "voice_lipsync", () => runVoiceLipSyncImpl(projectId));
+const runVoiceLipSyncImpl: Stage = async (projectId) => {
   const db = getDb();
   const shots = db.prepare(`SELECT sh.id,sh.verse_ref,sh.dialogue_character_id,
     (SELECT result_asset_path FROM generation_attempts WHERE shot_id=sh.id AND operation='generate' AND status='accepted' ORDER BY created_at DESC LIMIT 1) keyframe,
@@ -95,3 +96,4 @@ export const runVoiceLipSync: Stage = async (projectId) => {
   }
   return made === 0 ? { ok: true, reasoning: `${master.reasoning} Every speaking treatment already has an accepted selected clip; narration was not lip-synced.` } : { ok: false, reasoning: `${master.reasoning} Recorded ${made} speaking lip-sync candidate(s), all held for producer review; narration was not lip-synced.` };
 };
+import { observeWork } from "../observed-work.js";

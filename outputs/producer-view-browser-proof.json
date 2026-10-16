@@ -1,0 +1,18 @@
+{
+  "purpose": "Synthetic mechanical browser proof; not Scripture, canon, acting or field approval",
+  "url": "http://127.0.0.1:4026",
+  "observed": {
+    "singleProducerPanel": true,
+    "acceptedArrivalWithoutReload": "1 to 2 accepted clips; waiting reel continued to take2",
+    "existingSourceAndCastRate": 1,
+    "castFileSeekSeconds": 3,
+    "speechPausedMusic": true,
+    "emptyOtherChapterHasNoShotsOrPlayer": true,
+    "failedMissingCandidateExcluded": true,
+    "scopedRoleDisagreementInspectable": true,
+    "disconnectMarkedStale": true,
+    "reconnectRestoredFailedStateAndTwoClipReel": true
+  },
+  "providerSubmissions": 0,
+  "productionDataConnected": false
+}

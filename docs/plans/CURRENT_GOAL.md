@@ -1,5 +1,211 @@
 # Current Goal
 
+## Normal producer interface with production/edit controls (2026-10-15)
+
+Dan authorized making the real chapter inventory/console the normal HeartWord
+interface. Goal: the same faithful autonomous editable chapter and the same
+language/book/chapter inspection/correction workflow. Acceptance: one normal
+entry point, the actual configured chapter database/media, existing production
+and editing controls enabled, and unchanged source, regional canon, cumulative
+cost/outstanding-charge and approval gates. Opening the app is not a film launch
+or a new approval. All other active work and Mark 4 holds below remain intact.
+
+`npm start` builds the current UI and runs the normal server on loopback at
+`http://127.0.0.1:4000/` (existing `PORT` / `HEARTWORD_DATA_DIR` overrides apply).
+The app factory mounts the same existing project, production, canon, voice and
+control-room routes beside the inventory/console. Development uses that backend
+too. The read-only preview's blanket mutation/provider restrictions do not apply
+to this normal entry point; individual operation gates remain unchanged.
+Earlier port-4026/4027 demonstration processes were retired. Their scripts and
+historical evidence remain available but are not the normal launch path.
+
+Before live startup, a SQLite backup was retained outside OneDrive and normal
+initialization was exercised on a separate copy. The preflight and live startup
+preserved every existing table's original row values and foreign-key results;
+the missing video-progress table was added empty. This expected schema change
+changes the DB file hash; it is not reported as a byte-identical database.
+All 89 retained render inventory entries remain unchanged. No source binding,
+canon, attempt, cost, producer decision, approval or edit history was replaced.
+Starting the app dispatches no stage/provider generation and creates no charge.
+
+The cutover also fixes opening the already selected chapter: it now preserves
+loaded shots/drafts and its polling epoch instead of clearing the editing
+controls and stranding their refresh. Real chapter switches still clear stale
+chapter state and reject late replies. Design, validation and a dedicated Goal
+Guardian pass are recorded in
+[live-producer-view.md](../design/live-producer-view.md#normal-interface-cutover--october-15).
+The older read-only-preview statements below describe the earlier demonstration.
+
+Validation: **723 tests / 111 files pass**, including four new full-app route
+integration tests under `tests/web/normal-interface.test.ts`. TypeScript, the
+production web build and diff checks pass. The final complete log is
+`outputs/normal-interface-verified-tests.txt`. Live browser proof confirms the
+normal Mark 4 controls, 96 existing shot-comment fields, unsaved draft retention
+through same-chapter inventory/reopen, approval-gated finishing and the real
+33-entry crew replay. The draft was cleared without submission. Final original-
+row digests and foreign-key results match the baseline for all existing tables;
+the new video-progress table is empty and all 89 render inventory entries match.
+Evidence is under `outputs/normal-interface-*`. The separate Goal Guardian pass
+finds no drift or new product decision for Dan. Existing production holds and
+historical timing/cost uncertainty remain explicit; no film generation/spending
+occurred. Included assistant usage/billed attribution and Your dot/live Mabel/
+SMS transport availability remain unreported/unavailable as previously noted.
+
+Commit verification (2026-10-15): all **723 tests / 111 files pass** with
+`npm test -- --maxWorkers=2 --minWorkers=1`; typecheck, web build and staged diff
+checks pass. The initial default-worker run hit an audio sample comparison and
+a loopback `ECONNRESET`; both passed in the complete rerun without code changes.
+Logs: `outputs/normal-interface-commit-initial-tests.txt` and
+`outputs/normal-interface-commit-verified-tests.txt`.
+
+## Live chapter inventory and saved-discussion replay (2026-10-15)
+
+Dan authorized implementation of the inventory image proposal below into the
+existing producer console. This serves PRODUCT_VISION's faithful autonomous
+editable chapter and USER_WORKFLOW's language/book/chapter inspection and
+selective correction. Acceptance: real chapter status, automatic raw audio +
+text availability, independently evidenced alignment/character/canon/cast fields,
+keyframe/video/lip-sync counts and retries, and animated playback of the actual
+saved cast/crew discussion. Changes refresh without reopening, chapter switches
+remain isolated, and missing/failed work cannot become completed footage.
+
+Implemented on existing project/production GET routes and shared source path
+rules, with no new stage, schema, dispatcher, approval or parallel production
+state. The entry inventory opens the same producer workspace/edit controls.
+It lists existing source-catalog books and chapter ranges without enabling
+unsupported production. Available file counts are distinct from acceptance;
+generated/reused/derived/supplied outputs and current/restart history remain
+inspectable. Retries mean additional recorded generation attempts for the same
+target and operation; historical intent and provider-internal retries may be
+unreported. Raw-file readiness never substitutes for the existing source gate.
+
+The second tab merges actual role events and older director negotiations,
+retaining wording, original timestamps, errors, findings and dispositions.
+Cartoon portraits animate only recorded replay. Role/run/shot filters, step,
+speed, scrub and affected-shot links are implemented; current objections remain
+separate from historical verdicts. Declared roles remain declared. Replay does
+not synthesize speech, dispatch agents or execute provider calls.
+
+Actual query-only data inspection finds all 16 Hatam Mark source pairs, three
+saved chapter workspaces, 50 Mark 2 legacy exchanges, 297 Mark 3 exchanges
+(134 legacy + 163 role events), and 33 Mark 4 role events. Existing holds and
+uncertain runtime evidence remain visible. The normal HeartWord app uses these
+same projections. `scripts/producer-inventory-preview.ts` serves actual records
+at `http://127.0.0.1:4027` with a read-only banner and disabled mutations/providers,
+without starting the migrating/seeding production server. All prior console,
+source reconciliation, emotional treatment, crew/FDL, Avatar, LTX, Mark 4 holds
+and preservation work below remains active and intact.
+
+Design/evidence and the dedicated Goal Guardian review are recorded in
+[live-producer-view.md](../design/live-producer-view.md#live-chapter-inventory-and-recorded-discussion--october-15).
+This section supersedes only the historical image-only implementation status;
+the image and its illustrative data remain a proposal artifact.
+
+Validation: **719 tests / 110 files pass**, including 21 new tests under
+`tests/web/`, plus TypeScript, production web build and diff checks. Actual-data
+browser proof covers current/history counts, recorded replay, filtering/seeking,
+chapter isolation/empty history, affected-shot workspace navigation, compact
+layout and disconnect/reconnect without reopening. The production DB hash and
+all **89** retained render inventory entries match baseline; all three chapter
+projections succeed read-only. Evidence is under `outputs/chapter-inventory-*`.
+The separate Goal Guardian pass corrected ambiguous shot links/workspace context,
+overbroad notes, malformed-reply/wrong-file handling and a partial discussion
+badge. Result: passes the stated workflow and preservation scope. No new Dan
+product decision is required. Existing historical retry/remaining-estimate and
+Your dot/live Mabel/SMS transport limits remain explicit. No generation or film
+charge occurred; included assistant usage/billed attribution is unreported.
+
+## Live producer command console (2026-10-15)
+
+This single concern serves PRODUCT_VISION's autonomous faithful editable film
+and USER_WORKFLOW's language/book/chapter selection, inspection, correction and
+selective rerun. Dan clarified that the producer view is a command/control and
+master viewing workspace, rather than a long report. The native workspace now
+uses one viewport with chapter/production/panel menus, independently scrolling
+resizable storyboard, monitor and inspector panels, a resizable bottom timeline,
+and a second crew-discussion tab. Existing source, canon, generation, casting,
+review, guidance, editing and finishing controls open in a keyboard-accessible
+drawer in this same workspace. Browser-local panel sizes are preferences, not
+parallel saved production state. Narrow windows offer panel tabs.
+
+The console retains all seven stages, actual executing work, last recorded
+progress, external/queued work, Dan's holds, failures, uncertainty, next action,
+costs/outstanding reservations, reviews and decisions. Detailed job/run evidence
+and its execution observation count as one activity. Serial polling refreshes
+without reopening; disconnects mark evidence stale and pause preview. Chapter
+switches clear playback/media state and reject late replies. Historical databases
+without progress records remain inspectable with an explicit evidence gap.
+
+The bottom timeline supports zoom, horizontal scrolling and a scrub playhead.
+Where an immutable render manifest supplies valid timing, it shows accepted
+picture on saved chapter placements, explicit missing coverage, keyframe
+proposals, mutually exclusive source/saved-cast speech, applied ambience and
+music. Speech drives the preview clock at rate 1, preserving recorded offsets,
+source order and saved pauses independently of picture cuts. Contiguous speech
+from one file stays continuous. Review toggles do not edit the saved mix; the
+recorded cut retains its actual finished program mix. Only the finishing
+command that produced that render supplies soundtrack placements. Unplaced
+assets remain solo auditions. Legacy/custom/missing maps are not rebuilt:
+the accepted subset reel is explicitly picture-only, and the recorded cut
+remains playable. Multiple components need an authoritative assembled shot
+before they can share a saved shot-local clock. Missing/failed/pre-restart media
+never fill a gap or pass as completed footage.
+
+Shot inspectors retain keyframes, candidates, selected clips, coverage, Scripture
+planning context, real scoped contributions, objections and dispositions. The
+crew tab uses existing cartoon portraits beside real saved replies and evidence;
+registry-declared roles are explicitly labelled and never presented as workers.
+Deterministic proposal placeholders consume no keyframe-generation usage. The
+cost inspector shows cumulative recorded estimates, outstanding bounds and the
+$200 ceiling; estimate-to-finish stays **Unreported** because no complete forecast
+is recorded. No prices or approvals were invented.
+
+[Design, optional Filmora/Blender comparison and separate Goal Guardian review](../design/live-producer-view.md)
+record the acceptance and limits. All other active source reconciliation,
+emotional-treatment, crew/FDL, Avatar, reference handoff, LTX, Mark 4 holds and
+preservation work below remains intact. Manual/autonomous operation still uses
+the same records and gates, without a separate chapter-plan signature.
+
+The reopenable synthetic app at `http://127.0.0.1:4026` uses
+`scripts/production-view-demo.ts` and only the explicitly guarded scratch film.
+Its test patterns/tones, scripted reviews, saved timing/cues and missing coverage
+are mechanical workflow proof, not Scripture/canon/acting/field approval.
+Evidence is under `outputs/producer-console-*`. No production stage/provider
+was started and no film was regenerated or migrated. Production preservation
+checks read all three actual chapters without migration; the DB hash and all
+89 retained render inventory entries are checked before/after.
+
+Validation: **698 tests / 108 files pass**, including 32 producer projection,
+clock/playback and timeline checks. `npm run typecheck`, `npm run build:web` and
+`git diff --check` pass. Final complete run:
+`outputs/producer-console-verified-tests.txt`. Browser evidence, desktop/compact
+and crew screenshots, and preservation results are under
+`outputs/producer-console-*`: both DB hashes match, the 89 render inventory
+entries match, and all three chapter projections succeed read-only. The separate
+Goal Guardian review passes the console against Dan's clarified workflow,
+with the implementation's recorded limits. Browser preview is not frame-addressable
+final QC and does not reproduce finishing ducking/color. Legacy custom edits
+need their existing editor; another process's liveness, synchronous FFmpeg
+blocks, unreported remaining-work estimates, exact Filmora interchange and
+unavailable SMS/Your dot transport remain explicit limits. None requires a new
+Dan product decision to use this console. Existing field/release approval stays
+intact. Included assistant usage/billed attribution is unreported; provider
+submissions are zero. Completion is reported here in ChatGPT; SMS to the supplied
+number ending 8114 is not claimed.
+
+### Chapter inventory visual proposal (2026-10-15, image only)
+
+Dan requested an image of book/chapter status, automatic raw-audio-plus-text
+readiness, alignment, character/canon/cast readiness, generation counts/retries
+and a separate discussion/animated-log tab. The
+[static concept](../assets/control-room/producer-chapter-inventory-concept-v1.png)
+shows both tab states with explicitly illustrative sample data. Automatic
+population and animated replay are depicted proposals, not newly implemented
+behavior. [Visual acceptance and separate Goal Guardian review](../design/live-producer-view.md#chapter-inventory-image-proposal--october-15)
+pass the image-only scope; no runtime or production state changed. One built-in
+image call was used; included usage/billed attribution remains unreported. The
+existing implementation validation above and all other active work remain intact.
+
 ## Built-in canon packets and local LTX reference inputs (2026-10-14)
 
 This single concern serves PRODUCT_VISION's affordable, faithful editable chapter

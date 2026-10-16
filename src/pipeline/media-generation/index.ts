@@ -664,6 +664,9 @@ export const generateKeyframes = async (projectId: string, onlyShotIds?: string[
 
 const activeGeneration = new Set<string>();
 export const runMediaGeneration = async (projectId: string, onlyShotIds?: string[], imageTier?: "standard" | "pro", backend?: VideoBackend): Promise<StageResult> => {
+  return observeWork(projectId, "media_generation", () => runMediaGenerationImpl(projectId, onlyShotIds, imageTier, backend));
+};
+const runMediaGenerationImpl = async (projectId: string, onlyShotIds?: string[], imageTier?: "standard" | "pro", backend?: VideoBackend): Promise<StageResult> => {
   if (activeGeneration.has(projectId)) return { ok: false, reasoning: "Keyframe generation is already running for this chapter." };
   activeGeneration.add(projectId);
   try {
@@ -722,3 +725,4 @@ export const runMediaGeneration = async (projectId: string, onlyShotIds?: string
   }
   finally { activeGeneration.delete(projectId); }
 };
+import { observeWork } from "../observed-work.js";

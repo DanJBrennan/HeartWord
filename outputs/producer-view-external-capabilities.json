@@ -1,0 +1,23 @@
+{
+  "recommendation": "Native HeartWord is authoritative; external visualization optional; no Filmora integration or two-way synchronization implemented",
+  "filmora": {
+    "exactBuildRoundTrip": "unverified: startup appeared but no stable editor window was available",
+    "evidence": "Windows uninstall registry and installed executable product metadata",
+    "documentedImport": "Media, image sequence, Timeline XML",
+    "supportedAutomationApi": "not verified",
+    "documentedExport": "Rendered media and Final Cut Pro 7 XML",
+    "projectFilesModified": false,
+    "installedBuild": "15.0.12.16430"
+  },
+  "checkedOn": "2026-10-15",
+  "blender": {
+    "probe": "background factory-startup disable-autoexec, no user project opened or saved",
+    "open_mainfile": true,
+    "new_sound": true,
+    "new_image": true,
+    "render_filepath": true,
+    "save_as_mainfile": true,
+    "new_movie": true,
+    "installedVersion": "5.2.1 LTS"
+  }
+}

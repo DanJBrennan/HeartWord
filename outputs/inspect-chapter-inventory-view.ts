@@ -1,0 +1,10 @@
+import {createRequire} from 'node:module';
+import {writeFileSync} from 'node:fs';
+import {readChapterInventory} from '../src/server/chapter-inventory.js';
+import {readChapterDiscussion} from '../src/server/chapter-discussion.js';
+const {DatabaseSync}=createRequire(import.meta.url)('node:sqlite');
+const root='C:/Users/danbr/HeartWordData',db=new DatabaseSync(root+'/db/heartword.sqlite',{readOnly:true});db.exec('PRAGMA query_only=ON');
+const inventory=readChapterInventory(db,root,'hatam','mark');
+const summaries=inventory.chapters.filter(row=>row.projectId).map(row=>({chapter:row.chapter,source:row.source,state:row.state,alignment:row.alignment?.state,characters:row.identification?.count,canon:row.canon,casting:row.casting,generation:row.generation,discussion:readChapterDiscussion(db,row.projectId!)}));
+writeFileSync('outputs/chapter-inventory-real-evidence.json',JSON.stringify({inventory,summaries},null,2));
+console.log(JSON.stringify({chapters:inventory.chapters.length,sourceReady:inventory.chapters.filter(row=>row.source.ready).length,saved:summaries.map(row=>({chapter:row.chapter,state:row.state,sourceReady:row.source.ready,characters:row.characters,canonRequired:row.canon?.required,canonReady:row.canon?.ready,available:row.generation?.current,discussion:row.discussion.entries.length,legacy:row.discussion.entries.filter(item=>item.source==='director_negotiation').length}))})); db.close();

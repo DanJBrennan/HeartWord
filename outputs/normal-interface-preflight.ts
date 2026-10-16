@@ -1,0 +1,13 @@
+import {copyFileSync,mkdirSync,readFileSync} from 'node:fs';
+import {join} from 'node:path';
+const {backupRoot}=JSON.parse(readFileSync('outputs/normal-interface-baseline.json','utf8'));
+const trialRoot=join(backupRoot,'preflight');mkdirSync(join(trialRoot,'db'),{recursive:true});
+copyFileSync(join(backupRoot,'db','heartword.sqlite'),join(trialRoot,'db','heartword.sqlite'));
+process.env.HEARTWORD_DATA_DIR=trialRoot;
+globalThis.fetch=(async()=>{throw new Error('Network disabled during isolated startup preflight.');}) as typeof fetch;
+const {getDb}=await import('../src/db/client.js');
+const {seedControlRoomPresentationBriefs}=await import('../src/server/control-room-presentation-briefs.js');
+const {seedControlRoomRedTeamFindings}=await import('../src/server/control-room-red-team-findings.js');
+const db=getDb();
+const seeded={presentationBriefs:seedControlRoomPresentationBriefs(db),presentationFindings:seedControlRoomRedTeamFindings(db)};
+db.close();console.log(JSON.stringify({trialRoot,seeded,productionStarted:false,providerCalls:0}));

@@ -1,0 +1,60 @@
+import {createRequire} from 'node:module';
+import {mkdtempSync,mkdirSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {dirname,join} from 'node:path';
+import type {Server} from 'node:http';
+import {beforeEach,afterEach,expect,it,vi} from 'vitest';
+const {DatabaseSync}=createRequire(import.meta.url)('node:sqlite') as typeof import('node:sqlite');
+let db:import('node:sqlite').DatabaseSync,root:string,server:Server,base:string;
+vi.mock('../../src/db/client.js',()=>({getDb:()=>db,getDataDir:()=>root}));
+const put=(path:string,value='fixture bytes')=>{const file=join(root,'assets',path);mkdirSync(dirname(file),{recursive:true});writeFileSync(file,value);};
+beforeEach(async()=>{
+  root=mkdtempSync(join(tmpdir(),'heartword-normal-interface-'));mkdirSync(join(root,'web'));mkdirSync(join(root,'assets'));
+  writeFileSync(join(root,'web','index.html'),'<!doctype html><title>HeartWord</title><div id="root">HeartWord Studio built application</div>');
+  db=new DatabaseSync(':memory:');db.exec(readFileSync('src/db/schema.sql','utf8'));
+  db.exec(`INSERT INTO projects VALUES ('p','hatam','mark',2,'casting','held',1,1),('other','hatam','mark',3,'casting','held',1,1);
+    INSERT INTO scenes(id,project_id,sequence,verse_start,verse_end,created_at) VALUES ('scene','p',1,'Mark 2:1','Mark 2:1',1),('other-scene','other',1,'Mark 3:1','Mark 3:1',1);
+    INSERT INTO shots(id,scene_id,sequence,action,created_at) VALUES ('shot','scene',1,'Retained action',1),('other-shot','other-scene',1,'Other chapter',1);
+    INSERT INTO characters(id,name,scope_kind,canon_status,region,created_at,updated_at) VALUES ('c','Fixture character','global','approved','Papuan',1,1);
+    INSERT INTO cost_ledger_entries(id,project_id,amount_usd,created_at) VALUES ('cost','p',10,1);`);
+  const {createHeartWordApp}=await import('../../src/server/app.js');
+  server=createHeartWordApp({webBuildDir:join(root,'web')}).listen(0,'127.0.0.1');
+  await new Promise<void>(done=>server.once('listening',done));base=`http://127.0.0.1:${(server.address() as {port:number}).port}`;
+});
+afterEach(async()=>{await new Promise<void>(done=>server.close(()=>done()));db.close();rmSync(root,{recursive:true,force:true});});
+const json=(method:string,body:unknown)=>({method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+it('serves the normal built app with the same live inventory, media and chapter routes, without preview restrictions or implicit production',async()=>{
+  put('source/hatam/mark-2/mark-2-text.docx');put('source/hatam/mark-2/mark-2-fcbh-audio.mp3');
+  const before=db.prepare('SELECT total_changes() n').get()!.n;
+  const page=await fetch(base);expect(page.headers.get('cache-control')).toBe('no-store');expect(await page.text()).toContain('HeartWord Studio built application');
+  expect(await(await fetch(`${base}/api/health`)).json()).toEqual({status:'ok'});
+  const inventory=await(await fetch(`${base}/api/projects/inventory`)).json();expect(inventory.chapters[1]).toMatchObject({projectId:'p',source:{ready:true}});
+  expect((await(await fetch(`${base}/api/projects/p/production/discussion`)).json()).project.id).toBe('p');
+  expect((await fetch(`${base}/media/source/hatam/mark-2/mark-2-fcbh-audio.mp3`)).status).toBe(200);
+  expect(db.prepare('SELECT total_changes() n').get()!.n).toBe(before);
+  expect(db.prepare('SELECT COUNT(*) n FROM production_runs').get()!.n).toBe(0);
+});
+it('saves an existing producer edit and idempotent history through the full app while keeping source, canon, other chapters, costs and approvals intact',async()=>{
+  const beforeCanon=db.prepare('SELECT * FROM characters').all(),beforeCosts=db.prepare('SELECT * FROM cost_ledger_entries').all();
+  const body={action:'Producer changes only this shot staging',note:'Synthetic normal-interface edit proof',expectedRevision:null,idempotencyKey:'one-edit'};
+  const edit=()=>fetch(`${base}/api/projects/p/shots/shot`,json('PATCH',body));
+  expect((await edit()).status).toBe(200);expect((await(await edit()).json()).replayed).toBe(true);
+  expect(db.prepare("SELECT action FROM shots WHERE id='shot'").get()!.action).toBe(body.action);
+  expect(db.prepare("SELECT action FROM shots WHERE id='other-shot'").get()!.action).toBe('Other chapter');
+  expect(db.prepare('SELECT * FROM characters').all()).toEqual(beforeCanon);expect(db.prepare('SELECT * FROM cost_ledger_entries').all()).toEqual(beforeCosts);
+  expect(db.prepare('SELECT COUNT(*) n FROM production_runs').get()!.n).toBe(0);
+  expect(db.prepare("SELECT COUNT(*) n FROM edit_commands WHERE command_type='producer_creative_edit'").get()!.n).toBe(1);
+  const history=JSON.parse(String(db.prepare("SELECT payload FROM edit_commands WHERE command_type='producer_creative_edit'").get()!.payload));expect(history.before.action).toBe('Retained action');expect(history.after.action).toBe(body.action);
+  expect((await fetch(`${base}/api/projects/p/shots/other-shot`,json('PATCH',body))).status).toBe(404);
+  expect(db.prepare('SELECT COUNT(*) n FROM project_source_bindings').get()!.n).toBe(0);
+  expect(db.prepare("SELECT status FROM projects WHERE id='p'").get()!.status).toBe('held');
+});
+it('keeps real production prerequisites and the cumulative cost gate in force instead of blanket read-only rejection',async()=>{
+  const plan=await fetch(`${base}/api/projects/p/production/plan`,json('POST',{}));expect(plan.status).toBe(409);expect((await plan.json()).error).toMatch(/source catalog|source|text/i);
+  const budget=await fetch(`${base}/api/projects/p/avatar-budget`,json('POST',{actor:'Synthetic cost reviewer',evidence:'Fixture liabilities exceed the ceiling',unreportedUpperBoundUsd:199,outstandingUpperBoundUsd:2,idempotencyKey:'over-limit'}));expect(budget.status).toBe(400);expect((await budget.json()).error).toContain('$200');
+  const view=await(await fetch(`${base}/api/projects/p/production/view`)).json();expect(view.costs).toMatchObject({ceilingUsd:200,recordedUsd:10});expect(view.costs.hold).toContain('reconcile cumulative film costs and outstanding charges');
+  expect(db.prepare('SELECT COUNT(*) n FROM production_runs').get()!.n).toBe(0);expect(db.prepare('SELECT COUNT(*) n FROM generation_attempts').get()!.n).toBe(0);expect(db.prepare('SELECT COUNT(*) n FROM edit_commands').get()!.n).toBe(0);
+});
+it('never serves the application HTML as a successful missing API response',async()=>{
+  const response=await fetch(`${base}/api/unknown-production-route`);expect(response.status).toBe(404);expect(response.headers.get('content-type')).toContain('application/json');expect(await response.json()).toEqual({error:'API route not found.'});
+});

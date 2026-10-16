@@ -689,9 +689,11 @@ const buildCasting: Stage = async (projectId) => {
 
 // Prevent duplicate paid planning when the same request arrives twice.
 const activeCasting = new Set<string>();
-export const runCasting: Stage = async projectId => {
+export const runCasting: Stage = projectId => observeWork(projectId, "casting", () => runCastingImpl(projectId));
+const runCastingImpl: Stage = async projectId => {
   if (activeCasting.has(projectId)) return { ok: false, reasoning: "Storyboard creation is already running for this chapter." };
   activeCasting.add(projectId);
   try { return await buildCasting(projectId); }
   finally { activeCasting.delete(projectId); }
 };
+import { observeWork } from "../observed-work.js";

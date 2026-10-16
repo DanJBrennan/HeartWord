@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { observeWork } from "../observed-work.js";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
@@ -86,12 +87,16 @@ export async function registerVideoAmbience(db: DatabaseSync, projectId: string,
   db.prepare("UPDATE review_notes SET note=? WHERE id=?").run(`Native ambience ${outcome.status}: ${outcome.reason}. Retained audio: ${path}. Listening evidence: ${metadataPath}.`, noteId);
   return outcome;
 }
-export async function generateRequestedSoundtrack(projectId: string, runId: string, options: {
+interface SoundtrackOptions {
   db?: DatabaseSync; dataDir?: string; brief?: CrewBrief;
   music?: SoundtrackProvider; effects?: SoundtrackProvider;
   review?: (prompt: string, mimeType: string, bytes: Buffer) => Promise<SoundtrackReview>;
   duration?: (path: string) => number;
-} = {}): Promise<{ accepted: number; failures: string[] }> {
+}
+export async function generateRequestedSoundtrack(projectId: string, runId: string, options: SoundtrackOptions = {}): Promise<{ accepted: number; failures: string[] }> {
+  return observeWork(projectId, "qc", () => generateRequestedSoundtrackImpl(projectId, runId, options), runId);
+}
+async function generateRequestedSoundtrackImpl(projectId: string, runId: string, options: SoundtrackOptions): Promise<{ accepted: number; failures: string[] }> {
   const db = options.db ?? getDb(), dataDir = options.dataDir ?? getDataDir();
   const run = latestCrewRun(db, projectId, "finishing");
   if (!run || run.id !== runId || run.status !== "awaiting_assets") throw new Error("A current Director-approved soundtrack request is required.");
