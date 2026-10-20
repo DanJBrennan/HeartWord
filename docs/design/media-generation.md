@@ -77,6 +77,15 @@ historical design context, not a requirement to use Gemini for this handoff.
 
 ## Output
 
+October 16 wardrobe refinements extend the same two built-in handoffs: a
+promoted successor supplies an exact hashed wardrobe sheet, identity-only
+portrait lineage and concrete approved garment facts. Both roles remain
+explicit in the input map; the existing crew/FDL world references name the same
+version. Candidate creation never changes generation references. Promotion
+stales affected prepared contexts through existing checks, retains accepted
+old film assets and triggers no regeneration. See
+[the controlled refinement workflow](../production/DISCIPLE_WARDROBE_REFINEMENT.md).
+
 Rendered visual content per scene, ready to receive lip-synced speech (see
 `docs/design/audio-and-speakers.md`) and be placed on the timeline (see
 `docs/design/timeline.md`).

@@ -1,0 +1,716 @@
+{
+  "backupPath": "C:\\Users\\danbr\\HeartWordData\\backups\\wardrobe-refinement-1792194334238.sqlite",
+  "candidates": [
+    {
+      "name": "Peter",
+      "characterId": "9cbc4222-b194-4db4-baa9-2ba7083e31f3",
+      "candidateVersionId": "1fb7dfa3-6538-4282-9a7e-bc913d1fc4ed",
+      "baseVersionId": "88e8eb71-6d59-4ba3-9e2b-b3e3ce544377",
+      "status": "candidate",
+      "assetPath": "characters/refinements/1fb7dfa3-6538-4282-9a7e-bc913d1fc4ed/a25912b8-5d4e-46a7-87a8-d8fe4a0fdd3a.png",
+      "observation": "Corner macro ends still look brush-like; compare to compact hand-knotted cords before accepting fringe. Four-corner attachment topology is not proven by the worn view."
+    },
+    {
+      "name": "Andrew",
+      "characterId": "600e366f-8323-459d-b300-292f4e63ac41",
+      "candidateVersionId": "2e1c02e5-f872-4098-9da5-45dcaf9b5288",
+      "baseVersionId": "8c1be0de-b4dc-4fac-ae75-a872843776bd",
+      "status": "candidate",
+      "assetPath": "characters/refinements/2e1c02e5-f872-4098-9da5-45dcaf9b5288/f9573484-bf27-407c-8439-e53e05e7353b.png",
+      "observation": "Macro shows two long ends with knots; compactness and all four actual corner attachments need verification; rear shows one uncovered clavus, not evidence that the covered one is missing."
+    },
+    {
+      "name": "James son of Zebedee",
+      "characterId": "0ee7b1c5-b33c-43b7-b6e4-803fb18e9bf6",
+      "candidateVersionId": "89e93f97-009a-4649-8ac6-307f9b0396ee",
+      "baseVersionId": "3292fdd7-9a31-474d-887e-4835480a2076",
+      "status": "candidate",
+      "assetPath": "characters/refinements/89e93f97-009a-4649-8ac6-307f9b0396ee/f592bbc3-ff80-44c9-974c-109879baf295.png",
+      "observation": "Newer face/palette propagated. Corner knots and border treatment need producer comparison; do not call the colored border historically universal."
+    },
+    {
+      "name": "John son of Zebedee",
+      "characterId": "3179d3c7-201d-4365-9a41-0e7ef0c49257",
+      "candidateVersionId": "6c25fb29-35fa-40b0-b3ae-8d0d28988a61",
+      "baseVersionId": "f102a96e-54d0-42c7-ac44-7935e332f269",
+      "status": "candidate",
+      "assetPath": "characters/refinements/6c25fb29-35fa-40b0-b3ae-8d0d28988a61/8949eed6-aba6-4615-aa2f-0ee53a81ea17.png",
+      "observation": "Latest standing beard/headcloth propagated. Seated beard appears fuller; check identity consistency and the layered shoulder fabric; ensure a single rectangular mantle and no tunic tassels."
+    },
+    {
+      "name": "Philip the Apostle",
+      "characterId": "38bd4a5c-185b-4280-b778-cc61d5d4030a",
+      "candidateVersionId": "2d1d5416-e876-4e9c-afd1-4aac8f9ce097",
+      "baseVersionId": "0b824940-d749-4a31-ae1a-12a27dc437b0",
+      "status": "candidate",
+      "assetPath": "characters/refinements/2d1d5416-e876-4e9c-afd1-4aac8f9ce097/ab5dadaf-1066-431d-95b9-38f540f5eb68.png",
+      "observation": "Front appears to retain five hanging bundles instead of four true mantle corners. Fringe check should fail until corrected or disproved with corner evidence."
+    },
+    {
+      "name": "Bartholomew",
+      "characterId": "177cef9d-90c6-468e-848f-3f0d3961f402",
+      "candidateVersionId": "c724bebc-f762-44ed-b008-adb1717a701a",
+      "baseVersionId": "63277838-c03e-4b9a-9736-93bc05b812bf",
+      "status": "candidate",
+      "assetPath": "characters/refinements/c724bebc-f762-44ed-b008-adb1717a701a/dcaedeef-b602-4ba5-b7d6-e6662e1f825c.png",
+      "observation": "Front/rear appear to contain extra dangling points; inspect attachment topology. Macro knot is decorative/brush-like; fringe remains unaccepted."
+    },
+    {
+      "name": "Thomas",
+      "characterId": "c30f20dc-18b5-4854-a81f-87242a8a096d",
+      "candidateVersionId": "e84f6dbc-c614-4f53-bcdb-15c1d5cd47e0",
+      "baseVersionId": "d8ccd715-130c-4d86-beaa-cf3b21145759",
+      "status": "candidate",
+      "assetPath": "characters/refinements/e84f6dbc-c614-4f53-bcdb-15c1d5cd47e0/3f509529-ddf0-461c-bf9c-595d833ec6f8.png",
+      "observation": "Front still appears to show more than four dangling bundles. Reject fringe count unless four-corner topology is demonstrated. A concealed clavus is not a confirmed missing stripe."
+    },
+    {
+      "name": "Matthew (Levi)",
+      "characterId": "e9bdbfec-b3ed-4289-aa7e-669ecba92ca0",
+      "candidateVersionId": "36983b8e-df80-46b1-9d2f-87f8f93efbce",
+      "baseVersionId": "afdbdea6-1eb6-4c51-83d9-fc52f95c7e84",
+      "status": "candidate",
+      "assetPath": "characters/refinements/36983b8e-df80-46b1-9d2f-87f8f93efbce/d6ca7736-aba3-4483-a68b-56159539d167.png",
+      "observation": "Palette reads bluer under neutral lighting; compare with approved standing reference before accepting colors. Corner count and compact knot shape need inspection; tablet/stylus retained in allowed contexts."
+    },
+    {
+      "name": "James son of Alphaeus",
+      "characterId": "154b32fe-5eb5-4127-ba26-7e8e0273a834",
+      "candidateVersionId": "7d1ff17e-21b4-4fe4-9ec6-4a5ba80780d2",
+      "baseVersionId": "67ad8e3c-46ac-48d4-baf4-feb1ba79163a",
+      "status": "candidate",
+      "assetPath": "characters/refinements/7d1ff17e-21b4-4fe4-9ec6-4a5ba80780d2/b0ee3290-ab3f-4758-bff9-1d2ac49b6002.png",
+      "observation": "Front still shows five hanging bundles and rear wrap knot is an inferred view. Fringe needs correction; confirm headwrap arrangement preserves approved silhouette."
+    },
+    {
+      "name": "Thaddaeus (Jude)",
+      "characterId": "1192b5d3-5972-4555-a95b-f9fa7b355a6d",
+      "candidateVersionId": "0d21ce18-c870-455b-9768-85ebfe5da019",
+      "baseVersionId": "eebba346-1e0f-41f7-8a36-5dff21e211cc",
+      "status": "candidate",
+      "assetPath": "characters/refinements/0d21ce18-c870-455b-9768-85ebfe5da019/28a86a15-3c37-4e60-b7f0-85f502cb663f.png",
+      "observation": "Newer identity/palette propagated. Macro still resembles a decorative tassel; exact construction and cord compactness remain for review."
+    },
+    {
+      "name": "Simon the Zealot",
+      "characterId": "1848375b-b4a7-4633-bbc9-63e5ed0ac0ec",
+      "candidateVersionId": "a279a855-2a8c-425a-a411-815110093121",
+      "baseVersionId": "16454999-d1e7-4321-96df-ac8e45b7c151",
+      "status": "candidate",
+      "assetPath": "characters/refinements/a279a855-2a8c-425a-a411-815110093121/4819cfaf-906a-4217-a130-f300d4daa1ea.png",
+      "observation": "Earlier headband deliberately excluded under standing-choice decision. Macro has mixed existing blue/cream cords; count/topology and dangling length still require comparison."
+    },
+    {
+      "name": "Judas Iscariot",
+      "characterId": "e690f114-4be0-46a4-95f3-fed16ba2b4bb",
+      "candidateVersionId": "7c824a7a-4288-443c-bb3f-1a2eb4f9cd00",
+      "baseVersionId": "c2ebbc51-4a11-444c-967c-4d208911dcc8",
+      "status": "candidate",
+      "assetPath": "characters/refinements/7c824a7a-4288-443c-bb3f-1a2eb4f9cd00/2bf54594-2dbe-4ac2-af61-7a8f5874e469.png",
+      "observation": "Front/rear still show extra hanging bundles. Fringe count needs correction; rear headcloth knot is inferred and requires review. No exterior money pouch was introduced."
+    }
+  ],
+  "preserved": [
+    {
+      "table": "projects",
+      "originalRows": 3,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "characters",
+      "originalRows": 33,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "character_versions",
+      "originalRows": 91,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "character_assets",
+      "originalRows": 329,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "scenes",
+      "originalRows": 16,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "shots",
+      "originalRows": 219,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "shot_characters",
+      "originalRows": 723,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "generation_attempts",
+      "originalRows": 1403,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "clips",
+      "originalRows": 486,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "audio_segments",
+      "originalRows": 292,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "tracks",
+      "originalRows": 0,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "edit_commands",
+      "originalRows": 13,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "cost_ledger_entries",
+      "originalRows": 1283,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "review_notes",
+      "originalRows": 1527,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "character_groups",
+      "originalRows": 3,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "coverage_beats",
+      "originalRows": 57,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "coverage_keyframe_attempts",
+      "originalRows": 51,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "chapter_renders",
+      "originalRows": 89,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "creative_direction_proposals",
+      "originalRows": 40,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "director_negotiation_log",
+      "originalRows": 184,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "director_resolutions",
+      "originalRows": 37,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "production_runs",
+      "originalRows": 15,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "production_events",
+      "originalRows": 196,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "production_audio_assets",
+      "originalRows": 8,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "soundtrack_attempts",
+      "originalRows": 0,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "chapter_render_manifests",
+      "originalRows": 69,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "directed_video_jobs",
+      "originalRows": 0,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "control_room_voice_profiles",
+      "originalRows": 21,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "control_room_presentation_items",
+      "originalRows": 692,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "control_room_presentation_lines",
+      "originalRows": 1778,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "control_room_presentation_briefs",
+      "originalRows": 21,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "control_room_red_team_findings",
+      "originalRows": 9,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "production_lessons",
+      "originalRows": 1,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "production_lesson_events",
+      "originalRows": 1,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "media_reuse_candidates",
+      "originalRows": 0,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "stage_executions",
+      "originalRows": 19,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "evaluation_cases",
+      "originalRows": 0,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "evaluation_runs",
+      "originalRows": 0,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "evaluation_predictions",
+      "originalRows": 0,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "shot_utterance_bindings",
+      "originalRows": 29,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "composite_audio_source_map",
+      "originalRows": 122,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "source_alignment_reviews",
+      "originalRows": 3,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "project_source_bindings",
+      "originalRows": 2,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "alignment_evidence",
+      "originalRows": 3,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "source_alignment_corrections",
+      "originalRows": 23,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "source_alignment_boundary_overrides",
+      "originalRows": 4,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "source_alignment_editorial_classifications",
+      "originalRows": 5,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "source_alignment_speaker_attributions",
+      "originalRows": 66,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "source_alignment_segment_splits",
+      "originalRows": 5,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "source_alignment_segment_merges",
+      "originalRows": 2,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "shot_character_states",
+      "originalRows": 1,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "shot_performance_briefs",
+      "originalRows": 1,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "generation_attempt_references",
+      "originalRows": 0,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "media_library_items",
+      "originalRows": 858,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "chapter_intro_plans",
+      "originalRows": 1,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "chapter_ending_plans",
+      "originalRows": 2,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "editorial_beats",
+      "originalRows": 8,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "project_restart_cutovers",
+      "originalRows": 1,
+      "allOriginalRowsUnchanged": true
+    },
+    {
+      "table": "video_generation_jobs",
+      "originalRows": 0,
+      "allOriginalRowsUnchanged": true
+    }
+  ],
+  "files": [
+    {
+      "path": "characters/peter/motion/motion-neutral-standing-v4.png",
+      "sha256": "52255b7ab9d566f0ae3c4050e014ddba26611c23df95bf6ad91f799036455ce5",
+      "unchanged": true
+    },
+    {
+      "path": "characters/peter/motion/motion-seated-listening-v2.png",
+      "sha256": "e8d62cf4143d7ffc7590a52a0bae9e79e52638e5bc7ed42fc1363c246247aae5",
+      "unchanged": true
+    },
+    {
+      "path": "characters/peter/motion/motion-teaching-v2.png",
+      "sha256": "3e1d3b9de6c0e76e8eb38cb01d8ebd5037e8107252d49203aa68a70d67466417",
+      "unchanged": true
+    },
+    {
+      "path": "characters/peter/motion/motion-walking-v2.png",
+      "sha256": "5d2ff91f9da9391285cebde6e9a33e9d432a8ddba37a66e876892846a7c591ae",
+      "unchanged": true
+    },
+    {
+      "path": "characters/peter/lip_sync_closeup/close-up-neutral-v3.png",
+      "sha256": "38ea1460f11de95b411c9e2ce13eddb13cb9ed798d2a82b4debb594ab0f661de",
+      "unchanged": true
+    },
+    {
+      "path": "characters/andrew/motion/motion-neutral-standing-v2.png",
+      "sha256": "407335fd0475707e43362b05ddd0df09af35b3c401e6d374f517b28b58204210",
+      "unchanged": true
+    },
+    {
+      "path": "characters/andrew/motion/motion-seated-listening-v2.png",
+      "sha256": "f88dd29156d3b94a52e2467b5e5be0254510c7d56c3a021edb5f950a5484300a",
+      "unchanged": true
+    },
+    {
+      "path": "characters/andrew/motion/motion-teaching-v2.png",
+      "sha256": "c9919c16c3ecd331b00f4cc40b3731991670a712f5aeb386c2c32ee2f6793a07",
+      "unchanged": true
+    },
+    {
+      "path": "characters/andrew/motion/motion-walking-v2.png",
+      "sha256": "a57dc7795ee6909289ae8ec315284bc608efe25ec7177fd00262f2ee47054098",
+      "unchanged": true
+    },
+    {
+      "path": "characters/andrew/lip_sync_closeup/close-up-neutral-v2.png",
+      "sha256": "44287ece298b23def64468f2f387dd8dbbdecb0f280324fcb6b4e0de4108813a",
+      "unchanged": true
+    },
+    {
+      "path": "characters/james-son-of-zebedee/motion/motion-neutral-standing-v2.png",
+      "sha256": "b1fd21e483c27235525a582c2a1addd8450b1ae0aeb9b8fd79a92a2b3d9cc862",
+      "unchanged": true
+    },
+    {
+      "path": "characters/james-son-of-zebedee/motion/motion-seated-listening-v2.png",
+      "sha256": "099c2bee76991f82c5ce9f66c7d9941a1ae18374f1525ee8756759050380a900",
+      "unchanged": true
+    },
+    {
+      "path": "characters/james-son-of-zebedee/motion/motion-teaching-v2.png",
+      "sha256": "2af14b60192637b9ae97ca9f831cfcd9eedfa5d03dbf172e9a8972bba98a5d7c",
+      "unchanged": true
+    },
+    {
+      "path": "characters/james-son-of-zebedee/motion/motion-walking-v2.png",
+      "sha256": "19ed0b0145d1a230e39e25b919620b9e8d12363a3c6a3ff61a423195cc52f644",
+      "unchanged": true
+    },
+    {
+      "path": "characters/james-son-of-zebedee/lip_sync_closeup/close-up-neutral-v3.png",
+      "sha256": "91314af8e3be3217a5c51c0bb55b3b2e60380936b6d72dab54458193e59d1584",
+      "unchanged": true
+    },
+    {
+      "path": "characters/john-son-of-zebedee/motion/motion-neutral-standing-v4.png",
+      "sha256": "143038d17a82a03727332787098d7b67184fd3dfb36aff339f36a3d34f3d6403",
+      "unchanged": true
+    },
+    {
+      "path": "characters/john-son-of-zebedee/motion/motion-seated-listening-v3.png",
+      "sha256": "7edd6f00896c531f7f388a24cb2d9c1ed6f25c7cfe349b2f32c259eaa27ec324",
+      "unchanged": true
+    },
+    {
+      "path": "characters/john-son-of-zebedee/motion/motion-teaching-v3.png",
+      "sha256": "e1146305fbaa36d3b7bf9e5c0d2e9d6a316c227761826842bfdf16f745e61b25",
+      "unchanged": true
+    },
+    {
+      "path": "characters/john-son-of-zebedee/motion/motion-walking-v3.png",
+      "sha256": "8d4e6027b79041f8996f95ecde3c3c3d4f620694134c6063fefccbdbd69634c1",
+      "unchanged": true
+    },
+    {
+      "path": "characters/john-son-of-zebedee/lip_sync_closeup/close-up-neutral-v3.png",
+      "sha256": "ac664f6261ec4a8464eed7f4f45fcc9bc2ee69bc47229a1dbb5d43e2f75558b2",
+      "unchanged": true
+    },
+    {
+      "path": "characters/philip-the-apostle/motion/motion-neutral-standing-v4.png",
+      "sha256": "7565f39f095c451538245d975c08015deb6ee97d5c983b585cc457f3d9714426",
+      "unchanged": true
+    },
+    {
+      "path": "characters/philip-the-apostle/motion/motion-seated-listening-v4.png",
+      "sha256": "6d74a3089a91bfde76f4d5928803e0efc25aa1cee806b0ed302d7ea3448767ae",
+      "unchanged": true
+    },
+    {
+      "path": "characters/philip-the-apostle/motion/motion-teaching-v4.png",
+      "sha256": "2759fc04101902e1979c6ee0cfa47fffcadd1310b6aeb62d04ab8f07bbbd5cc1",
+      "unchanged": true
+    },
+    {
+      "path": "characters/philip-the-apostle/motion/motion-walking-v4.png",
+      "sha256": "b6b81af2316718ba501a85f640d08fb523b635719683aee393674e8fe64d0274",
+      "unchanged": true
+    },
+    {
+      "path": "characters/philip-the-apostle/lip_sync_closeup/close-up-neutral-v3.png",
+      "sha256": "ffbf548bd70a660849e9df28eab5726c4ea1a0bad0a80202db772da844ec82cc",
+      "unchanged": true
+    },
+    {
+      "path": "characters/bartholomew/motion/motion-neutral-standing-v4.png",
+      "sha256": "513ba2201fc7c107447351fc718bf67babc1c1a49fdaa4169950414353a5de6a",
+      "unchanged": true
+    },
+    {
+      "path": "characters/bartholomew/motion/motion-seated-listening-v3.png",
+      "sha256": "02292ebd994ae41b1e895488ea3fc729ac8a271dc23cbf91f320f4010b56c9a5",
+      "unchanged": true
+    },
+    {
+      "path": "characters/bartholomew/motion/motion-teaching-v3.png",
+      "sha256": "7548f868554d848f9523c90fc883c8e820aa4a21b8e01fcb8ff8cb6827de47ab",
+      "unchanged": true
+    },
+    {
+      "path": "characters/bartholomew/motion/motion-walking-v3.png",
+      "sha256": "ba6dd69574d0930b84be67310cd7b6d90791f89352e13580d4293667905b4b79",
+      "unchanged": true
+    },
+    {
+      "path": "characters/bartholomew/lip_sync_closeup/close-up-neutral-v3.png",
+      "sha256": "0787e5dc882d37376aa952fe18053149618430208ff6647b6e6a8e75818877be",
+      "unchanged": true
+    },
+    {
+      "path": "characters/thomas/motion/motion-neutral-standing-v2.png",
+      "sha256": "f99979e2b8335d521153eec433a303c1ab6ff39f081317c769d0fd4bcf171d98",
+      "unchanged": true
+    },
+    {
+      "path": "characters/thomas/motion/motion-seated-listening-v2.png",
+      "sha256": "220e03e03b630290d5d56d65b4f5a698e23de43fe5f20241fa84fe6f35d053d9",
+      "unchanged": true
+    },
+    {
+      "path": "characters/thomas/motion/motion-teaching-v2.png",
+      "sha256": "c15f5499e07a71e9be0b9a9a75b7ec01d05352ccc7b97dd83e7085a94423231f",
+      "unchanged": true
+    },
+    {
+      "path": "characters/thomas/motion/motion-walking-v2.png",
+      "sha256": "012333991a7ce850d7f83fa7a8aba536b311faaaffa90d873a3854f9604fcbe0",
+      "unchanged": true
+    },
+    {
+      "path": "characters/thomas/lip_sync_closeup/close-up-neutral-v2.png",
+      "sha256": "63236d1848b67b726b9b3c6f2132d6290a4132efcba76d8553436c3451fb296b",
+      "unchanged": true
+    },
+    {
+      "path": "characters/matthew/motion/motion-neutral-standing-v6.png",
+      "sha256": "56544769d2abac00b9fcecbee61abe1846cde7c2ef0775675f807f3ba9e43db9",
+      "unchanged": true
+    },
+    {
+      "path": "characters/matthew/motion/motion-seated-listening-v5.png",
+      "sha256": "bec8f2d12fd3b37522293149f3d7dd258c1302d351516f6c9227394930d47da1",
+      "unchanged": true
+    },
+    {
+      "path": "characters/matthew/motion/motion-teaching-v5.png",
+      "sha256": "b1343318daf6e517c2698b6b9c0a2845098d039a765e9955026bd4692f5b679c",
+      "unchanged": true
+    },
+    {
+      "path": "characters/matthew/motion/motion-walking-v5.png",
+      "sha256": "32386ca9ebb0f2cb7a004fe9abff66e6f84fe6671412224b6c1e1f2343818c32",
+      "unchanged": true
+    },
+    {
+      "path": "characters/matthew/lip_sync_closeup/close-up-neutral-v5.png",
+      "sha256": "badb3e9f60e1374061f1b8784e6ab04d1e2c3ec0d969fa72b5efa7e7a487366b",
+      "unchanged": true
+    },
+    {
+      "path": "characters/james-son-of-alphaeus/motion/motion-neutral-standing-v4.png",
+      "sha256": "817aa5e1d5b23fe659d7843b2b39eccc575e1fb6a90168ba73050f80446dd955",
+      "unchanged": true
+    },
+    {
+      "path": "characters/james-son-of-alphaeus/motion/motion-seated-listening-v3.png",
+      "sha256": "5c872b289156179ab475bcfd2361aa19a8d23e408f7106687ad16199389504ca",
+      "unchanged": true
+    },
+    {
+      "path": "characters/james-son-of-alphaeus/motion/motion-teaching-v3.png",
+      "sha256": "98ede284bfaea9d6b64c0e4d05d6f5d402424271edfdfe78139c72d3589b9820",
+      "unchanged": true
+    },
+    {
+      "path": "characters/james-son-of-alphaeus/motion/motion-walking-v3.png",
+      "sha256": "841dc713ae618af95dd93be9bf32f0d09d277d8425ba281d750d0efd01a6aa9b",
+      "unchanged": true
+    },
+    {
+      "path": "characters/james-son-of-alphaeus/lip_sync_closeup/close-up-neutral-v3.png",
+      "sha256": "03ae3b1e1509817dc7ff3760e60ff7018a578c55141da33ca2f77fd1c055b537",
+      "unchanged": true
+    },
+    {
+      "path": "characters/thaddaeus-jude/motion/motion-neutral-standing-v2.png",
+      "sha256": "8e54916fc7a94bf62271f8c7cd3e0aad706e78e7e9725b249201fb53bf5225b2",
+      "unchanged": true
+    },
+    {
+      "path": "characters/thaddaeus-jude/motion/motion-seated-listening-v2.png",
+      "sha256": "9200ebc549bee57d60b93cdcc112cc0a7cf87acf0a7a7e602b894d4331edb064",
+      "unchanged": true
+    },
+    {
+      "path": "characters/thaddaeus-jude/motion/motion-teaching-v2.png",
+      "sha256": "120a4a12f43cdbbffb83023ad3a2a7c41840e318aa56fbafacd963b41009e1ee",
+      "unchanged": true
+    },
+    {
+      "path": "characters/thaddaeus-jude/motion/motion-walking-v2.png",
+      "sha256": "8df2b6327ff5af7bd6fb4f2a2ac82d3d4bea5bbed1046e9e6106f9522396b4bb",
+      "unchanged": true
+    },
+    {
+      "path": "characters/thaddaeus-jude/lip_sync_closeup/close-up-neutral-v3.png",
+      "sha256": "9e9d8f527e2aeecef14d932f18a3f356321e4c57f255bcd1aae1000e25a84599",
+      "unchanged": true
+    },
+    {
+      "path": "characters/simon-the-zealot/motion/motion-neutral-standing-v2.png",
+      "sha256": "4bc90b3bb65d4022d0f3e041a172bb876f4eea23ea0cb7f719e51d01075dc785",
+      "unchanged": true
+    },
+    {
+      "path": "characters/simon-the-zealot/motion/motion-seated-listening-v2.png",
+      "sha256": "91cf2a89a4e3fea67b6ee1d339cb7e5987bbedbff0f1c417efe72d8d5e70f116",
+      "unchanged": true
+    },
+    {
+      "path": "characters/simon-the-zealot/motion/motion-teaching-v2.png",
+      "sha256": "d49749c2c1a85263bc5d94b9449558d7a16a955b99835e8db4cf0b04e8a15967",
+      "unchanged": true
+    },
+    {
+      "path": "characters/simon-the-zealot/motion/motion-walking-v2.png",
+      "sha256": "f617fa9e34138d5e9ac4ca39740e729170ac1aefa1caa988d6126d5843e1067e",
+      "unchanged": true
+    },
+    {
+      "path": "characters/simon-the-zealot/lip_sync_closeup/close-up-neutral-v2.png",
+      "sha256": "3063f8ec7cdcdb7d087ae0c7eac898193a9812613b716a56e2412d0497347052",
+      "unchanged": true
+    },
+    {
+      "path": "characters/judas-iscariot/motion/motion-neutral-standing-v4.png",
+      "sha256": "e75f960b21ba93ed35da343b9b679c03c3b0d0e0627d187b6725582f30a411a7",
+      "unchanged": true
+    },
+    {
+      "path": "characters/judas-iscariot/motion/motion-seated-listening-v3.png",
+      "sha256": "6907725fefb607c68da4fdd724a6c0ce5d4506c6449cb04aeb922aabe1fca11d",
+      "unchanged": true
+    },
+    {
+      "path": "characters/judas-iscariot/motion/motion-teaching-v3.png",
+      "sha256": "41a8019f3e7545115c3633e6efa92d4a4b55ecdf7397ac05f2cf1b31bf5aa0bd",
+      "unchanged": true
+    },
+    {
+      "path": "characters/judas-iscariot/motion/motion-walking-v3.png",
+      "sha256": "e609ed61ab08e6ef8bbd8a919d1131e0a4b7ea91d1e2f2982c9fc55abcd36365",
+      "unchanged": true
+    },
+    {
+      "path": "characters/judas-iscariot/lip_sync_closeup/close-up-neutral-v3.png",
+      "sha256": "476779f2c25a2a175758124e1bb6ea75f3ab3dfe02a5f0e7bdb1e8c6a9b1da4b",
+      "unchanged": true
+    }
+  ],
+  "foreignKeyIssues": [],
+  "providerCalls": "12 built-in assistant image calls; model, included usage and dollar costs unreported; no paid image API",
+  "filmProductionDispatches": 0,
+  "promotions": 0
+}

@@ -9,6 +9,7 @@ import type { FilmSnapshot } from "../creative-direction/production-record.js";
 import { sceneReferenceAssetsForVerse } from "../../providers/story-state-assets.js";
 import { getDataDir } from "../../db/client.js";
 import { sortAssetsByFreshness } from "../../characters/asset-freshness.js";
+import {wardrobeReferenceRole} from "../../characters/wardrobe-refinement.js";
 
 const REFERENCE_CATEGORY_RANK: Record<string, number> = { headshot: 0, body_pose: 1, turnaround: 2 };
 
@@ -22,7 +23,7 @@ export interface KeyframeContext {
     crowd_density: string | null; continuity_notes: string | null };
   scene: { id: string; sequence: number; summary: string | null; lighting_continuity: string | null };
   references: Array<{ character_id: string; name: string; version_id: string; version_label: string;
-    category: string; path: string; sha256: string }>;
+    category: string; path: string; sha256: string; referenceRole?:string; wardrobeFacts?:string }>;
   sceneReferences?: SetReference[];
 }
 
@@ -135,10 +136,10 @@ export function prepareReferencePacket(dataDir: string, id: string, references: 
     inputs.push({path,sha256:sha256(readFileSync(assetPath(dataDir,path))),referenceNumbers:numbers});
     legend.push(`Image ${i + 1}, cells in row-major order: ` + numbers.map(n => {
       const r = all[n - 1]!;
-      return "character_id" in r ? `${r.name} (${r.version_label}, ${r.category}, reference ${n})` : `SET ONLY (${r.role}, ${r.recordRef}, reference ${n})`;
+      return "character_id" in r ? `${r.name} (${r.version_label}, ${r.category}, reference ${n}${r.referenceRole?`, role ${r.referenceRole}`:""})${r.wardrobeFacts?` WARDROBE FACTS: ${r.wardrobeFacts}`:""}` : `SET ONLY (${r.role}, ${r.recordRef}, reference ${n})`;
     }).join("; "));
   }
-  return {inputs, direction:"\nREFERENCE INPUT MAP:\n" + legend.join("\n") + "\nThese are references, never a collage to reproduce. Preserve each named identity/wardrobe; set images constrain architecture only, not people, pose or camera. An accepted scene view does not approve hidden geometry or create building canon. No reference labels or board borders in the output.\n"};
+  return {inputs, direction:"\nREFERENCE INPUT MAP:\n" + legend.join("\n") + "\nThese are references, never a collage to reproduce. Preserve each named identity/wardrobe; identity_only constrains face/hair/build, never its older clothing. wardrobe constrains the versioned garment, construction and drape; individual views are one person, not extra cast. Set images constrain architecture only, not people, pose or camera. An accepted scene view does not approve hidden geometry or create building canon. No reference labels or board borders in the output.\n"};
 }
 
 export function keyframeFilmInput(run: StoredCrewRun, shotId: string): FilmInput | undefined {
@@ -220,7 +221,8 @@ export function getKeyframeContext(db: DatabaseSync, dataDir: string, shotId: st
     // A lip-sync shot can contain silent supporting cast (for example the
     // paralytic while Jesus speaks). Those characters still need their canon
     // reference, but must not block a keyframe because they have no headshot.
-    const chosen = shot.needs_lip_sync && assets.some(a => a.category === "headshot")
+    const refined=wardrobeReferenceRole(db,version.id,"body_pose")==="wardrobe";
+    const chosen = (shot.needs_lip_sync||refined) && assets.some(a => a.category === "headshot")
       ? [assets.find(a => a.category === "headshot"), assets.find(a => a.category === "body_pose")].filter(a => a !== undefined)
       : [assets.find(a => a.category === "body_pose") ?? assets[0]].filter(a => a !== undefined);
     if (!chosen.length) {
@@ -229,8 +231,11 @@ export function getKeyframeContext(db: DatabaseSync, dataDir: string, shotId: st
     for (const asset of chosen) {
       const hash = sha256(readFileSync(assetPath(dataDir, asset.path)));
       if (asset.content_hash && asset.content_hash.toLowerCase() !== hash) throw new Error(`Reference hash mismatch: ${asset.path}`);
+      const role=wardrobeReferenceRole(db,version.id,asset.category);
+      const facts=refined?db.prepare("SELECT locked_visual_facts FROM character_versions WHERE id=?").get(version.id)?.locked_visual_facts:null;
       references.push({ character_id: character.id, name: character.name, version_id: version.id,
-        version_label: version.version_label, category: asset.category, path: asset.path, sha256: hash });
+        version_label: version.version_label, category: asset.category, path: asset.path, sha256: hash,
+        ...(refined?{referenceRole:role,...(role==="wardrobe"&&facts?{wardrobeFacts:String(facts)}:{})}:{}) });
     }
   }
   const sceneReferences = keyframeSetReferences(db,dataDir,shotId);

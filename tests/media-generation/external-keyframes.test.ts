@@ -53,6 +53,15 @@ beforeEach(() => {
 afterEach(() => db.close());
 
 describe("external keyframe handoff", () => {
+  it("keeps candidate canon reviews distinct from chapter creative guidance until promotion",()=>{
+    const before=crewBriefHash(loadCrewBrief(db,dir,"project","planning"),"planning");
+    db.exec("INSERT INTO character_versions(id,character_id,version_label,status,created_at)VALUES('candidate-version','person','candidate','candidate',2)");
+    db.prepare("INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at)VALUES('candidate-review','project','character_version','candidate-version','human',?,0,2)")
+      .run('HeartWord wardrobe refinement v1\n'+JSON.stringify({kind:"review",domain:"identity",outcome:"approved",evidence:"Synthetic isolated candidate comparison; wardrobe unapproved"}));
+    expect(crewBriefHash(loadCrewBrief(db,dir,"project","planning"),"planning")).toBe(before);
+    db.exec("INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at)VALUES('guidance','project','shot','shot','human','Keep the producer staging correction',0,3)");
+    expect(crewBriefHash(loadCrewBrief(db,dir,"project","planning"),"planning")).not.toBe(before);
+  });
   it("uses the same reviewed set state for shot/coverage preparation and holds withdrawn references at acceptance",()=>{
     const item=registerStandaloneLibraryAsset(db,dir,{assetPath:"ref.png",title:"Fixture set",location:"Fixture room",tags:["set"],language:"hatam",canonRegion:"Papuan",provenance:{}});
     const reuse=createReuseCandidate(db,dir,item.id,"shot",null);

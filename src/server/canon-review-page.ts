@@ -120,7 +120,7 @@ pre{white-space:pre-wrap;font:12.5px/1.6 ui-monospace,monospace;background:#0f12
 #zoom img{max-width:94vw;max-height:94vh;border-radius:8px}
 .empty{padding:40px 20px;color:var(--dim)}
 </style></head><body>
-<header><h1>HeartWord canon review</h1><div class="sub" id="sub"></div><div class="bar" id="bar"></div></header>
+<header><h1>HeartWord canon review</h1><a href="/api/characters/refinements/review" style="color:#addbff">Compare wardrobe refinements</a><div class="sub" id="sub"></div><div class="bar" id="bar"></div></header>
 <main id="grid"></main>
 <dialog id="detail"><div class="dh"><div><div class="nm" id="dTitle"></div><div class="kv" id="dMeta"></div></div><button onclick="detail.close()">Close</button></div><div class="dc" id="dBody"></div></dialog>
 <div id="zoom" onclick="this.style.display='none'"><img id="zoomImg" alt=""></div>

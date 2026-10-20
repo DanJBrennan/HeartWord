@@ -24,6 +24,7 @@ import { assetPath, readLandscapePng, sha256, keyframeSetReferences, keyframeFil
 import { getDataDir } from "../../db/client.js";
 import { sceneReferenceAssetsForVerse } from "../../providers/story-state-assets.js";
 import { sortAssetsByFreshness } from "../../characters/asset-freshness.js";
+import {wardrobeReferenceRole} from "../../characters/wardrobe-refinement.js";
 
 const REFERENCE_CATEGORY_RANK: Record<string, number> = { headshot: 0, body_pose: 1, turnaround: 2 };
 
@@ -62,6 +63,8 @@ export interface CoverageBeatContext {
     category: string;
     path: string;
     sha256: string;
+    referenceRole?:string;
+    wardrobeFacts?:string;
   }>;
   sceneReferences?: SetReference[];
 }
@@ -169,8 +172,9 @@ export function getCoverageBeatContext(db: DatabaseSync, dataDir: string, beatId
     // regenerated can't silently outrank the one that was.
     const assets = sortAssetsByFreshness(sceneReferenceAssetsForVerse(rawAssets,shot.verse_ref ?? undefined), REFERENCE_CATEGORY_RANK);
     const isSpeaker = speakingCharacter?.id === character.id;
+    const refined=wardrobeReferenceRole(db,version.id,"body_pose")==="wardrobe";
     const chosen = (
-      isSpeaker && assets.some((a) => a.category === "headshot")
+      (isSpeaker||refined) && assets.some((a) => a.category === "headshot")
         ? [assets.find((a) => a.category === "headshot"), assets.find((a) => a.category === "body_pose")]
         : [assets.find((a) => a.category === "body_pose") ?? assets[0]]
     ).filter((a) => a !== undefined);
@@ -187,7 +191,9 @@ export function getCoverageBeatContext(db: DatabaseSync, dataDir: string, beatId
         version_label: version.version_label,
         category: asset.category,
         path: asset.path,
-        sha256: hash
+        sha256: hash,
+        ...(refined?{referenceRole:wardrobeReferenceRole(db,version.id,asset.category),
+          ...(asset.category!=="headshot"?{wardrobeFacts:String(db.prepare("SELECT locked_visual_facts FROM character_versions WHERE id=?").get(version.id)?.locked_visual_facts??"")}:{})}:{})
       });
     }
   }

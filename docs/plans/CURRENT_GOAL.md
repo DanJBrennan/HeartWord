@@ -1,5 +1,68 @@
 # Current Goal
 
+## Controlled Papuan disciple wardrobe refinement (2026-10-16)
+
+This single concern serves PRODUCT_VISION's faithful autonomous editable chapter
+and USER_WORKFLOW's inspect/correct/selective-rerun flow. Acceptance: compare and
+approve refinements, distinct identity/wardrobe/voice authority, exact versioned
+references for later keyframes, concrete QC drift and preserved old-film visual
+authority. All other active work and Mark 4 holds below remain intact.
+
+The [inventory, historical research and review proposal](../production/DISCIPLE_WARDROBE_REFINEMENT.md)
+cover all Twelve and 60 current approved references. Existing mixed pose packages,
+newer headshot/body conflicts, missing machine-readable garment facts, voice
+assignments and uncertain corner topology are explicit. Scripture/archaeological
+evidence is separated from uncertain reconstruction and approved regional choices;
+The Chosen is a visual discussion reference, never wardrobe/canon authority.
+Dan chose current-choice propagation and newer approved James Zebedee/Thaddaeus
+palettes where older standing colors conflict. No new headwear/blue-cord policy
+was adopted.
+
+Implemented in existing character versions/assets/review notes and producer
+routes, without a new schema/stage/worker or parallel state. Twelve built-in
+assistant image sheets are saved as **candidates**, with exact prompts, hashes,
+reference roles, garment facts and per-character QC observations. Some still show
+extra/decorative tassels and remain unaccepted. The comparison page requires
+separate evidenced identity/wardrobe decisions on current bytes, then atomic
+promotion against the unchanged approved basis; voice assignment is carried
+without new approval. Current voice controls cannot silently target a newer
+candidate. Old versions/assets/provenance, films, accepted takes and edits are
+retained; no promotion or film regeneration occurred.
+
+Both assistant keyframe handoffs carry promoted garment references/facts and
+identity-only lineage. Existing crew/FDL v2/Bible-regional records retain exact
+version authority; new-media QC reads the hash-verified approved sheet instead
+of old portrait clothes. Declared Dottie/Mabel roles remain declared. Manual
+controls and assistant preparation share the same saved service. Source-audio
+wording/speed, automatic applicable-review continuation, cumulative $200 plus
+outstanding-charge gates and field/release requirements are unchanged.
+
+The real comparison route is open on the normal app factory at
+`http://127.0.0.1:4031/api/characters/refinements/review`, using the same configured
+production data; port 4000 gains the route on its next server restart. Browser
+proof shows old/new images, findings and separate controls; no live approval was
+submitted as a test. Disk-backed isolated tests demonstrate preparation, separate
+reviews, reopen, promotion and retained old takes. A read-only final comparison
+with the retained SQLite backup confirms all **10,845 original rows / 59 tables**
+and **60 original canon files** unchanged, twelve still-approved bases and twelve
+unapproved candidates, with no foreign-key errors. Receipts and screenshots are
+under `outputs/disciple-wardrobe-*`.
+
+The separate [Goal Guardian pass](../production/DISCIPLE_WARDROBE_REFINEMENT.md#saved-workflow-proof-and-separate-goal-guardian-review)
+passes the bounded workflow; actual visual refinements await Dan's review and
+some need fringe correction. It fixed stale comparison replies, submitted-event
+authority spoofing, wardrobe-QC reference selection and retroactive old-take
+review before any paid call or invalidation. No new product-policy
+decision blocks this implementation. Exact rear-wrap reconstruction/new cord or
+headwear choices need their own approval if proposed. Twelve built-in image calls
+used included assistant generation; model/usage amount/dollar attribution remain
+unreported, not zero. No paid image API or production-model/film dispatch occurred,
+and no film budget clearance was issued. Your dot/live Mabel/SMS are unavailable;
+completion is reported here without claiming SMS delivery to the number ending
+8114. Final validation: **755 tests / 113 files pass**, including 17 new cases;
+TypeScript, production web build and diff checks pass. The complete log is
+`outputs/disciple-wardrobe-complete-tests.txt`.
+
 ## Bounded evidence-based creative feedback (2026-10-15)
 
 This single concern serves PRODUCT_VISION's faithful autonomous editable

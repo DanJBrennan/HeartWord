@@ -83,6 +83,14 @@ promotion can be rolled back.
 
 ## Voice Mapping and Live Test
 
+The implemented [wardrobe refinement controls](../production/DISCIPLE_WARDROBE_REFINEMENT.md#operate-the-same-saved-workflow)
+are linked from the existing canon review. They compare exact approved identity
+and standing wardrobe references with a separate candidate sheet, retain QC
+observations, and require distinct evidenced identity/wardrobe reviews before
+atomic promotion. Voice choice continues to target the approved version rather
+than a newer candidate; wardrobe promotion carries it unchanged and confers no
+voice approval. API and assistant tools use the same saved service and records.
+
 - Applies only to characters with spoken lines. Most named characters in a
   given chapter will need this; most crowd/background characters won't —
   the distinction is whichever the source text and scene breakdown actually

@@ -1,0 +1,463 @@
+{
+  "originalTables": 59,
+  "originalRows": 10845,
+  "rows": [
+    {
+      "table": "projects",
+      "originalRows": 3,
+      "unchanged": true
+    },
+    {
+      "table": "characters",
+      "originalRows": 33,
+      "unchanged": true
+    },
+    {
+      "table": "character_versions",
+      "originalRows": 91,
+      "unchanged": true
+    },
+    {
+      "table": "character_assets",
+      "originalRows": 329,
+      "unchanged": true
+    },
+    {
+      "table": "scenes",
+      "originalRows": 16,
+      "unchanged": true
+    },
+    {
+      "table": "shots",
+      "originalRows": 219,
+      "unchanged": true
+    },
+    {
+      "table": "shot_characters",
+      "originalRows": 723,
+      "unchanged": true
+    },
+    {
+      "table": "generation_attempts",
+      "originalRows": 1403,
+      "unchanged": true
+    },
+    {
+      "table": "clips",
+      "originalRows": 486,
+      "unchanged": true
+    },
+    {
+      "table": "audio_segments",
+      "originalRows": 292,
+      "unchanged": true
+    },
+    {
+      "table": "tracks",
+      "originalRows": 0,
+      "unchanged": true
+    },
+    {
+      "table": "edit_commands",
+      "originalRows": 13,
+      "unchanged": true
+    },
+    {
+      "table": "cost_ledger_entries",
+      "originalRows": 1283,
+      "unchanged": true
+    },
+    {
+      "table": "review_notes",
+      "originalRows": 1527,
+      "unchanged": true
+    },
+    {
+      "table": "character_groups",
+      "originalRows": 3,
+      "unchanged": true
+    },
+    {
+      "table": "coverage_beats",
+      "originalRows": 57,
+      "unchanged": true
+    },
+    {
+      "table": "coverage_keyframe_attempts",
+      "originalRows": 51,
+      "unchanged": true
+    },
+    {
+      "table": "chapter_renders",
+      "originalRows": 89,
+      "unchanged": true
+    },
+    {
+      "table": "creative_direction_proposals",
+      "originalRows": 40,
+      "unchanged": true
+    },
+    {
+      "table": "director_negotiation_log",
+      "originalRows": 184,
+      "unchanged": true
+    },
+    {
+      "table": "director_resolutions",
+      "originalRows": 37,
+      "unchanged": true
+    },
+    {
+      "table": "production_runs",
+      "originalRows": 15,
+      "unchanged": true
+    },
+    {
+      "table": "production_events",
+      "originalRows": 196,
+      "unchanged": true
+    },
+    {
+      "table": "production_audio_assets",
+      "originalRows": 8,
+      "unchanged": true
+    },
+    {
+      "table": "soundtrack_attempts",
+      "originalRows": 0,
+      "unchanged": true
+    },
+    {
+      "table": "chapter_render_manifests",
+      "originalRows": 69,
+      "unchanged": true
+    },
+    {
+      "table": "directed_video_jobs",
+      "originalRows": 0,
+      "unchanged": true
+    },
+    {
+      "table": "control_room_voice_profiles",
+      "originalRows": 21,
+      "unchanged": true
+    },
+    {
+      "table": "control_room_presentation_items",
+      "originalRows": 692,
+      "unchanged": true
+    },
+    {
+      "table": "control_room_presentation_lines",
+      "originalRows": 1778,
+      "unchanged": true
+    },
+    {
+      "table": "control_room_presentation_briefs",
+      "originalRows": 21,
+      "unchanged": true
+    },
+    {
+      "table": "control_room_red_team_findings",
+      "originalRows": 9,
+      "unchanged": true
+    },
+    {
+      "table": "production_lessons",
+      "originalRows": 1,
+      "unchanged": true
+    },
+    {
+      "table": "production_lesson_events",
+      "originalRows": 1,
+      "unchanged": true
+    },
+    {
+      "table": "media_reuse_candidates",
+      "originalRows": 0,
+      "unchanged": true
+    },
+    {
+      "table": "stage_executions",
+      "originalRows": 19,
+      "unchanged": true
+    },
+    {
+      "table": "evaluation_cases",
+      "originalRows": 0,
+      "unchanged": true
+    },
+    {
+      "table": "evaluation_runs",
+      "originalRows": 0,
+      "unchanged": true
+    },
+    {
+      "table": "evaluation_predictions",
+      "originalRows": 0,
+      "unchanged": true
+    },
+    {
+      "table": "shot_utterance_bindings",
+      "originalRows": 29,
+      "unchanged": true
+    },
+    {
+      "table": "composite_audio_source_map",
+      "originalRows": 122,
+      "unchanged": true
+    },
+    {
+      "table": "source_alignment_reviews",
+      "originalRows": 3,
+      "unchanged": true
+    },
+    {
+      "table": "project_source_bindings",
+      "originalRows": 2,
+      "unchanged": true
+    },
+    {
+      "table": "alignment_evidence",
+      "originalRows": 3,
+      "unchanged": true
+    },
+    {
+      "table": "source_alignment_corrections",
+      "originalRows": 23,
+      "unchanged": true
+    },
+    {
+      "table": "source_alignment_boundary_overrides",
+      "originalRows": 4,
+      "unchanged": true
+    },
+    {
+      "table": "source_alignment_editorial_classifications",
+      "originalRows": 5,
+      "unchanged": true
+    },
+    {
+      "table": "source_alignment_speaker_attributions",
+      "originalRows": 66,
+      "unchanged": true
+    },
+    {
+      "table": "source_alignment_segment_splits",
+      "originalRows": 5,
+      "unchanged": true
+    },
+    {
+      "table": "source_alignment_segment_merges",
+      "originalRows": 2,
+      "unchanged": true
+    },
+    {
+      "table": "shot_character_states",
+      "originalRows": 1,
+      "unchanged": true
+    },
+    {
+      "table": "shot_performance_briefs",
+      "originalRows": 1,
+      "unchanged": true
+    },
+    {
+      "table": "generation_attempt_references",
+      "originalRows": 0,
+      "unchanged": true
+    },
+    {
+      "table": "media_library_items",
+      "originalRows": 858,
+      "unchanged": true
+    },
+    {
+      "table": "chapter_intro_plans",
+      "originalRows": 1,
+      "unchanged": true
+    },
+    {
+      "table": "chapter_ending_plans",
+      "originalRows": 2,
+      "unchanged": true
+    },
+    {
+      "table": "editorial_beats",
+      "originalRows": 8,
+      "unchanged": true
+    },
+    {
+      "table": "project_restart_cutovers",
+      "originalRows": 1,
+      "unchanged": true
+    },
+    {
+      "table": "video_generation_jobs",
+      "originalRows": 0,
+      "unchanged": true
+    }
+  ],
+  "originalCanonFilesVerified": 60,
+  "candidates": [
+    {
+      "name": "Peter",
+      "candidateId": "1fb7dfa3-6538-4282-9a7e-bc913d1fc4ed",
+      "baseId": "88e8eb71-6d59-4ba3-9e2b-b3e3ce544377",
+      "candidateHash": "34eae39a2ab903d15315691f1a5d88365c4d92fbaf0fcc28b37a52c454ef6a73",
+      "status": "candidate",
+      "baseStatus": "approved",
+      "referenceFilesVerified": 1,
+      "decisions": [
+        "proposal",
+        "reference"
+      ]
+    },
+    {
+      "name": "Andrew",
+      "candidateId": "2e1c02e5-f872-4098-9da5-45dcaf9b5288",
+      "baseId": "8c1be0de-b4dc-4fac-ae75-a872843776bd",
+      "candidateHash": "4b23dfcadc9d22ad7f30df8e04bb65c904c9ba5e500182e43123e191b2ad44ad",
+      "status": "candidate",
+      "baseStatus": "approved",
+      "referenceFilesVerified": 1,
+      "decisions": [
+        "proposal",
+        "reference"
+      ]
+    },
+    {
+      "name": "James son of Zebedee",
+      "candidateId": "89e93f97-009a-4649-8ac6-307f9b0396ee",
+      "baseId": "3292fdd7-9a31-474d-887e-4835480a2076",
+      "candidateHash": "d5220fd4f11d6caec3ce923fb95879b2c27e39bc0def7c7eb58b20ff935a8ffb",
+      "status": "candidate",
+      "baseStatus": "approved",
+      "referenceFilesVerified": 1,
+      "decisions": [
+        "proposal",
+        "reference"
+      ]
+    },
+    {
+      "name": "John son of Zebedee",
+      "candidateId": "6c25fb29-35fa-40b0-b3ae-8d0d28988a61",
+      "baseId": "f102a96e-54d0-42c7-ac44-7935e332f269",
+      "candidateHash": "72837108d6389804bafb72a1bb6dbbe2757c07e755f43ad0de715161cce0cfc2",
+      "status": "candidate",
+      "baseStatus": "approved",
+      "referenceFilesVerified": 1,
+      "decisions": [
+        "proposal",
+        "reference"
+      ]
+    },
+    {
+      "name": "Philip the Apostle",
+      "candidateId": "2d1d5416-e876-4e9c-afd1-4aac8f9ce097",
+      "baseId": "0b824940-d749-4a31-ae1a-12a27dc437b0",
+      "candidateHash": "cad9f35c221229af742f83f1418430bef3d02ae64672e16fc11014f556ab5411",
+      "status": "candidate",
+      "baseStatus": "approved",
+      "referenceFilesVerified": 1,
+      "decisions": [
+        "proposal",
+        "reference"
+      ]
+    },
+    {
+      "name": "Bartholomew",
+      "candidateId": "c724bebc-f762-44ed-b008-adb1717a701a",
+      "baseId": "63277838-c03e-4b9a-9736-93bc05b812bf",
+      "candidateHash": "8cec40dd78d05cac750d04350ca32940f6836adfdc2bdf2ac8ef5eee9cb393c8",
+      "status": "candidate",
+      "baseStatus": "approved",
+      "referenceFilesVerified": 1,
+      "decisions": [
+        "proposal",
+        "reference"
+      ]
+    },
+    {
+      "name": "Thomas",
+      "candidateId": "e84f6dbc-c614-4f53-bcdb-15c1d5cd47e0",
+      "baseId": "d8ccd715-130c-4d86-beaa-cf3b21145759",
+      "candidateHash": "791c37125a488835ed44be0918c3240ba1111370562d94d865d3e8688173cb84",
+      "status": "candidate",
+      "baseStatus": "approved",
+      "referenceFilesVerified": 1,
+      "decisions": [
+        "proposal",
+        "reference"
+      ]
+    },
+    {
+      "name": "Matthew (Levi)",
+      "candidateId": "36983b8e-df80-46b1-9d2f-87f8f93efbce",
+      "baseId": "afdbdea6-1eb6-4c51-83d9-fc52f95c7e84",
+      "candidateHash": "faf3ef84628757f28971a03428a012c75267134d472e7c70303fb6b98f449ec7",
+      "status": "candidate",
+      "baseStatus": "approved",
+      "referenceFilesVerified": 1,
+      "decisions": [
+        "proposal",
+        "reference"
+      ]
+    },
+    {
+      "name": "James son of Alphaeus",
+      "candidateId": "7d1ff17e-21b4-4fe4-9ec6-4a5ba80780d2",
+      "baseId": "67ad8e3c-46ac-48d4-baf4-feb1ba79163a",
+      "candidateHash": "64c77d2869bad4f835e55ad1ec5c3854f70d6cb2adc50d612f0212e00d281777",
+      "status": "candidate",
+      "baseStatus": "approved",
+      "referenceFilesVerified": 1,
+      "decisions": [
+        "proposal",
+        "reference"
+      ]
+    },
+    {
+      "name": "Thaddaeus (Jude)",
+      "candidateId": "0d21ce18-c870-455b-9768-85ebfe5da019",
+      "baseId": "eebba346-1e0f-41f7-8a36-5dff21e211cc",
+      "candidateHash": "c994c56108ad9408b2ace6c32fb368fbcca69a1a4ab9206c1d2bc87af7cdd02a",
+      "status": "candidate",
+      "baseStatus": "approved",
+      "referenceFilesVerified": 1,
+      "decisions": [
+        "proposal",
+        "reference"
+      ]
+    },
+    {
+      "name": "Simon the Zealot",
+      "candidateId": "a279a855-2a8c-425a-a411-815110093121",
+      "baseId": "16454999-d1e7-4321-96df-ac8e45b7c151",
+      "candidateHash": "58abecd5f10a45e4c5c91666136087cf199df0e4d0e0bbfc39436ca2d927b223",
+      "status": "candidate",
+      "baseStatus": "approved",
+      "referenceFilesVerified": 1,
+      "decisions": [
+        "proposal",
+        "reference"
+      ]
+    },
+    {
+      "name": "Judas Iscariot",
+      "candidateId": "7c824a7a-4288-443c-bb3f-1a2eb4f9cd00",
+      "baseId": "c2ebbc51-4a11-444c-967c-4d208911dcc8",
+      "candidateHash": "b004ff7160e0534b61db28ed5ffc2d22d8786587f7567b4b56e32b8e6a3538a2",
+      "status": "candidate",
+      "baseStatus": "approved",
+      "referenceFilesVerified": 1,
+      "decisions": [
+        "proposal",
+        "reference"
+      ]
+    }
+  ],
+  "foreignKeyIssues": [],
+  "promotions": 0,
+  "productionDispatches": 0
+}

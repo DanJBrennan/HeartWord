@@ -53,6 +53,19 @@ an obscured wardrobe may be recorded as not visible, but a malformed or absent
 assessment is held for review rather than silently passing. The result must
 name the concrete drift so the next generation can correct it.
 
+October 16: new-media Director review paths use the promoted refinement's
+hash-verified coherent wardrobe/identity sheet when present. An older portrait
+remains identity lineage and cannot supply superseded clothing. Reference-sheet
+views depict one person; instance counts apply to the candidate scene. Missing
+or changed sheet bytes hold. Director and standalone likeness audits preflight
+take creation against recorded wardrobe promotion before any paid review or
+invalidation: a take predating the successor is held untouched, retaining its
+original authority. An explicit reuse/new candidate receives its own target
+review. Legacy references and saved historical film reviews are not backfilled
+or automatically re-audited by a canon promotion. The
+[refinement workflow](../production/DISCIPLE_WARDROBE_REFINEMENT.md) also retains
+specific candidate drift and separate producer identity/wardrobe decisions.
+
 When review yields a verdict, it should resolve to one of a small set of
 concrete outcomes rather than a bare pass/fail: accept, retry with the same
 prompt (useful for a provider's own generation variance), retry with a

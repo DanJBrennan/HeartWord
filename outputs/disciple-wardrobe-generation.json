@@ -1,0 +1,158 @@
+[
+  {
+    "name": "Peter",
+    "prompt": "Use case: identity-preserve. Asset: HeartWord candidate wardrobe reference sheet, realistic Papuan canon, 16:9 landscape. Input 1 is the approved standing WARDROBE reference, input 2 is approved FACE IDENTITY reference only; ignore the clothing on input 2. Preserve this exact individual, Papuan facial structure, skin tone, age, build, hair silhouette and beard; no recasting, no generic Middle Eastern face. Propagate the approved standing garment construction, materials, hem length, colors, clavi and mantle arrangement into a consistent reference sheet. No new garments, colors, headwear, props, jewellery, labels, names, letters or watermarks. Neutral warm gray studio backdrop, readable even lighting. Layout: three large whole-body views across the upper 2/3: front standing, side walking, rear standing; lower 1/3: seated listening, chest/neckline closeup, and one close detail of an actual mantle corner attachment. Show cut and sleeves, separate tunic and rectangular unstitched mantle, belt, sandals, drape, visible headcloth exactly as approved. The mantle has FOUR true corners and one short separate hand-twisted knotted cord bundle at each corner; corners may naturally occlude, do not repeat tassels along the hem. No continuous long fringe, no pom-poms, no curtain tassels. Reconcile accidental decorative fringe to the approved compact knotted-cord rule, retaining existing cord colors rather than inventing a new blue-cord treatment. Facial and wardrobe consistency across every view; no double-layered mantle or duplicated anatomy. This is a reviewable candidate, not new historical proof. Character: Peter. Cream clavi-striped tunic, rust shoulder-draped mantle, narrow plain waist strap, sandals; bare head; retain mature graying curls and broad gray beard. Preserve his distinct broad older face. Existing blue threads within corner cords may remain as in input 1; add no new blue motif.",
+    "references": [
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\peter\\motion\\motion-neutral-standing-v4.png",
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\peter\\lip_sync_closeup\\close-up-neutral-v3.png"
+    ],
+    "outputPath": "C:\\Users\\danbr\\.codex\\generated_images\\01a1470b-3188-7e30-b24d-fe366f58bba9\\exec-01b26cf1-c174-4d3c-97b9-8919207f071b.png",
+    "provider": "codex_imagegen",
+    "model": "not_reported",
+    "includedUsage": "not_reported",
+    "costUsd": null
+  },
+  {
+    "name": "Andrew",
+    "prompt": "Use case: identity-preserve. Asset: HeartWord candidate wardrobe reference sheet, realistic Papuan canon, 16:9 landscape. Input 1 is the approved standing WARDROBE reference, input 2 is approved FACE IDENTITY reference only; ignore the clothing on input 2. Preserve this exact individual, Papuan facial structure, skin tone, age, build, hair silhouette and beard; no recasting, no generic Middle Eastern face. Propagate the approved standing garment construction, materials, hem length, colors, clavi and mantle arrangement into a consistent reference sheet. No new garments, colors, headwear, props, jewellery, labels, names, letters or watermarks. Neutral warm gray studio backdrop, readable even lighting. Layout: three large whole-body views across the upper 2/3: front standing, side walking, rear standing; lower 1/3: seated listening, chest/neckline closeup, and one close detail of an actual mantle corner attachment. Show cut and sleeves, separate tunic and rectangular unstitched mantle, belt, sandals, drape, visible headcloth exactly as approved. The mantle has FOUR true corners and one short separate hand-twisted knotted cord bundle at each corner; corners may naturally occlude, do not repeat tassels along the hem. No continuous long fringe, no pom-poms, no curtain tassels. Reconcile accidental decorative fringe to the approved compact knotted-cord rule, retaining existing cord colors rather than inventing a new blue-cord treatment. Facial and wardrobe consistency across every view; no double-layered mantle or duplicated anatomy. This is a reviewable candidate, not new historical proof.\nKeep younger rounded face, short tight black curls and short beard. Cream tunic, green clavi and green corner gamma motifs, cream mantle draped over his left shoulder, thin brown leather belt, bare head.",
+    "references": [
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\andrew\\motion\\motion-neutral-standing-v2.png",
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\andrew\\lip_sync_closeup\\close-up-neutral-v2.png"
+    ],
+    "outputPath": "C:\\Users\\danbr\\.codex\\generated_images\\01a1470b-3188-7e30-b24d-fe366f58bba9\\exec-68803c02-7520-4921-af88-206ed726876e.png",
+    "provider": "codex_imagegen",
+    "model": "not_reported",
+    "includedUsage": "not_reported",
+    "costUsd": null
+  },
+  {
+    "name": "James son of Zebedee",
+    "prompt": "Use case: identity-preserve. Asset: HeartWord candidate wardrobe reference sheet, realistic Papuan canon, 16:9 landscape. Input 1 is the approved standing WARDROBE reference, input 2 is approved FACE IDENTITY reference only; ignore the clothing on input 2. Preserve this exact individual, Papuan facial structure, skin tone, age, build, hair silhouette and beard; no recasting, no generic Middle Eastern face. Propagate the approved standing garment construction, materials, hem length, colors, clavi and mantle arrangement into a consistent reference sheet. No new garments, colors, headwear, props, jewellery, labels, names, letters or watermarks. Neutral warm gray studio backdrop, readable even lighting. Layout: three large whole-body views across the upper 2/3: front standing, side walking, rear standing; lower 1/3: seated listening, chest/neckline closeup, and one close detail of an actual mantle corner attachment. Show cut and sleeves, separate tunic and rectangular unstitched mantle, belt, sandals, drape, visible headcloth exactly as approved. The mantle has FOUR true corners and one short separate hand-twisted knotted cord bundle at each corner; corners may naturally occlude, do not repeat tassels along the hem. No continuous long fringe, no pom-poms, no curtain tassels. Reconcile accidental decorative fringe to the approved compact knotted-cord rule, retaining existing cord colors rather than inventing a new blue-cord treatment. Facial and wardrobe consistency across every view; no double-layered mantle or duplicated anatomy. This is a reviewable candidate, not new historical proof.\nSPECIFIC APPROVED OVERRIDE OF OLDER REFERENCE: Producer explicitly chose the NEWER approved headshot identity AND PALETTE: sturdy mid-40s wide square jaw, closely cropped curls, compact squared black beard, cream tunic and TERRACOTTA-RED MANTLE. Input 1 supplies garment CONSTRUCTION only; its older cream mantle color and older face are superseded by input 2. Preserve this distinct mature face, not Peter's broad gray beard. Transfer the standing view's simple cut, clavi, sash and four corner cord construction into the approved cream/terracotta palette; bare head, brown sandals. No new headwear.",
+    "references": [
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\james-son-of-zebedee\\motion\\motion-neutral-standing-v2.png",
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\james-son-of-zebedee\\lip_sync_closeup\\close-up-neutral-v3.png"
+    ],
+    "outputPath": "C:\\Users\\danbr\\.codex\\generated_images\\01a1470b-3188-7e30-b24d-fe366f58bba9\\exec-f96a20a5-8d3e-4dbe-a79e-9a8447104838.png",
+    "provider": "codex_imagegen",
+    "model": "not_reported",
+    "includedUsage": "not_reported",
+    "costUsd": null
+  },
+  {
+    "name": "John son of Zebedee",
+    "prompt": "Use case: identity-preserve. Asset: HeartWord candidate wardrobe reference sheet, realistic Papuan canon, 16:9 landscape. Input 1 is the approved standing WARDROBE reference, input 2 is approved FACE IDENTITY reference only; ignore the clothing on input 2. Preserve this exact individual, Papuan facial structure, skin tone, age, build, hair silhouette and beard; no recasting, no generic Middle Eastern face. Propagate the approved standing garment construction, materials, hem length, colors, clavi and mantle arrangement into a consistent reference sheet. No new garments, colors, headwear, props, jewellery, labels, names, letters or watermarks. Neutral warm gray studio backdrop, readable even lighting. Layout: three large whole-body views across the upper 2/3: front standing, side walking, rear standing; lower 1/3: seated listening, chest/neckline closeup, and one close detail of an actual mantle corner attachment. Show cut and sleeves, separate tunic and rectangular unstitched mantle, belt, sandals, drape, visible headcloth exactly as approved. The mantle has FOUR true corners and one short separate hand-twisted knotted cord bundle at each corner; corners may naturally occlude, do not repeat tassels along the hem. No continuous long fringe, no pom-poms, no curtain tassels. Reconcile accidental decorative fringe to the approved compact knotted-cord rule, retaining existing cord colors rather than inventing a new blue-cord treatment. Facial and wardrobe consistency across every view; no double-layered mantle or duplicated anatomy. This is a reviewable candidate, not new historical proof.\nUse input 1 as BOTH identity and wardrobe authority because the latest approved standing view adds a SHORT FULL BEARD. Disregard older clean-shaven face and uncovered head on input 2. Preserve youthful face, cream loose sudarium and its restrained plain head cord, cream tunic/mantle, distinctive TEAL clavi and corner gamma marks, narrow rope belt. The sudarium stays loose, never a wound turban.",
+    "references": [
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\john-son-of-zebedee\\motion\\motion-neutral-standing-v4.png",
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\john-son-of-zebedee\\lip_sync_closeup\\close-up-neutral-v3.png"
+    ],
+    "outputPath": "C:\\Users\\danbr\\.codex\\generated_images\\01a1470b-3188-7e30-b24d-fe366f58bba9\\exec-dbe06aaa-d13f-4eb4-b0de-af8f6b4f2355.png",
+    "provider": "codex_imagegen",
+    "model": "not_reported",
+    "includedUsage": "not_reported",
+    "costUsd": null
+  },
+  {
+    "name": "Philip the Apostle",
+    "prompt": "Use case: identity-preserve. Asset: HeartWord candidate wardrobe reference sheet, realistic Papuan canon, 16:9 landscape. Input 1 is the approved standing WARDROBE reference, input 2 is approved FACE IDENTITY reference only; ignore the clothing on input 2. Preserve this exact individual, Papuan facial structure, skin tone, age, build, hair silhouette and beard; no recasting, no generic Middle Eastern face. Propagate the approved standing garment construction, materials, hem length, colors, clavi and mantle arrangement into a consistent reference sheet. No new garments, colors, headwear, props, jewellery, labels, names, letters or watermarks. Neutral warm gray studio backdrop, readable even lighting. Layout: three large whole-body views across the upper 2/3: front standing, side walking, rear standing; lower 1/3: seated listening, chest/neckline closeup, and one close detail of an actual mantle corner attachment. Show cut and sleeves, separate tunic and rectangular unstitched mantle, belt, sandals, drape, visible headcloth exactly as approved. The mantle has FOUR true corners and one short separate hand-twisted knotted cord bundle at each corner; corners may naturally occlude, do not repeat tassels along the hem. No continuous long fringe, no pom-poms, no curtain tassels. Reconcile accidental decorative fringe to the approved compact knotted-cord rule, retaining existing cord colors rather than inventing a new blue-cord treatment. Facial and wardrobe consistency across every view; no double-layered mantle or duplicated anatomy. This is a reviewable candidate, not new historical proof.\nPreserve slim youthful clean-shaven long oval face and long curled hair, mustard tunic and umber rectangular mantle over left shoulder, thin girdle, toe-loop sandals, bare head. Do not add a beard.",
+    "references": [
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\philip-the-apostle\\motion\\motion-neutral-standing-v4.png",
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\philip-the-apostle\\lip_sync_closeup\\close-up-neutral-v3.png"
+    ],
+    "outputPath": "C:\\Users\\danbr\\.codex\\generated_images\\01a1470b-3188-7e30-b24d-fe366f58bba9\\exec-7f01c174-dc34-4c66-b8bd-4200d3f29788.png",
+    "provider": "codex_imagegen",
+    "model": "not_reported",
+    "includedUsage": "not_reported",
+    "costUsd": null
+  },
+  {
+    "name": "Bartholomew",
+    "prompt": "Use case: identity-preserve. Asset: HeartWord candidate wardrobe reference sheet, realistic Papuan canon, 16:9 landscape. Input 1 is the approved standing WARDROBE reference, input 2 is approved FACE IDENTITY reference only; ignore the clothing on input 2. Preserve this exact individual, Papuan facial structure, skin tone, age, build, hair silhouette and beard; no recasting, no generic Middle Eastern face. Propagate the approved standing garment construction, materials, hem length, colors, clavi and mantle arrangement into a consistent reference sheet. No new garments, colors, headwear, props, jewellery, labels, names, letters or watermarks. Neutral warm gray studio backdrop, readable even lighting. Layout: three large whole-body views across the upper 2/3: front standing, side walking, rear standing; lower 1/3: seated listening, chest/neckline closeup, and one close detail of an actual mantle corner attachment. Show cut and sleeves, separate tunic and rectangular unstitched mantle, belt, sandals, drape, visible headcloth exactly as approved. The mantle has FOUR true corners and one short separate hand-twisted knotted cord bundle at each corner; corners may naturally occlude, do not repeat tassels along the hem. No continuous long fringe, no pom-poms, no curtain tassels. Reconcile accidental decorative fringe to the approved compact knotted-cord rule, retaining existing cord colors rather than inventing a new blue-cord treatment. Facial and wardrobe consistency across every view; no double-layered mantle or duplicated anatomy. This is a reviewable candidate, not new historical proof.\nPreserve lean older oval face, very short tight curls, short beard with slight gray, undyed cream tunic with MADDER clavi, DEEP INDIGO left-shoulder mantle with pale corner gamma motifs, wide flush woven sash, bare head.",
+    "references": [
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\bartholomew\\motion\\motion-neutral-standing-v4.png",
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\bartholomew\\lip_sync_closeup\\close-up-neutral-v3.png"
+    ],
+    "outputPath": "C:\\Users\\danbr\\.codex\\generated_images\\01a1470b-3188-7e30-b24d-fe366f58bba9\\exec-6ee43695-c323-47a6-9c32-75aa319f9dad.png",
+    "provider": "codex_imagegen",
+    "model": "not_reported",
+    "includedUsage": "not_reported",
+    "costUsd": null
+  },
+  {
+    "name": "Thomas",
+    "prompt": "Use case: identity-preserve. Asset: HeartWord candidate wardrobe reference sheet, realistic Papuan canon, 16:9 landscape. Input 1 is the approved standing WARDROBE reference, input 2 is approved FACE IDENTITY reference only; ignore the clothing on input 2. Preserve this exact individual, Papuan facial structure, skin tone, age, build, hair silhouette and beard; no recasting, no generic Middle Eastern face. Propagate the approved standing garment construction, materials, hem length, colors, clavi and mantle arrangement into a consistent reference sheet. No new garments, colors, headwear, props, jewellery, labels, names, letters or watermarks. Neutral warm gray studio backdrop, readable even lighting. Layout: three large whole-body views across the upper 2/3: front standing, side walking, rear standing; lower 1/3: seated listening, chest/neckline closeup, and one close detail of an actual mantle corner attachment. Show cut and sleeves, separate tunic and rectangular unstitched mantle, belt, sandals, drape, visible headcloth exactly as approved. The mantle has FOUR true corners and one short separate hand-twisted knotted cord bundle at each corner; corners may naturally occlude, do not repeat tassels along the hem. No continuous long fringe, no pom-poms, no curtain tassels. Reconcile accidental decorative fringe to the approved compact knotted-cord rule, retaining existing cord colors rather than inventing a new blue-cord treatment. Facial and wardrobe consistency across every view; no double-layered mantle or duplicated anatomy. This is a reviewable candidate, not new historical proof.\nPreserve dark broad serious face, distinctive short separated coils/locks and full compact beard. Cream short-sleeved tunic, muted madder clavi; cream mantle on left shoulder with madder corner gamma marks. Thin cream cord belt, bare head, sandals. Correct the accidental multiple decorative tassels to exactly FOUR corner bundles TOTAL, with only naturally exposed corners visible; no tassels attached at intermediate hem points.",
+    "references": [
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\thomas\\motion\\motion-neutral-standing-v2.png",
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\thomas\\lip_sync_closeup\\close-up-neutral-v2.png"
+    ],
+    "outputPath": "C:\\Users\\danbr\\.codex\\generated_images\\01a1470b-3188-7e30-b24d-fe366f58bba9\\exec-6d5e29a0-6a82-4859-8149-b01a139dcb11.png",
+    "provider": "codex_imagegen",
+    "model": "not_reported",
+    "includedUsage": "not_reported",
+    "costUsd": null
+  },
+  {
+    "name": "Matthew (Levi)",
+    "prompt": "Use case: identity-preserve. Asset: HeartWord candidate wardrobe reference sheet, realistic Papuan canon, 16:9 landscape. Input 1 is the approved standing WARDROBE reference, input 2 is approved FACE IDENTITY reference only; ignore the clothing on input 2. Preserve this exact individual, Papuan facial structure, skin tone, age, build, hair silhouette and beard; no recasting, no generic Middle Eastern face. Propagate the approved standing garment construction, materials, hem length, colors, clavi and mantle arrangement into a consistent reference sheet. No new garments, colors, headwear, props, jewellery, labels, names, letters or watermarks. Neutral warm gray studio backdrop, readable even lighting. Layout: three large whole-body views across the upper 2/3: front standing, side walking, rear standing; lower 1/3: seated listening, chest/neckline closeup, and one close detail of an actual mantle corner attachment. Show cut and sleeves, separate tunic and rectangular unstitched mantle, belt, sandals, drape, visible headcloth exactly as approved. The mantle has FOUR true corners and one short separate hand-twisted knotted cord bundle at each corner; corners may naturally occlude, do not repeat tassels along the hem. No continuous long fringe, no pom-poms, no curtain tassels. Reconcile accidental decorative fringe to the approved compact knotted-cord rule, retaining existing cord colors rather than inventing a new blue-cord treatment. Facial and wardrobe consistency across every view; no double-layered mantle or duplicated anatomy. This is a reviewable candidate, not new historical proof.\nPreserve lean young fine-boned oval face, clean-shaven, compact coils. Pale stone-gray tunic, solid indigo clavi, DEEP TEAL mantle (maintain reference hue rather than recoloring), narrow leather belt, sandals, bare head. Plain wax tablet and reed stylus retained only in standing/walking/listening; tuck them away for other views. Do not age or bald him, do not reintroduce embroidered/metallic edging.",
+    "references": [
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\matthew\\motion\\motion-neutral-standing-v6.png",
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\matthew\\lip_sync_closeup\\close-up-neutral-v5.png"
+    ],
+    "outputPath": "C:\\Users\\danbr\\.codex\\generated_images\\01a1470b-3188-7e30-b24d-fe366f58bba9\\exec-ee42affb-3597-4896-8608-b65630e5717a.png",
+    "provider": "codex_imagegen",
+    "model": "not_reported",
+    "includedUsage": "not_reported",
+    "costUsd": null
+  },
+  {
+    "name": "James son of Alphaeus",
+    "prompt": "Use case: identity-preserve. Asset: HeartWord candidate wardrobe reference sheet, realistic Papuan canon, 16:9 landscape. Input 1 is the approved standing WARDROBE reference, input 2 is approved FACE IDENTITY reference only; ignore the clothing on input 2. Preserve this exact individual, Papuan facial structure, skin tone, age, build, hair silhouette and beard; no recasting, no generic Middle Eastern face. Propagate the approved standing garment construction, materials, hem length, colors, clavi and mantle arrangement into a consistent reference sheet. No new garments, colors, headwear, props, jewellery, labels, names, letters or watermarks. Neutral warm gray studio backdrop, readable even lighting. Layout: three large whole-body views across the upper 2/3: front standing, side walking, rear standing; lower 1/3: seated listening, chest/neckline closeup, and one close detail of an actual mantle corner attachment. Show cut and sleeves, separate tunic and rectangular unstitched mantle, belt, sandals, drape, visible headcloth exactly as approved. The mantle has FOUR true corners and one short separate hand-twisted knotted cord bundle at each corner; corners may naturally occlude, do not repeat tassels along the hem. No continuous long fringe, no pom-poms, no curtain tassels. Reconcile accidental decorative fringe to the approved compact knotted-cord rule, retaining existing cord colors rather than inventing a new blue-cord treatment. Facial and wardrobe consistency across every view; no double-layered mantle or duplicated anatomy. This is a reviewable candidate, not new historical proof.\nPreserve younger face, short tight curls and full neat black beard, pale flax tunic, indigo clavi, gray draped mantle and corner gamma marks, gray loose travel headwrap as in standing view, wide flush sash. Keep exactly four corner bundles total rather than multiplying the five apparent dangling points in input 1.",
+    "references": [
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\james-son-of-alphaeus\\motion\\motion-neutral-standing-v4.png",
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\james-son-of-alphaeus\\lip_sync_closeup\\close-up-neutral-v3.png"
+    ],
+    "outputPath": "C:\\Users\\danbr\\.codex\\generated_images\\01a1470b-3188-7e30-b24d-fe366f58bba9\\exec-18409e63-a942-45df-9405-746842d05cc0.png",
+    "provider": "codex_imagegen",
+    "model": "not_reported",
+    "includedUsage": "not_reported",
+    "costUsd": null
+  },
+  {
+    "name": "Thaddaeus (Jude)",
+    "prompt": "Use case: identity-preserve. Asset: HeartWord candidate wardrobe reference sheet, realistic Papuan canon, 16:9 landscape. Input 1 is the approved standing WARDROBE reference, input 2 is approved FACE IDENTITY reference only; ignore the clothing on input 2. Preserve this exact individual, Papuan facial structure, skin tone, age, build, hair silhouette and beard; no recasting, no generic Middle Eastern face. Propagate the approved standing garment construction, materials, hem length, colors, clavi and mantle arrangement into a consistent reference sheet. No new garments, colors, headwear, props, jewellery, labels, names, letters or watermarks. Neutral warm gray studio backdrop, readable even lighting. Layout: three large whole-body views across the upper 2/3: front standing, side walking, rear standing; lower 1/3: seated listening, chest/neckline closeup, and one close detail of an actual mantle corner attachment. Show cut and sleeves, separate tunic and rectangular unstitched mantle, belt, sandals, drape, visible headcloth exactly as approved. The mantle has FOUR true corners and one short separate hand-twisted knotted cord bundle at each corner; corners may naturally occlude, do not repeat tassels along the hem. No continuous long fringe, no pom-poms, no curtain tassels. Reconcile accidental decorative fringe to the approved compact knotted-cord rule, retaining existing cord colors rather than inventing a new blue-cord treatment. Facial and wardrobe consistency across every view; no double-layered mantle or duplicated anatomy. This is a reviewable candidate, not new historical proof.\nSPECIFIC APPROVED OVERRIDE OF OLDER REFERENCE: Producer explicitly chose the NEWER approved headshot identity AND PALETTE: slim mid-20s, angular youthful face, crisp short black coils and fine mustache, AUBERGINE TUNIC and DUSTY-SAFFRON MANTLE. Input 1 supplies garment CONSTRUCTION only; its cream tunic and wine mantle and bearded older face are superseded by input 2. Preserve youthful identity, no full beard. Apply the standing view's unstitched mantle/cut, sash and four corner cord construction in the approved aubergine/saffron palette; bare head. Precisely four corner cord bundles TOTAL, do not add intermediate hem tassels.",
+    "references": [
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\thaddaeus-jude\\motion\\motion-neutral-standing-v2.png",
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\thaddaeus-jude\\lip_sync_closeup\\close-up-neutral-v3.png"
+    ],
+    "outputPath": "C:\\Users\\danbr\\.codex\\generated_images\\01a1470b-3188-7e30-b24d-fe366f58bba9\\exec-190c6648-7903-4f48-ae93-ea8bbf887d07.png",
+    "provider": "codex_imagegen",
+    "model": "not_reported",
+    "includedUsage": "not_reported",
+    "costUsd": null
+  },
+  {
+    "name": "Simon the Zealot",
+    "prompt": "Use case: identity-preserve. Asset: HeartWord candidate wardrobe reference sheet, realistic Papuan canon, 16:9 landscape. Input 1 is the approved standing WARDROBE reference, input 2 is approved FACE IDENTITY reference only; ignore the clothing on input 2. Preserve this exact individual, Papuan facial structure, skin tone, age, build, hair silhouette and beard; no recasting, no generic Middle Eastern face. Propagate the approved standing garment construction, materials, hem length, colors, clavi and mantle arrangement into a consistent reference sheet. No new garments, colors, headwear, props, jewellery, labels, names, letters or watermarks. Neutral warm gray studio backdrop, readable even lighting. Layout: three large whole-body views across the upper 2/3: front standing, side walking, rear standing; lower 1/3: seated listening, chest/neckline closeup, and one close detail of an actual mantle corner attachment. Show cut and sleeves, separate tunic and rectangular unstitched mantle, belt, sandals, drape, visible headcloth exactly as approved. The mantle has FOUR true corners and one short separate hand-twisted knotted cord bundle at each corner; corners may naturally occlude, do not repeat tassels along the hem. No continuous long fringe, no pom-poms, no curtain tassels. Reconcile accidental decorative fringe to the approved compact knotted-cord rule, retaining existing cord colors rather than inventing a new blue-cord treatment. Facial and wardrobe consistency across every view; no double-layered mantle or duplicated anatomy. This is a reviewable candidate, not new historical proof.\nPreserve sturdy dark face, short tight curls and thick black beard. Cream tunic with dark madder clavi, charcoal shoulder-draped mantle, thin brown belt, sandals. BARE HEAD as latest standing reference; ignore the patterned band on the older identity headshot. Retain blue cord threads already present without introducing a new blue design.",
+    "references": [
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\simon-the-zealot\\motion\\motion-neutral-standing-v2.png",
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\simon-the-zealot\\lip_sync_closeup\\close-up-neutral-v2.png"
+    ],
+    "outputPath": "C:\\Users\\danbr\\.codex\\generated_images\\01a1470b-3188-7e30-b24d-fe366f58bba9\\exec-21f540e6-4c47-4b1d-8391-45729b9d8a16.png",
+    "provider": "codex_imagegen",
+    "model": "not_reported",
+    "includedUsage": "not_reported",
+    "costUsd": null
+  },
+  {
+    "name": "Judas Iscariot",
+    "prompt": "Use case: identity-preserve. Asset: HeartWord candidate wardrobe reference sheet, realistic Papuan canon, 16:9 landscape. Input 1 is the approved standing WARDROBE reference, input 2 is approved FACE IDENTITY reference only; ignore the clothing on input 2. Preserve this exact individual, Papuan facial structure, skin tone, age, build, hair silhouette and beard; no recasting, no generic Middle Eastern face. Propagate the approved standing garment construction, materials, hem length, colors, clavi and mantle arrangement into a consistent reference sheet. No new garments, colors, headwear, props, jewellery, labels, names, letters or watermarks. Neutral warm gray studio backdrop, readable even lighting. Layout: three large whole-body views across the upper 2/3: front standing, side walking, rear standing; lower 1/3: seated listening, chest/neckline closeup, and one close detail of an actual mantle corner attachment. Show cut and sleeves, separate tunic and rectangular unstitched mantle, belt, sandals, drape, visible headcloth exactly as approved. The mantle has FOUR true corners and one short separate hand-twisted knotted cord bundle at each corner; corners may naturally occlude, do not repeat tassels along the hem. No continuous long fringe, no pom-poms, no curtain tassels. Reconcile accidental decorative fringe to the approved compact knotted-cord rule, retaining existing cord colors rather than inventing a new blue-cord treatment. Facial and wardrobe consistency across every view; no double-layered mantle or duplicated anatomy. This is a reviewable candidate, not new historical proof.\nPreserve slim long narrow oval face, high forehead, swept-back tight curls, narrow mustache and pointed goatee. Olive tunic with wine clavi, wine-red mantle and loose wine headcloth, pale gamma marks, flush woven sash, sandals. No exterior money bag or villain caricature. Correct extra dangling points to exactly four corner bundles TOTAL, naturally occluded in the drape.",
+    "references": [
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\judas-iscariot\\motion\\motion-neutral-standing-v4.png",
+      "C:\\Users\\danbr\\HeartWordData\\assets\\characters\\judas-iscariot\\lip_sync_closeup\\close-up-neutral-v3.png"
+    ],
+    "outputPath": "C:\\Users\\danbr\\.codex\\generated_images\\01a1470b-3188-7e30-b24d-fe366f58bba9\\exec-98b17849-5d4e-4e4e-a239-68315f919fb7.png",
+    "provider": "codex_imagegen",
+    "model": "not_reported",
+    "includedUsage": "not_reported",
+    "costUsd": null
+  }
+]

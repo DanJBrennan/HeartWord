@@ -187,6 +187,30 @@ previously:
    rollback, and existing approved shots are not force-regenerated just
    because canon moved forward.
 
+## Controlled wardrobe refinement (October 16 implementation)
+
+`characters/wardrobe-refinement.ts` extends existing additive versions, assets
+and review notes. A proposal pins separate identity and approved standing
+wardrobe assets, basis hashes, per-character recognition, research uncertainty,
+concrete garment facts and unresolved producer decisions. Built-in assistant
+PNG sheets retain input/output hashes, exact prompt, included usage and unknown
+dollar cost. Unresolved choices prevent import/promotion; new attempts use new
+candidates. No paid image fallback is provided.
+
+Identity preservation and wardrobe approval are separate producer reviews on
+the exact candidate hash. Wardrobe review needs evidence for cut/construction,
+layers, colors, drape, corner cords, head covering and footwear, with front,
+rear, side, seated and construction/detail views. Failed/unverified checks
+hold. Promotion is atomic against the original approved basis; old assets,
+approval history, films and voice assignments survive. A candidate never
+becomes the current canon through creation time or a voice selection.
+
+The existing canon-review page links to the comparison/approval controls.
+Future shot/coverage keyframe packets distinguish identity-only portraits from
+the versioned wardrobe sheet and carry exact facts/hashes. Existing crew/FDL
+snapshots and old accepted film assets are not migrated or regenerated.
+See [the inventory, historical evidence and proposal](../production/DISCIPLE_WARDROBE_REFINEMENT.md).
+
 ## Open questions
 
 - How character reference assets are stored/versioned so media generation can

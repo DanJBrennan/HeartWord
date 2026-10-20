@@ -49,6 +49,7 @@ import {
   type WardrobeStatus
 } from "./likeness-verdict.js";
 import { findFailedShotCharacterRow, type ShotCharacterCheckRow } from "./canonical-likeness-row.js";
+import {assertWardrobeReviewBasis} from "../../characters/wardrobe-refinement.js";
 
 export { isLikenessAligned, LIKENESS_THRESHOLD, parseLikenessVerdict, type LikenessVerdict, type WardrobeStatus };
 
@@ -122,7 +123,9 @@ export async function checkCanonicalLikeness(
     `(Melanesian Arfak highland) actors -- a deliberate, culturally specific casting choice, not a generic or ` +
     `default appearance. The FIRST image is "${characterName}"'s approved canon reference. The SECOND image is a ` +
     `newly generated shot that is supposed to show the same "${characterName}", possibly at a different angle, ` +
-    `pose, or lighting.\n\n` +
+    `pose, or lighting. A reference sheet may show several views of this ONE person. These views are not ` +
+    `extra cast; count instances only in the SECOND image. Compare all visible garment details including ` +
+    `head covering and corner attachment topology; never use an older portrait to override an approved sheet.\n\n` +
     `For the SCORE: judge ONLY whether the second image's face reads as the same specific individual -- not ` +
     `composition, not lighting, not clothing. A face that has drifted toward a generic or different regional/ ` +
     `ethnic appearance (e.g. more Mediterranean, more Western-default) than the reference is a real failure, even ` +
@@ -222,6 +225,10 @@ export async function runCanonicalLikenessAudit(
        ORDER BY s.sequence`
     )
     .all(projectId));
+
+  // Preflight the entire audit before any paid review or attempt invalidation.
+  // Improved canon never becomes retroactive authority over an old film.
+  for(const row of rows)assertWardrobeReviewBasis(db,row.generation_attempt_id);
 
   const now = Date.now();
   const invalidateAttempt = db.prepare(`UPDATE generation_attempts SET status = 'retry_modified' WHERE id = ?`);

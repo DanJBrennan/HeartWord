@@ -1,0 +1,554 @@
+[
+  {
+    "name": "Peter",
+    "characterId": "9cbc4222-b194-4db4-baa9-2ba7083e31f3",
+    "proposal": {
+      "projectId": "8a5659a4-b033-4d5f-80e2-904b217cf8a0",
+      "baseVersionId": "88e8eb71-6d59-4ba3-9e2b-b3e3ce544377",
+      "versionLabel": "v4-wardrobe-r1",
+      "reason": "Dan selected propagation of current approved choices; newer approved James/Thaddaeus identity palettes take precedence over older body colors. No new blue-cord/headwear treatment.",
+      "gaps": [
+        "No machine-readable garment facts or complete construction/detail sheet on the current version.",
+        "Saved version notes record older carried views alongside newer approved identity or standing costume.",
+        "Corner macro ends still look brush-like; compare to compact hand-knotted cords before accepting fringe. Four-corner attachment topology is not proven by the worn view."
+      ],
+      "identityAssetId": "3c2a3ccc-2de7-409b-b5c8-e199d5e32ef6",
+      "wardrobeAssetId": "9fee1ebe-e470-4df8-abd3-52e2d0d9ac9c",
+      "identityNotes": "Mature broad Papuan face, short graying curls, broad graying beard; preserve older sturdy build",
+      "facts": {
+        "construction": "Preserve approved plain-weave tunic cut, neckline and sleeves; mantle is an unstitched four-corner rectangle, not a tailored coat. Narrow plain waist strap",
+        "layers": "Separate tunic, belt/sash and mantle; headcloth only where already approved. Do not invent a second mantle.",
+        "colors": "Cream tunic with muted red paired clavi; rust mantle",
+        "drape": "Rust rectangular mantle over both shoulders, never worn around hips",
+        "fringe": "Exactly four short separate hand-twisted wool cord bundles tied in compact knots at true mantle corners; visible count follows occlusion. No intermediate hem tassels, continuous trim, pom-poms or curtain fringe. Preserve existing cord colors; new blue treatment remains a separate decision.",
+        "headCovering": "Bare head, existing curls visible",
+        "footwear": "Preserve the approved simple leather sandal construction shown in the standing reference."
+      },
+      "evidence": [
+        {
+          "ref": "character_versions:88e8eb71-6d59-4ba3-9e2b-b3e3ce544377",
+          "classification": "producer_choice",
+          "limitations": "Existing regional visual approval, not historical proof of each detail"
+        },
+        {
+          "ref": "docs/production/DISCIPLE_WARDROBE_REFINEMENT.md",
+          "classification": "evidence",
+          "limitations": "Textual/archaeological evidence and uncertainty are separated from artistic canon choices"
+        },
+        {
+          "ref": "Dan, this chat, 2026-10-16: propagate current choices; use newer approved James/Thaddaeus palettes",
+          "classification": "producer_choice",
+          "limitations": "Direction for candidate creation only; no candidate image is approved by this choice"
+        }
+      ],
+      "unresolvedDecisions": []
+    },
+    "observation": "Corner macro ends still look brush-like; compare to compact hand-knotted cords before accepting fringe. Four-corner attachment topology is not proven by the worn view."
+  },
+  {
+    "name": "Andrew",
+    "characterId": "600e366f-8323-459d-b300-292f4e63ac41",
+    "proposal": {
+      "projectId": "8a5659a4-b033-4d5f-80e2-904b217cf8a0",
+      "baseVersionId": "8c1be0de-b4dc-4fac-ae75-a872843776bd",
+      "versionLabel": "v2-wardrobe-r1",
+      "reason": "Dan selected propagation of current approved choices; newer approved James/Thaddaeus identity palettes take precedence over older body colors. No new blue-cord/headwear treatment.",
+      "gaps": [
+        "No machine-readable garment facts or complete construction/detail sheet on the current version.",
+        "Saved version notes record older carried views alongside newer approved identity or standing costume.",
+        "Macro shows two long ends with knots; compactness and all four actual corner attachments need verification; rear shows one uncovered clavus, not evidence that the covered one is missing."
+      ],
+      "identityAssetId": "7e18edf7-1192-400a-993c-580393c3b405",
+      "wardrobeAssetId": "7a2ceeb0-ca57-44cd-9cd8-f0e47f7589ff",
+      "identityNotes": "Younger Papuan rounded face, short tight curls and compact black beard; leaner than Peter",
+      "facts": {
+        "construction": "Preserve approved plain-weave tunic cut, neckline and sleeves; mantle is an unstitched four-corner rectangle, not a tailored coat. Thin brown leather tie belt; preserve reference sandal laces",
+        "layers": "Separate tunic, belt/sash and mantle; headcloth only where already approved. Do not invent a second mantle.",
+        "colors": "Cream tunic/mantle, green clavi and green corner gamma marks",
+        "drape": "Cream rectangular mantle over left shoulder",
+        "fringe": "Exactly four short separate hand-twisted wool cord bundles tied in compact knots at true mantle corners; visible count follows occlusion. No intermediate hem tassels, continuous trim, pom-poms or curtain fringe. Preserve existing cord colors; new blue treatment remains a separate decision.",
+        "headCovering": "Bare head",
+        "footwear": "Preserve the approved simple leather sandal construction shown in the standing reference."
+      },
+      "evidence": [
+        {
+          "ref": "character_versions:8c1be0de-b4dc-4fac-ae75-a872843776bd",
+          "classification": "producer_choice",
+          "limitations": "Existing regional visual approval, not historical proof of each detail"
+        },
+        {
+          "ref": "docs/production/DISCIPLE_WARDROBE_REFINEMENT.md",
+          "classification": "evidence",
+          "limitations": "Textual/archaeological evidence and uncertainty are separated from artistic canon choices"
+        },
+        {
+          "ref": "Dan, this chat, 2026-10-16: propagate current choices; use newer approved James/Thaddaeus palettes",
+          "classification": "producer_choice",
+          "limitations": "Direction for candidate creation only; no candidate image is approved by this choice"
+        }
+      ],
+      "unresolvedDecisions": []
+    },
+    "observation": "Macro shows two long ends with knots; compactness and all four actual corner attachments need verification; rear shows one uncovered clavus, not evidence that the covered one is missing."
+  },
+  {
+    "name": "James son of Zebedee",
+    "characterId": "0ee7b1c5-b33c-43b7-b6e4-803fb18e9bf6",
+    "proposal": {
+      "projectId": "8a5659a4-b033-4d5f-80e2-904b217cf8a0",
+      "baseVersionId": "3292fdd7-9a31-474d-887e-4835480a2076",
+      "versionLabel": "v3-wardrobe-r1",
+      "reason": "Dan selected propagation of current approved choices; newer approved James/Thaddaeus identity palettes take precedence over older body colors. No new blue-cord/headwear treatment.",
+      "gaps": [
+        "No machine-readable garment facts or complete construction/detail sheet on the current version.",
+        "Saved version notes record older carried views alongside newer approved identity or standing costume.",
+        "Newer face/palette propagated. Corner knots and border treatment need producer comparison; do not call the colored border historically universal."
+      ],
+      "identityAssetId": "012fb028-8443-4f49-a2a1-8a20773b2b9e",
+      "wardrobeAssetId": "47fa7304-f92e-4c23-87c0-4ada72995f41",
+      "identityNotes": "Sturdy mid-40s Papuan, square jaw, close cropped curls, compact squared black beard from v3 headshot",
+      "facts": {
+        "construction": "Preserve approved plain-weave tunic cut, neckline and sleeves; mantle is an unstitched four-corner rectangle, not a tailored coat. Plain woven sash; retain existing restrained band/gamma construction only",
+        "layers": "Separate tunic, belt/sash and mantle; headcloth only where already approved. Do not invent a second mantle.",
+        "colors": "Cream flax tunic and terracotta-red mantle from newer approved identity palette",
+        "drape": "Standing reference construction in newer terracotta palette",
+        "fringe": "Exactly four short separate hand-twisted wool cord bundles tied in compact knots at true mantle corners; visible count follows occlusion. No intermediate hem tassels, continuous trim, pom-poms or curtain fringe. Preserve existing cord colors; new blue treatment remains a separate decision.",
+        "headCovering": "Bare head",
+        "footwear": "Preserve the approved simple leather sandal construction shown in the standing reference."
+      },
+      "evidence": [
+        {
+          "ref": "character_versions:3292fdd7-9a31-474d-887e-4835480a2076",
+          "classification": "producer_choice",
+          "limitations": "Existing regional visual approval, not historical proof of each detail"
+        },
+        {
+          "ref": "docs/production/DISCIPLE_WARDROBE_REFINEMENT.md",
+          "classification": "evidence",
+          "limitations": "Textual/archaeological evidence and uncertainty are separated from artistic canon choices"
+        },
+        {
+          "ref": "Dan, this chat, 2026-10-16: propagate current choices; use newer approved James/Thaddaeus palettes",
+          "classification": "producer_choice",
+          "limitations": "Direction for candidate creation only; no candidate image is approved by this choice"
+        }
+      ],
+      "unresolvedDecisions": []
+    },
+    "observation": "Newer face/palette propagated. Corner knots and border treatment need producer comparison; do not call the colored border historically universal."
+  },
+  {
+    "name": "John son of Zebedee",
+    "characterId": "3179d3c7-201d-4365-9a41-0e7ef0c49257",
+    "proposal": {
+      "projectId": "8a5659a4-b033-4d5f-80e2-904b217cf8a0",
+      "baseVersionId": "f102a96e-54d0-42c7-ac44-7935e332f269",
+      "versionLabel": "v4-wardrobe-r1",
+      "reason": "Dan selected propagation of current approved choices; newer approved James/Thaddaeus identity palettes take precedence over older body colors. No new blue-cord/headwear treatment.",
+      "gaps": [
+        "No machine-readable garment facts or complete construction/detail sheet on the current version.",
+        "Saved version notes record older carried views alongside newer approved identity or standing costume.",
+        "Latest standing beard/headcloth propagated. Seated beard appears fuller; check identity consistency and the layered shoulder fabric; ensure a single rectangular mantle and no tunic tassels."
+      ],
+      "identityAssetId": "4e8b197d-1191-4967-a857-6b33dd0c1037",
+      "wardrobeAssetId": "9bf1f0ad-4cc7-4c62-9961-065e6f6bd42b",
+      "identityNotes": "Youthful Papuan face and short curls with latest approved v4 short full beard; older clean-shaven portrait is facial-geometry lineage only",
+      "facts": {
+        "construction": "Preserve approved plain-weave tunic cut, neckline and sleeves; mantle is an unstitched four-corner rectangle, not a tailored coat. Narrow rope belt",
+        "layers": "Separate tunic, belt/sash and mantle; headcloth only where already approved. Do not invent a second mantle.",
+        "colors": "Cream tunic/mantle with distinctive teal clavi and gamma marks",
+        "drape": "Naturally draped cream rectangular mantle",
+        "fringe": "Exactly four short separate hand-twisted wool cord bundles tied in compact knots at true mantle corners; visible count follows occlusion. No intermediate hem tassels, continuous trim, pom-poms or curtain fringe. Preserve existing cord colors; new blue treatment remains a separate decision.",
+        "headCovering": "Latest approved loose cream sudarium with plain retaining cord; no new headwear design",
+        "footwear": "Preserve the approved simple leather sandal construction shown in the standing reference."
+      },
+      "evidence": [
+        {
+          "ref": "character_versions:f102a96e-54d0-42c7-ac44-7935e332f269",
+          "classification": "producer_choice",
+          "limitations": "Existing regional visual approval, not historical proof of each detail"
+        },
+        {
+          "ref": "docs/production/DISCIPLE_WARDROBE_REFINEMENT.md",
+          "classification": "evidence",
+          "limitations": "Textual/archaeological evidence and uncertainty are separated from artistic canon choices"
+        },
+        {
+          "ref": "Dan, this chat, 2026-10-16: propagate current choices; use newer approved James/Thaddaeus palettes",
+          "classification": "producer_choice",
+          "limitations": "Direction for candidate creation only; no candidate image is approved by this choice"
+        }
+      ],
+      "unresolvedDecisions": []
+    },
+    "observation": "Latest standing beard/headcloth propagated. Seated beard appears fuller; check identity consistency and the layered shoulder fabric; ensure a single rectangular mantle and no tunic tassels."
+  },
+  {
+    "name": "Philip the Apostle",
+    "characterId": "38bd4a5c-185b-4280-b778-cc61d5d4030a",
+    "proposal": {
+      "projectId": "8a5659a4-b033-4d5f-80e2-904b217cf8a0",
+      "baseVersionId": "0b824940-d749-4a31-ae1a-12a27dc437b0",
+      "versionLabel": "v4-wardrobe-r1",
+      "reason": "Dan selected propagation of current approved choices; newer approved James/Thaddaeus identity palettes take precedence over older body colors. No new blue-cord/headwear treatment.",
+      "gaps": [
+        "No machine-readable garment facts or complete construction/detail sheet on the current version.",
+        "Full body package already repaired; inspect detail coverage without presuming replacement is needed.",
+        "Front appears to retain five hanging bundles instead of four true mantle corners. Fringe check should fail until corrected or disproved with corner evidence."
+      ],
+      "identityAssetId": "23668ce2-93cb-4995-b4c4-3a93dcd2f96b",
+      "wardrobeAssetId": "99ef3846-a284-4fed-b3d2-dd0387afc4db",
+      "identityNotes": "Lean youthful Papuan, long oval face, long curled hair, clean shaven from approved v3/v4 package",
+      "facts": {
+        "construction": "Preserve approved plain-weave tunic cut, neckline and sleeves; mantle is an unstitched four-corner rectangle, not a tailored coat. Thin leather girdle and toe-loop sandals",
+        "layers": "Separate tunic, belt/sash and mantle; headcloth only where already approved. Do not invent a second mantle.",
+        "colors": "Mustard tunic with umber clavi and dark umber mantle",
+        "drape": "Umber rectangular mantle over left shoulder",
+        "fringe": "Exactly four short separate hand-twisted wool cord bundles tied in compact knots at true mantle corners; visible count follows occlusion. No intermediate hem tassels, continuous trim, pom-poms or curtain fringe. Preserve existing cord colors; new blue treatment remains a separate decision.",
+        "headCovering": "Bare head; do not add beard",
+        "footwear": "Preserve the approved simple leather sandal construction shown in the standing reference."
+      },
+      "evidence": [
+        {
+          "ref": "character_versions:0b824940-d749-4a31-ae1a-12a27dc437b0",
+          "classification": "producer_choice",
+          "limitations": "Existing regional visual approval, not historical proof of each detail"
+        },
+        {
+          "ref": "docs/production/DISCIPLE_WARDROBE_REFINEMENT.md",
+          "classification": "evidence",
+          "limitations": "Textual/archaeological evidence and uncertainty are separated from artistic canon choices"
+        },
+        {
+          "ref": "Dan, this chat, 2026-10-16: propagate current choices; use newer approved James/Thaddaeus palettes",
+          "classification": "producer_choice",
+          "limitations": "Direction for candidate creation only; no candidate image is approved by this choice"
+        }
+      ],
+      "unresolvedDecisions": []
+    },
+    "observation": "Front appears to retain five hanging bundles instead of four true mantle corners. Fringe check should fail until corrected or disproved with corner evidence."
+  },
+  {
+    "name": "Bartholomew",
+    "characterId": "177cef9d-90c6-468e-848f-3f0d3961f402",
+    "proposal": {
+      "projectId": "8a5659a4-b033-4d5f-80e2-904b217cf8a0",
+      "baseVersionId": "63277838-c03e-4b9a-9736-93bc05b812bf",
+      "versionLabel": "v4-wardrobe-r1",
+      "reason": "Dan selected propagation of current approved choices; newer approved James/Thaddaeus identity palettes take precedence over older body colors. No new blue-cord/headwear treatment.",
+      "gaps": [
+        "No machine-readable garment facts or complete construction/detail sheet on the current version.",
+        "Saved version notes record older carried views alongside newer approved identity or standing costume.",
+        "Front/rear appear to contain extra dangling points; inspect attachment topology. Macro knot is decorative/brush-like; fringe remains unaccepted."
+      ],
+      "identityAssetId": "dd4ba744-ef82-4571-aa98-7909ca202309",
+      "wardrobeAssetId": "799bdc46-c634-42ee-996a-399e87dd9370",
+      "identityNotes": "Lean late-30s/early-40s Papuan oval tapered face, close tight curls, short pointed beard with minimal gray",
+      "facts": {
+        "construction": "Preserve approved plain-weave tunic cut, neckline and sleeves; mantle is an unstitched four-corner rectangle, not a tailored coat. Flush wide woven sash",
+        "layers": "Separate tunic, belt/sash and mantle; headcloth only where already approved. Do not invent a second mantle.",
+        "colors": "Undyed flax tunic, madder clavi, deep indigo mantle and pale corner gamma marks",
+        "drape": "Indigo rectangular mantle over left shoulder",
+        "fringe": "Exactly four short separate hand-twisted wool cord bundles tied in compact knots at true mantle corners; visible count follows occlusion. No intermediate hem tassels, continuous trim, pom-poms or curtain fringe. Preserve existing cord colors; new blue treatment remains a separate decision.",
+        "headCovering": "Bare head",
+        "footwear": "Preserve the approved simple leather sandal construction shown in the standing reference."
+      },
+      "evidence": [
+        {
+          "ref": "character_versions:63277838-c03e-4b9a-9736-93bc05b812bf",
+          "classification": "producer_choice",
+          "limitations": "Existing regional visual approval, not historical proof of each detail"
+        },
+        {
+          "ref": "docs/production/DISCIPLE_WARDROBE_REFINEMENT.md",
+          "classification": "evidence",
+          "limitations": "Textual/archaeological evidence and uncertainty are separated from artistic canon choices"
+        },
+        {
+          "ref": "Dan, this chat, 2026-10-16: propagate current choices; use newer approved James/Thaddaeus palettes",
+          "classification": "producer_choice",
+          "limitations": "Direction for candidate creation only; no candidate image is approved by this choice"
+        }
+      ],
+      "unresolvedDecisions": []
+    },
+    "observation": "Front/rear appear to contain extra dangling points; inspect attachment topology. Macro knot is decorative/brush-like; fringe remains unaccepted."
+  },
+  {
+    "name": "Thomas",
+    "characterId": "c30f20dc-18b5-4854-a81f-87242a8a096d",
+    "proposal": {
+      "projectId": "8a5659a4-b033-4d5f-80e2-904b217cf8a0",
+      "baseVersionId": "d8ccd715-130c-4d86-beaa-cf3b21145759",
+      "versionLabel": "v2-wardrobe-r1",
+      "reason": "Dan selected propagation of current approved choices; newer approved James/Thaddaeus identity palettes take precedence over older body colors. No new blue-cord/headwear treatment.",
+      "gaps": [
+        "No machine-readable garment facts or complete construction/detail sheet on the current version.",
+        "Saved version notes record older carried views alongside newer approved identity or standing costume.",
+        "Front still appears to show more than four dangling bundles. Reject fringe count unless four-corner topology is demonstrated. A concealed clavus is not a confirmed missing stripe."
+      ],
+      "identityAssetId": "0948ea1b-1f89-4ac6-a8dd-1378a2d65a27",
+      "wardrobeAssetId": "1840b822-63b7-482b-b321-bb81b800d044",
+      "identityNotes": "Papuan broad serious face, distinct short separated coils/locks, compact full black beard",
+      "facts": {
+        "construction": "Preserve approved plain-weave tunic cut, neckline and sleeves; mantle is an unstitched four-corner rectangle, not a tailored coat. Short tunic sleeves and narrow cream cord belt; keep occluded clavus uncertainty",
+        "layers": "Separate tunic, belt/sash and mantle; headcloth only where already approved. Do not invent a second mantle.",
+        "colors": "Cream tunic and mantle with muted madder clavi/corner gamma",
+        "drape": "Cream rectangular mantle over left shoulder",
+        "fringe": "Exactly four short separate hand-twisted wool cord bundles tied in compact knots at true mantle corners; visible count follows occlusion. No intermediate hem tassels, continuous trim, pom-poms or curtain fringe. Preserve existing cord colors; new blue treatment remains a separate decision.",
+        "headCovering": "Bare head",
+        "footwear": "Preserve the approved simple leather sandal construction shown in the standing reference."
+      },
+      "evidence": [
+        {
+          "ref": "character_versions:d8ccd715-130c-4d86-beaa-cf3b21145759",
+          "classification": "producer_choice",
+          "limitations": "Existing regional visual approval, not historical proof of each detail"
+        },
+        {
+          "ref": "docs/production/DISCIPLE_WARDROBE_REFINEMENT.md",
+          "classification": "evidence",
+          "limitations": "Textual/archaeological evidence and uncertainty are separated from artistic canon choices"
+        },
+        {
+          "ref": "Dan, this chat, 2026-10-16: propagate current choices; use newer approved James/Thaddaeus palettes",
+          "classification": "producer_choice",
+          "limitations": "Direction for candidate creation only; no candidate image is approved by this choice"
+        }
+      ],
+      "unresolvedDecisions": []
+    },
+    "observation": "Front still appears to show more than four dangling bundles. Reject fringe count unless four-corner topology is demonstrated. A concealed clavus is not a confirmed missing stripe."
+  },
+  {
+    "name": "Matthew (Levi)",
+    "characterId": "e9bdbfec-b3ed-4289-aa7e-669ecba92ca0",
+    "proposal": {
+      "projectId": "8a5659a4-b033-4d5f-80e2-904b217cf8a0",
+      "baseVersionId": "afdbdea6-1eb6-4c51-83d9-fc52f95c7e84",
+      "versionLabel": "v6-wardrobe-r1",
+      "reason": "Dan selected propagation of current approved choices; newer approved James/Thaddaeus identity palettes take precedence over older body colors. No new blue-cord/headwear treatment.",
+      "gaps": [
+        "No machine-readable garment facts or complete construction/detail sheet on the current version.",
+        "Saved version notes record older carried views alongside newer approved identity or standing costume.",
+        "Palette reads bluer under neutral lighting; compare with approved standing reference before accepting colors. Corner count and compact knot shape need inspection; tablet/stylus retained in allowed contexts."
+      ],
+      "identityAssetId": "c1990acf-1151-4222-affa-03aa8c66c3d8",
+      "wardrobeAssetId": "8a2a8ce3-ab8c-4b86-90b0-fda3f8f581f6",
+      "identityNotes": "Lean 28-year-old Papuan, fine oval face, compact coils, clean shaven; never older/bald v4 identity",
+      "facts": {
+        "construction": "Preserve approved plain-weave tunic cut, neckline and sleeves; mantle is an unstitched four-corner rectangle, not a tailored coat. Narrow brown leather belt, supported sandals; tablet/stylus only in permitted standing/walking/listening contexts",
+        "layers": "Separate tunic, belt/sash and mantle; headcloth only where already approved. Do not invent a second mantle.",
+        "colors": "Pale stone-gray tunic, indigo clavi, deep teal mantle",
+        "drape": "Shoulder-draped deep teal rectangular mantle",
+        "fringe": "Exactly four short separate hand-twisted wool cord bundles tied in compact knots at true mantle corners; visible count follows occlusion. No intermediate hem tassels, continuous trim, pom-poms or curtain fringe. Preserve existing cord colors; new blue treatment remains a separate decision.",
+        "headCovering": "Bare head",
+        "footwear": "Preserve the approved simple leather sandal construction shown in the standing reference."
+      },
+      "evidence": [
+        {
+          "ref": "character_versions:afdbdea6-1eb6-4c51-83d9-fc52f95c7e84",
+          "classification": "producer_choice",
+          "limitations": "Existing regional visual approval, not historical proof of each detail"
+        },
+        {
+          "ref": "docs/production/DISCIPLE_WARDROBE_REFINEMENT.md",
+          "classification": "evidence",
+          "limitations": "Textual/archaeological evidence and uncertainty are separated from artistic canon choices"
+        },
+        {
+          "ref": "Dan, this chat, 2026-10-16: propagate current choices; use newer approved James/Thaddaeus palettes",
+          "classification": "producer_choice",
+          "limitations": "Direction for candidate creation only; no candidate image is approved by this choice"
+        }
+      ],
+      "unresolvedDecisions": []
+    },
+    "observation": "Palette reads bluer under neutral lighting; compare with approved standing reference before accepting colors. Corner count and compact knot shape need inspection; tablet/stylus retained in allowed contexts."
+  },
+  {
+    "name": "James son of Alphaeus",
+    "characterId": "154b32fe-5eb5-4127-ba26-7e8e0273a834",
+    "proposal": {
+      "projectId": "8a5659a4-b033-4d5f-80e2-904b217cf8a0",
+      "baseVersionId": "67ad8e3c-46ac-48d4-baf4-feb1ba79163a",
+      "versionLabel": "v4-wardrobe-r1",
+      "reason": "Dan selected propagation of current approved choices; newer approved James/Thaddaeus identity palettes take precedence over older body colors. No new blue-cord/headwear treatment.",
+      "gaps": [
+        "No machine-readable garment facts or complete construction/detail sheet on the current version.",
+        "Saved version notes record older carried views alongside newer approved identity or standing costume.",
+        "Front still shows five hanging bundles and rear wrap knot is an inferred view. Fringe needs correction; confirm headwrap arrangement preserves approved silhouette."
+      ],
+      "identityAssetId": "66c08e19-4d6c-41d7-b4a4-e229f0742cbf",
+      "wardrobeAssetId": "e60755fa-deee-49ea-be2d-2b735df201c2",
+      "identityNotes": "Younger approved Papuan face, short tight curls and neat full black beard, distinct from Zebedee",
+      "facts": {
+        "construction": "Preserve approved plain-weave tunic cut, neckline and sleeves; mantle is an unstitched four-corner rectangle, not a tailored coat. Wide flush woven sash; plain leather sandals",
+        "layers": "Separate tunic, belt/sash and mantle; headcloth only where already approved. Do not invent a second mantle.",
+        "colors": "Pale flax tunic, indigo clavi, gray mantle and dark gamma marks",
+        "drape": "Gray mantle across shoulders and chest",
+        "fringe": "Exactly four short separate hand-twisted wool cord bundles tied in compact knots at true mantle corners; visible count follows occlusion. No intermediate hem tassels, continuous trim, pom-poms or curtain fringe. Preserve existing cord colors; new blue treatment remains a separate decision.",
+        "headCovering": "Approved loose gray travel headwrap",
+        "footwear": "Preserve the approved simple leather sandal construction shown in the standing reference."
+      },
+      "evidence": [
+        {
+          "ref": "character_versions:67ad8e3c-46ac-48d4-baf4-feb1ba79163a",
+          "classification": "producer_choice",
+          "limitations": "Existing regional visual approval, not historical proof of each detail"
+        },
+        {
+          "ref": "docs/production/DISCIPLE_WARDROBE_REFINEMENT.md",
+          "classification": "evidence",
+          "limitations": "Textual/archaeological evidence and uncertainty are separated from artistic canon choices"
+        },
+        {
+          "ref": "Dan, this chat, 2026-10-16: propagate current choices; use newer approved James/Thaddaeus palettes",
+          "classification": "producer_choice",
+          "limitations": "Direction for candidate creation only; no candidate image is approved by this choice"
+        }
+      ],
+      "unresolvedDecisions": []
+    },
+    "observation": "Front still shows five hanging bundles and rear wrap knot is an inferred view. Fringe needs correction; confirm headwrap arrangement preserves approved silhouette."
+  },
+  {
+    "name": "Thaddaeus (Jude)",
+    "characterId": "1192b5d3-5972-4555-a95b-f9fa7b355a6d",
+    "proposal": {
+      "projectId": "8a5659a4-b033-4d5f-80e2-904b217cf8a0",
+      "baseVersionId": "eebba346-1e0f-41f7-8a36-5dff21e211cc",
+      "versionLabel": "v3-wardrobe-r1",
+      "reason": "Dan selected propagation of current approved choices; newer approved James/Thaddaeus identity palettes take precedence over older body colors. No new blue-cord/headwear treatment.",
+      "gaps": [
+        "No machine-readable garment facts or complete construction/detail sheet on the current version.",
+        "Saved version notes record older carried views alongside newer approved identity or standing costume.",
+        "Newer identity/palette propagated. Macro still resembles a decorative tassel; exact construction and cord compactness remain for review."
+      ],
+      "identityAssetId": "35d61afa-c62b-426e-9d10-b3c1d2d7f6d5",
+      "wardrobeAssetId": "92e49d94-41a9-4135-be95-621b65d36228",
+      "identityNotes": "Slim mid-20s Papuan angular face, crisp short coils, fine mustache from newer approved headshot",
+      "facts": {
+        "construction": "Preserve approved plain-weave tunic cut, neckline and sleeves; mantle is an unstitched four-corner rectangle, not a tailored coat. Plain sash; restrained prior corner motifs only",
+        "layers": "Separate tunic, belt/sash and mantle; headcloth only where already approved. Do not invent a second mantle.",
+        "colors": "Aubergine tunic and dusty-saffron mantle from newer approved palette",
+        "drape": "Rectangular saffron mantle using prior standing construction",
+        "fringe": "Exactly four short separate hand-twisted wool cord bundles tied in compact knots at true mantle corners; visible count follows occlusion. No intermediate hem tassels, continuous trim, pom-poms or curtain fringe. Preserve existing cord colors; new blue treatment remains a separate decision.",
+        "headCovering": "Bare head; no full beard",
+        "footwear": "Preserve the approved simple leather sandal construction shown in the standing reference."
+      },
+      "evidence": [
+        {
+          "ref": "character_versions:eebba346-1e0f-41f7-8a36-5dff21e211cc",
+          "classification": "producer_choice",
+          "limitations": "Existing regional visual approval, not historical proof of each detail"
+        },
+        {
+          "ref": "docs/production/DISCIPLE_WARDROBE_REFINEMENT.md",
+          "classification": "evidence",
+          "limitations": "Textual/archaeological evidence and uncertainty are separated from artistic canon choices"
+        },
+        {
+          "ref": "Dan, this chat, 2026-10-16: propagate current choices; use newer approved James/Thaddaeus palettes",
+          "classification": "producer_choice",
+          "limitations": "Direction for candidate creation only; no candidate image is approved by this choice"
+        }
+      ],
+      "unresolvedDecisions": []
+    },
+    "observation": "Newer identity/palette propagated. Macro still resembles a decorative tassel; exact construction and cord compactness remain for review."
+  },
+  {
+    "name": "Simon the Zealot",
+    "characterId": "1848375b-b4a7-4633-bbc9-63e5ed0ac0ec",
+    "proposal": {
+      "projectId": "8a5659a4-b033-4d5f-80e2-904b217cf8a0",
+      "baseVersionId": "16454999-d1e7-4321-96df-ac8e45b7c151",
+      "versionLabel": "v2-wardrobe-r1",
+      "reason": "Dan selected propagation of current approved choices; newer approved James/Thaddaeus identity palettes take precedence over older body colors. No new blue-cord/headwear treatment.",
+      "gaps": [
+        "No machine-readable garment facts or complete construction/detail sheet on the current version.",
+        "Saved version notes record older carried views alongside newer approved identity or standing costume.",
+        "Earlier headband deliberately excluded under standing-choice decision. Macro has mixed existing blue/cream cords; count/topology and dangling length still require comparison."
+      ],
+      "identityAssetId": "b54700f7-0085-423b-8929-0d77ec081f2e",
+      "wardrobeAssetId": "60dd2b14-b42d-48a8-9383-af6cb053d857",
+      "identityNotes": "Sturdy Papuan face, short curls, thick black beard; preserve differences from Peter",
+      "facts": {
+        "construction": "Preserve approved plain-weave tunic cut, neckline and sleeves; mantle is an unstitched four-corner rectangle, not a tailored coat. Narrow brown leather belt; retain existing blue threads in corner cords without imposing a new blue-cord rule",
+        "layers": "Separate tunic, belt/sash and mantle; headcloth only where already approved. Do not invent a second mantle.",
+        "colors": "Cream tunic with dark madder clavi, charcoal mantle",
+        "drape": "Charcoal rectangular mantle over shoulders",
+        "fringe": "Exactly four short separate hand-twisted wool cord bundles tied in compact knots at true mantle corners; visible count follows occlusion. No intermediate hem tassels, continuous trim, pom-poms or curtain fringe. Preserve existing cord colors; new blue treatment remains a separate decision.",
+        "headCovering": "Bare head as latest standing; older patterned headband is not current wardrobe authority",
+        "footwear": "Preserve the approved simple leather sandal construction shown in the standing reference."
+      },
+      "evidence": [
+        {
+          "ref": "character_versions:16454999-d1e7-4321-96df-ac8e45b7c151",
+          "classification": "producer_choice",
+          "limitations": "Existing regional visual approval, not historical proof of each detail"
+        },
+        {
+          "ref": "docs/production/DISCIPLE_WARDROBE_REFINEMENT.md",
+          "classification": "evidence",
+          "limitations": "Textual/archaeological evidence and uncertainty are separated from artistic canon choices"
+        },
+        {
+          "ref": "Dan, this chat, 2026-10-16: propagate current choices; use newer approved James/Thaddaeus palettes",
+          "classification": "producer_choice",
+          "limitations": "Direction for candidate creation only; no candidate image is approved by this choice"
+        }
+      ],
+      "unresolvedDecisions": []
+    },
+    "observation": "Earlier headband deliberately excluded under standing-choice decision. Macro has mixed existing blue/cream cords; count/topology and dangling length still require comparison."
+  },
+  {
+    "name": "Judas Iscariot",
+    "characterId": "e690f114-4be0-46a4-95f3-fed16ba2b4bb",
+    "proposal": {
+      "projectId": "8a5659a4-b033-4d5f-80e2-904b217cf8a0",
+      "baseVersionId": "c2ebbc51-4a11-444c-967c-4d208911dcc8",
+      "versionLabel": "v4-wardrobe-r1",
+      "reason": "Dan selected propagation of current approved choices; newer approved James/Thaddaeus identity palettes take precedence over older body colors. No new blue-cord/headwear treatment.",
+      "gaps": [
+        "No machine-readable garment facts or complete construction/detail sheet on the current version.",
+        "Saved version notes record older carried views alongside newer approved identity or standing costume.",
+        "Front/rear still show extra hanging bundles. Fringe count needs correction; rear headcloth knot is inferred and requires review. No exterior money pouch was introduced."
+      ],
+      "identityAssetId": "ed6cfa3e-5990-4a7b-9c4b-b550406d9be6",
+      "wardrobeAssetId": "1026fc20-a40a-4d95-b0c9-1c23cedf606e",
+      "identityNotes": "Lean early/mid-30s Papuan, long narrow oval face, high forehead, swept tight curls, narrow mustache and pointed goatee; no villain caricature",
+      "facts": {
+        "construction": "Preserve approved plain-weave tunic cut, neckline and sleeves; mantle is an unstitched four-corner rectangle, not a tailored coat. Flush woven sash; no exterior money bag; funds only implied in belt fold",
+        "layers": "Separate tunic, belt/sash and mantle; headcloth only where already approved. Do not invent a second mantle.",
+        "colors": "Olive tunic with wine clavi, wine-red mantle and pale gamma marks",
+        "drape": "Wine mantle naturally draped across chest/shoulders",
+        "fringe": "Exactly four short separate hand-twisted wool cord bundles tied in compact knots at true mantle corners; visible count follows occlusion. No intermediate hem tassels, continuous trim, pom-poms or curtain fringe. Preserve existing cord colors; new blue treatment remains a separate decision.",
+        "headCovering": "Latest approved loose wine headcloth",
+        "footwear": "Preserve the approved simple leather sandal construction shown in the standing reference."
+      },
+      "evidence": [
+        {
+          "ref": "character_versions:c2ebbc51-4a11-444c-967c-4d208911dcc8",
+          "classification": "producer_choice",
+          "limitations": "Existing regional visual approval, not historical proof of each detail"
+        },
+        {
+          "ref": "docs/production/DISCIPLE_WARDROBE_REFINEMENT.md",
+          "classification": "evidence",
+          "limitations": "Textual/archaeological evidence and uncertainty are separated from artistic canon choices"
+        },
+        {
+          "ref": "Dan, this chat, 2026-10-16: propagate current choices; use newer approved James/Thaddaeus palettes",
+          "classification": "producer_choice",
+          "limitations": "Direction for candidate creation only; no candidate image is approved by this choice"
+        }
+      ],
+      "unresolvedDecisions": []
+    },
+    "observation": "Front/rear still show extra hanging bundles. Fringe count needs correction; rear headcloth knot is inferred and requires review. No exterior money pouch was introduced."
+  }
+]

@@ -48,6 +48,7 @@ import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
 import { assetPath } from "../media-generation/external-keyframes.js";
 import { checkCanonicalLikeness, isLikenessAligned } from "./canonical-likeness.js";
+import {approvedWardrobeQcReference,assertWardrobeReviewBasis} from "../../characters/wardrobe-refinement.js";
 import { checkSceneFidelity, isSceneFidelityAligned } from "./scene-fidelity.js";
 import { formatCriticFindings, parseCriticFindings, runCritic, type CriticCharacterReference, type CriticFinding, type CriticReport } from "./critic.js";
 import { decideGenerationStatus, type DirectorDecision } from "./director-verdict.js";
@@ -329,7 +330,8 @@ function readShotCharacterRows(rows: Record<string, unknown>[]): ShotCharacterRo
     ) {
       throw new Error("Expected shot-character rows with string identifiers and an optional reference path.");
     }
-    return { character_id: row.character_id, character_name: row.character_name, reference_path: row.reference_path };
+    return { character_id: row.character_id, character_name: row.character_name,
+      reference_path: approvedWardrobeQcReference(getDb(),getDataDir(),row.character_id)??row.reference_path };
   });
 }
 
@@ -378,6 +380,7 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
   }
 
   const generatedAbsPath = join(dataDir, "assets", shot.generated_path);
+  assertWardrobeReviewBasis(db,shot.generation_attempt_id);
 
   const fidelityRow = db.prepare(`SELECT crowd_density, continuity_notes FROM shots WHERE id = ?`).get(shotId) as
     | { crowd_density: string | null; continuity_notes: string | null }
@@ -509,6 +512,7 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
   if (!candidate?.generated_path) {
     return runCoverageBeatCandidateReview(attemptId);
   }
+  assertWardrobeReviewBasis(db,attemptId);
   const generatedAbsPath = join(dataDir, "assets", candidate.generated_path);
   if (!existsSync(generatedAbsPath)) throw new Error(`Candidate asset is missing: ${candidate.generated_path}`);
 
@@ -633,6 +637,7 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
      WHERE cka.id = ?`
   ).get(attemptId) as CoverageBeatCandidateRow | undefined;
   if (!candidate) throw new Error(`No keyframe candidate found for id: ${attemptId}`);
+  assertWardrobeReviewBasis(db,attemptId);
   const generatedAbsPath = join(dataDir, "assets", candidate.result_asset_path);
   if (!existsSync(generatedAbsPath)) throw new Error(`Candidate asset is missing: ${candidate.result_asset_path}`);
 
@@ -660,9 +665,9 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
      ) ref ON ref.character_version_id = cv.id AND ref.rn = 1
      WHERE c.id = ?`
   );
-  const characters = [...characterIds]
+  const characters = readShotCharacterRows([...characterIds]
     .map((id) => characterRefQuery.get(id) as ShotCharacterRow | undefined)
-    .filter((c): c is ShotCharacterRow => c !== undefined);
+    .filter((c): c is ShotCharacterRow => c !== undefined) as unknown as Record<string,unknown>[]);
 
   // The preceding beat's own candidate keyframe (if it has one yet),
   // for the Critic's coverage-beat-continuity check (item 9 in its
