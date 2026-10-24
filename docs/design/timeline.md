@@ -23,6 +23,29 @@ from the source narration.
   re-inserted without rebuilding the whole timeline.
 - Output a file/format the user can actually open and edit further (per
   `docs/USER_WORKFLOW.md` — this is a starting cut, not a locked final export).
+- A fixed approved opening uses the existing `pre_source` editorial beats and
+  retained `select_editorial_media` / `select_editorial_title_card` commands.
+  Assembly verifies their exact files, hashes, approved durations and contiguous
+  order, then prepends those placements and offsets the complete source clock.
+  They retain editorial IDs and `shotId: null`; no Scripture shot or verse is
+  invented. The Picture Editor supplies chapter coverage and any separately
+  justified pauses after source intervals. A fixed opening already defines
+  the entire pre-source interval; another leading pause is rejected, and the
+  first source sample must start immediately after that opening. Saved render
+  maps, producer playback, structural QC and portable
+  rebuilds use those same explicit placements. Missing, held or changed opening
+  media holds a new assembly; it never becomes a substitute still or an omitted
+  section. Planning authority and reviewed source attribution remain unchanged.
+- Nonnarrative closing titles/scroll credits use existing `post_source` beats
+  with `beat_type: title_card` and the same retained media-selection commands.
+  Their stored order and durations are verified, then rebased after the actual
+  complete source cut and its justified pauses. The Picture Editor supplies
+  chapter coverage only; credits cannot cover a source interval, replace the
+  recording tail, or be counted again as a pause. They retain editorial IDs,
+  exact hashes and paths in the same executable timeline, producer preview,
+  structural QC and portable restore/rebuild. Narrative departure/journey beats
+  are not credits and are not implicitly appended. No new stage or planning
+  approval is introduced; chapters without selected closing titles are unchanged.
 - **The narrator must never go silent.** HeartWord presents Scripture in its
   entirety, so every second of the real approved recording — narration and
   dialogue alike — must be audible somewhere in the final chapter; a shot
@@ -31,6 +54,18 @@ from the source narration.
   caught missing — see `docs/production/PARALYTIC_EXIT_SEQUENCE_HANDOFF.md`
   for a worked example of the fix). Concretely, for every future chapter's
   assembly:
+  - Editing and finishing briefs also preserve the decoded recording after
+    its last aligned interval as an explicit unassigned original-audio tail.
+    Alignment is attribution, not proof of the physical recording's end. This
+    creates no new verse or speaker assignment and changes no reviewed row or
+    approved planning run. An alignment beyond the decoded file is held for
+    reconciliation. Actual picture coverage must include that tail at source
+    speed; neither a shorter cut nor silence may replace it.
+    Saved render maps include the original file path and hash for unassigned
+    gaps/tails, so the producer's independent source/performance tracks retain
+    them too. That projection requires the exact current project recording,
+    matching hash and deterministic gap/tail identity; it never assigns cast
+    speech to an unassigned interval or invents reviewed database rows.
   - The real, continuous source recording (`original_reading` layer) is the
     master clock. Dialogue spans play the `composite_cast_master` redub in
     place of the original line (durations match to within tens of ms, so

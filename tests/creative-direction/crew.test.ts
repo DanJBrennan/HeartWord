@@ -41,6 +41,78 @@ function response(role: CrewRole): CrewContribution {
 const roleFromPrompt = (prompt: string): CrewRole => prompt.match(/You are HeartWord's ([^.]+)\./)![1]!.replaceAll(" ", "_") as CrewRole;
 
 describe("coordinated filmmaking", () => {
+  it("rejects invalid cue envelopes while preserving legacy cues without fades", () => {
+    const b=brief(), out=response("composer");
+    out.audioCues=[{assetId:"music",startMs:0,endMs:4000,sourceStartMs:0,gainDb:-24,reason:"Restrained music"}];
+    expect(()=>validateContribution(out,"composer",b)).not.toThrow();
+    out.audioCues[0]!.fadeInMs=3000;out.audioCues[0]!.fadeOutMs=2000;
+    expect(()=>validateContribution(out,"composer",b)).toThrow("fades exceed");
+    out.audioCues[0]!.fadeInMs=-1;out.audioCues[0]!.fadeOutMs=0;
+    expect(()=>validateContribution(out,"composer",b)).toThrow();
+    out.audioCues[0]!.fadeInMs=Number.NaN;
+    expect(()=>validateContribution(out,"composer",b)).toThrow();
+  });
+  it("offers only approved assets of each sound role's kind and executes those cues", async () => {
+    const b=brief();b.audioAssets.push({id:"approved-fx",kind:"sfx",description:"Reviewed room tone",path:"tone.wav",sha256:"tone-hash",durationMs:8000});
+    const result=await runCrew({phase:"finishing",brief:b,media:[{mimeType:"video/mp4",data:"fixture"}],log:()=>{},call:async(prompt,schema)=>{
+      const role=roleFromPrompt(prompt),out=response(role);
+      if(role==="sound_designer"||role==="composer"){
+        const id=role==="sound_designer"?"approved-fx":"music";
+        expect((schema.properties as any).audioCues.items.properties.assetId.enum).toEqual([id]);
+        out.audioCues=[{assetId:id,startMs:0,endMs:4000,sourceStartMs:0,gainDb:-24,reason:"Reviewed quiet accompaniment"}];
+      }return out;
+    }});
+    expect(result.status,result.summary).toBe("approved");
+    expect(finishingRecipe(b,result).inputs).toEqual(["tone.wav","music.wav"]);
+  });
+  it("requests missing music without inventing an approved asset or cue", async () => {
+    const b=brief();b.audioAssets=[];
+    const result=await runCrew({phase:"finishing",brief:b,media:[{mimeType:"video/mp4",data:"fixture"}],log:()=>{},call:async(prompt,schema)=>{
+      const role=roleFromPrompt(prompt),out=response(role);
+      if(role==="sound_designer"||role==="composer")expect((schema.properties as any).audioCues.maxItems).toBe(0);
+      if(role==="composer")out.generationRequests=[{prompt:"Quiet instrumental strings without speech or singing",durationMs:4000,loop:false,startMs:0,gainDb:-24,reason:"Support the source encounter"}];
+      return out;
+    }});
+    expect(result.status,result.summary).toBe("awaiting_assets");
+    expect(result.contributions.composer!.audioCues).toEqual([]);
+    expect(result.contributions.composer!.generationRequests).toHaveLength(1);expect(b.audioAssets).toEqual([]);
+  });
+  it("retains completed reviews and holds a future cue even if a caller ignores the schema", async () => {
+    const b=brief(),events:CrewEvent[]=[];
+    const result=await runCrew({phase:"finishing",brief:b,media:[{mimeType:"video/mp4",data:"fixture"}],log:e=>events.push(e),call:async prompt=>{
+      const out=response(roleFromPrompt(prompt));if(roleFromPrompt(prompt)==="sound_designer")out.audioCues=[{assetId:"future-unapproved-fx",startMs:0,endMs:4000,sourceStartMs:0,gainDb:-24,reason:"Not registered"}];return out;
+    }});
+    expect(result.status).toBe("incomplete");expect(result.summary).toContain("approved asset");
+    expect(events.slice(0,-1).every(e=>!e.error&&e.output)).toBe(true);
+    expect(events.at(-1)!.error).toContain("approved asset");expect(b.audioAssets.map(a=>a.id)).toEqual(["music"]);
+  });
+  it("continues after a rejected first-pass reply without repeating completed roles or resetting the call cap", async () => {
+    const events: CrewEvent[] = [];
+    const first = await runCrew({ phase:"planning",brief:brief(),log:e=>events.push(e),call:async prompt=>{
+      const role=roleFromPrompt(prompt),out=response(role);
+      if(role==="picture_editor")out.pauses=[{afterSegmentId:null,durationMs:1000,reason:"Execution belongs in editing"}];
+      return out;
+    }});
+    expect(first.status).toBe("incomplete");
+    const completedRoles=events.filter(e=>!e.error).map(e=>e.role);
+    const resumedEvents:CrewEvent[]=[];
+    const resumeFirstPass={contributions:first.contributions,completedRoles,calls:first.calls,failedRole:"picture_editor" as const,previousError:events.at(-1)!.error!};
+    const result=await runCrew({phase:"planning",brief:brief(),resumeFirstPass,log:e=>resumedEvents.push(e),call:async prompt=>response(roleFromPrompt(prompt))});
+    expect(result.status).toBe("approved");
+    expect(resumedEvents[0]!.role).toBe("picture_editor");
+    expect(resumedEvents[0]!.prompt).toContain("PRIOR REJECTED REPLY");
+    expect(resumedEvents.some(e=>completedRoles.includes(e.role))).toBe(false);
+    expect(result.calls).toBe(first.calls+resumedEvents.length);
+    expect(result.contributions.creative_director).toEqual(first.contributions.creative_director);
+    const noCalls=vi.fn();
+    const capped=await runCrew({phase:"planning",brief:brief(),maxCalls:first.calls,resumeFirstPass,call:noCalls,log:()=>{}});
+    expect(capped.status).toBe("incomplete");expect(capped.calls).toBe(first.calls);expect(noCalls).not.toHaveBeenCalled();
+  });
+  it("rejects a reordered saved planning prefix before another provider call", async () => {
+    const call=vi.fn();
+    await expect(runCrew({phase:"planning",brief:brief(),call,log:()=>{},resumeFirstPass:{contributions:{cinematographer:response("cinematographer")},completedRoles:["cinematographer"],calls:2,failedRole:"picture_editor",previousError:"Invalid planning execution"}})).rejects.toThrow("exact saved first-pass prefix");
+    expect(call).not.toHaveBeenCalled();
+  });
   it("shows an imperfect edit to the crew but cannot approve it or release soundtrack generation", async () => {
     const b = brief();
     b.render!.timingAudit = { kind: "observed_cut_timing", renderId: "render", renderSha256: "cut-hash", durationMs: 8000,
@@ -249,7 +321,7 @@ describe("coordinated filmmaking", () => {
       // incomplete -- exactly one real call, so one event and one ledger row.
       const result = await runProductionCrew("p", "planning", { db, brief: brief(), maxCalls: 1 });
       expect(result.calls).toBe(1);
-      const expectedCostUsd = 500 * 0.30 / 1e6 + 100 * 2.50 / 1e6;
+      const expectedCostUsd = 500 * 0.75 / 1e6 + 100 * 3.75 / 1e6;
       const event = db.prepare("SELECT role, cost_usd FROM production_events").get() as { role: string; cost_usd: number };
       expect(event.role).toBe("creative_director");
       expect(event.cost_usd).toBeCloseTo(expectedCostUsd, 10);

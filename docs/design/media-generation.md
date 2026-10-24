@@ -1,5 +1,22 @@
 # Media Generation
 
+Ordinary non-speaking final requests default to eight seconds. A caller may
+request ten seconds from the configured local LTX backend when measured source
+coverage needs it; resolution, frame rate, source performance and fallback gates
+remain unchanged. Existing accepted or uncertain takes are still reconciled
+before another submission. A requested duration is not proof of usable returned
+coverage; measure and review the actual result before selecting its interval.
+
+When an accepted short interval leaves source narration uncovered, the existing
+candidate stage can request additional coverage explicitly. It requires the
+selected accepted attempt, its saved Director `extend_existing` review note and
+a measured reason. The current clip, raw parent and original findings remain
+retained while the new candidate receives its normal review. A later unresolved
+candidate or local job still holds submission; current plan, draft, canon,
+source, budget and separate native-audio gates remain unchanged. Ordinary calls
+continue to reuse the selected clip. This adds a versioned take to the existing
+stage, not a replacement selection or a new planning stage.
+
 ## Scope
 
 Turns a scene's casting + action/blocking decision into actual visual content:
@@ -89,6 +106,12 @@ old film assets and triggers no regeneration. See
 Rendered visual content per scene, ready to receive lip-synced speech (see
 `docs/design/audio-and-speakers.md`) and be placed on the timeline (see
 `docs/design/timeline.md`).
+
+Supplementary gap shots are appended to a scene's saved roster, but use their
+existing explicit editorial anchor for automatic set references: the accepted
+anchor view and its preceding view, rather than pictures from the end of the
+chapter. A missing, later or foreign-scene anchor holds preparation. Ordinary
+shots retain their preceding-view behavior; no canon or set approval is inferred.
 
 ## Shared doorway construction rule
 
@@ -219,6 +242,14 @@ scoped to the approved Hatam/Papuan production world; other language/canon
 reuse is a separate producer decision, not an inference from an empty cast.
 
 ## Draft Room and Cost-Tiered Generation
+
+October 22 execution: the existing draft stage may receive a local LTX preview
+through its provider interface when the configured cloud draft request is held.
+It records the provider's actual declared resolution, retaining 360p for the
+existing Omni adapter. A 720p local preview remains a held `generate_draft`
+attempt, requires actual source/cast/motion review and selection, and cannot
+silently count as final footage. Original errors, costs and outstanding charges
+remain retained. This adds no stage or paid scene fallback.
 
 Gemini Omni 1.1 Flash (Google, released 2026) is a concrete example of the
 kind of provider capability this design should lean on: it generates

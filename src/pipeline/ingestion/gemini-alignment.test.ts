@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { alignWithGemini } from "./gemini-alignment.js";
 
 const dirs:string[]=[]; afterEach(()=>dirs.splice(0).forEach(path=>rmSync(path,{recursive:true,force:true})));
@@ -11,3 +11,12 @@ it("uses ordered anchors then strong bounded fill without silently losing text",
 it("treats malformed model output as unresolved evidence",async()=>{const result=await alignWithGemini({audioPath:fixture(),durationMs:1000,gaps:[],verses:[{verse:1,paragraphIndex:0,text:"one two three"}],identify:async()=>({span:"one two three"})});expect(result.segments[0]).toMatchObject({status:"unresolved",verseRef:null});});
 it("accepts a structurally identified narrated title without assigning it to Scripture",async()=>{const result=await alignWithGemini({audioPath:fixture(),durationMs:1000,gaps:[],verses:[{verse:20,paragraphIndex:2,text:"one two three"}],titles:[{text:"Yesus kin Beelzebul",parallelRefs:"Mat. 12:22-32",paragraphIndex:1,verseStart:20}],identify:async()=>({isScripture:true,span:"Yesus kin Beelzebul"})});expect(result.segments[0]).toMatchObject({status:"matched",verseRef:null,sourceKind:"paragraph_title",parallelRefs:"Mat. 12:22-32"});expect(result.coverage).toBe(0);});
 it("uses a spoken chapter title as editorial context before verse one",async()=>{const result=await alignWithGemini({audioPath:fixture(),durationMs:1000,gaps:[],chapterTitle:"MARKUS 4",verses:[{verse:1,paragraphIndex:1,text:"one two three"}],identify:async()=>({isScripture:true,span:"MARKUS 4"})});expect(result.segments[0]).toMatchObject({status:"matched",verseRef:null,sourceKind:"chapter_title"});expect(result.coverage).toBe(0);});
+it("accepts an exact two-word chapter title on the first pass without a redundant strong call",async()=>{
+ const identify=vi.fn(async()=>({isScripture:true,span:"MARKUS 5"}));
+ const result=await alignWithGemini({audioPath:fixture(),durationMs:2300,gaps:[],chapterTitle:"MARKUS 5",verses:[{verse:1,paragraphIndex:1,text:"one two three"}],identify});
+ expect(result.segments[0]).toMatchObject({status:"matched",sourceKind:"chapter_title",text:"MARKUS 5"});expect(identify).toHaveBeenCalledTimes(1);
+});
+it("does not count a supplied standalone parenthesis as an uncovered spoken word",async()=>{
+ const result=await alignWithGemini({audioPath:fixture(),durationMs:1000,gaps:[],verses:[{verse:7,paragraphIndex:1,text:"one two three ("}],identify:async()=>({isScripture:true,span:"one two three"})});
+ expect(result.coverage).toBe(1);expect(result.uncoveredVerses).toEqual([]);
+});

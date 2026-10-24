@@ -136,6 +136,23 @@ describe("bounded evidence-based craft feedback",()=>{
     }});
     expect(result.status).toBe("held");expect(result.creativeFeedback!.stopReason).toBe(result.summary);
   });
+  it("keeps proposal and source times out of first-cut craft evidence while retaining executable edit timings",async()=>{
+    const rejected:CrewEvent[]=[];
+    const invalid=await runCrew({phase:"editing",brief:brief(),creativeFeedback:true,log:e=>rejected.push(e),call:async p=>{
+      const out=response(p);
+      if(roleOf(p)==="picture_editor")out.craftAssessment!.dimensions.forEach(d=>{d.startMs=0;d.endMs=1000;});
+      return out;
+    }});
+    expect(invalid.status).toBe("incomplete");expect(invalid.summary).toContain("actual cut's bounds");
+    expect(rejected.at(-1)!.rejectedOutput).toMatchObject({craftAssessment:{dimensions:expect.arrayContaining([expect.objectContaining({startMs:0,endMs:1000})])}});
+    const result=await runCrew({phase:"editing",brief:brief(),creativeFeedback:true,log:()=>{},call:async p=>{
+      if(roleOf(p)==="picture_editor")expect(p).toContain("Every craftAssessment dimension must use startMs=null and endMs=null in planning and editing");
+      return response(p);
+    }});
+    expect(result.status,result.summary).toBe("approved");
+    expect(result.contributions.picture_editor!.edits).toEqual([{shotId:"s",sourceStartMs:0,durationMs:1000}]);
+    expect(result.contributions.picture_editor!.craftAssessment!.dimensions.every(d=>d.startMs===null&&d.endMs===null)).toBe(true);
+  });
   it("saves and reopens the same assessments/selection through the existing production records",async()=>{
     const root=mkdtempSync(join(tmpdir(),"hw-craft-")),db=new DatabaseSync(join(root,"proof.sqlite"));
     try {

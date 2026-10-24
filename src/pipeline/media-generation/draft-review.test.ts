@@ -1,5 +1,6 @@
 import { createRequire } from "node:module";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
@@ -20,11 +21,12 @@ afterEach(() => { if (dataDir) rmSync(dataDir, { recursive: true, force: true })
 
 function setup() {
   dataDir = mkdtempSync(join(tmpdir(), "hw-draft-review-"));
-  for (const rel of ["generated/key.png", "generated/drafts/take.mp4"]) {
-    const abs = join(dataDir, "assets", rel);
-    mkdirSync(dirname(abs), { recursive: true });
-    writeFileSync(abs, Buffer.from("bytes"));
-  }
+  const video=join(dataDir,"assets/generated/drafts/take.mp4"),key=join(dataDir,"assets/generated/key.png");
+  mkdirSync(dirname(video),{recursive:true});
+  // Picture-only review now probes native tracks before a model call. Use
+  // a real decodable silent fixture, retaining the mocked review assertions.
+  execFileSync("ffmpeg",["-v","error","-n","-f","lavfi","-i","testsrc2=s=160x90:r=24:d=0.25","-c:v","libx264","-pix_fmt","yuv420p",video],{windowsHide:true,stdio:["ignore","ignore","pipe"]});
+  execFileSync("ffmpeg",["-v","error","-n","-i",video,"-frames:v","1",key],{windowsHide:true,stdio:["ignore","ignore","pipe"]});
   const db = new DatabaseSync(":memory:");
   db.exec(readFileSync("src/db/schema.sql", "utf8"));
   db.exec(`

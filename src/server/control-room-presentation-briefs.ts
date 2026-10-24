@@ -165,7 +165,11 @@ export function seedControlRoomPresentationBriefs(db: DatabaseSync, now = Date.n
     (id, agent_name, title, context, source_references_json, snapshot_date, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
   let inserted = 0;
+  const profile = db.prepare("SELECT agent_name FROM control_room_voice_profiles WHERE agent_name=?");
   for (const brief of CONTROL_ROOM_PRESENTATION_BRIEFS) {
+    // A restored chapter need not contain unrelated presentation voice profiles.
+    // Startup may seed known samples only for parents that actually exist.
+    if (!profile.get(brief.agentName)) continue;
     const result = insert.run(brief.id, brief.agentName, brief.title, brief.context, JSON.stringify(brief.sourceReferences), "2026-09-14", now, now);
     inserted += Number(result.changes);
   }

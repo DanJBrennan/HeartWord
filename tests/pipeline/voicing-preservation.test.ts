@@ -7,7 +7,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 let db: InstanceType<typeof DatabaseSync>, directory: string;
 vi.mock("../../src/db/client.js", () => ({ getDb: () => db, getDataDir: () => directory }));
-vi.mock("../../src/providers/elevenlabs.js", () => ({ reVoiceAudio: vi.fn(async () => ({ audioBuffer: Buffer.from("new cast audio"), requestSettings: { model_id: "fixture-sts", remove_background_noise: true, output_format: "mp3_44100_128" } })) }));
+vi.mock("../../src/providers/elevenlabs.js", () => ({ reVoiceAudio: vi.fn(async () => ({ audioBuffer: Buffer.from("new cast audio"), requestSettings: { model_id: "fixture-sts", remove_background_noise: true, output_format: "mp3_44100_128" }, usage:{requestId:"fixture-request",historyItemId:"fixture-history",characterCost:"30"} })) }));
 vi.mock("../../src/pipeline/ingestion/detect-silences.js", () => ({ getAudioDurationMs: () => 1000 }));
 vi.mock("../../src/pipeline/voicing/extract-clip.js", () => ({ extractClip: (_s: string, _a: number, _b: number, out: string) => writeFileSync(out, "extracted audio", { flag: "wx" }) }));
 import { runVoicing } from "../../src/pipeline/voicing/index.js";
@@ -23,6 +23,24 @@ beforeEach(() => {
     ('one','p','original_reading','source.mp3',0,1000,'c',1),('two','p','original_reading','source.mp3',1000,2000,'c',1);`);
 });
 afterEach(() => { db.close(); if (resolve(directory).startsWith(resolve(tmpdir(), "heartword-voicing-retention-"))) rmSync(directory, { recursive: true, force: true }); });
+it("allows first voicing after reviewed source boundaries, then protects a stale retained master", async () => {
+  db.exec(`INSERT INTO scenes(id,project_id,sequence,verse_start,verse_end,created_at)VALUES('scene','p',1,'Mark 4:1','Mark 4:1',1);
+    INSERT INTO shots(id,scene_id,sequence,action,needs_lip_sync,dialogue_character_id,created_at)VALUES('shot','scene',1,'Synthetic speaking view',1,'c',1);
+    INSERT INTO shot_utterance_bindings VALUES('binding','shot','one',0,1000,'v','fixture-hash',1,'Fixture reviewer');
+    INSERT INTO source_alignment_boundary_overrides VALUES('boundary','p','one',0,1100,0,1000,'Fixture reviewer','Synthetic reviewed boundary',1);`);
+  const first=await runVoicing("p",{sourceSegmentIds:["one"],voiceSettings:{speed:1,stability:0.5}});
+  expect(first).toMatchObject({ok:true,generated:1});
+  expect(reVoiceAudio).toHaveBeenCalledTimes(1);
+  expect(vi.mocked(reVoiceAudio).mock.calls[0]?.[2]).toEqual({voiceSettings:{speed:1,stability:0.5}});
+  const retained=String(db.prepare("SELECT source_path FROM audio_segments WHERE layer='composite_cast_master'").get()!.source_path);
+  expect(JSON.parse(readFileSync(join(directory,"assets",retained+'.json'),"utf8")).providerUsage).toEqual({requestId:"fixture-request",historyItemId:"fixture-history",characterCost:"30"});
+  vi.mocked(reVoiceAudio).mockClear();
+  expect((await runVoicing("p",{sourceSegmentIds:["one"]})).reused).toBe(1);
+  db.exec("UPDATE audio_segments SET end_ms=800 WHERE id='one'");
+  expect(await runVoicing("p",{sourceSegmentIds:["one"]})).toMatchObject({ok:false,generated:0});
+  expect(reVoiceAudio).not.toHaveBeenCalled();
+  expect(existsSync(join(directory,"assets",retained))).toBe(true);
+});
 it("scoped voicing cannot collide by loop index; forced revisions retain old files and exact mappings", async () => {
   await runVoicing("p", { sourceSegmentIds: ["one"] });
   const first = db.prepare("SELECT source_path FROM audio_segments WHERE layer='composite_cast_master'").get()!;

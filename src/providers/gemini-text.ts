@@ -34,16 +34,24 @@ export async function generateJsonMetered<T>(prompt: string, schema: GeminiJsonS
   return generateJsonWithImagesMetered(prompt, [], schema);
 }
 
-// Rough public-pricing-based estimate (Gemini flash-tier per-1M-token
-// rates), NOT reconciled against a real invoice -- same honesty caveat as
-// the image/video provider cost constants in providers/gemini/index.ts.
-// Replace with a verified figure once real billing data is available.
-// Output tokens include any thinking tokens, billed at the same rate.
-const GEMINI_TEXT_INPUT_USD_PER_MILLION_TOKENS = 0.30;
-const GEMINI_TEXT_OUTPUT_USD_PER_MILLION_TOKENS = 2.50;
+// Public Gemini 3.6 Flash standard rates verified 2026-10-23 at
+// https://ai.google.dev/gemini-api/docs/pricing (valid through 2026-12-31).
+// This remains an estimate, not an invoice reconciliation. Historical
+// ledger entries retain their original estimates; a production allowance
+// accounts for uncertain earlier charges without rewriting those records.
+// Output tokens include thinking tokens at the same output rate.
+const GEMINI_TEXT_INPUT_USD_PER_MILLION_TOKENS = 0.75;
+const GEMINI_TEXT_OUTPUT_USD_PER_MILLION_TOKENS = 3.75;
 
 export interface GeminiUsage { promptTokenCount: number; candidatesTokenCount: number; thoughtsTokenCount: number; totalTokenCount: number }
 export interface GeminiMeteredResult<T> { result: T; usage: GeminiUsage; costUsd: number }
+export interface GeminiMediaInput {
+  mimeType: string;
+  data: string;
+  caption?: string;
+  /** Optional static video sampling; omitted inputs retain the provider default. */
+  videoMetadata?: { fps: number };
+}
 
 function estimateGeminiTextCostUsd(usage: GeminiUsage): number {
   const inputCost = usage.promptTokenCount * GEMINI_TEXT_INPUT_USD_PER_MILLION_TOKENS / 1_000_000;
@@ -53,7 +61,7 @@ function estimateGeminiTextCostUsd(usage: GeminiUsage): number {
 
 async function callGemini<T>(
   prompt: string,
-  images: Array<{ mimeType: string; data: string; caption?: string }>,
+  images: GeminiMediaInput[],
   schema: GeminiJsonSchema,
   model: string
 ): Promise<GeminiMeteredResult<T>> {
@@ -73,7 +81,8 @@ async function callGemini<T>(
     { text: prompt },
     ...images.flatMap((img) => [
       ...(img.caption ? [{ text: img.caption }] : []),
-      { inlineData: { mimeType: img.mimeType, data: img.data } }
+      { inlineData: { mimeType: img.mimeType, data: img.data },
+        ...(img.videoMetadata ? { videoMetadata: img.videoMetadata } : {}) }
     ])
   ];
 
@@ -131,7 +140,7 @@ async function callGemini<T>(
  */
 export async function generateJsonWithImages<T>(
   prompt: string,
-  images: Array<{ mimeType: string; data: string; caption?: string }>,
+  images: GeminiMediaInput[],
   schema: GeminiJsonSchema,
   model = GEMINI_TEXT_MODEL
 ): Promise<T> {
@@ -149,7 +158,7 @@ export async function generateJsonWithImages<T>(
  */
 export async function generateJsonWithImagesMetered<T>(
   prompt: string,
-  images: Array<{ mimeType: string; data: string; caption?: string }>,
+  images: GeminiMediaInput[],
   schema: GeminiJsonSchema,
   model = GEMINI_TEXT_MODEL
 ): Promise<GeminiMeteredResult<T>> {

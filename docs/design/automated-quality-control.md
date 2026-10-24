@@ -1,5 +1,22 @@
 # Automated Quality Control
 
+Oversized ordinary motion files use a local review-only H264 copy before the
+first model submission. It preserves every decoded frame, native dimensions,
+frame rate and duration, strips the separately reviewed native sound, and retains
+original/proxy hashes plus immutable encoding proof. A final candidate records
+that input in typed history. Exact cached bytes can be reused after a root move;
+incomplete or changed proof holds before any review call. Encoding failure or a
+copy still over the inline limit holds the candidate without a provider retry.
+The original deliverable and its audio stay intact, and model scores/findings
+and all picture/native-audio acceptance gates retain their existing meanings.
+
+Picture review also removes native sound from an ordinary file below the size
+limit, using a verified video stream copy with identical decoded frames/timing.
+This keeps an independently held generated voice or score out of the visual
+verdict. A naturally silent small original is sent unchanged. Original video,
+native sound, earlier findings and scores remain retained; no existing result
+is automatically re-reviewed or promoted by this input correction.
+
 ## Scope
 
 Automated checks that run across generated media and the assembled chapter
@@ -9,6 +26,38 @@ back from a generation provider and across the whole assembled video before
 it's handed to the user for review.
 
 ## Automated Media Review (per returned shot)
+
+October 21 Mark 5 execution: built-in shot review uses the approved chapter's
+catalog Scripture, scoped to Hatam Mark 2/4/5. Identity may use its approved
+portrait while wardrobe/head covering uses the approved body reference for the
+scene state; an older portrait cannot override that wardrobe. Material wardrobe
+mismatch holds/retries independently of a general Critic pass. Composite review
+estimates include research, duplicate, identity and fidelity calls only when all
+components are reported. Missing charges remain unreported for the existing
+film reservation/ledger, never summed as zero.
+
+October 22 motion-review handoff: draft and ordinary final-video review use the
+actual returned provider motion prompt, falling back to the submitted motion
+request when a legacy adapter omits it. A still-image editing instruction is
+not a motion requirement. Original accepted keyframes remain identity/setting
+anchors; all earlier assessments, scores and holds remain retained without
+automatic re-review or promotion. Picture and native-audio decisions stay separate.
+
+Guided final motion also sends the provider's actual pinned END picture, labelled
+separately from START. Its relative asset path must stay inside project assets
+and its bytes must match the provider's saved SHA256 before review. Typed review
+history retains this input. Review assesses concrete endpoint action, identity
+and physical continuity against END, distinguishing minor stride/framing variation
+from source-state failures; a running pose does not imply a frozen ending hold.
+Missing, changed or unsafe reference metadata holds the returned candidate.
+This does not rescore old results, approve native sound or bypass acceptance gates.
+
+Planning and editing craft assessments use shot IDs and observed-coverage evidence;
+their dimension timestamps remain null until the finishing review has an actual
+assembled cut. Source-recording bounds and proposed edit times cannot serve as
+whole-film observations. Executable editing entries still carry their clip offsets
+and durations. Rejected replies and timing guards remain intact; clearer role
+instructions do not retry an earlier incomplete production review.
 
 Whenever a media producer (an image or video generation provider) returns a
 result — a cheap draft or a full-resolution final, see
@@ -145,6 +194,14 @@ geographic jump, or premature next-chapter action (not applicable if none is pla
 Each verdict is `clear`, `concern`, `unverified`, or
 `not_applicable`, with evidence and a requested change. Concern or uncertainty
 holds automatic approval; an absent checklist is an incomplete review.
+
+Targeted video evidence can request a static sampling rate through the existing
+Gemini review adapter's optional `videoMetadata.fps` (otherwise the API defaults
+to 1 FPS). Captions retain native geometry, sampling, actual film/reel mapping
+and transport compression limits. More frequent frames support inspection of
+visible speaking/listening behavior; they do not certify sample-accurate visemes
+or native-language pronunciation. `speaker_mouth` specifically asks whether a
+listener mouths another speaker's words, independently of those separate checks.
 
 The saved timeline also supplies deterministic *review targets* for long
 consecutive placements of one shot, a shot reused three or more times, and a
@@ -318,6 +375,19 @@ five factual cases. Protected source/canon/producer-hold regressions or use of
 a held-out chapter in training provenance result in `do_not_adopt`; a passing
 comparison only makes a candidate eligible for producer review, never deploys
 it or changes authority.
+
+## Recorded speaking-candidate review
+
+Speaking candidates may be selected after recorded actual audiovisual QC under
+an authorized autonomous film run. Such selection records the named automated
+reviewer and evidence as `qc`; it must not manufacture a human approval. The
+ordinary explicit producer action retains its human attribution. Assess identity,
+wardrobe, actor count, observable mouth/audio timing and the source-grounded
+performance against the approved starting picture and exact approved audio.
+State the limits of language verification. Provider completion alone remains
+insufficient. Video and ambience review schemas explicitly request confidence on
+the existing 0–100 scale; malformed fractional historic verdicts remain held,
+without silently rescaling them.
 
 ## Open questions
 

@@ -53,6 +53,43 @@ beforeEach(() => {
 afterEach(() => db.close());
 
 describe("external keyframe handoff", () => {
+  it("uses a supplementary shore shot's story anchor instead of later bedroom references", () => {
+    db.exec(`UPDATE shots SET sequence=4;
+      INSERT INTO shots(id,scene_id,sequence,action,verse_ref,created_at)VALUES
+      ('shore-wide','scene',1,'Shore wide','Mark 2:1',1),
+      ('shore-anchor','scene',2,'Shore approach','Mark 2:1',1),
+      ('bedroom','scene',3,'Later bedroom','Mark 2:2',1);`);
+    for (const [shot,id] of [["shore-wide","wide-keyframe"],["shore-anchor","shore-keyframe"],["bedroom","bedroom-keyframe"]]) {
+      writeFileSync(join(dir,"assets",id+".png"),png());
+      db.prepare("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES(?,?,'test','test','generate','accepted',?,0,1)").run(id,shot,id+".png");
+    }
+    expect(keyframeSetReferences(db,dir,"shot").map(r=>r.recordRef)).toEqual(["generation_attempts:bedroom-keyframe","generation_attempts:shore-keyframe"]);
+    db.prepare("UPDATE shots SET action=? WHERE id='shot'").run("A supplementary shore reaction.\nEditorial anchor: shore-anchor. Purpose: same shore encounter.");
+    expect(keyframeSetReferences(db,dir,"shot").map(r=>r.recordRef)).toEqual(["generation_attempts:shore-keyframe","generation_attempts:wide-keyframe"]);
+  });
+  it("holds a supplementary set packet with a missing or foreign-scene anchor", () => {
+    db.exec(`UPDATE shots SET sequence=4;
+      INSERT INTO scenes(id,project_id,sequence,verse_start,verse_end,created_at)VALUES('other-scene','project',2,'Mark 2:1','Mark 2:2',1);
+      INSERT INTO shots(id,scene_id,sequence,action,verse_ref,created_at)VALUES('foreign-anchor','other-scene',1,'Other location','Mark 2:1',1);`);
+    for (const anchor of ["missing-anchor","foreign-anchor"]) {
+      db.prepare("UPDATE shots SET action=? WHERE id='shot'").run(`Supplementary reaction.\nEditorial anchor: ${anchor}. Purpose: same source event.`);
+      expect(()=>keyframeSetReferences(db,dir,"shot")).toThrow("editorial anchor");
+    }
+    expect(db.prepare("SELECT COUNT(*) n FROM generation_attempts").get()!.n).toBe(0);
+  });
+  it("prepares approved Hatam Mark 5 with catalog source hashes while keeping other chapters scoped out", () => {
+    db.exec("UPDATE projects SET chapter=5; UPDATE scenes SET verse_start='Mark 5:1',verse_end='Mark 5:2'; UPDATE shots SET verse_ref='Mark 5:1-2'; UPDATE audio_segments SET verse_ref='Mark 5:1-2'");
+    for (const path of ["source/hatam/text/Mark/Mark 5.docx", "source/english-esv/text/Mark/Mark 5.docx"]) {
+      const target=join(dir,"assets",path); mkdirSync(join(target,".."),{recursive:true});
+      writeFileSync(target,readFileSync(join(dir,"assets/source/hatam/mark-2/mark-2-text.docx")));
+    }
+    brief();
+    const prepared=prepareKeyframe(db,dir,"shot","16:9 synthetic Mark 5 view","Producer-approved chapter preparation");
+    expect(prepared.sources.map(s=>s.path)).toEqual(["source/hatam/text/Mark/Mark 5.docx","source/english-esv/text/Mark/Mark 5.docx"]);
+    expect(prepared.sources.every(s=>s.sha256===sha256(readFileSync(assetPath(dir,s.path))))).toBe(true);
+    db.exec("UPDATE projects SET chapter=6");
+    expect(()=>getKeyframeContext(db,dir,"shot")).toThrow("producer-approved Mark 4 and 5");
+  });
   it("keeps candidate canon reviews distinct from chapter creative guidance until promotion",()=>{
     const before=crewBriefHash(loadCrewBrief(db,dir,"project","planning"),"planning");
     db.exec("INSERT INTO character_versions(id,character_id,version_label,status,created_at)VALUES('candidate-version','person','candidate','candidate',2)");

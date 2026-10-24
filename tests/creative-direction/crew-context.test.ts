@@ -10,6 +10,7 @@ import { assertEditorialRebuildable } from "../../src/pipeline/assembly/render-e
 import { recordCutTimingAudit, type CutTimingAudit } from "../../src/pipeline/assembly/cut-timing-audit.js";
 import { structuralCutFindings } from "../../src/pipeline/assembly/finishing.js";
 import { fixtureTreatment } from "../helpers/crew-treatment.js";
+import { fixtureWave } from "../helpers/pcm-wave.js";
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 let db: InstanceType<typeof DatabaseSync>, directory: string;
@@ -39,7 +40,7 @@ beforeEach(() => {
     INSERT INTO audio_segments (id,project_id,layer,source_path,start_ms,end_ms,verse_ref,created_at) VALUES ('audio','p','original_reading','source.wav',0,8000,'Mark 2:1-2',1);`);
   file("source/hatam/mark-2/mark-2-text.docx", docx("1Original words. 2More words."));
   file("reference/english/mark-2/mark-2-text.docx", docx("1Reference words. 2More reference."));
-  file("ref.png", "reference fixture"); file("source.wav", "audio fixture");
+  file("ref.png", "reference fixture"); file("source.wav", fixtureWave(8000));
 });
 afterEach(() => {
   db.close();
@@ -72,7 +73,7 @@ describe("immutable project brief", () => {
     const { brief, audit } = existingCut(); recordCutTimingAudit(db, brief, audit);
     file("existing.mp4", "a different cut");
     expect(loadCrewBrief(db, directory, "p", "finishing").render!.timingAudit).toBeUndefined();
-    file("existing.mp4", "unchanged film fixture"); file("source.wav", "new source audio");
+    file("existing.mp4", "unchanged film fixture"); file("source.wav", fixtureWave(8000, 220));
     expect(loadCrewBrief(db, directory, "p", "finishing").render!.timingAudit).toBeUndefined();
   });
   it("rejects unknown sources, invalid intervals, and a changed current render before saving observations", () => {

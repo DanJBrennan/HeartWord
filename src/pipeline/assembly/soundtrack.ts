@@ -5,16 +5,18 @@ import { dirname } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { getDataDir, getDb } from "../../db/client.js";
 import { GeminiMusicProvider, ElevenLabsEffectsProvider, type SoundtrackProvider } from "../../providers/soundtrack.js";
-import { generateJsonWithImages, generateJsonWithImagesMetered, GEMINI_TEXT_MODEL } from "../../providers/gemini-text.js";
+import { generateJsonWithImagesMetered, GEMINI_TEXT_MODEL } from "../../providers/gemini-text.js";
 import type { GenerationResult } from "../../providers/types.js";
 import { crewBriefHash, digest, loadCrewBrief, productionAssetPath } from "../creative-direction/crew-context.js";
 import { latestCrewRun } from "../creative-direction/crew-store.js";
 import type { CrewBrief, CrewResult } from "../creative-direction/crew-types.js";
 import { mediaDurationMs } from "./finishing.js";
+import { checkFilmSpend, reconcileAvatarBudget } from "../voice-lipsync/performance-direction.js";
+import { recordModelSpend, settleCrewModelSpend } from "../creative-direction/model-spend.js";
 
 export interface SoundtrackReview { matchesBrief: boolean; speechDetected: boolean; intelligibleSpeech: boolean; technicalPass: boolean; confidence: number; reason: string }
 const SOUNDTRACK_REVIEW_SCHEMA = {
-  type: "object", properties: { matchesBrief: { type: "boolean" }, speechDetected: { type: "boolean" }, intelligibleSpeech: { type: "boolean" }, technicalPass: { type: "boolean" }, confidence: { type: "number" }, reason: { type: "string" } },
+  type: "object", properties: { matchesBrief: { type: "boolean" }, speechDetected: { type: "boolean" }, intelligibleSpeech: { type: "boolean" }, technicalPass: { type: "boolean" }, confidence: { type: "integer", description: "Confidence on the required 0–100 scale, for example 95. Fractions such as 0.95 are invalid." }, reason: { type: "string" } },
   required: ["matchesBrief", "speechDetected", "intelligibleSpeech", "technicalPass", "confidence", "reason"]
 };
 function soundtrackReviewPassed(verdict: SoundtrackReview) {
@@ -90,8 +92,11 @@ export async function registerVideoAmbience(db: DatabaseSync, projectId: string,
 interface SoundtrackOptions {
   db?: DatabaseSync; dataDir?: string; brief?: CrewBrief;
   music?: SoundtrackProvider; effects?: SoundtrackProvider;
-  review?: (prompt: string, mimeType: string, bytes: Buffer) => Promise<SoundtrackReview>;
+  review?: (prompt: string, mimeType: string, bytes: Buffer) => Promise<SoundtrackReview | { verdict: SoundtrackReview; costUsd: number | null; usage?: unknown }>;
   duration?: (path: string) => number;
+  /** Evidenced combined upper bound for one generation and its listening
+   * review. Default adapters do not infer dollar charges from credit counts. */
+  upperBoundUsd?: number;
 }
 export async function generateRequestedSoundtrack(projectId: string, runId: string, options: SoundtrackOptions = {}): Promise<{ accepted: number; failures: string[] }> {
   return observeWork(projectId, "qc", () => generateRequestedSoundtrackImpl(projectId, runId, options), runId);
@@ -113,7 +118,17 @@ async function generateRequestedSoundtrackImpl(projectId: string, runId: string,
   const requests = (["composer", "sound_designer"] as const).flatMap(role =>
     (result.contributions[role]?.generationRequests ?? []).map((request, index) => ({ role, request, key: `${runId}:${role}:${index}` })));
   if (requests.length > 8) throw new Error("This run requests more than eight audio generations. Refine the cue plan before spending.");
-  const review = options.review ?? ((prompt, mimeType, bytes) => generateJsonWithImages<SoundtrackReview>(prompt, [{ mimeType, data: bytes.toString("base64") }], SOUNDTRACK_REVIEW_SCHEMA));
+  const review: NonNullable<SoundtrackOptions["review"]> = options.review ?? (async (prompt, mimeType, bytes) => {
+    const response = await generateJsonWithImagesMetered<SoundtrackReview>(prompt, [{ mimeType, data: bytes.toString("base64") }], SOUNDTRACK_REVIEW_SCHEMA);
+    return { verdict: response.result, usage: response.usage,
+      costUsd: Number(response.usage?.totalTokenCount) > 0 && response.costUsd > 0 ? response.costUsd : null };
+  });
+  const budgetInput = () => JSON.parse(String(db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='reconcile_avatar_budget' AND undone=0 ORDER BY sequence DESC LIMIT 1").get(projectId)!.payload)).input as { unreportedUpperBoundUsd: number; outstandingUpperBoundUsd: number };
+  const reconcileRequestCosts = (id: string, phase: string, prior: ReturnType<typeof budgetInput>) => reconcileAvatarBudget(db, {
+    projectId, actor: "Soundtrack stage", unreportedUpperBoundUsd: prior.unreportedUpperBoundUsd, outstandingUpperBoundUsd: prior.outstandingUpperBoundUsd,
+    evidence: `Soundtrack ${id}, ${phase}: only this request's cost rows changed. Existing base allocations remain intact. Its generation and listening share one retained reserve_crew_spend bound; unknown charges remain NULL and keep that reservation.`,
+    idempotencyKey: `soundtrack-costs:${id}:${phase}`
+  });
   let accepted = 0;
   const failures: string[] = [];
   for (const item of requests) {
@@ -124,40 +139,104 @@ async function generateRequestedSoundtrackImpl(projectId: string, runId: string,
       else failures.push(`${item.role}: previous attempt is ${previous.status}; revise the request before another paid attempt.`);
       continue;
     }
-    const id = randomUUID(), kind = item.role === "composer" ? "music" : "sfx";
-    db.prepare("INSERT INTO soundtrack_attempts (id,project_id,run_id,request_key,kind,request_json,status,created_at) VALUES (?,?,?,?,?,?,'generating',?)")
-      .run(id, projectId, runId, item.key, kind, JSON.stringify(item.request), Date.now());
+    const upperBoundUsd = Number(options.upperBoundUsd ?? process.env.HEARTWORD_SOUNDTRACK_CALL_UPPER_BOUND_USD);
+    if (!Number.isFinite(upperBoundUsd) || upperBoundUsd <= 0) throw new Error("Soundtrack spending held: configure an evidenced HEARTWORD_SOUNDTRACK_CALL_UPPER_BOUND_USD covering generation and listening before a new request.");
+    const id = randomUUID(), kind = item.role === "composer" ? "music" : "sfx", eventId = `soundtrack:${item.key}`, reservationId = randomUUID();
+    const dispatch = { at: Date.now(), eventId, reservationId, upperBoundUsd, requestKey: item.key, request: item.request };
+    const evidence: { dispatch: typeof dispatch; generation?: { provider: string; model: string; usage: unknown; requestId: string | null; sha256: string; costUsd: number | null }; review?: { verdict: SoundtrackReview; costUsd: number | null; usage?: unknown } } = { dispatch };
+    // Claim and reserve atomically, using the existing film budget commands.
+    // A failed/unknown submission can never become an automatic fresh call.
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      checkFilmSpend(db, projectId, upperBoundUsd);
+      const prior = budgetInput();
+      db.prepare("INSERT INTO soundtrack_attempts (id,project_id,run_id,request_key,kind,request_json,status,usage_json,created_at) VALUES (?,?,?,?,?,?,'generating',?,?)")
+        .run(id, projectId, runId, item.key, kind, JSON.stringify(item.request), JSON.stringify(evidence), dispatch.at);
+      db.prepare("INSERT INTO production_events (id,run_id,sequence,role,round,prompt,output_json,model,cost_usd,created_at) SELECT ?,?,COALESCE(MAX(sequence),0)+1,'soundtrack_generation_and_review',1,?,?,'pending_soundtrack',NULL,? FROM production_events WHERE run_id=?")
+        .run(eventId, runId, item.request.prompt, JSON.stringify({ attemptId: id, ...evidence, phase: "submitting_generation" }), dispatch.at, runId);
+      db.prepare("INSERT INTO edit_commands (id,project_id,sequence,command_type,payload,idempotency_key,applied_at) SELECT ?,?,COALESCE(MAX(sequence),0)+1,'reserve_crew_spend',?,?,? FROM edit_commands WHERE project_id=?")
+        .run(randomUUID(), projectId, JSON.stringify({ reservationId, eventId, upperBoundUsd }), `crew-reservation:${eventId}`, dispatch.at, projectId);
+      reconcileRequestCosts(id, "claimed", prior);
+      db.exec("COMMIT");
+    } catch (error) { db.exec("ROLLBACK"); throw error; }
+    let generationCost: number | null = null, reviewCost: number | null = null, reviewStarted = false;
+    let retainedPath: string | undefined, failure: string | undefined;
+    const reportedCost = (value: number | null | undefined) => {
+      if (value == null) return null;
+      if (!Number.isFinite(value) || value < 0) throw new Error("Invalid reported soundtrack dollar charge; retain the request bound for reconciliation.");
+      return value;
+    };
     try {
       const provider = kind === "music" ? options.music ?? new GeminiMusicProvider() : options.effects ?? new ElevenLabsEffectsProvider();
       const generated = await provider.generate({ kind, prompt: item.request.prompt, durationMs: item.request.durationMs, loop: item.request.loop });
       const path = `generated/soundtrack/${projectId}/${id}.${generated.mimeType.includes("wav") ? "wav" : "mp3"}`;
       const absolute = productionAssetPath(dataDir, path); mkdirSync(dirname(absolute), { recursive: true });
       writeFileSync(absolute, generated.bytes, { flag: "wx" });
+      retainedPath = path;
+      evidence.generation = { provider: generated.provider, model: generated.model, usage: generated.usage, requestId: generated.requestId, sha256: digest(generated.bytes), costUsd: null };
+      generationCost = reportedCost(generated.costUsd);
+      evidence.generation.costUsd = generationCost;
       db.prepare("UPDATE soundtrack_attempts SET status='needs_review',provider=?,model=?,path=?,usage_json=? WHERE id=?")
-        .run(generated.provider, generated.model, path, JSON.stringify({ usage: generated.usage, requestId: generated.requestId }), id);
+        .run(generated.provider, generated.model, path, JSON.stringify(evidence), id);
       const durationMs = (options.duration ?? mediaDurationMs)(absolute);
       if (durationMs + 50 < item.request.durationMs) throw new Error("Generated audio is shorter than its planned cue; do not stretch or silently loop it.");
-      const verdict = await review(`Independently review this generated ${kind} by listening to it. Brief: ${JSON.stringify(item.request)}. ` +
+      // Check again immediately before the separate listening request. This
+      // request's combined bound remains pending; unrelated unknown charges
+      // must be reconciled by their owner, never silently acknowledged here.
+      checkFilmSpend(db, projectId, 0);
+      assertCurrent();
+      reviewStarted = true;
+      db.prepare("UPDATE production_events SET output_json=? WHERE id=?").run(JSON.stringify({ attemptId: id, ...evidence, phase: "submitting_listening" }), eventId);
+      const reviewed = await review(`Independently review this generated ${kind} by listening to it. Brief: ${JSON.stringify(item.request)}. ` +
         "Check audible artifacts, fit to requested mood, development/crescendo, instruments or concrete effect. Detect ANY speech, including unintelligible dialogue, gibberish voices, narration, lyrics or singing: speechDetected=true even when no words are understood. " +
         "Do not assert native-cultural authenticity you cannot verify. Return false or low confidence when uncertain; this recording must not replace Scripture.", generated.mimeType, generated.bytes);
+      const verdict = "verdict" in reviewed ? reviewed.verdict : reviewed;
+      evidence.review = { verdict, costUsd: null, ...("verdict" in reviewed ? { usage: reviewed.usage } : {}) };
+      // Preserve a completed listening finding even if the cut subsequently
+      // becomes stale, has malformed cost metadata or rejects the candidate.
+      try { reviewCost = "verdict" in reviewed ? reportedCost(reviewed.costUsd) : null; evidence.review.costUsd = reviewCost; }
+      finally { db.prepare("UPDATE soundtrack_attempts SET review_json=?,usage_json=? WHERE id=?").run(JSON.stringify(verdict), JSON.stringify(evidence), id); }
+      if (digest(readFileSync(absolute)) !== evidence.generation.sha256) throw new Error("Soundtrack bytes changed during listening; preserve and reconcile the candidate before selection.");
       const pass = soundtrackReviewPassed(verdict);
       if (!pass) {
         db.prepare("UPDATE soundtrack_attempts SET review_json=?,status='held' WHERE id=?").run(JSON.stringify(verdict), id);
-        failures.push(`${kind}: ${verdict.reason || "Audio review did not pass."}`); continue;
+        failures.push(`${kind}: ${verdict.reason || "Audio review did not pass."}`);
+      } else {
+        assertCurrent();
+        db.exec("BEGIN IMMEDIATE");
+        try {
+          db.prepare("INSERT INTO production_audio_assets (id,project_id,kind,description,path,sha256,duration_ms,created_at) VALUES (?,?,?,?,?,?,?,?)")
+            .run(id, projectId, kind, `Requested at ${item.request.startMs}ms for ${item.request.durationMs}ms, ${item.request.gainDb}dB. ${item.request.reason} — ${item.request.prompt}`, path, digest(readFileSync(absolute)), durationMs, Date.now());
+          db.prepare("UPDATE soundtrack_attempts SET status='accepted' WHERE id=?").run(id);
+          db.exec("COMMIT");
+        } catch (error) { db.exec("ROLLBACK"); throw error; }
+        accepted++;
       }
-      assertCurrent();
+    } catch (error) {
+      failure = (error as Error).message;
+      db.prepare("UPDATE soundtrack_attempts SET status='incomplete',error=? WHERE id=?").run(failure, id);
+      failures.push(`${kind}: ${failure}`);
+    } finally {
+      const subtotal = (generationCost ?? 0) + (reviewCost ?? 0);
+      const total = generationCost !== null && (!reviewStarted || reviewCost !== null) ? subtotal : null;
+      const receipt = { attemptId: id, ...evidence, path: retainedPath, phase: "terminal", error: failure, knownSubtotalUsd: subtotal, costUsd: total,
+        allChargesReported: total !== null, reservationRetained: total === null, reviewSubmitted: reviewStarted };
+      if (retainedPath) writeFileSync(`${productionAssetPath(dataDir, retainedPath)}.json`, JSON.stringify(receipt, null, 2) + "\n", { flag: "wx" });
       db.exec("BEGIN IMMEDIATE");
       try {
-        db.prepare("INSERT INTO production_audio_assets (id,project_id,kind,description,path,sha256,duration_ms,created_at) VALUES (?,?,?,?,?,?,?,?)")
-          .run(id, projectId, kind, `Requested at ${item.request.startMs}ms for ${item.request.durationMs}ms, ${item.request.gainDb}dB. ${item.request.reason} — ${item.request.prompt}`, path, digest(readFileSync(absolute)), durationMs, Date.now());
-        db.prepare("UPDATE soundtrack_attempts SET review_json=?,status='accepted' WHERE id=?").run(JSON.stringify(verdict), id);
+        let prior: ReturnType<typeof budgetInput> | undefined;
+        try { checkFilmSpend(db, projectId, 0); prior = budgetInput(); } catch { /* Record observed charges, but do not bless another request's unknown costs. */ }
+        db.prepare("UPDATE soundtrack_attempts SET cost_usd=?,usage_json=?,path=COALESCE(path,?) WHERE id=?").run(total, JSON.stringify(receipt), retainedPath ?? null, id);
+        db.prepare("UPDATE production_events SET cost_usd=?,output_json=?,error=?,model=? WHERE id=?")
+          .run(total, JSON.stringify(receipt), failure ?? null, evidence.generation?.model ?? "unreported_soundtrack", eventId);
+        recordModelSpend(db, projectId, subtotal);
+        settleCrewModelSpend(db, projectId, reservationId, eventId, total);
+        if (prior) reconcileRequestCosts(id, "terminal", prior);
         db.exec("COMMIT");
       } catch (error) { db.exec("ROLLBACK"); throw error; }
-      accepted++;
-    } catch (error) {
-      db.prepare("UPDATE soundtrack_attempts SET status='incomplete',error=? WHERE id=?").run((error as Error).message, id);
-      failures.push(`${kind}: ${(error as Error).message}`);
     }
+    try { checkFilmSpend(db, projectId, 0); }
+    catch (error) { failures.push(`Soundtrack spending held: ${(error as Error).message}`); break; }
   }
   return { accepted, failures };
 }

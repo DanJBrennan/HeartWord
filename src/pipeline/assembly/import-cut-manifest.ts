@@ -2,12 +2,12 @@ import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { loadCrewBrief } from "../creative-direction/crew-context.js";
 import { structuralCutFindings } from "./finishing.js";
-import type { AudioPlacement } from "../creative-direction/crew-types.js";
+import type { AudioPlacement, PicturePlacement } from "../creative-direction/crew-types.js";
 
 /** Attach producer-supplied timing from an existing editor export, without rendering. */
 export function importCutManifest(db: DatabaseSync, dataDir: string, projectId: string, value: unknown): void {
   if (!value || typeof value !== "object") throw new Error("A timing manifest is required.");
-  const manifest = value as { renderId: string; renderSha256: string; timeline: Array<{ shotId: string; startMs: number; endMs: number }>; audioMap: AudioPlacement[] };
+  const manifest = value as { renderId: string; renderSha256: string; timeline: PicturePlacement[]; audioMap: AudioPlacement[] };
   const brief = loadCrewBrief(db, dataDir, projectId, "finishing");
   if (manifest.renderId !== brief.render!.id || manifest.renderSha256 !== brief.render!.sha256) throw new Error("Timing must describe the current, unchanged render.");
   if (!Array.isArray(manifest.timeline) || !manifest.timeline.length || manifest.timeline.length > 2000 || !Array.isArray(manifest.audioMap) || manifest.audioMap.some(a => !a || typeof a !== "object") || manifest.timeline.some(t => !t || typeof t !== "object")) throw new Error("Ordered shot and source-audio placements are required.");

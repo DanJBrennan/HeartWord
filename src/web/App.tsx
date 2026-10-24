@@ -207,6 +207,7 @@ export default function App() {
   const [pipelineError, setPipelineError] = useState<string | null>(null);
   const [canonReadiness, setCanonReadiness] = useState<CanonReadiness | null>(null);
   const [sourceSegments, setSourceSegments] = useState<SourceSegment[]>([]);
+  const [listeningReview, setListeningReview] = useState<{projectId:string;available:boolean}|null>(null);
 
   async function refresh() {
     try {
@@ -323,8 +324,8 @@ export default function App() {
   }
 
   async function loadSourceSegments(projectId: string) {
-    try { const result=await api<{segments:SourceSegment[]}>(`/projects/${projectId}/audio-segments?layer=original_reading`); if(selectedProjectRef.current===projectId) setSourceSegments(result.segments); }
-    catch { if(selectedProjectRef.current===projectId) setSourceSegments([]); }
+    try { const result=await api<{segments:SourceSegment[];sourceListeningReviewAvailable?:boolean}>(`/projects/${projectId}/audio-segments?layer=original_reading`); if(selectedProjectRef.current===projectId) {setSourceSegments(result.segments);setListeningReview({projectId,available:result.sourceListeningReviewAvailable===true});} }
+    catch { if(selectedProjectRef.current===projectId) {setSourceSegments([]);setListeningReview({projectId,available:false});} }
   }
 
   async function loadImageGenerationCosts(projectId: string) {
@@ -520,6 +521,7 @@ export default function App() {
             </p>
             <ol>{pipelineResult.results.map((result) => <li key={result.stage}><strong>{result.stage.replaceAll("_", " ")}</strong> — {result.reasoning}</li>)}</ol>
           </div>}
+          {listeningReview?.projectId===activeProject.id && listeningReview.available && <p><a href={`/api/projects/${activeProject.id}/source-listening-review`} target="_blank" rel="noreferrer">Source listening clips — adjust to 0.01 s and verify each window</a></p>}
           {sourceSegments.length > 0 && <ContinuousSpeechReview key={activeProject.id} projectId={activeProject.id} intervals={sourceSegments} characters={characters} onSaved={() => void loadSourceSegments(activeProject.id)} />}
           {sourceSegments.length > 0 && <details><summary>Source alignment intervals — listen to anything marked uncertain</summary><ul>{sourceSegments.map(segment => <li key={segment.id}><code>{(segment.start_ms/1000).toFixed(2)}–{(segment.end_ms/1000).toFixed(2)}s</code> · {segment.verse_ref ?? (segment.editorialTitle ? "editorial material" : "unassigned")} · {segment.alignmentStatus ?? "Legacy alignment — detailed evidence not recorded"}{segment.reviewerName ? ` · reviewed by ${segment.reviewerName}` : ""}{segment.assignedText ? ` · ${segment.assignedText}` : ""}{segment.editorialTitle ? ` · title: ${segment.editorialTitle}` : ""}{segment.crossReferenceText ? ` · references: (${segment.crossReferenceText})` : ""}{segment.editorialNextVerseRef ? ` · next Scripture begins ${segment.editorialNextVerseRef}` : ""}{segment.automatedVerseRef ? ` · automated span was ${segment.automatedVerseRef}` : ""}{segment.textMatchScore !== null && segment.textMatchScore !== undefined ? ` · local text-match score ${segment.textMatchScore}/100` : ""}<br /><BoundedIntervalAudio src={`/media/${segment.source_path}`} startMs={segment.start_ms} endMs={segment.end_ms} /></li>)}</ul></details>}
         </>}

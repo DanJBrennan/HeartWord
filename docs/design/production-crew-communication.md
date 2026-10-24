@@ -15,6 +15,18 @@ contribution records owner, input versions, verse/audio/shot scope, rationale,
 evidence, status, and destination. No role may alter verified Scripture,
 source performance, approved canon, producer holds, or another role's record.
 
+The live Director response schema offers only contribution IDs from the current
+input and revision, excluding superseded proposals and its own previous verdict.
+Its new contribution ID is available once that reply is saved. Older evidence
+remains in the record. Empty selections and holds remain available; the existing
+ownership, source, canon and acceptance checks still validate the returned reply.
+Objection-response IDs are similarly limited to that role's own retained
+findings; a Director cannot close another reviewer's finding through its reply.
+Sound and music cue schemas likewise offer only the registered assets of the
+role's kind. With none available, cues stay empty and the role can request a new
+recording. File aliases and future generation IDs do not approve an asset;
+existing duration, listening, source protection and mix checks remain mandatory.
+
 Each newly reported finding or production-director verdict also records an
 uncalibrated 0–100 agent confidence estimate and its limitations. This is
 specific to that claim, distinct from severity and evidence, and helps the

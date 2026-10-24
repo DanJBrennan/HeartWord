@@ -94,6 +94,8 @@ export interface VerseRecord {
    *  quote-alignment exercise in scripts/quote-alignment/) recover it
    *  without re-parsing the docx. */
   paragraphIndex: number;
+  /** A verse can continue before the next marker in the following paragraph. */
+  continuationParagraphIndices?: number[];
 }
 
 /**
@@ -112,7 +114,20 @@ export function parseSourceTextByVerse(docxPath: string): VerseRecord[] {
 
   const records: VerseRecord[] = [];
   lines.forEach((line, paragraphIndex) => {
-    for (const { verse, text } of splitParagraphIntoVerses(line)) {
+    const verses = splitParagraphIntoVerses(line);
+    const firstMarker = [...line.matchAll(VERSE_MARKER)][0];
+    const prefix = firstMarker ? line.slice(0, firstMarker.index).trim() : "";
+    const previous = records.at(-1);
+    // Mark 5:9's reply is at the start of the paragraph containing v10.
+    // Preserve these supplied words on v9; they are neither a heading nor
+    // part of v10. Require adjacent paragraphs and consecutive verse numbers
+    // so an unrelated preface is not silently attached to earlier Scripture.
+    const previousParagraph = previous?.continuationParagraphIndices?.at(-1) ?? previous?.paragraphIndex;
+    if (prefix && previous && previousParagraph === paragraphIndex - 1 && verses[0]?.verse === previous.verse + 1) {
+      previous.text += " " + prefix;
+      (previous.continuationParagraphIndices ??= []).push(paragraphIndex);
+    }
+    for (const { verse, text } of verses) {
       records.push({ verse, text, paragraphIndex });
     }
   });

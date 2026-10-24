@@ -2,7 +2,8 @@ import type { DatabaseSync } from "node:sqlite";
 import type { AudioPlacement } from "../pipeline/creative-direction/crew-types.js";
 
 export interface PreviewInterval { id: string; path: string; startMs: number; endMs: number; sourceStartMs: number; available: boolean; gainDb: number }
-export interface PreviewPicture { shotId: string; startMs: number; endMs: number; sourceStartMs: number }
+export interface PreviewPicture { shotId: string | null; startMs: number; endMs: number; sourceStartMs: number;
+  editorialBeatId?: string; path?: string; sha256?: string; label?: string }
 export interface ProgrammePreview {
   renderId: string | null; durationMs: number; timeline: PreviewPicture[];
   source: PreviewInterval[]; performance: PreviewInterval[];
@@ -23,7 +24,8 @@ export function joinPreviewIntervals(items: PreviewInterval[]): PreviewInterval[
  * custom hand edit. The immutable render map remains the timing authority. */
 export function readProgrammePreview(db: DatabaseSync, projectId: string,
   render: { id: string; total_duration_ms: number; historical: boolean } | null,
-  audio: Audio[], available: (path: string | null) => boolean): ProgrammePreview {
+  audio: Audio[], available: (path: string | null) => boolean,
+  verifiedSource?: (path: string, sha256: string) => boolean): ProgrammePreview {
   const preview: ProgrammePreview = { renderId: null, durationMs: 0, timeline: [], source: [], performance: [], cues: [], issues: [] };
   if (!render || render.historical) { preview.issues.push("No current recorded chapter timing map. Accepted reel uses a separate picture-only clock."); return preview; }
   const manifest = db.prepare("SELECT timeline_json,source_audio_json FROM chapter_render_manifests WHERE render_id=?").get(render.id) as { timeline_json: string; source_audio_json: string } | undefined;
@@ -33,15 +35,49 @@ export function readProgrammePreview(db: DatabaseSync, projectId: string,
     if (!Array.isArray(timeline) || !Array.isArray(placements)) throw new Error("Custom legacy recipe is not an executable timeline.");
     if (!finite(render.total_duration_ms) || render.total_duration_ms === 0) throw new Error("Recorded duration is invalid.");
     const shotIds = new Set((db.prepare("SELECT sh.id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=?").all(projectId) as Array<{ id: string }>).map(item => item.id));
+    const closing = db.prepare(`SELECT id,duration_ms,timeline_start_ms,timeline_end_ms,status,approved_by FROM editorial_beats
+      WHERE project_id=? AND placement='post_source' AND beat_type='title_card' ORDER BY timeline_start_ms,sequence`).all(projectId);
+    const closingMs = closing.reduce((n,b) => n + Number(b.duration_ms),0), closingStart = render.total_duration_ms - closingMs;
+    let closingCursor = closingStart, savedClosingCursor = Number(closing[0]?.timeline_start_ms ?? 0);
+    const closingRanges = new Map<string,{startMs:number;endMs:number}>();
+    for (const beat of closing) {
+      if (beat.status !== "accepted" || !String(beat.approved_by).trim() || Number(beat.timeline_start_ms) !== savedClosingCursor || Number(beat.timeline_end_ms)-savedClosingCursor !== Number(beat.duration_ms)) throw new Error("Closing credits lack complete accepted timing.");
+      closingRanges.set(String(beat.id),{startMs:closingCursor,endMs:closingCursor+Number(beat.duration_ms)});
+      closingCursor += Number(beat.duration_ms); savedClosingCursor = Number(beat.timeline_end_ms);
+    }
     const validRange = (item: { startMs: number; endMs: number; sourceStartMs: number }) => finite(item.startMs) && finite(item.endMs) && finite(item.sourceStartMs) && item.endMs > item.startMs && item.endMs <= render.total_duration_ms + 50;
-    if (timeline.some(item => !shotIds.has(item.shotId) || !validRange(item))) throw new Error("Picture timing is missing, invalid or belongs to another chapter.");
+    const knownPicture = (item: PreviewPicture) => {
+      if (item.shotId !== null) return !item.editorialBeatId && shotIds.has(item.shotId) && (!closing.length || item.endMs <= closingStart);
+      if (!item.editorialBeatId || !item.path || !item.sha256 || item.sourceStartMs !== 0 || !verifiedSource?.(item.path,item.sha256)) return false;
+      const ending = closingRanges.get(item.editorialBeatId);
+      const beat = ending ? ending.startMs === item.startMs && ending.endMs === item.endMs
+        : db.prepare("SELECT id FROM editorial_beats WHERE project_id=? AND id=? AND placement='pre_source' AND status='accepted' AND timeline_start_ms=? AND timeline_end_ms=?").get(projectId,item.editorialBeatId,item.startMs,item.endMs);
+      const selected = db.prepare(`SELECT payload FROM edit_commands WHERE project_id=? AND undone=0 AND command_type IN('select_editorial_media','select_editorial_title_card')
+        AND json_extract(payload,'$.editorialBeatId')=? ORDER BY sequence DESC LIMIT 1`).get(projectId,item.editorialBeatId);
+      const media = selected ? JSON.parse(String(selected.payload)) : null;
+      return !!beat && media?.projectId === projectId && media.path === item.path && media.sha256 === item.sha256;
+    };
+    if (timeline.some(item => !validRange(item) || !knownPicture(item))) throw new Error("Picture timing is missing, invalid or belongs to another chapter.");
+    if (closing.some(beat => !timeline.some(item => item.shotId === null && item.editorialBeatId === beat.id))) throw new Error("Accepted closing credits are missing from the recorded timeline.");
     const ordered = [...timeline].sort((a,b) => a.startMs-b.startMs);
     if (ordered.some((item,i) => i > 0 && item.startMs < ordered[i-1]!.endMs)) throw new Error("Overlapping picture placements require the existing editor.");
     const mapped = [...placements].sort((a,b) => a.startMs-b.startMs);
+    if (closing.length && mapped.some(item => item.endMs > closingStart)) throw new Error("Closing credits overlap the source performance.");
     if (mapped.some((item,i) => !validRange(item) || !finite(item.sourceEndMs) || Math.abs(item.sourceEndMs-item.sourceStartMs-(item.endMs-item.startMs)) > 50 || (i > 0 && item.startMs < mapped[i-1]!.endMs))) throw new Error("Speech timing is invalid, overlapping or changes source speed.");
     preview.renderId = render.id; preview.durationMs = render.total_duration_ms; preview.timeline = ordered;
     for (const [index, placement] of mapped.entries()) {
-      const original = audio.find(item => item.id === placement.segmentId && item.layer === "original_reading");
+      let original = audio.find(item => item.id === placement.segmentId && item.layer === "original_reading");
+      if (!original && placement.provenance === "unassigned_source_interval" && placement.voice === "original" &&
+          placement.sourcePath && placement.sourceSha256 && verifiedSource?.(placement.sourcePath, placement.sourceSha256)) {
+        const readings = audio.filter(item => item.layer === "original_reading").sort((a,b) => a.start_ms-b.start_ms);
+        const previous = readings.find(item => item.end_ms === placement.sourceStartMs && item.source_path === placement.sourcePath);
+        const next = readings.find(item => item.start_ms === placement.sourceEndMs && item.source_path === placement.sourcePath);
+        const gap = next && placement.segmentId === `source-gap:${previous ? previous.id : "start"}:${next.id}` &&
+          (previous || placement.sourceStartMs === 0) && !readings.some(item => item.start_ms < placement.sourceEndMs && item.end_ms > placement.sourceStartMs);
+        const tail = previous && previous.id === readings.at(-1)?.id && placement.segmentId === `source-tail:${previous.id}`;
+        if (gap || tail) original = { id: placement.segmentId, layer: "original_reading", source_path: placement.sourcePath,
+          start_ms: placement.sourceStartMs, end_ms: placement.sourceEndMs, original_segment_id: null };
+      }
       if (!original || placement.sourceStartMs < original.start_ms || placement.sourceEndMs > original.end_ms + 50) { preview.issues.push(`Speech placement ${placement.segmentId} lacks its exact source interval; no replacement inferred.`); continue; }
       const source: PreviewInterval = { id: `source:${index}`, path: original.source_path, startMs: placement.startMs, endMs: placement.endMs, sourceStartMs: placement.sourceStartMs, available: available(original.source_path), gainDb: 0 };
       preview.source.push(source);

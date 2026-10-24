@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import express from "express";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { generateNonSpeakingVideoCandidate } from "../../src/pipeline/media-generation/final-video.js";
+import { generateNonSpeakingVideoCandidate, localMotionDirection } from "../../src/pipeline/media-generation/final-video.js";
 import { generateSelectedFinalVideo } from "../../src/pipeline/media-generation/select-final-video.js";
 import { createVideoProviders, videoBackend, type VideoProviders } from "../../src/providers/video-selection.js";
 import { LtxVideoProvider } from "../../src/providers/ltx/index.js";
@@ -32,6 +32,14 @@ function providers(): VideoProviders {
     return result;
   })},veo:{generateFinal:vi.fn(async()=>result)},kling:{generateFinal:vi.fn(async()=>result)},draft:{generateDraft:vi.fn(async()=>result),generateGuided:vi.fn(async()=>result)}};
 }
+it("sends focused shot direction without the full chapter treatment or FDL and never truncates its actual instruction",()=>{
+ const shot="production director: The boat gently reaches the gravel; everyone remains aboard.";
+ const focused=localMotionDirection("\nAPPROVED FILM DIRECTION (fixture):\n"+shot+"\n\nACCEPTED FDL CONSTRAINTS (fixture):\n"+"chapter metadata ".repeat(1000)+"\nACCEPTED EMOTIONAL TREATMENT\nUnrelated later story action.");
+ expect(focused).toBe(shot);expect(localMotionDirection("long actual shot instruction ".repeat(300))).toHaveLength("long actual shot instruction ".repeat(300).trim().length);
+});
+it("does not turn a broader wardrobe list into additional visible cast",()=>{
+ expect(localMotionDirection("Wide static view. The boat reaches gravel. Jesus wears cream; James wears terracotta. Cool light from the left.")).toBe("Wide static view. The boat reaches gravel. Cool light from the left.");
+});
 it("defaults to LTX while keeping both cloud providers selectable",()=>{
   vi.stubEnv("HEARTWORD_VIDEO_PROVIDER",undefined);
   expect(videoBackend()).toBe("ltx");

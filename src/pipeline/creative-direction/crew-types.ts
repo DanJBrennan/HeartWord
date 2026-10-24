@@ -16,7 +16,17 @@ export type CrewRole = typeof PLANNING_ROLES[number] | typeof FINISHING_ROLES[nu
 export type CrewPhase = "planning" | "editing" | "finishing";
 export interface AudioPlacement { segmentId: string; sourceStartMs: number; sourceEndMs: number; startMs: number; endMs: number;
   /** Render-audit evidence; absent on an unrendered editorial plan. */
-  voice?: "original" | "cast"; speakerId?: string | null }
+  voice?: "original" | "cast"; speakerId?: string | null;
+  /** Exact immutable recording proof for an unassigned gap/tail, not a new
+   * reviewed attribution row or a guessed speaker. */
+  provenance?: "unassigned_source_interval"; sourcePath?: string; sourceSha256?: string }
+export interface EditorialOpeningBeat {
+  id: string; label: string; path: string; sha256: string; durationMs: number; startMs: number; endMs: number;
+}
+export interface PicturePlacement {
+  shotId: string | null; startMs: number; endMs: number; sourceStartMs?: number;
+  editorialBeatId?: string; path?: string; sha256?: string; label?: string;
+}
 export interface CrewShot {
   id: string; sceneId: string; sceneSequence: number; sequence: number;
   verseRef: string; action: string; framing: string | null; cameraMovement: string | null;
@@ -32,6 +42,12 @@ export interface CrewShot {
   clip: { id: string; path: string; durationMs: number } | null;
 }
 export interface CrewBrief {
+  /** Fixed producer-approved pre-source beats, kept outside Scripture shots.
+   * The planner prepends them; the Picture Editor edits chapter coverage only. */
+  editorialOpening?: EditorialOpeningBeat[];
+  /** Accepted nonnarrative post-source titles/credits, with relative timing.
+   * Appended after complete chapter coverage and justified pauses. */
+  editorialClosing?: EditorialOpeningBeat[];
   /** Saved QC evidence, not producer direction or current asset acceptance. */
   mediaReviewEvidence?: Array<{ id: string; shotId: string; note: string; createdAt: number }>;
   /** Read from the accepted planning run; never inferred for historical films. */
@@ -51,7 +67,7 @@ export interface CrewBrief {
   audioAssets: Array<{ id: string; kind: "music" | "sfx"; description: string; path: string;
     sha256: string; durationMs: number }>;
   render: { id: string; path: string; durationMs: number; sha256: string;
-    timeline: Array<{ shotId: string; startMs: number; endMs: number }>; audioMap?: AudioPlacement[];
+    timeline: PicturePlacement[]; audioMap?: AudioPlacement[];
     timingAudit?: SavedCutTimingAudit;
     finishing?: { baseRenderId: string; basePath: string; baseSha256: string; previousDecisions: CrewResult["contributions"] } } | null;
 }
@@ -77,7 +93,7 @@ export interface CrewContribution {
   edits?: Array<{ shotId: string; sourceStartMs: number; durationMs: number }>;
   pauses?: Array<{ afterSegmentId: string | null; durationMs: number; reason: string }>;
   colorAdjustments?: Array<{ shotId: string; brightness: number; contrast: number; saturation: number; reason: string }>;
-  audioCues?: Array<{ assetId: string; startMs: number; endMs: number; sourceStartMs: number; gainDb: number; reason: string }>;
+  audioCues?: Array<{ assetId: string; startMs: number; endMs: number; sourceStartMs: number; gainDb: number; reason: string; fadeInMs?: number; fadeOutMs?: number }>;
   generationRequests?: Array<{ prompt: string; durationMs: number; loop: boolean; startMs: number; gainDb: number; reason: string }>;
   decision?: "approve" | "revise" | "hold";
   decisionConfidence?: number; decisionLimitations?: string;
@@ -103,4 +119,4 @@ export interface CrewResult {
  *  before this image (see generateJsonWithImages) -- otherwise a model
  *  receiving several images (e.g. per-character canon reference art) has
  *  no way to know which image is which. */
-export interface ReviewMedia { mimeType: string; data: string; caption?: string }
+export interface ReviewMedia { mimeType: string; data: string; caption?: string; videoMetadata?: { fps: number } }

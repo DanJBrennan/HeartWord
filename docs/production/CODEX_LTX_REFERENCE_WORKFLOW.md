@@ -1,5 +1,19 @@
 # Built-in keyframes and local LTX reference workflow
 
+October 21 producer-approved Mark 5 execution extends the existing shot handoff
+to Hatam Mark 5 and catalog sources. All source/canon/current-plan checks remain.
+The installed web text encoder rejects prompts over 5,000 characters: motion
+submission now carries authoritative shot prose, retaining the full treatment
+and FDL in the pinned production record. The adapter checks its complete prompt,
+including audio rules, before SSH/upload and never truncates direction. Web text
+encoding remains selected with local Fast inference and no paid scene fallback.
+
+Prepare and accept scene pictures sequentially. Accepting a preceding scene view
+enriches automatic continuity packets; if that happens during a later candidate's
+review, reconcile the same retained picture against its new packet before
+selection. Retain the original import/review/cost and identify reimport as reuse,
+not as another built-in generation.
+
 Producer direction: October 14, 2026. This extends existing media preparation,
 crew handoffs, retained attempts/reviews and producer controls. It serves the
 autonomous faithful editable chapter and its ordinary watch/correct/selective
@@ -277,3 +291,14 @@ Your dot/live Mabel dispatch and direct ChatGPT/SMS delivery are unavailable in
 this session. Plugin discovery found no connected suitable SMS transport. This
 chat reports progress/result; no SMS delivery to the supplied number ending
 8114 is claimed. No unrelated naming work or new notification subsystem is added.
+
+### Mark 5 motion retake evidence (October 21)
+
+Web text encoding is the selected Desktop path. The first successful eight-second
+local render passed that encoder but materialized an extra boat passenger. The
+accepted three-person keyframe was correct. Chapter-wide wardrobe sentences in
+the shot direction named an off-screen disciple, so local motion handoff now
+omits those sentences and explicitly preserves the approved frame's people and
+sparse-shot count. It retains the full source direction in the production record.
+The failed take, actual review and inspected frame remain available; a deliberate
+retake is separate. This does not switch to local encoding or cloud inference.

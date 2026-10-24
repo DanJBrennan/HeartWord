@@ -100,18 +100,22 @@ NON-SPEAKING VIDEO RULE: This is a non-speaking shot. Do not generate dialogue, 
 NATURAL CROWD MOTION RULE: People in a crowd move on independent, staggered timings. At most a few people may reach, shift, or react at once while others hold, breathe, look, edge forward, or respond subtly at different moments. Never generate a synchronized wave of arms, a repeated group gesture, mirrored movement, or a mass simultaneous reach-and-retract.`;
   const authorization=productionAuthorization(db,dataDir,projectId);
   authorization.assertCurrent();
+  const acceptedPrompt = draftPrompt + directionsFromRun(requireCurrentPlan(db,dataDir,projectId),shot.id);
   const result = await draftProvider.generateDraft(
     // Do not attach named canonical reference sheets: the accepted frame is
     // the identity reference for video generation and avoids Gemini's block.
-    { shotId: `${shot.id}-draft-${id}`, prompt: draftPrompt+directionsFromRun(requireCurrentPlan(db,dataDir,projectId),shot.id), characters: [],authorizeSubmission:authorization.assertCurrent,productionRevision:{runId:authorization.runId,briefHash:authorization.briefHash} },
+    { shotId: `${shot.id}-draft-${id}`, prompt: acceptedPrompt, characters: [],authorizeSubmission:authorization.assertCurrent,productionRevision:{runId:authorization.runId,briefHash:authorization.briefHash} },
     { startFrame: { path: keyframe.result_asset_path } }
   );
 
   const risk = shotRiskFor(db, shotId);
+  // A provider may supply a local full-resolution preview. Its operation is
+  // still generate_draft, never deliverable footage; retain actual quality.
+  const resolution = typeof result.metadata?.resolution === "string" ? result.metadata.resolution : "360p";
   db.prepare(
     `INSERT INTO generation_attempts (id, shot_id, provider, model, operation, resolution, prompt, status, result_asset_path, cost_usd, created_at)
-     VALUES (?, ?, ?, ?, 'generate_draft', '360p', ?, 'hold_for_review', ?, ?, ?)`
-  ).run(id, shotId, result.provenance.provider, result.provenance.model, result.provenance.prompt,
+     VALUES (?, ?, ?, ?, 'generate_draft', ?, ?, 'hold_for_review', ?, ?, ?)`
+  ).run(id, shotId, result.provenance.provider, result.provenance.model, resolution, result.provenance.prompt,
     result.media?.path ?? null, result.cost.usd, now);
   bindAttemptRevision(db,projectId,id,authorization);
   db.prepare(
@@ -131,7 +135,7 @@ NATURAL CROWD MOTION RULE: People in a crowd move on independent, staggered timi
       const review = await reviewGeneratedVideo({
         videoPath: join(dataDir, "assets", result.media.path),
         keyframePath: join(dataDir, "assets", keyframe.result_asset_path),
-        instruction: keyframe.prompt ?? shot.action
+        instruction: result.provenance.prompt || acceptedPrompt
       });
       db.prepare(
         "INSERT INTO cost_ledger_entries (id, project_id, generation_attempt_id, amount_usd, created_at) VALUES (?, ?, ?, ?, ?)"

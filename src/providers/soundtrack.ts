@@ -1,6 +1,11 @@
 /** Documented REST adapters; vendor changes stay outside the Composer/Sound Designer. */
 export interface SoundtrackRequest { kind: "music" | "sfx"; prompt: string; durationMs: number; loop: boolean }
-export interface SoundtrackResult { bytes: Buffer; mimeType: string; provider: string; model: string; usage: unknown; requestId: string | null }
+export interface SoundtrackResult {
+  bytes: Buffer; mimeType: string; provider: string; model: string; usage: unknown; requestId: string | null;
+  /** Explicit provider dollar attribution only. Missing usage/pricing is not
+   * zero; the existing film reservation stays outstanding when absent. */
+  costUsd?: number | null;
+}
 export interface SoundtrackProvider { generate(request: SoundtrackRequest): Promise<SoundtrackResult> }
 
 export class GeminiMusicProvider implements SoundtrackProvider {

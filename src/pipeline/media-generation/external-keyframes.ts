@@ -4,6 +4,7 @@ import { constants, copyFileSync, mkdirSync, readFileSync, writeFileSync } from 
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
+import { discoverSourcePaths } from "../ingestion/source-catalog.js";
 import { requireCurrentPlan, directionsFromRun, validateHandoffPlan, bindAttemptRevision, validateAttemptRevision, savedProductionRecord, type StoredCrewRun } from "../creative-direction/crew-store.js";
 import type { FilmSnapshot } from "../creative-direction/production-record.js";
 import { sceneReferenceAssetsForVerse } from "../../providers/story-state-assets.js";
@@ -93,10 +94,24 @@ export function referenceGroups(references: KeyframeContext["references"], sets:
 /** Existing accepted scene views are continuity evidence, not building canon.
  * Explicit library set refs need the existing target-shot approval as well. */
 export function keyframeSetReferences(db: DatabaseSync, dataDir: string, shotId: string): SetReference[] {
+  const target = db.prepare("SELECT scene_id,sequence,action FROM shots WHERE id=?").get(shotId);
+  // materializeGapIdea appends supplementary shots to the scene roster. Their
+  // saved editorial anchor supplies the story position; the appended sequence
+  // can follow an entirely different location (for example shore vs bedroom).
+  const anchorId = String(target?.action ?? "").match(/(?:^|\n)Editorial anchor:\s*([a-zA-Z0-9_-]{1,80})\./)?.[1];
+  let beforeSequence = Number(target?.sequence ?? Number.MAX_SAFE_INTEGER);
+  if (anchorId) {
+    const anchor = db.prepare("SELECT scene_id,sequence FROM shots WHERE id=?").get(anchorId);
+    if (!anchor || anchor.scene_id !== target?.scene_id || Number(anchor.sequence) >= beforeSequence) {
+      throw new Error("Supplementary keyframe needs a valid earlier editorial anchor in the same scene.");
+    }
+    // Include the accepted anchor view itself, then the preceding scene view.
+    beforeSequence = Number(anchor.sequence) + 1;
+  }
   const rows = db.prepare(`SELECT ga.id,earlier.id AS shot_id,ga.result_asset_path AS path FROM generation_attempts ga
     JOIN shots earlier ON earlier.id=ga.shot_id JOIN shots target ON target.scene_id=earlier.scene_id
-    WHERE target.id=? AND earlier.sequence<target.sequence AND ga.operation='generate' AND ga.status='accepted'
-      AND ga.result_asset_path IS NOT NULL ORDER BY earlier.sequence DESC,ga.created_at DESC,ga.id DESC`).all(shotId);
+    WHERE target.id=? AND earlier.sequence<? AND ga.operation='generate' AND ga.status='accepted'
+      AND ga.result_asset_path IS NOT NULL ORDER BY earlier.sequence DESC,ga.created_at DESC,ga.id DESC`).all(shotId,beforeSequence);
   const refs: SetReference[] = [];
   const paths = new Set<string>();
   const views = new Set<string>();
@@ -192,8 +207,8 @@ export function getKeyframeContext(db: DatabaseSync, dataDir: string, shotId: st
     JOIN scenes sc ON sc.project_id = p.id WHERE sc.id = ?`).get(scene.id) as KeyframeContext["project"];
   // This bridge is deliberately scoped to the active production, not an implicit
   // approval of other books, languages or regional canons.
-  if (project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || ![2, 4].includes(project.chapter)) {
-    throw new Error("The external keyframe handoff currently supports Hatam Mark 2 and the producer-approved Mark 4 coverage plan only.");
+  if (project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || ![2, 4, 5].includes(project.chapter)) {
+    throw new Error("The external keyframe handoff currently supports Hatam Mark 2 and the producer-approved Mark 4 and 5 plans only.");
   }
   const cast = db.prepare(`SELECT c.id, c.name, c.region, c.canon_status FROM shot_characters sh
     JOIN characters c ON c.id = sh.character_id WHERE sh.shot_id = ? ORDER BY c.id`).all(shotId) as
@@ -250,15 +265,11 @@ export function prepareKeyframe(db: DatabaseSync, dataDir: string, shotId: strin
   prompt += directionsFromRun(plan, shotId);
   const filmInput = keyframeFilmInput(plan,shotId);
   prompt += keyframeFilmDirection(filmInput);
-  const sources = (context.project.chapter === 4
-    ? [
-        { role: "verified Hatam source", path: "source/hatam/text/Mark/Mark 4.docx" },
-        { role: "English reference", path: "source/english-esv/text/Mark/Mark 4.docx" }
-      ]
-    : [
-        { role: "verified Hatam source", path: `source/hatam/mark-${context.project.chapter}/mark-${context.project.chapter}-text.docx` },
-        { role: "English reference", path: `reference/english/mark-${context.project.chapter}/mark-${context.project.chapter}-text.docx` }
-      ]).map(source => {
+  const sourcePaths = discoverSourcePaths(context.project, undefined, dataDir, false);
+  const sources = [
+    { role: "verified Hatam source", path: relative(join(dataDir, "assets"), sourcePaths.docxPath).replace(/\\/g, "/") },
+    { role: "English reference", path: relative(join(dataDir, "assets"), sourcePaths.referencePath).replace(/\\/g, "/") }
+  ].map(source => {
     const path = assetPath(dataDir, source.path);
     return { ...source, sha256: sha256(readFileSync(path)), verses: parseSourceTextByVerse(path) };
   });

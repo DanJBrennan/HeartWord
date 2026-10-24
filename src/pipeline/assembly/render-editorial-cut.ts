@@ -1,10 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
-import { crewBriefHash, loadCrewBrief, productionAssetPath } from "../creative-direction/crew-context.js";
+import { crewBriefHash, digest, loadCrewBrief, productionAssetPath } from "../creative-direction/crew-context.js";
 import { latestCrewRun } from "../creative-direction/crew-store.js";
 import type { CrewResult } from "../creative-direction/crew-types.js";
 import { planEditorialCut } from "./editorial-plan.js";
@@ -41,7 +41,8 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
   try {
     const videos: string[] = [];
     for (const [index, edit] of cut.timeline.entries()) {
-      const clip = brief.shots.find(s => s.id === edit.shotId)!.clip!;
+      const clip = edit.shotId !== null ? brief.shots.find(s => s.id === edit.shotId)!.clip!
+        : [...brief.editorialOpening ?? [], ...brief.editorialClosing ?? []].find(beat => beat.id === edit.editorialBeatId)!;
       const input = productionAssetPath(dataDir, clip.path);
       if (edit.sourceStartMs + edit.endMs - edit.startMs > mediaDurationMs(input) + 50) throw new Error("A clip is shorter than its saved duration; request coverage instead of freezing it.");
       const frames = Math.round(edit.endMs * 24 / 1000) - Math.round(edit.startMs * 24 / 1000);
@@ -57,7 +58,7 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
     const silence = (durationMs: number) => {
       if (durationMs <= 0) return;
       const output = join(directory, `audio-${audio.length}.wav`);
-      runFfmpeg(["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", String(durationMs / 1000), "-c:a", "pcm_s16le", output]);
+      runFfmpeg(["-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-t", String(durationMs / 1000), "-c:a", "pcm_s16le", output]);
       audio.push(output);
     };
     const resolvedAudio: ResolvedAudioPlacement[] = cut.audioMap.map(placement => {
@@ -90,7 +91,7 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
       const output = join(directory, `audio-${audio.length}.wav`);
       runFfmpeg(["-ss", String(group.sourceStartMs / 1000), "-i", input,
         "-t", String((group.sourceEndMs - group.sourceStartMs) / 1000),
-        "-af", "apad", "-ar", "44100", "-ac", "2", "-c:a", "pcm_s16le", output]);
+        "-af", "apad", "-ar", "48000", "-ac", "2", "-c:a", "pcm_s16le", output]);
       // A picture cut is irrelevant to this check. Only a speaker-turn or
       // chapter end can make a renewed onset at the tail an audible fragment.
       const next = audioGroups[index + 1];
@@ -111,7 +112,7 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
     const renderId = randomUUID(), path = `generated/chapter/${projectId}/${renderId}.mp4`;
     const output = productionAssetPath(dataDir, path); mkdirSync(dirname(output), { recursive: true });
     runFfmpeg(["-f", "concat", "-safe", "0", "-i", concatList("video.txt", videos), "-i", audioPath, "-map", "0:v:0", "-map", "1:a:0",
-      "-c:v", "copy", "-c:a", "aac", "-t", String(cut.durationMs / 1000), "-movflags", "+faststart", output]);
+      "-c:v", "copy", "-c:a", "aac", "-ar", "48000", "-t", String(cut.durationMs / 1000), "-movflags", "+faststart", output]);
     const duration = mediaDurationMs(output);
     if (Math.abs(duration - cut.durationMs) > 100) throw new Error("Rendered duration differs from the protected performance and pauses.");
     assertNoRenderedFlashes(output);
@@ -129,8 +130,13 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
     db.exec("BEGIN IMMEDIATE");
     try {
       db.prepare("INSERT INTO chapter_renders (id,project_id,result_asset_path,total_duration_ms,shot_count,created_at) VALUES (?,?,?,?,?,?)").run(renderId, projectId, path, duration, cut.timeline.length, Date.now());
-      const auditedAudioMap = cut.audioMap.map((placement, index) => ({ ...placement,
-        voice: resolvedAudio[index]!.voice, speakerId: resolvedAudio[index]!.speakerId }));
+      const sourceHashes = new Map<string, string>();
+      const auditedAudioMap = cut.audioMap.map((placement, index) => {
+        const segment = brief.audio[index]!;
+        if (segment.provenance && !sourceHashes.has(segment.path)) sourceHashes.set(segment.path, digest(readFileSync(productionAssetPath(dataDir, segment.path))));
+        return { ...placement, voice: resolvedAudio[index]!.voice, speakerId: resolvedAudio[index]!.speakerId,
+          ...(segment.provenance ? { provenance: segment.provenance, sourcePath: segment.path, sourceSha256: sourceHashes.get(segment.path)! } : {}) };
+      });
       db.prepare("INSERT INTO chapter_render_manifests (render_id,timeline_json,source_audio_json) VALUES (?,?,?)").run(renderId, JSON.stringify(cut.timeline), JSON.stringify(auditedAudioMap));
       const sequence = Number(db.prepare("SELECT COALESCE(MAX(sequence),0)+1 AS n FROM edit_commands WHERE project_id=?").get(projectId)!.n);
       db.prepare("INSERT INTO edit_commands (id,project_id,sequence,command_type,payload,idempotency_key,applied_at) VALUES (?,?,?,'render_editorial_cut',?,?,?)")

@@ -39,7 +39,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
-import { generateJsonWithImages, type GeminiJsonSchema } from "../../providers/gemini-text.js";
+import { generateJsonWithImagesMetered, type GeminiJsonSchema } from "../../providers/gemini-text.js";
 import { runMediaGeneration } from "../media-generation/index.js";
 import {
   isLikenessAligned,
@@ -113,10 +113,12 @@ const LIKENESS_RESPONSE_SCHEMA: GeminiJsonSchema = {
 export async function checkCanonicalLikeness(
   characterName: string,
   referenceImagePath: string,
-  generatedImagePath: string
-): Promise<LikenessVerdict> {
+  generatedImagePath: string,
+  wardrobeReferencePath?: string
+): Promise<LikenessVerdict & {costUsd?:number}> {
   const referenceImage = { mimeType: "image/png", data: readFileSync(referenceImagePath).toString("base64") };
   const generatedImage = { mimeType: "image/png", data: readFileSync(generatedImagePath).toString("base64") };
+  const wardrobeImage=wardrobeReferencePath && wardrobeReferencePath!==referenceImagePath ? {mimeType:"image/png",data:readFileSync(wardrobeReferencePath).toString("base64")} : undefined;
 
   const prompt =
     `You are a continuity reviewer for a Scripture video production cast entirely with Hatam/Papuan ` +
@@ -142,8 +144,10 @@ export async function checkCanonicalLikeness(
     `specific combination is this character duplicated -- a real generation bug -- even if you can't clearly see ` +
     `that second figure's face, and even if the first figure's face check above scored well.`;
 
-  const verdict = await generateJsonWithImages<LikenessVerdict>(prompt, [referenceImage, generatedImage], LIKENESS_RESPONSE_SCHEMA);
-  return parseLikenessVerdict(verdict);
+  const scopedPrompt=wardrobeImage ? prompt.replaceAll("SECOND image","FINAL image").replaceAll("second image","final image")+
+    "\nREFERENCE AUTHORITY: Image 1 is the approved facial identity portrait. Image 2 is the current approved body/wardrobe reference used for this scene state. The FINAL image is the candidate. Judge face against Image 1, but visible clothing, mantle and head covering against Image 2; an older portrait cannot override the supplied approved body wardrobe. Multiple reference views are one person; count instances only in the FINAL candidate.\n" : prompt;
+  const response = await generateJsonWithImagesMetered<LikenessVerdict>(scopedPrompt, [referenceImage,...(wardrobeImage?[wardrobeImage]:[]),generatedImage], LIKENESS_RESPONSE_SCHEMA);
+  return {...parseLikenessVerdict(response.result), ...(response.usage.totalTokenCount>0 ? {costUsd:response.costUsd} : {})};
 }
 
 function readShotCharacterCheckRows(rows: Record<string, unknown>[]): ShotCharacterCheckRow[] {

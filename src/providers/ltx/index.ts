@@ -8,6 +8,7 @@ import { latestLogCommand, shellQuote, sharedLtxTransport, type LtxTransport } f
 import { prepareLtxVideoOutput } from "./output.js";
 
 export const LTX_MODEL = "ltx-2.5-fast";
+export const LTX_MAX_PROMPT_CHARACTERS = 5000;
 export const LTX_AMBIENT_DIRECTION = "AUDIO AND PERFORMANCE RULE: Only natural environmental ambience consistent with the supplied image and scene, including appropriate nonverbal animal calls when requested. No human speech, dialogue, narration, spoken words, gibberish voices, singing, human vocals or music. People remain non-speaking; no visible talking or lip-sync performance. Character speech is supplied separately by HeartWord.";
 export const LTX_DURATIONS = { "540p": [5, 6, 8, 10, 20], "720p": [5, 6, 8, 10], "1080p": [5] } as const;
 export function validateLtxOptions(resolution: string, duration: number, fps: number): asserts resolution is keyof typeof LTX_DURATIONS {
@@ -78,6 +79,7 @@ export class LtxVideoProvider implements VideoProvider {
     const resolution = opts.resolution ?? "720p", duration = opts.durationSeconds ?? 8, fps = opts.fps ?? 24;
     const audioMode = opts.audioMode ?? "ambient";
     const prompt = `${request.prompt}\n\n${LTX_AMBIENT_DIRECTION}`;
+    if(prompt.length>LTX_MAX_PROMPT_CHARACTERS)throw new Error(`LTX prompt exceeds the ${LTX_MAX_PROMPT_CHARACTERS}-character text-encoding limit. Compile focused shot prose before submission; do not truncate approved direction.`);
     const seed = opts.seed ?? randomInt(0, 2147483647);
     if (!Number.isSafeInteger(seed) || seed < 0 || seed > 2147483647) throw new Error("LTX seed must be an integer between 0 and 2147483647.");
     if (!request.prompt.trim()) throw new Error("LTX needs a nonempty shot prompt.");

@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync, renameSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -41,6 +41,10 @@ describe("editable chapter preservation", () => {
     expect(manifest.files.some(f => f.originals.includes("rejected.png"))).toBe(true);
     expect(manifest.files.some(f => f.originals.includes("superseded.wav"))).toBe(true);
     restoreChapterPackage(packageDir, restored);
+    const portrait = "docs/assets/control-room/agent-portraits/nell-editor.png";
+    expect(readFileSync(join(restored, "application", portrait))).toEqual(readFileSync(portrait));
+    const logo = "docs/assets/branding/heartword-ai-logo.png";
+    expect(readFileSync(join(restored, "application", logo))).toEqual(readFileSync(logo));
     const reopened = new DatabaseSync(join(restored, "db", "heartword.sqlite"));
     try {
       expect(reopened.prepare("SELECT id FROM projects").all()).toEqual([{ id: "p" }]);
@@ -100,5 +104,48 @@ describe("editable chapter preservation", () => {
     const snapshot = inspectChapterPackage(db, directory, "p");
     expect(snapshot.tables.production_lessons?.map(row => row.id)).toEqual(["book"]);
     expect(snapshot.tables.generation_attempts?.some(a => a.id === "other-take")).toBe(false);
+  });
+  it("retains the exact shot performance binding and voice/source authority without importing another chapter binding",()=>{
+    db.exec(`INSERT INTO audio_segments(id,project_id,layer,source_path,start_ms,end_ms,verse_ref,created_at)VALUES('other-audio','other','original_reading','other.wav',0,1000,'Mark 3:1',1);
+      INSERT INTO shot_utterance_bindings VALUES('bound','shot','o',125,875,'v','exact-source-hash',2,'Synthetic timing authority'),('other-bound','shot-other','other-audio',0,1000,'v','other-hash',2,'Other authority');`);
+    const original=db.prepare("SELECT * FROM shot_utterance_bindings WHERE id='bound'").get();
+    const snapshot=inspectChapterPackage(db,directory,"p",{includeApplication:false});
+    expect(snapshot.tables.shot_utterance_bindings).toEqual([original]);
+    expect(snapshot.tables.audio_segments?.some(row=>row.id==="other-audio")).toBe(false);
+    const packaged=join(directory,"bound-package"),restored=join(directory,"bound-restored");
+    exportChapterPackage(db,directory,"p",packaged,{includeApplication:false});restoreChapterPackage(packaged,restored);
+    const reopened=new DatabaseSync(join(restored,"db/heartword.sqlite"));try{
+      expect(reopened.prepare("SELECT * FROM shot_utterance_bindings").all()).toEqual([original]);
+      expect(reopened.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+    }finally{reopened.close();}
+  });
+  it("reopens immutable sidecars with Mac and old-root paths while the original assets are unavailable",()=>{
+    const remote="/Users/synthetic/LTX-Inbox/unique-reference.png",absolute=join(directory,"assets/take.png"),sidecar=JSON.stringify({sourceKeyframe:"take.png",remoteInputPath:remote,localOutputPath:absolute});
+    put("take.png.json",sidecar);mkdirSync(join(directory,"logs"));
+    writeFileSync(join(directory,"logs/disaster-recovery-paths.json"),JSON.stringify({version:1,references:[[remote,"assets/take.png"]]}));
+    const packaged=join(directory,"sidecar-package"),restored=join(directory,"sidecar-restored");
+    exportChapterPackage(db,directory,"p",packaged,{includeApplication:false});restoreChapterPackage(packaged,restored);
+    const originalAssets=resolve(directory,"assets"),offlineAssets=resolve(directory,"offline-assets");
+    if(!originalAssets.startsWith(resolve(directory))||!offlineAssets.startsWith(resolve(directory)))throw Error("Fixture move escapes temporary root.");
+    renameSync(originalAssets,offlineAssets);
+    const reopened=new DatabaseSync(join(restored,"db/heartword.sqlite"));try{
+      const audit=inspectChapterPackage(reopened,restored,"p",{includeApplication:false});
+      expect(audit.manifest.problems).toEqual([]);
+      expect(audit.manifest.files.some(f=>f.path.startsWith("assets/preserved-external/"))).toBe(false);
+      expect(readFileSync(join(restored,"assets/take.png.json"),"utf8")).toBe(sidecar);
+      const projection=JSON.parse(readFileSync(join(restored,"logs/disaster-recovery-paths.json"),"utf8"));
+      expect(projection.references).toContainEqual([remote,"assets/take.png"]);
+      expect(projection.references).toContainEqual([absolute,"assets/take.png"]);
+    }finally{reopened.close();}
+  });
+  it("preserves valid relative path spelling instead of changing pinned planning inputs",()=>{
+    put("folder/take.png","synthetic retained alias");
+    db.exec("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('alias','shot','fixture','fixture','generate','accepted','folder//take.png',0,2)");
+    const packaged=join(directory,"alias-package"),restored=join(directory,"alias-restored");
+    exportChapterPackage(db,directory,"p",packaged,{includeApplication:false});restoreChapterPackage(packaged,restored);
+    const reopened=new DatabaseSync(join(restored,"db/heartword.sqlite"));try{
+      expect(reopened.prepare("SELECT result_asset_path FROM generation_attempts WHERE id='alias'").get()!.result_asset_path).toBe("folder//take.png");
+      expect(readFileSync(join(restored,"assets/folder/take.png"),"utf8")).toBe("synthetic retained alias");
+    }finally{reopened.close();}
   });
 });

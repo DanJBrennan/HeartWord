@@ -11,6 +11,9 @@ import type { CrewResult } from "../../src/pipeline/creative-direction/crew-type
 import { exportChapterPackage, restoreChapterPackage, verifyChapterPackage } from "../../src/pipeline/assembly/chapter-package.js";
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 const ffmpegAvailable = spawnSync("ffmpeg", ["-version"], { stdio: "ignore" }).status === 0;
+function audioSampleRate(path: string): number {
+  return Number(execFileSync("ffprobe", ["-v", "error", "-select_streams", "a:0", "-show_entries", "stream=sample_rate", "-of", "csv=p=0", path], { encoding: "utf8" }).trim());
+}
 function docx(text: string): Buffer {
   const name = Buffer.from("word/document.xml"), bytes = Buffer.from(`<w:document><w:p><w:r><w:t>${text}</w:t></w:r></w:p></w:document>`);
   const local = Buffer.alloc(30); local.writeUInt32LE(0x04034b50, 0); local.writeUInt16LE(name.length, 26);
@@ -50,6 +53,7 @@ it.skipIf(!ffmpegAvailable)("renders real pauses and cast speech, then applies a
     db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('edit','p','editing',?,?,'approved',?,1)").run(crewBriefHash(before, "editing"), JSON.stringify(before), JSON.stringify(edit));
     const cut = renderEditorialCut(db, directory, "p", "edit");
     expect(renderEditorialCut(db, directory, "p", "edit")).toEqual(cut);
+    expect(audioSampleRate(join(assets, cut.path))).toBe(48000);
     expect(Math.abs(mediaDurationMs(join(assets, cut.path)) - 3000)).toBeLessThan(100);
     const raw = execFileSync("ffmpeg", ["-v", "error", "-i", join(assets, cut.path), "-f", "f32le", "-ac", "1", "-ar", "8000", "pipe:1"]);
     const samples = new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4);
@@ -62,17 +66,45 @@ it.skipIf(!ffmpegAvailable)("renders real pauses and cast speech, then applies a
     const brief = loadCrewBrief(db, directory, "p", "finishing");
     const finish: CrewResult = { status: "approved", calls: 7, summary: "Restrained score", contributions: {
       colorist: { summary: "Match", directions: [], findings: [], colorAdjustments: [{ shotId: "narration", brightness: 0.01, contrast: 1, saturation: 1, reason: "Match adjacent shot" }] },
-      composer: { summary: "Cue", directions: [], findings: [], generationRequests: [], audioCues: [{ assetId: "m", startMs: 0, endMs: 3000, sourceStartMs: 0, gainDb: -24, reason: "Quiet underscore" }] },
+      composer: { summary: "Cue", directions: [], findings: [], generationRequests: [], audioCues: [{ assetId: "m", startMs: 0, endMs: 3000, sourceStartMs: 0, gainDb: -24, reason: "Quiet underscore", fadeInMs: 500, fadeOutMs: 500 }] },
       sound_designer: { summary: "No effects needed", directions: [], findings: [], generationRequests: [], audioCues: [] }
     } };
     db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('finish','p','finishing',?,?,'approved',?,2)").run(crewBriefHash(brief, "finishing"), JSON.stringify(brief), JSON.stringify(finish));
     const finished = applyFinishing(db, directory, "p", "finish"); expect(applyFinishing(db, directory, "p", "finish")).toEqual(finished);
     expect(finished.path).not.toBe(cut.path); expect(Math.abs(mediaDurationMs(join(assets, finished.path)) - 3000)).toBeLessThan(100);
+    expect(audioSampleRate(join(assets, finished.path))).toBe(48000);
+    const finishedRaw = execFileSync("ffmpeg", ["-v", "error", "-i", join(assets, finished.path), "-f", "f32le", "-ac", "1", "-ar", "8000", "pipe:1"]);
+    const finishedSamples = new Float32Array(finishedRaw.buffer, finishedRaw.byteOffset, finishedRaw.byteLength / 4);
+    // Measure only the music's 220Hz component; the retained 440/880Hz
+    // source/cast tones must not masquerade as a soundtrack envelope.
+    const musicAmplitude = (start: number, end: number) => {
+      let sine = 0, cosine = 0;
+      const first = Math.round(start * 8000), last = Math.round(end * 8000);
+      for (let i = first; i < last; i++) {
+        const phase = 2 * Math.PI * 220 * i / 8000;
+        sine += finishedSamples[i]! * Math.sin(phase); cosine += finishedSamples[i]! * Math.cos(phase);
+      }
+      return Math.hypot(sine, cosine) * 2 / (last - first);
+    };
+    expect(musicAmplitude(0.02, 0.07)).toBeLessThan(musicAmplitude(0.3, 0.4) * 0.3);
+    expect(musicAmplitude(2.85, 2.95)).toBeLessThan(musicAmplitude(2.15, 2.25) * 0.4);
+    const phase = (values: Float32Array, start: number, end: number, hz: number) => {
+      let sine=0,cosine=0;
+      for(let i=Math.round(start*8000);i<Math.round(end*8000);i++){
+        const angle=2*Math.PI*hz*i/8000;sine+=values[i]!*Math.sin(angle);cosine+=values[i]!*Math.cos(angle);
+      }
+      return Math.atan2(cosine,sine);
+    };
+    for(const [start,end,hz] of [[0.7,1.1,440],[2.3,2.7,880]]){
+      const difference=phase(finishedSamples,start!,end!,hz!)-phase(samples,start!,end!,hz!);
+      expect(Math.abs(Math.atan2(Math.sin(difference),Math.cos(difference)))).toBeLessThan(0.04);
+    }
     expect(loadCrewBrief(db, directory, "p", "finishing").render!.audioMap).toEqual(brief.render!.audioMap);
     const revisedBrief = loadCrewBrief(db, directory, "p", "finishing");
     expect(revisedBrief.render!.finishing!.baseRenderId).toBe(cut.renderId);
     db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('finish2','p','finishing',?,?,'approved',?,3)").run(crewBriefHash(revisedBrief, "finishing"), JSON.stringify(revisedBrief), JSON.stringify(finish));
     const revised = applyFinishing(db, directory, "p", "finish2");
+    expect(audioSampleRate(join(assets, revised.path))).toBe(48000);
     const pcm = (path: string) => execFileSync("ffmpeg", ["-v", "error", "-i", join(assets, path), "-f", "s16le", "-ac", "1", "-ar", "8000", "pipe:1"]);
     const first = pcm(finished.path), second = pcm(revised.path);
     const firstSamples = new Int16Array(first.buffer, first.byteOffset, first.byteLength / 2), secondSamples = new Int16Array(second.buffer, second.byteOffset, second.byteLength / 2);
@@ -98,10 +130,11 @@ it.skipIf(!ffmpegAvailable)("renders real pauses and cast speech, then applies a
       expect(reopenedBrief.render!.audioMap).toEqual(revisedBrief.render!.audioMap);
       const modified = structuredClone(finish);
       modified.summary = "Lower retained music by 1 dB";
-      modified.contributions.composer!.audioCues![0]!.gainDb = -25;
+      modified.contributions.composer!.audioCues![0]!.gainDb = -26;
       reopened.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('restored-edit','p','finishing',?,?,'approved',?,4)")
         .run(crewBriefHash(reopenedBrief, "finishing"), JSON.stringify(reopenedBrief), JSON.stringify(modified));
       const preview = applyFinishing(reopened, restored, "p", "restored-edit");
+      expect(audioSampleRate(join(restored, "assets", preview.path))).toBe(48000);
       expect(mediaDurationMs(join(restored, "assets", preview.path))).toBeCloseTo(3000, -2);
       const previewPcm = execFileSync("ffmpeg", ["-v", "error", "-i", join(restored, "assets", preview.path), "-f", "s16le", "-ac", "1", "-ar", "8000", "pipe:1"]);
       const previewSamples = new Int16Array(previewPcm.buffer, previewPcm.byteOffset, previewPcm.byteLength / 2);
@@ -124,7 +157,7 @@ it.skipIf(!ffmpegAvailable)("renders real pauses and cast speech, then applies a
           const retainedDb = new DatabaseSync(join(retainedRoot, "db", "heartword.sqlite"), { readOnly: true });
           try { expect(loadCrewBrief(retainedDb, retainedRoot, "p", "finishing").render!.audioMap).toEqual(reopenedBrief.render!.audioMap); }
           finally { retainedDb.close(); }
-          writeFileSync(join(demo, "evidence.json"), JSON.stringify({ fixture: "Synthetic chapter: red/blue picture, 440 Hz original narration, 880 Hz cast speech, 220 Hz music; no generated or invented Scripture.", originalRootUnavailable: true, restoredRoot: retainedRoot, change: "Music cue -24 dB to -25 dB", preview: preview.path, durationMs: mediaDurationMs(join(restored, "assets", preview.path)), costLedgerUnchanged: true, audioMap: reopenedBrief.render!.audioMap, history: reopened.prepare("SELECT command_type,payload FROM edit_commands ORDER BY sequence").all() }, null, 2));
+          writeFileSync(join(demo, "evidence.json"), JSON.stringify({ fixture: "Synthetic chapter: red/blue picture, 440 Hz original narration, 880 Hz cast speech, 220 Hz music; no generated or invented Scripture.", originalRootUnavailable: true, restoredRoot: retainedRoot, change: "Music cue -24 dB to -26 dB", preview: preview.path, durationMs: mediaDurationMs(join(restored, "assets", preview.path)), costLedgerUnchanged: true, audioMap: reopenedBrief.render!.audioMap, history: reopened.prepare("SELECT command_type,payload FROM edit_commands ORDER BY sequence").all() }, null, 2));
         }
       }
     } finally { reopened.close(); }

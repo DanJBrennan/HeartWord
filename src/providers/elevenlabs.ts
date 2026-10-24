@@ -80,7 +80,8 @@ export async function listElevenLabsVoices(): Promise<ElevenLabsVoice[]> {
 export interface ReVoiceResult {
   audioBuffer: Buffer;
   contentType: string;
-  requestSettings: { model_id: string; remove_background_noise: boolean; output_format: string };
+  requestSettings: { model_id: string; remove_background_noise: boolean; output_format: string; voice_settings?: Record<string,number|boolean> };
+  usage?: {requestId:string|null;historyItemId:string|null;characterCost:string|null};
 }
 
 /**
@@ -93,7 +94,7 @@ export interface ReVoiceResult {
  * Three-Layer Audio Architecture) and, later, Kling's Avatar API for
  * lip-sync.
  */
-export async function reVoiceAudio(voiceId: string, sourceAudioPath: string): Promise<ReVoiceResult> {
+export async function reVoiceAudio(voiceId: string, sourceAudioPath: string, options: {voiceSettings?:Record<string,number|boolean>} = {}): Promise<ReVoiceResult> {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
     throw new Error(
@@ -103,11 +104,12 @@ export async function reVoiceAudio(voiceId: string, sourceAudioPath: string): Pr
   }
 
   const audioBytes = await readFile(sourceAudioPath);
-  const requestSettings = { model_id: "eleven_multilingual_sts_v2", remove_background_noise: true, output_format: "mp3_44100_128" };
+  const requestSettings:ReVoiceResult["requestSettings"] = { model_id: "eleven_multilingual_sts_v2", remove_background_noise: true, output_format: "mp3_44100_128",...(options.voiceSettings?{voice_settings:options.voiceSettings}:{}) };
   const form = new FormData();
   form.append("audio", new Blob([audioBytes]), basename(sourceAudioPath));
   form.append("model_id", requestSettings.model_id);
   form.append("remove_background_noise", String(requestSettings.remove_background_noise));
+  if(requestSettings.voice_settings)form.append("voice_settings",JSON.stringify(requestSettings.voice_settings));
 
   const url = `https://api.elevenlabs.io/v1/speech-to-speech/${voiceId}?output_format=${requestSettings.output_format}`;
   const res = await fetch(url, {
@@ -124,5 +126,5 @@ export async function reVoiceAudio(voiceId: string, sourceAudioPath: string): Pr
   }
 
   const arrayBuffer = await res.arrayBuffer();
-  return { audioBuffer: Buffer.from(arrayBuffer), contentType: res.headers.get("content-type") ?? "audio/mpeg", requestSettings };
+  return { audioBuffer: Buffer.from(arrayBuffer), contentType: res.headers.get("content-type") ?? "audio/mpeg", requestSettings,usage:{requestId:res.headers.get("request-id"),historyItemId:res.headers.get("history-item-id"),characterCost:res.headers.get("character-cost")} };
 }

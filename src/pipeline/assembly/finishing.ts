@@ -25,10 +25,19 @@ export function structuralCutFindings(brief: CrewBrief): string[] {
   if (render.timingAudit) issues.push("Existing cut timing is an observation, not verified complete source coverage. " + render.timingAudit.findings.join(" "));
   let end = 0;
   const represented = new Set<string>();
+  const closingStart = render.durationMs - (brief.editorialClosing?.at(-1)?.endMs ?? 0);
+  if (brief.editorialClosing?.length && render.audioMap?.some(a => a.endMs > closingStart)) issues.push("Closing credits overlap the source performance.");
   for (const item of render.timeline) {
-    if (!brief.shots.some(s => s.id === item.shotId) || !Number.isFinite(item.startMs) || !Number.isFinite(item.endMs) || Math.abs(item.startMs - end) > 2 || item.endMs <= item.startMs) issues.push("Render timeline contains an unknown shot, gap, overlap or invalid duration.");
-    represented.add(item.shotId); end = item.endMs;
+    const opening = item.shotId === null ? brief.editorialOpening?.find(b => b.id === item.editorialBeatId) : undefined;
+    const closing = item.shotId === null ? brief.editorialClosing?.find(b => b.id === item.editorialBeatId) : undefined;
+    const beat = opening ?? closing, offset = opening ? 0 : closingStart;
+    const known = item.shotId !== null ? !item.editorialBeatId && brief.shots.some(s => s.id === item.shotId) && (!brief.editorialClosing?.length || item.endMs <= closingStart)
+      : beat && item.path === beat.path && item.sha256 === beat.sha256 && item.sourceStartMs === 0 && item.startMs === offset + beat.startMs && item.endMs === offset + beat.endMs;
+    if (!known || !Number.isFinite(item.startMs) || !Number.isFinite(item.endMs) || Math.abs(item.startMs - end) > 2 || item.endMs <= item.startMs) issues.push("Render timeline contains an unknown shot, gap, overlap or invalid duration.");
+    represented.add(item.shotId ?? `editorial:${item.editorialBeatId}`); end = item.endMs;
   }
+  if (brief.editorialOpening?.some(beat => !represented.has(`editorial:${beat.id}`))) issues.push("The approved editorial opening is missing from the recorded timeline.");
+  if (brief.editorialClosing?.some(beat => !represented.has(`editorial:${beat.id}`))) issues.push("The accepted closing credits are missing from the recorded timeline.");
   if (Math.abs(end - render.durationMs) > 100) issues.push("Saved shot timeline does not cover the rendered cut.");
   return [...new Set(issues)];
 }
@@ -61,15 +70,33 @@ export function finishingRecipe(brief: CrewBrief, result: CrewResult): { inputs:
   const inputs: string[] = [];
   cues.forEach((cue, index) => {
     inputs.push(brief.audioAssets.find(a => a.id === cue.assetId)!.path);
-    filters.push(`[${index + 1}:a]atrim=start=${cue.sourceStartMs / 1000}:duration=${(cue.endMs - cue.startMs) / 1000},asetpts=PTS-STARTPTS,volume=${cue.gainDb}dB,adelay=${cue.startMs}:all=1[cue${index}]`);
+    const duration = (cue.endMs - cue.startMs) / 1000;
+    const fades = [
+      ...(cue.fadeInMs ? [`afade=t=in:d=${cue.fadeInMs / 1000}`] : []),
+      ...(cue.fadeOutMs ? [`afade=t=out:st=${duration - cue.fadeOutMs / 1000}:d=${cue.fadeOutMs / 1000}`] : [])
+    ];
+    filters.push(`[${index + 1}:a]atrim=start=${cue.sourceStartMs / 1000}:duration=${duration},asetpts=PTS-STARTPTS,volume=${cue.gainDb}dB,${fades.length ? fades.join(",") + "," : ""}adelay=${cue.startMs}:all=1[cue${index}]`);
   });
   if (cues.length) {
     filters.push(`[0:a]asplit=2[speech][detector]`);
     filters.push(`${cues.map((_, i) => `[cue${i}]`).join("")}amix=inputs=${cues.length}:normalize=0,apad[bed]`);
     filters.push("[bed][detector]sidechaincompress=threshold=0.03:ratio=8:attack=10:release=250[ducked]");
-    filters.push("[speech][ducked]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.98:level=false[sound]");
+    // Compensate the limiter's lookahead: otherwise it delays the exact
+    // source clock by 239 samples at48kHz, even when no peak is limited.
+    filters.push("[speech][ducked]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.98:level=false:latency=true[sound]");
   } else filters.push("[0:a]anull[sound]");
   return { inputs, filter: filters.join(";"), videoLabel: "[picture]", audioLabel: "[sound]" };
+}
+
+/** A concatenated picture can change its decoded color metadata between shots.
+ * FFmpeg reinitializes that graph; sharing its graph with buffered audio then
+ * drops audio samples. Keep the genuine stored recipe intact but execute its
+ * independent picture/sound components as separate graphs. */
+export function finishingFilterArgs(recipe: { filter: string }): string[] {
+  const [picture, ...audio] = recipe.filter.split(";");
+  if (!picture?.startsWith("[0:v]") || !picture.endsWith("[picture]") || !audio.length)
+    throw new Error("Finishing recipe must retain separate picture and sound components.");
+  return ["-filter_complex", picture, "-filter_complex", audio.join(";")];
 }
 
 export async function reviewChapter(projectId: string, maxCalls = 17): Promise<CrewResult & { runId: string }> {
@@ -120,8 +147,8 @@ export function applyFinishing(db: DatabaseSync, dataDir: string, projectId: str
   const out = productionAssetPath(dataDir, path);
   mkdirSync(dirname(out), { recursive: true });
   execFileSync("ffmpeg", ["-v", "error", "-n", "-i", productionAssetPath(dataDir, brief.render!.finishing?.basePath ?? brief.render!.path),
-    ...recipe.inputs.flatMap(p => ["-i", productionAssetPath(dataDir, p)]), "-filter_complex", recipe.filter,
-    "-map", recipe.videoLabel, "-map", recipe.audioLabel, "-c:v", "libx264", "-crf", "18", "-c:a", "aac",
+    ...recipe.inputs.flatMap(p => ["-i", productionAssetPath(dataDir, p)]), ...finishingFilterArgs(recipe),
+    "-map", recipe.videoLabel, "-map", recipe.audioLabel, "-c:v", "libx264", "-crf", "18", "-c:a", "aac", "-ar", "48000",
     "-t", String(brief.render!.durationMs / 1000), "-movflags", "+faststart", out], { stdio: ["ignore", "ignore", "pipe"] });
   const duration = mediaDurationMs(out);
   if (Math.abs(duration - brief.render!.durationMs) > 100) throw new Error("Finishing changed the cut duration; output was not promoted.");

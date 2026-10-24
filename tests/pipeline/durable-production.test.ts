@@ -21,7 +21,8 @@ async function fixtureCrewContribution(prompt: string) {
     ...(role === "picture_editor" ? { coverageRequests: [], edits: [
       { shotId: "narrator", sourceStartMs: 0, durationMs: 500 },
       { shotId: "a", sourceStartMs: 0, durationMs: 1000 },
-      { shotId: "b", sourceStartMs: 0, durationMs: 1000 }
+      { shotId: "b", sourceStartMs: 0, durationMs: 1000 },
+      { shotId: "narrator", sourceStartMs: 0, durationMs: 500 }
     ], pauses: [] } : {}),
     ...(role === "colorist" ? { colorAdjustments: [] } : {}),
     ...(role === "sound_designer" || role === "composer" ? { audioCues: [], generationRequests: [] } : {}),
@@ -134,12 +135,12 @@ describe.skipIf(!ffmpeg)("durable production recovery", () => {
     db.exec("INSERT INTO generation_attempts (id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at) VALUES ('n-final','narrator','fixture','fixture','generate_final_video','accepted','returned.mp4',0,2),('n-assembled','narrator','fixture','fixture','assemble_shot','accepted','returned.mp4',0,3),('a-assembled','a','fixture','fixture','assemble_shot','accepted','returned.mp4',0,3),('b-assembled','b','fixture','fixture','assemble_shot','accepted','returned.mp4',0,3); INSERT INTO clips VALUES ('n-clip','narrator','n-final',0,500,2),('n-assembled-clip','narrator','n-assembled',0,500,3),('a-assembled-clip','a','a-assembled',0,1000,3),('b-assembled-clip','b','b-assembled',0,1000,3)");
     const { runAssembly } = await import("../../src/pipeline/assembly/index.js");
     const assembled = await runAssembly("p");
-    expect(assembled.ok).toBe(true);
+    expect(assembled.ok, assembled.reasoning).toBe(true);
     const render = db.prepare("SELECT result_asset_path,total_duration_ms FROM chapter_renders WHERE project_id='p' ORDER BY created_at DESC LIMIT 1").get() as {result_asset_path:string;total_duration_ms:number};
     expect(readFileSync(join(assets, render.result_asset_path)).length).toBeGreaterThan(0);
-    expect(render.total_duration_ms).toBeGreaterThanOrEqual(2400);
+    expect(render.total_duration_ms).toBeGreaterThanOrEqual(3000);
     const manifest = JSON.parse((db.prepare("SELECT source_audio_json FROM chapter_render_manifests WHERE render_id=(SELECT id FROM chapter_renders WHERE project_id='p' ORDER BY created_at DESC LIMIT 1)").get() as {source_audio_json:string}).source_audio_json);
-    expect(manifest.map((entry: {segmentId:string}) => entry.segmentId)).toEqual(["n", "a-src", "b-src"]);
+    expect(manifest.map((entry: {segmentId:string}) => entry.segmentId)).toEqual(["n", "a-src", "b-src", "source-tail:b-src"]);
     expect(sync).toHaveBeenCalledTimes(2);
   }, 30000);
 });

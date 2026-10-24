@@ -155,9 +155,10 @@ async function runDirectorReview(
       .map(
         ({ idea, round }) =>
           `- id=${idea.id} (round ${round}/${MAX_ROUNDS_PER_CONFLICT}, ~$${ESTIMATED_COST_USD[idea.operation].toFixed(2)}): ` +
-          `[${idea.operation}${idea.targetShotVerseRef ? ` -> ${idea.targetShotVerseRef}` : ""}] "${idea.label}" -- ${idea.description}` +
-          `${idea.setting ? ` [setting: ${idea.setting}]` : ""} ` +
-          `(${idea.kind}, ~${idea.estimatedDurationSec}s). Decorum claim: ${idea.decorumRationale}`
+          // Review the complete CURRENT revision. Omitting its targetShotId
+          // made the Director repeatedly request an anchor already supplied
+          // by the Creative Director, exhausting the bounded negotiation.
+          JSON.stringify(idea)
       )
       .join("\n") +
     `\n\nReturn one verdict per idea (matching its id exactly): "approve" (it should be built as-is), "reject" (it ` +

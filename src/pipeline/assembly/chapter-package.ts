@@ -57,7 +57,7 @@ export function productionRecords(db: DatabaseSync, projectId?: string): { table
   if (projectId === undefined) return { tables: all, schema };
   if (!selected.projects?.size) throw new Error("Project not found.");
   let changed = true;
-  const owners: Record<string, string> = { shots: "scene_id", shot_characters: "shot_id", generation_attempts: "shot_id",
+  const owners: Record<string, string> = { shots: "scene_id", shot_characters: "shot_id", shot_utterance_bindings: "shot_id", generation_attempts: "shot_id",
     media_reuse_candidates: "target_shot_id", coverage_beats: "shot_id", coverage_keyframe_attempts: "coverage_beat_id",
     clips: "shot_id", composite_audio_source_map: "composite_segment_id", chapter_render_manifests: "render_id",
     production_events: "run_id", character_versions: "character_id", character_assets: "character_version_id",
@@ -96,7 +96,7 @@ export function productionRecords(db: DatabaseSync, projectId?: string): { table
             selected[fk.table]!.add(parent); changed = true;
           }
         }
-      } else if (owners[table] && (!["shots", "shot_characters", "generation_attempts", "clips", "coverage_beats", "coverage_keyframe_attempts", "media_reuse_candidates"].includes(table) || !ownedByOtherChapter(table, row)) && keys[table]!.some(fk => fk.from === owners[table] &&
+      } else if (owners[table] && (!["shots", "shot_characters", "shot_utterance_bindings", "generation_attempts", "clips", "coverage_beats", "coverage_keyframe_attempts", "media_reuse_candidates"].includes(table) || !ownedByOtherChapter(table, row)) && keys[table]!.some(fk => fk.from === owners[table] &&
         fk.table !== "projects" && row[fk.from] != null && [...(selected[fk.table] ?? [])].some(parent => parent[fk.to || "id"] === row[fk.from]))) {
         selected[table]!.add(row); changed = true;
       }
@@ -217,7 +217,8 @@ export function inspectChapterPackage(db: DatabaseSync, dataDir: string, project
       bySource.set(full, { path: `application/${slash(relative(resolve("."), full))}`, bytes, sha256: hash(readFileSync(full)), originals: [full], references: ["application source snapshot"], role: "original" });
     }
   }
-  if (options.includeApplication !== false) for (const path of ["src", "scripts", "package.json", "package-lock.json", "tsconfig.json", "tsconfig.base.json", "vite.config.ts", "vitest.config.ts", "docs/design/fdl"]) addApplication(resolve(path));
+  if (options.includeApplication !== false) for (const path of ["src", "scripts", "package.json", "package-lock.json", "tsconfig.json", "tsconfig.base.json", "vite.config.ts", "vitest.config.ts", "docs/design/fdl",
+    "docs/assets/control-room/agent-portraits", "docs/assets/branding"]) addApplication(resolve(path));
   // Earlier voicing used fixed names and left superseded files unregistered.
   const castDirectory = resolve(assets, "generated", String(project.language), `${project.book}-${project.chapter}`, "composite_cast_master");
   if (inside(assets, castDirectory) && existsSync(castDirectory)) for (const name of readdirSync(castDirectory)) if (statSync(resolve(castDirectory, name)).isFile()) add(resolve(castDirectory, name), "retained cast-master history");
@@ -305,7 +306,12 @@ export function restoreChapterPackage(directory: string, destination: string): C
   for (const file of manifest.files) for (const original of file.originals) {
     const rel = file.path.replace(/^assets\//, "");
     const target = file.path.startsWith("assets/") ? rel : resolve(destination, file.path);
-    relocations.set(original, target);
+    // Keep valid relative tokens verbatim when their same tree is retained.
+    // Changing slash spelling can invalidate a hash-pinned planning brief or
+    // collapse separately retained aliases in UNIQUE library rows.
+    const sameRelativeAsset = !isAbsolute(original) && file.path.startsWith("assets/") &&
+      slash(relative(resolve(manifest.sourceRoot,"assets"),resolve(manifest.sourceRoot,"assets",original))) === rel;
+    relocations.set(original, sameRelativeAsset ? original : target);
   }
   mkdirSync(resolve(destination, "db"), { recursive: true });
   for (const file of manifest.files) {
@@ -314,6 +320,20 @@ export function restoreChapterPackage(directory: string, destination: string): C
     if (hash(readFileSync(target)) !== file.sha256) throw new Error(`Restore integrity failed: ${file.path}`);
   }
   restoreProductionRecords(resolve(destination, "db", "heartword.sqlite"), tables, readFileSync(portablePath(directory, manifest.schemaFile), "utf8"), relocations);
+  // Provider/review sidecars are immutable and can contain absolute paths to
+  // the original machine or Mac working copies. Retain their exact bytes and
+  // resolve those references through the existing recovery projection.
+  const projection = resolve(destination,"logs/disaster-recovery-paths.json");
+  mkdirSync(dirname(projection),{recursive:true});
+  if (existsSync(projection)) {
+    const history=resolve(destination,`logs/recovery-history/${hash(readFileSync(projection))}-chapter-prior-paths.json`);
+    mkdirSync(dirname(history),{recursive:true});
+    if (existsSync(history)) {
+      if (hash(readFileSync(history))!==hash(readFileSync(projection))) throw new Error("Prior recovery projection history changed.");
+    } else copyFileSync(projection,history,constants.COPYFILE_EXCL);
+  }
+  writeFileSync(projection,JSON.stringify({version:1,sourceRoot:manifest.sourceRoot,recordsSha256:manifest.recordsSha256,
+    references:manifest.files.flatMap(file=>file.originals.map(original=>[original,file.path]))},null,2));
   writeFileSync(resolve(destination, "restored-from.json"), JSON.stringify({ package: resolve(directory), recordsSha256: manifest.recordsSha256, restoredAt: new Date().toISOString(), noGeneration: true }, null, 2), { flag: "wx" });
   return manifest;
 }

@@ -15,6 +15,22 @@ const proposal: CreativeDirectorProposal = { id: "proposal", projectId: "p", nar
 beforeEach(() => { vi.resetAllMocks(); db = new DatabaseSync(":memory:"); db.exec(readFileSync("src/db/schema.sql", "utf8")); db.exec("INSERT INTO projects (id,language,book,chapter,created_at,updated_at) VALUES ('p','hatam','mark',2,1,1)"); });
 afterEach(() => db.close());
 describe("Creative/Production Director negotiation", () => {
+  it("lets the Director inspect a corrected anchor and current staging without another false revision", async () => {
+    const corrected = { ...idea, targetShotId: "corrected-anchor", framing: "medium_wide", cameraMovement: "static", charactersInvolved: ["Peter"], narrativeRationale: "The crowd stays outside while Peter follows Jesus." };
+    vi.mocked(generateJsonMetered).mockImplementation(async (prompt, schema) => metered((schema.properties as Record<string, unknown>).verdicts
+      ? { verdicts: [{ ideaId: "idea", verdict: prompt.includes('"targetShotId":"corrected-anchor"') ? "approve" : "request_changes", feedback: "The new shot needs its exact chapter anchor and staging.", confidence: 90, limitations: "Text-only direction; footage still needs normal review." }] }
+      : { ideas: [corrected] }) as never);
+    const result = await negotiateGapProposal(db, "p", { ...proposal, ideas: [{ ...idea, targetShotId: "" }] });
+    expect(result.approvedIdeas).toEqual([corrected]);
+    expect(result.rejectedIdeas).toEqual([]);
+    expect(result.roundsUsed).toBe(1);
+    expect(generateJsonMetered).toHaveBeenCalledTimes(3);
+    const lastPrompt = vi.mocked(generateJsonMetered).mock.calls[2]![0];
+    expect(lastPrompt).toContain('"framing":"medium_wide"');
+    expect(lastPrompt).toContain('"charactersInvolved":["Peter"]');
+    expect(db.prepare("SELECT COUNT(*) n FROM director_negotiation_log WHERE role='production_director'").get()!.n).toBe(2);
+    expect(db.prepare("SELECT COUNT(*) n FROM cost_ledger_entries").get()!.n).toBe(3);
+  });
   it("rejects an unresolved conflict at the revision cap and retains context throughout", async () => {
     vi.mocked(generateJsonMetered).mockImplementation(async (_prompt, schema) => metered((schema.properties as Record<string, unknown>).verdicts
       ? { verdicts: [{ ideaId: "idea", verdict: "request_changes", feedback: "Resolve continuity", confidence: 70, limitations: "Needs producer visual review." }] }

@@ -22,6 +22,7 @@ export function editorialReviewTargets(brief: CrewBrief): string[] {
   const targets: string[] = [];
   const timeline = render.timeline;
   for (let i = 0; i < timeline.length;) {
+    if (timeline[i]!.shotId === null) { i++; continue; }
     let j = i + 1;
     while (j < timeline.length && timeline[j]!.shotId === timeline[i]!.shotId) j++;
     const duration = timeline[j - 1]!.endMs - timeline[i]!.startMs;
@@ -29,7 +30,7 @@ export function editorialReviewTargets(brief: CrewBrief): string[] {
     i = j;
   }
   const counts = new Map<string, number>();
-  for (const item of timeline) counts.set(item.shotId, (counts.get(item.shotId) ?? 0) + 1);
+  for (const item of timeline) if (item.shotId !== null) counts.set(item.shotId, (counts.get(item.shotId) ?? 0) + 1);
   for (const [shotId, count] of counts) if (count >= 3) targets.push(`Shot ${shotId} appears ${count} times; inspect for obvious recycled footage.`);
   for (const item of timeline) {
     const shot = brief.shots.find(s => s.id === item.shotId);

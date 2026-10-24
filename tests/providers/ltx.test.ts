@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { LtxVideoProvider, LTX_AMBIENT_DIRECTION, ltxProgress, validateLtxOptions } from "../../src/providers/ltx/index.js";
+import { LtxVideoProvider, LTX_AMBIENT_DIRECTION, LTX_MAX_PROMPT_CHARACTERS, ltxProgress, validateLtxOptions } from "../../src/providers/ltx/index.js";
 import { parseBackendPort, shellQuote, type LtxTransport } from "../../src/providers/ltx/transport.js";
 import { ltxJson } from "../../src/providers/ltx/http.js";
 import { GeminiVideoProvider } from "../../src/providers/gemini/index.js";
@@ -71,6 +71,11 @@ function provider() { return new LtxVideoProvider({transport,dataDir:root,sleep:
 const options = {startFrame:{path:"key frame.png"},durationSeconds:5,seed:42};
 
 describe("LTX Desktop adapter", () => {
+  it("holds an oversized prompt before SSH, upload or generation, including mandatory audio rules",async()=>{
+    const length=LTX_MAX_PROMPT_CHARACTERS-LTX_AMBIENT_DIRECTION.length-2;
+    await expect(provider().generateFinal({...request,prompt:"x".repeat(length+1)},options)).rejects.toThrow("text-encoding limit");
+    expect(transport.connect).not.toHaveBeenCalled();expect(transport.upload).not.toHaveBeenCalled();expect(requests).toHaveLength(0);
+  });
   it("holds changed input bytes after upload and does not silently drop ending frames on cloud adapters",async()=>{
     transport.upload.mockImplementationOnce(async()=>writeFileSync(join(root,"assets","key frame.png"),"changed during transfer"));
     await expect(provider().generateFinal(request,options)).rejects.toThrow("changed during upload");

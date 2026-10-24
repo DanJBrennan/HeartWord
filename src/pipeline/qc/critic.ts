@@ -50,7 +50,7 @@
  * before wiring it in by default.
  */
 import { readFileSync } from "node:fs";
-import { generateGroundedText, generateJsonWithImages, type GeminiJsonSchema, type GroundingSource } from "../../providers/gemini-text.js";
+import { generateGroundedText, generateJsonWithImagesMetered, type GeminiJsonSchema, type GroundingSource } from "../../providers/gemini-text.js";
 
 export type CriticSeverity = "none" | "minor" | "moderate" | "severe";
 
@@ -168,8 +168,8 @@ function higherSeverity(a: CriticSeverity, b: CriticSeverity): CriticSeverity {
   return levels.indexOf(a) >= levels.indexOf(b) ? a : b;
 }
 
-async function checkCrowdDuplicates(image: { mimeType: string; data: string }): Promise<CrowdDuplicateVerdict> {
-  return generateJsonWithImages<CrowdDuplicateVerdict>(
+async function checkCrowdDuplicates(image: { mimeType: string; data: string }): Promise<CrowdDuplicateVerdict & {costUsd?:number}> {
+  const response=await generateJsonWithImagesMetered<CrowdDuplicateVerdict>(
     `Inspect this single generated keyframe solely for copied crowd members. Enumerate every visible person, then compare ` +
       `facial structure, hairline/curl pattern, beard shape, garment folds, and pose. Count the largest group of distinct ` +
       `people that are visibly the same generated person. Do not count people as duplicates merely because they share a generic ` +
@@ -181,6 +181,7 @@ async function checkCrowdDuplicates(image: { mimeType: string; data: string }): 
     [image],
     CROWD_DUPLICATE_SCHEMA
   );
+  return {...response.result,...(response.usage.totalTokenCount>0 ? {costUsd:response.costUsd} : {})};
 }
 
 const SEVERITY_LINE = /SEVERITY:\s*(none|minor|moderate|severe)/i;
@@ -445,8 +446,10 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
   // generation call on it.
   const images = [...referenceImages, ...(precedingImage ? [precedingImage] : []), image];
   let result = await generateGroundedText(prompt, images);
+  let groundedCostUsd:number|undefined=result.costUsd>0 ? result.costUsd : undefined;
   if (!SEVERITY_LINE.test(result.text)) {
     result = await generateGroundedText(prompt, images);
+    groundedCostUsd=groundedCostUsd!==undefined && result.costUsd>0 ? groundedCostUsd+result.costUsd : undefined;
     if (!SEVERITY_LINE.test(result.text)) {
       throw new Error(
         `Critic's grounded research call returned no parseable SEVERITY line twice in a row -- treating as an ` +
@@ -505,6 +508,7 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
     structuredFindings,
     sources,
     suggestedFix,
-    preserve
+    preserve,
+    ...(groundedCostUsd!==undefined && duplicateVerdict.costUsd!==undefined ? {costUsd:groundedCostUsd+duplicateVerdict.costUsd} : {})
   };
 }

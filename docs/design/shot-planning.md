@@ -100,6 +100,16 @@ Every source verse and planned shot must be represented; that coverage check
 does not prove that the interpretation or beat divisions are good. The existing
 specialists and independent critics judge those choices.
 
+Live Mark 5 compatibility check (October 21): the Gemini `responseSchema`
+transport rejects a numeric enum entry for this version field before model
+generation. The request therefore uses an integer with an explicit version-1
+description; existing runtime validation still requires the returned number to
+equal 1. This changes no saved treatment version or review authority.
+An explicitly clear review may also leave its required `requestedChange` string
+empty, meaning no correction is requested. Evidence, limitations and bounded
+confidence remain required; concern/unverified verdicts still require a concrete
+requested change. This preserves the reviewer's actual verdict, not an override.
+
 Consider motivated close-ups, anticipation, reactions, context/establishing
 views, openings/endings, ambience, musical entrances/releases and wordless
 space. Explain selected and omitted options. A 24-second introduction or
@@ -232,6 +242,22 @@ should be visible as a disagreement and its resolution, not silently
 smoothed over.
 
 ## Interaction Log
+
+Gap negotiations send the complete current idea to the Production Director,
+including its exact shot anchor, cast, framing and camera direction. A revision
+must be reviewed from its revised fields; a shortened description that omits an
+already supplied anchor can otherwise exhaust the bounded negotiation on a
+false missing-field objection. Original ideas, replies, costs and verdicts
+remain in the existing negotiation log.
+
+A returned malformed first-pass planning reply may be corrected by continuing
+the same saved run from its exact completed role prefix. The caller verifies
+the unchanged brief, original successful event outputs and returned failed
+reply before resuming. Completed roles are neither called nor logged again;
+the prior calls still count against the original cap. The rejected event,
+costs and pre-continuation envelope remain retained. Planning Picture Editor
+replies contain intent, with executable edits, pauses, audio cues and generation
+requests left empty for the existing editing and finishing controls.
 
 An unresolved disagreement, or a chapter reaching a reviewable state, is
 also a candidate producer-notification event — see

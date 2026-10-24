@@ -80,7 +80,8 @@ export function confirmContinuousSpeech(db: DatabaseSync, input: {
     audioHash: audioHash(getDataDir(), members[0]!.source_path), internalVerseTiming: input.internalVerseTiming,
     reviewerName: input.reviewerName.trim(), evidence: input.evidence.trim(), members };
   const hashes = sourceReviewHashes(db, input.projectId);
-  db.exec("BEGIN TRANSACTION");
+  const ownsTransaction = !db.isTransaction;
+  if (ownsTransaction) db.exec("BEGIN TRANSACTION");
   try {
     if (input.characterId) for (const member of members) recordSourceAlignmentSpeakerAttribution(db, {
       projectId: input.projectId, audioSegmentId: member.id, characterId: input.characterId,
@@ -90,8 +91,8 @@ export function confirmContinuousSpeech(db: DatabaseSync, input: {
     db.prepare("INSERT INTO edit_commands (id,project_id,sequence,command_type,payload,idempotency_key,applied_at) VALUES (?,?,?,'confirm_continuous_speech',?,?,?)")
       .run(run.id, input.projectId, sequence, JSON.stringify({ run, ...hashes, supersedesRunId: input.supersedesRunId,
         supersededRunSnapshot: superseded ? JSON.parse(superseded.payload) : undefined }), input.idempotencyKey, Date.now());
-    db.exec("COMMIT");
-  } catch (error) { db.exec("ROLLBACK"); throw error; }
+    if (ownsTransaction) db.exec("COMMIT");
+  } catch (error) { if (ownsTransaction) db.exec("ROLLBACK"); throw error; }
   return run;
 }
 

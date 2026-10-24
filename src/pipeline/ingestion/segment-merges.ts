@@ -48,7 +48,8 @@ export function recordSegmentMerge(db: DatabaseSync, input: {
   }
 
   const mergedId = randomUUID(), mergeId = randomUUID(), now = Date.now();
-  db.exec("BEGIN TRANSACTION");
+  const ownsTransaction = !db.isTransaction;
+  if (ownsTransaction) db.exec("BEGIN TRANSACTION");
   try {
     db.prepare("INSERT INTO audio_segments (id,project_id,layer,source_path,start_ms,end_ms,speaker_character_id,verse_ref,confidence,created_at) VALUES (?,?,'original_reading',?,?,?,NULL,NULL,NULL,?)")
       .run(mergedId, input.projectId, first.source_path, first.start_ms, second.end_ms, now);
@@ -78,9 +79,9 @@ export function recordSegmentMerge(db: DatabaseSync, input: {
         attributionIds.length ? JSON.stringify(attributionIds) : null,
         overrideIds.length ? JSON.stringify(overrideIds) : null,
         input.reviewerName.trim(), input.evidence.trim(), hashes.sourceHash, hashes.alignmentHash, now);
-    db.exec("COMMIT");
+    if (ownsTransaction) db.exec("COMMIT");
   } catch (error) {
-    db.exec("ROLLBACK");
+    if (ownsTransaction) db.exec("ROLLBACK");
     throw error;
   }
 

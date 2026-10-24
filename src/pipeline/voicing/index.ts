@@ -85,10 +85,11 @@ export interface VoicingRunResult {
  * whose output file already exists is reused rather than regenerated --
  * pass force=true to regenerate anyway (e.g. after re-casting a voice).
  */
-export async function runVoicing(projectId: string, opts: { force?: boolean; sourceSegmentIds?: readonly string[] } = {}): Promise<VoicingRunResult> {
+export interface VoicingOptions { force?: boolean; sourceSegmentIds?: readonly string[]; voiceSettings?: Record<string,number|boolean> }
+export async function runVoicing(projectId: string, opts: VoicingOptions = {}): Promise<VoicingRunResult> {
   return observeWork(projectId, "voice_lipsync", () => runVoicingImpl(projectId, opts));
 }
-async function runVoicingImpl(projectId: string, opts: { force?: boolean; sourceSegmentIds?: readonly string[] }): Promise<VoicingRunResult> {
+async function runVoicingImpl(projectId: string, opts: VoicingOptions): Promise<VoicingRunResult> {
   const db = getDb();
   const project = db.prepare(`SELECT id, language, book, chapter FROM projects WHERE id = ?`).get(projectId) as
     | ProjectRow
@@ -150,7 +151,8 @@ async function runVoicingImpl(projectId: string, opts: { force?: boolean; source
     JOIN audio_segments o ON o.id=bo.audio_segment_id AND o.project_id=? AND o.layer='original_reading'
     JOIN shot_utterance_bindings ub ON ub.source_audio_segment_id=o.id
     LEFT JOIN composite_audio_source_map m ON m.original_segment_id=o.id
-    LEFT JOIN audio_segments a ON a.id=m.composite_segment_id AND a.project_id=o.project_id AND a.layer='composite_cast_master'`)
+    LEFT JOIN audio_segments a ON a.id=m.composite_segment_id AND a.project_id=o.project_id AND a.layer='composite_cast_master'
+    WHERE m.composite_segment_id IS NOT NULL`)
     .all(project.id) as unknown as ReviewedMasterRow[];
   const reviewedByOriginal = new Map(reviewedMasters.map(row => [row.originalSegmentId, row]));
   for (const seg of segments) {
@@ -242,11 +244,13 @@ async function runVoicingImpl(projectId: string, opts: { force?: boolean; source
       const outFileName = `${run.id}-${randomUUID()}-${assignment?.voiceProvider ?? "passthrough"}.mp3`;
       const outPath = join(outDir, outFileName);
       let requestSettings: unknown = null;
+      let providerUsage: unknown = null;
       if (assignment) {
         const tmp = join(outDir, `${randomUUID()}-source.tmp.mp3`);
         extractClip(absSourcePath, run.startMs, run.endMs, tmp);
-        const result = await reVoiceAudio(assignment.voiceId, tmp);
+        const result = await reVoiceAudio(assignment.voiceId, tmp, opts.voiceSettings ? {voiceSettings:opts.voiceSettings} : {});
         requestSettings = result.requestSettings ?? null;
+        providerUsage = result.usage ?? null;
         writeFileSync(outPath, result.audioBuffer, { flag: "wx" });
         rmSync(tmp, { force: true }); generated++;
       } else { extractClip(absSourcePath, run.startMs, run.endMs, outPath); passthrough++; }
@@ -255,7 +259,7 @@ async function runVoicingImpl(projectId: string, opts: { force?: boolean; source
         speechRunId: run.id, members: run.members, sourcePath: seg.source_path, sourceHash,
         sourceStartMs: run.startMs, sourceEndMs: run.endMs, verseRef: run.verseRef,
         internalVerseTiming: run.internalVerseTiming, voiceVersionId: assignment?.versionId ?? null,
-        provider: assignment?.voiceProvider ?? "local", requestSettings, durationMs,
+        provider: assignment?.voiceProvider ?? "local", requestSettings, providerUsage, durationMs,
         usage: assignment ? "not_reported" : "local_extraction", directCostUsd: assignment ? null : 0 }, null, 2), { flag: "wx" });
       if (Math.abs(durationMs - (run.endMs - run.startMs)) > 100) throw new Error(`Continuous cast take ${run.id} does not match the unchanged source speed/duration; retain it for review before retrying.`);
       for (const member of run.members) {
@@ -270,12 +274,14 @@ async function runVoicingImpl(projectId: string, opts: { force?: boolean; source
     const outFileName = assignment ? `${slug}-${assignment.voiceProvider}.mp3` : `${slug}-passthrough.mp3`;
     const outPath = join(outDir, outFileName);
     let requestSettings: unknown = null;
+    let providerUsage: unknown = null;
 
     if (assignment) {
       const tmpClipPath = join(outDir, `${slug}-source-clip.tmp.mp3`);
       extractClip(absSourcePath, seg.start_ms, seg.end_ms, tmpClipPath);
-      const result = await reVoiceAudio(assignment.voiceId, tmpClipPath);
+      const result = await reVoiceAudio(assignment.voiceId, tmpClipPath, opts.voiceSettings ? {voiceSettings:opts.voiceSettings} : {});
       requestSettings = result.requestSettings ?? null;
+      providerUsage = result.usage ?? null;
       writeFileSync(outPath, result.audioBuffer, { flag: "wx" });
       rmSync(tmpClipPath, { force: true });
       generated++;
@@ -296,7 +302,7 @@ async function runVoicingImpl(projectId: string, opts: { force?: boolean; source
       format: "heartword-cast-master", version: 1, originalSegmentId: seg.id,
       sourcePath: seg.source_path, sourceHash, sourceStartMs: seg.start_ms, sourceEndMs: seg.end_ms,
       voiceVersionId: assignment?.versionId ?? null, voiceId: assignment?.voiceId ?? null,
-      provider: assignment?.voiceProvider ?? "local", requestSettings, durationMs,
+      provider: assignment?.voiceProvider ?? "local", requestSettings, providerUsage, durationMs,
       usage: assignment ? "not_reported" : "local_extraction", directCostUsd: assignment ? null : 0
     }, null, 2), { flag: "wx" });
     newRows.push({

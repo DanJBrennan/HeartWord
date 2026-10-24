@@ -9,6 +9,8 @@ import type { CrewBrief, CrewPhase, CrewShot, CrewResult } from "./crew-types.js
 import { readCutTimingAudit } from "../assembly/cut-timing-audit.js";
 import { readConfirmedSpeechRuns, speechRunPauseIsSafe } from "../ingestion/continuous-speech.js";
 import { speechRunBinding } from "../voice-lipsync/speech-run-audio.js";
+import { decodeToPcm16Mono } from "../ingestion/pitch.js";
+import { readAcceptedEditorialOpening, readAcceptedEditorialClosing } from "../assembly/editorial-beats.js";
 
 export const digest = (value: string | Buffer): string => createHash("sha256").update(value).digest("hex");
 export function productionAssetPath(dataDir: string, path: string): string {
@@ -80,6 +82,16 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
     }
     audio.push(segment);
     end = segment.endMs;
+  }
+  // Alignment describes attributed speech, not the physical end of a recording.
+  // Preserve the last file's remaining samples for editing/finishing without
+  // changing reviewed attribution rows or invalidating a current planning run.
+  if (phase !== "planning") {
+    const last = alignedAudio.at(-1)!;
+    const recordingEndMs = Math.ceil(decodeToPcm16Mono(productionAssetPath(dataDir, last.path), 8000).length / 8);
+    if (recordingEndMs < end) throw new Error("Aligned source audio extends beyond its decoded recording; reconcile the source before editing.");
+    if (recordingEndMs > end) audio.push({ id: `source-tail:${last.id}`, startMs: end, endMs: recordingEndMs,
+      verseRef: null, speakerId: null, path: last.path, confidence: null, provenance: "unassigned_source_interval" });
   }
   for (const segment of audio) if (segment.speakerId) {
     const original = db.prepare("SELECT canon_status, group_id FROM characters WHERE id=?").get(segment.speakerId);
@@ -219,6 +231,12 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
     }
   }
   const brief: CrewBrief = { project, source, audio, canon, shots, producerNotes, appliedLessons, spentUsd, audioAssets, render };
+  if (phase !== "planning") {
+    const opening = readAcceptedEditorialOpening(db,dataDir,projectId);
+    if (opening.length) brief.editorialOpening = opening;
+    const closing = readAcceptedEditorialClosing(db,dataDir,projectId);
+    if (closing.length) brief.editorialClosing = closing;
+  }
   if (phase !== "planning") brief.mediaReviewEvidence = db.prepare(`SELECT r.id,r.subject_id shotId,r.note,r.created_at createdAt FROM review_notes r
     JOIN shots sh ON sh.id=r.subject_id JOIN scenes sc ON sc.id=sh.scene_id
     WHERE r.project_id=? AND sc.project_id=? AND r.source='qc' AND r.subject_type='shot'

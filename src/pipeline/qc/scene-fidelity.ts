@@ -41,7 +41,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
-import { generateJsonWithImages, type GeminiJsonSchema } from "../../providers/gemini-text.js";
+import { generateJsonWithImagesMetered, type GeminiJsonSchema } from "../../providers/gemini-text.js";
 import { runMediaGeneration } from "../media-generation/index.js";
 import {
   type FidelityVerdict,
@@ -93,7 +93,7 @@ export async function checkSceneFidelity(
   action: string,
   requiredCrowdDensity: string | null,
   continuityConstraint: string | null
-): Promise<FidelityVerdict> {
+): Promise<FidelityVerdict & {costUsd?:number}> {
   const generatedImage = { mimeType: "image/png", data: readFileSync(generatedImagePath).toString("base64") };
 
   const prompt =
@@ -108,8 +108,8 @@ export async function checkSceneFidelity(
     `match, and the continuity constraint. Reject a visually plausible frame when it depicts a different ` +
     `causal moment than the planned action.`;
 
-  const verdict = await generateJsonWithImages<FidelityVerdict>(prompt, [generatedImage], FIDELITY_RESPONSE_SCHEMA);
-  return parseFidelityVerdict(verdict);
+  const response = await generateJsonWithImagesMetered<FidelityVerdict>(prompt, [generatedImage], FIDELITY_RESPONSE_SCHEMA);
+  return {...parseFidelityVerdict(response.result), ...(response.usage.totalTokenCount>0 ? {costUsd:response.costUsd} : {})};
 }
 
 interface ShotFidelityRow {

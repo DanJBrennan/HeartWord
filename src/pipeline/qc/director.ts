@@ -46,22 +46,15 @@ import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
 import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
-import { assetPath } from "../media-generation/external-keyframes.js";
+import { assetPath, getKeyframeContext } from "../media-generation/external-keyframes.js";
+import { discoverSourcePaths } from "../ingestion/source-catalog.js";
 import { checkCanonicalLikeness, isLikenessAligned } from "./canonical-likeness.js";
 import {approvedWardrobeQcReference,assertWardrobeReviewBasis} from "../../characters/wardrobe-refinement.js";
 import { checkSceneFidelity, isSceneFidelityAligned } from "./scene-fidelity.js";
 import { formatCriticFindings, parseCriticFindings, runCritic, type CriticCharacterReference, type CriticFinding, type CriticReport } from "./critic.js";
-import { decideGenerationStatus, type DirectorDecision } from "./director-verdict.js";
+import { decideGenerationStatus, MAX_AUTOMATIC_RETRIES, type DirectorDecision } from "./director-verdict.js";
 import { matchesBeatScope, stripBeatTag, tagNote, type NoteScope } from "./beat-scope.js";
 
-// Same hardcoded Hatam Mark 2 source paths external-keyframes.ts and
-// external-coverage-keyframes.ts already use -- this whole pipeline is a
-// single-chapter v1 pilot (see AGENTS.md), not yet parameterized by
-// project/book/chapter.
-const SCRIPTURE_SOURCES = [
-  { role: "Hatam (verified source)", path: "source/hatam/mark-2/mark-2-text.docx" },
-  { role: "English (reference)", path: "reference/english/mark-2/mark-2-text.docx" }
-];
 
 /**
  * Loads the verified scripture text for a shot's verse range, so the
@@ -72,19 +65,15 @@ const SCRIPTURE_SOURCES = [
  */
 function loadScriptureText(db: ReturnType<typeof getDb>, dataDir: string, shotId: string, verseRef: string | null): string | null {
   if (!verseRef) return null;
-  // SCRIPTURE_SOURCES is hardcoded to Hatam Mark 2 (the same convention
-  // external-keyframes.ts/external-coverage-keyframes.ts use for their
-  // own single-chapter v1 pilot) -- reading it unconditionally for
-  // whatever project is actually being reviewed would silently hand the
-  // Critic the WRONG passage the moment a second project exists. Only
-  // load it when this shot really is Hatam Mark 2.
+  // Match the producer-approved handoff scope and actual chapter catalog.
+  // A Mark 5 picture must never receive the old Mark 2 pilot passage.
   const project = db
     .prepare(
       `SELECT p.language, p.book, p.chapter FROM projects p JOIN scenes sc ON sc.project_id = p.id JOIN shots s ON s.scene_id = sc.id
        WHERE s.id = ?`
     )
     .get(shotId) as { language: string; book: string; chapter: number } | undefined;
-  if (!project || project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || project.chapter !== 2) {
+  if (!project || project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || ![2,4,5].includes(project.chapter)) {
     return null;
   }
   let range: { start: number; end: number };
@@ -93,9 +82,12 @@ function loadScriptureText(db: ReturnType<typeof getDb>, dataDir: string, shotId
   } catch {
     return null;
   }
+  let paths;
+  try { paths=discoverSourcePaths(project,undefined,dataDir,false); } catch { return null; }
+  const sources=[{role:"Hatam (verified source)",path:paths.docxPath},{role:"English (reference)",path:paths.referencePath}];
   const parts: string[] = [];
-  for (const source of SCRIPTURE_SOURCES) {
-    const absPath = assetPath(dataDir, source.path);
+  for (const source of sources) {
+    const absPath = source.path;
     if (!existsSync(absPath)) continue;
     const verses = parseSourceTextByVerse(absPath).filter((v) => v.verse >= range.start && v.verse <= range.end);
     if (!verses.length) continue;
@@ -278,6 +270,8 @@ function getProjectIdForShot(db: ReturnType<typeof getDb>, shotId: string): stri
 }
 
 export interface ShotReviewReport {
+  /** Complete reported review-call estimate; omitted if any call is unreported. */
+  costUsd?: number;
   shotId: string;
   decision: DirectorDecision;
   critic: CriticReport;
@@ -548,6 +542,9 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
     shotOverrides: loadShotOverrides(db, candidate.id)
   });
 
+  const reviewCosts: Array<number|undefined> = [critic.costUsd];
+  const sceneReferences=getKeyframeContext(db,dataDir,candidate.id).references;
+  let wardrobeMismatch=false;
   let likenessAligned = true;
   const likenessNotes: string[] = [];
   for (const character of characters) {
@@ -562,7 +559,10 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
       likenessNotes.push(`${character.character_name}'s approved comparison asset is missing`);
       continue;
     }
-    const verdict = await checkCanonicalLikeness(character.character_name, referenceAbsPath, generatedAbsPath);
+    const wardrobe=sceneReferences.find(r=>r.character_id===character.character_id&&r.category==='body_pose');
+    const verdict = await checkCanonicalLikeness(character.character_name, referenceAbsPath, generatedAbsPath,wardrobe?assetPath(dataDir,wardrobe.path):undefined);
+    reviewCosts.push(verdict.costUsd);
+    if(verdict.wardrobeStatus==='mismatch')wardrobeMismatch=true;
     if (!isLikenessAligned(verdict.score, undefined, verdict.instanceCount, 1, verdict.wardrobeStatus)) {
       likenessAligned = false;
       likenessNotes.push(
@@ -574,6 +574,7 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
 
   const fidelityVerdict = await checkSceneFidelity(generatedAbsPath, candidate.action,
     fidelityRow?.crowd_density ?? null, fidelityRow?.continuity_notes ?? null);
+  reviewCosts.push(fidelityVerdict.costUsd);
   const fidelityAligned = isSceneFidelityAligned(fidelityVerdict);
   const decision = decideGenerationStatus({
     criticSeverity: critic.severity,
@@ -581,6 +582,7 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
     fidelityAligned,
     priorAttemptCount: countPriorGenerateAttempts(db, candidate.id)
   });
+  if(wardrobeMismatch){decision.status=countPriorGenerateAttempts(db,candidate.id)>=MAX_AUTOMATIC_RETRIES?'hold_for_review':'retry_modified';decision.reasoning='A material mismatch against the approved scene wardrobe must be corrected before acceptance, independently of the general Critic verdict.';}
   const report =
     `Candidate QC decision: ${decision.status} -- ${decision.reasoning}\n\n` +
     `Critic (severity: ${critic.severity}):\n${criticRecord(critic)}\n\n` +
@@ -598,7 +600,8 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
      SELECT ?, sc.project_id, 'shot', ?, 'qc', ?, 0, ?
      FROM shots s JOIN scenes sc ON sc.id=s.scene_id WHERE s.id=?`
   ).run(randomUUID(), candidate.id, `Codex candidate ${attemptId} composite QC\n${report}`, Date.now(), candidate.id);
-  return { shotId: candidate.id, decision, critic, likenessAligned, fidelityAligned, report };
+  return { shotId: candidate.id, decision, critic, likenessAligned, fidelityAligned, report,
+    ...(reviewCosts.every(c=>typeof c==="number" && Number.isFinite(c) && c>=0) ? {costUsd:reviewCosts.reduce<number>((sum,c)=>sum+c!,0)} : {}) };
 }
 
 interface CoverageBeatCandidateRow {

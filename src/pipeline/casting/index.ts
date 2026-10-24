@@ -354,7 +354,7 @@ const buildCasting: Stage = async (projectId) => {
   try { sourceSpeakerSegments = speechCoverageSegments(db, project.id); }
   catch (error) { return { ok: false, reasoning: (error as Error).message }; }
   const attributionHold = incompleteSpeakerAttributionHold(verses, sourceSpeakerSegments) ??
-    missingSpeakerAttributionHold(verses, sourceSpeakerSegments.filter(segment => segment.speakerId !== null).length);
+    missingSpeakerAttributionHold(verses, sourceSpeakerSegments.filter(segment => segment.speakerId !== null || segment.reviewedNarration).length);
   if (attributionHold) return { ok: false, reasoning: attributionHold };
 
   // Refinement keeps shot IDs, approved takes, costs and producer edits.

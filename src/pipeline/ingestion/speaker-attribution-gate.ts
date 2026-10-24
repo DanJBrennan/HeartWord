@@ -72,7 +72,7 @@ export function incompleteSpeakerAttributionHold(
   const runs = directSpeechRuns(referenceVerses);
   if (!runs.length) return null;
   const attributedVerses = new Set(sourceSegments
-    .filter(segment => segment.speakerId !== null)
+    .filter(segment => segment.speakerId !== null || segment.reviewedNarration)
     .flatMap(segment => verseNumbers(segment.verseRef)));
   const missingVerses = [...new Set(runs.flat().filter(verse => !attributedVerses.has(verse)))];
 
@@ -101,7 +101,7 @@ export function incompleteSpeakerAttributionHold(
     const first = indices[0]!;
     const last = indices[indices.length - 1]!;
     const firstNamed = ordered.findIndex((segment, index) =>
-      index >= first && index <= last && segment.speakerId !== null
+      index >= first && index <= last && (segment.speakerId !== null || segment.reviewedNarration)
     );
     if (firstNamed === -1) continue; // The verse-level check reports this clearly.
     const hasUnboundTail = ordered.slice(firstNamed, last + 1).some(segment => segment.speakerId === null && !segment.reviewedNarration);

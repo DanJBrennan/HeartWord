@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { Router } from "express";
 import { getDataDir, getDb } from "../../db/client.js";
 import { adoptRecoveredPipeline, runPipeline } from "../../pipeline/orchestrator.js";
@@ -25,11 +26,30 @@ import { recordSourceAlignmentSpeakerAttribution } from "../../pipeline/ingestio
 import { confirmContinuousSpeech, confirmSpeechRunPauseBoundary, readConfirmedSpeechRuns } from "../../pipeline/ingestion/continuous-speech.js";
 import { recordSegmentSplit } from "../../pipeline/ingestion/segment-splits.js";
 import { recordSegmentMerge } from "../../pipeline/ingestion/segment-merges.js";
+import {readListeningReview,saveListeningReview,readListeningClip,listeningFolder} from "../../pipeline/ingestion/source-listening-review.js";
+import {renderSourceListeningReviewPage} from "../source-listening-review-page.js";
 import { computeNarrationCoverage } from "../../pipeline/casting/narration-coverage.js";
 import { renderCanonReviewPage } from "../canon-review-page.js";
 import { applyProducerCreativeEdit } from "../../pipeline/creative-direction/crew-store.js";
 
 export const projectsRouter = Router();
+
+projectsRouter.get("/:id/source-listening-review",(req,res)=>{
+  if(!getDb().prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)){res.status(404).json({error:"Project not found."});return;}
+  res.setHeader("Cache-Control","no-store");res.type("html").send(renderSourceListeningReviewPage(req.params.id));
+});
+projectsRouter.get("/:id/source-listening-review/data",(req,res)=>{
+  try{res.setHeader("Cache-Control","no-store");res.json(readListeningReview(getDb(),getDataDir(),req.params.id));}
+  catch(e){res.status(409).json({error:(e as Error).message});}
+});
+projectsRouter.post("/:id/source-listening-review/items/:itemId",(req,res)=>{
+  try{res.status(201).json(saveListeningReview(getDb(),getDataDir(),req.params.id,req.params.itemId,req.body));}
+  catch(e){res.status(409).json({error:(e as Error).message});}
+});
+projectsRouter.get("/:id/source-listening-review/items/:itemId/audio",(req,res)=>{
+  try{const bytes=readListeningClip(getDb(),getDataDir(),req.params.id,req.params.itemId);res.setHeader("Cache-Control","no-store");res.setHeader("Content-Disposition","attachment; filename=source-window.wav");res.type("audio/wav").send(bytes);}
+  catch(e){res.status(409).json({error:(e as Error).message});}
+});
 
 projectsRouter.get("/", (_req, res) => {
   const db = getDb();
@@ -284,6 +304,7 @@ projectsRouter.get("/:id/audio-segments", (req, res) => {
     .all(req.params.id, layer);
 
   let evidence: { method?: string; segments?: unknown[] } | undefined;
+  const sourceListeningReviewAvailable=layer==="original_reading"&&/^[a-zA-Z0-9-]{1,128}$/.test(req.params.id)&&existsSync(join(listeningFolder(getDataDir(),req.params.id),"manifest.json"));
   if (layer === "original_reading") {
     const row = db.prepare("SELECT result_json FROM alignment_evidence WHERE project_id=? ORDER BY created_at DESC LIMIT 1").get(req.params.id) as { result_json: string } | undefined;
     try { evidence = row ? JSON.parse(row.result_json) : undefined; } catch { evidence = undefined; }
@@ -292,7 +313,7 @@ projectsRouter.get("/:id/audio-segments", (req, res) => {
   if(layer==="original_reading")try{for(const correction of db.prepare("SELECT audio_segment_id,verse_ref,assigned_text,reviewer_name,created_at FROM source_alignment_corrections WHERE project_id=? ORDER BY created_at").all(req.params.id) as Array<{audio_segment_id:string;verse_ref:string;assigned_text:string;reviewer_name:string;created_at:number}>)corrections.set(correction.audio_segment_id,correction);}catch{/* pre-migration test database */}
   let editorials=new Map<string,{classification:Parameters<typeof editorialAlignmentDisplay>[0];title_text:string;cross_reference_text:string;next_verse_ref:string|null;reviewer_name:string;created_at:number;film_treatment:Parameters<typeof editorialAlignmentDisplay>[1]}>();
   if(layer==="original_reading")try{for(const editorial of db.prepare("SELECT audio_segment_id,classification,title_text,cross_reference_text,next_verse_ref,reviewer_name,created_at,film_treatment FROM source_alignment_editorial_classifications WHERE project_id=? ORDER BY created_at").all(req.params.id) as Array<{audio_segment_id:string;classification:Parameters<typeof editorialAlignmentDisplay>[0];title_text:string;cross_reference_text:string;next_verse_ref:string|null;reviewer_name:string;created_at:number;film_treatment:Parameters<typeof editorialAlignmentDisplay>[1]}>)editorials.set(editorial.audio_segment_id,editorial);}catch{/* pre-migration test database */}
-  res.json({ segments: layer === "original_reading" ? (segments as Array<{ id:string;start_ms:number; end_ms:number;verse_ref?:string|null }>).map(segment => {const correction=corrections.get(segment.id), editorial=editorials.get(segment.id);return correction ? {...segment,automatedVerseRef:segment.verse_ref,verse_ref:correction.verse_ref,assignedText:correction.assigned_text,alignmentStatus:"Human-reviewed correction",alignmentMethod:"human_reviewed",textMatchScore:null,reviewerName:correction.reviewer_name,correctedAt:correction.created_at} : editorial ? {...segment,automatedVerseRef:segment.verse_ref,verse_ref:null,editorialTitle:editorial.title_text,crossReferenceText:editorial.cross_reference_text,editorialNextVerseRef:editorial.next_verse_ref,filmTreatment:editorial.film_treatment,alignmentStatus:editorialAlignmentDisplay(editorial.classification,editorial.film_treatment),alignmentMethod:"human_reviewed_editorial",textMatchScore:null,reviewerName:editorial.reviewer_name,correctedAt:editorial.created_at} : {...segment,...alignmentDisplay(segment,evidence as Parameters<typeof alignmentDisplay>[1])};}) : segments });
+  res.json({ sourceListeningReviewAvailable, segments: layer === "original_reading" ? (segments as Array<{ id:string;start_ms:number; end_ms:number;verse_ref?:string|null }>).map(segment => {const correction=corrections.get(segment.id), editorial=editorials.get(segment.id);return correction ? {...segment,automatedVerseRef:segment.verse_ref,verse_ref:correction.verse_ref,assignedText:correction.assigned_text,alignmentStatus:"Human-reviewed correction",alignmentMethod:"human_reviewed",textMatchScore:null,reviewerName:correction.reviewer_name,correctedAt:correction.created_at} : editorial ? {...segment,automatedVerseRef:segment.verse_ref,verse_ref:null,editorialTitle:editorial.title_text,crossReferenceText:editorial.cross_reference_text,editorialNextVerseRef:editorial.next_verse_ref,filmTreatment:editorial.film_treatment,alignmentStatus:editorialAlignmentDisplay(editorial.classification,editorial.film_treatment),alignmentMethod:"human_reviewed_editorial",textMatchScore:null,reviewerName:editorial.reviewer_name,correctedAt:editorial.created_at} : {...segment,...alignmentDisplay(segment,evidence as Parameters<typeof alignmentDisplay>[1])};}) : segments });
 });
 
 // Read-only, attempt-level image-cost report. Every paid image attempt stays

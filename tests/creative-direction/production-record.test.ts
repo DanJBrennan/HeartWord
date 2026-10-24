@@ -6,6 +6,7 @@ import express from "express";
 import type { Server } from "node:http";
 import Ajv2020 from "ajv/dist/2020.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fixtureWave } from "../helpers/pcm-wave.js";
 import type { CrewContribution, CrewRole } from "../../src/pipeline/creative-direction/crew-types.js";
 import type { ProductionRecord, FilmChange } from "../../src/pipeline/creative-direction/production-record.js";
 import { withFixtureTreatment } from "../helpers/crew-treatment.js";
@@ -70,7 +71,7 @@ beforeEach(()=>{
     INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('accepted-key','shot1','synthetic','fixture','generate','accepted','key.png',0,1);`);
   file("source/hatam/mark-5/mark-5-text.docx",docx("1Original fixture words. 2More original words."));
   file("reference/english/mark-5/mark-5-text.docx",docx("1Reference fixture words. 2More reference words."));
-  file("canon.png",Buffer.from("89504e470d0a1a0a0000000d494844520000078000000438","hex"));file("source.wav","synthetic immutable audio bytes");file("key.png","synthetic accepted pixels");file("returned.mp4","synthetic video, not playable media");
+  file("canon.png",Buffer.from("89504e470d0a1a0a0000000d494844520000078000000438","hex"));file("source.wav",fixtureWave(8000));file("key.png","synthetic accepted pixels");file("returned.mp4","synthetic video, not playable media");
   reconcileAvatarBudget(db,{projectId,actor:"Synthetic reviewer",evidence:"Only mocked providers; positively no fixture liabilities.",unreportedUpperBoundUsd:0,outstandingUpperBoundUsd:0,idempotencyKey:"fixture-budget"});
 });
 afterEach(async()=>{vi.unstubAllEnvs();if(server){await new Promise<void>(resolve=>server!.close(()=>resolve()));server=undefined;}db.close();if(state.dir.startsWith(join(tmpdir(),"hw-crew-runtime-")))rmSync(state.dir,{recursive:true,force:true});});
@@ -96,6 +97,43 @@ describe("saved crew production runtime",()=>{
     expect(requireCurrentPlan(db,state.dir,projectId).id).toBe(result.runId);
     expect(readFileSync(join(state.dir,"assets/source.wav"))).toEqual(source);expect(readFileSync(join(state.dir,"assets/key.png"))).toEqual(key);
     expect(db.prepare("SELECT COUNT(*) n FROM character_versions").get()!.n).toBe(1);
+  });
+
+  it("offers current selection references while retaining an earlier crew's evidence",async()=>{
+    const first=await plan();expect(first.status,first.summary).toBe("approved");
+    const original=db.prepare("SELECT * FROM production_events WHERE run_id=? ORDER BY sequence").all(first.runId);
+    const second=await runProductionCrew(projectId,"planning",{db,dataDir:state.dir,call:async(prompt,schema)=>{
+      const out=reply(prompt),{role,record}=context(prompt);
+      if(role==="production_director"){
+        const allowed=(schema.properties as any).acceptedContributionIds.items.enum as string[];
+        expect((schema.properties as any).objectionResponses.maxItems).toBe(0);
+        expect(allowed.length).toBeGreaterThan(1);
+        expect(allowed.every(id=>id.startsWith(record.revision+":"))).toBe(true);
+        expect(allowed.some(id=>id.startsWith(first.runId+":"))).toBe(false);
+        const editor=record.history.find(h=>h.id===`${record.revision}:picture_editor:1`)!;
+        expect(allowed).toContain(editor.id);out.acceptedContributionIds=[editor.id];
+      }
+      return out;
+    }});
+    expect(second.status,second.summary).toBe("approved");
+    expect(second.productionRecord!.history.some(h=>h.id.startsWith(first.runId+":"))).toBe(true);
+    expect(second.productionRecord!.acceptedContributionIds).toEqual([`${second.runId}:picture_editor:1`]);
+    expect(db.prepare("SELECT * FROM production_events WHERE run_id=? ORDER BY sequence").all(first.runId)).toEqual(original);
+  });
+
+  it("still holds a stale selection when a caller ignores the current-reference schema",async()=>{
+    const first=await plan();expect(first.status,first.summary).toBe("approved");
+    const original=db.prepare("SELECT * FROM production_runs WHERE id=?").get(first.runId);
+    const next=await runProductionCrew(projectId,"planning",{db,dataDir:state.dir,call:async(prompt,schema)=>{
+      const out=reply(prompt);if(context(prompt).role==="production_director"){
+        const stale=`${first.runId}:picture_editor:1`;
+        expect((schema.properties as any).acceptedContributionIds.items.enum).not.toContain(stale);
+        out.acceptedContributionIds=[stale];
+      }return out;
+    }});
+    expect(next.status).toBe("held");expect(next.summary).toContain("stale, superseded or unknown");
+    expect(next.productionRecord!.status).toBe("held");
+    expect(db.prepare("SELECT * FROM production_runs WHERE id=?").get(first.runId)).toEqual(original);
   });
 
   it("resolves camera versus blocking while retaining the original proposal, objection and owner resolution",async()=>{

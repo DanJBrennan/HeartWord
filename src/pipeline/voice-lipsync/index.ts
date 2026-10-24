@@ -6,16 +6,16 @@ import { getDb, getDataDir } from "../../db/client.js";
 import { productionAuthorization, bindAttemptRevision } from "../creative-direction/crew-store.js";
 import { KlingLipSyncProvider } from "../../providers/kling/index.js";
 import { runVoicing } from "../voicing/index.js";
-import type { Stage } from "../types.js";
+import type { StageResult } from "../types.js";
 import { resolveSpeechRunCastAudio } from "./speech-run-audio.js";
 import { checkAvatarSpend,readPerformanceDirection,reserveAvatarSpend,settleAvatarSpend } from "./performance-direction.js";
 import { AVATAR_RESERVATION_RATE_USD } from "../../providers/kling/avatar-direction.js";
 
 type ReadyShot = { id: string; verse_ref: string | null; dialogue_character_id: string; keyframe: string | null; voice_id: string | null; version_id: string | null; locked_visual_facts:string|null; binding_id:string|null; source_segment_id:string|null; start_ms:number|null; end_ms:number|null; source_hash:string|null };
-export const runVoiceLipSync: Stage = projectId => observeWork(projectId, "voice_lipsync", () => runVoiceLipSyncImpl(projectId));
-const runVoiceLipSyncImpl: Stage = async (projectId) => {
+export const runVoiceLipSync = (projectId:string,onlyShotIds?:readonly string[]):Promise<StageResult> => observeWork(projectId, "voice_lipsync", () => runVoiceLipSyncImpl(projectId,onlyShotIds));
+const runVoiceLipSyncImpl = async (projectId:string,onlyShotIds?:readonly string[]):Promise<StageResult> => {
   const db = getDb();
-  const shots = db.prepare(`SELECT sh.id,sh.verse_ref,sh.dialogue_character_id,
+  const allShots = db.prepare(`SELECT sh.id,sh.verse_ref,sh.dialogue_character_id,
     (SELECT result_asset_path FROM generation_attempts WHERE shot_id=sh.id AND operation='generate' AND status='accepted' ORDER BY created_at DESC LIMIT 1) keyframe,
     (SELECT cv.voice_id FROM character_versions cv WHERE cv.id=ub.character_version_id AND cv.character_id=sh.dialogue_character_id AND cv.status='approved') voice_id,
     (SELECT cv.id FROM character_versions cv WHERE cv.id=ub.character_version_id AND cv.character_id=sh.dialogue_character_id AND cv.status='approved') version_id,
@@ -23,6 +23,9 @@ const runVoiceLipSyncImpl: Stage = async (projectId) => {
     ub.id binding_id,ub.source_audio_segment_id source_segment_id,ub.source_start_ms start_ms,ub.source_end_ms end_ms,ub.source_hash source_hash
     FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id LEFT JOIN shot_utterance_bindings ub ON ub.shot_id=sh.id
     WHERE sc.project_id=? AND sh.needs_lip_sync=1`).all(projectId) as unknown as ReadyShot[];
+  const scope=onlyShotIds ? new Set(onlyShotIds) : null;
+  if(scope && (!scope.size || [...scope].some(id=>!allShots.some(s=>s.id===id))))return {ok:false,reasoning:"Scoped lip-sync needs speaking shots belonging to this chapter; no voice or video request was sent."};
+  const shots=scope ? allShots.filter(s=>scope.has(s.id)) : allShots;
   if (!shots.length) return { ok: true, reasoning: "No on-camera speech is planned; narration remains unsynchronised as required." };
   const missing = shots.filter(s => !s.keyframe || !s.voice_id || !s.version_id || !s.binding_id || !s.source_segment_id || s.start_ms===null || s.end_ms===null);
   if (missing.length) return { ok: false, reasoning: `Voice/lip-sync is held for ${missing.length} speaking shot(s): each needs an accepted keyframe, approved speaking voice, and producer-approved exact utterance binding. Voicing and provider calls were not started.` };

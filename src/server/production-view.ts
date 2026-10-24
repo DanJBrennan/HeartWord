@@ -1,4 +1,5 @@
-import { statSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { observedWork } from "../pipeline/observed-work.js";
@@ -38,6 +39,14 @@ export function readProductionView(db: DatabaseSync, dataDir: string, projectId:
     const target = resolve(assetsRoot, path), local = relative(assetsRoot, target);
     if (isAbsolute(path) || local === ".." || local.startsWith(`..${sep}`) || isAbsolute(local)) return false;
     try { const stat = statSync(target); return stat.isFile() && stat.size > 0; } catch { return false; }
+  };
+  const sourceHashes = new Map<string, string>();
+  const verifiedSource = (path: string, expected: string) => {
+    if (!available(path) || !/^[a-f0-9]{64}$/.test(expected)) return false;
+    try {
+      if (!sourceHashes.has(path)) sourceHashes.set(path, createHash("sha256").update(readFileSync(resolve(assetsRoot, path))).digest("hex"));
+      return sourceHashes.get(path) === expected;
+    } catch { return false; }
   };
   const executions = db.prepare("SELECT * FROM stage_executions WHERE project_id=? ORDER BY started_at DESC,rowid DESC").all(projectId) as unknown as Execution[];
   const runs = db.prepare("SELECT id,phase,status,result_json,created_at,completed_at FROM production_runs WHERE project_id=? ORDER BY created_at DESC,rowid DESC").all(projectId) as unknown as Run[];
@@ -179,7 +188,7 @@ export function readProductionView(db: DatabaseSync, dataDir: string, projectId:
   const current = holds.find(item => item.state === "uncertain" || item.state === "failed") ?? work.find(item => item.state === "awaiting_external") ?? work[0] ?? holds[0];
   return { project, observedAt: now, lastProgressAt, currentStage: current?.stage ?? project.stage, state: current?.state ?? (stages.every(item => item.state === "finished") && render?.available && !render.historical ? "finished" : "queued") as WorkState,
     nextAction: current ? current.state === "awaiting_external" ? "Wait for the existing external task; inspect its recorded progress." : current.state === "working" ? "Work is executing; inspect the latest saved contribution below." : current.state === "uncertain" ? "Reconcile retained work and provider evidence before retrying." : current.summary : costHold ?? "Continue through the existing chapter controls when applicable source, canon and review gates pass.",
-    work, holds, stages, costs, scenes, shots, reel, render, programme: readProgrammePreview(db, projectId, render, audio, available), cutover: cutover ?? null, intro, ending, editorial, soundtrackAttempts, record: record ?? null, runs, crewEvents, reviews, decisions,
+    work, holds, stages, costs, scenes, shots, reel, render, programme: readProgrammePreview(db, projectId, render, audio, available, verifiedSource), cutover: cutover ?? null, intro, ending, editorial, soundtrackAttempts, record: record ?? null, runs, crewEvents, reviews, decisions,
     audio: audio.map(item => ({ ...item, available: available(item.source_path) })), sound: sound.map(item => ({ ...item, available: available(item.path) })),
     note: "Saved production records are authoritative. Working requires execution ownership in this process; old running records are uncertain. Queued stages without an execution are planned, not submitted. Finishing is not field or release approval." };
 }

@@ -13,6 +13,11 @@ export function pictureTimeline(snapshot: ProductionView, mode: "chapter" | "ree
   const spans: PictureSpan[] = []; let cursor = 0;
   for (const [index, placement] of snapshot.programme.timeline.entries()) {
     if (placement.startMs > cursor) spans.push({ id: `gap:${index}`, shotId: null, label: "Unfilled picture interval", path: null, startMs: cursor, endMs: placement.startMs, sourceStartMs: 0 });
+    if (placement.shotId === null && placement.editorialBeatId && placement.path) {
+      spans.push({ id: `editorial:${placement.editorialBeatId}`, shotId: null, label: placement.label ?? "Approved editorial opening", path: placement.path,
+        startMs: placement.startMs, endMs: placement.endMs, sourceStartMs: placement.sourceStartMs });
+      cursor = placement.endMs; continue;
+    }
     // Saved chapter placement addresses the selected shot's local clock. Never
     // shorten the chapter or freeze a face to cover missing accepted material.
     let local = 0, filled = placement.startMs;

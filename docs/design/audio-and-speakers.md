@@ -1,5 +1,39 @@
 # Audio & Speakers
 
+Finishing executes its stored picture and sound filter components as separate
+FFmpeg graphs. A concatenated title/scene can change decoded color metadata;
+reinitializing a shared graph can discard buffered audio and shift the source
+clock. Graph isolation preserves the genuine cue recipe and picture treatment
+without allowing a picture-format transition to reset continuous speech.
+
+Finishing cues support optional `fadeInMs` / `fadeOutMs` within their own
+trimmed duration. The existing mixer applies those numeric envelopes only to
+the separate approved music/effects before placement and speech ducking. Fades
+cannot exceed the cue duration in total, extend an asset, or alter source/cast
+words or timing. Omitted values retain the previous no-fade behavior. Original
+assets and cue decisions remain retained for review and editable reconstruction.
+
+The finishing limiter compensates its lookahead latency. An uncompensated
+limiter delays the actual speech clock even below its peak threshold; phase
+checks on rendered original/cast tones and measured chapter windows protect
+the source positions as well as the saved timing map. This changes no approved
+performance, cue placement or source speed.
+
+October 21 Mark 5 execution: a reviewed source boundary with no prior cast-map
+entry permits its first voicing. Existing mapped masters still require matching
+source, approved voice, bounds and measured duration before reuse; stale or
+missing retained audio holds. Standalone voicing accepts the approved audition
+settings, including speed 1, and retains returned provider usage/request evidence
+beside each new take. Approved audition bytes can populate the existing cast-map
+projection without another provider call. These changes add no audio layer or
+pipeline stage and do not change source-language speech.
+
+The existing voice/lip-sync stage also accepts an optional speaking-shot scope,
+so an accepted performance picture can run while other chapter pictures are
+prepared. Empty/foreign scopes hold before spending. The ordinary unscoped
+chapter run retains its full-batch checks, source bindings, budget reservations,
+single-face rule and candidate acceptance requirements.
+
 ## Inputs
 
 - A narrator's full recording of the chapter/book in the heart language (the
@@ -16,6 +50,15 @@
   language, still driven by the same source recording/text where possible.
 
 ## Lip-sync
+
+October 22 assembly preservation: single-shot assembly uses an existing exact
+utterance binding and its source/voice-matched cast-map entry, including an
+evidenced speech-run window when present. It never chooses a different line by
+verse number if that binding is stale or missing its cast master. Legacy
+unbound lookup remains scoped to the shot's own chapter project. Only an
+accepted raw clip may enter assembly; a newer held take cannot replace it.
+This is local preparation for the existing chapter editor, with no new voice
+request or change to the protected source duration.
 
 **Confirmed provider: Kling Avatar.** Dan reaffirmed on 2026-10-06 that
 Kling Avatar continues to generate lip-synced speaking video, driven by the
@@ -93,10 +136,36 @@ available for review. Review cost is metered separately from free local video
 generation. Explicit `audioMode: "none"` (CLI `--audio none`) still removes the
 whole native track when Desktop returns audio despite the silent request.
 
+New Director-requested music/effects use the same cumulative film budget and
+existing `reserve_crew_spend` / settlement records. An evidenced
+`HEARTWORD_SOUNDTRACK_CALL_UPPER_BOUND_USD` (or an explicit stage option) covers
+one generation and its separate listening review. Claim, reservation and pending
+cost evidence are atomic before the first provider call; the stage checks the
+budget again before listening and before the next cue. Reported generation and
+metered listening subtotals enter the ledger even for held or incomplete audio.
+Missing dollar attribution stays NULL with the combined bound outstanding;
+provider credits alone are not converted to dollars. Only this request's known
+cost-row transition can update the budget fingerprint: unrelated new unknown
+charges hold further calls. Returned files, request/usage evidence and completed
+findings remain retained. Accepted prior requests are reused, and all other saved
+attempts hold without automatic provider or listening retries. This extends the
+existing soundtrack stage, not its creative or producer-approval workflow.
+
 Audio2Face-3D and cloud GPU evaluation were earlier candidate approaches,
 not the current lip-sync production path.
 
 ## Source-boundary integrity
+
+October 20 source preparation exposed a Word-paragraph continuation in Hatam
+Mark 5:9 before the next paragraph's v10 marker (and English 5:24 before v25).
+The source parser retains this supplied prefix on the immediately preceding
+verse only for adjacent paragraphs and consecutive verse markers, recording the
+continuation paragraph. It changes no source bytes or saved older film record.
+An exact complete supplied two-word chapter title can anchor directly; arbitrary
+short Scripture guesses retain the normal minimum. Standalone punctuation stays
+in the source reference but is excluded from spoken-word coverage accounting.
+These are extraction/matching corrections, not speaker attribution, linguistic
+assurance or approval. See the [Mark 5 preparation](../production/MARK5_PREPARATION.md).
 
 An exact match between recorded words and translated text does not prove that
 an audio interval ends between utterances. Inspect the original audio around
@@ -125,6 +194,47 @@ separate: it protects the audible end of a speaking turn, not every picture
 cut. A genuinely unresolved content/speaker decision remains eligible for
 qualified language review; routine acoustic crossing does not summon Dan.
 
+## Source listening-window review (October 21)
+
+The existing ingestion review can prepare source-only PCM excerpts and a listening
+page, with chapter-clock start/end controls in 10 ms increments. Web Audio schedules
+the selected interval from the decoded source; a timer or MP3 frame seek is not the
+cut authority. The producer can hear context and both edges, save a draft, and
+verify each quoted/narrated/diagnostic window separately under their own name.
+Drafts and verifications append exact bounds, source/alignment/manifest hashes,
+text/speaker identity, reviewer and a retained PCM clip to existing `review_notes`.
+Editing a verified window creates a new unverified revision until explicitly
+verified again. Stale source evidence and concurrent edits hold rather than
+overwriting another review. Preparing/opening the page records no human approval.
+
+These are source-window listening decisions, usable for subsequent audition
+preparation. They do not themselves split original intervals, attribute an entire
+mixed interval, attest the whole chapter, approve a cast performance or dispatch
+production. Reviewed bounds are applied through the existing source split,
+attribution and continuous-speech operations when reconciling source bindings;
+retained exact-window decisions must be carried forward, not replaced by the
+initial broad alignment envelopes. This adds no table, pipeline stage or queue.
+
+Applying an authorized complete listening set uses the existing source split,
+merge, correction and continuous-speech operations in one transaction. Preserve
+every prior source interval in a project review record and SQLite backup, retain
+all original covered audio, and attribute only the exact verified character
+windows. Explicit producer decisions may cover a duplicate fragment or retain it
+as narration. Original narration, including all of 5:28, keeps its source voice.
+The retained manifest and individual human verifications remain unchanged; an
+application record pins the old and new alignment hashes and exact review IDs.
+That recognized transition keeps the applied listening set readable and read-only.
+Later source changes still hold. Applying windows does not invent a whole-chapter
+language attestation or authorize film production.
+
+Voice auditions use the existing ElevenLabs multilingual speech-to-speech client
+on exact source WAVs. Candidate audio, request settings/IDs, usage when supplied,
+source hashes, approved voice version and timing measurements are retained for
+side-by-side listening. A bounded batch records dispatch before each paid request;
+unknown submissions are never automatically repeated. Auditions do not enter the
+accepted cast master, change a voice selection, approve a performance or release
+the film hold. Preserve both before/restored Gerasene samples for producer review.
+
 ## Speaker-attribution gate
 
 Immediately after source alignment, before scene breakdown or storyboard casting,
@@ -140,6 +250,13 @@ attributed fragment cannot clear a longer speech. Once the first named source
 interval inside a quoted run begins, later intervals must carry a speaker or
 an explicit reviewed narration decision, including otherwise unlabelled slices.
 A narrated lead-in is permitted before that first named interval.
+An explicit reviewed original-narrator run also supplies speaker coverage for a
+narrated thought or explanatory quotation; it must not require an invented
+character voice merely because the text contains quotation marks. Unreviewed
+tails after a narrator confirmation still hold. Applying verified character
+windows records the retained original narration/pause treatment outside those
+windows separately, under the applying agent's name with the producer evidence;
+this does not create another human listening or whole-chapter attestation.
 Chapters without quoted direct
 speech are not blocked by this specific gate.
 

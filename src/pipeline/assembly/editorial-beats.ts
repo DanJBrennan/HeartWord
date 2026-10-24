@@ -1,8 +1,46 @@
 import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { isAbsolute, relative, resolve } from "node:path";
+import { getAudioDurationMs } from "../ingestion/detect-silences.js";
+import type { EditorialOpeningBeat } from "../creative-direction/crew-types.js";
 import type { DatabaseSync } from "node:sqlite";
 
 type IntroPlan = { titleCard:{title:string;language:string;durationMs:number}; shots:Array<{role:"establishing"|"bridge"|"arrival";description:string;reason:string;evidence:string;durationMs:number}>; sourceClockStartMs:number };
 type EndingPlan = { sourceClockEndMs:number; shots:Array<{role:"departure"|"journey"|"destination_hint";description:string;reason:string;currentEvidence:string;nextEvidence:string;durationMs:number}> };
+
+/** Resolve already-selected editorial media from its retained typed commands.
+ * No generation, source row, Scripture shot or new approval is created here. */
+export function readAcceptedEditorialOpening(db: DatabaseSync, dataDir: string, projectId: string): EditorialOpeningBeat[] {
+  return readAcceptedEditorialMedia(db, dataDir, projectId, "opening");
+}
+
+/** Post-source title material is credits, never a narrative chapter handoff.
+ * Return relative timing: the actual cut (including source pauses) determines
+ * where these beats begin, rather than a provisional database source end. */
+export function readAcceptedEditorialClosing(db: DatabaseSync, dataDir: string, projectId: string): EditorialOpeningBeat[] {
+  return readAcceptedEditorialMedia(db, dataDir, projectId, "closing");
+}
+
+function readAcceptedEditorialMedia(db: DatabaseSync, dataDir: string, projectId: string, kind: "opening" | "closing"): EditorialOpeningBeat[] {
+  const beats = db.prepare(`SELECT id,description,duration_ms,timeline_start_ms,timeline_end_ms,status,approved_by
+    FROM editorial_beats WHERE project_id=? AND ${kind === "opening" ? "placement='pre_source'" : "placement='post_source' AND beat_type='title_card'"} ORDER BY timeline_start_ms,sequence`).all(projectId);
+  const base = kind === "closing" && beats.length ? Number(beats[0]!.timeline_start_ms) : 0;
+  let cursor = 0;
+  return beats.map(beat => {
+    if (beat.status !== "accepted" || !String(beat.approved_by).trim() || Number(beat.timeline_start_ms) !== base + cursor || Number(beat.timeline_end_ms) !== base + cursor + Number(beat.duration_ms)) throw new Error(`The approved editorial ${kind} needs complete, ordered, reviewed media before chapter assembly.`);
+    const command = db.prepare(`SELECT payload FROM edit_commands WHERE project_id=? AND undone=0
+      AND command_type IN('select_editorial_media','select_editorial_title_card') AND json_extract(payload,'$.editorialBeatId')=? ORDER BY sequence DESC LIMIT 1`).get(projectId,String(beat.id));
+    const media = command ? JSON.parse(String(command.payload)) as { projectId?: string; path?: string; sha256?: string; durationMs?: number; probe?: { format?: { duration?: string } } } : null;
+    if (!media || media.projectId !== projectId || typeof media.path !== "string" || typeof media.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(media.sha256)) throw new Error("Selected editorial media lacks its exact project and file proof.");
+    const assets = resolve(dataDir,"assets"), path = resolve(assets,media.path), local = relative(assets,path);
+    if (isAbsolute(media.path) || !local || local === ".." || local.startsWith("../") || local.startsWith("..\\") || isAbsolute(local)) throw new Error("Selected editorial media must be inside the project asset area.");
+    const declaredDuration = media.durationMs ?? Number(media.probe?.format?.duration)*1000;
+    if (!Number.isFinite(declaredDuration) || createHash("sha256").update(readFileSync(path)).digest("hex") !== media.sha256 || Math.abs(getAudioDurationMs(path)-Number(beat.duration_ms)) > 1 || Math.abs(declaredDuration-Number(beat.duration_ms)) > 1) throw new Error("Selected editorial media changed or no longer matches its approved duration.");
+    const startMs = cursor; cursor += Number(beat.duration_ms);
+    return { id: String(beat.id), label: String(beat.description), path: media.path, sha256: media.sha256, durationMs: Number(beat.duration_ms), startMs, endMs: cursor };
+  });
+}
 
 /** Turns already-approved editorial proposals into timeline-addressable beats.
  * It never creates media or changes the source clock. */

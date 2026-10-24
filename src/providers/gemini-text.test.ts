@@ -43,8 +43,9 @@ it("estimates a real USD cost from Gemini's own reported token usage, output tok
   const metered = await generateJsonWithImagesMetered<{ ok: boolean }>("Prompt", [], { type: "object", properties: {} });
   expect(metered.result).toEqual({ ok: true });
   expect(metered.usage).toEqual({ promptTokenCount: 1000, candidatesTokenCount: 200, thoughtsTokenCount: 50, totalTokenCount: 1250 });
-  // 1000 input tokens @ $0.30/1M + (200+50) output tokens @ $2.50/1M
-  expect(metered.costUsd).toBeCloseTo(1000 * 0.30 / 1e6 + 250 * 2.50 / 1e6, 10);
+  // Public standard rates through2026-12-31: $0.75input/$3.75output per1M,
+  // including thinking; the returned dollar estimate is rounded to6decimals.
+  expect(metered.costUsd).toBe(0.001688);
   expect(metered.costUsd).toBeGreaterThan(0);
 });
 

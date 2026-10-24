@@ -15,20 +15,22 @@
  * layer.
  */
 import { execFileSync } from "node:child_process";
-import { randomUUID } from "node:crypto";
-import { mkdirSync, mkdtempSync, renameSync, rmSync } from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { getDataDir } from "../../db/client.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
 import { verseRangesRelated } from "../casting/coverage.js";
+import { resolveSpeechRunCastAudio } from "../voice-lipsync/speech-run-audio.js";
 
 const TARGET_WIDTH = 1280;
 const TARGET_HEIGHT = 720;
 const TARGET_FPS = 24;
 
 interface ShotRow {
+  project_id: string;
   needs_lip_sync: number;
   dialogue_character_id: string | null;
   verse_ref: string | null;
@@ -201,7 +203,7 @@ export function assembleSingleShot(db: DatabaseSync, shotId: string): AssembleSi
     .prepare(
       `SELECT cl.id, cl.timeline_start_ms, cl.timeline_end_ms, ga.result_asset_path
        FROM clips cl JOIN generation_attempts ga ON ga.id = cl.generation_attempt_id
-       WHERE cl.shot_id = ? AND ga.operation != 'assemble_shot'
+       WHERE cl.shot_id = ? AND ga.operation != 'assemble_shot' AND ga.status = 'accepted'
        ORDER BY ga.created_at DESC LIMIT 1`
     )
     .get(shotId) as RawClipRow | undefined;
@@ -210,7 +212,8 @@ export function assembleSingleShot(db: DatabaseSync, shotId: string): AssembleSi
   const durationMs = clip.timeline_end_ms - clip.timeline_start_ms;
   if (durationMs <= 0) throw new Error(`Clip for shot ${shotId} has a non-positive duration.`);
 
-  const shot = db.prepare(`SELECT needs_lip_sync, dialogue_character_id, verse_ref FROM shots WHERE id = ?`).get(shotId) as ShotRow | undefined;
+  const shot = db.prepare(`SELECT sh.needs_lip_sync,sh.dialogue_character_id,sh.verse_ref,sc.project_id
+    FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=?`).get(shotId) as ShotRow | undefined;
   if (!shot) throw new Error(`Shot ${shotId} not found.`);
 
   const tmpDir = mkdtempSync(join(tmpdir(), "heartword-single-assemble-"));
@@ -224,13 +227,47 @@ export function assembleSingleShot(db: DatabaseSync, shotId: string): AssembleSi
 
     let hasDialogueAudio = false;
     if (shot.needs_lip_sync && shot.dialogue_character_id && shot.verse_ref) {
+      const bound = db.prepare(`SELECT ub.*,o.project_id,o.source_path,o.start_ms original_start_ms,o.end_ms original_end_ms,
+        o.speaker_character_id,cv.character_id version_character_id,cv.status version_status FROM shot_utterance_bindings ub
+        JOIN audio_segments o ON o.id=ub.source_audio_segment_id JOIN character_versions cv ON cv.id=ub.character_version_id
+        WHERE ub.shot_id=?`).get(shotId) as {source_audio_segment_id:string;source_start_ms:number;source_end_ms:number;source_hash:string;
+          character_version_id:string;project_id:string;source_path:string;original_start_ms:number;original_end_ms:number;
+          speaker_character_id:string|null;version_character_id:string;version_status:string}|undefined;
+      if (bound) {
+        if (bound.project_id!==shot.project_id || bound.speaker_character_id!==shot.dialogue_character_id ||
+            bound.version_character_id!==shot.dialogue_character_id || bound.version_status!=="approved" ||
+            Math.abs(durationMs-(bound.source_end_ms-bound.source_start_ms))>1 ||
+            createHash("sha256").update(readFileSync(join(dataDir,"assets",bound.source_path))).digest("hex")!==bound.source_hash) {
+          throw new Error("Bound speaking shot must retain its approved source, voice and exact performance duration.");
+        }
+        // Reuse the same evidenced window as lip-sync. A verse can contain
+        // several utterances, and the same verse number occurs in old chapters.
+        // A broken binding must hold rather than fall back to a verse guess.
+        let audio = resolveSpeechRunCastAudio(db,shotId,bound.character_version_id);
+        if (!audio) {
+          const matches=db.prepare(`SELECT a.source_path path,a.start_ms startMs,a.end_ms endMs,m.source_hash sourceHash,m.voice_version_id voiceVersionId
+            FROM composite_audio_source_map m JOIN audio_segments a ON a.id=m.composite_segment_id
+            WHERE m.original_segment_id=? AND a.project_id=? AND a.layer='composite_cast_master' AND a.speaker_character_id=?`)
+            .all(bound.source_audio_segment_id,shot.project_id,shot.dialogue_character_id) as Array<{path:string;startMs:number;endMs:number;sourceHash:string;voiceVersionId:string|null}>;
+          if (matches.length!==1 || matches[0]!.sourceHash!==bound.source_hash || matches[0]!.voiceVersionId!==bound.character_version_id ||
+              bound.source_start_ms<bound.original_start_ms || bound.source_end_ms>bound.original_end_ms ||
+              Math.abs(matches[0]!.endMs-matches[0]!.startMs-(bound.original_end_ms-bound.original_start_ms))>100) {
+            throw new Error("Bound speaking shot needs one current source/voice-matched cast master; verse fallback is prohibited.");
+          }
+          const cast=matches[0]!;
+          audio={path:cast.path,startMs:cast.startMs+bound.source_start_ms-bound.original_start_ms,
+            endMs:cast.startMs+bound.source_end_ms-bound.original_start_ms};
+        }
+        muxAudio(trimmedPath,join(dataDir,"assets",audio.path),(audio.startMs/1000).toFixed(3),(durationMs/1000).toFixed(3),durationMs,outPath);
+        hasDialogueAudio=true;
+      } else {
       const { start: verseStart, end: verseEnd } = parseVerseRange(shot.verse_ref);
       const audioRows = db
         .prepare(
           `SELECT source_path, verse_ref, start_ms, end_ms FROM audio_segments
-           WHERE layer = 'composite_cast_master' AND speaker_character_id = ? AND verse_ref IS NOT NULL`
+           WHERE project_id = ? AND layer = 'composite_cast_master' AND speaker_character_id = ? AND verse_ref IS NOT NULL`
         )
-        .all(shot.dialogue_character_id) as Array<{ source_path: string; verse_ref: string; start_ms: number; end_ms: number }>;
+        .all(shot.project_id,shot.dialogue_character_id) as Array<{ source_path: string; verse_ref: string; start_ms: number; end_ms: number }>;
       let matches = audioRows.filter((s) => verseRangesRelated(parseVerseRange(s.verse_ref), { start: verseStart, end: verseEnd }));
 
       // Fallback: some shots cast a specific individual (e.g. "Crowd
@@ -249,8 +286,8 @@ export function assembleSingleShot(db: DatabaseSync, shotId: string): AssembleSi
       // narration rows that aren't this shot's real dialogue.
       if (matches.length === 0) {
         matches = db
-          .prepare(`SELECT source_path, verse_ref, start_ms, end_ms FROM audio_segments WHERE layer = 'composite_cast_master' AND verse_ref = ?`)
-          .all(shot.verse_ref) as Array<{ source_path: string; verse_ref: string; start_ms: number; end_ms: number }>;
+          .prepare(`SELECT source_path, verse_ref, start_ms, end_ms FROM audio_segments WHERE project_id = ? AND layer = 'composite_cast_master' AND verse_ref = ?`)
+          .all(shot.project_id,shot.verse_ref) as Array<{ source_path: string; verse_ref: string; start_ms: number; end_ms: number }>;
       }
 
       if (matches.length === 0) {
@@ -265,6 +302,7 @@ export function assembleSingleShot(db: DatabaseSync, shotId: string): AssembleSi
       const audioAbsPath = join(dataDir, "assets", seg.source_path);
       muxAudio(trimmedPath, audioAbsPath, (seg.start_ms / 1000).toFixed(3), (durationMs / 1000).toFixed(3), durationMs, outPath);
       hasDialogueAudio = true;
+      }
     } else {
       execFileSync("ffmpeg", ["-y", "-i", trimmedPath, "-c", "copy", outPath], { stdio: ["ignore", "ignore", "pipe"] });
     }

@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CrewBrief, CrewContribution, CrewEvent, CrewRole } from "../../src/pipeline/creative-direction/crew-types.js";
-import { validateEmotionalTreatment } from "../../src/pipeline/creative-direction/emotional-treatment.js";
+import { emotionalTreatmentSchema, validateEmotionalTreatment, validateTreatmentHandoff } from "../../src/pipeline/creative-direction/emotional-treatment.js";
 import { runCrew } from "../../src/pipeline/creative-direction/crew.js";
 import { newProductionRecord } from "../../src/pipeline/creative-direction/production-record.js";
 import { directionsFromRun } from "../../src/pipeline/creative-direction/crew-store.js";
@@ -39,6 +39,23 @@ function treatment(b=brief()) {
 }
 afterEach(()=>vi.unstubAllEnvs());
 describe("advance emotional treatment",()=>{
+  it("uses a Gemini-compatible version field while rejecting unsupported returned versions",()=>{
+    const version = emotionalTreatmentSchema.properties.version;
+    expect(version).toMatchObject({type:"integer"});
+    expect(version).not.toHaveProperty("enum");
+    const unsupported = {...treatment(),version:2};
+    expect(()=>validateEmotionalTreatment(unsupported,brief())).toThrow("version 1");
+  });
+  it("accepts no requested change only for an evidenced clear treatment review",()=>{
+    const output:CrewContribution={summary:"Reviewed",directions:[],findings:[],treatmentReview:{status:"clear",evidence:"Checked the supplied treatment against its exact source triggers",requestedChange:"",confidence:90,limitations:"Planning evidence only; no film was viewed"}};
+    const check=()=>validateTreatmentHandoff(output,"fidelity_challenger","planning",brief());
+    expect(check).not.toThrow();
+    for(const status of ["concern","unverified"] as const){output.treatmentReview!.status=status;expect(check).toThrow("requested change");}
+    output.treatmentReview!.status="clear";output.treatmentReview!.evidence="";
+    expect(check).toThrow("evidence");
+    output.treatmentReview!.evidence="Checked exact supplied text";output.treatmentReview!.limitations="";
+    expect(check).toThrow("limitations");
+  });
   it("grounds ordered beats in exact supplied text and makes every pause/cue accountable",()=>{
     expect(validateEmotionalTreatment(treatment(),brief()).beats.map(b=>b.intensity)).toEqual(["Quiet anticipation","Release into reflection"]);
     const bad=treatment();bad.beats[0]!.sourceTrigger.quote="An invented miracle";

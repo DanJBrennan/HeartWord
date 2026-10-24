@@ -38,6 +38,12 @@ and npm dependencies can still be needed on a different machine; no provider
 credential is needed to edit/render retained media. Exact codec bit identity
 across application versions is not promised.
 
+The application snapshot also includes the crew portraits and branding files
+referenced by its frontend source, so a restored normal build retains the
+producer interface. Presentation-only startup briefs are seeded only for voice
+profiles already present; a chapter-only database must open without unrelated
+demo profiles, fabricated voice mappings or a foreign-key failure.
+
 ## Package contract, v1
 
 ```
@@ -66,6 +72,16 @@ paths/links, requires a new root, restores the exact schema/relationships and
 checks foreign keys. Exact asset references become paths in the restored
 working projection. Original rows remain in records.json; prompts, source
 wording, approvals and timestamps are not reconstructed or invented.
+
+Exact shot-utterance bindings are shot-owned dependencies, including their
+original source interval, authority hash and approved voice version. Restoring
+must retain them without importing other chapters' bindings or fabricating a new
+approval. Valid relative references keep their original spelling when the same
+asset tree is copied, preserving pinned planning inputs and distinct aliases.
+Immutable provider/review JSON can retain old absolute or Mac working paths;
+chapter restore writes the existing recovery-path projection for every retained
+reference instead of rewriting those files or reading a substitute original
+root. A prior copied projection remains in recovery history.
 
 Database relationships and JSON snapshots provide inspectable source/cast
 intervals, selected takes, timeline placements, pauses, audio cues, music/SFX,
