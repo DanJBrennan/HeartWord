@@ -22,6 +22,14 @@ supports the proposed late repeated Jesus close-up and whispering-reaction
 omissions in Mark 4:40–41; their exact placement choices still require shot-map
 review. An omission cannot carry target speech, a picture handle or a new
 target action, and the edition must retain at least one selected picture shot.
+An `addedForEdition` coverage beat names its own reviewed, source-grounded
+`addedVerseRef` and `addedAction` so image generation does not repeat the
+anchor donor shot's historical verse and action. The new verse must fall within
+the inherited narrative scene. The beat continues to inherit that donor
+scene's selected Papuan cast; the producer reviews its verse, action and reason
+before stage 3 creates a target shot. The Mark 4:35–38 storm bridge beats use
+these fields for a dusk crossing and disciples turning toward the sleeping
+Jesus, who remains outside the second bridge frame.
 Producer decisions: Dan's October 2026 language-edition conversation and
 `C:/Users/danbr/HeartWordData/reviews/2026-10-22-language-editions/LANGUAGE_EDITION_HANDOFF.md`.
 

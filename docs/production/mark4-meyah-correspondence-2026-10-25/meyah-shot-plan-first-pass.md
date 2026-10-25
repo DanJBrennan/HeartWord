@@ -71,6 +71,11 @@ or spoken line is needed.
 
 ## Storm ending: exact source-clock proposal
 
+The [25-row graphical paper edit](http://127.0.0.1:4002/media/review/meyah-mark4-storm-shot-review-20261025/index.html)
+expands this section into individual donor placements, exact proposed Meyah
+clock, retained take trims and three new silent picture intervals. It remains
+a read-only proposal; the complete target correspondence is not saved.
+
 | Source span | Picture treatment to review |
 | --- | --- |
 | 672.893–684.518 (4:35) | Existing evening shore/boat picture. Convert only Jesus' reviewed 681.342–684.191 quotation to his mapped voice as voice-over; surrounding narration remains original. |

@@ -63,6 +63,10 @@ Dan approved an explicit edition-only `omit_picture` correspondence treatment
 for the proposed late repeated Jesus close-up and whispering reaction. It keeps
 their donor placements in review history and creates no target shot or media.
 Those two exact placements are still a proposal until shot-map review.
+The [storm source-clock paper edit](storm-shot-map-proposal.md) now gives
+twenty-five inspectable rows for 4:35–41, including exact retained-handle
+trims, three proposed silent coverage intervals, Peter/Jesus speech anchors
+and the unchanged final sea. It remains read-only and needs Dan's review.
 The [picture-handle audit](donor-picture-handle-audit.md) measures possible
 extension from separate accepted donor takes. It confirms that scenes 2–5
 need close shot-level attention; the simple one-take surplus does not itself

@@ -138,6 +138,8 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
       if(!targetSceneId)throw new Error("Donor shot scene has no target narrative correspondence.");
       const targetShotId=randomUUID(),next=(sequences.get(targetSceneId)??0)+1;sequences.set(targetSceneId,next);
       const copy:RecordRow={...donor,id:targetShotId,scene_id:targetSceneId,sequence:next,status:"planned",created_at:now,
+        ...(item.addedForEdition && item.addedAction?{action:item.addedAction.trim(),verse_ref:item.addedVerseRef?.trim()??donor.verse_ref,
+          coverage_notes:`New target-language picture beat based on reviewed donor scene. ${item.reason}`}:{ }),
         ...(item.narratorOnlyAction!==undefined?{action:item.narratorOnlyAction.trim(),needs_lip_sync:0,dialogue_character_id:null,
           coverage_notes:`Target narration describes this action without quoted character speech. ${item.reason}`}:{})};
       const columns=Object.keys(copy);

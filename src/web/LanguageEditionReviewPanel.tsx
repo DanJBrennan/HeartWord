@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 type Segment={id:string;startMs:number;endMs:number;verseRef:string|null;speakerId:string|null};
 type Disposition="reuse_picture"|"replace_avatar"|"needs_coverage"|"omit_picture";
 type PictureReuse={attemptId:string;sourceStartMs:number;durationMs:number;path?:string;sha256?:string};
-type Mapping={donorShotId:string;targetSegmentId:string|null;targetSpeechRunId?:string|null;targetStartMs:number|null;targetEndMs:number|null;treatment:Disposition;reason:string;pictureReuse?:PictureReuse;narratorOnlyAction?:string;addedForEdition?:boolean};
+type Mapping={donorShotId:string;targetSegmentId:string|null;targetSpeechRunId?:string|null;targetStartMs:number|null;targetEndMs:number|null;treatment:Disposition;reason:string;pictureReuse?:PictureReuse;narratorOnlyAction?:string;addedForEdition?:boolean;addedAction?:string;addedVerseRef?:string};
 type Shot={shotId:string;startMs:number;endMs:number;shot:{action:string;verse_ref:string|null;needs_lip_sync:number;dialogue_character_id:string|null};
   reuseCandidates:Array<{attemptId:string;path:string;provider:string;recordedDurationMs:number}>};
 type Workspace={edition:null|{donor:{renderId:string};target:{language:string;book:string;chapter:number;title:{bookChapter:string;languageName:string}};
@@ -73,6 +73,10 @@ export function LanguageEditionReviewPanel({projectId}:{projectId:string}){
       const choices=edition.donorShots.filter(row=>row.shotId===value.donorShotId),item=choices[Math.max(0,occurrence)]??choices[0];if(!item)return null;const speaking=Boolean(item.shot.needs_lip_sync);
       return <fieldset key={`${item.shotId}-${index}`}><legend>{index+1}. {item.shot.verse_ref??"Unassigned"} · {item.shot.action}</legend>
         <p>{value.addedForEdition?"New target coverage beat based on this donor scene":`Donor ${item.startMs}–${item.endMs} ms`} · {speaking?`Visible speaker ${item.shot.dialogue_character_id}`:"No visible speaking mouth"}</p>
+        {value.addedForEdition&&<><label>New beat verse (for example, Mark 4:38) <input value={value.addedVerseRef??""}
+          onChange={event=>edit(index,{addedVerseRef:event.target.value})} /></label>
+          <label>New source-grounded beat action <input value={value.addedAction??""}
+            onChange={event=>edit(index,{addedAction:event.target.value})} /> Describe this new picture instead of repeating the donor shot action.</label></>}
         <label>Treatment <select value={value.treatment} onChange={event=>{const treatment=event.target.value as Disposition;
           edit(index,{treatment,pictureReuse:undefined,...(treatment==="needs_coverage"?{}:{narratorOnlyAction:undefined}),
             ...(treatment==="omit_picture"?{targetSegmentId:null,targetSpeechRunId:null,targetStartMs:null,targetEndMs:null}: {})});}}>
@@ -109,7 +113,7 @@ export function LanguageEditionReviewPanel({projectId}:{projectId:string}){
           <label>End ms <input type="number" value={value.targetEndMs??""} onChange={event=>edit(index,{targetEndMs:Number(event.target.value)})} /></label></>}</>}
         <label>{value.treatment==="omit_picture"?"Why this picture is omitted":"Why this mapping fits the target recording"} <input value={value.reason} onChange={event=>edit(index,{reason:event.target.value})} /></label>
         {!edition.targetShotCount&&value.treatment!=="omit_picture"&&<button type="button" onClick={()=>{setMapping(rows=>{
-          const extra:Mapping={donorShotId:value.donorShotId,targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"needs_coverage",reason:"",addedForEdition:true};
+          const extra:Mapping={donorShotId:value.donorShotId,targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"needs_coverage",reason:"",addedForEdition:true,addedAction:"",addedVerseRef:""};
           return [...rows.slice(0,index+1),extra,...rows.slice(index+1)];});setRequestId("");setError("");}}>Add target coverage beat after this shot</button>}
         {value.addedForEdition&&!edition.targetShotCount&&<button type="button" onClick={()=>{setMapping(rows=>rows.filter((_,position)=>position!==index));setRequestId("");setError("");}}>Remove this added beat</button>}
       </fieldset>;})}

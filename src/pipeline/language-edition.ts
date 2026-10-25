@@ -7,6 +7,7 @@ import { discoverSourcePaths } from "./ingestion/source-catalog.js";
 import { parseReferenceOnlyVerseMarkers, parseSourceTextByVerse } from "./ingestion/parse-source-text.js";
 import { VOICE_CHANGER_DEFAULTS, type ReVoiceResult } from "../providers/elevenlabs.js";
 import { readConfirmedSpeechRuns } from "./ingestion/continuous-speech.js";
+import { parseVerseRange } from "./scene-breakdown/build-scenes.js";
 
 type Project = { id: string; language: string; book: string; chapter: number; updated_at: number };
 type Render = { id: string; project_id: string; result_asset_path: string; total_duration_ms:number; timeline_json: string | null; source_audio_json: string | null };
@@ -316,6 +317,11 @@ export function assertEditionInputsCurrent(db:DatabaseSync,dataDir:string,projec
       }
       if(!selected.targetShotId || !db.prepare("SELECT sh.id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=? AND sc.project_id=?").get(selected.targetShotId,projectId))
         throw new Error("A selected edition target shot is missing.");
+      if(reviewed.addedForEdition && reviewed.addedAction!==undefined){
+        const targetShot=db.prepare("SELECT action,verse_ref FROM shots WHERE id=?").get(selected.targetShotId) as {action:string;verse_ref:string|null}|undefined;
+        if(!targetShot || targetShot.action!==reviewed.addedAction?.trim() || targetShot.verse_ref!==reviewed.addedVerseRef)
+          throw new Error("Added target picture action or verse changed after correspondence review.");
+      }
       if(reviewed.narratorOnlyAction!==undefined){
         const targetShot=db.prepare("SELECT action,needs_lip_sync,dialogue_character_id FROM shots WHERE id=?").get(selected.targetShotId) as {action:string;needs_lip_sync:number;dialogue_character_id:string|null}|undefined;
         if(!targetShot||targetShot.action!==reviewed.narratorOnlyAction.trim()||targetShot.needs_lip_sync!==0||targetShot.dialogue_character_id!==null)
@@ -352,6 +358,10 @@ export interface EditionShotCorrespondence {
    * Scripture narrates that action without a character quotation. */
   narratorOnlyAction?: string;
   addedForEdition?: boolean;
+  /** Source-grounded action for a new target beat, rather than the anchor
+   * donor shot's different historical action. */
+  addedAction?: string;
+  addedVerseRef?: string;
 }
 export interface EditionPlanRevision {
   version: 1; targetProjectId: string; parentHash: string; revisionHash: string;
@@ -406,9 +416,21 @@ export function reviseLanguageEdition(db: DatabaseSync, projectId: string, input
   const seen=new Set<string>();
   for (const item of correspondence) {
     if (!item || !["reuse_picture","replace_avatar","needs_coverage","omit_picture"].includes(item.treatment) || !item.reason?.trim()) throw new Error("Every mapped shot needs a disposition and reviewable reason.");
-    if(item.addedForEdition && item.treatment!=="needs_coverage")throw new Error("An added target beat must receive its own reviewed picture coverage.");
-    const shot=db.prepare(`SELECT sh.needs_lip_sync AS speaking,sh.dialogue_character_id AS speaker FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=? AND sc.project_id=?`).get(item.donorShotId,donorProjectId) as {speaking:number;speaker:string|null}|undefined;
+    if(item.addedForEdition && (item.treatment!=="needs_coverage" || typeof item.addedAction!=="string" || !item.addedAction.trim() ||
+        typeof item.addedVerseRef!=="string" || !item.addedVerseRef.trim() || item.narratorOnlyAction!==undefined))
+      throw new Error("An added target beat needs its own reviewed verse, action and picture coverage.");
+    if(!item.addedForEdition && (item.addedAction!==undefined || item.addedVerseRef!==undefined))
+      throw new Error("Only a new target beat can replace its donor verse and action.");
+    const shot=db.prepare(`SELECT sh.needs_lip_sync AS speaking,sh.dialogue_character_id AS speaker,sc.verse_start AS sceneStart,sc.verse_end AS sceneEnd FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=? AND sc.project_id=?`).get(item.donorShotId,donorProjectId) as {speaking:number;speaker:string|null;sceneStart:string;sceneEnd:string}|undefined;
     if (!shot) throw new Error("Correspondence references a foreign or missing donor shot.");
+    if(item.addedForEdition){
+      const chapter=origin.preflight.target.chapter,ref=item.addedVerseRef!;
+      if(!new RegExp(`^Mark ${chapter}:\\d+(?:-\\d+)?$`).test(ref))
+        throw new Error("Added target beat verse must name a verse in the selected Mark chapter.");
+      const range=parseVerseRange(ref),sceneStart=parseVerseRange(shot.sceneStart).start,sceneEnd=parseVerseRange(shot.sceneEnd).end;
+      if(range.start<sceneStart || range.end>sceneEnd || range.start>range.end)
+        throw new Error("Added target beat verse must stay within its inherited narrative scene.");
+    }
     const key=canonical(item);if(seen.has(key))throw new Error("Duplicate shot correspondence is not allowed.");seen.add(key);
     if(item.treatment==="omit_picture"){
       if(item.pictureReuse || item.narratorOnlyAction!==undefined || item.targetSegmentId!==null || item.targetSpeechRunId || item.targetStartMs!==null || item.targetEndMs!==null)

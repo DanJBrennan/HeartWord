@@ -341,14 +341,25 @@ describe("language edition identity",()=>{
     const hashes=sourceReviewHashes(db,target,dataDir);
     db.prepare("INSERT INTO source_alignment_reviews VALUES('coverage-review',?,'Dan','confirm',?,?,'Reviewed target source',1)").run(target,hashes.sourceHash,hashes.alignmentHash);
     expect(materializeEditionScenes(db,dataDir,target).ok).toBe(true);
+    expect(()=>reviseLanguageEdition(db,target,{requestId:"coverage-wrong-verse-001",expectedParentHash:readLanguageEditionPlan(db,target)!.hash,reviewer:"Dan",evidence:"New picture review",
+      correspondence:[{donorShotId:"shot",targetSegmentId:"target-speech",targetStartMs:0,targetEndMs:1000,treatment:"replace_avatar",reason:"New Meyah mouth"},
+        {donorShotId:"cutaway",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"reuse_picture",reason:"Retained listener action"},
+        {donorShotId:"cutaway",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"needs_coverage",reason:"New listener angle",addedForEdition:true,
+          addedVerseRef:"Mark 4:38",addedAction:"Listeners turn toward Jesus."}]})).toThrow(/within its inherited narrative scene/);
     reviseLanguageEdition(db,target,{requestId:"coverage-map-001",expectedParentHash:readLanguageEditionPlan(db,target)!.hash,reviewer:"Dan",evidence:"New picture needed for longer target source",
       correspondence:[{donorShotId:"shot",targetSegmentId:"target-speech",targetStartMs:0,targetEndMs:1000,treatment:"replace_avatar",reason:"New Meyah mouth"},
         {donorShotId:"cutaway",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"reuse_picture",reason:"Retained listener action covers the first beat"},
-        {donorShotId:"cutaway",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"needs_coverage",reason:"Added target beat needs a new listener angle",addedForEdition:true}]});
+        {donorShotId:"cutaway",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"needs_coverage",reason:"Added target beat needs a new listener angle",addedForEdition:true,
+          addedVerseRef:"Mark 4:1",addedAction:"The listeners turn together toward Jesus from a new angle."}]});
     expect(materializeEditionCasting(db,dataDir,target).ok).toBe(true);
     expect((db.prepare("SELECT COUNT(*) n FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=?").get(target) as {n:number}).n).toBe(3);
     expect(materializeEditionMedia(db,dataDir,target).ok).toBe(false);
-    const targetShot=db.prepare("SELECT sh.id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=? AND sh.action='Listening' AND sh.sequence=3").get(target) as {id:string};
+    const targetShot=db.prepare("SELECT sh.id,sh.action,sh.verse_ref FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=? AND sh.sequence=3").get(target) as {id:string;action:string;verse_ref:string};
+    expect(targetShot.action).toBe("The listeners turn together toward Jesus from a new angle.");
+    expect(targetShot.verse_ref).toBe("Mark 4:1");
+    db.prepare("UPDATE shots SET verse_ref='Mark 4:2' WHERE id=?").run(targetShot.id);
+    expect(()=>assertEditionInputsCurrent(db,dataDir,target)).toThrow(/Added target picture action or verse/);
+    db.prepare("UPDATE shots SET verse_ref=? WHERE id=?").run(targetShot.verse_ref,targetShot.id);
     asset("generated/target-frame.png","new reviewed frame");asset("generated/target-motion.mp4","new reviewed motion");
     db.prepare("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('wrong-frame',?,'gemini','image','generate','accepted','generated/target-frame.png',0,1)").run(targetShot.id);
     expect(materializeEditionMedia(db,dataDir,target).ok).toBe(false);

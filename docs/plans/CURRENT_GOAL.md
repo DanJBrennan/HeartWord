@@ -44,6 +44,18 @@ The correspondence reviewer also exposes the existing narrator-only silent
 replacement needed at 4:39. Both typechecks and the full 873-test suite across
 127 files pass with a 30-second test timeout to accommodate parallel machine
 load. No target-shot or media selection has been applied.
+An exact, read-only [4:35–41 storm paper edit](../production/mark4-meyah-correspondence-2026-10-25/storm-shot-map-proposal.md)
+now maps all twenty-three donor story placements plus two new silent beats to
+the complete 132.792-second Meyah source clock. It proposes two edition-only
+omissions, retains the exact final sixteen-second sea and identifies 11.336
+seconds of new silent coverage. Its selected retained-take source ranges fit
+the copied accepted files, but the motion, trims and complete target shot map
+still need producer review before any database correspondence is saved.
+New target-only coverage beats now require a reviewed verse and action within
+their inherited narrative scene, rather than repeating the anchor donor
+shot's historical description. The normal correspondence reviewer exposes
+these fields. The focused edition tests, both typechecks and the full
+873-test/127-file suite pass on this implementation.
 The approved Peter 4:38 version-3 reference remains only a
 keyframe candidate; no Kling Avatar take, voice conversion or target shot has
 been created. Continue the source-faithful editable-edition workflow after
