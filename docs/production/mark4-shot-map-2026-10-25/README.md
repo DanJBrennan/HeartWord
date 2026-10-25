@@ -10,6 +10,11 @@ normalized, and this review has made no database or provider changes.
   chunk boundaries. It identifies 84 existing Mark 4 donor shots; 14 intervals
   await dedicated legacy shot records in the isolated copy. The first 96 frames
   are an explicitly replaceable title card, not a reusable story shot.
+- [Meyah title preview](markus4-meyah-title-preview.mp4)
+  ([still](markus4-meyah-title-preview.jpg)): `Markus 4` in large type and
+  `Meyah` below, rendered locally from the retained clean lake still. The clip
+  is video-only, exactly 96 frames at 24 fps. It is a review candidate; no
+  target editorial selection has been recorded.
 - [Summary](first-shot-map-summary.json): 7,407 frames link directly from a
   saved picture source to a shot in the correct narrative scene; 2,522 match
   retained source video visually;

@@ -211,3 +211,8 @@ to the shot-map pack. The missing accepted `generate` rows and utterance
 bindings remain unresolved. The final-film stills extracted during the search
 are only unaccepted comparison candidates; the retained originals are the
 preferred reference. No historical review status was rewritten.
+
+The local Mark 4 title renderer also produced a review-only, four-second
+`Markus 4` / `Meyah` preview from the retained clean lake still. FFprobe confirms
+96 video frames at 24 fps with no audio stream. The preview is in the shot-map
+pack; it has not been selected into a target edition or written to any DB.
