@@ -481,3 +481,15 @@ The pre-correction isolated database backup is
 The full suite passed 872 tests in 127 files, both TypeScript checks passed,
 SQLite `quick_check` returned `ok`, and exact source-row, target-scene,
 target-shot and source-attestation rows match that backup.
+
+A separate source/cast binding proposal now lists all thirteen current
+Meyah speech-review windows with their exact review IDs in
+`docs/production/mark4-meyah-correspondence-2026-10-25/source-binding-proposal.md`.
+It records the v39 narrator and v41 original-group exceptions and Dan's
+subsequent choice to use Peter's mapped voice for the visibly speaking 4:38
+shot. The isolated database remains
+unattributed. Applying this map must extend ingestion's existing split and
+continuous-speech operations with retained backup/review evidence; the
+current all-verse application helper intentionally rejects reconciled rows
+and already created scenes. The earlier source attestation covers scene
+planning only and cannot silently authorize the resulting cast map.

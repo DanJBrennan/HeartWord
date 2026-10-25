@@ -47,3 +47,6 @@ outside the cast window. They also retain the original Meyah group performance
 for the offscreen disciples' question at 4:41, rather than mapping Peter's
 voice to that passage. These are source and editorial directions for the
 next correspondence revision; the visual inventory itself remains read-only.
+The exact [source and cast binding proposal](source-binding-proposal.md) lists
+all thirteen reviewed speech/narration turns and the retained original-audio
+treatments. It is not yet applied to the isolated project.

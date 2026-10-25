@@ -14,6 +14,15 @@
       "treatment": "Jesus quoted speech may use the approved mapped character voice during target correspondence; retain the original Meyah recording before and after the quote as narration. The old picture has no required visible mouth for this line."
     },
     {
+      "verse": "Mark 4:38",
+      "producerChoice": "Use Peter's mapped voice for the visible speaking shot",
+      "speechReviewId": "c65ecd61-2a15-43cb-a029-cd136ccac898",
+      "speaker": "disciples; Peter is the visible Papuan character in the donor cut",
+      "quoteStartMs": 746695,
+      "quoteEndMs": 754976,
+      "treatment": "Convert the reviewed Meyah quote to Peter's pinned approved voice for the visible speaking shot; preserve source words and timing and require a reviewed Kling Avatar take."
+    },
+    {
       "verse": "Mark 4:41",
       "producerChoice": "Retain the original Meyah recording",
       "speechReviewId": "ea496271-a680-4e82-82f5-e89ae53231c6",
