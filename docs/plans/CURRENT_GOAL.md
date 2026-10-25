@@ -69,8 +69,9 @@ now clear, while its complete editable reconstruction remains unproved. The
 legacy database still has no decision linked to that render ID. See
 `docs/production/mark4-final-donor-evidence-2026-10-24.md`. No real Meyah
 edition or paid provider request is authorized by the isolated engineering
-checks. Before deployment, record the exact producer selection on an isolated
-donor copy, normalize a reviewed picture/audio recipe, then run a bounded
+checks. An isolated donor database copy now records Dan's exact final-cut
+selection without changing the live database. Before deployment, normalize
+a reviewed picture/audio recipe, then run a bounded
 target-language voice/Avatar audition,
 whole-film review and editable fresh-root restoration. The live database,
 Mark 5 checkout and production services remain outside this worktree's test

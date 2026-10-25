@@ -1,7 +1,8 @@
 # Hatam Mark 4 final donor evidence — 2026-10-24
 
-Status: read-only feasibility audit for the isolated language-edition work.
-No production database, media, approval row or provider job was changed.
+Status: read-only media audit plus one exact final-cut attestation in an
+ignored isolated database backup. No production database, media or provider
+job was changed.
 
 ## Producer selection and exact bytes
 
@@ -45,18 +46,39 @@ This proves the final picture can be assembled exactly from retained silent
 media; it does not establish shot-level editorial identity or reconstruct the
 Hatam soundtrack.
 
+The final MP4 and five chunks were copied, without changing their originals,
+to the ignored isolated worktree folder
+`output/mark4-donor-20261024/assets/legacy-mark4/`. Every copied SHA-256
+matched its source:
+
+| Isolated file | SHA-256 |
+| --- | --- |
+| `Markus-4.mp4` | `b207b4c0109d70e85fab40ccb9253e7973c4cd38213333307153d417fda8aa6a` |
+| `chunk00.mp4` | `55dbaa70bdfa4486b25024f89b9b50373d264665c75de43b7df395fa442ad383` |
+| `chunk01.mp4` | `fba0150be2fe808ba4d1fe8b08d13f0044571af1c54e6ef37410970322ac40a1` |
+| `chunk02.mp4` | `a09b61b53d2cd4176291382d1500d6bc84141a0456771780afffdffc5568594` |
+| `chunk03.mp4` | `e18ef678502c157bc6e13b6279316242c8c9e411ece5d97255935763ab3a9f36` |
+| `chunk04.mp4` | `1cc249e80d64b67156d204b92011a6a47d9ce81255cf5b6728f95239543cbd14` |
+
 An earlier registered base cut has 161 picture placements pointing to 89
 distinct retained assembled files. All 89 files exist and each path maps
 unambiguously to one saved generation attempt and shot. Those records preserve
 useful verse and speaker context, but later edits changed the cut, so the
 earlier placement list cannot simply be labeled as the final timeline.
 
-Read-only preflight of the current final render still holds for four reasons:
-the legacy database has no decision linked to that exact render ID; the final
-recipe is not normalized; the final shot identities are not present in its
-manifest; and the selected speaking voices cannot be pinned until those shots
-are identified. The producer's new final-output statement resolves which film
-to select. It does not fill in missing edit data or authorize copying a mixed
+The live legacy database has no decision linked to that exact render ID. A
+consistent SQLite online backup was saved at
+`output/mark4-donor-20261024/db/heartword.sqlite` inside this worktree (ignored
+by Git). It passed `PRAGMA quick_check` and foreign-key checking. Only that
+copy received a `producer_decision` row, ID
+`0574dc9c-e28c-43a5-b670-d818ff3dc030`, binding Dan's final-output
+statement to render `deefa536-62f9-41b3-bbac-e9e8fb244206` and the exact
+film SHA-256. The row expressly excludes field-release and target-language
+approval. Read-only preflight against the copy now recognizes the producer
+selection. Its three remaining holds are the unnormalized recipe, absent
+final-shot identities and speaking-voice evidence that depends on those
+identities. The live database still has zero exact decision rows. The isolated
+attestation does not fill in missing edit data or authorize copying a mixed
 Hatam soundtrack into Meyah.
 
 The Meyah source document's `6 (4:5)` and `19 (4:18)` entries remain
