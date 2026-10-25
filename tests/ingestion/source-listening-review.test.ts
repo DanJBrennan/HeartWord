@@ -94,7 +94,17 @@ it("reconciles approximate source rows while retaining both listening manifests,
  expect(readListeningReview(db,root,"p").items[0]!.sourceRow).toEqual({startMs:0,endMs:1300,verseRef:"Mark 5:7"});
  expect(readListeningReview(db,root,"p","speech")).toMatchObject({reconciliation:{id:applied.id},items:[{current:{id:speechReview.id},resolution:{treatment:"narration"}}]});
  expect(readListeningClip(db,root,"p","speech-1","speech")).toEqual(pcmWindow(wave(),700,1400));
- expect(()=>saveListeningReview(db,root,"p","quote-1",request({baseRevision:verseReview.id,requestId:"later-review"}))).toThrow("read-only");
+ const rowsBefore=db.prepare("SELECT * FROM audio_segments ORDER BY start_ms").all();
+ const revised=saveListeningReview(db,root,"p","quote-1",request({baseRevision:verseReview.id,requestId:"later-review",startMs:1001,endMs:1131,speakerLabel:"Jesus"}));
+ expect(revised).toMatchObject({previousRevision:verseReview.id,verified:true,startMs:1001,endMs:1131});
+ expect(readListeningReview(db,root,"p").items[0]).toMatchObject({current:{id:revised.id},sourceRow:{startMs:0,endMs:1300},history:[{id:verseReview.id},{id:revised.id}]});
+ expect(readListeningClip(db,root,"p","quote-1")).toEqual(pcmWindow(wave(),1001,1131));
+ expect(db.prepare("SELECT * FROM audio_segments ORDER BY start_ms").all()).toEqual(rowsBefore);
+ const speechRevised=saveListeningReview(db,root,"p","speech-1",{...request({scope:"speech",manifestHash:speechManifestHash,baseRevision:speechReview.id,requestId:"speech-revised",startMs:701,endMs:1399})});
+ expect(readListeningReview(db,root,"p","speech").items[0]).toMatchObject({current:{id:speechRevised.id},resolution:null});
+ expect(db.prepare("SELECT * FROM audio_segments ORDER BY start_ms").all()).toEqual(rowsBefore);
+ db.prepare("DELETE FROM review_notes WHERE note LIKE ?").run("Source listening reconciliation revision v1\n%");
+ expect(()=>readListeningReview(db,root,"p")).toThrow("changed after source-row reconciliation");
 });
 it("saves a millisecond window and a reviewed speaker label without attributing the source row",()=>{
  const saved=saveListeningReview(db,root,"p","quote-1",request({startMs:1001,endMs:1131,speakerLabel:"Jesus"}));

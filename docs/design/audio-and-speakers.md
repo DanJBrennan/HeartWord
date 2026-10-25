@@ -234,8 +234,13 @@ waveform windows as containment constraints while keeping internal verse edges
 approximate; the separate speech-turn reviews remain the source of exact
 character cutoffs. Before/after rows and boundary reasons are append-only
 project QC evidence. A bridge tied to the resulting alignment hash keeps both
-original listening manifests, saved WAVs and review history readable, then
-locks those reviews until a new source-binding revision. Reconciliation never
+original listening manifests, saved WAVs and review history readable. A later
+producer correction to an exact listening window appends a new named review,
+retained WAV and a QC revision bridge tied to the same source, manifest and
+reconciled alignment hashes. The earlier review and approved approximate source
+rows remain intact; any content decision tied to the old review becomes inactive.
+An unbridged or stale correction holds for explicit source-binding reconciliation.
+Reconciliation never
 supplies a whole-chapter human alignment attestation, speaker cast, translated
 words or provider request.
 

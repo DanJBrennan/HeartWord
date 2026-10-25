@@ -45,6 +45,16 @@ export interface SourceRowReconciliation {
  beforeSegments:unknown[];afterSegments:unknown[];boundaryRevisions:Array<{afterItemId:string;fromMs:number;toMs:number;basis:string}>;
 }
 export const sourceRowReconciliationPrefix="Source row reconciliation v1\n";
+export interface ListeningReconciliationRevision {
+ id:string;reconciliationId:string;manifestHash:string;sourceHash:string;appliedAlignmentHash:string;
+ scope:ListeningScope;itemId:string;fromReviewId:string|null;toReviewId:string;createdAt:number;
+}
+export const listeningReconciliationRevisionPrefix="Source listening reconciliation revision v1\n";
+function reconciliationRevisions(db:DatabaseSync,projectId:string,reconciliationId:string):ListeningReconciliationRevision[] {
+ return db.prepare("SELECT note FROM review_notes WHERE project_id=? AND subject_type='project' AND subject_id=? AND source='qc' AND note LIKE ? ORDER BY created_at,rowid").all(projectId,projectId,listeningReconciliationRevisionPrefix+"%")
+  .map(row=>JSON.parse(String(row.note).slice(listeningReconciliationRevisionPrefix.length)) as ListeningReconciliationRevision)
+  .filter(row=>row.reconciliationId===reconciliationId);
+}
 export function appliedSourceRowReconciliation(db:DatabaseSync,projectId:string):SourceRowReconciliation|null {
  const rows=db.prepare("SELECT note FROM review_notes WHERE project_id=? AND subject_type='project' AND subject_id=? AND source='qc' AND note LIKE ? ORDER BY created_at,rowid").all(projectId,projectId,sourceRowReconciliationPrefix+"%");
  return rows.map(r=>JSON.parse(String(r.note).slice(sourceRowReconciliationPrefix.length)) as SourceRowReconciliation).at(-1)??null;
@@ -95,7 +105,17 @@ function prepared(db:DatabaseSync,root:string,projectId:string,scope:ListeningSc
  const reconciliation=record&&record.sourceHash===current.sourceHash&&record.originalAlignmentHash===manifest.alignmentHash&&record.appliedAlignmentHash===current.alignmentHash&&record.manifestHashes[scope]===manifestHash?record:null;
  if(current.sourceHash!==manifest.sourceHash||(current.alignmentHash!==manifest.alignmentHash&&(!application||application.sourceHash!==current.sourceHash||application.originalAlignmentHash!==manifest.alignmentHash||application.appliedAlignmentHash!==current.alignmentHash)&&!reconciliation))throw Error("Source or alignment changed. Preserve these reviews and prepare a reconciled listening set.");
  if(application){const latest=revisions(db,projectId).filter(r=>r.manifestHash===manifestHash),ids=manifest.items.flatMap(i=>{const r=latest.filter(r=>r.itemId===i.id).at(-1);return r?[r.id]:[];});if(JSON.stringify(ids.sort())!==JSON.stringify([...application.reviewIds].sort()))throw Error("Applied review decisions changed; reconcile the source bindings before continuing.");}
- if(reconciliation){const latest=revisions(db,projectId).filter(r=>r.manifestHash===manifestHash),ids=manifest.items.flatMap(i=>{const r=latest.filter(r=>r.itemId===i.id).at(-1);return r?[r.id]:[];});if(JSON.stringify(ids.sort())!==JSON.stringify([...reconciliation.reviewIds[scope]].sort()))throw Error("A listening revision changed after source-row reconciliation; prepare a new source-binding revision.");}
+ if(reconciliation){
+  const history=revisions(db,projectId).filter(r=>r.manifestHash===manifestHash),expected=new Map<string,string>();
+  for(const id of reconciliation.reviewIds[scope]){const r=history.find(row=>row.id===id);if(!r||!manifest.items.some(i=>i.id===r.itemId)||expected.has(r.itemId))throw Error("Reconciled listening history is invalid.");expected.set(r.itemId,id);}
+  for(const bridge of reconciliationRevisions(db,projectId,reconciliation.id).filter(r=>r.scope===scope)){
+   const next=history.find(r=>r.id===bridge.toReviewId);
+   if(bridge.manifestHash!==manifestHash||bridge.sourceHash!==current.sourceHash||bridge.appliedAlignmentHash!==current.alignmentHash||!next||next.itemId!==bridge.itemId||next.previousRevision!==bridge.fromReviewId||(expected.get(bridge.itemId)??null)!==bridge.fromReviewId||!manifest.items.some(i=>i.id===bridge.itemId))throw Error("A post-reconciliation listening revision is invalid.");
+   expected.set(bridge.itemId,bridge.toReviewId);
+  }
+  const latest=new Map<string,string>();for(const r of history)latest.set(r.itemId,r.id);
+  if(JSON.stringify([...latest].sort())!==JSON.stringify([...expected].sort()))throw Error("A listening revision changed after source-row reconciliation; prepare a new source-binding revision.");
+ }
  return {manifest,manifestHash,application,reconciliation};
 }
 function revisions(db:DatabaseSync,projectId:string):ListeningRevision[] {
@@ -142,7 +162,7 @@ export function saveListeningReview(db:DatabaseSync,root:string,projectId:string
  if(!input||!["draft","verify"].includes(input.action)||!input.reviewerName?.trim()||input.reviewerName.length>160||typeof input.note!=="string"||input.note.length>8000||(input.speakerLabel!==undefined&&(typeof input.speakerLabel!=="string"||input.speakerLabel.length>160))||!/^[a-zA-Z0-9-]{1,100}$/.test(input.requestId??"")||!(input.baseRevision===null||typeof input.baseRevision==="string"))throw Error("Reviewer, valid request and draft/verification action are required.");
  if(input.action==="verify"&&input.attestation!=="confirm")throw Error("Verify explicitly confirms that you listened to this exact window.");
  const {manifest,manifestHash,application,reconciliation}=prepared(db,root,projectId,input.scope??"verse"),item=manifest.items.find(i=>i.id===itemId);
- if(application||reconciliation)throw Error("These reviewed windows have been applied or reconciled. Prepare a source-binding revision before changing a retained review; history is read-only.");
+ if(application)throw Error("These reviewed windows have been applied; prepare a source-binding revision before changing a retained review; history is read-only.");
  if(!item||input.manifestHash!==manifestHash)throw Error("The prepared item changed. Reload before saving.");
  if(!Number.isInteger(input.startMs)||!Number.isInteger(input.endMs)||input.startMs<0||input.endMs<=input.startMs||input.endMs>manifest.durationMs)throw Error("Start/end must be valid chapter times in 0.001-second increments.");
  const wav=readFileSync(assetPath(root,manifest.pcmPath));
@@ -158,6 +178,10 @@ export function saveListeningReview(db:DatabaseSync,root:string,projectId:string
   const bytes=pcmWindow(wav,input.startMs,input.endMs),full=assetPath(root,clipPath);mkdirSync(dirname(full),{recursive:true});writeFileSync(full,bytes,{flag:"wx"});
   const record:ListeningRevision={id,itemId,manifestHash,sourceHash:manifest.sourceHash,alignmentHash:manifest.alignmentHash,itemHash,requestId:input.requestId,reviewerName:input.reviewerName.trim(),note:input.note.trim(),startMs:input.startMs,endMs:input.endMs,verified:input.action==="verify",createdAt:Date.now(),clipPath,clipSha256:listeningHash(bytes),previousRevision:previous?.id??null,...(input.speakerLabel!==undefined?{speakerLabel:input.speakerLabel.trim()}:{})};
   db.prepare("INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES(?,?,'project',?,'human',?,0,?)").run(id,projectId,projectId,prefix+JSON.stringify(record),record.createdAt);
+  if(reconciliation){
+   const bridge:ListeningReconciliationRevision={id:randomUUID(),reconciliationId:reconciliation.id,manifestHash,sourceHash:manifest.sourceHash,appliedAlignmentHash:reconciliation.appliedAlignmentHash,scope:input.scope??"verse",itemId,fromReviewId:previous?.id??null,toReviewId:id,createdAt:record.createdAt};
+   db.prepare("INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES(?,?,'project',?,'qc',?,0,?)").run(bridge.id,projectId,projectId,listeningReconciliationRevisionPrefix+JSON.stringify(bridge),bridge.createdAt);
+  }
   db.exec("COMMIT");return record;
  } catch(e){db.exec("ROLLBACK");throw e;}
 }

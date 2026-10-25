@@ -40,3 +40,10 @@ longer chapter is visually complete. The next correspondence revision needs
 exact reviewed Meyah windows for each visible speaking placement and a
 passage-grounded choice of extended handles or new coverage where picture
 would otherwise run out.
+
+Dan's later [audio decisions](producer-audio-decisions-2026-10-25.json)
+pin the corrected 4:35 Jesus-only quotation, leaving its narrator lead-in
+outside the cast window. They also retain the original Meyah group performance
+for the offscreen disciples' question at 4:41, rather than mapping Peter's
+voice to that passage. These are source and editorial directions for the
+next correspondence revision; the visual inventory itself remains read-only.

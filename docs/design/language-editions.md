@@ -90,6 +90,10 @@ plan, source/canon checks, spend controls and actual result review.
   authority. Existing voicing forms a target-only cast master with the pinned
   voice settings. Short Avatar audio may receive trailing non-speech padding
   under the existing Kling contract; every spoken sample remains intact.
+  The producer may explicitly retain an original target-language group
+  performance for a quoted passage covered by non-speaking picture. In the
+  Mark 4 Meyah pilot Dan chose this for the disciples' 4:41 question; do not
+  substitute Peter's mapped voice or generate Avatar solely for that passage.
 - Before whole-chapter voice conversion, the producer selects one complete
   2–15 second target-language speech interval (or confirmed short speech run)
   after source and correspondence review. The existing voicing route converts

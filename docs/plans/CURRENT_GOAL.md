@@ -452,3 +452,32 @@ typechecks, the real fixed-root source-approval script and visual browser
 inspection. Goal Guardian: source map approval advanced only the existing
 scene stage, the picture inventory is read-only, and the normal producer
 correspondence, shot, voice, media and film reviews remain distinct.
+
+Dan corrected Mark 4:35 to the quoted Jesus words alone. The existing UI
+selection initially failed to save because the reviewed listening set was
+locked after source-row reconciliation. The isolated reviewer now supports
+append-only post-reconciliation listening corrections: each named revision
+keeps its WAV and a QC bridge pinned to the approved source, manifest and
+alignment hashes. Missing or stale bridges hold the review, while the earlier
+approved verse rows, listening history and source attestation stay intact.
+After a retained SQLite backup, Dan's selected 681.342–684.191 s window was
+saved and verified in the verse archive, then transcribed to the separate
+Jesus speech turn with a cross-reference to his verse review. The previous
+681.173–684.518 s speech review remains in history. The 4:35 source row
+remains the approximate 672.893–684.518 s navigation span, including narrator
+lead-in. Dan also directed that 4:41 retain its original Meyah disciples'
+performance over non-speaking picture, without Peter voice conversion or a
+new Avatar take for that passage. The exact review IDs and editorial choices
+are in `docs/production/mark4-meyah-correspondence-2026-10-25/producer-audio-decisions-2026-10-25.json`.
+No donor or live database, target shot, provider job, or film was changed by
+these listening corrections. Goal Guardian: this fixes the existing ingestion
+review path and follows the original Meyah performance and Dan's exact quote
+boundary; it adds no narrative content, new stage, or implied production
+approval.
+
+The pre-correction isolated database backup is
+`output/mark4-donor-20261024/review/heartword.before-v35-listening-correction.sqlite`
+(SHA256 `11e894bbb0eb78a98577d2e3828bd6d7cb66cf9754529135de2e1a03245713ef`).
+The full suite passed 872 tests in 127 files, both TypeScript checks passed,
+SQLite `quick_check` returned `ok`, and exact source-row, target-scene,
+target-shot and source-attestation rows match that backup.

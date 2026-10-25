@@ -1,0 +1,28 @@
+{
+  "projectId": "a5a40890-8bb0-4856-aacb-1dcad97074bb",
+  "sourceHash": "7947e9038f1cc0e74df68d934b0dbeba271a2ea27481165021ae207b2751b2c6",
+  "sourceReconciliationId": "f8c8883a-0c3c-4ac2-adaa-c0f78a0808d1",
+  "decisions": [
+    {
+      "verse": "Mark 4:35",
+      "producerStatement": "v35 was marked to include narration and Jesus speech. I just corrected it to just his speech.",
+      "verseReviewId": "6cac9d4b-ee0c-43f8-b2ce-3db7a63096f6",
+      "speechReviewId": "1dc9f2b9-f481-4dfb-8e73-3a4b707801c8",
+      "speaker": "Jesus",
+      "quoteStartMs": 681342,
+      "quoteEndMs": 684191,
+      "treatment": "Jesus quoted speech may use the approved mapped character voice during target correspondence; retain the original Meyah recording before and after the quote as narration. The old picture has no required visible mouth for this line."
+    },
+    {
+      "verse": "Mark 4:41",
+      "producerChoice": "Retain the original Meyah recording",
+      "speechReviewId": "ea496271-a680-4e82-82f5-e89ae53231c6",
+      "speechClipSha256": "8038adf1fb629fa8abd81abab6b6ef16ea6a690f526be87d2c3cb312d9984cc8",
+      "speaker": "disciples",
+      "quoteStartMs": 796354,
+      "quoteEndMs": 803616,
+      "treatment": "Use the original Meyah group performance over reaction and night-sea picture. Do not replace it with Peter's mapped voice or request Avatar for this offscreen passage."
+    }
+  ],
+  "scope": "Producer editorial direction for target correspondence; no target shot, voice conversion, media request, or film approval is recorded by this file."
+}
