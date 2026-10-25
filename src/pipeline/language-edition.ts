@@ -309,6 +309,11 @@ export function assertEditionInputsCurrent(db:DatabaseSync,dataDir:string,projec
     for(let index=0;index<saved.shots.length;index++){
       const selected=saved.shots[index]!,reviewed=plan.revision.correspondence[index]!;
       if(selected.donorShotId!==reviewed.donorShotId)throw new Error("Edition shot order changed after review.");
+      if(reviewed.narratorOnlyAction!==undefined){
+        const targetShot=db.prepare("SELECT action,needs_lip_sync,dialogue_character_id FROM shots WHERE id=?").get(selected.targetShotId) as {action:string;needs_lip_sync:number;dialogue_character_id:string|null}|undefined;
+        if(!targetShot||targetShot.action!==reviewed.narratorOnlyAction.trim()||targetShot.needs_lip_sync!==0||targetShot.dialogue_character_id!==null)
+          throw new Error("Narrator-only target picture changed after correspondence review.");
+      }
       if(reviewed.targetSegmentId!==null){
         const segment=db.prepare("SELECT start_ms,end_ms,speaker_character_id,source_path FROM audio_segments WHERE id=? AND project_id=? AND layer='original_reading'")
           .get(reviewed.targetSegmentId,projectId) as {start_ms:number;end_ms:number;speaker_character_id:string|null;source_path:string}|undefined;
@@ -336,6 +341,9 @@ export interface EditionShotCorrespondence {
   treatment: "reuse_picture" | "replace_avatar" | "needs_coverage";
   reason: string;
   pictureReuse?: { attemptId:string; sourceStartMs:number; durationMs:number; path?:string; sha256?:string };
+  /** Reviewed target action when the donor visibly speaks but the target
+   * Scripture narrates that action without a character quotation. */
+  narratorOnlyAction?: string;
   addedForEdition?: boolean;
 }
 export interface EditionPlanRevision {
@@ -396,9 +404,12 @@ export function reviseLanguageEdition(db: DatabaseSync, projectId: string, input
     if (!shot) throw new Error("Correspondence references a foreign or missing donor shot.");
     if (shot.speaking && item.treatment==="reuse_picture") throw new Error("A visibly speaking donor shot cannot reuse its old mouth performance.");
     if (item.treatment==="replace_avatar" && !shot.speaking) throw new Error("Avatar replacement needs a visibly speaking donor shot.");
+    const narratorOnly=item.narratorOnlyAction!==undefined;
+    if(narratorOnly && (typeof item.narratorOnlyAction!=="string" || !item.narratorOnlyAction.trim() || !shot.speaking || item.treatment!=="needs_coverage" || item.targetSegmentId!==null || item.targetSpeechRunId || item.targetStartMs!==null || item.targetEndMs!==null))
+      throw new Error("Narrator-only replacement needs a reviewed non-speaking action and new target picture coverage, without a character source window.");
     const key=canonical(item);if(seen.has(key))throw new Error("Duplicate shot correspondence is not allowed.");seen.add(key);
     if (item.targetSegmentId === null) {
-      if (shot.speaking || item.targetSpeechRunId || item.targetStartMs !== null || item.targetEndMs !== null) throw new Error("Speaking shots require an exact target source window.");
+      if ((shot.speaking&&!narratorOnly) || item.targetSpeechRunId || item.targetStartMs !== null || item.targetEndMs !== null) throw new Error("Speaking shots require an exact target source window.");
       continue;
     }
     const segment=db.prepare("SELECT start_ms AS startMs,end_ms AS endMs,speaker_character_id AS speaker FROM audio_segments WHERE id=? AND project_id=? AND layer='original_reading'").get(item.targetSegmentId,projectId) as {startMs:number;endMs:number;speaker:string|null}|undefined;

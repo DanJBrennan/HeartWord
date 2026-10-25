@@ -404,3 +404,25 @@ the already verified word/speech evidence; exact character/source binding
 follows that approval. Goal Guardian: this extends ingestion's existing
 review/correction boundary, retains the original narrator and editable
 chapter workflow, and invents no dialogue, cast, separate stage or approval.
+
+Dan clarified that his saved 4:38 verse-review window, 746.679–754.957 s,
+isolates the disciples' quotation. Its separate reviewed speech-turn window
+is 746.695–754.976 s. The applied source row, 723.776–755.248 s, also
+contains the narrator's lead-in. Preserve the quote windows as exact speech
+evidence and the broader row as approximate verse navigation. This
+clarification is not whole-chapter source approval.
+
+The stage-3 correspondence now supports the confirmed 4:39 case: a donor
+speaking insert may become a reviewed narrator-only, non-speaking target
+coverage shot with no character speech window. Stage 4 still requires its
+own accepted Codex keyframe and local LTX clip; no target shot has been
+materialized in the real Meyah project. This preserves the source narration
+and avoids carrying the old Hatam Jesus mouth performance into Meyah.
+The full suite passes 872 tests in 127 files with a 15-second timeout for
+parallel media tests; the one test that hit its default 5-second limit in the
+first run passed alone in 2.23 seconds. Both TypeScript typechecks pass.
+Goal Guardian: the change stays within existing correspondence, casting and
+media stages, requires a reviewed target action, preserves original Meyah
+narration and ordinary shot review, and does not invent character dialogue or
+authorize generation. The pending named source review still controls the
+real Meyah stage-2 transition.

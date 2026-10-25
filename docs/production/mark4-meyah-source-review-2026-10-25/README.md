@@ -244,3 +244,11 @@ the saved listening window and is now read-only pending any new source-binding
 revision. It still reports 12/40 verse-window and 13/13 speech-entry
 verifications. No whole-chapter source attestation, cast/source-word binding,
 provider call, target shot correspondence or film approval was created.
+
+Dan subsequently clarified that his saved 4:38 **verse-review** clip is the
+spoken quotation alone (746.679–754.957 seconds). The separate disciples'
+speech-turn review is 746.695–754.976 seconds. These nearly identical
+windows establish the quoted performance; the applied 4:38 source row
+(723.776–755.248 seconds) remains broader because it also includes the
+narrator's lead-in. His clarification did not approve the whole-chapter
+source-row alignment for scene planning.

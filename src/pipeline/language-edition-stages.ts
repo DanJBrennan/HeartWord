@@ -128,7 +128,9 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
       const targetSceneId=mappedScene.get(String(donor.scene_id));
       if(!targetSceneId)throw new Error("Donor shot scene has no target narrative correspondence.");
       const targetShotId=randomUUID(),next=(sequences.get(targetSceneId)??0)+1;sequences.set(targetSceneId,next);
-      const copy:RecordRow={...donor,id:targetShotId,scene_id:targetSceneId,sequence:next,status:"planned",created_at:now};
+      const copy:RecordRow={...donor,id:targetShotId,scene_id:targetSceneId,sequence:next,status:"planned",created_at:now,
+        ...(item.narratorOnlyAction!==undefined?{action:item.narratorOnlyAction.trim(),needs_lip_sync:0,dialogue_character_id:null,
+          coverage_notes:`Target narration describes this action without quoted character speech. ${item.reason}`}:{})};
       const columns=Object.keys(copy);
       db.prepare(`INSERT INTO shots (${columns.map(name=>`"${name}"`).join(",")})VALUES(${columns.map(()=>"?").join(",")})`).run(...columns.map(name=>copy[name]??null));
       const cast=db.prepare("SELECT character_id FROM shot_characters WHERE shot_id=?").all(item.donorShotId) as Array<{character_id:string}>;
@@ -137,7 +139,7 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
         db.prepare("INSERT INTO shot_characters(shot_id,character_id)VALUES(?,?)").run(targetShotId,member.character_id);
       }
       let voiceIdentitySource: "donor_utterance_binding"|"pinned_approved_character"|undefined;
-      if(Number(donor.needs_lip_sync)===1){
+      if(Number(copy.needs_lip_sync)===1){
         const bindings=db.prepare("SELECT character_version_id FROM shot_utterance_bindings WHERE shot_id=?").all(item.donorShotId) as Array<{character_version_id:string}>;
         if(bindings.length>1)throw new Error("Selected donor speaking shot has an ambiguous retained utterance binding.");
         const pinned=origin.preflight.voices.filter(voice=>voice.characterId===donor.dialogue_character_id);

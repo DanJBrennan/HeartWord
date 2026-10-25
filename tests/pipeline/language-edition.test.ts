@@ -156,6 +156,28 @@ describe("language edition identity",()=>{
     db.prepare("UPDATE audio_segments SET start_ms=10,end_ms=1010 WHERE id='target-speech'").run();
     expect(()=>assertEditionInputsCurrent(db,dataDir,target)).toThrow(/Target source interval/);
   });
+  it("replaces a donor speaking insert with source-grounded narrator-only picture coverage",()=>{
+    const pre=preflightLanguageEdition(db,dataDir,"donor",input),target=createLanguageEdition(db,dataDir,"donor",{...input,requestId:"narrator-edition-001",checkedFingerprint:pre.fingerprint!}).project.id;
+    const audioPath="source/meyah/audio/Meyah_mej_TBL_NT_Non-Drama/B02___04_Markus______MEJTBLN1DA.mp3";
+    db.prepare("INSERT INTO audio_segments(id,project_id,layer,source_path,start_ms,end_ms,verse_ref,created_at)VALUES('target-narration',?,'original_reading',?,0,1000,'Mark 4:1',1)").run(target,audioPath);
+    const hashes=sourceReviewHashes(db,target,dataDir);
+    db.prepare("INSERT INTO source_alignment_reviews VALUES('narrator-review',?,'Dan','confirm',?,?,'Source narrates the action without a direct character quote',1)").run(target,hashes.sourceHash,hashes.alignmentHash);
+    expect(materializeEditionScenes(db,dataDir,target).ok).toBe(true);
+    const parent=readLanguageEditionPlan(db,target)!.hash;
+    const correspondence=[{donorShotId:"shot",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"needs_coverage" as const,
+      narratorOnlyAction:"Jesus turns toward the waves while the narrator describes his action.",reason:"Reviewed target verse narrates the action; replace the donor mouth insert with new silent picture."}];
+    expect(()=>reviseLanguageEdition(db,target,{requestId:"narrator-map-bad-001",expectedParentHash:parent,reviewer:"Dan",evidence:"Narrator-only source review",correspondence:[{...correspondence[0]!,narratorOnlyAction:undefined}]})).toThrow("Speaking shots require");
+    const plan=reviseLanguageEdition(db,target,{requestId:"narrator-map-good-001",expectedParentHash:parent,reviewer:"Dan",evidence:"Narrator-only source review",correspondence});
+    expect(plan.created).toBe(true);
+    expect(materializeEditionCasting(db,dataDir,target).ok).toBe(true);
+    const shot=db.prepare("SELECT sh.id,sh.action,sh.needs_lip_sync,sh.dialogue_character_id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=?").get(target) as {id:string;action:string;needs_lip_sync:number;dialogue_character_id:string|null};
+    expect(shot).toMatchObject({action:correspondence[0]!.narratorOnlyAction,needs_lip_sync:0,dialogue_character_id:null});
+    expect(db.prepare("SELECT id FROM shot_utterance_bindings WHERE shot_id=?").get(shot.id)).toBeUndefined();
+    expect(()=>assertEditionInputsCurrent(db,dataDir,target)).not.toThrow();
+    expect(materializeEditionMedia(db,dataDir,target)).toMatchObject({ok:false,reasoning:expect.stringContaining("new coverage")});
+    db.prepare("UPDATE shots SET action='Changed silent action' WHERE id=?").run(shot.id);
+    expect(()=>assertEditionInputsCurrent(db,dataDir,target)).toThrow("Narrator-only target picture changed");
+  });
   it("binds an original-keyframe speaking shot to the pinned approved character voice after target review",()=>{
     db.exec(`INSERT INTO shots(id,scene_id,sequence,action,needs_lip_sync,dialogue_character_id,created_at)
       VALUES('original-performance','scene',2,'Continued teaching',1,'jesus',1);

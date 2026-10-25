@@ -116,6 +116,13 @@ plan, source/canon checks, spend controls and actual result review.
   holds an exact `needs_coverage` shot until its Codex keyframe
   and, for a non-speaking shot, accepted local LTX picture exist. A speaking
   shot proceeds to a new target-language Avatar take after its keyframe.
+  When the final donor visibly speaks but the target recording only narrates
+  that action, the reviewed correspondence may replace that insert with a
+  passage-grounded non-speaking `needs_coverage` shot. It records the target
+  action and reason, has no character speech window or mouth binding, and
+  requires its own accepted Codex keyframe and local LTX clip. Mark 4:39 is
+  this case in the Meyah pilot; do not assign the old Hatam Jesus mouth
+  performance to the Meyah narrator passage.
   There is no loop/freeze or silent story change. Editorial assembly adapts to
   the target audio clock through the ordinary Picture Editor cut and
   source-coverage checks.
