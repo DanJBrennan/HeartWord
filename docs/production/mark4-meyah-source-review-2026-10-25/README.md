@@ -191,3 +191,36 @@ the storm handoff. Dan's speech-turn boundary pass does not establish those
 words. The two DOCX reference-only markers, `6 (4:5)` and `19 (4:18)`, also
 remain source-text review items. Resolve these bounded source questions before
 recording a whole-chapter source attestation or applying target correspondence.
+
+### Dan's targeted word check, 2026-10-25
+
+Dan then reviewed the seven flagged passages and directly answered that the
+spoken Meyah words match the displayed text in 4:7, 4:10, 4:14, 4:33 and
+4:36–38. He also answered that neither printed reference-only marker is
+spoken. [The retained answer record](targeted-word-review.json) pins the
+source hash, verse-manifest hash, and seven saved clip revision IDs and hashes.
+The isolated reviewer reports 12 of 40 verse-archive entries verified in
+this snapshot, including saved windows for 4:5 and 4:18. Dan's marker answer
+is a separate content finding. The 4:38
+archive window isolates the disciples' quote, so it is not a whole-verse
+timing interval. These targeted answers resolve the seven named verse
+word-match questions and both reference-marker questions. The model's
+744.776–758.776-second storm span still needs source-row placement against
+Dan's reviewed 4:38 speech and 4:39 narration. Whole-chapter alignment and
+target-shot correspondence still require their normal named review.
+
+The isolated database's older silence-only `original_reading` rows must be
+reconciled before that whole-source review: 8 of the 11 verified verse-archive
+clip midpoints currently fall under a *different* provisional verse label.
+For example, the row labeled Mark 4:37 runs 702.398–776.219 seconds and
+contains Dan's reviewed 4:38 disciples quotation and the 4:39 narrated
+passage. The prepared 40-entry verse manifest is a contiguous, source-hashed
+Gemini-based navigation proposal; its internal verse edges remain approximate,
+while the separately verified speech-turn cutoffs carry exact voice timing.
+Rebuilding source rows must preserve both review manifests, their saved WAVs
+and histories, the v39 narrator decision, and these targeted content answers.
+Calling ordinary re-ingestion against the current isolated database would
+replace its rows and clear project QC notes, so it is not a safe shortcut.
+The [source-row candidate](source-row-reconciliation-candidate.md) now gives
+the proposed seven boundary repairs over the contiguous 40-entry navigation
+manifest. It remains read-only until an application preserves review history.

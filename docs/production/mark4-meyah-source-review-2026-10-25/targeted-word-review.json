@@ -1,0 +1,91 @@
+{
+  "kind": "targeted-meyah-mark4-source-content-review",
+  "recordedDate": "2026-10-25",
+  "projectId": "a5a40890-8bb0-4856-aacb-1dcad97074bb",
+  "reportedBy": "Dan",
+  "recordedBy": "Codex from Dan's direct answers in the Mark 4 Meyah review chat",
+  "sourceHash": "7947e9038f1cc0e74df68d934b0dbeba271a2ea27481165021ae207b2751b2c6",
+  "verseManifestHash": "ad61775feba7e8f8d65f9914cf6d47b1ca58385a728cdbcaf4bddcc85c60ad4c",
+  "wordMatch": {
+    "question": "For verses 7, 10, 14, 33, and 36-38 that you just reviewed, did the spoken Meyah words match the displayed text? If any did not, please name the verse and what you heard.",
+    "answer": "Yes, the words match",
+    "reviewedClips": [
+      {
+        "itemId": "v7",
+        "reviewId": "6e812869-fa4d-4985-8806-1a20760bc240",
+        "clipSha256": "bafd3de9a40cfac03e3f0aa09f7db6263a373d5a4b2d3e637a90b079e3e0dbdd",
+        "startMs": 92954,
+        "endMs": 109580
+      },
+      {
+        "itemId": "v10",
+        "reviewId": "f5a00358-097f-4017-8ef1-3fd63a414f23",
+        "clipSha256": "76f0026d8f07d64c8cbd5f17faf261667bb26e73bcb4949f73911c5d6d6c7806",
+        "startMs": 154308,
+        "endMs": 175610
+      },
+      {
+        "itemId": "v14",
+        "reviewId": "48086f23-e72f-4369-a821-2ebd7e1f41ee",
+        "clipSha256": "e55a55b933a37fc35ca95699cad941f375419a8ed623d0f1c5160e3bef3cc055",
+        "startMs": 260896,
+        "endMs": 278194
+      },
+      {
+        "itemId": "v33",
+        "reviewId": "46c358b1-8783-4652-8d39-4decd8981e1b",
+        "clipSha256": "5211cd68295635cfce1153d65e430b403dcaef86cb04ec561fa53c85ec92bae8",
+        "startMs": 641808,
+        "endMs": 650718
+      },
+      {
+        "itemId": "v36",
+        "reviewId": "4046673c-bd77-4f6e-862a-2ebd6d85999a",
+        "clipSha256": "97fa939f3f78bee745d77a7076485b3bef9ec79382b41498474238838fab5980",
+        "startMs": 684818,
+        "endMs": 702203
+      },
+      {
+        "itemId": "v37",
+        "reviewId": "d918be68-a477-4876-89fd-5a8cf3693495",
+        "clipSha256": "a6a5e34ddf09c0f50a9af6382e3f02b85e2c16cd2202fc17561e2373db125fa8",
+        "startMs": 702617,
+        "endMs": 723776
+      },
+      {
+        "itemId": "v38",
+        "reviewId": "ac9da2f9-913e-43a0-8b9b-97e02711d5fd",
+        "clipSha256": "2495f1a3eee6755ee07723a3df0fb52ecc9ff7c00ed3203b34e857127e5ee965",
+        "startMs": 746679,
+        "endMs": 754957
+      }
+    ]
+  },
+  "referenceOnlyMarkers": {
+    "question": "At the printed reference-only markers following 4:5 and 4:18, are the verse numbers spoken in the recording? Please check 4:18 if you have not listened to it yet.",
+    "answer": "Neither marker is spoken",
+    "markers": [
+      "6 (4:5)",
+      "19 (4:18)"
+    ],
+    "verse18WindowVerified": true,
+    "supportingClips": [
+      {
+        "itemId": "v5",
+        "reviewId": "1dddeac3-72f9-4e87-b992-9e6019a53ae7",
+        "clipSha256": "b0fc3adb5f79d3c7e510ff4b8002c6f6e2a12d9502f4281cef5416e3c4382d84",
+        "startMs": 66562,
+        "endMs": 92504
+      },
+      {
+        "itemId": "v18",
+        "reviewId": "7b6eb564-244a-4aca-a536-067bd5a5d54a",
+        "clipSha256": "1c184806285d95d2d546054f0fafc80629ac6716dc7e7c51e887f4d4823bd532",
+        "startMs": 339674,
+        "endMs": 378184
+      }
+    ]
+  },
+  "scope": "Targeted source-content answers only. Saved clip verifications attest to listening windows, not whole-verse boundaries. Mark 4:38's saved verse-archive clip isolates the disciples' quotation and is not a full-verse timing interval. This record does not approve all 40 source intervals, apply speaker/cast rows, or constitute whole-chapter source-alignment attestation.",
+  "snapshotVerifiedVerseWindows": 12
+}

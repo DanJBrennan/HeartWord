@@ -366,3 +366,28 @@ normal chapter source review, editable correspondence, and producer approval
 path. The final full suite passed 870 tests in 127 files; TypeScript checks
 and the web build passed. The isolated reviewer reports 13 current verified
 entries, of which 12 remain character windows and one is original narration.
+Dan's next targeted source-content answers confirm that spoken words match
+the displayed Meyah text in the seven Gemini-flagged verses (7, 10, 14, 33,
+36–38), and that neither reference-only marker after 4:5 or 4:18 is spoken.
+The answer and exact current clip/source hashes are retained in
+`docs/production/mark4-meyah-source-review-2026-10-25/targeted-word-review.json`.
+This resolves those content questions, but only 12/40 verse-archive windows
+are verified, and the 4:38 archive clip is the
+disciples' quote rather than a complete verse. The named whole-source
+alignment review and target correspondence remain separate gates. No source
+rows, cast rows, provider work, or live database changed.
+The 744.776–758.776-second model-unresolved storm span still needs placement
+against the separately reviewed 4:38 quote and 4:39 narration; Dan's targeted
+word answer alone does not set those source-row boundaries.
+Before source attestation, reconcile the old silence-only original-reading
+rows in a retained isolated revision. Eight of 11 verified verse clip
+midpoints presently carry the wrong provisional row label; the row labeled
+4:37 spans 702.398–776.219 seconds and contains the reviewed 4:38 quote and
+4:39 narration. Preserve both manifests, saved WAV/review history, the v39
+content decision and targeted word answers. A normal re-ingestion would
+replace source rows and clear project QC notes, so use an explicit source-row
+reconciliation with an inspectable before/after map. Exact speech cutoffs
+remain authoritative; internal verse edges are approximate navigation.
+A read-only 40-row proposal with seven reviewed-evidence boundary repairs and
+the preserved 17 ms decoded-audio tail is in
+`docs/production/mark4-meyah-source-review-2026-10-25/source-row-reconciliation-candidate.md`.
