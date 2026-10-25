@@ -1,0 +1,73 @@
+{
+  "totalFrames": 13484,
+  "placements": 113,
+  "framesByEvidenceClass": {
+    "legacy_editorial_import": 1075,
+    "source_linked": 8339,
+    "visual_match": 2604,
+    "visual_review": 358,
+    "keyframe_match": 192,
+    "patch_predecessor": 588,
+    "legacy_cross_chapter_import": 68,
+    "saved_attempt_match": 260
+  },
+  "legacyImportFrames": 1143,
+  "missingAcceptedDonorKeyframes": 15,
+  "acceptedKeyframesNotInIsolatedCopy": 71,
+  "normalizerReady": false,
+  "missingAcceptedDonorKeyframeShotIds": [
+    "0a6d5fa5-d5bf-47aa-a0ca-10228d91ae63",
+    "11e009c8-5914-4393-9129-4e8eb4c2b555",
+    "1500fbb4-6e16-44fd-9f6a-e1b03a3fd11a",
+    "3d161507-2eb4-4805-ad75-a759d8ec7580",
+    "41ef4134-46c3-4f88-8a64-3d2dca0e9b78",
+    "4f07697e-2bf5-4254-a24c-00afd7fb9748",
+    "680fba01-4960-404c-8a29-97f7fcdcba76",
+    "7a4384ed-95dc-4f48-a63a-5f4c4aaa9dcd",
+    "82b420d8-6422-4185-a4d2-815824add384",
+    "871b9833-386c-4130-8413-9f2ed0847760",
+    "b791ad84-184e-4875-806b-2e0f2f9b29f6",
+    "c7034b8b-9139-474d-995e-c027d4cc5938",
+    "dbc3f313-54a7-4b06-b5de-1452629be4f3",
+    "f2efed36-6f6d-4268-b506-46c9413ccbec",
+    "f76279dd-4f87-4ecf-9e7e-1350cdb238c7"
+  ],
+  "legacyImports": [
+    {
+      "firstFrame": 0,
+      "lastFrame": 179,
+      "kind": "legacy_editorial_import",
+      "evidence": "Dan directed exact preservation of the lake/title picture; create a dedicated opening beat and localize title text only."
+    },
+    {
+      "firstFrame": 180,
+      "lastFrame": 347,
+      "kind": "legacy_editorial_import",
+      "evidence": "Dan directed exact preservation of the empty-boat mood insert as a dedicated opening beat."
+    },
+    {
+      "firstFrame": 348,
+      "lastFrame": 440,
+      "kind": "legacy_editorial_import",
+      "evidence": "Dan directed exact preservation of this shore/boat editorial still as a dedicated opening beat."
+    },
+    {
+      "firstFrame": 775,
+      "lastFrame": 1024,
+      "kind": "legacy_editorial_import",
+      "evidence": "Dan directed exact preservation of the second move on the shore/boat editorial still as a distinct beat."
+    },
+    {
+      "firstFrame": 7759,
+      "lastFrame": 7826,
+      "kind": "legacy_cross_chapter_import",
+      "evidence": "Saved picture is a Mark 3:30 listener asset reused in final Hatam Mark 4; create an explicit Mark 4 editorial beat and flag target-picture review."
+    },
+    {
+      "firstFrame": 13100,
+      "lastFrame": 13483,
+      "kind": "legacy_editorial_import",
+      "evidence": "Dan directed exact preservation of the final night-sea mood pullout as a dedicated ending beat."
+    }
+  ]
+}

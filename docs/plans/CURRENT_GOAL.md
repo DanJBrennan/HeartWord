@@ -156,3 +156,19 @@ implementation, not a completed Meyah film. The real pilot remains held on a
 reviewed final Mark 4 shot map, Meyah source alignment/listening, bounded
 voice/Avatar checks and a full editorial/QC/export pass. The live database and
 approved Mark 5 production were not modified.
+
+Final-shot-map review, 2026-10-25: the isolated final `Markus-4.mp4` now has a
+complete **draft** 113-placement, 13,484-frame shot map at
+`docs/production/mark4-shot-map-2026-10-25/`. Saved v39–v73 edits and source
+links identify most placements; retained-video, later-attempt and keyframe
+checks resolve more. Dan directed exact preservation of the five opening and
+closing mood intervals (44.8 seconds total), changing only the target title.
+They will become dedicated legacy editorial beats in the isolated donor.
+One further 68-frame listener clip came from a Mark 3 shot record; it also
+needs an explicit Mark 4 legacy beat with its source provenance retained.
+Another 15
+historical canonical Jesus performance shots need accepted keyframes and
+source/voice bindings reconstructed from saved v45 evidence; 71 other selected
+keyframes need copying into the isolated root. The draft is explicitly not a
+normalizer input, no normalization or Meyah project has run, and the live
+database and Mark 5 remain untouched.
