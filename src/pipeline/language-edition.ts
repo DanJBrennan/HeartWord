@@ -303,12 +303,19 @@ export function assertEditionInputsCurrent(db:DatabaseSync,dataDir:string,projec
   }
   const cast=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_shots' AND undone=0 ORDER BY sequence DESC LIMIT 1").get(projectId) as {payload:string}|undefined;
   if(cast){
-    const saved=JSON.parse(cast.payload) as {planHash:string;shots:Array<{donorShotId:string;targetShotId:string}>};
+    const saved=JSON.parse(cast.payload) as {planHash:string;shots:Array<{donorShotId:string;targetShotId:string|null;treatment:string}>};
     if(saved.planHash!==plan?.hash || !plan?.revision || saved.shots.length!==plan.revision.correspondence.length)
       throw new Error("Edition shot selection no longer matches its reviewed correspondence.");
     for(let index=0;index<saved.shots.length;index++){
       const selected=saved.shots[index]!,reviewed=plan.revision.correspondence[index]!;
-      if(selected.donorShotId!==reviewed.donorShotId)throw new Error("Edition shot order changed after review.");
+      if(selected.donorShotId!==reviewed.donorShotId || selected.treatment!==reviewed.treatment)
+        throw new Error("Edition shot order or treatment changed after review.");
+      if(reviewed.treatment==="omit_picture"){
+        if(selected.targetShotId!==null)throw new Error("An omitted edition placement acquired a target shot.");
+        continue;
+      }
+      if(!selected.targetShotId || !db.prepare("SELECT sh.id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=? AND sc.project_id=?").get(selected.targetShotId,projectId))
+        throw new Error("A selected edition target shot is missing.");
       if(reviewed.narratorOnlyAction!==undefined){
         const targetShot=db.prepare("SELECT action,needs_lip_sync,dialogue_character_id FROM shots WHERE id=?").get(selected.targetShotId) as {action:string;needs_lip_sync:number;dialogue_character_id:string|null}|undefined;
         if(!targetShot||targetShot.action!==reviewed.narratorOnlyAction.trim()||targetShot.needs_lip_sync!==0||targetShot.dialogue_character_id!==null)
@@ -338,7 +345,7 @@ export interface EditionShotCorrespondence {
   targetSpeechRunId?: string | null;
   targetStartMs: number | null;
   targetEndMs: number | null;
-  treatment: "reuse_picture" | "replace_avatar" | "needs_coverage";
+  treatment: "reuse_picture" | "replace_avatar" | "needs_coverage" | "omit_picture";
   reason: string;
   pictureReuse?: { attemptId:string; sourceStartMs:number; durationMs:number; path?:string; sha256?:string };
   /** Reviewed target action when the donor visibly speaks but the target
@@ -398,16 +405,21 @@ export function reviseLanguageEdition(db: DatabaseSync, projectId: string, input
   });
   const seen=new Set<string>();
   for (const item of correspondence) {
-    if (!item || !["reuse_picture","replace_avatar","needs_coverage"].includes(item.treatment) || !item.reason?.trim()) throw new Error("Every mapped shot needs a disposition and reviewable reason.");
+    if (!item || !["reuse_picture","replace_avatar","needs_coverage","omit_picture"].includes(item.treatment) || !item.reason?.trim()) throw new Error("Every mapped shot needs a disposition and reviewable reason.");
     if(item.addedForEdition && item.treatment!=="needs_coverage")throw new Error("An added target beat must receive its own reviewed picture coverage.");
     const shot=db.prepare(`SELECT sh.needs_lip_sync AS speaking,sh.dialogue_character_id AS speaker FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=? AND sc.project_id=?`).get(item.donorShotId,donorProjectId) as {speaking:number;speaker:string|null}|undefined;
     if (!shot) throw new Error("Correspondence references a foreign or missing donor shot.");
+    const key=canonical(item);if(seen.has(key))throw new Error("Duplicate shot correspondence is not allowed.");seen.add(key);
+    if(item.treatment==="omit_picture"){
+      if(item.pictureReuse || item.narratorOnlyAction!==undefined || item.targetSegmentId!==null || item.targetSpeechRunId || item.targetStartMs!==null || item.targetEndMs!==null)
+        throw new Error("An omitted edition placement cannot select picture, action or target speech.");
+      continue;
+    }
     if (shot.speaking && item.treatment==="reuse_picture") throw new Error("A visibly speaking donor shot cannot reuse its old mouth performance.");
     if (item.treatment==="replace_avatar" && !shot.speaking) throw new Error("Avatar replacement needs a visibly speaking donor shot.");
     const narratorOnly=item.narratorOnlyAction!==undefined;
     if(narratorOnly && (typeof item.narratorOnlyAction!=="string" || !item.narratorOnlyAction.trim() || !shot.speaking || item.treatment!=="needs_coverage" || item.targetSegmentId!==null || item.targetSpeechRunId || item.targetStartMs!==null || item.targetEndMs!==null))
       throw new Error("Narrator-only replacement needs a reviewed non-speaking action and new target picture coverage, without a character source window.");
-    const key=canonical(item);if(seen.has(key))throw new Error("Duplicate shot correspondence is not allowed.");seen.add(key);
     if (item.targetSegmentId === null) {
       if ((shot.speaking&&!narratorOnly) || item.targetSpeechRunId || item.targetStartMs !== null || item.targetEndMs !== null) throw new Error("Speaking shots require an exact target source window.");
       continue;

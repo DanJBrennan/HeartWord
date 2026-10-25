@@ -90,9 +90,10 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
   const sceneMap=JSON.parse(sceneCommand.payload) as {scenes:Array<{donorSceneId:string;targetSceneId:string}>};
   const mappedScene=new Map(sceneMap.scenes.map(item=>[item.donorSceneId,item.targetSceneId]));
   const existing=command(db,projectId,"materialize_edition_shots");
-  if(existing){const map=JSON.parse(existing.payload) as {planHash:string;shots:Array<{targetShotId:string}>};
+  if(existing){const map=JSON.parse(existing.payload) as {planHash:string;shots:Array<{targetShotId:string|null;treatment:string}>};
     if(map.planHash!==readLanguageEditionPlan(db,projectId)?.hash)return {ok:false,reasoning:"Edition correspondence changed after target shots were materialized; reconcile existing shots before a new plan can run."};
-    if(map.shots.length && map.shots.every(item=>row(db,"SELECT sh.id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=? AND sc.project_id=?",item.targetShotId,projectId)))return {ok:true,reasoning:`Retained ${map.shots.length} target-owned shot correspondences.`};
+    if(map.shots.length && map.shots.every(item=>item.treatment==="omit_picture" ? item.targetShotId===null : !!item.targetShotId && !!row(db,"SELECT sh.id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=? AND sc.project_id=?",item.targetShotId,projectId)))
+      return {ok:true,reasoning:`Retained ${map.shots.filter(item=>item.targetShotId!==null).length} target-owned shots and ${map.shots.filter(item=>item.treatment==="omit_picture").length} reviewed picture omissions.`};
     return {ok:false,reasoning:"Saved edition shot map is incomplete; preserve it for reconciliation."};}
   if(row(db,"SELECT sh.id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=? LIMIT 1",projectId))return {ok:false,reasoning:"Target shots already exist without an edition map; review them before casting."};
   const plan=readLanguageEditionPlan(db,projectId);
@@ -108,6 +109,8 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
   if([...selected].some(id=>!mapped.has(id)) || [...mapped].some(id=>!selected.has(id)))
     return {ok:false,reasoning:"Reviewed correspondence must cover each selected donor shot and no unrelated shot."};
   const inherited=plan.revision.correspondence.filter(item=>!item.addedForEdition);
+  if(!plan.revision.correspondence.some(item=>item.treatment!=="omit_picture"))
+    return {ok:false,reasoning:"A language edition needs at least one selected target picture shot."};
   if(JSON.stringify(picture.filter(item=>typeof item?.shotId==="string").map(item=>item.shotId))!==JSON.stringify(inherited.map(item=>item.donorShotId)))
     return {ok:false,reasoning:"Reviewed target correspondence must retain the selected donor picture order."};
   for(const id of selected){
@@ -118,7 +121,7 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
   for(const [index,item] of plan.revision.correspondence.entries())if(item.addedForEdition &&
       (item.treatment!=="needs_coverage" || index===0 || plan.revision.correspondence[index-1]?.donorShotId!==item.donorShotId))
     return {ok:false,reasoning:"An added target coverage beat must follow a selected donor shot in the same reviewed scene."};
-  const now=Date.now(),mapping:Array<{donorShotId:string;targetShotId:string;treatment:string;targetSegmentId:string|null;reason:string;
+  const now=Date.now(),mapping:Array<{donorShotId:string;targetShotId:string|null;treatment:string;targetSegmentId:string|null;reason:string;
     voiceIdentitySource?:"donor_utterance_binding"|"pinned_approved_character"}>=[];
   let activeRuns:ReturnType<typeof readConfirmedSpeechRuns>;
   try{activeRuns=readConfirmedSpeechRuns(db,projectId,dataDir);}catch(error){return {ok:false,reasoning:`Target speech-run evidence changed: ${(error as Error).message}`};}
@@ -126,6 +129,10 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
   try{
     const sequences=new Map<string,number>();
     for(const item of plan.revision.correspondence){
+      if(item.treatment==="omit_picture"){
+        mapping.push({donorShotId:item.donorShotId,targetShotId:null,treatment:item.treatment,targetSegmentId:null,reason:item.reason});
+        continue;
+      }
       const donor=row(db,"SELECT * FROM shots WHERE id=?",item.donorShotId)!;
       const targetSceneId=mappedScene.get(String(donor.scene_id));
       if(!targetSceneId)throw new Error("Donor shot scene has no target narrative correspondence.");
@@ -175,7 +182,7 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
       .run(projectId,JSON.stringify(intro),intro.status,now,now);
     appendCommand(db,projectId,"materialize_edition_shots",{planHash:plan.hash,donorRenderId:origin.preflight.donor.renderId,shots:mapping},now);
     db.exec("COMMIT");
-    return {ok:true,reasoning:`Created ${mapping.length} target-owned shots from reviewed correspondence; speaking shots bind exact target windows. Donor assets and approvals remain separate.`};
+    return {ok:true,reasoning:`Created ${mapping.filter(item=>item.targetShotId!==null).length} target-owned shots and retained ${mapping.filter(item=>item.treatment==="omit_picture").length} explicit picture omissions; speaking shots bind exact target windows. Donor assets and approvals remain separate.`};
   }catch(error){db.exec("ROLLBACK");return {ok:false,reasoning:`Edition casting held: ${(error as Error).message}`};}
 }
 
@@ -187,7 +194,7 @@ export function materializeEditionMedia(db:DatabaseSync,dataDir:string,projectId
   const shotRecord=command(db,projectId,"materialize_edition_shots");
   const plan=readLanguageEditionPlan(db,projectId);
   if(!shotRecord||!plan?.revision)return {ok:false,reasoning:"Reviewed target shots and exact correspondence are required before picture reuse."};
-  const mapped=JSON.parse(shotRecord.payload) as {planHash:string;shots:Array<{donorShotId:string;targetShotId:string;treatment:string}>};
+  const mapped=JSON.parse(shotRecord.payload) as {planHash:string;shots:Array<{donorShotId:string;targetShotId:string|null;treatment:string}>};
   if(mapped.planHash!==plan.hash)return {ok:false,reasoning:"Target shot correspondence changed; picture reuse must be reconciled."};
   const previous=command(db,projectId,"materialize_edition_media");
   if(previous){
@@ -199,7 +206,8 @@ export function materializeEditionMedia(db:DatabaseSync,dataDir:string,projectId
     return {ok:false,reasoning:"A retained edition picture changed or is missing; do not regenerate or approve it automatically."};
   }
   const missingCoverage:string[]=[];
-  for(const item of mapped.shots.filter(item=>item.treatment==="needs_coverage")){
+  for(const item of mapped.shots.filter(item=>item.treatment==="needs_coverage" && item.targetShotId!==null)){
+    if(!item.targetShotId)return {ok:false,reasoning:"A coverage placement lost its target shot."};
     const frame=row(db,"SELECT result_asset_path FROM generation_attempts WHERE shot_id=? AND operation='generate' AND provider='codex_imagegen' AND status='accepted' AND result_asset_path IS NOT NULL ORDER BY created_at DESC LIMIT 1",item.targetShotId);
     const speaking=Number(row(db,"SELECT needs_lip_sync FROM shots WHERE id=?",item.targetShotId)?.needs_lip_sync)===1;
     const motion=speaking ? null : row(db,`SELECT ga.result_asset_path FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id
@@ -231,7 +239,12 @@ export function materializeEditionMedia(db:DatabaseSync,dataDir:string,projectId
       const evidence=pinned.get(item.donorShotId)?.shift();
       if(!evidence || placement.path!==evidence.path || placement.sha256!==evidence.sha256 || (placement.sourceStartMs??0)!==evidence.sourceStartMs || placement.endMs-placement.startMs!==evidence.durationMs)
         throw new Error("Selected picture placement differs from the frozen edition evidence.");
+      if(item.treatment==="omit_picture"){
+        if(item.targetShotId!==null)throw new Error("Omitted picture acquired a target shot.");
+        continue;
+      }
       if(item.treatment==="needs_coverage")continue;
+      if(!item.targetShotId)throw new Error("Selected picture lost its target shot.");
       const target=row(db,"SELECT needs_lip_sync FROM shots WHERE id=?",item.targetShotId);
       if(!target)throw new Error("Target shot was removed after correspondence review.");
       const keyPath=evidence.keyframePath,keyAbs=productionAssetPath(dataDir,keyPath),keyHash=digest(readFileSync(keyAbs));

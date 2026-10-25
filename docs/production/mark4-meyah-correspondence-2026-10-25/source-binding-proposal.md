@@ -2,8 +2,9 @@
 
 Status: **applied to the isolated Meyah project on Dan's explicit approval**.
 The proposal below is retained as the decision basis. The resulting 54-row
-speaker map, with seven scenes and zero target shots, now awaits Dan's named
-review before target shot planning or paid voicing. The earlier 40-row verse
+speaker map, with seven scenes and zero target shots, received Dan's named
+approval **for shot planning** in isolated source review
+`4a80c28d-7904-45a0-8a55-5f1ec92c7ba7`. The earlier 40-row verse
 map remains in the source-review history.
 
 Applied binding ID: `6fbea6d4-b75e-43c5-bc09-b80921c7078a`.
@@ -51,8 +52,9 @@ verse labels, and appended named continuous-speech/cast evidence. It kept
 the source chapter heading, narration, 4:39 narrated action and 4:41 group
 question in the original Meyah performance. The seven target scenes remain.
 This changed the alignment/speaker hash, so the earlier scene-planning source
-attestation remains historical; the resulting exact map needs its own named
-producer review before target-shot correspondence and paid audition. The
+attestation remains historical; the resulting exact map has its own named
+producer review for target-shot planning. A separate reviewed shot
+correspondence and voice audition are still required. The
 existing `applyListeningReview` cannot perform this specific transition: it
 requires the whole verse-review set, forbids previously reconciled rows, and
 forbids downstream scenes. `applySourceSpeechBinding` extends ingestion for

@@ -21,12 +21,33 @@ seven donor scenes, 125 donor shots and 148 donor audio rows unchanged; the
 target project and its seven scenes are unchanged apart from the intended
 source binding history, and it still has zero shots.
 
-**Next gate:** Dan's named review of that new speaker map. Stage 3 shot
-materialization and paid voice audition hold until a current source attestation
-is recorded. The approved Peter 4:38 version-3 reference remains only a
+Dan then explicitly answered **“Approve the map for shot planning.”** The
+isolated project records this as source review
+`4a80c28d-7904-45a0-8a55-5f1ec92c7ba7`, bound to the current alignment
+hash. The prior 40-row scene-planning review remains historical. Approval
+does not select target shots, title picture, voice audition, Avatar takes or
+film. A SQLite-consistent pre-approval backup is retained under the isolated
+`review/` directory.
+
+**Next gate:** review the [first shot-planning brief](http://127.0.0.1:4002/media/review/meyah-mark4-shot-plan-20261025/index.html)
+and its 113-placement visual inventory before recording exact target
+correspondence. Scenes 2–5 need substantial passage-grounded picture beyond
+the simple one-take handle surplus. The proposed storm ending keeps Peter's
+8.281-second quote, narrator-only 4:39, Jesus' 7.710-second question, the
+original Meyah 4:41 group performance and the exact 16-second final sea.
+Dan approved an explicit edition-only omission disposition before target media
+generation. The code now retains each omitted donor placement and review reason
+in the ordered correspondence while skipping target-shot and media creation.
+The proposed two late omissions still need selection in the reviewed target
+shot map.
+The correspondence reviewer also exposes the existing narrator-only silent
+replacement needed at 4:39. Both typechecks and the full 873-test suite across
+127 files pass with a 30-second test timeout to accommodate parallel machine
+load. No target-shot or media selection has been applied.
+The approved Peter 4:38 version-3 reference remains only a
 keyframe candidate; no Kling Avatar take, voice conversion or target shot has
 been created. Continue the source-faithful editable-edition workflow after
-the review, using the existing stages and retained Mark 4 picture handles.
+the shot review, using the existing stages and retained Mark 4 picture handles.
 
 ## Completed: Hatam Mark 5 production
 

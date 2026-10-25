@@ -51,9 +51,18 @@ The exact [source and cast binding record](source-binding-proposal.md) lists
 all thirteen reviewed speech/narration turns and the retained original-audio
 treatments. Dan approved its 54-row projection, which was applied only to the
 isolated Meyah database. The [graphical speaker map](http://127.0.0.1:4002/media/review/meyah-mark4-speech-binding-20261025/index.html)
-lets him review every row against the original Meyah recording. Its named
-approval is still required before target shots or paid voice work. The earlier
+lets him review every row against the original Meyah recording. Dan approved
+it for shot planning in isolated source review
+`4a80c28d-7904-45a0-8a55-5f1ec92c7ba7`. Target shots and paid voice work
+still have their own review and action gates. The earlier
 40-row map remains in review history, and the source bytes are unchanged.
+The [first shot-planning brief](http://127.0.0.1:4002/media/review/meyah-mark4-shot-plan-20261025/index.html)
+sets out the passage-grounded coverage approach and proposed storm ending.
+Its [Markdown source](meyah-shot-plan-first-pass.md) is the editable record.
+Dan approved an explicit edition-only `omit_picture` correspondence treatment
+for the proposed late repeated Jesus close-up and whispering reaction. It keeps
+their donor placements in review history and creates no target shot or media.
+Those two exact placements are still a proposal until shot-map review.
 The [picture-handle audit](donor-picture-handle-audit.md) measures possible
 extension from separate accepted donor takes. It confirms that scenes 2–5
 need close shot-level attention; the simple one-take surplus does not itself

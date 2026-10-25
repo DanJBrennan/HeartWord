@@ -107,6 +107,41 @@ describe("language edition identity",()=>{
     expect(()=>reviseLanguageEdition(db,target,{...request,requestId:"mapping-review-003",expectedParentHash:saved.revision.revisionHash,
       correspondence:[{...correspondence[0]!,targetSegmentId:"speech"}]})).toThrow(/target original-reading/);
   });
+  it("records a reviewed edition-only omission without creating or preparing its repeated donor shot",()=>{
+    db.prepare("UPDATE chapter_render_manifests SET timeline_json=? WHERE render_id='render'").run(JSON.stringify([
+      {shotId:"shot",path:"films/scene.mp4",sha256:pictureHash,sourceStartMs:0,startMs:0,endMs:1000},
+      {shotId:"shot",path:"films/scene.mp4",sha256:pictureHash,sourceStartMs:0,startMs:1000,endMs:2000}]));
+    const pre=preflightLanguageEdition(db,dataDir,"donor",input);
+    expect(pre.status).toBe("ready");
+    const target=createLanguageEdition(db,dataDir,"donor",{...input,requestId:"omission-edition-001",checkedFingerprint:pre.fingerprint!}).project.id;
+    const audioPath="source/meyah/audio/Meyah_mej_TBL_NT_Non-Drama/B02___04_Markus______MEJTBLN1DA.mp3";
+    db.prepare("INSERT INTO audio_segments(id,project_id,layer,source_path,start_ms,end_ms,verse_ref,speaker_character_id,created_at)VALUES('target-speech',?,'original_reading',?,0,1000,'Mark 4:1','jesus',1)").run(target,audioPath);
+    const hashes=sourceReviewHashes(db,target,dataDir);
+    db.prepare("INSERT INTO source_alignment_reviews VALUES('omission-review',?,'Dan','confirm',?,?,'Reviewed target source',1)").run(target,hashes.sourceHash,hashes.alignmentHash);
+    expect(materializeEditionScenes(db,dataDir,target).ok).toBe(true);
+    const parent=readLanguageEditionPlan(db,target)!.hash;
+    const omitted={donorShotId:"shot",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"omit_picture" as const,
+      reason:"Producer omitted the later repeated speaking close-up from this edition."};
+    expect(()=>reviseLanguageEdition(db,target,{requestId:"omission-invalid-001",expectedParentHash:parent,reviewer:"Dan",evidence:"Review",correspondence:[
+      {donorShotId:"shot",targetSegmentId:"target-speech",targetStartMs:0,targetEndMs:1000,treatment:"replace_avatar",reason:"Use the first performance"},
+      {...omitted,targetSegmentId:"target-speech"}]})).toThrow(/cannot select picture, action or target speech/);
+    reviseLanguageEdition(db,target,{requestId:"omission-map-001",expectedParentHash:parent,reviewer:"Dan",evidence:"Reviewed later repeated picture omission",correspondence:[
+      {donorShotId:"shot",targetSegmentId:"target-speech",targetStartMs:0,targetEndMs:1000,treatment:"replace_avatar",reason:"Use the first performance"},
+      omitted]});
+    expect(materializeEditionCasting(db,dataDir,target)).toMatchObject({ok:true});
+    expect(materializeEditionCasting(db,dataDir,target)).toMatchObject({ok:true});
+    const saved=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_shots'").get(target) as {payload:string};
+    const mapped=JSON.parse(saved.payload).shots as Array<{targetShotId:string|null;treatment:string}>;
+    expect(mapped.map(item=>item.treatment)).toEqual(["replace_avatar","omit_picture"]);
+    expect(mapped[0]!.targetShotId).toBeTruthy();expect(mapped[1]!.targetShotId).toBeNull();
+    expect((db.prepare("SELECT COUNT(*) n FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=?").get(target) as {n:number}).n).toBe(1);
+    expect(()=>assertEditionInputsCurrent(db,dataDir,target)).not.toThrow();
+    expect(materializeEditionMedia(db,dataDir,target)).toMatchObject({ok:true});
+    const prepared=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_media'").get(target) as {payload:string};
+    expect(JSON.parse(prepared.payload).assets).toHaveLength(1);
+    expect((db.prepare("SELECT COUNT(*) n FROM shots WHERE scene_id='scene'").get() as {n:number}).n).toBe(1);
+    expect((db.prepare("SELECT COUNT(*) n FROM shot_utterance_bindings WHERE shot_id='shot'").get() as {n:number}).n).toBe(1);
+  });
   it("retains Meyah-style reference-only markers without inventing Scripture",()=>{
     const path=join(dataDir,"assets/source/meyah/text/Mark/Mark 4.docx");
     writeFileSync(path,docx(["MARK 4","5Meyah text with straight \"quotes\".","6 (4:5)","18More supplied text.","19 (4:18)","20Next text."]));

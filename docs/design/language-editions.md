@@ -1,14 +1,27 @@
 # Language editions from an editable chapter
 
 Status: isolated Mark 4 donor normalized and Meyah project identity created;
-target source, voice, picture and film reviews remain open.
+the 54-row target speaker map is approved for shot planning. Target picture,
+voice, title selection and film reviews remain open.
 
 October 25 source-binding update: Dan approved applying the projected 54-row
 Meyah speaker map after exact listening review. The existing ingestion stage
 now records an append-only binding from the approved 40-row verse archive,
 keeping its history and source bytes intact. Stage 3 target-shot materialization
 and paid voice audition require a new named review of the current speaker map;
-the earlier verse-map review alone does not satisfy that gate.
+the earlier verse-map review alone does not satisfy that gate. Dan supplied
+that named speaker-map approval on October 25; review
+`4a80c28d-7904-45a0-8a55-5f1ec92c7ba7` is current only for this exact
+source/alignment. Target shot selection and provider requests remain separate.
+Dan also approved an explicit edition-only `omit_picture` disposition for
+donor placements that do not fit the reviewed Meyah source clock. Each omitted
+placement remains in the ordered correspondence with its donor identity and
+reason, but stage 3 creates no target shot or speech binding and stage 4
+prepares no media for it. The donor timeline and assets remain intact. This
+supports the proposed late repeated Jesus close-up and whispering-reaction
+omissions in Mark 4:40–41; their exact placement choices still require shot-map
+review. An omission cannot carry target speech, a picture handle or a new
+target action, and the edition must retain at least one selected picture shot.
 Producer decisions: Dan's October 2026 language-edition conversation and
 `C:/Users/danbr/HeartWordData/reviews/2026-10-22-language-editions/LANGUAGE_EDITION_HANDOFF.md`.
 

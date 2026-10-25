@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
 type Segment={id:string;startMs:number;endMs:number;verseRef:string|null;speakerId:string|null};
-type Disposition="reuse_picture"|"replace_avatar"|"needs_coverage";
+type Disposition="reuse_picture"|"replace_avatar"|"needs_coverage"|"omit_picture";
 type PictureReuse={attemptId:string;sourceStartMs:number;durationMs:number;path?:string;sha256?:string};
-type Mapping={donorShotId:string;targetSegmentId:string|null;targetSpeechRunId?:string|null;targetStartMs:number|null;targetEndMs:number|null;treatment:Disposition;reason:string;pictureReuse?:PictureReuse;addedForEdition?:boolean};
+type Mapping={donorShotId:string;targetSegmentId:string|null;targetSpeechRunId?:string|null;targetStartMs:number|null;targetEndMs:number|null;treatment:Disposition;reason:string;pictureReuse?:PictureReuse;narratorOnlyAction?:string;addedForEdition?:boolean};
 type Shot={shotId:string;startMs:number;endMs:number;shot:{action:string;verse_ref:string|null;needs_lip_sync:number;dialogue_character_id:string|null};
   reuseCandidates:Array<{attemptId:string;path:string;provider:string;recordedDurationMs:number}>};
 type Workspace={edition:null|{donor:{renderId:string};target:{language:string;book:string;chapter:number;title:{bookChapter:string;languageName:string}};
@@ -65,7 +65,7 @@ export function LanguageEditionReviewPanel({projectId}:{projectId:string}){
   const auditionCast=edition.castAudio.find(item=>item.segmentId===auditionIds[0])?.path;
   return <section className="edition-panel" aria-label="Language edition correspondence">
     <h2>{edition.target.title.bookChapter} · {edition.target.title.languageName}</h2>
-    <p>Donor render {edition.donor.renderId}. Review every target-language source interval against the selected picture. Use a reviewed trim of retained footage when it fits the Meyah narration. A visible speaking mouth needs a new Kling Avatar take. Mark a shot “Needs coverage” only when its retained picture cannot cover the reviewed beat; use the Codex image handoff for its keyframe and local LTX for non-speaking motion. This plan records your evidence; it does not contact a provider.</p>
+    <p>Donor render {edition.donor.renderId}. Review every target-language source interval against the selected picture. Use a reviewed trim of retained footage when it fits the Meyah narration. A visible speaking mouth needs a new Kling Avatar take. Mark a shot “Needs coverage” only when its retained picture cannot cover the reviewed beat; use the Codex image handoff for its keyframe and local LTX for non-speaking motion. “Omit from this edition” records a reviewed editorial omission without creating a target shot or media. This plan records your evidence; it does not contact a provider.</p>
     {edition.sourceQuestions.length>0&&<div><strong>Source questions</strong><ul>{edition.sourceQuestions.map((question,index)=><li key={index}>{question}</li>)}</ul></div>}
     {!edition.segments.length&&<p>Ingest and review the target chapter audio before mapping its picture.</p>}
     {edition.targetShotCount>0&&<p>Target shots already exist. A changed correspondence will hold their previous selections until reconciled.</p>}
@@ -73,9 +73,12 @@ export function LanguageEditionReviewPanel({projectId}:{projectId:string}){
       const choices=edition.donorShots.filter(row=>row.shotId===value.donorShotId),item=choices[Math.max(0,occurrence)]??choices[0];if(!item)return null;const speaking=Boolean(item.shot.needs_lip_sync);
       return <fieldset key={`${item.shotId}-${index}`}><legend>{index+1}. {item.shot.verse_ref??"Unassigned"} · {item.shot.action}</legend>
         <p>{value.addedForEdition?"New target coverage beat based on this donor scene":`Donor ${item.startMs}–${item.endMs} ms`} · {speaking?`Visible speaker ${item.shot.dialogue_character_id}`:"No visible speaking mouth"}</p>
-        <label>Treatment <select value={value.treatment} onChange={event=>edit(index,{treatment:event.target.value as Disposition,pictureReuse:undefined})}>
+        <label>Treatment <select value={value.treatment} onChange={event=>{const treatment=event.target.value as Disposition;
+          edit(index,{treatment,pictureReuse:undefined,...(treatment==="needs_coverage"?{}:{narratorOnlyAction:undefined}),
+            ...(treatment==="omit_picture"?{targetSegmentId:null,targetSpeechRunId:null,targetStartMs:null,targetEndMs:null}: {})});}}>
           {!value.addedForEdition&&(speaking?<option value="replace_avatar">Replace Avatar mouth</option>:<option value="reuse_picture">Reuse picture</option>)}
-          <option value="needs_coverage">Needs coverage</option></select></label>
+          <option value="needs_coverage">Needs coverage</option>
+          {!value.addedForEdition&&<option value="omit_picture">Omit from this edition</option>}</select></label>
         {!speaking&&value.treatment==="reuse_picture"&&<><label>Reviewed picture source <select value={value.pictureReuse?.attemptId??""}
           onChange={event=>{const candidate=item.reuseCandidates.find(row=>row.attemptId===event.target.value);
             edit(index,{pictureReuse:candidate?{attemptId:candidate.attemptId,sourceStartMs:0,durationMs:candidate.recordedDurationMs}:undefined});}}>
@@ -88,6 +91,12 @@ export function LanguageEditionReviewPanel({projectId}:{projectId:string}){
             <video controls preload="metadata" src={`/media/${item.reuseCandidates.find(candidate=>candidate.attemptId===value.pictureReuse?.attemptId)?.path??""}`} aria-label="Retained donor picture handle preview" />
             <p>Review the full action and target audio timing. The saved trim is verified against this take; no speech audio is copied.</p></>}
         </>}
+        {speaking&&value.treatment==="needs_coverage"&&<label><input type="checkbox" checked={value.narratorOnlyAction!==undefined}
+          onChange={event=>edit(index,{narratorOnlyAction:event.target.checked?"":undefined,...(event.target.checked?{targetSegmentId:null,targetSpeechRunId:null,targetStartMs:null,targetEndMs:null}:{})})} />
+          The Meyah narrator describes this action; replace the old speaking insert with silent picture</label>}
+        {value.treatment==="omit_picture"?<p>This donor placement remains in the reviewed history. No target speech, picture handle, shot or media is selected for it.</p>:
+          value.narratorOnlyAction!==undefined?<label>Reviewed silent action <input value={value.narratorOnlyAction}
+            onChange={event=>edit(index,{narratorOnlyAction:event.target.value})} /> Describe only what the supplied passage says or clearly shows.</label>:<>
         <label>Confirmed continuous speech, if this mouth window crosses segments <select value={value.targetSpeechRunId??""} onChange={event=>{const run=edition.speechRuns.find(row=>row.id===event.target.value);
           edit(index,{targetSpeechRunId:run?.id??null,targetSegmentId:run?.anchorSegmentId??null,targetStartMs:run?.startMs??null,targetEndMs:run?.endMs??null});}}>
           <option value="">Single original interval</option>{edition.speechRuns.filter(run=>run.speakerId===item.shot.dialogue_character_id).map(run=><option key={run.id} value={run.id}>
@@ -97,9 +106,9 @@ export function LanguageEditionReviewPanel({projectId}:{projectId:string}){
           <option value="">No linked target interval</option>{edition.segments.map(segment=><option key={segment.id} value={segment.id}>
             {segment.verseRef??"Unassigned"} · {segment.startMs}–{segment.endMs} ms · {segment.speakerId??"narrator"}</option>)}</select></label>}
         {value.targetSegmentId&&<><label>Start ms <input type="number" value={value.targetStartMs??""} onChange={event=>edit(index,{targetStartMs:Number(event.target.value)})} /></label>
-          <label>End ms <input type="number" value={value.targetEndMs??""} onChange={event=>edit(index,{targetEndMs:Number(event.target.value)})} /></label></>}
-        <label>Why this mapping fits the target recording <input value={value.reason} onChange={event=>edit(index,{reason:event.target.value})} /></label>
-        {!edition.targetShotCount&&<button type="button" onClick={()=>{setMapping(rows=>{
+          <label>End ms <input type="number" value={value.targetEndMs??""} onChange={event=>edit(index,{targetEndMs:Number(event.target.value)})} /></label></>}</>}
+        <label>{value.treatment==="omit_picture"?"Why this picture is omitted":"Why this mapping fits the target recording"} <input value={value.reason} onChange={event=>edit(index,{reason:event.target.value})} /></label>
+        {!edition.targetShotCount&&value.treatment!=="omit_picture"&&<button type="button" onClick={()=>{setMapping(rows=>{
           const extra:Mapping={donorShotId:value.donorShotId,targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"needs_coverage",reason:"",addedForEdition:true};
           return [...rows.slice(0,index+1),extra,...rows.slice(index+1)];});setRequestId("");setError("");}}>Add target coverage beat after this shot</button>}
         {value.addedForEdition&&!edition.targetShotCount&&<button type="button" onClick={()=>{setMapping(rows=>rows.filter((_,position)=>position!==index));setRequestId("");setError("");}}>Remove this added beat</button>}
