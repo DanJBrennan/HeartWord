@@ -331,3 +331,14 @@ editable-language-edition workflow without making verse edges into voice cuts.
 The stable full suite passed 869 tests in 127 files; TypeScript checks and the
 web build passed. The isolated API still reports four verified verse windows,
 zero verified speech turns, and matching source hashes for both views.
+
+Dan completed the first isolated speech-turn pass: all 13 current entries now
+have his verification. The 4:9 Jesus window is pinned as a 9.691-second
+source-only candidate for the first Meyah ElevenLabs audition, with its exact
+review ID/WAV hash and historical settings gap retained. No provider request
+was sent. Before source attribution, Dan is rechecking the 4:11 narrator-to-
+Jesus handoff and whether 4:39 contains direct Meyah speech at all. The
+4:21–23 and 4:24–25 Jesus windows touch exactly and should form one cast run
+unless a real narrator interruption is evidenced. Existing provisional source
+rows have not been reconciled; the normal target source attestation and
+target-shot correspondence still hold paid voicing and later film work.

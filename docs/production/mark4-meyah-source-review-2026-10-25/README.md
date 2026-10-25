@@ -120,3 +120,39 @@ isolated review asset folder. The original `manifest.json`, its four verified
 verse entries and all review history remain intact. Speech-turn verification
 still does not apply source attribution, choose a canon voice or release film
 work; those downstream decisions require exact reviewed words and bindings.
+
+### Dan's first speech-turn pass, 2026-10-25
+
+The isolated reviewer now records **13/13 current speech entries verified by
+Dan**. The source and speech-manifest hashes are unchanged; the four older
+verse-window verifications remain independent. The windows are non-overlapping.
+The Mark 4:21–23 Jesus window ends at 461.883 seconds and the Mark 4:24–25
+Jesus window starts at that same millisecond. For voice conversion these are
+adjacent reviewed pieces of one continuous Jesus performance, unless later
+source evidence shows a real narrator interruption. Do not add an audio seam
+merely because English punctuation starts a new quotation.
+
+Two saved windows require focused reconciliation before source attribution:
+
+- **4:11:** Dan's current Jesus start is 175.610 seconds. The retained Gemini
+  phrase evidence maps the Meyah narrator lead-in `Beda Ofa agot gu rua oida,`
+  to roughly 175.878–178.109 and the first quoted phrase to 178.848–192.848.
+  These model times are not forced word boundaries. Dan was asked to recheck
+  the exact first quoted word; his verification remains intact until he revises
+  or confirms it.
+- **4:39:** Dan verified 755.519–775.486 seconds as Jesus. The supplied Meyah
+  verse has no marked direct quotation and narrates Jesus' rebuke and the sea's
+  calm, whereas the parallel English has `“Peace! Be still!”`. Dan was asked
+  whether the recording contains distinct direct words or only narrated
+  action. No Jesus cast window or translated words are inferred meanwhile.
+
+The 4:9 Jesus clip is a **prepared source-only audition candidate**: Dan's
+142.703–152.394-second review is 9.691 seconds, and its retained 16 kHz PCM
+WAV hash is `4f9c9439ad4dad9e1ed759f304839ac69cb35f67715e8a315b86a8228b794b30`.
+Its review ID, exact quoted text, approved donor Jesus voice ID/version and
+proposed current adapter defaults are pinned in
+`output/mark4-donor-20261024/review/meyah-mark4-v9-audition-source-candidate.json`.
+The historical cast settings remain unknown. No ElevenLabs request, cast
+master, source attribution or approval was made. The isolated target still
+has no current whole-source alignment attestation or reviewed target-shot
+correspondence; both are required by the normal audition gate.
