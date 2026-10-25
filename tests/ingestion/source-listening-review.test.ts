@@ -28,17 +28,23 @@ beforeEach(()=>{
  mkdirSync(listeningFolder(root,"p"),{recursive:true});writeFileSync(join(listeningFolder(root,"p"),"manifest.json"),JSON.stringify(manifest));
 });
 afterEach(async()=>{await new Promise<void>(r=>server?server.close(()=>r()):r());server=undefined;db?.close();if(root)rmSync(root,{recursive:true,force:true});});
-it("extracts exact 0.01-second PCM boundaries, preserving both channels and sample values",()=>{
- const wav=wave(),clip=pcmWindow(wav,1000,1130),info=pcmWaveInfo(clip);
+it("extracts exact 0.001-second PCM boundaries, preserving both channels and sample values",()=>{
+ const wav=wave(),clip=pcmWindow(wav,1001,1131),info=pcmWaveInfo(clip);
  expect(info).toMatchObject({sampleRate:24000,channels:2,frames:3120,durationMs:130});
- expect(clip.subarray(info.dataOffset)).toEqual(wav.subarray(44+24000*4,44+27120*4));
- for(const [a,b] of [[1001,1130],[1000,1131],[-10,1000],[1000,1000],[1000,2010]])expect(()=>pcmWindow(wav,a!,b!)).toThrow("0.01");
+ expect(clip.subarray(info.dataOffset)).toEqual(wav.subarray(44+24024*4,44+27144*4));
+ for(const [a,b] of [[-10,1000],[1000,1000],[1000,2010],[1000.5,1130]])expect(()=>pcmWindow(wav,a!,b!)).toThrow("0.001");
  expect(()=>pcmWaveInfo(wav.subarray(0,90))).toThrow("truncated");
 });
 it("opening a prepared review does not write or verify anything",()=>{
  expect(readListeningReview(db,root,"p")).toMatchObject({verifiedCount:0,items:[{current:null,history:[]}]});
  expect(readListeningClip(db,root,"p","quote-1")).toEqual(pcmWindow(wave(),500,1200));
  expect(db.prepare("SELECT count(*) n FROM review_notes").get()).toMatchObject({n:0});
+});
+it("saves a millisecond window and a reviewed speaker label without attributing the source row",()=>{
+ const saved=saveListeningReview(db,root,"p","quote-1",request({startMs:1001,endMs:1131,speakerLabel:"Jesus"}));
+ expect(saved).toMatchObject({startMs:1001,endMs:1131,speakerLabel:"Jesus",verified:true});
+ expect(readListeningClip(db,root,"p","quote-1")).toEqual(pcmWindow(wave(),1001,1131));
+ expect(db.prepare("SELECT speaker_character_id FROM audio_segments WHERE id='a'").get()).toMatchObject({speaker_character_id:null});
 });
 it("retains each named revision and WAV, invalidating verification on a later saved edit without changing source",()=>{
  const original=db.prepare("SELECT * FROM audio_segments").all();
@@ -54,8 +60,8 @@ it("retains each named revision and WAV, invalidating verification on a later sa
  expect(db.prepare("SELECT * FROM audio_segments").all()).toEqual(original);
  expect(db.prepare("SELECT count(*) n FROM source_alignment_reviews").get()).toMatchObject({n:0});
 });
-it("requires a named, explicit confirmation and valid centisecond bounds",()=>{
- for(const extra of [{reviewerName:" "},{attestation:undefined},{startMs:1001},{endMs:2001},{startMs:1200},{manifestHash:"wrong"},{baseRevision:"missing"}])expect(()=>saveListeningReview(db,root,"p","quote-1",request(extra))).toThrow();
+it("requires a named, explicit confirmation and valid millisecond bounds",()=>{
+ for(const extra of [{reviewerName:" "},{attestation:undefined},{startMs:1000.5},{endMs:2001},{startMs:1200},{manifestHash:"wrong"},{baseRevision:"missing"}])expect(()=>saveListeningReview(db,root,"p","quote-1",request(extra))).toThrow();
  expect(()=>saveListeningReview(db,root,"p","missing",request())).toThrow("item changed");
  expect(()=>readListeningReview(db,root,"../p")).toThrow();
  expect(db.prepare("SELECT count(*) n FROM review_notes").get()).toMatchObject({n:0});
@@ -87,7 +93,7 @@ it("serves the review page, precise saved WAV and current verification through t
  const url=`http://127.0.0.1:${(server.address() as {port:number}).port}/api/projects/p/source-listening-review`;
  expect(await (await fetch(url.replace('/source-listening-review','/audio-segments?layer=original_reading'))).json()).toMatchObject({sourceListeningReviewAvailable:true});
  expect(await (await fetch(url.replace('/p/source-listening-review','/other/audio-segments?layer=original_reading'))).json()).toMatchObject({sourceListeningReviewAvailable:false});
- const html=await (await fetch(url)).text();expect(html).toContain('step="0.01"');expect(html).toContain('data-action="verify"');expect(html).toContain('source-listening-review.js');
+ const html=await (await fetch(url)).text();expect(html).toContain('step="0.001"');expect(html).toContain('data-step="-1"');expect(html).toContain('data-step="10"');expect(html).toContain('data-action="verify"');expect(html).toContain('source-listening-review.js');
  expect(await (await fetch(url+"/data")).json()).toMatchObject({verifiedCount:0});
  const response=await fetch(url+"/items/quote-1",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(request())});expect(response.status).toBe(201);
  expect(await (await fetch(url+"/data")).json()).toMatchObject({verifiedCount:1});

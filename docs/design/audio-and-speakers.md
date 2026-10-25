@@ -1,5 +1,16 @@
 # Audio & Speakers
 
+The source-listening reviewer accepts integer millisecond boundaries on PCM
+audio with an integral number of samples per millisecond. It presents a
+waveform, ±1 ms and ±10 ms nudges, edge zoom, and exact selected-window
+playback. Each saved edit retains its named reviewer, timing, speaker label,
+original-source hashes, and extracted clip. A speaker suggested from the
+parallel English verse remains provisional until the exact target-language
+speech is heard; a mixed narration/quotation verse is not assigned wholesale
+to a character. Gemini source-text matches are phrase anchors and have a
+separate confidence score from verse boundary confidence. Displaying or
+editing these suggestions does not change cast attribution in `audio_segments`.
+
 Finishing executes its stored picture and sound filter components as separate
 FFmpeg graphs. A concatenated title/scene can change decoded color metadata;
 reinitializing a shared graph can discard buffered audio and shift the source

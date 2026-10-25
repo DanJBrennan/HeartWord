@@ -276,3 +276,30 @@ editable project using the existing ingestion, casting, voice, media and
 assembly stages. The static listening page is a review aid, not another
 pipeline stage. The user's current workflow is preserved: source and title
 decisions remain inspectable before provider work or target film assembly.
+
+Meyah source review preparation, later 2026-10-25: Dan requested a graphical
+per-entry waveform reviewer with exact ±0.001 s and ±0.010 s adjustments,
+selected-window playback, Gemini alignment and English-verse speaker context.
+The isolated reviewer now has 40 entries, 1 ms PCM clip revisions, start/end
+zoom, an editable speaker note and separate timing/text-match/speaker
+confidence readings. One recorded `alignWithGemini` run made 91 audio checks
+for estimated $0.528753, produced phrase anchors for all 39 source verse groups
+and 96.4% supplied-word coverage. Seven verses retain partial unmatched-word
+findings. A separate Gemini English-context proposal cost estimated $0.016093;
+mixed narrator/quotation verses are flagged. Proposed review windows are
+derived from neighboring model phrase extents, but remain unverified. Verse 1
+is now 4.094–29.020 s and verse 41 is 788.436–805.668 s in decoded PCM.
+Dan can review them at the isolated localhost reviewer described in
+`docs/production/mark4-meyah-source-review-2026-10-25/README.md`.
+No review, speaker attribution, stage completion, voice conversion, visual
+generation or film approval was auto-recorded. The isolated source/cast rows,
+Mark 5 and live database remain untouched. The next gate is Dan's listening
+review of the Meyah words, exact boundaries and quoted speakers, especially
+the two reference-only verse markers and partly unmatched verses.
+
+Goal Guardian check: this is an extension of the existing source-listening
+reviewer within ingestion, not a new pipeline stage. It preserves the original
+Meyah performance and the ordinary producer edit/review path. Model scores and
+English speaker proposals are inspectable evidence, never source truth or
+automatic casting. The full suite passed 868 tests in 127 files, both
+configured TypeScript checks passed, and the web build passed.

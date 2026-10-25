@@ -1,0 +1,22 @@
+/** Review-only server against the fixed isolated Meyah checkout on port 4002. */
+import {realpathSync} from "node:fs";
+import {resolve} from "node:path";
+import express from "express";
+const checkout=realpathSync(resolve(import.meta.dirname,".."));
+const root=realpathSync(resolve(checkout,"output","mark4-donor-20261024"));
+if(!root.startsWith(checkout+"\\")&&!root.startsWith(checkout+"/"))throw Error("Review data must stay inside this checkout.");
+process.env.HEARTWORD_DATA_DIR=root;
+const {getDb}=await import("../src/db/client.js");
+const {readListeningReview,saveListeningReview,readListeningClip}=await import("../src/pipeline/ingestion/source-listening-review.js");
+const {renderSourceListeningReviewPage}=await import("../src/server/source-listening-review-page.js");
+const projectId="a5a40890-8bb0-4856-aacb-1dcad97074bb",base=`/api/projects/${projectId}/source-listening-review`;
+const app=express();app.use(express.json());
+const fail=(res:express.Response,error:unknown)=>res.status(409).json({error:(error as Error).message});
+app.get("/",(_req,res)=>res.redirect(base));
+app.get(base,(_req,res)=>res.type("html").send(renderSourceListeningReviewPage(projectId)));
+app.get(base+"/data",(_req,res)=>{try{res.json(readListeningReview(getDb(),root,projectId));}catch(e){fail(res,e);}});
+app.post(base+"/items/:itemId",(req,res)=>{try{res.status(201).json(saveListeningReview(getDb(),root,projectId,req.params.itemId!,req.body));}catch(e){fail(res,e);}});
+app.get(base+"/items/:itemId/audio",(req,res)=>{try{res.type("audio/wav").send(readListeningClip(getDb(),root,projectId,req.params.itemId!));}catch(e){fail(res,e);}});
+app.use("/media",express.static(resolve(root,"assets")));
+app.use(express.static(resolve(checkout,"dist/web")));
+app.listen(4002,"127.0.0.1",()=>console.log(`Isolated Meyah source reviewer: http://127.0.0.1:4002${base}`));

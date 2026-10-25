@@ -38,3 +38,49 @@ The approved Hatam final cut is 9:21.8 of picture; the Meyah recording is
 13:25.685. The longer target may require extended retained handles and new
 target-owned Codex keyframes/local LTX motion, with Kling Avatar for visible
 speech. No shot timing, added coverage or final edit has been approved yet.
+
+## Interactive waveform review
+
+The isolated reviewer is served at
+`http://127.0.0.1:4002/api/projects/a5a40890-8bb0-4856-aacb-1dcad97074bb/source-listening-review`
+by `scripts/serve-isolated-mark4-meyah-review.ts`. It uses only the isolated
+`output/mark4-donor-20261024` data root. The original static page above remains
+a historical record of the first local timing pass.
+
+Each heading/verse-group entry shows the target and parallel English text, the
+full-recording waveform, a playable selected window, optional Gemini phrase
+highlight, zoomed start/end views, millisecond time boxes and ±0.001/±0.010 s
+buttons. Saves retain a named revision and an exact PCM clip. A speaker field
+starts with a provisional reading of the English verse and can be edited in
+the same revision. Mixed narration/quotation remains explicitly flagged.
+
+The review distinguishes provisional boundary confidence, a Gemini
+**text-match** score and English speaker-context score. Gemini short-phrase anchors are
+not forced word boundaries. No verse window, speaker or casting decision is
+confirmed merely by displaying a suggestion. The heading and all 39 Meyah
+verse-group intervals require Dan's listening review. `v1` and `v41` are
+especially uncertain. The 41 English verses include two reference-only verse
+markers in the supplied Meyah text; they are not silently turned into source
+audio rows.
+
+The one recorded Gemini alignment run made **91** audio checks, with estimated
+provider cost **$0.528753**. It retained 87 audio spans, matched 77, placed a
+phrase anchor in all 39 Meyah verse groups, and covered 96.4% of supplied
+Scripture words. It matched the spoken chapter title at 1.807–3.327 seconds.
+Verses 7, 10, 14, 33, 36, 37 and 38 have some unmatched
+words. These are model estimates, not Dan's listening decisions. The review
+windows now propose each intervening boundary at the midpoint between the
+neighboring Gemini phrase extents. Verse 1 changes from the earlier 4.094–66.352
+seconds to 4.094–29.020 seconds; verse 41 changes from about one second to
+788.436–805.668 seconds in the decoded reviewer PCM. The original MP3 reports
+805.685 seconds; this 17 ms codec/decoder tail difference is kept visible and
+does not rewrite the source file. A separate one-call Gemini reading of the
+parallel English verses cost an estimated $0.016093. Its speaker labels are
+review suggestions only.
+
+Provider intent, per-call usage/results and the final model output are retained
+under `output/mark4-donor-20261024/review/`. The prepared manifest, decoded
+PCM and initial/context clips are under
+`output/mark4-donor-20261024/assets/source-listening-review/a5a40890-8bb0-4856-aacb-1dcad97074bb/`.
+No Gemini request was repeated, no review was auto-verified, and no live or
+isolated source/cast database row was rewritten.
