@@ -62,12 +62,16 @@ evidence and a clean title background. Target correspondence and title media
 need their own named reviews. Sougb remains held until its text/title evidence
 is verified; MP4-only import is later work.
 
-The latest registered Hatam Mark 4 `Markus-4.mp4` is a candidate only. The
-October 22 read-only snapshot records a held custom recipe and no approval
-linked to that render ID. No real Meyah edition or paid provider request is
-authorized by the isolated engineering checks. Before deployment, verify a
-current exact approval and reconstruct the selected donor recipe on an
-isolated copy, then run a bounded target-language voice/Avatar audition,
+Dan confirmed on 2026-10-24 that `Markus-4.mp4` is his final Hatam Mark 4
+output, renamed for distribution. Its bytes match the retained v73 cut; the
+historical `heldForReview` recipe predates that statement. The selected film is
+now clear, while its complete editable reconstruction remains unproved. The
+legacy database still has no decision linked to that render ID. See
+`docs/production/mark4-final-donor-evidence-2026-10-24.md`. No real Meyah
+edition or paid provider request is authorized by the isolated engineering
+checks. Before deployment, record the exact producer selection on an isolated
+donor copy, normalize a reviewed picture/audio recipe, then run a bounded
+target-language voice/Avatar audition,
 whole-film review and editable fresh-root restoration. The live database,
 Mark 5 checkout and production services remain outside this worktree's test
 and migration commands.
@@ -80,9 +84,11 @@ target, same approved canon/voice identities, ordinary stage/workspace path,
 new target-only reviews, local picture reuse and exact title treatment aligned
 with the product vision and user workflow. This is engineering evidence, not
 approval of a real Meyah film or of the donor. A 2026-10-24 read-only query of
-the current production database still found zero exact approved decisions for
-render `deefa536-62f9-41b3-bbac-e9e8fb244206` and a non-array custom
-picture recipe. The target-language voice audition has an explicit 2–15 second
+the current production database found zero exact approved decisions for render
+`deefa536-62f9-41b3-bbac-e9e8fb244206` and a non-array custom picture
+recipe. Dan's later statement establishes that this was his final output;
+the zero-row observation is a legacy recording gap, not a denial of finality.
+The target-language voice audition has an explicit 2–15 second
 review gate before bulk voice work. The remaining real acceptance work is
 donor approval/isolated normalization, native Meyah source and voice listening,
 one bounded Avatar pilot, target credits/soundtrack review, complete target

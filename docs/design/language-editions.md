@@ -1,6 +1,6 @@
 # Language editions from an editable chapter
 
-Status: isolated implementation, held for donor approval and safe deployment.
+Status: isolated implementation, held for donor edit reconstruction and safe deployment.
 Producer decisions: Dan's October 2026 language-edition conversation and
 `C:/Users/danbr/HeartWordData/reviews/2026-10-22-language-editions/LANGUAGE_EDITION_HANDOFF.md`.
 
@@ -79,9 +79,12 @@ An accepted donor does not transfer human film approval, QC, release rights
 or cost ledger charges to the target.
 
 Run implementation checks on an isolated worktree and disposable data. The
-real Mark 4 `Markus-4.mp4` is currently held by its recorded recipe and lacks
-an exact linked producer approval in the October 22 snapshot. Do not approve
-or normalize it in the live database by inference. Before rollout, reconcile
+real Mark 4 `Markus-4.mp4` was confirmed by Dan on 2026-10-24 as his final
+distribution-named output. Its historical recipe remains held and lacks an
+exact linked producer decision in the database. See
+`docs/production/mark4-final-donor-evidence-2026-10-24.md`. Record that
+producer selection only in an isolated donor copy; do not alter the live
+database. Before rollout, reconcile
 the current Mark 5 production state, take a consistent DB/media backup, pin
 the code revision and validate an isolated restore. Roll back application
 code while preserving any newer edition rows/assets; never restore the old
