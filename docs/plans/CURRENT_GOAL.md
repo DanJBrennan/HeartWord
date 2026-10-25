@@ -342,3 +342,6 @@ Jesus handoff and whether 4:39 contains direct Meyah speech at all. The
 unless a real narrator interruption is evidenced. Existing provisional source
 rows have not been reconciled; the normal target source attestation and
 target-shot correspondence still hold paid voicing and later film work.
+Dan subsequently verified a revised 4:11 Jesus start at 178.666 seconds,
+retaining the previous 175.610-second review in history. The 4:39 content
+question remains open; neither passage was applied to source/cast rows.

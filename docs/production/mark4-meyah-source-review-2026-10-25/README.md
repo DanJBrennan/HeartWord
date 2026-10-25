@@ -132,7 +132,8 @@ adjacent reviewed pieces of one continuous Jesus performance, unless later
 source evidence shows a real narrator interruption. Do not add an audio seam
 merely because English punctuation starts a new quotation.
 
-Two saved windows require focused reconciliation before source attribution:
+Two saved windows were flagged for focused reconciliation before source
+attribution; 4:11 was subsequently revised:
 
 - **4:11:** Dan's current Jesus start is 175.610 seconds. The retained Gemini
   phrase evidence maps the Meyah narrator lead-in `Beda Ofa agot gu rua oida,`
@@ -145,6 +146,12 @@ Two saved windows require focused reconciliation before source attribution:
   calm, whereas the parallel English has `“Peace! Be still!”`. Dan was asked
   whether the recording contains distinct direct words or only narrated
   action. No Jesus cast window or translated words are inferred meanwhile.
+
+Dan then reopened 4:11 and verified a revised start at **178.666 seconds**
+(review revision `2d335bfb-8dee-4cd6-a1e7-eb5bb2243f44`). That places the
+Jesus window after the estimated narrator lead-in while retaining the older
+175.610-second verification in its history. The 4:39 content question remains
+open; neither review has been applied to source or cast rows.
 
 The 4:9 Jesus clip is a **prepared source-only audition candidate**: Dan's
 142.703–152.394-second review is 9.691 seconds, and its retained 16 kHz PCM
