@@ -252,3 +252,20 @@ windows establish the quoted performance; the applied 4:38 source row
 (723.776–755.248 seconds) remains broader because it also includes the
 narrator's lead-in. His clarification did not approve the whole-chapter
 source-row alignment for scene planning.
+
+Dan subsequently answered **“Approve the map for scene planning”** with the
+approximate internal verse edges and separate 4:38 quotation windows stated
+in the question. The named source attestation is
+`10bfa028-92db-4826-bc14-a62760dca5bc`, bound to unchanged source hash
+`7947e9038f1cc0e74df68d934b0dbeba271a2ea27481165021ae207b2751b2c6`
+and applied alignment hash
+`97cac1b52db6f9cd16018d4aebdae6e142f6f91a0f7ce8a7c76a4d8c329929b8`.
+The isolated pre-approval SQLite backup is
+`output/mark4-donor-20261024/review/heartword.before-source-approval.sqlite`
+(SHA-256 `1aac3b828e75e2c72ca1258a437f2c52bbde731dbf347f4f9af70f7695acc7c8`).
+The receipt `output/mark4-donor-20261024/review/meyah-mark4-source-map-approval.json`
+records the user statement and stage result. Stage 2 created seven target-owned
+Meyah scenes matching the donor's reviewed narrative divisions. The donor
+scene records were unchanged and SQLite `quick_check` passed. This is scene
+planning approval; no shot correspondence, character audio, provider work or
+film approval followed from it.

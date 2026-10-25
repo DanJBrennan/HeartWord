@@ -424,5 +424,31 @@ first run passed alone in 2.23 seconds. Both TypeScript typechecks pass.
 Goal Guardian: the change stays within existing correspondence, casting and
 media stages, requires a reviewed target action, preserves original Meyah
 narration and ordinary shot review, and does not invent character dialogue or
-authorize generation. The pending named source review still controls the
-real Meyah stage-2 transition.
+authorize generation. At that check, the named source review still controlled
+the real Meyah stage-2 transition.
+
+Dan then explicitly approved the current 40-row Meyah source map for scene
+planning with approximate internal verse edges and exact 4:38 quotation
+windows kept separate. Named source review
+`10bfa028-92db-4826-bc14-a62760dca5bc` pins the current source/alignment
+hashes in the isolated project. A verified pre-approval SQLite backup and
+receipt are retained under `output/mark4-donor-20261024/review/`; stage 2
+created seven target-owned Meyah scenes, with the donor scenes unchanged.
+The next gate is exact target-shot correspondence and speaker/source binding
+from Dan's verified speech turns. No target shots, voice work or film were
+approved by the source-map decision.
+
+A read-only target-picture inventory is now open at
+`http://127.0.0.1:4002/media/review/meyah-mark4-correspondence-20261025/index.html`.
+It checks the pinned final film, target recording and 113 keyframes, and shows
+all 113 story placements with scene audio and initial treatment. Scenes 2–5
+run 1.68–2.05 times their donor picture duration, so a target shot plan must
+allocate the longer speaking performances over compatible retained cutaways,
+new Meyah Avatar picture and source-grounded additional coverage. The
+inventory is not a reviewed correspondence revision and no target shots were
+created from it. See `docs/production/mark4-meyah-correspondence-2026-10-25/`.
+This unit passes the full suite (872 tests in 127 files), both TypeScript
+typechecks, the real fixed-root source-approval script and visual browser
+inspection. Goal Guardian: source map approval advanced only the existing
+scene stage, the picture inventory is read-only, and the normal producer
+correspondence, shot, voice, media and film reviews remain distinct.
