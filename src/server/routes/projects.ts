@@ -140,7 +140,8 @@ projectsRouter.get("/:id/language-edition-renders", (req,res) => {
   if(!db.prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)){res.status(404).json({error:"Project not found."});return;}
   res.setHeader("Cache-Control","no-store");
   res.json({renders:db.prepare(`SELECT r.id,r.result_asset_path AS path,r.total_duration_ms AS durationMs,r.created_at AS createdAt,
-    CASE WHEN json_valid(m.timeline_json) AND json_type(m.timeline_json)='array' AND json_valid(m.source_audio_json) AND json_type(m.source_audio_json)='array' THEN 1 ELSE 0 END AS normalized
+    CASE WHEN json_valid(m.timeline_json) AND json_type(m.timeline_json)='array' AND json_array_length(m.timeline_json)>0
+      AND json_valid(m.source_audio_json) AND json_type(m.source_audio_json) IN ('array','object') THEN 1 ELSE 0 END AS normalized
     FROM chapter_renders r LEFT JOIN chapter_render_manifests m ON m.render_id=r.id WHERE r.project_id=? ORDER BY r.created_at DESC,r.id DESC`).all(req.params.id)});
 });
 

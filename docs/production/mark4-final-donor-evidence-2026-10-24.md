@@ -56,7 +56,7 @@ matched its source:
 | `Markus-4.mp4` | `b207b4c0109d70e85fab40ccb9253e7973c4cd38213333307153d417fda8aa6a` |
 | `chunk00.mp4` | `55dbaa70bdfa4486b25024f89b9b50373d264665c75de43b7df395fa442ad383` |
 | `chunk01.mp4` | `fba0150be2fe808ba4d1fe8b08d13f0044571af1c54e6ef37410970322ac40a1` |
-| `chunk02.mp4` | `a09b61b53d2cd4176291382d1500d6bc84141a0456771780afffdffc5568594` |
+| `chunk02.mp4` | `a09b61b53d2cd4176291382d1500d6bc84141a0456771780afffdfffc5568594` |
 | `chunk03.mp4` | `e18ef678502c157bc6e13b6279316242c8c9e411ece5d97255935763ab3a9f36` |
 | `chunk04.mp4` | `1cc249e80d64b67156d204b92011a6a47d9ce81255cf5b6728f95239543cbd14` |
 
@@ -104,7 +104,49 @@ exact final picture without Hatam audio. The historical Hatam soundtrack
 recipe remains pinned for provenance, while Meyah source audio supplies the
 new timing and words; reconstructing the old mix is not a prerequisite.
 
-Any normalized copy must keep the original render and its custom recipe
-unchanged, document every derived slice and gap, and prove target source-audio
-coverage independently. No real Meyah project, audition or Avatar request was
-created by this audit.
+Any normalized copy must retain the original custom recipe verbatim as
+provenance, document every derived slice and gap, and prove target source-audio
+coverage independently. The live render and recipe stay unchanged. No real
+Meyah project, audition or Avatar request was created by this audit.
+
+### Isolated final-picture normalization path
+
+`scripts/normalize-mark4-final-donor.ts` is fixed to this checkout's ignored
+`output/mark4-donor-20261024` database and asset root. It cannot target the
+live database by command-line argument. The exact final MP4 has also been
+copied inside that root at its registered `assets/generated/chapter/Markus-4.mp4`
+path; the five silent chunks remain at `assets/legacy-mark4/chunk00.mp4`
+through `chunk04.mp4`. No plan has been applied yet.
+
+The input is a **human-reviewed** JSON document, not inferred from the old
+Hatam timeline:
+
+```json
+{
+  "schemaVersion": 1,
+  "renderId": "deefa536-62f9-41b3-bbac-e9e8fb244206",
+  "expectedOriginalTimelineSha256": "a754c96659bdf280de5ec4a4a81f0673864d1d327078d1e002b5f986e75d7ce6",
+  "reviewer": "named producer",
+  "evidence": "reference to the reviewed final-picture shot map",
+  "placements": [
+    {"shotId":"retained donor shot ID","startFrame":0,"endFrame":123,"reason":"visual and Scripture correspondence"}
+  ]
+}
+```
+
+The example placement is incomplete and cannot be applied. A real plan must
+cover every frame 0–13,483 in order, split at each five-chunk boundary, name a
+retained donor shot and explain the correspondence. The utility verifies exact
+film/chunk hashes, video-only streams and frame counts, accepted donor
+keyframes, the isolated producer decision, and gap-free placement. It retains
+the old recipe verbatim in an append-only command before storing the normalized
+timeline in the **isolated copy** and linking imported silent chunks to donor
+shots as zero-cost historical media. The original live manifest is not changed.
+Run `npx tsx scripts/normalize-mark4-final-donor.ts <reviewed-plan.json>` only
+after the reviewed map and its required isolated assets are complete.
+
+For comparison during that review, the isolated
+`review/earlier-cut-shot-inventory-NOT-FINAL.tsv` lists all 161 placements in
+the older registered base cut with each uniquely linked donor shot, action and
+verse when present. It is a reference for finding candidates, not a final-cut
+map: v66–v73 changed timing and replaced pictures after that base render.

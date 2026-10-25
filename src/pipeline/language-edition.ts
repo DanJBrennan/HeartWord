@@ -74,7 +74,7 @@ export function preflightLanguageEdition(db: DatabaseSync, dataDir: string, sour
   // The target recording supplies every spoken sample and its clock. Older final
   // cuts may retain only a mixed Hatam soundtrack recipe; pin those bytes for
   // provenance without requiring a reconstruction of obsolete donor audio.
-  if (!sourceAudio || typeof sourceAudio !== "object" || (Array.isArray(sourceAudio) && !sourceAudio.length))
+  if (!sourceAudio || typeof sourceAudio !== "object" || !Object.keys(sourceAudio).length)
     holds.push("The selected donor cut has no retained soundtrack provenance.");
   const sourceAudioEvidence:EditionPreflight["sourceAudioEvidence"]=[];
   if(Array.isArray(sourceAudio)){

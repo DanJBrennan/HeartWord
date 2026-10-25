@@ -111,3 +111,13 @@ recording and normal producer stage/review path, preserves the approved canon,
 does not invent text or speech, and keeps incomplete picture coverage visible.
 The real Mark 4 final picture still needs an ordered shot-level map from its
 verified silent chunks before the isolated Meyah project can be created.
+The fixed-root `scripts/normalize-mark4-final-donor.ts` utility now validates
+and applies such a named, gap-free map to the isolated donor copy only; it
+retains the prior custom recipe verbatim and checks every silent chunk hash,
+frame count, audio absence and donor-shot keyframe. It has not been run because
+the final-picture shot mapping still needs human visual and Scripture review.
+The isolated smoke check verified the actual copied film and all five chunks,
+then rejected an intentionally invalid shot ID without writing a normalization
+row. The new structural tests and full suite pass: 864 tests in 127 files;
+typechecks and web build pass. A transcription typo in the documented chunk 2
+SHA-256 was corrected against the copied bytes during this check.

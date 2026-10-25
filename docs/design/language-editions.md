@@ -33,6 +33,12 @@ plan, source/canon checks, spend controls and actual result review.
   the edition's speech and timing. Custom historical picture recipes hold
   until reconstructed on an isolated donor copy with a verifiable ordered
   timeline. Approval of an older or different render is insufficient.
+  For the selected Mark 4 legacy cut, a fixed-root utility can apply a named
+  frame-by-frame shot map only to the isolated donor copy. It verifies the
+  exact final film and five video-only chunks, retains the previous custom
+  recipe verbatim in edit history, and refuses incomplete or boundary-crossing
+  maps. The reviewed map is still required; the utility cannot infer Scripture
+  or shot identity from matching pixels alone.
 - Preflight pins the Meyah non-drama recording, supplied DOCX and English
   reference; selected Papuan character versions, visual hashes, retained
   cast-master sidecars with the effective ElevenLabs voice/model/settings;

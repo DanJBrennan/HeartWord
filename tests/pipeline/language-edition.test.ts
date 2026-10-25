@@ -86,6 +86,8 @@ describe("language edition identity",()=>{
     expect(pre.status).toBe("ready");
     expect(pre.sourceAudioEvidence).toEqual([]);
     expect(pre.donor.sourceAudioSha256).toMatch(/^[a-f0-9]{64}$/);
+    db.prepare("UPDATE chapter_render_manifests SET source_audio_json='{}' WHERE render_id='render'").run();
+    expect(preflightLanguageEdition(db,dataDir,"donor",input).holds).toContain("The selected donor cut has no retained soundtrack provenance.");
   });
   it("records exact target speech correspondence with parent hashes and rejects foreign audio",()=>{
     const pre=preflightLanguageEdition(db,dataDir,"donor",input);
