@@ -57,7 +57,8 @@ title is `Markus 5` / `Hatam`; this checkout does not change its delivered film.
 
 The implementation lives in existing stages and is described in
 `docs/design/language-editions.md`. Creation requires exact linked donor
-approval, a normalized executable picture/audio recipe, source/canon/voice
+approval, a normalized executable picture recipe, pinned soundtrack provenance,
+source/canon/voice
 evidence and a clean title background. Target correspondence and title media
 need their own named reviews. Sougb remains held until its text/title evidence
 is verified; MP4-only import is later work.
@@ -70,8 +71,11 @@ legacy database still has no decision linked to that render ID. See
 `docs/production/mark4-final-donor-evidence-2026-10-24.md`. No real Meyah
 edition or paid provider request is authorized by the isolated engineering
 checks. An isolated donor database copy now records Dan's exact final-cut
-selection without changing the live database. Before deployment, normalize
-a reviewed picture/audio recipe, then run a bounded
+selection without changing the live database. Dan authorized new keyframes and
+local LTX video where the longer Meyah recording needs fresh visual coverage.
+The old Hatam soundtrack stays pinned as provenance because Meyah source audio
+supplies the new speech and timing. Before deployment, normalize
+a reviewed final-picture recipe, then run a bounded
 target-language voice/Avatar audition,
 whole-film review and editable fresh-root restoration. The live database,
 Mark 5 checkout and production services remain outside this worktree's test
@@ -95,3 +99,15 @@ donor approval/isolated normalization, native Meyah source and voice listening,
 one bounded Avatar pilot, target credits/soundtrack review, complete target
 film QC and portable edit/render verification. No live rows or media were
 changed by this checkout.
+
+Follow-up, 2026-10-24: the edition preflight now accepts a retained legacy
+mixed-soundtrack recipe as provenance while preserving its exact hash; it does
+not require reconstruction of the old Hatam audio before a target edition.
+Reviewed `needs_coverage` shots require a target-owned accepted keyframe and,
+for non-speaking picture, an accepted local LTX clip before stage 4 completes.
+The full suite passes 862 tests in 126 files, both TypeScript checks and the
+web build pass. The Goal Guardian check confirms this still uses the target
+recording and normal producer stage/review path, preserves the approved canon,
+does not invent text or speech, and keeps incomplete picture coverage visible.
+The real Mark 4 final picture still needs an ordered shot-level map from its
+verified silent chunks before the isolated Meyah project can be created.

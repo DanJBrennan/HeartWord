@@ -97,12 +97,12 @@ causal action or reusing mixed Hatam sound is outside the accepted workflow.
 ## Next isolated check
 
 Represent the now-proven final picture as reviewed shot-level placements using
-the five silent chunks and the retained source clips/patch records. Where
-individual source-clip lineage remains unresolved, a bounded legacy fallback
-could derive silent picture slices from the final MP4; this requires Dan's
-product decision because the earlier handoff explicitly excluded the mixed
-finished film as a picture stem. The verified chunks are preferable because
-they already contain the exact final picture and no Hatam audio.
+the five silent chunks and the retained source clips/patch records. Dan
+authorized making new keyframes and local LTX video where the longer target
+recording needs more visual coverage. The verified chunks already contain the
+exact final picture without Hatam audio. The historical Hatam soundtrack
+recipe remains pinned for provenance, while Meyah source audio supplies the
+new timing and words; reconstructing the old mix is not a prerequisite.
 
 Any normalized copy must keep the original render and its custom recipe
 unchanged, document every derived slice and gap, and prove target source-audio

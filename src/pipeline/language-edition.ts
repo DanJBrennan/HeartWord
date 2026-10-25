@@ -70,8 +70,12 @@ export function preflightLanguageEdition(db: DatabaseSync, dataDir: string, sour
   try { renderFile = asset(dataDir,render.result_asset_path); } catch { holds.push("Selected donor film is unavailable or outside the chapter assets."); }
   let timeline: unknown = null, sourceAudio: unknown = null;
   try { timeline = JSON.parse(render.timeline_json ?? "null"); sourceAudio = JSON.parse(render.source_audio_json ?? "null"); } catch { /* held below */ }
-  if (!Array.isArray(timeline) || !Array.isArray(sourceAudio)) holds.push("The selected donor cut needs a complete normalized picture and source-audio recipe on an isolated copy.");
-  else if(!timeline.length || !sourceAudio.length)holds.push("Normalized donor picture and source-audio placements must both be nonempty.");
+  if (!Array.isArray(timeline) || !timeline.length) holds.push("The selected donor cut needs a complete normalized picture recipe on an isolated copy.");
+  // The target recording supplies every spoken sample and its clock. Older final
+  // cuts may retain only a mixed Hatam soundtrack recipe; pin those bytes for
+  // provenance without requiring a reconstruction of obsolete donor audio.
+  if (!sourceAudio || typeof sourceAudio !== "object" || (Array.isArray(sourceAudio) && !sourceAudio.length))
+    holds.push("The selected donor cut has no retained soundtrack provenance.");
   const sourceAudioEvidence:EditionPreflight["sourceAudioEvidence"]=[];
   if(Array.isArray(sourceAudio)){
     let previousEnd=-1;

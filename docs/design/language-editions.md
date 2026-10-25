@@ -27,10 +27,12 @@ plan, source/canon checks, spend controls and actual result review.
 ## Identity and gates
 
 - Read-only preflight pins the exact donor render and linked producer decision,
-  original render/recipe hashes, selected clip/attempt/keyframe lineage and
-  source audio files. Custom historical recipes hold until reconstructed on
-  an isolated donor copy with a verifiable ordered timeline. Approval of an
-  older or different render is insufficient.
+  original render/recipe hashes and selected clip/attempt/keyframe lineage.
+  A legacy mixed soundtrack recipe is pinned as provenance; rebuilding the
+  old Hatam audio mix is not required because the target recording supplies
+  the edition's speech and timing. Custom historical picture recipes hold
+  until reconstructed on an isolated donor copy with a verifiable ordered
+  timeline. Approval of an older or different render is insufficient.
 - Preflight pins the Meyah non-drama recording, supplied DOCX and English
   reference; selected Papuan character versions, visual hashes, retained
   cast-master sidecars with the effective ElevenLabs voice/model/settings;
@@ -61,9 +63,16 @@ plan, source/canon checks, spend controls and actual result review.
   voicing. The first paid audition is a later explicit producer action.
 - Local picture reuse is derived from selected donor clip stems, muted and
   trimmed with FFmpeg. The mixed finished donor film cannot be a picture stem.
-  Insufficient picture coverage is a visible hold, not a loop/freeze or a
-  silent story change. Editorial assembly adapts to the target audio clock
-  through the ordinary Picture Editor cut and source-coverage checks.
+  The five retained Mark 4 final-picture chunks are already video-only and
+  decode exactly to its final 13,484 frames; they may supply reviewed source
+  intervals once shot identity and trim are established. Insufficient picture
+  coverage uses target-owned reviewed keyframes and the existing local LTX
+  motion path. Stage 4 holds an exact `needs_coverage` shot until its keyframe
+  and, for a non-speaking shot, accepted local LTX picture exist. A speaking
+  shot proceeds to a new target-language Avatar take after its keyframe.
+  There is no loop/freeze or silent story change. Editorial assembly adapts to
+  the target audio clock through the ordinary Picture Editor cut and
+  source-coverage checks.
 
 Sougb remains held pending verified chapter text extraction and native title
 metadata. MP4-only import, translation/TTS and global voice reassignment

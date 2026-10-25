@@ -184,7 +184,17 @@ export function materializeEditionMedia(db:DatabaseSync,dataDir:string,projectId
       return {ok:true,reasoning:`Retained ${saved.assets.length} reviewed picture reuse assets; no provider request was made.`};
     return {ok:false,reasoning:"A retained edition picture changed or is missing; do not regenerate or approve it automatically."};
   }
-  if(mapped.shots.some(item=>item.treatment==="needs_coverage"))return {ok:false,reasoning:"Reviewed target picture plan identifies insufficient coverage; resolve those exact shots before reuse."};
+  const missingCoverage:string[]=[];
+  for(const item of mapped.shots.filter(item=>item.treatment==="needs_coverage")){
+    const frame=row(db,"SELECT result_asset_path FROM generation_attempts WHERE shot_id=? AND operation='generate' AND status='accepted' AND result_asset_path IS NOT NULL ORDER BY created_at DESC LIMIT 1",item.targetShotId);
+    const speaking=Number(row(db,"SELECT needs_lip_sync FROM shots WHERE id=?",item.targetShotId)?.needs_lip_sync)===1;
+    const motion=speaking ? null : row(db,`SELECT ga.result_asset_path FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id
+      WHERE c.shot_id=? AND ga.operation='generate_final_video' AND ga.provider='ltx_local' AND ga.status='accepted' AND ga.result_asset_path IS NOT NULL ORDER BY ga.created_at DESC LIMIT 1`,item.targetShotId);
+    const frameReady=typeof frame?.result_asset_path==="string" && existsSync(productionAssetPath(dataDir,frame.result_asset_path));
+    const motionReady=speaking || (typeof motion?.result_asset_path==="string" && existsSync(productionAssetPath(dataDir,motion.result_asset_path)));
+    if(!frameReady || !motionReady)missingCoverage.push(item.targetShotId);
+  }
+  if(missingCoverage.length)return {ok:false,reasoning:`Reviewed target picture needs new coverage for shot(s) ${missingCoverage.join(", ")}. Generate and review a target-owned keyframe, then local LTX video for non-speaking shots, before completing media preparation.`};
   const manifest=row(db,"SELECT timeline_json FROM chapter_render_manifests WHERE render_id=?",origin.preflight.donor.renderId);
   if(!manifest||digest(String(manifest.timeline_json))!==origin.preflight.donor.timelineSha256)return {ok:false,reasoning:"Pinned donor picture recipe changed."};
   const timeline=JSON.parse(String(manifest.timeline_json)) as Array<{shotId:string|null;path?:string;sha256?:string;sourceStartMs?:number;startMs:number;endMs:number}>;
@@ -195,6 +205,7 @@ export function materializeEditionMedia(db:DatabaseSync,dataDir:string,projectId
   const preparations:Array<{targetShotId:string;operation:"generate"|"generate_final_video";path:string;sha256:string;durationMs:number|null;donorShotId:string;donorPath:string}>=[];
   try{
     for(const item of mapped.shots){
+      if(item.treatment==="needs_coverage")continue;
       const placement=placements.get(item.donorShotId)?.shift();
       if(!placement)throw new Error(`No pinned picture placement remains for donor shot ${item.donorShotId}.`);
       const evidence=pinned.get(item.donorShotId)?.shift();

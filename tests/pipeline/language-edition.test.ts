@@ -78,6 +78,15 @@ describe("language edition identity",()=>{
     expect(()=>createLanguageEdition(db,dataDir,"donor",{...input,requestId:"stale-input-001",checkedFingerprint:pre.fingerprint!})).toThrow(/Preflight inputs changed/);
     expect(preflightLanguageEdition(db,dataDir,"donor",{...input,title:{...title,bookChapter:"Mark 3"}}).status).toBe("held");
   });
+  it("pins a legacy mixed donor soundtrack as provenance without requiring its old audio reconstruction",()=>{
+    db.prepare("UPDATE chapter_render_manifests SET source_audio_json=? WHERE render_id='render'")
+      .run(JSON.stringify({audioBase:"films/mark4.mp4",sourceCastAudioCopied:false}));
+    db.prepare("UPDATE audio_segments SET source_path='missing-legacy-source.wav' WHERE id='speech'").run();
+    const pre=preflightLanguageEdition(db,dataDir,"donor",input);
+    expect(pre.status).toBe("ready");
+    expect(pre.sourceAudioEvidence).toEqual([]);
+    expect(pre.donor.sourceAudioSha256).toMatch(/^[a-f0-9]{64}$/);
+  });
   it("records exact target speech correspondence with parent hashes and rejects foreign audio",()=>{
     const pre=preflightLanguageEdition(db,dataDir,"donor",input);
     const target=createLanguageEdition(db,dataDir,"donor",{...input,requestId:"mapped-edition-001",checkedFingerprint:pre.fingerprint!}).project.id;
@@ -192,6 +201,38 @@ describe("language edition identity",()=>{
     const probe=JSON.parse(execFileSync("ffprobe",["-v","error","-show_streams","-of","json",join(dataDir,"assets",reuse.path)],{encoding:"utf8"})) as {streams:Array<{codec_type:string}>};
     expect(probe.streams.map(stream=>stream.codec_type)).toEqual(["video"]);
     expect((db.prepare("SELECT COALESCE(SUM(amount_usd),0) sum FROM cost_ledger_entries WHERE project_id=?").get(target) as {sum:number}).sum).toBe(0);
+  });
+  it("holds new coverage until target-owned keyframes and local LTX pictures are accepted",()=>{
+    db.exec(`INSERT INTO shots(id,scene_id,sequence,action,needs_lip_sync,created_at)VALUES('cutaway','scene',2,'Listening',0,1);
+      INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('cutaway-frame','cutaway','fixture','fixture','generate','accepted','films/cutaway-frame.png',0,1);
+      INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('cutaway-picture','cutaway','fixture','fixture','generate_final_video','accepted','films/cutaway.mp4',0,1);
+      INSERT INTO clips(id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)VALUES('cutaway-clip','cutaway','cutaway-picture',0,1000,1);`);
+    asset("films/cutaway-frame.png","old frame");asset("films/cutaway.mp4","old picture");
+    const cutawayHash=createHash("sha256").update("old picture").digest("hex");
+    db.prepare("UPDATE chapter_render_manifests SET timeline_json=? WHERE render_id='render'").run(JSON.stringify([
+      {shotId:"shot",path:"films/scene.mp4",sha256:pictureHash,sourceStartMs:0,startMs:0,endMs:1000},
+      {shotId:"cutaway",path:"films/cutaway.mp4",sha256:cutawayHash,sourceStartMs:0,startMs:1000,endMs:2000}]));
+    const pre=preflightLanguageEdition(db,dataDir,"donor",input);
+    expect(pre.status).toBe("ready");
+    const target=createLanguageEdition(db,dataDir,"donor",{...input,requestId:"coverage-edition-001",checkedFingerprint:pre.fingerprint!}).project.id;
+    const audioPath="source/meyah/audio/Meyah_mej_TBL_NT_Non-Drama/B02___04_Markus______MEJTBLN1DA.mp3";
+    db.prepare("INSERT INTO audio_segments(id,project_id,layer,source_path,start_ms,end_ms,verse_ref,speaker_character_id,created_at)VALUES('target-speech',?,'original_reading',?,0,1000,'Mark 4:1','jesus',1)").run(target,audioPath);
+    const hashes=sourceReviewHashes(db,target,dataDir);
+    db.prepare("INSERT INTO source_alignment_reviews VALUES('coverage-review',?,'Dan','confirm',?,?,'Reviewed target source',1)").run(target,hashes.sourceHash,hashes.alignmentHash);
+    expect(materializeEditionScenes(db,dataDir,target).ok).toBe(true);
+    reviseLanguageEdition(db,target,{requestId:"coverage-map-001",expectedParentHash:readLanguageEditionPlan(db,target)!.hash,reviewer:"Dan",evidence:"New picture needed for longer target source",
+      correspondence:[{donorShotId:"shot",targetSegmentId:"target-speech",targetStartMs:0,targetEndMs:1000,treatment:"replace_avatar",reason:"New Meyah mouth"},
+        {donorShotId:"cutaway",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"needs_coverage",reason:"Target recording needs longer listener coverage"}]});
+    expect(materializeEditionCasting(db,dataDir,target).ok).toBe(true);
+    expect(materializeEditionMedia(db,dataDir,target).ok).toBe(false);
+    const targetShot=db.prepare("SELECT sh.id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=? AND sh.action='Listening'").get(target) as {id:string};
+    asset("generated/target-frame.png","new reviewed frame");asset("generated/target-motion.mp4","new reviewed motion");
+    db.prepare("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('new-frame',?,'local_image','local','generate','accepted','generated/target-frame.png',0,2)").run(targetShot.id);
+    expect(materializeEditionMedia(db,dataDir,target).ok).toBe(false);
+    db.prepare("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('new-motion',?,'ltx_local','fast','generate_final_video','accepted','generated/target-motion.mp4',0,2)").run(targetShot.id);
+    db.prepare("INSERT INTO clips(id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)VALUES('new-clip',?,'new-motion',0,1000,2)").run(targetShot.id);
+    expect(materializeEditionMedia(db,dataDir,target).ok).toBe(true);
+    expect(db.prepare("SELECT id FROM generation_attempts WHERE shot_id=? AND provider='retained_edition_picture'").get(targetShot.id)).toBeUndefined();
   });
   it("builds and explicitly selects the pinned Meyah title through the normal opening beat",()=>{
     const background=join(dataDir,"assets",title.backgroundFramePath);
