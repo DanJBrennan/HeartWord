@@ -80,6 +80,8 @@ export function materializeEditionScenes(db:DatabaseSync,dataDir:string,projectI
 export function materializeEditionCasting(db:DatabaseSync,dataDir:string,projectId:string):StageResult {
   const origin=readLanguageEditionOrigin(db,projectId);
   if(!origin)return {ok:false,reasoning:"This is not a language edition."};
+  try{if(!hasCurrentSourceReview(db,projectId,dataDir))return {ok:false,reasoning:"Review the current speaker-bound target alignment before materializing target shots."};}
+  catch(error){return {ok:false,reasoning:`Current target source review is unavailable: ${(error as Error).message}`};}
   try{assertEditionInputsCurrent(db,dataDir,projectId);}catch(error){return {ok:false,reasoning:`Edition casting held: ${(error as Error).message}`};}
   try{if(!editionSourceIsCurrent(db,dataDir,projectId))return {ok:false,reasoning:"Target source bytes changed; casting held."};}
   catch(error){return {ok:false,reasoning:`Target source is unavailable: ${(error as Error).message}`};}

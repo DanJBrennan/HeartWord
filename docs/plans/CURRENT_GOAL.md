@@ -1,5 +1,33 @@
 # Current Goal
 
+## In progress: isolated Mark 4 → Meyah language edition
+
+Dan approved projecting the verified Meyah speech turns onto the isolated
+source rows. Binding `6fbea6d4-b75e-43c5-bc09-b80921c7078a` applied the
+approved 40→54 row map only to the isolated Meyah database after an identical
+dry run against a SQLite copy. The original source hash remains
+`7947e9038f1cc0e74df68d934b0dbeba271a2ea27481165021ae207b2751b2c6`.
+The new alignment hash is
+`24d60b4109f480a8ea3d11e9d7c554e59c21df694a16e389d9697aac48baf6c7`.
+Jesus has 561.242 seconds and Peter 8.281 seconds of exactly reviewed character
+speech. Other audio, including narrated 4:39 and the 4:41 group performance,
+remains original Meyah. Ten continuous speech runs and all 13 named listening
+reviews are retained. The earlier 40-row archive remains readable; the old
+alignment attestation is stale as intended. Seven target scenes and zero target
+shots remain. The read-only graphical map is
+`http://127.0.0.1:4002/media/review/meyah-mark4-speech-binding-20261025/index.html`.
+Comparison with the pre-binding SQLite backup found the donor project, all
+seven donor scenes, 125 donor shots and 148 donor audio rows unchanged; the
+target project and its seven scenes are unchanged apart from the intended
+source binding history, and it still has zero shots.
+
+**Next gate:** Dan's named review of that new speaker map. Stage 3 shot
+materialization and paid voice audition hold until a current source attestation
+is recorded. The approved Peter 4:38 version-3 reference remains only a
+keyframe candidate; no Kling Avatar take, voice conversion or target shot has
+been created. Continue the source-faithful editable-edition workflow after
+the review, using the existing stages and retained Mark 4 picture handles.
+
 ## Completed: Hatam Mark 5 production
 
 Updated 2026-10-24T14:59:12.898Z. Dan explicitly approved the finished film: **“I approve the finished film.”** The complete production, whole-film checks and verified editable delivery meet the requested goal. No production work or producer review remains. No further generation, voice conversion, paid review, rendering or re-export is required without a new correction request.
@@ -493,3 +521,53 @@ continuous-speech operations with retained backup/review evidence; the
 current all-verse application helper intentionally rejects reconciled rows
 and already created scenes. The earlier source attestation covers scene
 planning only and cannot silently authorize the resulting cast map.
+
+A read-only audit probed 59 separate accepted non-speaking donor video files
+from the existing Mark 4 media store, without changing the live database or
+copying those files. A one-take-per-shot comparison found candidate surplus
+of 6.6, 9.5, 13.2 and 13.6 seconds in scenes 2–5 respectively, versus source
+duration increases of 34.5, 69.4, 57.5 and 36.5 seconds. This is a planning
+indicator pending visual trim review, not a complete footage limit or approved
+picture. See
+`docs/production/mark4-meyah-correspondence-2026-10-25/donor-picture-handle-audit.md`.
+The same 59 candidate files (388,590,158 bytes) are now copied with verified
+SHA256 into the isolated worktree; a 60-attempt receipt is retained under its
+`review/` directory. No donor/live database row changed, no target take was
+selected, and the picture handles remain subject to visual trim review.
+Dan then authorized a new 4:38 Peter lip-sync and optionally a new keyframe
+showing Peter wetter and more frightened than the Hatam cut. The reviewed
+Meyah quote and pinned Papuan Peter identity remain controlling. This is
+creative direction for a target-owned candidate, not acceptance of an image,
+voice audition, Avatar result, or target correspondence.
+The default built-in Codex image handoff produced an isolated 16:9 Peter
+4:38 candidate from the pinned final-cut keyframe and approved Peter portrait.
+It preserves the storm boat, sleeping Jesus and Papuan identity while making
+Peter visibly wetter and more frightened. The output SHA256 is
+`37638b72038369c6ba33a915b0c5faae76204ca181d1f8d98f2079abe91244b3`;
+its prompt, reference hashes and held status are retained in
+`output/mark4-donor-20261024/review/peter-v38-keyframe-candidate-v1.json`.
+All three file hashes were checked. No target shot or generation-attempt row
+was created, and no Kling request was sent.
+Dan then requested a tighter lip-sync close-up with Peter looking at Jesus
+while speaking and the sleeping Jesus visible in the frame. A second built-in
+Codex image candidate now meets that framing direction visually and remains
+held. Its SHA256 is
+`70995b7adb51a63e93c1a0ac65f2db54c967f3f4eb7a73c52281e41c8f2129b8`;
+the original candidate, exact revised prompt, approved Peter portrait and
+final-donor geography hashes are retained in
+`output/mark4-donor-20261024/review/peter-v38-keyframe-candidate-v2.json`.
+All referenced bytes were verified. No target shot or Kling work was started.
+Dan corrected the second candidate again because Peter still looked past
+Jesus. Version 3 changes the camera relationship: Peter leans close to the
+sleeping Jesus, his head and eyes aimed at Jesus' face, while his wet mouth
+remains visible. The image SHA256 is
+`ee56dec53b628c287956f1737883de4a0da5b06afaa5cdbef56b074af0a607cd`.
+Its prompt, references and retained earlier version are in
+`output/mark4-donor-20261024/review/peter-v38-keyframe-candidate-v3.json`;
+all referenced hashes match. At that point it awaited Dan's visual review.
+Dan then explicitly approved version 3's eyeline and close-up composition.
+The isolated version-3 receipt now records his `Approve version 3` decision
+and binds it to the same image SHA256; receipt SHA256 is
+`5c33e644ebd5b2d68975e5a1802b2db789ad9cbf092e776d000bcf737527bcb8`.
+This is an approved reference image for the eventual target shot, not an
+accepted target media attempt or authorization to bypass voice/video review.

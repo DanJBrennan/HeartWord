@@ -6,7 +6,7 @@ import { getDataDir } from "../../db/client.js";
 import { recordSourceAlignmentSpeakerAttribution } from "./source-alignment-speaker-attributions.js";
 import { sourceReviewHashes } from "./source-review.js";
 import { resolveAndBindSourcePaths } from "./source-catalog.js";
-import { parseSourceTextByVerse } from "./parse-source-text.js";
+import { parseReferenceOnlyVerseMarkers, parseSourceTextByVerse } from "./parse-source-text.js";
 import { approvedEditionCanon } from "../language-edition.js";
 
 export interface SpeechRunMember {
@@ -54,7 +54,10 @@ export function confirmContinuousSpeech(db: DatabaseSync, input: {
   const paths = resolveAndBindSourcePaths(db, { id: input.projectId, ...project });
   const coveredVerses = verseNumbers(input.verseRef);
   for (const path of [paths.docxPath, paths.referencePath]) {
-    const supplied = new Set(parseSourceTextByVerse(path).map(v => v.verse));
+    // A printed cross-reference marker has no independent target words or
+    // audio, but it may fall inside one heard multi-verse speech turn.
+    const supplied = new Set([...parseSourceTextByVerse(path).map(v => v.verse),
+      ...parseReferenceOnlyVerseMarkers(path).map(v => v.verse)]);
     if (coveredVerses.some(verse => !supplied.has(verse))) throw new Error("Speech range must be present in the verified source and reference Scripture.");
   }
   if (input.characterId !== null) {

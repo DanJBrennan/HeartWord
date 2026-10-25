@@ -13,6 +13,17 @@ and quote-start cue expose the handoff for review. Gemini source-text matches ar
 separate confidence score from verse boundary confidence. Displaying or
 editing these suggestions does not change cast attribution in `audio_segments`.
 
+An explicitly approved source-binding revision may project the exact verified
+character speech turns onto previously reconciled approximate verse rows.
+It splits only at character quotation edges, preserves the whole original
+recording and each row's approximate verse label, and records the prior and
+new alignment hashes, exact listening review IDs, original-performance
+decisions, named evidence, backup and continuous speech runs. The retained
+40-row verse navigation review remains readable as history. The resulting
+speaker map needs a new named producer source review before target shot
+materialization or paid voice audition; the older alignment attestation cannot
+authorize a changed map.
+
 Finishing executes its stored picture and sound filter components as separate
 FFmpeg graphs. A concatenated title/scene can change decoded color metadata;
 reinitializing a shared graph can discard buffered audio and shift the source

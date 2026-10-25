@@ -2,6 +2,13 @@
 
 Status: isolated Mark 4 donor normalized and Meyah project identity created;
 target source, voice, picture and film reviews remain open.
+
+October 25 source-binding update: Dan approved applying the projected 54-row
+Meyah speaker map after exact listening review. The existing ingestion stage
+now records an append-only binding from the approved 40-row verse archive,
+keeping its history and source bytes intact. Stage 3 target-shot materialization
+and paid voice audition require a new named review of the current speaker map;
+the earlier verse-map review alone does not satisfy that gate.
 Producer decisions: Dan's October 2026 language-edition conversation and
 `C:/Users/danbr/HeartWordData/reviews/2026-10-22-language-editions/LANGUAGE_EDITION_HANDOFF.md`.
 

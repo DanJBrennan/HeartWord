@@ -1,10 +1,18 @@
 # Meyah Mark 4 source and cast binding proposal
 
-Status: **review proposal only**. The isolated Meyah project still has the
-approved 40 approximate source rows, seven scenes and zero target shots. No
-character attribution, speech run, cast audio or provider request has been
-applied. The existing named source approval covers the verse map for scene
-planning; it does not approve this later speaker binding.
+Status: **applied to the isolated Meyah project on Dan's explicit approval**.
+The proposal below is retained as the decision basis. The resulting 54-row
+speaker map, with seven scenes and zero target shots, now awaits Dan's named
+review before target shot planning or paid voicing. The earlier 40-row verse
+map remains in the source-review history.
+
+Applied binding ID: `6fbea6d4-b75e-43c5-bc09-b80921c7078a`.
+Previous alignment SHA256: `97cac1b52db6f9cd16018d4aebdae6e142f6f91a0f7ce8a7c76a4d8c329929b8`.
+Current alignment SHA256: `24d60b4109f480a8ea3d11e9d7c554e59c21df694a16e389d9697aac48baf6c7`.
+The [graphical speaker-map reviewer](http://127.0.0.1:4002/media/review/meyah-mark4-speech-binding-20261025/index.html)
+plays each of the 54 original-audio rows. The original source hash is unchanged.
+The isolated backup, dry-run and applied receipts are retained under
+`output/mark4-donor-20261024/review/`.
 
 All times below are seconds on the immutable Meyah chapter recording. The
 review IDs are the current verified speech-window revisions. The source hash
@@ -25,7 +33,7 @@ plays each exact window with waveform and context.
 | 4:26–29 | 519.191–598.861 | `0a93da81-98c3-4f15-b77d-5f7bbcd58b26` | Jesus, approved mapped voice |
 | 4:30–32 | 604.801–641.508 | `18aa7b27-2d80-4590-91a4-8a0cc3c563f9` | Jesus, approved mapped voice |
 | 4:35 | 681.342–684.191 | `1dc9f2b9-f481-4dfb-8e73-3a4b707801c8` | Jesus, approved mapped voice; 672.893–681.342 narrator lead-in outside |
-| 4:38 | 746.695–754.976 | `c65ecd61-2a15-43cb-a029-cd136ccac898` | Peter's approved mapped voice for the visible speaking shot, as Dan directed |
+| 4:38 | 746.695–754.976 | `c65ecd61-2a15-43cb-a029-cd136ccac898` | Peter's approved mapped voice for the visible speaking shot, as Dan directed. His approved version-3 keyframe has the wet, frightened close-up and eyeline toward sleeping Jesus; a Kling Avatar take is still pending. |
 | 4:39 | 755.519–775.486 | `00d42481-87a7-4f37-a3fd-9dc60bc1e6f5` | Original Meyah narration describing Jesus' action; no Jesus speech or Avatar |
 | 4:40 | 780.426–788.136 | `df35636a-970a-48af-97ef-4e8fb72556c8` | Jesus, approved mapped voice |
 | 4:41 | 796.354–803.616 | `ea496271-a680-4e82-82f5-e89ae53231c6` | Original Meyah disciples' performance over non-speaking picture, as Dan directed; no Peter conversion or Avatar |
@@ -37,16 +45,16 @@ character IDs, so these identities must be explicitly bound from the pinned
 Papuan donor cast and Dan's 4:38 decision. A displayed speaker name alone
 cannot authorize a database attribution.
 
-The proposed application would split only original-reading rows at exact
-character-window edges, retain their full audio coverage and approximate
-verse labels, and append named continuous-speech/cast evidence. It would keep
+The application split only original-reading rows at exact
+character-window edges, retained their full audio coverage and approximate
+verse labels, and appended named continuous-speech/cast evidence. It kept
 the source chapter heading, narration, 4:39 narrated action and 4:41 group
 question in the original Meyah performance. The seven target scenes remain.
-This changes the alignment/speaker hash, so the earlier scene-planning source
+This changed the alignment/speaker hash, so the earlier scene-planning source
 attestation remains historical; the resulting exact map needs its own named
 producer review before target-shot correspondence and paid audition. The
 existing `applyListeningReview` cannot perform this specific transition: it
 requires the whole verse-review set, forbids previously reconciled rows, and
-forbids downstream scenes. Its safeguards should be extended within ingestion
-for this approved edition case, with an isolated backup and tests, rather than
-manually changing the live database.
+forbids downstream scenes. `applySourceSpeechBinding` extends ingestion for
+this approved edition case, with an isolated backup and tests. The live
+database was not changed.

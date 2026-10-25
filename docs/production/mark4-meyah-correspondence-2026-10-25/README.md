@@ -47,6 +47,24 @@ outside the cast window. They also retain the original Meyah group performance
 for the offscreen disciples' question at 4:41, rather than mapping Peter's
 voice to that passage. These are source and editorial directions for the
 next correspondence revision; the visual inventory itself remains read-only.
-The exact [source and cast binding proposal](source-binding-proposal.md) lists
+The exact [source and cast binding record](source-binding-proposal.md) lists
 all thirteen reviewed speech/narration turns and the retained original-audio
-treatments. It is not yet applied to the isolated project.
+treatments. Dan approved its 54-row projection, which was applied only to the
+isolated Meyah database. The [graphical speaker map](http://127.0.0.1:4002/media/review/meyah-mark4-speech-binding-20261025/index.html)
+lets him review every row against the original Meyah recording. Its named
+approval is still required before target shots or paid voice work. The earlier
+40-row map remains in review history, and the source bytes are unchanged.
+The [picture-handle audit](donor-picture-handle-audit.md) measures possible
+extension from separate accepted donor takes. It confirms that scenes 2–5
+need close shot-level attention; the simple one-take surplus does not itself
+establish the final footage gap.
+An isolated [Peter 4:38 keyframe candidate, version 3](../../../output/mark4-donor-20261024/assets/generated/keyframes/codex/meyah-mark4-peter-v38/peter-facing-sleeping-jesus-candidate-v3.png)
+places Peter close to the visibly sleeping Jesus, with his head and eyes
+directed toward Jesus' face and Peter's mouth exposed for lip-sync. It keeps
+the approved Papuan Peter identity and wet storm setting. Dan rejected the
+eyelines in the first two candidates; all three versions and their prompts
+remain retained in the isolated `review/peter-v38-keyframe-candidate-v*.json`
+receipts. Dan approved version 3's eyeline and close-up composition for the
+later Meyah lip-sync. The approval is pinned to image SHA256
+`ee56dec53b628c287956f1737883de4a0da5b06afaa5cdbef56b074af0a607cd`
+in the isolated version-3 receipt. No target shot or Avatar result uses it yet.

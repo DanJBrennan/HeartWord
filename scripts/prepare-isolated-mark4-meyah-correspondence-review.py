@@ -45,6 +45,19 @@ def main():
         picture = json.loads((ROOT / "review" / "approved-final-picture-plan.json").read_text(encoding="utf-8"))
         if picture["renderId"] != origin["preflight"]["donor"]["renderId"]:
             raise RuntimeError("Final-picture map and edition origin differ")
+        handle_receipt = json.loads((ROOT / "review" / "mark4-meyah-picture-handles.json").read_text(encoding="utf-8"))
+        if (handle_receipt["targetProjectId"], handle_receipt["donorProjectId"], handle_receipt["donorRenderId"]) != (PROJECT, DONOR, picture["renderId"]):
+            raise RuntimeError("Staged picture handles belong to another edition")
+        handles = defaultdict(list)
+        checked = set()
+        for candidate in handle_receipt["candidates"]:
+            path = candidate["result_asset_path"]
+            if path not in checked:
+                full = (ROOT / "assets" / path).resolve()
+                if not full.is_relative_to((ROOT / "assets").resolve()) or hashlib.sha256(full.read_bytes()).hexdigest() != candidate["sha256"]:
+                    raise RuntimeError("A staged donor picture handle changed")
+                checked.add(path)
+            handles[candidate["shot_id"]].append({"attemptId": candidate["attempt_id"], "path": path, "sha256": candidate["sha256"]})
         audio = db.execute("SELECT audio_path FROM project_source_bindings WHERE project_id=?", (PROJECT,)).fetchone()[0]
         film = db.execute("SELECT result_asset_path FROM chapter_renders WHERE id=?", (picture["renderId"],)).fetchone()[0]
         if hashlib.sha256((ROOT / "assets" / film).read_bytes()).hexdigest() != origin["preflight"]["donor"]["renderSha256"] or hashlib.sha256((ROOT / "assets" / audio).read_bytes()).hexdigest() != origin["preflight"]["target"]["audio"]["sha256"]:
@@ -102,6 +115,7 @@ def main():
                 else:
                     turn_id = turn_by_scene[shot["scene"]]
             per_scene[shot["scene"]].append({**entry, **shot, "keyframe": key, "treatment": treatment,
+                "acceptedHandleCandidates": handles.get(shot["id"], []),
                 "turnId": turn_id, "durationMs": round((entry["endFrame"] - entry["startFrame"] + 1) / 24 * 1000)})
         if len(title) != 1 or sum(map(len, per_scene.values())) != 113:
             raise RuntimeError("The approved 114-placement picture map is incomplete")
@@ -134,7 +148,9 @@ def main():
                 img = media(p["keyframe"])
                 turn_label = f"<br><small>Candidate source turn: {html.escape(p['turnId'])}</small>" if p["turnId"] else ""
                 late_note = "<br><small>Final-cut position follows two 4:41 reactions; check Meyah source order.</small>" if p["scene"] == 7 and p["startFrame"] == 13030 else ""
-                rows.append(f"<tr><td><img loading='lazy' src='{img}' alt='Donor shot still'></td><td>{p['startFrame']}–{p['endFrame']}<br>{p['durationMs']/1000:.2f}s<br><button class='video-play' data-start='{p['startFrame']/24:.3f}' data-end='{(p['endFrame']+1)/24:.3f}'>Play cut</button></td><td><b>{html.escape(p['verse_ref'] or '')}</b><br>{html.escape(p['action'] or '')}<br><small>{html.escape(p['framing'] or '')}</small></td><td>{html.escape(p['treatment'])}{turn_label}{late_note}</td></tr>")
+                handle_links = "".join(f"<li><a href='{media(handle['path'])}' target='_blank' rel='noopener'>View accepted take</a> <small>{html.escape(handle['attemptId'])}</small></li>" for handle in p["acceptedHandleCandidates"])
+                handle_html = f"<details><summary>{len(p['acceptedHandleCandidates'])} separate accepted take(s)</summary><ul>{handle_links}</ul><small>Candidate only; inspect the usable trim before selecting it.</small></details>" if handle_links else ""
+                rows.append(f"<tr><td><img loading='lazy' src='{img}' alt='Donor shot still'></td><td>{p['startFrame']}–{p['endFrame']}<br>{p['durationMs']/1000:.2f}s<br><button class='video-play' data-start='{p['startFrame']/24:.3f}' data-end='{(p['endFrame']+1)/24:.3f}'>Play cut</button></td><td><b>{html.escape(p['verse_ref'] or '')}</b><br>{html.escape(p['action'] or '')}<br><small>{html.escape(p['framing'] or '')}</small></td><td>{html.escape(p['treatment'])}{turn_label}{late_note}{handle_html}</td></tr>")
             scene_html.append(f"<section id='scene-{scene['sequence']}'><h2>Scene {scene['sequence']} · {html.escape(scene['verse_start'])}–{html.escape(scene['verse_end'])}</h2><p>Meyah source {clock(scene['targetStartMs'])}–{clock(scene['targetEndMs'])} ({scene['targetDurationMs']/1000:.1f}s) · donor picture {scene['donorDurationMs']/1000:.1f}s · difference <b>{scene['differenceMs']/1000:+.1f}s</b>. Direct speech {scene['targetDirectSpeechMs']/1000:.1f}s; old visible speaking picture {scene['donorSpeakingMs']/1000:.1f}s.</p><button class='audio-play' data-start='{scene['targetStartMs']}' data-end='{scene['targetEndMs']}'>Listen to scene</button><details><summary>Reviewed speech turns</summary><ul>{turns_html}</ul></details><table><thead><tr><th>Donor frame</th><th>Final cut</th><th>Source-grounded shot</th><th>Initial treatment</th></tr></thead><tbody>{''.join(rows)}</tbody></table></section>")
         page = f"""<!doctype html><html lang='en'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Mark 4 → Meyah shot correspondence review</title>
 <style>body{{margin:0;background:#121b23;color:#ecf3f4;font:16px/1.5 system-ui,Segoe UI,sans-serif}}main{{max-width:1280px;margin:auto;padding:22px}}h1{{margin:.2em 0}}h2{{margin-top:1.8em}}p{{max-width:80ch}}a{{color:#83d7ee}}.notice{{border-left:4px solid #f9bd67;background:#2d2b26;padding:12px 16px}}.player{{position:sticky;top:0;z-index:2;background:#13232d;padding:12px;display:flex;gap:16px;align-items:center;box-shadow:0 4px 12px #0009}}.player video{{width:270px;max-height:152px}}.player audio{{width:360px}}button{{background:#257b92;border:0;color:white;border-radius:5px;padding:6px 10px;cursor:pointer}}button:hover{{background:#2f9ab3}}section{{border-top:1px solid #435561;padding-top:8px}}table{{border-collapse:collapse;width:100%;margin-top:12px}}th,td{{border-bottom:1px solid #364b58;padding:9px;vertical-align:top;text-align:left}}th{{position:sticky;top:176px;background:#223642}}td img{{width:160px;max-height:95px;object-fit:contain;background:#000}}td:nth-child(2){{white-space:nowrap}}small{{color:#b5c8cc}}@media(max-width:800px){{.player{{position:static;display:block}}.player video{{width:100%}}.player audio{{width:100%}}th{{position:static}}td img{{width:100px}}}}</style>
