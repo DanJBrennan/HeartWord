@@ -1,6 +1,7 @@
 const $=id=>document.getElementById(id);
 const projectId=document.body.dataset.projectId;
 const api="/api/projects/"+encodeURIComponent(projectId)+"/source-listening-review";
+const scope=new URLSearchParams(location.search).get("scope")==="speech"?"speech":"verse";
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const clock=ms=>{if(!Number.isFinite(ms))return "—";const t=Math.max(0,Math.round(ms));return String(Math.floor(t/60000)).padStart(2,"0")+":"+String(Math.floor(t/1000)%60).padStart(2,"0")+"."+String(t%1000).padStart(3,"0");};
 let data,selected,headMs=0,audioContext,audioBuffer,playing=null,frame,busy=false,waveCache=null,viewMode="window";
@@ -15,10 +16,10 @@ function error(message){$("error").textContent=message??"";$("error").hidden=!me
 function activeVerified(i){return !!i.current?.verified&&!draft(i).dirty;}
 function resolved(i){return !!i.resolution||activeVerified(i);}
 function speakerLabel(i){return i.resolution?.treatment==="narration"?"Original narrator":i.resolution?.treatment==="covered"?(data.items.find(p=>p.id===i.resolution.coveredBy)?.speakerName??i.speakerName)+" · merged utterance":draft(i).speakerLabel;}
-function updateLeadIn(i){const quoteAt=i.textHatam.search(/["“]/u),mixed=/^Narrator,\s*\S/u.test(speakerLabel(i));$("speech-leadin").hidden=!(mixed&&quoteAt>0);$("speech-leadin").textContent=mixed&&quoteAt>0?`Narrator lead-in before the first opening quotation mark: “${i.textHatam.slice(0,quoteAt).trim()}” The quoted speech starts after that mark; listen to locate the exact audio handoff.`:"";}
+function updateLeadIn(i){const quoteAt=i.textHatam.search(/["“]/u),mixed=/^Narrator,\s*\S/u.test(speakerLabel(i)),lead=scope==="speech"&&quoteAt>0?i.textHatam.slice(0,quoteAt).replace(/^\[[^\]]+\]\s*/,"").trim():"";$("speech-leadin").hidden=!(mixed&&quoteAt>0)&&!lead;$("speech-leadin").textContent=mixed&&quoteAt>0?`Narrator lead-in before the first opening quotation mark: “${i.textHatam.slice(0,quoteAt).trim()}” The quoted speech starts after that mark; listen to locate the exact audio handoff.`:lead?`Narrator lead-in before the first quotation: “${lead}” Set the start at the first quoted word you hear.`:"";}
 function list() {
  const filter=$("filter").value;
- $("progress").textContent=data.application?data.verifiedCount+" verified · "+data.resolvedCount+" / "+data.items.length+" resolved · boundaries applied":data.items.filter(activeVerified).length+" / "+data.items.length+" windows verified";
+ $("progress").textContent=data.application?data.verifiedCount+" verified · "+data.resolvedCount+" / "+data.items.length+" resolved · boundaries applied":data.items.filter(activeVerified).length+" / "+data.items.length+(scope==="speech"?" speech turns verified":" verse windows verified");
  $("items").innerHTML=data.items.filter(i=>filter==="all"||(filter==="pending"?!resolved(i):i.kind===filter)).map(i=>'<button class="clip" data-item="'+esc(i.id)+'" aria-current="'+(i.id===selected)+'"'+(busy?' disabled':'')+'><strong>'+esc(i.verseRef)+' · '+esc(i.title)+'</strong><small>'+esc(speakerLabel(i))+'</small><small class="'+(resolved(i)?"done":"")+'">'+(draft(i).dirty?"Unsaved changes":i.resolution?(i.resolution.treatment==="covered"?"✓ Covered by merged utterance":"✓ Narrator confirmed"):activeVerified(i)?"✓ Verified":i.current?"Saved draft":"Proposed timing")+'</small></button>').join("");
 }
 function contextRange() {
@@ -73,14 +74,14 @@ function summary() {
  for(const button of document.querySelectorAll("[data-bound]"))button.disabled=busy||!!data.application;
  $("start").disabled=$("end").disabled=$("note").disabled=$("speaker-choice").disabled=busy||!!data.application;
  document.querySelector('[data-action="draft"]').textContent=verified&&!d.dirty?"Reopen as draft":"Save changes";
- $("download").href=api+"/items/"+encodeURIComponent(i.id)+"/audio";
+ $("download").href=api+"/items/"+encodeURIComponent(i.id)+"/audio?scope="+scope;
  $("download").textContent=d.dirty?"Download last saved WAV":i.current?"Download saved WAV":"Download initial WAV";
  list();paintClock();draw();
 }
 function select(id) {
  pause();selected=id;viewMode="window";const i=item();if(!i)return;const d=draft();
  headMs=Number.isFinite(d.startMs)?d.startMs:i.startMs;
- $("workspace").hidden=false;$("kind").textContent=i.kind==="character"?"Spoken quotation":i.kind==="narration"?"Narration passage":"Alignment check";
+ $("workspace").hidden=false;$("kind").textContent=scope==="speech"?"Quoted speech turn":i.kind==="character"?"Spoken quotation":i.kind==="narration"?"Narration passage":"Verse timing aid";
  $("title").textContent=i.verseRef+" · "+i.title;$("speaker").textContent=speakerLabel(i)+(i.voiceName?" · "+i.voiceName:"");
  $("hatam").textContent=i.textHatam||"Listen to the original context and note what you hear.";$("english").textContent=i.englishContext;
  $("confidence").textContent=[i.timingConfidence==null?null:`Timing boundary confidence ${i.timingConfidence}%`,i.geminiMatchConfidence==null?null:`Gemini text-match score ${i.geminiMatchConfidence}%`,i.speakerConfidence==null?null:`English speaker evidence score ${i.speakerConfidence}%`,i.current?.speakerLabel&&i.current.speakerLabel!==i.speakerName?"Saved speaker correction; exact handoff still unreviewed":null].filter(Boolean).join(" · ")||"Confidence has not been estimated.";
@@ -107,7 +108,7 @@ async function play(from,to,loop=false) {
 }
 async function save(action) {
  pause();const i=item(),d=draft();if(!valid(d))return;
- const body={startMs:d.startMs,endMs:d.endMs,action,reviewerName:$("reviewer").value.trim(),note:d.note,speakerLabel:d.speakerLabel,baseRevision:d.baseRevision,manifestHash:data.manifestHash,...(action==="verify"?{attestation:"confirm"}:{})};
+ const body={startMs:d.startMs,endMs:d.endMs,action,reviewerName:$("reviewer").value.trim(),note:d.note,speakerLabel:d.speakerLabel,baseRevision:d.baseRevision,manifestHash:data.manifestHash,scope,...(action==="verify"?{attestation:"confirm"}:{})};
  if(!body.reviewerName){error("Enter the name of the person reviewing this recording.");$("reviewer").focus();return;}
  const signature=JSON.stringify(body);if(d.pending?.signature!==signature)d.pending={signature,id:crypto.randomUUID()};
  busy=true;error(null);summary();
@@ -148,8 +149,10 @@ window.addEventListener("resize",draw);
 window.addEventListener("beforeunload",e=>{if([...drafts.values()].some(d=>d.dirty)){e.preventDefault();e.returnValue="";}});
 async function load(){
  try{
-  const response=await fetch(api+"/data",{cache:"no-store"});data=await response.json();if(!response.ok)throw Error(data.error);
-  $("chapter").textContent=data.title+" · "+data.items.length+" source entries";
+  const response=await fetch(api+"/data?scope="+scope,{cache:"no-store"});data=await response.json();if(!response.ok)throw Error(data.error);
+  $("speech-mode").href="?scope=speech";$("verse-mode").href="?scope=verse";$(scope+"-mode").setAttribute("aria-current","page");
+  $("chapter").textContent=data.title+" · "+data.items.length+(scope==="speech"?" proposed speech turns":" source verse entries");
+  if(scope==="speech"){$("speaker-label").firstChild.textContent="Story speaker for this turn ";$("wave-hint").textContent="Gold: proposed speech interval. Gemini aligned the surrounding verses; the exact quote edges still need your ear.";$("review-scope").textContent="Each entry is one proposed quoted speech turn, even when it crosses verses. Set start at its first quoted word and end after its last spoken word. Verse markers and narrator lead-ins are context only. These reviews do not automatically attribute source rows, choose a canon character, approve a cast voice or dispatch generation.";document.querySelector('[data-action="verify"]').textContent="Verify this speech turn";document.querySelector('#filter option[value="all"]').textContent="All speech turns";}
   select(data.items.some(i=>i.id===decodeURIComponent(location.hash.slice(1)))?decodeURIComponent(location.hash.slice(1)):data.items[0].id);
   audioContext=new AudioContext({sampleRate:data.sampleRate});
   const pcmResponse=await fetch(data.pcmUrl);if(!pcmResponse.ok)throw Error("The original listening audio could not be loaded.");

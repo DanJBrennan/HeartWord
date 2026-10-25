@@ -40,6 +40,17 @@ it("opening a prepared review does not write or verify anything",()=>{
  expect(readListeningClip(db,root,"p","quote-1")).toEqual(pcmWindow(wave(),500,1200));
  expect(db.prepare("SELECT count(*) n FROM review_notes").get()).toMatchObject({n:0});
 });
+it("keeps multi-verse speech-turn reviews separate from retained verse-window decisions",()=>{
+ const verse=saveListeningReview(db,root,"p","quote-1",request());
+ const speech:ListeningManifest={...manifest,title:"Synthetic speech turns",items:[{...manifest.items[0]!,id:"speech-run-1",verseRef:"Mark 5:7-9",title:"Continuous quotation",textHatam:"[Mark 5:7] Synthetic source\n[Mark 5:8-9] Continued source",startMs:600,endMs:1500}]};
+ put("source-listening-review/p/speech-manifest.json",JSON.stringify(speech));
+ expect(readListeningReview(db,root,"p","speech")).toMatchObject({scope:"speech",verifiedCount:0,items:[{id:"speech-run-1",current:null}]});
+ const turn=saveListeningReview(db,root,"p","speech-run-1",{...request(),scope:"speech",manifestHash:readListeningReview(db,root,"p","speech").manifestHash,requestId:"speech-request",startMs:650,endMs:1400});
+ expect(readListeningReview(db,root,"p","speech")).toMatchObject({verifiedCount:1,items:[{current:{id:turn.id,startMs:650,endMs:1400}}]});
+ expect(readListeningReview(db,root,"p")).toMatchObject({verifiedCount:1,items:[{current:{id:verse.id}}]});
+ expect(readListeningClip(db,root,"p","speech-run-1","speech")).toEqual(pcmWindow(wave(),650,1400));
+ expect(()=>saveListeningReview(db,root,"p","speech-run-1",request({scope:"speech"}))).toThrow("item changed");
+});
 it("saves a millisecond window and a reviewed speaker label without attributing the source row",()=>{
  const saved=saveListeningReview(db,root,"p","quote-1",request({startMs:1001,endMs:1131,speakerLabel:"Jesus"}));
  expect(saved).toMatchObject({startMs:1001,endMs:1131,speakerLabel:"Jesus",verified:true});
@@ -99,6 +110,9 @@ it("serves the review page, precise saved WAV and current verification through t
  expect(await (await fetch(url+"/data")).json()).toMatchObject({verifiedCount:1});
  const clip=await fetch(url+"/items/quote-1/audio");expect(clip.headers.get("content-type")).toContain("audio/wav");expect(Buffer.from(await clip.arrayBuffer())).toEqual(pcmWindow(wave(),1000,1130));
  expect((await fetch(url+"/items/quote-1",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(request({startMs:1001}))})).status).toBe(409);
+ const speech={...manifest,items:[{...manifest.items[0]!,id:"speech-run-1",startMs:600,endMs:1500}]};put("source-listening-review/p/speech-manifest.json",JSON.stringify(speech));
+ expect(await (await fetch(url+"/data?scope=speech")).json()).toMatchObject({scope:"speech",verifiedCount:0,items:[{id:"speech-run-1"}]});
+ const speechClip=await fetch(url+"/items/speech-run-1/audio?scope=speech");expect(Buffer.from(await speechClip.arrayBuffer())).toEqual(pcmWindow(wave(),500,1200));
 });
 
 function readyToApply(extraItems:ListeningManifest["items"]=[]) {

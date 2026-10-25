@@ -17,6 +17,8 @@ export interface ListeningManifest {
  originalAudioPath:string;originalAudioSha256:string;pcmPath:string;pcmSha256:string;
  durationMs:number;sampleRate:number;channels:number;items:ListeningItem[];
 }
+export type ListeningScope="verse"|"speech";
+export const listeningManifestName=(scope:ListeningScope)=>scope==="speech"?"speech-manifest.json":"manifest.json";
 export interface ListeningRevision {
  id:string;itemId:string;manifestHash:string;sourceHash:string;alignmentHash:string;
  itemHash:string;requestId:string;reviewerName:string;note:string;startMs:number;endMs:number;
@@ -66,9 +68,10 @@ export function pcmWindow(wav:Buffer,startMs:number,endMs:number) {
  const h=Buffer.alloc(44);h.write("RIFF");h.writeUInt32LE(36+data.length,4);h.write("WAVEfmt ",8);h.writeUInt32LE(16,16);h.writeUInt16LE(1,20);h.writeUInt16LE(info.channels,22);h.writeUInt32LE(info.sampleRate,24);h.writeUInt32LE(info.sampleRate*info.blockAlign,28);h.writeUInt16LE(info.blockAlign,32);h.writeUInt16LE(16,34);h.write("data",36);h.writeUInt32LE(data.length,40);
  return Buffer.concat([h,data]);
 }
-function prepared(db:DatabaseSync,root:string,projectId:string) {
+function prepared(db:DatabaseSync,root:string,projectId:string,scope:ListeningScope="verse") {
  if(!db.prepare("SELECT id FROM projects WHERE id=?").get(projectId))throw Error("Chapter not found.");
- const path=join(listeningFolder(root,projectId),"manifest.json");
+ if(scope!=="verse"&&scope!=="speech")throw Error("Unknown listening review scope.");
+ const path=join(listeningFolder(root,projectId),listeningManifestName(scope));
  if(!existsSync(path))throw Error("Source listening clips have not been prepared for this chapter.");
  const bytes=readFileSync(path),manifest=JSON.parse(bytes.toString("utf8")) as ListeningManifest;
  if(manifest.version!==1||manifest.projectId!==projectId||!Array.isArray(manifest.items)||!manifest.items.length)throw Error("Invalid prepared source review.");
@@ -80,21 +83,21 @@ function prepared(db:DatabaseSync,root:string,projectId:string) {
 function revisions(db:DatabaseSync,projectId:string):ListeningRevision[] {
  return db.prepare("SELECT note FROM review_notes WHERE project_id=? AND subject_type='project' AND subject_id=? AND source='human' AND note LIKE ? ORDER BY created_at,rowid").all(projectId,projectId,prefix+"%").map(row=>{try{return JSON.parse(String(row.note).slice(prefix.length)) as ListeningRevision;}catch{throw Error("A saved listening review is unreadable; inspect its retained record.");}});
 }
-export function readListeningReview(db:DatabaseSync,root:string,projectId:string) {
- const {manifest,manifestHash,application}=prepared(db,root,projectId),history=revisions(db,projectId);
+export function readListeningReview(db:DatabaseSync,root:string,projectId:string,scope:ListeningScope="verse") {
+ const {manifest,manifestHash,application}=prepared(db,root,projectId,scope),history=revisions(db,projectId);
  const items=manifest.items.map(item=>{const records=history.filter(r=>r.itemId===item.id&&r.manifestHash===manifestHash);
   const current=records.at(-1)??null;
   return {...item,current,resolution:application?.resolutions.find(r=>r.itemId===item.id)??null,history:records.map(r=>({id:r.id,startMs:r.startMs,endMs:r.endMs,verified:r.verified,reviewerName:r.reviewerName,speakerLabel:r.speakerLabel??null,createdAt:r.createdAt})),staleHistory:history.some(r=>r.itemId===item.id&&r.manifestHash!==manifestHash)};
  });
- return {projectId,title:manifest.title,manifestHash,sourceHash:manifest.sourceHash,durationMs:manifest.durationMs,sampleRate:manifest.sampleRate,pcmUrl:"/media/"+manifest.pcmPath.split(/[\\/]/).map(encodeURIComponent).join("/"),items,verifiedCount:items.filter(i=>i.current?.verified).length,resolvedCount:items.filter(i=>i.current?.verified||i.resolution).length,application:application?{id:application.id,createdAt:application.createdAt,reviewerName:application.reviewerName,evidence:application.evidence}:null};
+ return {projectId,title:manifest.title,scope,manifestHash,sourceHash:manifest.sourceHash,durationMs:manifest.durationMs,sampleRate:manifest.sampleRate,pcmUrl:"/media/"+manifest.pcmPath.split(/[\\/]/).map(encodeURIComponent).join("/"),items,verifiedCount:items.filter(i=>i.current?.verified).length,resolvedCount:items.filter(i=>i.current?.verified||i.resolution).length,application:application?{id:application.id,createdAt:application.createdAt,reviewerName:application.reviewerName,evidence:application.evidence}:null};
 }
 export function saveListeningReview(db:DatabaseSync,root:string,projectId:string,itemId:string,input:{
  startMs:number;endMs:number;action:"draft"|"verify";reviewerName:string;note:string;speakerLabel?:string;
- baseRevision:string|null;requestId:string;manifestHash:string;attestation?:string;
+ baseRevision:string|null;requestId:string;manifestHash:string;attestation?:string;scope?:ListeningScope;
 }) {
  if(!input||!["draft","verify"].includes(input.action)||!input.reviewerName?.trim()||input.reviewerName.length>160||typeof input.note!=="string"||input.note.length>8000||(input.speakerLabel!==undefined&&(typeof input.speakerLabel!=="string"||input.speakerLabel.length>160))||!/^[a-zA-Z0-9-]{1,100}$/.test(input.requestId??"")||!(input.baseRevision===null||typeof input.baseRevision==="string"))throw Error("Reviewer, valid request and draft/verification action are required.");
  if(input.action==="verify"&&input.attestation!=="confirm")throw Error("Verify explicitly confirms that you listened to this exact window.");
- const {manifest,manifestHash,application}=prepared(db,root,projectId),item=manifest.items.find(i=>i.id===itemId);
+ const {manifest,manifestHash,application}=prepared(db,root,projectId,input.scope??"verse"),item=manifest.items.find(i=>i.id===itemId);
  if(application)throw Error("These reviewed windows have been applied. Prepare a source-binding revision before changing an applied review; retained history is read-only.");
  if(!item||input.manifestHash!==manifestHash)throw Error("The prepared item changed. Reload before saving.");
  if(!Number.isInteger(input.startMs)||!Number.isInteger(input.endMs)||input.startMs<0||input.endMs<=input.startMs||input.endMs>manifest.durationMs)throw Error("Start/end must be valid chapter times in 0.001-second increments.");
@@ -114,8 +117,8 @@ export function saveListeningReview(db:DatabaseSync,root:string,projectId:string
   db.exec("COMMIT");return record;
  } catch(e){db.exec("ROLLBACK");throw e;}
 }
-export function readListeningClip(db:DatabaseSync,root:string,projectId:string,itemId:string) {
- const {manifest,manifestHash}=prepared(db,root,projectId),item=manifest.items.find(i=>i.id===itemId);if(!item)throw Error("Clip not found.");
+export function readListeningClip(db:DatabaseSync,root:string,projectId:string,itemId:string,scope:ListeningScope="verse") {
+ const {manifest,manifestHash}=prepared(db,root,projectId,scope),item=manifest.items.find(i=>i.id===itemId);if(!item)throw Error("Clip not found.");
  const current=revisions(db,projectId).filter(r=>r.itemId===itemId&&r.manifestHash===manifestHash).at(-1);
  const path=current?.clipPath??item.initialClipPath,bytes=readFileSync(assetPath(root,path));
  if(current&&listeningHash(bytes)!==current.clipSha256)throw Error("The saved clip changed.");

@@ -314,3 +314,20 @@ windows. A quote-start cue is shown from the source punctuation without
 moving the verse window, changing cast attribution, or treating the Gemini
 phrase anchor as a word boundary. The existing manifest and source rows stay
 unchanged; no re-verification is silently required.
+
+Dan then clarified the review unit: a continuous quoted speech can cover
+several verses; only its actual first and last spoken words, plus real speaker
+or narrator handoffs, need exact voice/lip-sync cutoffs. The isolated Meyah
+review now has a separate 13-turn waveform view, including Jesus v3–8 and
+v13–20. Its broad Gemini-bracketed proposals are unverified and the absent
+Meyah quotation punctuation in v24/v39 is explicitly flagged. The original
+40-entry verse manifest and four Dan verifications remain a navigational
+archive, with their hashes and review history intact. No target source row,
+canon attribution, cast audio, film stage, Mark 5 asset or live database was
+changed. Next, Dan reviews the speech-turn edges and words; source/canon
+binding follows only from that evidence. Goal Guardian: the change extends
+ingestion's existing listening reviewer and preserves the one-recording,
+editable-language-edition workflow without making verse edges into voice cuts.
+The stable full suite passed 869 tests in 127 files; TypeScript checks and the
+web build passed. The isolated API still reports four verified verse windows,
+zero verified speech turns, and matching source hashes for both views.

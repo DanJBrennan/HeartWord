@@ -209,6 +209,19 @@ qualified language review; routine acoustic crossing does not summon Dan.
 
 ## Source listening-window review (October 21)
 
+For a language-edition source, the primary voice/lip-sync listening unit is a
+continuous **quoted speech turn**: the first audible quoted word through the
+last audible quoted word of the same story speaker, even across multiple
+verses. A narrator lead-in or interruption creates a real handoff; an internal
+verse marker alone does not. Source verse timing remains available for
+Scripture navigation and text correspondence. The isolated Meyah Mark 4
+review uses a separate immutable speech-turn manifest so retained verse
+verifications and their manifest hash are preserved. The two review scopes
+share the original PCM and revision mechanics but never count each other's
+verifications. Proposed turns derived from Gemini verse phrases are broad
+envelopes, not forced word boundaries. Native listening must confirm exact
+edges and words before source attribution, voice conversion or Avatar use.
+
 The existing ingestion review can prepare source-only PCM excerpts and a listening
 page, with chapter-clock start/end controls in 10 ms increments. Web Audio schedules
 the selected interval from the decoded source; a timer or MP3 frame seek is not the

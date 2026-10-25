@@ -4,3 +4,7 @@
 aside{min-width:0}@media(max-width:850px){main{grid-template-columns:minmax(0,1fr)}}
 #speaker-choice{display:block;width:min(100%,460px);margin:6px 0 14px}
 #speech-leadin{margin:0 0 14px;padding:9px 12px;border-left:3px solid var(--gold);background:#39342b;color:#f5ddb0;font-size:14px}
+.review-modes{display:grid;gap:7px;margin-bottom:18px}.review-modes a{display:block;padding:8px 10px;border:1px solid var(--line);border-radius:6px;text-decoration:none}.review-modes a[aria-current=page]{background:#35372e;border-color:var(--gold);color:var(--gold)}
+#hatam,#english{white-space:pre-line}
+.source-text{max-height:170px;overflow-y:auto}
+.review-evidence{margin:0 0 12px}.review-evidence summary{cursor:pointer;color:var(--muted);font-size:13px}.review-evidence .notice{margin:8px 0}

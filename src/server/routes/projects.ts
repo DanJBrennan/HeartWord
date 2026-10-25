@@ -26,7 +26,7 @@ import { recordSourceAlignmentSpeakerAttribution } from "../../pipeline/ingestio
 import { confirmContinuousSpeech, confirmSpeechRunPauseBoundary, readConfirmedSpeechRuns } from "../../pipeline/ingestion/continuous-speech.js";
 import { recordSegmentSplit } from "../../pipeline/ingestion/segment-splits.js";
 import { recordSegmentMerge } from "../../pipeline/ingestion/segment-merges.js";
-import {readListeningReview,saveListeningReview,readListeningClip,listeningFolder} from "../../pipeline/ingestion/source-listening-review.js";
+import {readListeningReview,saveListeningReview,readListeningClip,listeningFolder,type ListeningScope} from "../../pipeline/ingestion/source-listening-review.js";
 import {renderSourceListeningReviewPage} from "../source-listening-review-page.js";
 import { computeNarrationCoverage } from "../../pipeline/casting/narration-coverage.js";
 import { renderCanonReviewPage } from "../canon-review-page.js";
@@ -42,7 +42,7 @@ projectsRouter.get("/:id/source-listening-review",(req,res)=>{
   res.setHeader("Cache-Control","no-store");res.type("html").send(renderSourceListeningReviewPage(req.params.id));
 });
 projectsRouter.get("/:id/source-listening-review/data",(req,res)=>{
-  try{res.setHeader("Cache-Control","no-store");res.json(readListeningReview(getDb(),getDataDir(),req.params.id));}
+  try{res.setHeader("Cache-Control","no-store");res.json(readListeningReview(getDb(),getDataDir(),req.params.id,(req.query.scope??"verse") as ListeningScope));}
   catch(e){res.status(409).json({error:(e as Error).message});}
 });
 projectsRouter.post("/:id/source-listening-review/items/:itemId",(req,res)=>{
@@ -50,7 +50,7 @@ projectsRouter.post("/:id/source-listening-review/items/:itemId",(req,res)=>{
   catch(e){res.status(409).json({error:(e as Error).message});}
 });
 projectsRouter.get("/:id/source-listening-review/items/:itemId/audio",(req,res)=>{
-  try{const bytes=readListeningClip(getDb(),getDataDir(),req.params.id,req.params.itemId);res.setHeader("Cache-Control","no-store");res.setHeader("Content-Disposition","attachment; filename=source-window.wav");res.type("audio/wav").send(bytes);}
+  try{const bytes=readListeningClip(getDb(),getDataDir(),req.params.id,req.params.itemId,(req.query.scope??"verse") as ListeningScope);res.setHeader("Cache-Control","no-store");res.setHeader("Content-Disposition","attachment; filename=source-window.wav");res.type("audio/wav").send(bytes);}
   catch(e){res.status(409).json({error:(e as Error).message});}
 });
 

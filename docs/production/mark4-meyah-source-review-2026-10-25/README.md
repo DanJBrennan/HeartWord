@@ -96,3 +96,27 @@ now displays the narrator lead-in separately when a mixed speaker label and
 opening quotation are present, and offers ±0.100 s boundary buttons alongside
 the 1 ms and 10 ms controls. The immutable base manifest and saved review
 history were not rewritten.
+
+## Quoted speech-turn review (producer correction)
+
+Dan clarified that the useful voice and Avatar cutoffs are **story-speaker
+turns**, often spanning multiple verses. The verse-group estimates remain a
+Scripture navigation and source-fidelity archive; their internal edges are not
+required character-audio cuts. The new [speech-turn waveform reviewer](http://127.0.0.1:4002/api/projects/a5a40890-8bb0-4856-aacb-1dcad97074bb/source-listening-review?scope=speech#speech-jesus-v3-v8)
+shows thirteen proposed quoted turns. For example, Jesus' first quoted turn
+runs through Mark 4:3–8, with one audio start after the v3 narrator lead-in
+and one end after the last quoted word in v8. The text and parallel English
+are shown for the whole turn, and the same precise waveform, play, edge and
+millisecond controls review its two outer boundaries.
+
+These broad proposed windows come from the retained Gemini-aligned verse
+phrases and English speaker-context proposal. They do **not** locate the exact
+Meyah quotation edges. Mark 4:24 lacks an opening quotation mark in the
+supplied Meyah text despite the English quotation; Mark 4:39 has no explicit
+Meyah quotation punctuation around the line reported in English. Those turns
+need particular listening/source review. All thirteen turns are unverified.
+Their separate immutable `speech-manifest.json` and PCM clips are in the
+isolated review asset folder. The original `manifest.json`, its four verified
+verse entries and all review history remain intact. Speech-turn verification
+still does not apply source attribution, choose a canon voice or release film
+work; those downstream decisions require exact reviewed words and bindings.
