@@ -200,3 +200,14 @@ timeout; that test passed alone and in the controlled full run. Goal Guardian:
 the title is replaced once, opening/closing picture is retained, cross-scene
 reuses keep the final film's visual intent without transferring wrong passage
 metadata, and the target recording and producer review remain authoritative.
+
+Historical performance evidence, 2026-10-25: the 15 selected speaking shots
+do have original v34 keyframes and exact cast-audio excerpts in the retained
+manifest. The isolated database also preserves Dan's note approving all 15
+keyframes for **held motion/lip-sync review only**, explicitly without chapter
+placement. Their original files, audio excerpts and manifest were copied with
+hash checks into the ignored isolated root; a review contact sheet was added
+to the shot-map pack. The missing accepted `generate` rows and utterance
+bindings remain unresolved. The final-film stills extracted during the search
+are only unaccepted comparison candidates; the retained originals are the
+preferred reference. No historical review status was rewritten.

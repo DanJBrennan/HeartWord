@@ -25,14 +25,27 @@ normalized, and this review has made no database or provider changes.
   picture remains exact, but their target shot records need the correct scene.
 - [Canonical speaking gaps](canonical-speaking-gaps.tsv): 15 selected Jesus
   performance shots that have saved video attempts and exact v45 source windows
-  but lack accepted `generate` keyframes and `shot_utterance_bindings` rows.
+  but lack accepted `generate` attempts and `shot_utterance_bindings` rows.
   Several windows cross old audio-segment boundaries. The table proposes the
   historically pinned Jesus voice version, using existing Jesus bindings as
   evidence; it does not record new approval.
+- [Original speaking keyframes](original-speaking-keyframes.jpg): the fifteen
+  original keyframes named by the retained v34 performance manifest. The
+  isolated database contains Dan's note approving them for **held motion and
+  lip-sync review only**, with no chapter-placement authority. The manifest
+  pins their shot IDs and exact Hatam audio windows. Those images, windows and
+  manifest have been copied to the isolated root with SHA-256 checks. This is
+  stronger historical evidence than extracting new stills from the final film,
+  but it does not silently promote the old approval scope.
+- [Historical keyframe evidence](historical-speaking-keyframes.tsv): exact shot,
+  original keyframe and cast-audio paths/hashes, plus the retained producer
+  note ID and its limited approval scope for all fifteen beats.
 - Seventy retained assets (69 selected accepted donor keyframes and the clean
   lake title still) were copied byte-for-byte from the live asset directory
   into the ignored isolated root. Their SHA-256 values and copy status are in
-  the isolated `review/copied-keyframes-manifest.json`; the live database and
+  the isolated `review/copied-keyframes-manifest.json`. The copy now also
+  contains the fifteen original speaking keyframes, fifteen exact cast-audio
+  excerpts and their saved manifest (101 files total). The live database and
   files were read only.
 
 The map comes from the retained v39–v73 edit manifests and patch scripts,
@@ -101,11 +114,13 @@ name has been created or submitted.
    frame-derived keyframes, exact picture intervals, original-source provenance
    and Scripture-grounded scene placement. Keep the five mood intervals
    unchanged in the Meyah edition except title text.
-2. The 15 canonical Jesus performance shots need accepted historical keyframes
-   extracted from their exact final-picture intervals, plus reviewed source
-   bindings from the v45 manifest. Do not silently accept old held attempts or
-   invent approval. Verify each source window, especially the ones crossing two
-   retained audio segments, against the original recording.
+2. The 15 canonical Jesus performance shots have original, historically
+   producer-approved **review inputs** and exact source windows, but still need
+   a scoped decision on how to represent that evidence as donor keyframe
+   attempts for an editable edition. Do not silently turn the held-review note
+   into chapter-placement approval or invent utterance bindings. Verify each
+   source window, especially those crossing two retained audio segments,
+   against the original recording before any new binding is recorded.
 3. Re-run read-only preflight, then the fixed-root normalizer on a complete,
    named reviewed map only. Confirm preserved original recipe, exact frame
    coverage, selected clip lineage, speaking voice evidence and a fresh-root
