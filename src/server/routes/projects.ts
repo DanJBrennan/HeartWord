@@ -166,7 +166,13 @@ projectsRouter.get("/:id/language-edition-workspace", (req,res) => {
     const timeline=JSON.parse(manifest.timeline_json) as Array<{shotId?:string;startMs?:number;endMs?:number}>;
     if(!Array.isArray(timeline))throw new Error("Pinned donor picture recipe is not a timeline.");
     const donorShots=timeline.filter(item=>typeof item.shotId==="string").map(item=>({
-      ...item,shot:db.prepare("SELECT action,verse_ref,needs_lip_sync,dialogue_character_id FROM shots WHERE id=?").get(item.shotId!) }));
+      ...item,shot:db.prepare("SELECT action,verse_ref,needs_lip_sync,dialogue_character_id FROM shots WHERE id=?").get(item.shotId!),
+      reuseCandidates:db.prepare(`SELECT ga.id AS attemptId,ga.result_asset_path AS path,ga.provider,
+        MAX(c.timeline_end_ms-c.timeline_start_ms) AS recordedDurationMs
+        FROM generation_attempts ga JOIN clips c ON c.generation_attempt_id=ga.id
+        WHERE ga.shot_id=? AND ga.operation='generate_final_video' AND ga.status='accepted'
+          AND ga.provider!='legacy_silent_picture' AND ga.result_asset_path IS NOT NULL
+        GROUP BY ga.id ORDER BY ga.created_at DESC`).all(item.shotId!) }));
     const segments=db.prepare("SELECT id,start_ms AS startMs,end_ms AS endMs,verse_ref AS verseRef,speaker_character_id AS speakerId FROM audio_segments WHERE project_id=? AND layer='original_reading' ORDER BY start_ms,id").all(req.params.id);
     const speechRuns=readConfirmedSpeechRuns(db,req.params.id,getDataDir()).map(run=>({id:run.id,verseRef:run.verseRef,startMs:run.startMs,endMs:run.endMs,
       speakerId:run.characterId,anchorSegmentId:run.members[0]?.id??null,memberIds:run.members.map(member=>member.id)}));

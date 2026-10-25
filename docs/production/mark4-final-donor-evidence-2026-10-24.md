@@ -94,6 +94,24 @@ minutes of provider media: actual speech, pauses, safe reuse and new coverage
 must be planned from the reviewed target alignment. Slowing words, looping
 causal action or reusing mixed Hatam sound is outside the accepted workflow.
 
+Dan clarified on 2026-10-25 that existing Mark 4 footage should be trimmed or
+extended to the Meyah narration first, with newly generated footage only where
+a particular visual beat runs out. The managed Hatam source recording itself
+is 517.864 seconds; a `-35 dB`, 0.5-second silence check found about 53 seconds
+of Hatam silence and 40 seconds of Meyah silence, so the 287.821-second source
+duration difference is not mostly a trailing silent pad. In the **older**
+registered cut, the 89 distinct retained picture clips have about 280 seconds
+of unique unused tail beyond their last logged use, and 54 have at least 1.5
+seconds of tail. These are nominal handles, not approved extension coverage:
+the final v73 cut differs, and each continuation must fit its action, verse,
+identity and target clock. The edition review now offers a same-shot accepted
+take with an exact, hash-pinned trim before marking a shot `needs_coverage`.
+After learning the recording length, Dan authorized substantial new footage
+and redesign wherever extending the retained film would weaken the story.
+This does not change the source words or allow an invented action: each added
+target beat is anchored to a reviewed donor scene and the Meyah source window,
+then uses the ordinary target media and Kling Avatar reviews.
+
 ## Next isolated check
 
 Represent the now-proven final picture as reviewed shot-level placements using

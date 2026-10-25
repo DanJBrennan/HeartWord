@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
@@ -278,6 +279,14 @@ export function assertEditionInputsCurrent(db:DatabaseSync,dataDir:string,projec
   if(!render || asset(dataDir,render.result_asset_path).sha256!==donor.renderSha256 || sha(render.timeline_json)!==donor.timelineSha256 || sha(render.source_audio_json)!==donor.sourceAudioSha256)
     throw new Error("Pinned donor render or normalized recipe is unavailable or changed.");
   const plan=readLanguageEditionPlan(db,projectId);
+  for(const item of plan?.revision?.correspondence??[]){
+    const reuse=item.pictureReuse;if(!reuse)continue;
+    const selected=db.prepare(`SELECT ga.result_asset_path AS path FROM generation_attempts ga JOIN clips c ON c.generation_attempt_id=ga.id
+      WHERE ga.id=? AND ga.shot_id=? AND ga.operation='generate_final_video' AND ga.status='accepted' LIMIT 1`)
+      .get(reuse.attemptId,item.donorShotId) as {path:string}|undefined;
+    if(!reuse.path || !reuse.sha256 || selected?.path!==reuse.path || asset(dataDir,reuse.path).sha256!==reuse.sha256)
+      throw new Error("Pinned donor picture handle changed after correspondence review.");
+  }
   const cast=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_shots' AND undone=0 ORDER BY sequence DESC LIMIT 1").get(projectId) as {payload:string}|undefined;
   if(cast){
     const saved=JSON.parse(cast.payload) as {planHash:string;shots:Array<{donorShotId:string;targetShotId:string}>};
@@ -312,6 +321,8 @@ export interface EditionShotCorrespondence {
   targetEndMs: number | null;
   treatment: "reuse_picture" | "replace_avatar" | "needs_coverage";
   reason: string;
+  pictureReuse?: { attemptId:string; sourceStartMs:number; durationMs:number; path?:string; sha256?:string };
+  addedForEdition?: boolean;
 }
 export interface EditionPlanRevision {
   version: 1; targetProjectId: string; parentHash: string; revisionHash: string;
@@ -343,9 +354,30 @@ export function reviseLanguageEdition(db: DatabaseSync, projectId: string, input
   const origin=readLanguageEditionOrigin(db,projectId);
   if (!origin) throw new Error("Only a created language edition can receive a correspondence revision.");
   const donorProjectId=origin.preflight.donor.projectId;
+  const correspondence=input.correspondence.map(item=>{
+    if(!item?.pictureReuse)return item;
+    const reuse=item.pictureReuse;
+    if(item.treatment!=="reuse_picture" || !dataDir || typeof reuse.attemptId!=="string" || !reuse.attemptId ||
+        !Number.isInteger(reuse.sourceStartMs) || reuse.sourceStartMs<0 || !Number.isInteger(reuse.durationMs) || reuse.durationMs<=0)
+      throw new Error("Reviewed picture handle needs an accepted donor take and exact positive trim.");
+    const candidate=db.prepare(`SELECT ga.result_asset_path AS path,ga.provider FROM generation_attempts ga
+      JOIN clips c ON c.generation_attempt_id=ga.id JOIN shots sh ON sh.id=ga.shot_id JOIN scenes sc ON sc.id=sh.scene_id
+      WHERE ga.id=? AND ga.shot_id=? AND sc.project_id=? AND sh.needs_lip_sync=0 AND ga.operation='generate_final_video' AND ga.status='accepted'
+        AND ga.result_asset_path IS NOT NULL LIMIT 1`).get(reuse.attemptId,item.donorShotId,donorProjectId) as {path:string;provider:string}|undefined;
+    if(!candidate || candidate.provider==="legacy_silent_picture" || candidate.path===origin.preflight.donor.renderPath)
+      throw new Error("Picture handle must be a retained accepted non-speaking take for the same donor shot.");
+    const pinned=asset(dataDir,candidate.path);
+    if((reuse.path && reuse.path!==pinned.path) || (reuse.sha256 && reuse.sha256!==pinned.sha256))
+      throw new Error("Reviewed picture handle changed since selection.");
+    const duration=Number(execFileSync("ffprobe",["-v","error","-show_entries","format=duration","-of","csv=p=0",resolve(dataDir,"assets",pinned.path)],{encoding:"utf8"}).trim())*1000;
+    if(!Number.isFinite(duration) || reuse.sourceStartMs+reuse.durationMs>duration+50)
+      throw new Error("Reviewed picture trim exceeds its retained source take.");
+    return {...item,pictureReuse:{attemptId:reuse.attemptId,sourceStartMs:reuse.sourceStartMs,durationMs:reuse.durationMs,path:pinned.path,sha256:pinned.sha256}};
+  });
   const seen=new Set<string>();
-  for (const item of input.correspondence) {
+  for (const item of correspondence) {
     if (!item || !["reuse_picture","replace_avatar","needs_coverage"].includes(item.treatment) || !item.reason?.trim()) throw new Error("Every mapped shot needs a disposition and reviewable reason.");
+    if(item.addedForEdition && item.treatment!=="needs_coverage")throw new Error("An added target beat must receive its own reviewed picture coverage.");
     const shot=db.prepare(`SELECT sh.needs_lip_sync AS speaking,sh.dialogue_character_id AS speaker FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=? AND sc.project_id=?`).get(item.donorShotId,donorProjectId) as {speaking:number;speaker:string|null}|undefined;
     if (!shot) throw new Error("Correspondence references a foreign or missing donor shot.");
     if (shot.speaking && item.treatment==="reuse_picture") throw new Error("A visibly speaking donor shot cannot reuse its old mouth performance.");
@@ -366,7 +398,7 @@ export function reviseLanguageEdition(db: DatabaseSync, projectId: string, input
     if (shot.speaking && (run?.characterId??segment.speaker)!==shot.speaker) throw new Error("Target speaker does not match the approved donor character identity.");
   }
   const key=`language-edition:${projectId}:revision:${input.requestId}`;
-  const body={targetProjectId:projectId,parentHash:input.expectedParentHash,correspondence:input.correspondence,
+  const body={targetProjectId:projectId,parentHash:input.expectedParentHash,correspondence,
     reviewer:input.reviewer.trim(),evidence:input.evidence.trim()};
   const revisionHash=sha(canonical(body));
   const prior=db.prepare("SELECT project_id,payload FROM edit_commands WHERE idempotency_key=?").get(key) as {project_id:string;payload:string}|undefined;

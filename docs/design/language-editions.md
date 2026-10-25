@@ -71,8 +71,13 @@ plan, source/canon checks, spend controls and actual result review.
   trimmed with FFmpeg. The mixed finished donor film cannot be a picture stem.
   The five retained Mark 4 final-picture chunks are already video-only and
   decode exactly to its final 13,484 frames; they may supply reviewed source
-  intervals once shot identity and trim are established. Insufficient picture
-  coverage uses the existing Codex image handoff for target-owned reviewed
+  intervals once shot identity and trim are established. The producer may
+  instead select another accepted non-speaking take of the same donor shot and
+  review a longer or shorter source trim against Meyah narration. That take,
+  its hash and trim are pinned in the target correspondence; the derived clip
+  is muted. Use existing picture handles and normal Picture Editor timing
+  before requesting new media. An actual uncovered interval uses the existing
+  Codex image handoff for target-owned reviewed
   keyframes and the local LTX motion path. Dan confirmed this means the
   default Codex handoff, whose image model is hosted and whose results are
   saved locally; no new computer-hosted image backend is needed. Stage 4
@@ -82,6 +87,15 @@ plan, source/canon checks, spend controls and actual result review.
   There is no loop/freeze or silent story change. Editorial assembly adapts to
   the target audio clock through the ordinary Picture Editor cut and
   source-coverage checks.
+- The longer Meyah source may need more than extended handles. A reviewed
+  correspondence can add a target-only coverage beat immediately after an
+  inherited donor shot in the same scene. It records a passage-grounded reason
+  and, for visible speech, an exact target-audio window. Stage 3 creates a new
+  target shot; stage 4 requires its own Codex keyframe and local LTX video for
+  non-speaking action, while visible target speech uses Kling Avatar in stage
+  5. The inherited donor picture is never silently copied into the added beat.
+  The normal target shot edit and crew review can redesign its action or camera
+  where keeping the old visual would fail the passage.
 
 Sougb remains held pending verified chapter text extraction and native title
 metadata. MP4-only import, translation/TTS and global voice reassignment

@@ -105,13 +105,17 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
   const mapped=new Set(plan.revision.correspondence.map(item=>item.donorShotId));
   if([...selected].some(id=>!mapped.has(id)) || [...mapped].some(id=>!selected.has(id)))
     return {ok:false,reasoning:"Reviewed correspondence must cover each selected donor shot and no unrelated shot."};
-  if(JSON.stringify(picture.filter(item=>typeof item?.shotId==="string").map(item=>item.shotId))!==JSON.stringify(plan.revision.correspondence.map(item=>item.donorShotId)))
+  const inherited=plan.revision.correspondence.filter(item=>!item.addedForEdition);
+  if(JSON.stringify(picture.filter(item=>typeof item?.shotId==="string").map(item=>item.shotId))!==JSON.stringify(inherited.map(item=>item.donorShotId)))
     return {ok:false,reasoning:"Reviewed target correspondence must retain the selected donor picture order."};
   for(const id of selected){
     const count=picture.filter(item=>item?.shotId===id).length;
-    if(plan.revision.correspondence.filter(item=>item.donorShotId===id).length!==count)
+    if(inherited.filter(item=>item.donorShotId===id).length!==count)
       return {ok:false,reasoning:`Selected donor shot ${id} has ${count} picture placements; provide one explicit target correspondence for each.`};
   }
+  for(const [index,item] of plan.revision.correspondence.entries())if(item.addedForEdition &&
+      (item.treatment!=="needs_coverage" || index===0 || plan.revision.correspondence[index-1]?.donorShotId!==item.donorShotId))
+    return {ok:false,reasoning:"An added target coverage beat must follow a selected donor shot in the same reviewed scene."};
   const now=Date.now(),mapping:Array<{donorShotId:string;targetShotId:string;treatment:string;targetSegmentId:string|null;reason:string}>=[];
   let activeRuns:ReturnType<typeof readConfirmedSpeechRuns>;
   try{activeRuns=readConfirmedSpeechRuns(db,projectId,dataDir);}catch(error){return {ok:false,reasoning:`Target speech-run evidence changed: ${(error as Error).message}`};}
@@ -204,13 +208,20 @@ export function materializeEditionMedia(db:DatabaseSync,dataDir:string,projectId
   for(const item of origin.preflight.pictureEvidence){const list=pinned.get(item.shotId)??[];list.push(item);pinned.set(item.shotId,list);}
   const preparations:Array<{targetShotId:string;operation:"generate"|"generate_final_video";path:string;sha256:string;durationMs:number|null;donorShotId:string;donorPath:string}>=[];
   try{
-    for(const item of mapped.shots){
-      if(item.treatment==="needs_coverage")continue;
+    for(const [index,item] of mapped.shots.entries()){
+      const reviewed=plan.revision?.correspondence[index];
+      if(!reviewed || reviewed.donorShotId!==item.donorShotId || reviewed.treatment!==item.treatment)
+        throw new Error("Target picture selection differs from its reviewed correspondence.");
+      if(reviewed.addedForEdition){
+        if(item.treatment!=="needs_coverage")throw new Error("An added target beat requires its own picture coverage.");
+        continue;
+      }
       const placement=placements.get(item.donorShotId)?.shift();
       if(!placement)throw new Error(`No pinned picture placement remains for donor shot ${item.donorShotId}.`);
       const evidence=pinned.get(item.donorShotId)?.shift();
       if(!evidence || placement.path!==evidence.path || placement.sha256!==evidence.sha256 || (placement.sourceStartMs??0)!==evidence.sourceStartMs || placement.endMs-placement.startMs!==evidence.durationMs)
         throw new Error("Selected picture placement differs from the frozen edition evidence.");
+      if(item.treatment==="needs_coverage")continue;
       const target=row(db,"SELECT needs_lip_sync FROM shots WHERE id=?",item.targetShotId);
       if(!target)throw new Error("Target shot was removed after correspondence review.");
       const keyPath=evidence.keyframePath,keyAbs=productionAssetPath(dataDir,keyPath),keyHash=digest(readFileSync(keyAbs));
@@ -222,17 +233,24 @@ export function materializeEditionMedia(db:DatabaseSync,dataDir:string,projectId
       }
       if(item.treatment!=="reuse_picture"||!placement.path||!placement.sha256||!Number.isInteger(placement.startMs)||!Number.isInteger(placement.endMs)||placement.endMs<=placement.startMs)
         throw new Error(`Donor shot ${item.donorShotId} lacks an exact reviewed reusable picture interval and hash.`);
-      if(placement.path===origin.preflight.donor.renderPath)throw new Error("Final mixed donor program cannot be used as a reusable picture stem.");
-      const source=productionAssetPath(dataDir,placement.path);
-      if(digest(readFileSync(source))!==placement.sha256)throw new Error("Pinned donor picture clip changed.");
-      const durationMs=placement.endMs-placement.startMs,startMs=placement.sourceStartMs??0;
+      const reuse=reviewed.pictureReuse;
+      const donorPath=reuse?.path??placement.path,donorSha=reuse?.sha256??placement.sha256;
+      if(!donorPath || !donorSha || donorPath===origin.preflight.donor.renderPath)throw new Error("Final mixed donor program cannot be used as a reusable picture stem.");
+      if(reuse){
+        const selected=row(db,`SELECT ga.result_asset_path AS path FROM generation_attempts ga JOIN clips c ON c.generation_attempt_id=ga.id
+          WHERE ga.id=? AND ga.shot_id=? AND ga.operation='generate_final_video' AND ga.status='accepted' LIMIT 1`,reuse.attemptId,item.donorShotId);
+        if(selected?.path!==donorPath)throw new Error("Reviewed donor picture handle selection changed.");
+      }
+      const source=productionAssetPath(dataDir,donorPath);
+      if(digest(readFileSync(source))!==donorSha)throw new Error("Pinned donor picture clip or reviewed handle changed.");
+      const durationMs=reuse?.durationMs??placement.endMs-placement.startMs,startMs=reuse?.sourceStartMs??placement.sourceStartMs??0;
       if(startMs<0||startMs+durationMs>mediaDurationMs(source)+50)throw new Error("Donor picture trim exceeds its retained clip.");
-      const outRel=`generated/${origin.preflight.target.language}/${origin.preflight.target.book}-${origin.preflight.target.chapter}/edition-reuse/${item.targetShotId}.mp4`;
+      const outRel=`generated/${origin.preflight.target.language}/${origin.preflight.target.book}-${origin.preflight.target.chapter}/edition-reuse/${plan.hash}/${item.targetShotId}.mp4`;
       const output=productionAssetPath(dataDir,outRel);mkdirSync(dirname(output),{recursive:true});
       if(!existsSync(output))execFileSync("ffmpeg",["-v","error","-n","-ss",String(startMs/1000),"-i",source,"-t",String(durationMs/1000),"-an",
         "-vf","scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,fps=24","-c:v","libx264","-crf","18",output],{stdio:["ignore","ignore","pipe"]});
       if(Math.abs(mediaDurationMs(output)-durationMs)>60)throw new Error("Locally reused picture does not retain the reviewed trim duration.");
-      preparations.push({targetShotId:item.targetShotId,operation:"generate_final_video",path:outRel,sha256:digest(readFileSync(output)),durationMs,donorShotId:item.donorShotId,donorPath:placement.path});
+      preparations.push({targetShotId:item.targetShotId,operation:"generate_final_video",path:outRel,sha256:digest(readFileSync(output)),durationMs,donorShotId:item.donorShotId,donorPath});
     }
   }catch(error){return {ok:false,reasoning:`Edition picture reuse held: ${(error as Error).message}`};}
   const now=Date.now();

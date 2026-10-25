@@ -174,15 +174,19 @@ describe("language edition identity",()=>{
     asset(targetAudio,"changed target recording");
     expect(()=>assertEditionInputsCurrent(db,dataDir,target)).toThrow(/target source/);
   });
-  it("reuses a selected non-speaking picture trim without carrying donor audio or provider cost",()=>{
+  it("extends a reviewed non-speaking shot from a retained handle without carrying donor audio or provider cost",()=>{
     const donorVideo=join(dataDir,"assets/films/cutaway.mp4");
     execFileSync("ffmpeg",["-v","error","-f","lavfi","-i","color=c=blue:s=320x180:r=24","-f","lavfi","-i","sine=frequency=440:sample_rate=48000",
       "-t","1.2","-c:v","libx264","-c:a","aac","-shortest",donorVideo]);
+    const handle=join(dataDir,"assets/films/cutaway-handle.mp4");
+    execFileSync("ffmpeg",["-v","error","-f","lavfi","-i","color=c=green:s=320x180:r=24","-t","3.2","-c:v","libx264",handle]);
     const cutawayHash=createHash("sha256").update(readFileSync(donorVideo)).digest("hex");
     db.exec(`INSERT INTO shots(id,scene_id,sequence,action,needs_lip_sync,created_at)VALUES('cutaway','scene',2,'Listening',0,1);
       INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('cutaway-frame','cutaway','fixture','fixture','generate','accepted','films/cutaway-frame.png',0,1);
       INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('cutaway-picture','cutaway','fixture','fixture','generate_final_video','accepted','films/cutaway.mp4',0,1);
-      INSERT INTO clips(id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)VALUES('cutaway-clip','cutaway','cutaway-picture',0,1200,1);`);
+      INSERT INTO clips(id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)VALUES('cutaway-clip','cutaway','cutaway-picture',0,1200,1);
+      INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('cutaway-handle','cutaway','fixture','fixture','generate_final_video','accepted','films/cutaway-handle.mp4',0,2);
+      INSERT INTO clips(id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)VALUES('handle-clip','cutaway','cutaway-handle',0,3200,2);`);
     asset("films/cutaway-frame.png","accepted scene frame");
     db.prepare("UPDATE chapter_render_manifests SET timeline_json=? WHERE render_id='render'").run(JSON.stringify([
       {shotId:"shot",path:"films/scene.mp4",sha256:pictureHash,sourceStartMs:0,startMs:0,endMs:1000},
@@ -195,15 +199,26 @@ describe("language edition identity",()=>{
     const hashes=sourceReviewHashes(db,target,dataDir);
     db.prepare("INSERT INTO source_alignment_reviews VALUES('cutaway-review',?,'Dan','confirm',?,?,'Reviewed target source',1)").run(target,hashes.sourceHash,hashes.alignmentHash);
     expect(materializeEditionScenes(db,dataDir,target).ok).toBe(true);
-    reviseLanguageEdition(db,target,{requestId:"cutaway-map-001",expectedParentHash:readLanguageEditionPlan(db,target)!.hash,reviewer:"Dan",evidence:"Reviewed target sound and listener cutaway",
+    const parent=readLanguageEditionPlan(db,target)!.hash;
+    const correspondence=[{donorShotId:"shot",targetSegmentId:"target-speech",targetStartMs:0,targetEndMs:1000,treatment:"replace_avatar" as const,reason:"Visible target speech"},
+      {donorShotId:"cutaway",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"reuse_picture" as const,reason:"Reviewed longer listener action over Meyah narration",
+        pictureReuse:{attemptId:"cutaway-handle",sourceStartMs:500,durationMs:2500}}];
+    expect(()=>reviseLanguageEdition(db,target,{requestId:"bad-handle-001",expectedParentHash:parent,reviewer:"Dan",evidence:"Out-of-range trim",
+      correspondence:[correspondence[0]!,{...correspondence[1]!,pictureReuse:{attemptId:"cutaway-handle",sourceStartMs:500,durationMs:5000}}]},dataDir)).toThrow(/exceeds/);
+    reviseLanguageEdition(db,target,{requestId:"cutaway-map-001",expectedParentHash:parent,reviewer:"Dan",evidence:"Reviewed target sound and listener cutaway",
       correspondence:[{donorShotId:"shot",targetSegmentId:"target-speech",targetStartMs:0,targetEndMs:1000,treatment:"replace_avatar",reason:"Visible target speech"},
-        {donorShotId:"cutaway",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"reuse_picture",reason:"Listener has no speech mouth"}]});
+        correspondence[1]!] },dataDir);
+    const originalHandle=readFileSync(handle);writeFileSync(handle,"changed handle");
+    expect(()=>assertEditionInputsCurrent(db,dataDir,target)).toThrow(/Pinned donor picture handle/);
+    writeFileSync(handle,originalHandle);
     expect(materializeEditionCasting(db,dataDir,target).ok).toBe(true);
     expect(materializeEditionMedia(db,dataDir,target).ok).toBe(true);
     const reuse=db.prepare(`SELECT ga.result_asset_path path FROM generation_attempts ga JOIN shots sh ON sh.id=ga.shot_id JOIN scenes sc ON sc.id=sh.scene_id
       WHERE sc.project_id=? AND sh.action='Listening' AND ga.operation='generate_final_video'`).get(target) as {path:string};
     const probe=JSON.parse(execFileSync("ffprobe",["-v","error","-show_streams","-of","json",join(dataDir,"assets",reuse.path)],{encoding:"utf8"})) as {streams:Array<{codec_type:string}>};
     expect(probe.streams.map(stream=>stream.codec_type)).toEqual(["video"]);
+    const duration=Number(execFileSync("ffprobe",["-v","error","-show_entries","format=duration","-of","csv=p=0",join(dataDir,"assets",reuse.path)],{encoding:"utf8"}))*1000;
+    expect(duration).toBeGreaterThan(2450);expect(duration).toBeLessThan(2560);
     expect((db.prepare("SELECT COALESCE(SUM(amount_usd),0) sum FROM cost_ledger_entries WHERE project_id=?").get(target) as {sum:number}).sum).toBe(0);
   });
   it("holds new coverage until target-owned keyframes and local LTX pictures are accepted",()=>{
@@ -211,8 +226,10 @@ describe("language edition identity",()=>{
       INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('cutaway-frame','cutaway','fixture','fixture','generate','accepted','films/cutaway-frame.png',0,1);
       INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('cutaway-picture','cutaway','fixture','fixture','generate_final_video','accepted','films/cutaway.mp4',0,1);
       INSERT INTO clips(id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)VALUES('cutaway-clip','cutaway','cutaway-picture',0,1000,1);`);
-    asset("films/cutaway-frame.png","old frame");asset("films/cutaway.mp4","old picture");
-    const cutawayHash=createHash("sha256").update("old picture").digest("hex");
+    asset("films/cutaway-frame.png","old frame");
+    const donorVideo=join(dataDir,"assets/films/cutaway.mp4");
+    execFileSync("ffmpeg",["-v","error","-f","lavfi","-i","color=c=blue:s=320x180:r=24","-t","1.2","-c:v","libx264",donorVideo]);
+    const cutawayHash=createHash("sha256").update(readFileSync(donorVideo)).digest("hex");
     db.prepare("UPDATE chapter_render_manifests SET timeline_json=? WHERE render_id='render'").run(JSON.stringify([
       {shotId:"shot",path:"films/scene.mp4",sha256:pictureHash,sourceStartMs:0,startMs:0,endMs:1000},
       {shotId:"cutaway",path:"films/cutaway.mp4",sha256:cutawayHash,sourceStartMs:0,startMs:1000,endMs:2000}]));
@@ -226,10 +243,12 @@ describe("language edition identity",()=>{
     expect(materializeEditionScenes(db,dataDir,target).ok).toBe(true);
     reviseLanguageEdition(db,target,{requestId:"coverage-map-001",expectedParentHash:readLanguageEditionPlan(db,target)!.hash,reviewer:"Dan",evidence:"New picture needed for longer target source",
       correspondence:[{donorShotId:"shot",targetSegmentId:"target-speech",targetStartMs:0,targetEndMs:1000,treatment:"replace_avatar",reason:"New Meyah mouth"},
-        {donorShotId:"cutaway",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"needs_coverage",reason:"Target recording needs longer listener coverage"}]});
+        {donorShotId:"cutaway",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"reuse_picture",reason:"Retained listener action covers the first beat"},
+        {donorShotId:"cutaway",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"needs_coverage",reason:"Added target beat needs a new listener angle",addedForEdition:true}]});
     expect(materializeEditionCasting(db,dataDir,target).ok).toBe(true);
+    expect((db.prepare("SELECT COUNT(*) n FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=?").get(target) as {n:number}).n).toBe(3);
     expect(materializeEditionMedia(db,dataDir,target).ok).toBe(false);
-    const targetShot=db.prepare("SELECT sh.id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=? AND sh.action='Listening'").get(target) as {id:string};
+    const targetShot=db.prepare("SELECT sh.id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=? AND sh.action='Listening' AND sh.sequence=3").get(target) as {id:string};
     asset("generated/target-frame.png","new reviewed frame");asset("generated/target-motion.mp4","new reviewed motion");
     db.prepare("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('wrong-frame',?,'gemini','image','generate','accepted','generated/target-frame.png',0,1)").run(targetShot.id);
     expect(materializeEditionMedia(db,dataDir,target).ok).toBe(false);

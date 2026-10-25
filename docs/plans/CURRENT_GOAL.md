@@ -126,3 +126,33 @@ Dan clarified on 2026-10-25 that new keyframes should use the default Codex
 image handoff, with local LTX still producing non-speaking motion. The isolated
 edition media gate now accepts only a reviewed `codex_imagegen` keyframe for a
 `needs_coverage` shot and retains the existing target-owned review path.
+He also clarified that existing Mark 4 picture should be trimmed or extended
+for Meyah narration first; new media is for a specific uncovered visual beat.
+The isolated correspondence now permits an accepted take of the same donor
+non-speaking shot with a named, exact, hash-pinned trim. Stage 4 derives muted
+picture at that length and verifies the handle has enough real frames. A
+changed take or overlong trim holds before assembly. The managed Meyah Mark 4
+recording is 13:26 versus the 8:38 Hatam source; its text and exact speech
+alignment still need the normal target-language review. Kling Avatar remains the
+speaking-shot path after target voice mapping.
+After seeing that duration difference, Dan authorized substantial additional
+footage and scene/shot redesign where extending retained footage would tell
+the passage poorly. The reviewed correspondence can now add target-only
+coverage beats beside inherited shots, with source windows for visible speech;
+they receive new target-owned media and normal crew review. Retained handles
+remain useful where their action genuinely fits the Meyah timing. The managed
+Meyah recording is the current intended source, subject to its ordinary text
+and native listening review.
+
+Implementation check, 2026-10-25: the focused language-edition checks and full
+suite pass (864 tests in 127 files), both TypeScript typechecks pass, and the web
+build passes. A Goal Guardian pass against the product vision and user workflow
+finds the longer target recording remains the timing and speech authority;
+retained picture handles and added coverage beats remain individually reviewed
+inside the existing stages; Papuan character and voice identities stay pinned;
+and no translation, dialogue or narrative beat is invented. The target can be
+edited through its ordinary chapter workspace. This validates the isolated
+implementation, not a completed Meyah film. The real pilot remains held on a
+reviewed final Mark 4 shot map, Meyah source alignment/listening, bounded
+voice/Avatar checks and a full editorial/QC/export pass. The live database and
+approved Mark 5 production were not modified.
