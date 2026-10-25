@@ -150,3 +150,9 @@ For comparison during that review, the isolated
 the older registered base cut with each uniquely linked donor shot, action and
 verse when present. It is a reference for finding candidates, not a final-cut
 map: v66–v73 changed timing and replaced pictures after that base render.
+A read-only 4 fps, 32 × 18 grayscale frame comparison against that earlier
+film was retained as `review/final-to-earlier-cut-visual-matches-CANDIDATE.tsv`.
+Only 233 of 2,247 final samples reached correlation 0.85; the median best
+match was 0.528. Grading, different cuts and repeated visual motifs make the
+nearest-frame match too weak to promote to a shot identity automatically. The
+candidate sheet is search aid only and was not fed to the normalizer.
