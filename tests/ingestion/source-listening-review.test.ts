@@ -4,7 +4,7 @@ import {tmpdir} from "node:os";
 import {dirname,join} from "node:path";
 import express from "express";
 import {afterEach,beforeEach,expect,it,vi} from "vitest";
-import {listeningFolder,listeningHash,pcmWaveInfo,pcmWindow,readListeningReview,saveListeningReview,readListeningClip,type ListeningManifest} from "../../src/pipeline/ingestion/source-listening-review.js";
+import {listeningFolder,listeningHash,pcmWaveInfo,pcmWindow,readListeningReview,saveListeningReview,readListeningClip,recordListeningNarrationDecision,type ListeningManifest} from "../../src/pipeline/ingestion/source-listening-review.js";
 import {sourceReviewHashes} from "../../src/pipeline/ingestion/source-review.js";
 import {applyListeningReview} from "../../src/pipeline/ingestion/apply-listening-review.js";
 import {speechCoverageSegments} from "../../src/pipeline/ingestion/continuous-speech.js";
@@ -50,6 +50,22 @@ it("keeps multi-verse speech-turn reviews separate from retained verse-window de
  expect(readListeningReview(db,root,"p")).toMatchObject({verifiedCount:1,items:[{current:{id:verse.id}}]});
  expect(readListeningClip(db,root,"p","speech-run-1","speech")).toEqual(pcmWindow(wave(),650,1400));
  expect(()=>saveListeningReview(db,root,"p","speech-run-1",request({scope:"speech"}))).toThrow("item changed");
+});
+it("records a producer's narrator-only correction against the reviewed passage without changing source or posing as a listener",()=>{
+ const review=saveListeningReview(db,root,"p","quote-1",request({speakerLabel:"Fixture actor"}));
+ const before=db.prepare("SELECT * FROM audio_segments").all();
+ const input={itemId:"quote-1",manifestHash:readListeningReview(db,root,"p").manifestHash,reviewId:review.id,reviewerName:"Codex recording producer answer",evidence:"Producer explicitly confirmed this passage is narrator-only."};
+ const decision=recordListeningNarrationDecision(db,root,"p",input);
+ expect(recordListeningNarrationDecision(db,root,"p",input).id).toBe(decision.id);
+ expect(readListeningReview(db,root,"p")).toMatchObject({verifiedCount:1,items:[{current:{id:review.id,reviewerName:"Fixture reviewer"},resolution:{treatment:"narration",evidence:input.evidence}}]});
+ expect(db.prepare("SELECT * FROM audio_segments").all()).toEqual(before);
+ expect(()=>recordListeningNarrationDecision(db,root,"p",{...input,evidence:"different"})).toThrow("different narration decision");
+ saveListeningReview(db,root,"p","quote-1",request({action:"draft",requestId:"new-revision",baseRevision:review.id}));
+ expect(readListeningReview(db,root,"p").items[0]!.resolution).toBeNull();
+ const revised=saveListeningReview(db,root,"p","quote-1",request({action:"verify",requestId:"reverified",baseRevision:readListeningReview(db,root,"p").items[0]!.current!.id}));
+ const reconciled=recordListeningNarrationDecision(db,root,"p",{...input,reviewId:revised.id,evidence:"Producer reaffirmed narrator-only after a new listening revision."});
+ expect(reconciled.id).not.toBe(decision.id);
+ expect(readListeningReview(db,root,"p").items[0]!.resolution).toMatchObject({treatment:"narration",evidence:"Producer reaffirmed narrator-only after a new listening revision."});
 });
 it("saves a millisecond window and a reviewed speaker label without attributing the source row",()=>{
  const saved=saveListeningReview(db,root,"p","quote-1",request({startMs:1001,endMs:1131,speakerLabel:"Jesus"}));

@@ -16,11 +16,13 @@ function error(message){$("error").textContent=message??"";$("error").hidden=!me
 function activeVerified(i){return !!i.current?.verified&&!draft(i).dirty;}
 function resolved(i){return !!i.resolution||activeVerified(i);}
 function speakerLabel(i){return i.resolution?.treatment==="narration"?"Original narrator":i.resolution?.treatment==="covered"?(data.items.find(p=>p.id===i.resolution.coveredBy)?.speakerName??i.speakerName)+" · merged utterance":draft(i).speakerLabel;}
+function displayTitle(i){return scope==="speech"&&i.resolution?.treatment==="narration"?"Narrated passage · no character voice":i.title;}
 function updateLeadIn(i){const quoteAt=i.textHatam.search(/["“]/u),mixed=/^Narrator,\s*\S/u.test(speakerLabel(i)),lead=scope==="speech"&&quoteAt>0?i.textHatam.slice(0,quoteAt).replace(/^\[[^\]]+\]\s*/,"").trim():"";$("speech-leadin").hidden=!(mixed&&quoteAt>0)&&!lead;$("speech-leadin").textContent=mixed&&quoteAt>0?`Narrator lead-in before the first opening quotation mark: “${i.textHatam.slice(0,quoteAt).trim()}” The quoted speech starts after that mark; listen to locate the exact audio handoff.`:lead?`Narrator lead-in before the first quotation: “${lead}” Set the start at the first quoted word you hear.`:"";}
 function list() {
  const filter=$("filter").value;
- $("progress").textContent=data.application?data.verifiedCount+" verified · "+data.resolvedCount+" / "+data.items.length+" resolved · boundaries applied":data.items.filter(activeVerified).length+" / "+data.items.length+(scope==="speech"?" speech turns verified":" verse windows verified");
- $("items").innerHTML=data.items.filter(i=>filter==="all"||(filter==="pending"?!resolved(i):i.kind===filter)).map(i=>'<button class="clip" data-item="'+esc(i.id)+'" aria-current="'+(i.id===selected)+'"'+(busy?' disabled':'')+'><strong>'+esc(i.verseRef)+' · '+esc(i.title)+'</strong><small>'+esc(speakerLabel(i))+'</small><small class="'+(resolved(i)?"done":"")+'">'+(draft(i).dirty?"Unsaved changes":i.resolution?(i.resolution.treatment==="covered"?"✓ Covered by merged utterance":"✓ Narrator confirmed"):activeVerified(i)?"✓ Verified":i.current?"Saved draft":"Proposed timing")+'</small></button>').join("");
+ const narrated=scope==="speech"?data.items.filter(i=>i.resolution?.treatment==="narration").length:0;
+ $("progress").textContent=data.application?data.verifiedCount+" verified · "+data.resolvedCount+" / "+data.items.length+" resolved · boundaries applied":scope==="speech"?`${data.items.filter(i=>activeVerified(i)&&i.resolution?.treatment!=="narration").length} character windows verified · ${narrated} narrator decisions`:data.items.filter(activeVerified).length+" / "+data.items.length+" verse windows verified";
+ $("items").innerHTML=data.items.filter(i=>filter==="all"||(filter==="pending"?!resolved(i):filter==="narration"?i.resolution?.treatment==="narration"||i.kind==="narration":filter==="character"?i.kind==="character"&&i.resolution?.treatment!=="narration":i.kind===filter)).map(i=>'<button class="clip" data-item="'+esc(i.id)+'" aria-current="'+(i.id===selected)+'"'+(busy?' disabled':'')+'><strong>'+esc(i.verseRef)+' · '+esc(displayTitle(i))+'</strong><small>'+esc(speakerLabel(i))+'</small><small class="'+(resolved(i)?"done":"")+'">'+(draft(i).dirty?"Unsaved changes":i.resolution?(i.resolution.treatment==="covered"?"✓ Covered by merged utterance":"✓ Narrator confirmed"):activeVerified(i)?"✓ Verified":i.current?"Saved draft":"Proposed timing")+'</small></button>').join("");
 }
 function contextRange() {
  const d=draft(),start=valid(d)?d.startMs:item().startMs,end=valid(d)?d.endMs:item().endMs;
@@ -64,15 +66,15 @@ function draw() {
  ctx.fillStyle="#aab9c5";ctx.font="11px monospace";ctx.fillText(clock(range.start),8,h-8);ctx.fillText(clock(range.end),Math.max(8,w-75),h-8);
 }
 function summary() {
- const i=item(),d=draft(),ok=valid(d),verified=activeVerified(i);
+ const i=item(),d=draft(),ok=valid(d),verified=activeVerified(i),locked=!!data.application||i.resolution?.treatment==="narration";
  updateLeadIn(i);$("speaker").textContent=speakerLabel(i)+(i.voiceName?" · "+i.voiceName:"");
  $("status").textContent=i.resolution?(i.resolution.treatment==="covered"?"Covered by merged utterance":"Narrator confirmed"):d.dirty?"Unsaved changes":verified?"Verified":i.current?"Saved draft":"Proposed timing";
  $("status").className="pill"+(verified?" verified":"");
  $("start-clock").textContent=clock(d.startMs);$("end-clock").textContent=clock(d.endMs);
  $("duration").textContent=ok?((d.endMs-d.startMs)/1000).toFixed(3)+" seconds selected":"Enter valid start/end times to continue";
- for(const button of document.querySelectorAll("[data-action]")){const action=button.dataset.action;button.disabled=busy||(data.application&&!["play","context","start-edge","end-edge","pause","zoom-window","zoom-start","zoom-end"].includes(action))||(["play","context","start-edge","end-edge","verify"].includes(action)&&(!ok||!audioBuffer))||(action==="draft"&&!ok);}
- for(const button of document.querySelectorAll("[data-bound]"))button.disabled=busy||!!data.application;
- $("start").disabled=$("end").disabled=$("note").disabled=$("speaker-choice").disabled=busy||!!data.application;
+ for(const button of document.querySelectorAll("[data-action]")){const action=button.dataset.action;button.disabled=busy||(locked&&!["play","context","start-edge","end-edge","pause","zoom-window","zoom-start","zoom-end","next"].includes(action))||(["play","context","start-edge","end-edge","verify"].includes(action)&&(!ok||!audioBuffer))||(action==="draft"&&!ok);}
+ for(const button of document.querySelectorAll("[data-bound]"))button.disabled=busy||locked;
+ $("start").disabled=$("end").disabled=$("note").disabled=$("speaker-choice").disabled=busy||locked;
  document.querySelector('[data-action="draft"]').textContent=verified&&!d.dirty?"Reopen as draft":"Save changes";
  $("download").href=api+"/items/"+encodeURIComponent(i.id)+"/audio?scope="+scope;
  $("download").textContent=d.dirty?"Download last saved WAV":i.current?"Download saved WAV":"Download initial WAV";
@@ -81,12 +83,17 @@ function summary() {
 function select(id) {
  pause();selected=id;viewMode="window";const i=item();if(!i)return;const d=draft();
  headMs=Number.isFinite(d.startMs)?d.startMs:i.startMs;
- $("workspace").hidden=false;$("kind").textContent=scope==="speech"?"Quoted speech turn":i.kind==="character"?"Spoken quotation":i.kind==="narration"?"Narration passage":"Verse timing aid";
- $("title").textContent=i.verseRef+" · "+i.title;$("speaker").textContent=speakerLabel(i)+(i.voiceName?" · "+i.voiceName:"");
+ $("workspace").hidden=false;$("kind").textContent=i.resolution?.treatment==="narration"?"Narrator-only source passage":scope==="speech"?"Quoted speech turn":i.kind==="character"?"Spoken quotation":i.kind==="narration"?"Narration passage":"Verse timing aid";
+ $("title").textContent=i.verseRef+" · "+displayTitle(i);$("speaker").textContent=speakerLabel(i)+(i.voiceName?" · "+i.voiceName:"");
  $("hatam").textContent=i.textHatam||"Listen to the original context and note what you hear.";$("english").textContent=i.englishContext;
- $("confidence").textContent=[i.timingConfidence==null?null:`Timing boundary confidence ${i.timingConfidence}%`,i.geminiMatchConfidence==null?null:`Gemini text-match score ${i.geminiMatchConfidence}%`,i.speakerConfidence==null?null:`English speaker evidence score ${i.speakerConfidence}%`,i.current?.speakerLabel&&i.current.speakerLabel!==i.speakerName?"Saved speaker correction; exact handoff still unreviewed":null].filter(Boolean).join(" · ")||"Confidence has not been estimated.";
+ if(scope==="speech"){
+  const narration=i.resolution?.treatment==="narration";
+  $("wave-hint").textContent=narration?"Gold: retained narrated passage. The original narrator stays on the soundtrack; no character voice is created.":"Gold: proposed speech interval. Gemini aligned the surrounding verses; the exact quote edges still need your ear.";
+  $("review-scope").textContent=narration?"Dan confirmed that this passage narrates Jesus' action. The saved listening revision remains in history, and the producer's separate content decision keeps this passage in the original narrator voice. No cast or Avatar work follows from it.":"Each entry is one proposed quoted speech turn, even when it crosses verses. Set start at its first quoted word and end after its last spoken word. Verse markers and narrator lead-ins are context only. These reviews do not automatically attribute source rows, choose a canon character, approve a cast voice or dispatch generation.";
+ }
+ $("confidence").textContent=[i.timingConfidence==null?null:`Timing boundary confidence ${i.timingConfidence}%`,i.geminiMatchConfidence==null?null:`Gemini text-match score ${i.geminiMatchConfidence}%`,i.resolution?.treatment==="narration"?"Producer confirmed original narration":i.speakerConfidence==null?null:`English speaker evidence score ${i.speakerConfidence}%`,i.current?.speakerLabel&&i.current.speakerLabel!==i.speakerName?"Saved speaker correction; exact handoff still unreviewed":null].filter(Boolean).join(" · ")||"Confidence has not been estimated.";
  $("warnings").textContent=i.warnings.join(" ");$("warnings").hidden=!i.warnings.length;
- $("start").value=(d.startMs/1000).toFixed(3);$("end").value=(d.endMs/1000).toFixed(3);$("note").value=d.note;$("speaker-choice").value=d.speakerLabel;
+ $("start").value=(d.startMs/1000).toFixed(3);$("end").value=(d.endMs/1000).toFixed(3);$("note").value=d.note;$("speaker-choice").value=i.resolution?.treatment==="narration"?"Original narrator":d.speakerLabel;
  $("saved").textContent=i.resolution?i.resolution.evidence:i.current?(i.current.verified?"Verified":"Draft saved")+" by "+i.current.reviewerName+" · "+new Date(i.current.createdAt).toLocaleString():"No verification recorded.";
  if(data.application)$("saved").textContent+=" Applied by producer instruction. This retained listening set is read-only; later changes require a source-binding revision.";
  $("history").innerHTML=i.history.length?i.history.slice().reverse().map(r=>"<li>"+clock(r.startMs)+"–"+clock(r.endMs)+" · "+(r.verified?"verified":"draft")+(r.speakerLabel?" · "+esc(r.speakerLabel):"")+" · "+esc(r.reviewerName)+" · "+esc(new Date(r.createdAt).toLocaleString())+"</li>").join(""):"<li>No saved history yet.</li>";
@@ -151,8 +158,8 @@ async function load(){
  try{
   const response=await fetch(api+"/data?scope="+scope,{cache:"no-store"});data=await response.json();if(!response.ok)throw Error(data.error);
   $("speech-mode").href="?scope=speech";$("verse-mode").href="?scope=verse";$(scope+"-mode").setAttribute("aria-current","page");
-  $("chapter").textContent=data.title+" · "+data.items.length+(scope==="speech"?" proposed speech turns":" source verse entries");
-  if(scope==="speech"){$("speaker-label").firstChild.textContent="Story speaker for this turn ";$("wave-hint").textContent="Gold: proposed speech interval. Gemini aligned the surrounding verses; the exact quote edges still need your ear.";$("review-scope").textContent="Each entry is one proposed quoted speech turn, even when it crosses verses. Set start at its first quoted word and end after its last spoken word. Verse markers and narrator lead-ins are context only. These reviews do not automatically attribute source rows, choose a canon character, approve a cast voice or dispatch generation.";document.querySelector('[data-action="verify"]').textContent="Verify this speech turn";document.querySelector('#filter option[value="all"]').textContent="All speech turns";}
+  $("chapter").textContent=data.title+" · "+data.items.length+(scope==="speech"?" source-review entries":" source verse entries");
+  if(scope==="speech"){$("speaker-label").firstChild.textContent="Story speaker for this turn ";document.querySelector('[data-action="verify"]').textContent="Verify this speech turn";document.querySelector('#filter option[value="all"]').textContent="All review entries";}
   select(data.items.some(i=>i.id===decodeURIComponent(location.hash.slice(1)))?decodeURIComponent(location.hash.slice(1)):data.items[0].id);
   audioContext=new AudioContext({sampleRate:data.sampleRate});
   const pcmResponse=await fetch(data.pcmUrl);if(!pcmResponse.ok)throw Error("The original listening audio could not be loaded.");

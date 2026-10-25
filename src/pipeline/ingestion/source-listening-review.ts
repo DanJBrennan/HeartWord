@@ -26,6 +26,11 @@ export interface ListeningRevision {
  speakerLabel?:string;
 }
 export interface ListeningResolution {itemId:string;treatment:"covered"|"narration";coveredBy?:string;evidence:string}
+export interface ListeningNarrationDecision {
+ id:string;itemId:string;manifestHash:string;sourceHash:string;alignmentHash:string;
+ reviewId:string;reviewerName:string;evidence:string;createdAt:number;treatment:"narration";
+}
+export const listeningNarrationDecisionPrefix="Source listening narration decision v1\n";
 export interface ListeningApplication {
  id:string;manifestHash:string;sourceHash:string;originalAlignmentHash:string;appliedAlignmentHash:string;
  reviewerName:string;evidence:string;createdAt:number;reviewIds:string[];resolutions:ListeningResolution[];
@@ -83,13 +88,36 @@ function prepared(db:DatabaseSync,root:string,projectId:string,scope:ListeningSc
 function revisions(db:DatabaseSync,projectId:string):ListeningRevision[] {
  return db.prepare("SELECT note FROM review_notes WHERE project_id=? AND subject_type='project' AND subject_id=? AND source='human' AND note LIKE ? ORDER BY created_at,rowid").all(projectId,projectId,prefix+"%").map(row=>{try{return JSON.parse(String(row.note).slice(prefix.length)) as ListeningRevision;}catch{throw Error("A saved listening review is unreadable; inspect its retained record.");}});
 }
+function narrationDecisions(db:DatabaseSync,projectId:string):ListeningNarrationDecision[] {
+ return db.prepare("SELECT note FROM review_notes WHERE project_id=? AND subject_type='project' AND subject_id=? AND source='qc' AND note LIKE ? ORDER BY created_at,rowid").all(projectId,projectId,listeningNarrationDecisionPrefix+"%").map(row=>JSON.parse(String(row.note).slice(listeningNarrationDecisionPrefix.length)) as ListeningNarrationDecision);
+}
 export function readListeningReview(db:DatabaseSync,root:string,projectId:string,scope:ListeningScope="verse") {
- const {manifest,manifestHash,application}=prepared(db,root,projectId,scope),history=revisions(db,projectId);
+ const {manifest,manifestHash,application}=prepared(db,root,projectId,scope),history=revisions(db,projectId),decisions=narrationDecisions(db,projectId);
  const items=manifest.items.map(item=>{const records=history.filter(r=>r.itemId===item.id&&r.manifestHash===manifestHash);
   const current=records.at(-1)??null;
-  return {...item,current,resolution:application?.resolutions.find(r=>r.itemId===item.id)??null,history:records.map(r=>({id:r.id,startMs:r.startMs,endMs:r.endMs,verified:r.verified,reviewerName:r.reviewerName,speakerLabel:r.speakerLabel??null,createdAt:r.createdAt})),staleHistory:history.some(r=>r.itemId===item.id&&r.manifestHash!==manifestHash)};
+  const decision=decisions.filter(d=>d.itemId===item.id&&d.manifestHash===manifestHash&&d.reviewId===current?.id).at(-1);
+  return {...item,current,resolution:application?.resolutions.find(r=>r.itemId===item.id)??(decision?{itemId:item.id,treatment:"narration" as const,evidence:decision.evidence}:null),history:records.map(r=>({id:r.id,startMs:r.startMs,endMs:r.endMs,verified:r.verified,reviewerName:r.reviewerName,speakerLabel:r.speakerLabel??null,createdAt:r.createdAt})),staleHistory:history.some(r=>r.itemId===item.id&&r.manifestHash!==manifestHash)};
  });
  return {projectId,title:manifest.title,scope,manifestHash,sourceHash:manifest.sourceHash,durationMs:manifest.durationMs,sampleRate:manifest.sampleRate,pcmUrl:"/media/"+manifest.pcmPath.split(/[\\/]/).map(encodeURIComponent).join("/"),items,verifiedCount:items.filter(i=>i.current?.verified).length,resolvedCount:items.filter(i=>i.current?.verified||i.resolution).length,application:application?{id:application.id,createdAt:application.createdAt,reviewerName:application.reviewerName,evidence:application.evidence}:null};
+}
+/** Record a producer's explicit content correction without impersonating a
+ * listening verification or changing the immutable prepared manifest. */
+export function recordListeningNarrationDecision(db:DatabaseSync,root:string,projectId:string,input:{
+ itemId:string;manifestHash:string;reviewId:string;reviewerName:string;evidence:string;scope?:ListeningScope;
+}):ListeningNarrationDecision {
+ if(!input?.reviewerName?.trim()||!input.evidence?.trim()||!input.itemId||!input.reviewId)throw Error("Named narration decision and exact review evidence are required.");
+ const {manifest,manifestHash,application}=prepared(db,root,projectId,input.scope??"verse");
+ if(application||manifestHash!==input.manifestHash||!manifest.items.some(i=>i.id===input.itemId))throw Error("Narration decision does not match the current prepared review.");
+ db.exec("BEGIN IMMEDIATE");
+ try{
+  const review=revisions(db,projectId).filter(r=>r.itemId===input.itemId&&r.manifestHash===manifestHash).at(-1);
+  if(!review?.verified||review.id!==input.reviewId)throw Error("Narration decision needs the current verified listening revision.");
+  const earlier=narrationDecisions(db,projectId).filter(d=>d.itemId===input.itemId&&d.manifestHash===manifestHash).at(-1);
+  if(earlier?.reviewId===review.id){if(earlier.reviewerName===input.reviewerName.trim()&&earlier.evidence===input.evidence.trim()){db.exec("COMMIT");return earlier;}throw Error("A different narration decision already exists for this listening revision; reconcile it explicitly.");}
+  const decision:ListeningNarrationDecision={id:randomUUID(),itemId:input.itemId,manifestHash,sourceHash:manifest.sourceHash,alignmentHash:manifest.alignmentHash,reviewId:review.id,reviewerName:input.reviewerName.trim(),evidence:input.evidence.trim(),createdAt:Date.now(),treatment:"narration"};
+  db.prepare("INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES(?,?,'project',?,'qc',?,0,?)").run(decision.id,projectId,projectId,listeningNarrationDecisionPrefix+JSON.stringify(decision),decision.createdAt);
+  db.exec("COMMIT");return decision;
+ }catch(error){if(db.isTransaction)db.exec("ROLLBACK");throw error;}
 }
 export function saveListeningReview(db:DatabaseSync,root:string,projectId:string,itemId:string,input:{
  startMs:number;endMs:number;action:"draft"|"verify";reviewerName:string;note:string;speakerLabel?:string;

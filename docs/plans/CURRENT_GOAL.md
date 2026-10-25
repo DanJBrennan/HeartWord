@@ -343,5 +343,26 @@ unless a real narrator interruption is evidenced. Existing provisional source
 rows have not been reconciled; the normal target source attestation and
 target-shot correspondence still hold paid voicing and later film work.
 Dan subsequently verified a revised 4:11 Jesus start at 178.666 seconds,
-retaining the previous 175.610-second review in history. The 4:39 content
-question remains open; neither passage was applied to source/cast rows.
+retaining the previous 175.610-second review in history. Dan confirmed that
+4:39 is narration describing Jesus' action, not direct Jesus speech. The
+isolated review now retains that answer as a separate append-only content
+decision bound to his unchanged v39 listening revision; the UI shows original
+narrator and no character voice. The consistent pre-decision database snapshot
+and SQLite integrity check passed. Twelve current review entries remain
+character windows, with adjacent v21–23/v24–25 forming one continuous Jesus
+performance for voicing. Neither passage was applied to source/cast rows; the
+whole-source and correspondence gates still hold any paid audition.
+The final-picture evidence further identifies Peter as the visible 4:38
+speaker, a 47-frame Hatam-speaking Jesus insert at 4:39 that needs a
+non-speaking Meyah picture treatment, and no required visible 4:41 lip-sync.
+The proposed 4:41 treatment retains the original Meyah narrator recording
+over the existing picture, pending target correspondence review. The remaining
+source gate is narrow but real: Gemini left seven partly unmatched verses,
+an uncertain storm-handoff span, and two reference-only DOCX markers. Dan's
+speech-turn review does not attest to those words or to the complete alignment.
+Goal Guardian: the isolated correction follows the source recording and Dan's
+explicit answer, adds no translated dialogue or new stage, and preserves the
+normal chapter source review, editable correspondence, and producer approval
+path. The final full suite passed 870 tests in 127 files; TypeScript checks
+and the web build passed. The isolated reviewer reports 13 current verified
+entries, of which 12 remain character windows and one is original narration.

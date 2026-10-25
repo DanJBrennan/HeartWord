@@ -114,7 +114,8 @@ phrases and English speaker-context proposal. They do **not** locate the exact
 Meyah quotation edges. Mark 4:24 lacks an opening quotation mark in the
 supplied Meyah text despite the English quotation; Mark 4:39 has no explicit
 Meyah quotation punctuation around the line reported in English. Those turns
-need particular listening/source review. All thirteen turns are unverified.
+need particular listening/source review. At preparation time, all thirteen
+turns were unverified.
 Their separate immutable `speech-manifest.json` and PCM clips are in the
 isolated review asset folder. The original `manifest.json`, its four verified
 verse entries and all review history remain intact. Speech-turn verification
@@ -138,20 +139,41 @@ attribution; 4:11 was subsequently revised:
 - **4:11:** Dan's current Jesus start is 175.610 seconds. The retained Gemini
   phrase evidence maps the Meyah narrator lead-in `Beda Ofa agot gu rua oida,`
   to roughly 175.878–178.109 and the first quoted phrase to 178.848–192.848.
-  These model times are not forced word boundaries. Dan was asked to recheck
-  the exact first quoted word; his verification remains intact until he revises
-  or confirms it.
+  These model times are not forced word boundaries. This was the first-pass
+  verification; Dan's revised boundary is recorded below.
 - **4:39:** Dan verified 755.519–775.486 seconds as Jesus. The supplied Meyah
   verse has no marked direct quotation and narrates Jesus' rebuke and the sea's
   calm, whereas the parallel English has `“Peace! Be still!”`. Dan was asked
   whether the recording contains distinct direct words or only narrated
-  action. No Jesus cast window or translated words are inferred meanwhile.
+  action. Dan's answer and its separate content decision are recorded below.
 
 Dan then reopened 4:11 and verified a revised start at **178.666 seconds**
 (review revision `2d335bfb-8dee-4cd6-a1e7-eb5bb2243f44`). That places the
 Jesus window after the estimated narrator lead-in while retaining the older
-175.610-second verification in its history. The 4:39 content question remains
-open; neither review has been applied to source or cast rows.
+175.610-second verification in its history. Dan also answered the 4:39
+question: **the narrator describes the action**. An append-only isolated
+content decision (`1bc14003-29cd-4c1a-b79b-b5696debff14`) links to Dan's
+unchanged v39 listening revision and marks the passage as original narration.
+The reviewer now displays it as a narrated passage with no character voice.
+This decision is not a fresh listening attestation, and no source or cast row
+was changed. A consistent isolated SQLite snapshot immediately before this
+decision is retained at
+`output/mark4-donor-20261024/review/heartword.before-v39-narration.sqlite`.
+
+The approved final-picture map gives the next correspondence pass three
+important scene-specific constraints. At **4:38**, the visible speaking shot
+is Peter (`9cbc4222-b194-4db4-baa9-2ba7083e31f3`) delivering the disciples'
+plea, so its reviewed Meyah speech needs Peter's approved voice if that picture
+is retained. At **4:39**, the Hatam final cut has 47 frames (12,194–12,240) of
+Jesus visibly speaking. Those frames cannot serve the confirmed Meyah
+narrator-only passage as a new Jesus lip-sync; choose the adjacent non-speaking
+Jesus/storm footage or a target-specific non-speaking coverage shot in the
+reviewed correspondence. At **4:41**, the donor's four picture beats have no
+required visible lip-sync, and its retained final audio map used original
+passthrough audio. The initial Meyah correspondence can likewise keep that
+speech in the original narrator recording over the existing picture, subject
+to the normal target shot review; it need not invent a Peter or group Avatar.
+These are correspondence directions, not applied target shot or cast bindings.
 
 The 4:9 Jesus clip is a **prepared source-only audition candidate**: Dan's
 142.703–152.394-second review is 9.691 seconds, and its retained 16 kHz PCM
@@ -163,3 +185,9 @@ The historical cast settings remain unknown. No ElevenLabs request, cast
 master, source attribution or approval was made. The isolated target still
 has no current whole-source alignment attestation or reviewed target-shot
 correspondence; both are required by the normal audition gate.
+The retained Gemini pass also left partial supplied-word matches in verses 7,
+10, 14, 33, 36, 37 and 38, and an unresolved 744.776–758.776-second span near
+the storm handoff. Dan's speech-turn boundary pass does not establish those
+words. The two DOCX reference-only markers, `6 (4:5)` and `19 (4:18)`, also
+remain source-text review items. Resolve these bounded source questions before
+recording a whole-chapter source attestation or applying target correspondence.

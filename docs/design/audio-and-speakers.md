@@ -221,6 +221,11 @@ share the original PCM and revision mechanics but never count each other's
 verifications. Proposed turns derived from Gemini verse phrases are broad
 envelopes, not forced word boundaries. Native listening must confirm exact
 edges and words before source attribution, voice conversion or Avatar use.
+An explicit producer correction that a proposed quoted turn is narration is
+recorded separately against the current verified listening revision and its
+immutable manifest hash. It does not impersonate a new human listening pass,
+rewrite the saved clip, or assign a character voice. A later change to that
+listening revision makes the content decision inactive until reconciled.
 
 The existing ingestion review can prepare source-only PCM excerpts and a listening
 page, with chapter-clock start/end controls in 10 ms increments. Web Audio schedules
