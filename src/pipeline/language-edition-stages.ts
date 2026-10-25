@@ -186,7 +186,7 @@ export function materializeEditionMedia(db:DatabaseSync,dataDir:string,projectId
   }
   const missingCoverage:string[]=[];
   for(const item of mapped.shots.filter(item=>item.treatment==="needs_coverage")){
-    const frame=row(db,"SELECT result_asset_path FROM generation_attempts WHERE shot_id=? AND operation='generate' AND status='accepted' AND result_asset_path IS NOT NULL ORDER BY created_at DESC LIMIT 1",item.targetShotId);
+    const frame=row(db,"SELECT result_asset_path FROM generation_attempts WHERE shot_id=? AND operation='generate' AND provider='codex_imagegen' AND status='accepted' AND result_asset_path IS NOT NULL ORDER BY created_at DESC LIMIT 1",item.targetShotId);
     const speaking=Number(row(db,"SELECT needs_lip_sync FROM shots WHERE id=?",item.targetShotId)?.needs_lip_sync)===1;
     const motion=speaking ? null : row(db,`SELECT ga.result_asset_path FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id
       WHERE c.shot_id=? AND ga.operation='generate_final_video' AND ga.provider='ltx_local' AND ga.status='accepted' AND ga.result_asset_path IS NOT NULL ORDER BY ga.created_at DESC LIMIT 1`,item.targetShotId);
@@ -194,7 +194,7 @@ export function materializeEditionMedia(db:DatabaseSync,dataDir:string,projectId
     const motionReady=speaking || (typeof motion?.result_asset_path==="string" && existsSync(productionAssetPath(dataDir,motion.result_asset_path)));
     if(!frameReady || !motionReady)missingCoverage.push(item.targetShotId);
   }
-  if(missingCoverage.length)return {ok:false,reasoning:`Reviewed target picture needs new coverage for shot(s) ${missingCoverage.join(", ")}. Generate and review a target-owned keyframe, then local LTX video for non-speaking shots, before completing media preparation.`};
+  if(missingCoverage.length)return {ok:false,reasoning:`Reviewed target picture needs new coverage for shot(s) ${missingCoverage.join(", ")}. Generate and review a target-owned Codex handoff keyframe, then local LTX video for non-speaking shots, before completing media preparation.`};
   const manifest=row(db,"SELECT timeline_json FROM chapter_render_manifests WHERE render_id=?",origin.preflight.donor.renderId);
   if(!manifest||digest(String(manifest.timeline_json))!==origin.preflight.donor.timelineSha256)return {ok:false,reasoning:"Pinned donor picture recipe changed."};
   const timeline=JSON.parse(String(manifest.timeline_json)) as Array<{shotId:string|null;path?:string;sha256?:string;sourceStartMs?:number;startMs:number;endMs:number}>;

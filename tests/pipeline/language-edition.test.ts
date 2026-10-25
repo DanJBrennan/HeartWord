@@ -14,6 +14,7 @@ import { acceptEditionTitleCandidate, buildChapterTitleCard, buildEditionTitleCa
 import { approveEditionVoiceAudition, assertEditionVoiceAuditionApproved, validateEditionAuditionScope } from "../../src/pipeline/language-edition-audition.js";
 import { readAcceptedEditorialOpening } from "../../src/pipeline/assembly/editorial-beats.js";
 import { VOICE_CHANGER_DEFAULTS } from "../../src/providers/elevenlabs.js";
+import { getKeyframeContext } from "../../src/pipeline/media-generation/external-keyframes.js";
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 let dataDir:string, db:InstanceType<typeof DatabaseSync>;
 const title={bookChapter:"Markus 4",languageName:"Meyah",authority:"Dan approved 2026-10-22",durationMs:4000,profile:"mark4-serif-over-establishing" as const,
@@ -129,6 +130,7 @@ describe("language edition identity",()=>{
     expect(materializeEditionCasting(db,dataDir,target).ok).toBe(true);
     const targetShot=db.prepare("SELECT sh.id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=?").get(target) as {id:string};
     expect(targetShot.id).not.toBe("shot");
+    expect(getKeyframeContext(db,dataDir,targetShot.id).project).toMatchObject({id:target,language:"meyah",book:"mark",chapter:4});
     expect(db.prepare("SELECT source_audio_segment_id,source_start_ms,source_end_ms FROM shot_utterance_bindings WHERE shot_id=?").get(targetShot.id)).toEqual({source_audio_segment_id:"target-speech",source_start_ms:0,source_end_ms:1000});
     expect((db.prepare("SELECT COUNT(*) n FROM generation_attempts WHERE shot_id=?").get(targetShot.id) as {n:number}).n).toBe(0);
     expect((db.prepare("SELECT COUNT(*) n FROM clips WHERE shot_id=?").get(targetShot.id) as {n:number}).n).toBe(0);
@@ -229,7 +231,9 @@ describe("language edition identity",()=>{
     expect(materializeEditionMedia(db,dataDir,target).ok).toBe(false);
     const targetShot=db.prepare("SELECT sh.id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=? AND sh.action='Listening'").get(target) as {id:string};
     asset("generated/target-frame.png","new reviewed frame");asset("generated/target-motion.mp4","new reviewed motion");
-    db.prepare("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('new-frame',?,'local_image','local','generate','accepted','generated/target-frame.png',0,2)").run(targetShot.id);
+    db.prepare("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('wrong-frame',?,'gemini','image','generate','accepted','generated/target-frame.png',0,1)").run(targetShot.id);
+    expect(materializeEditionMedia(db,dataDir,target).ok).toBe(false);
+    db.prepare("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('new-frame',?,'codex_imagegen','not_reported','generate','accepted','generated/target-frame.png',0,2)").run(targetShot.id);
     expect(materializeEditionMedia(db,dataDir,target).ok).toBe(false);
     db.prepare("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('new-motion',?,'ltx_local','fast','generate_final_video','accepted','generated/target-motion.mp4',0,2)").run(targetShot.id);
     db.prepare("INSERT INTO clips(id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)VALUES('new-clip',?,'new-motion',0,1000,2)").run(targetShot.id);

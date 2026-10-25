@@ -72,8 +72,11 @@ plan, source/canon checks, spend controls and actual result review.
   The five retained Mark 4 final-picture chunks are already video-only and
   decode exactly to its final 13,484 frames; they may supply reviewed source
   intervals once shot identity and trim are established. Insufficient picture
-  coverage uses target-owned reviewed keyframes and the existing local LTX
-  motion path. Stage 4 holds an exact `needs_coverage` shot until its keyframe
+  coverage uses the existing Codex image handoff for target-owned reviewed
+  keyframes and the local LTX motion path. Dan confirmed this means the
+  default Codex handoff, whose image model is hosted and whose results are
+  saved locally; no new computer-hosted image backend is needed. Stage 4
+  holds an exact `needs_coverage` shot until its Codex keyframe
   and, for a non-speaking shot, accepted local LTX picture exist. A speaking
   shot proceeds to a new target-language Avatar take after its keyframe.
   There is no loop/freeze or silent story change. Editorial assembly adapts to

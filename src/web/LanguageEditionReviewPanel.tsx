@@ -63,7 +63,7 @@ export function LanguageEditionReviewPanel({projectId}:{projectId:string}){
   const auditionCast=edition.castAudio.find(item=>item.segmentId===auditionIds[0])?.path;
   return <section className="edition-panel" aria-label="Language edition correspondence">
     <h2>{edition.target.title.bookChapter} · {edition.target.title.languageName}</h2>
-    <p>Donor render {edition.donor.renderId}. Review every target-language source interval against the selected picture. A visible speaking mouth needs a new Avatar take. Mark any shot without enough reusable picture as “Needs coverage”; review its target-owned keyframe and, for a non-speaking shot, local LTX motion through the normal media controls. This plan records your evidence; it does not contact a provider.</p>
+    <p>Donor render {edition.donor.renderId}. Review every target-language source interval against the selected picture. A visible speaking mouth needs a new Avatar take. Mark any shot without enough reusable picture as “Needs coverage”; use the Codex image handoff for its target-owned keyframe and local LTX for non-speaking motion, with the normal media review controls. This plan records your evidence; it does not contact a provider.</p>
     {edition.sourceQuestions.length>0&&<div><strong>Source questions</strong><ul>{edition.sourceQuestions.map((question,index)=><li key={index}>{question}</li>)}</ul></div>}
     {!edition.segments.length&&<p>Ingest and review the target chapter audio before mapping its picture.</p>}
     {edition.targetShotCount>0&&<p>Target shots already exist. A changed correspondence will hold their previous selections until reconciled.</p>}

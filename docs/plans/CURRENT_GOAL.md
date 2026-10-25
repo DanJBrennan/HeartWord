@@ -121,3 +121,8 @@ then rejected an intentionally invalid shot ID without writing a normalization
 row. The new structural tests and full suite pass: 864 tests in 127 files;
 typechecks and web build pass. A transcription typo in the documented chunk 2
 SHA-256 was corrected against the copied bytes during this check.
+
+Dan clarified on 2026-10-25 that new keyframes should use the default Codex
+image handoff, with local LTX still producing non-speaking motion. The isolated
+edition media gate now accepts only a reviewed `codex_imagegen` keyframe for a
+`needs_coverage` shot and retains the existing target-owned review path.
