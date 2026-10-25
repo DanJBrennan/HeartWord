@@ -1,39 +1,40 @@
 firstFrame	lastFrame	proposedShotId	evidenceClass	reviewEvidence	retainedPatchSource
-0	179		legacy_editorial_import	Dan directed exact preservation of the lake/title picture; create a dedicated opening beat and localize title text only.	
+0	95		replaceable_title	The Hatam-lettered four-second card is replaced in place by the reviewed Markus 4 / Meyah card over the retained clean lake still.	none
+96	179		legacy_editorial_import	Dan directed exact preservation of the clean moving lake after the title as a dedicated opening beat.	none
 180	347		legacy_editorial_import	Dan directed exact preservation of the empty-boat mood insert as a dedicated opening beat.	generated/video/editorial-mark4-intro-boat-r1.mp4
 348	440		legacy_editorial_import	Dan directed exact preservation of this shore/boat editorial still as a dedicated opening beat.	generated/editorial/mark4-v45-held-replacements/scene1-sailboat-rocky-shore-wide-v1.png
 441	587	5a812d41-8b6a-443e-9028-3dd8bc4649d2	source_linked	v68 opening generated/video/mark4-v63-world-base-scene1-boat-reverse-933697403817955364.mp4 motion-compensated slow motion 0.8x, graded	generated/video/mark4-v63-world-base-scene1-boat-reverse-933697403817955364.mp4
-588	774	8698ecb1-3d4f-475e-a798-39156449f04c	source_linked	v68 opening generated/assembled/8698ecb1-3d4f-475e-a798-39156449f04c.mp4 0.62x motion-compensated (source has 120 real frames then a frozen tail), light warm trim	generated/assembled/8698ecb1-3d4f-475e-a798-39156449f04c.mp4
+588	774		legacy_cross_scene_import	Jesus in the boat addresses the Mark 4:1-2 shoreline crowd; saved take was attached to a Mark 4:24 shot. Original donor shot 8698ecb1-3d4f-475e-a798-39156449f04c.	generated/assembled/8698ecb1-3d4f-475e-a798-39156449f04c.mp4
 775	1024		legacy_editorial_import	Dan directed exact preservation of the second move on the shore/boat editorial still as a distinct beat.	generated/editorial/mark4-v45-held-replacements/scene1-sailboat-rocky-shore-wide-v1.png
 1025	1194	b4f60ed5-c4f4-436f-bfac-fb0e8b357fdf	source_linked	v68 opening generated/assembled/b4f60ed5-c4f4-436f-bfac-fb0e8b357fdf.mp4 real frames 1.0x, graded to v65 match; leads into the 4:3 performance at 1195	generated/assembled/b4f60ed5-c4f4-436f-bfac-fb0e8b357fdf.mp4
-1195	1338	7af4222c-ae6e-4577-abe7-65f904cbdb67	visual_match	Direct source-frame comparison 0.991; Mark 4:3 Jesus speaking in boat.	
+1195	1338	7af4222c-ae6e-4577-abe7-65f904cbdb67	visual_match	Direct source-frame comparison 0.991; Mark 4:3 Jesus speaking in boat.	none
 1339	1509	1172d540-c778-46af-8c7e-9dfa2cc565a1	source_linked	v66 p02 generated/assembled/1172d540-c778-46af-8c7e-9dfa2cc565a1.mp4 1 s frozen head -> real frames	generated/assembled/1172d540-c778-46af-8c7e-9dfa2cc565a1.mp4
 1510	1578	7d0820da-e220-4962-b711-ccc42447017b	source_linked	v66 p03 generated/assembled/7d0820da-e220-4962-b711-ccc42447017b.mp4 clip restarted at f1486 -> continuous	generated/assembled/7d0820da-e220-4962-b711-ccc42447017b.mp4
-1579	1667	87ef49f3-1520-439a-9c0b-16827563033b	visual_match	Direct source-frame comparison 0.924; rocky-ground sprouts.	
+1579	1667	87ef49f3-1520-439a-9c0b-16827563033b	visual_match	Direct source-frame comparison 0.924; rocky-ground sprouts.	none
 1668	1775	f76279dd-4f87-4ecf-9e7e-1350cdb238c7	source_linked	v45 piece-1 generated/lipsync-face/933580727550746706.mp4 Mark 4:3–8 3-8-beat-1 approved canonical Jesus performance (canonical_v34_lip_sync)	generated/lipsync-face/933580727550746706.mp4
 1776	1884	06922215-fddd-4bb5-bfc7-583b9bd3f805	source_linked	v66 p04 generated/assembled/06922215-fddd-4bb5-bfc7-583b9bd3f805.mp4 clip restarted at f1790 -> continuous	generated/assembled/06922215-fddd-4bb5-bfc7-583b9bd3f805.mp4
-1885	2073	0a87e9e8-122d-4d66-8d00-ea6946a33582	visual_match	Direct source-frame comparison 0.999; wilting plants before cut at frame 2074.	
-2074	2124	f2d9bebb-77a7-4a38-8cb2-1f35ca06a711	visual_review	Visible hot-sun cut at frame 2074, consistent with Mark 4:6 source shot.	
+1885	2073	0a87e9e8-122d-4d66-8d00-ea6946a33582	visual_match	Direct source-frame comparison 0.999; wilting plants before cut at frame 2074.	none
+2074	2124	f2d9bebb-77a7-4a38-8cb2-1f35ca06a711	visual_review	Visible hot-sun cut at frame 2074, consistent with Mark 4:6 source shot.	none
 2125	2159	24d79583-696a-4ed3-a18a-9a059398f59c	source_linked	v66 p05 generated/assembled/24d79583-696a-4ed3-a18a-9a059398f59c.mp4 ping-pong/jitter -> continuous	generated/assembled/24d79583-696a-4ed3-a18a-9a059398f59c.mp4
 2160	2267	4f07697e-2bf5-4254-a24c-00afd7fb9748	source_linked	v45 piece-3 generated/lipsync-face/933581379491729430.mp4 Mark 4:3–8 3-8-beat-2 approved canonical Jesus performance (canonical_v34_lip_sync)	generated/lipsync-face/933581379491729430.mp4
 2268	2384	24d79583-696a-4ed3-a18a-9a059398f59c	source_linked	v66 p06a generated/assembled/24d79583-696a-4ed3-a18a-9a059398f59c.mp4 thorns continues to end of 4:7 (was held frames + wheat bridge)	generated/assembled/24d79583-696a-4ed3-a18a-9a059398f59c.mp4
-2385	2550	20496fa7-983d-47a3-ab9d-67d796aaef20	source_linked	v66 p06b generated/assembled/20496fa7-983d-47a3-ab9d-67d796aaef20.mp4 good ground (4:8) shoots, replaces held/frozen wheat	generated/assembled/20496fa7-983d-47a3-ab9d-67d796aaef20.mp4
+2385	2550		legacy_cross_scene_import	Seedlings in the sower story's fruitful soil; saved take was attached to the later growing-seed parable. Original donor shot 20496fa7-983d-47a3-ab9d-67d796aaef20.	generated/assembled/20496fa7-983d-47a3-ab9d-67d796aaef20.mp4
 2551	2718	9edf5781-cfc0-4975-8652-0f5a081a63f2	source_linked	v66 p07 generated/assembled/9edf5781-cfc0-4975-8652-0f5a081a63f2.mp4 0.8 s frozen head -> real frames	generated/assembled/9edf5781-cfc0-4975-8652-0f5a081a63f2.mp4
 2719	2826	871b9833-386c-4130-8413-9f2ed0847760	source_linked	v45 piece-5 generated/lipsync-face/933594340159524902.mp4 Mark 4:3–8 3-8-beat-3 approved canonical Jesus performance (canonical_v34_lip_sync)	generated/lipsync-face/933594340159524902.mp4
-2827	3017	4934ce6e-3894-4800-a8b9-c380d91ae570	source_linked	v66 p08 generated/assembled/4934ce6e-3894-4800-a8b9-c380d91ae570.mp4 0.9 s frozen head -> real frames	generated/assembled/4934ce6e-3894-4800-a8b9-c380d91ae570.mp4
-3018	3105	67a2d802-6a79-4461-bd99-aca44b3b7622	visual_match	Direct source-frame comparison 0.980; Jesus closes the sower teaching.	
+2827	3017		legacy_cross_scene_import	Jesus completes the opening sower teaching; saved take was attached to the later mustard-seed scene. Original donor shot 4934ce6e-3894-4800-a8b9-c380d91ae570.	generated/assembled/4934ce6e-3894-4800-a8b9-c380d91ae570.mp4
+3018	3105	67a2d802-6a79-4461-bd99-aca44b3b7622	visual_match	Direct source-frame comparison 0.980; Jesus closes the sower teaching.	none
 3106	3321	3ff6fea1-2515-4410-883b-38ae4025ccbd	source_linked	v69 e01_breath_to_field assembled/3ff6fea1-2515-4410-883b-38ae4025ccbd.mp4 	assembled/3ff6fea1-2515-4410-883b-38ae4025ccbd.mp4
-3322	3513	51adeb68-f6ba-489e-a6c4-fe2fe43415fc	visual_match	Direct source-frame comparison 0.999; group as crowd departs, before cut at 3514.	
-3514	3565	1486cad2-a9e7-49c5-b2f0-fddaec40225f	visual_match	Direct source-frame comparison 0.999; Jesus close-up after cut at 3514.	
+3322	3513	51adeb68-f6ba-489e-a6c4-fe2fe43415fc	visual_match	Direct source-frame comparison 0.999; group as crowd departs, before cut at 3514.	none
+3514	3565	1486cad2-a9e7-49c5-b2f0-fddaec40225f	visual_match	Direct source-frame comparison 0.999; Jesus close-up after cut at 3514.	none
 3566	3648	17246352-3c8d-498a-b99e-47c70ff89d2a	source_linked	v66 p09 generated/video/mark4-v11-three-clip-base-1-932998446301839368.mp4 jitter/loop -> continuous	generated/video/mark4-v11-three-clip-base-1-932998446301839368.mp4
 3649	3767	17246352-3c8d-498a-b99e-47c70ff89d2a	source_linked	v69 e07_ls30 lipsync-face/933004242674786324.mp4 	lipsync-face/933004242674786324.mp4
 3768	3843	17246352-3c8d-498a-b99e-47c70ff89d2a	source_linked	v70 e21_ls31_ext lipsync-face/933005032357371914.mp4 	lipsync-face/933005032357371914.mp4
 3844	3963	fc7ed23c-66de-4723-ab9b-0949088edd84	source_linked	v71 e31_grove_listeners assembled/fc7ed23c-66de-4723-ab9b-0949088edd84.mp4 	assembled/fc7ed23c-66de-4723-ab9b-0949088edd84.mp4
-3964	4023	dc9accab-c310-48b2-901a-44c6fc29b0e6	source_linked	v71 e32_path_listeners assembled/dc9accab-c310-48b2-901a-44c6fc29b0e6.mp4 	assembled/dc9accab-c310-48b2-901a-44c6fc29b0e6.mp4
-4024	4215	320af5b4-3b1e-4345-83dd-c8aa3d184af5	keyframe_match	Final hillside group visually matches the saved scene-2 group keyframe and Mark 4:11 action.	
+3964	4023		legacy_cross_scene_import	Disciples listen during the private Mark 4:10-12 exchange; saved take was attached to the next explanation scene. Original donor shot dc9accab-c310-48b2-901a-44c6fc29b0e6.	assembled/dc9accab-c310-48b2-901a-44c6fc29b0e6.mp4
+4024	4215	320af5b4-3b1e-4345-83dd-c8aa3d184af5	keyframe_match	Final hillside group visually matches the saved scene-2 group keyframe and Mark 4:11 action.	none
 4216	4319	db0de7b7-3b29-4c71-bfe6-558c5193919d	source_linked	v69 e02_jj_short assembled/db0de7b7-3b29-4c71-bfe6-558c5193919d.mp4 	assembled/db0de7b7-3b29-4c71-bfe6-558c5193919d.mp4
 4320	4407	1df48c5d-55b4-43bc-872a-dde88846ef46	source_linked	v71 e03_path_wide assembled/1df48c5d-55b4-43bc-872a-dde88846ef46.mp4 	assembled/1df48c5d-55b4-43bc-872a-dde88846ef46.mp4
-4408	4524	6096a4f9-7032-440d-97c8-ee2d92f377d7	visual_match	Direct source-frame comparison 0.997; Peter and John listener reaction.	
+4408	4524	6096a4f9-7032-440d-97c8-ee2d92f377d7	visual_match	Direct source-frame comparison 0.997; Peter and John listener reaction.	none
 4525	4691	740eb1df-5b4b-4c69-958c-f6bb8032cc39	source_linked	v69 e08_ls36 lipsync-face/933020659205799987.mp4 	lipsync-face/933020659205799987.mp4
 4692	4823	e31e2a51-e352-4e68-9e02-bf60b37be674	source_linked	v66 p10 generated/assembled/e31e2a51-e352-4e68-9e02-bf60b37be674.mp4 grove rebuild S1	generated/assembled/e31e2a51-e352-4e68-9e02-bf60b37be674.mp4
 4824	4943	dd78acd1-a146-48de-bddb-ac0a18a44674	source_linked	v66 p11 generated/assembled/dd78acd1-a146-48de-bddb-ac0a18a44674.mp4 grove rebuild S1 (no frozen tail)	generated/assembled/dd78acd1-a146-48de-bddb-ac0a18a44674.mp4
@@ -44,63 +45,63 @@ firstFrame	lastFrame	proposedShotId	evidenceClass	reviewEvidence	retainedPatchSo
 5544	5651	c7034b8b-9139-474d-995e-c027d4cc5938	source_linked	v45 piece-9 generated/lipsync-face/933583375460339797.mp4 Mark 4:14–20 14-20-beat-2 approved canonical Jesus performance (canonical_v34_lip_sync)	generated/lipsync-face/933583375460339797.mp4
 5652	5711	dc9accab-c310-48b2-901a-44c6fc29b0e6	source_linked	v71 e33_path_listeners_b assembled/dc9accab-c310-48b2-901a-44c6fc29b0e6.mp4 	assembled/dc9accab-c310-48b2-901a-44c6fc29b0e6.mp4
 5712	5923	2d6b96b1-77c9-4cb8-9279-5eea5f0ff3f2	source_linked	v66 p16 generated/assembled/2d6b96b1-77c9-4cb8-9279-5eea5f0ff3f2.mp4 grove rebuild S3	generated/assembled/2d6b96b1-77c9-4cb8-9279-5eea5f0ff3f2.mp4
-5924	6023	db0de7b7-3b29-4c71-bfe6-558c5193919d	source_linked	v71 e34_jj_reaction assembled/db0de7b7-3b29-4c71-bfe6-558c5193919d.mp4 	assembled/db0de7b7-3b29-4c71-bfe6-558c5193919d.mp4
+5924	6023		legacy_cross_scene_import	Two disciples listen during the sower explanation; saved take was attached to the prior private exchange. Original donor shot db0de7b7-3b29-4c71-bfe6-558c5193919d.	assembled/db0de7b7-3b29-4c71-bfe6-558c5193919d.mp4
 6024	6131	11e009c8-5914-4393-9129-4e8eb4c2b555	source_linked	v45 piece-11 generated/lipsync-face/933583974096568383.mp4 Mark 4:14–20 14-20-beat-3 approved canonical Jesus performance (canonical_v34_lip_sync)	generated/lipsync-face/933583974096568383.mp4
 6132	6290	dbdc468a-7d21-4651-a80d-2e98c52010da	source_linked	v71 e35_wall_listeners assembled/dbdc468a-7d21-4651-a80d-2e98c52010da.mp4 	assembled/dbdc468a-7d21-4651-a80d-2e98c52010da.mp4
 6291	6397	e31e2a51-e352-4e68-9e02-bf60b37be674	source_linked	v66 p19 generated/assembled/e31e2a51-e352-4e68-9e02-bf60b37be674.mp4 grove rebuild S4	generated/assembled/e31e2a51-e352-4e68-9e02-bf60b37be674.mp4
 6398	6472	744e014d-126f-4782-9dc6-2facd051e60a	source_linked	v69 e06_wall_alone assembled/744e014d-126f-4782-9dc6-2facd051e60a.mp4 	assembled/744e014d-126f-4782-9dc6-2facd051e60a.mp4
 6473	6603	3d161507-2eb4-4805-ad75-a759d8ec7580	patch_predecessor	v72 Avatar replacement spans v69 e09, whose saved attempt links to this Mark 4:20 Jesus shot.	editorial/mark4-v71-held/avatar-jesus-4-20-tail-lively.mp4
-6604	6695	6628e1e9-47ee-42de-b7b9-e3f578847c5b	visual_match	Direct source-frame comparison 0.991; Peter listens before cut at 6696.	
-6696	6784	611a8078-e67e-47c3-9cff-8c920809798e	visual_match	Direct source-frame comparison 0.999; Jesus lamp teaching after cut at 6696.	
+6604	6695	6628e1e9-47ee-42de-b7b9-e3f578847c5b	visual_match	Direct source-frame comparison 0.991; Peter listens before cut at 6696.	none
+6696	6784	611a8078-e67e-47c3-9cff-8c920809798e	visual_match	Direct source-frame comparison 0.999; Jesus lamp teaching after cut at 6696.	none
 6785	6897	611a8078-e67e-47c3-9cff-8c920809798e	source_linked	v69 e10_ls55 lipsync-face/933009326326415400.mp4 	lipsync-face/933009326326415400.mp4
-6898	6963	0003976f-7c1a-4508-a40c-cad61cd7bb37	visual_match	Direct source-frame comparison 0.979; John and James listen before cut at 6964.	
-6964	7131	c84b12da-2581-4e08-8bcc-513e41b6b79b	visual_match	Direct source-frame comparison 0.992; crowd listener after cut at 6964.	
+6898	6963	0003976f-7c1a-4508-a40c-cad61cd7bb37	visual_match	Direct source-frame comparison 0.979; John and James listen before cut at 6964.	none
+6964	7131	c84b12da-2581-4e08-8bcc-513e41b6b79b	visual_match	Direct source-frame comparison 0.992; crowd listener after cut at 6964.	none
 7132	7228	91cf250a-92f0-45cc-bf95-6fe627f9b5b1	source_linked	v39 replacement generated/assembled/91cf250a-92f0-45cc-bf95-6fe627f9b5b1.mp4 nonspeaking shore listener cover	generated/assembled/91cf250a-92f0-45cc-bf95-6fe627f9b5b1.mp4
 7229	7335	1500fbb4-6e16-44fd-9f6a-e1b03a3fd11a	source_linked	v45 piece-15 generated/lipsync-face/933585305729368116.mp4 Mark 4:21–25 21-25-beat-1 approved canonical Jesus performance (canonical_v34_lip_sync)	generated/lipsync-face/933585305729368116.mp4
 7336	7513	c84b12da-2581-4e08-8bcc-513e41b6b79b	source_linked	v60 replacement-3 generated/assembled/c84b12da-2581-4e08-8bcc-513e41b6b79b.mp4 distinct lakeshore listener replaces repeated shore pair	generated/assembled/c84b12da-2581-4e08-8bcc-513e41b6b79b.mp4
 7514	7622	82b420d8-6422-4185-a4d2-815824add384	source_linked	v45 piece-17 generated/lipsync-face/933585974323052588.mp4 Mark 4:21–25 21-25-beat-2 approved canonical Jesus performance (canonical_v34_lip_sync)	generated/lipsync-face/933585974323052588.mp4
-7623	7650	e85b706b-2cd3-4c60-93a8-4c508ac0e122	visual_match	Direct source-frame comparison 0.994; Thomas and Philip listener response.	
+7623	7650	e85b706b-2cd3-4c60-93a8-4c508ac0e122	visual_match	Direct source-frame comparison 0.994; Thomas and Philip listener response.	none
 7651	7758	f2efed36-6f6d-4268-b506-46c9413ccbec	source_linked	v45 piece-19 generated/lipsync-face/933586573508739163.mp4 Mark 4:21–25 21-25-beat-3 approved canonical Jesus performance (canonical_v34_lip_sync)	generated/lipsync-face/933586573508739163.mp4
 7759	7826		legacy_cross_chapter_import	Saved picture is a Mark 3:30 listener asset reused in final Hatam Mark 4; create an explicit Mark 4 editorial beat and flag target-picture review.	assembled/c50dca30-827a-49ae-9e49-77838ad31fda.mp4
 7827	7923	e85b706b-2cd3-4c60-93a8-4c508ac0e122	source_linked	v70 e25_shore_listeners assembled/e85b706b-2cd3-4c60-93a8-4c508ac0e122.mp4 	assembled/e85b706b-2cd3-4c60-93a8-4c508ac0e122.mp4
-7924	7979	e282642c-bacb-425b-815a-93d69dc1e243	visual_match	Direct source-frame comparison 0.988; farmer sows field.	
+7924	7979	e282642c-bacb-425b-815a-93d69dc1e243	visual_match	Direct source-frame comparison 0.988; farmer sows field.	none
 7980	8116	45aacff9-0266-4909-acb2-ce09f659b24a	source_linked	v46 piece-15 generated/lipsync-face/933022447253717040.mp4 restored approved Mark 4:26 opening performance	generated/lipsync-face/933022447253717040.mp4
 8117	8219	e282642c-bacb-425b-815a-93d69dc1e243	source_linked	v59 replacement-5 generated/assembled/e282642c-bacb-425b-815a-93d69dc1e243.mp4 moving field illustration after shore performance	generated/assembled/e282642c-bacb-425b-815a-93d69dc1e243.mp4
 8220	8387	9543eea6-1082-4b7c-ab33-4c3ea948457c	source_linked	v66 p22a generated/assembled/9543eea6-1082-4b7c-ab33-4c3ea948457c.mp4 warm the blue-grey sprout toward scene (colour jump)	generated/assembled/9543eea6-1082-4b7c-ab33-4c3ea948457c.mp4
 8388	8411	9543eea6-1082-4b7c-ab33-4c3ea948457c	source_linked	v66 p22 generated/assembled/9543eea6-1082-4b7c-ab33-4c3ea948457c.mp4 sprout continues (frees shoots clip for 4:8)	generated/assembled/9543eea6-1082-4b7c-ab33-4c3ea948457c.mp4
 8412	8519	41ef4134-46c3-4f88-8a64-3d2dca0e9b78	source_linked	v45 piece-21 generated/lipsync-face/933587237920055350.mp4 Mark 4:26–29 26-29-beat-1 approved canonical Jesus performance (canonical_v34_lip_sync)	generated/lipsync-face/933587237920055350.mp4
 8520	8691	4c3cea05-88ca-4d69-96b1-35ca1e05f7f0	source_linked	v66 p23 generated/assembled/4c3cea05-88ca-4d69-96b1-35ca1e05f7f0.mp4 golden wheat absorbs 1.2 s shoots insert	generated/assembled/4c3cea05-88ca-4d69-96b1-35ca1e05f7f0.mp4
-8692	8771	0662b8a6-134b-43d4-918c-21d938c79a5c	visual_match	Direct source-frame comparison 0.967; sickle harvest insert.	
+8692	8771	0662b8a6-134b-43d4-918c-21d938c79a5c	visual_match	Direct source-frame comparison 0.967; sickle harvest insert.	none
 8772	8879	0a6d5fa5-d5bf-47aa-a0ca-10228d91ae63	source_linked	v45 piece-23 generated/lipsync-face/933587901928710184.mp4 Mark 4:26–29 26-29-beat-2 approved canonical Jesus performance (canonical_v34_lip_sync)	generated/lipsync-face/933587901928710184.mp4
-8880	8910	049427ae-7663-418c-8e08-0104b12dcf1d	visual_match	Direct source-frame comparison 0.987; harvest workers.	
+8880	8910	049427ae-7663-418c-8e08-0104b12dcf1d	visual_match	Direct source-frame comparison 0.987; harvest workers.	none
 8911	9047	dbc3f313-54a7-4b06-b5de-1452629be4f3	patch_predecessor	v72 Avatar replacement begins at the saved Mark 4:29 canonical Jesus beat-3 frame, matching its selected shot.	editorial/mark4-v71-held/avatar-jesus-4-29-tail-lively.mp4
-9048	9120	7f3fb060-0836-4c33-a510-f678cf1959f3	visual_match	Direct source-frame comparison 0.996; shore listeners before cut at 9121.	
-9121	9206	4934ce6e-3894-4800-a8b9-c380d91ae570	visual_match	Direct source-frame comparison 0.997; Jesus speaks after cut at 9121.	
-9207	9239	7f3fb060-0836-4c33-a510-f678cf1959f3	visual_match	Direct source-frame comparison 0.995; shore listener return after cut at 9207.	
-9240	9321	c84b12da-2581-4e08-8bcc-513e41b6b79b	visual_match	Direct source-frame comparison 0.999; crowd witness before cut at 9322.	
-9322	9504	cdc3d490-e11f-4e67-8d50-07e8112daa90	saved_attempt_match	Saved held mustard-seed-scale attempt tied to this donor shot matches final source frames at 0.997.	
+9048	9120	7f3fb060-0836-4c33-a510-f678cf1959f3	visual_match	Direct source-frame comparison 0.996; shore listeners before cut at 9121.	none
+9121	9206	4934ce6e-3894-4800-a8b9-c380d91ae570	visual_match	Direct source-frame comparison 0.997; Jesus speaks after cut at 9121.	none
+9207	9239	7f3fb060-0836-4c33-a510-f678cf1959f3	visual_match	Direct source-frame comparison 0.995; shore listener return after cut at 9207.	none
+9240	9321		legacy_cross_scene_import	Crowd listener in the mustard-seed scene; saved take was attached to the earlier lamp teaching. Original donor shot c84b12da-2581-4e08-8bcc-513e41b6b79b.	none
+9322	9504	cdc3d490-e11f-4e67-8d50-07e8112daa90	saved_attempt_match	Saved held mustard-seed-scale attempt tied to this donor shot matches final source frames at 0.997.	none
 9505	9612	7a4384ed-95dc-4f48-a63a-5f4c4aaa9dcd	source_linked	v45 piece-27 generated/lipsync-face/933589166586204190.mp4 Mark 4:30–32 30-32-beat-1 approved canonical Jesus performance (canonical_v34_lip_sync)	generated/lipsync-face/933589166586204190.mp4
 9613	9660	519df33a-1adc-4b10-9617-d9c4c3add6ed	source_linked	v66 p24 generated/video/mark4-mustard-planting-2480dc06-0213-4798-a695-036342d8255b.mp4 restore mustard planting (was a 1 s freeze)	generated/video/mark4-mustard-planting-2480dc06-0213-4798-a695-036342d8255b.mp4
 9661	9773	9522db93-f598-4777-ac1f-58cf67e6f72f	source_linked	v66 p25 generated/video/mark4-mustard-growth-a67d0440-66d0-413e-bf16-763ee91e8358.mp4 growth continues after planting	generated/video/mark4-mustard-growth-a67d0440-66d0-413e-bf16-763ee91e8358.mp4
-9774	9850	cacd5540-4576-4a15-b2bd-708eb27a4f8b	saved_attempt_match	Saved held mustard-branches-and-birds attempt tied to this donor shot matches final source frames at 0.999.	
+9774	9850	cacd5540-4576-4a15-b2bd-708eb27a4f8b	saved_attempt_match	Saved held mustard-branches-and-birds attempt tied to this donor shot matches final source frames at 0.999.	none
 9851	9959	b791ad84-184e-4875-806b-2e0f2f9b29f6	source_linked	v45 piece-29 generated/lipsync-face/933638312442208318.mp4 Mark 4:30–32 30-32-beat-2 approved canonical Jesus performance (canonical_v34_close_lip_sync)	generated/lipsync-face/933638312442208318.mp4
 9960	9989	cacd5540-4576-4a15-b2bd-708eb27a4f8b	source_linked	v46 piece-19 generated/assembled/cacd5540-4576-4a15-b2bd-708eb27a4f8b.mp4 live mustard listener reflection replaces frozen Mark 4:32 breath	generated/assembled/cacd5540-4576-4a15-b2bd-708eb27a4f8b.mp4
 9990	10145	f86b670d-d8b2-4352-82c0-5fbb75eb702a	source_linked	v66 p26 generated/assembled/f86b670d-d8b2-4352-82c0-5fbb75eb702a.mp4 4:33 crowd wide without the 11 s frozen/looped tail	generated/assembled/f86b670d-d8b2-4352-82c0-5fbb75eb702a.mp4
-10146	10245	6628e1e9-47ee-42de-b7b9-e3f578847c5b	source_linked	v66 p27 generated/assembled/6628e1e9-47ee-42de-b7b9-e3f578847c5b.mp4 4:33-34a shore listeners	generated/assembled/6628e1e9-47ee-42de-b7b9-e3f578847c5b.mp4
-10246	10373	0003976f-7c1a-4508-a40c-cad61cd7bb37	source_linked	v66 p28 generated/assembled/0003976f-7c1a-4508-a40c-cad61cd7bb37.mp4 4:34a shore listeners	generated/assembled/0003976f-7c1a-4508-a40c-cad61cd7bb37.mp4
+10146	10245		legacy_cross_scene_import	Disciples listen after the mustard-seed teaching; saved take was attached to the earlier lamp teaching. Original donor shot 6628e1e9-47ee-42de-b7b9-e3f578847c5b.	generated/assembled/6628e1e9-47ee-42de-b7b9-e3f578847c5b.mp4
+10246	10373		legacy_cross_scene_import	Disciples listen before the private explanation; saved take was attached to the earlier lamp teaching. Original donor shot 0003976f-7c1a-4508-a40c-cad61cd7bb37.	generated/assembled/0003976f-7c1a-4508-a40c-cad61cd7bb37.mp4
 10374	10565	29cda8f3-2c78-4cbb-829a-1d67be2951ef	source_linked	v59 replacement-6 generated/assembled/29cda8f3-2c78-4cbb-829a-1d67be2951ef.mp4 moving private olive-grove explanation cover	generated/assembled/29cda8f3-2c78-4cbb-829a-1d67be2951ef.mp4
 10566	10685	2c535588-4be0-4c0f-a6cc-47aa1fb5c186	source_linked	v66 p29 generated/assembled/2c535588-4be0-4c0f-a6cc-47aa1fb5c186.mp4 dusk shore, no loop	generated/assembled/2c535588-4be0-4c0f-a6cc-47aa1fb5c186.mp4
 10686	10805	bd31a5e8-0a4b-4eac-bd58-5821bb4a3838	source_linked	v66 p30 generated/assembled/bd31a5e8-0a4b-4eac-bd58-5821bb4a3838.mp4 Jesus directs departure (4:35) - now on the line	generated/assembled/bd31a5e8-0a4b-4eac-bd58-5821bb4a3838.mp4
 10806	10970	1dcadb9d-f26b-4862-8683-ffc9c529d8e1	source_linked	v66 p31 generated/assembled/1dcadb9d-f26b-4862-8683-ffc9c529d8e1.mp4 dusk boarding, longer real take	generated/assembled/1dcadb9d-f26b-4862-8683-ffc9c529d8e1.mp4
-10971	11092	758ae7b7-8a94-46c1-8f86-a7360d979f92	visual_match	Direct source-frame comparison 0.984; boat launch before storm cut at 11093.	
-11093	11185	60c28de3-b880-43a8-a208-3e11fbf2c6a6	visual_match	Direct source-frame comparison 0.829; squall after cut at 11093.	
+10971	11092	758ae7b7-8a94-46c1-8f86-a7360d979f92	visual_match	Direct source-frame comparison 0.984; boat launch before storm cut at 11093.	none
+11093	11185	60c28de3-b880-43a8-a208-3e11fbf2c6a6	visual_match	Direct source-frame comparison 0.829; squall after cut at 11093.	none
 11186	11239	0396a389-3961-4dee-b53a-06a5731244e9	source_linked	v71 e36_bailing assembled/0396a389-3961-4dee-b53a-06a5731244e9.mp4 	assembled/0396a389-3961-4dee-b53a-06a5731244e9.mp4
-11240	11359	f3cbda35-bdd3-4dd6-ad02-2dcaae6a3d95	visual_match	Direct source-frame comparison 0.910; waves in boat before cut at 11360.	
-11360	11472	0396a389-3961-4dee-b53a-06a5731244e9	visual_match	Direct source-frame comparison 0.926; water pooling in boat across chunk boundary.	
-11473	11495	0396a389-3961-4dee-b53a-06a5731244e9	visual_match	Direct source-frame comparison 0.926; water pooling in boat across chunk boundary.	
-11496	11657	c73f71d3-64a6-48f2-967e-010e198b8d15	visual_match	Accepted donor video comparison 0.998; Jesus sleeps in stern.	
-11658	11831	ce748f77-5e27-44b4-86ec-2069fe797347	visual_match	Accepted donor video comparison 0.809; disciples struggle with wind and water.	
-11832	11873	f3cbda35-bdd3-4dd6-ad02-2dcaae6a3d95	visual_match	Direct source-frame comparison 0.998; storm boat return.	
+11240	11359	f3cbda35-bdd3-4dd6-ad02-2dcaae6a3d95	visual_match	Direct source-frame comparison 0.910; waves in boat before cut at 11360.	none
+11360	11472	0396a389-3961-4dee-b53a-06a5731244e9	visual_match	Direct source-frame comparison 0.926; water pooling in boat across chunk boundary.	none
+11473	11495	0396a389-3961-4dee-b53a-06a5731244e9	visual_match	Direct source-frame comparison 0.926; water pooling in boat across chunk boundary.	none
+11496	11657	c73f71d3-64a6-48f2-967e-010e198b8d15	visual_match	Accepted donor video comparison 0.998; Jesus sleeps in stern.	none
+11658	11831	ce748f77-5e27-44b4-86ec-2069fe797347	visual_match	Accepted donor video comparison 0.809; disciples struggle with wind and water.	none
+11832	11873	f3cbda35-bdd3-4dd6-ad02-2dcaae6a3d95	visual_match	Direct source-frame comparison 0.998; storm boat return.	none
 11874	12001	6db6f5f1-ced4-4675-82f4-05c772333d01	patch_predecessor	v73 e51 Peter mouth replacement follows v69 e13 on this saved Peter shot.	editorial/mark4-v71-held/s101-peter-shouting-lipsync-expressive.mp4
 12002	12193	d7cf6a81-3dc8-497c-8b33-9c57bbcc1d67	visual_review	v73 e52 Jesus wakes and rises, matching saved Mark 4:39 action; clip is an editorial Veo source.	editorial/mark4-v71-held/s102-jesus-wakes-and-rises-8s.mp4
 12194	12240	c02b7bd2-d16d-4163-b7a0-88f32ae3e1dd	source_linked	v69 e15_ls104 lipsync-face/932975424261459971.mp4 	lipsync-face/932975424261459971.mp4

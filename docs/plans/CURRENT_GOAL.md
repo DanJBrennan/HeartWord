@@ -172,3 +172,31 @@ source/voice bindings reconstructed from saved v45 evidence; 71 other selected
 keyframes need copying into the isolated root. The draft is explicitly not a
 normalizer input, no normalization or Meyah project has run, and the live
 database and Mark 5 remain untouched.
+
+Shot-map correction, 2026-10-25: inspection of the actual opening frames
+showed the four-second Hatam title followed by moving clean lake footage. The
+normalizer now requires an exact `replaceable_title` interval at frames 0–95,
+which the target's reviewed `Markus 4` / `Meyah` editorial card replaces once.
+The clean lake continues as its own exact-picture beat at frames 96–179. A
+further scene-sequence audit found eight final-cut picture reuses linked to
+shot records from the wrong Mark 4 scene. The draft now proposes exact-picture
+legacy aliases in the correct scenes, preserving source provenance and avoiding
+wrong passage labels in Meyah. The updated review artifact has 114 gap-free
+placements: one replaceable title, 14 legacy imports, and 99 mapped placements
+using 84 existing donor shots. Sixty-nine existing accepted keyframes need
+copying; 15 performance shots still lack accepted historical keyframes. The
+normalizer's title boundary has focused tests and typechecks. This remains a
+draft pending the complete producer shot-map review; the isolated database and
+live production database were not changed by this correction.
+
+The 69 selected accepted keyframes and clean Mark 4 lake still were then copied
+from live assets into the ignored isolated root with SHA-256 verification; no
+live file or database row was written. The draft summary now reports zero
+unavailable accepted keyframes, leaving the 14 legacy-shot imports and 15
+historical performance keyframes. The complete suite passed on a controlled
+four-worker run (864 tests in 127 files), both TypeScript checks and web build
+passed. An earlier unrestricted full run had one unrelated five-second test
+timeout; that test passed alone and in the controlled full run. Goal Guardian:
+the title is replaced once, opening/closing picture is retained, cross-scene
+reuses keep the final film's visual intent without transferring wrong passage
+metadata, and the target recording and producer review remain authoritative.

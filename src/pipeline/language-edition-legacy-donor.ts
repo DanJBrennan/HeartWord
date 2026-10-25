@@ -24,7 +24,9 @@ const asset=(dataDir:string,path:string)=>{
 };
 const ms=(frames:number)=>Math.round(frames*1000/24);
 
-export interface Mark4PicturePlacement { shotId:string; startFrame:number; endFrame:number; reason:string }
+export type Mark4PicturePlacement =
+  | { kind:"replaceable_title"; startFrame:0; endFrame:95; reason:string }
+  | { shotId:string; kind?:"shot"; startFrame:number; endFrame:number; reason:string };
 export interface Mark4PicturePlan {
   schemaVersion:1; renderId:string; expectedOriginalTimelineSha256:string;
   reviewer:string; evidence:string; placements:Mark4PicturePlacement[];
@@ -36,7 +38,10 @@ export function validateMark4PicturePlacements(placements:Mark4PicturePlacement[
   let nextFrame=0;
   const mapped=[] as Array<{placement:Mark4PicturePlacement;chunk:(typeof CHUNKS)[number]}>;
   for(const placement of placements){
-    if(!placement || !placement.shotId?.trim() || !placement.reason?.trim() || !Number.isInteger(placement.startFrame) ||
+    const title=placement?.kind==="replaceable_title";
+    if(!placement || !placement.reason?.trim() || (!title && !("shotId" in placement && placement.shotId?.trim())) ||
+        (title && (placement.startFrame!==0 || placement.endFrame!==95 || "shotId" in placement)) ||
+        !Number.isInteger(placement.startFrame) ||
         !Number.isInteger(placement.endFrame) || placement.startFrame!==nextFrame || placement.endFrame<placement.startFrame || placement.endFrame>13483)
       throw new Error(`Final-picture map has a gap, overlap or missing shot identity at frame ${nextFrame}.`);
     const chunk=CHUNKS.find(item=>placement.startFrame>=item.first && placement.endFrame<=item.last);
@@ -44,6 +49,8 @@ export function validateMark4PicturePlacements(placements:Mark4PicturePlacement[
     mapped.push({placement,chunk});nextFrame=placement.endFrame+1;
   }
   if(nextFrame!==13484)throw new Error(`Final-picture map stops at frame ${nextFrame-1}, before the final frame.`);
+  if(placements[0]?.kind!=="replaceable_title" || placements.slice(1).some(item=>item.kind==="replaceable_title"))
+    throw new Error("The Hatam title must be isolated as the replaceable first 96 frames.");
   return mapped;
 }
 
@@ -76,9 +83,16 @@ export function normalizeMark4FinalDonor(db:DatabaseSync,dataDir:string,plan:Mar
     if(streams.streams.length!==1 || streams.streams[0]?.codec_type!=="video" || Number(streams.streams[0].nb_read_frames)!==chunk.frames)
       throw new Error(`Final-picture chunk has unexpected frames or audio: ${chunk.path}`);
   }
-  const timeline:Array<{shotId:string;path:string;sha256:string;sourceStartMs:number;startMs:number;endMs:number}>=[];
+  const timeline:Array<{shotId?:string;kind?:"replaceable_title";path:string;sha256:string;sourceStartMs:number;startMs:number;endMs:number}>=[];
   const selected=new Map<string,{shotId:string;path:string;operation:"lip_sync"|"generate_final_video";durationMs:number}>();
   for(const {placement,chunk} of validateMark4PicturePlacements(plan.placements)){
+    if(placement.kind==="replaceable_title"){
+      // The target's reviewed pre-source title replaces these exact Hatam-
+      // lettered frames. Retain their picture hash and interval as provenance,
+      // but never offer them as a reusable donor shot.
+      timeline.push({kind:"replaceable_title",path:chunk.path,sha256:chunk.sha256,sourceStartMs:0,startMs:0,endMs:4000});
+      continue;
+    }
     const shot=db.prepare(`SELECT sh.id,sh.needs_lip_sync AS speaking FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=? AND sc.project_id=?`)
       .get(placement.shotId,PROJECT_ID) as {id:string;speaking:number}|undefined;
     if(!shot)throw new Error(`Picture placement has no retained donor shot ${placement.shotId}.`);

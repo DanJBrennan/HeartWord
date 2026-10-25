@@ -38,7 +38,14 @@ plan, source/canon checks, spend controls and actual result review.
   exact final film and five video-only chunks, retains the previous custom
   recipe verbatim in edit history, and refuses incomplete or boundary-crossing
   maps. The reviewed map is still required; the utility cannot infer Scripture
-  or shot identity from matching pixels alone.
+  or shot identity from matching pixels alone. The first four seconds of this
+  final cut contain Hatam lettering. The normalization records those exact 96
+  frames as `replaceable_title` provenance without a donor shot identity; the
+  reviewed target pre-source title replaces them once, followed by the exact
+  clean moving lake interval. Final-cut picture reused from a saved shot in a
+  different narrative scene needs a new scene-correct legacy shot in the
+  isolated donor, retaining the source clip link; otherwise target scene
+  inheritance would assign its action and verse to the wrong passage.
 - Preflight pins the Meyah non-drama recording, supplied DOCX and English
   reference; selected Papuan character versions, visual hashes, retained
   cast-master sidecars with the effective ElevenLabs voice/model/settings;

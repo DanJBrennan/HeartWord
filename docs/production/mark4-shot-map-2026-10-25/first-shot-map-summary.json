@@ -1,19 +1,23 @@
 {
   "totalFrames": 13484,
-  "placements": 113,
+  "placements": 114,
   "framesByEvidenceClass": {
-    "legacy_editorial_import": 1075,
-    "source_linked": 8339,
-    "visual_match": 2604,
+    "replaceable_title": 96,
+    "legacy_editorial_import": 979,
+    "source_linked": 7407,
+    "legacy_cross_scene_import": 1014,
+    "visual_match": 2522,
     "visual_review": 358,
     "keyframe_match": 192,
     "patch_predecessor": 588,
     "legacy_cross_chapter_import": 68,
     "saved_attempt_match": 260
   },
-  "legacyImportFrames": 1143,
+  "legacyImportFrames": 2061,
+  "legacyImportPlacements": 14,
+  "replaceableTitleFrames": 96,
   "missingAcceptedDonorKeyframes": 15,
-  "acceptedKeyframesNotInIsolatedCopy": 71,
+  "acceptedKeyframesNotInIsolatedCopy": 0,
   "normalizerReady": false,
   "missingAcceptedDonorKeyframeShotIds": [
     "0a6d5fa5-d5bf-47aa-a0ca-10228d91ae63",
@@ -34,10 +38,10 @@
   ],
   "legacyImports": [
     {
-      "firstFrame": 0,
+      "firstFrame": 96,
       "lastFrame": 179,
       "kind": "legacy_editorial_import",
-      "evidence": "Dan directed exact preservation of the lake/title picture; create a dedicated opening beat and localize title text only."
+      "evidence": "Dan directed exact preservation of the clean moving lake after the title as a dedicated opening beat."
     },
     {
       "firstFrame": 180,
@@ -52,16 +56,64 @@
       "evidence": "Dan directed exact preservation of this shore/boat editorial still as a dedicated opening beat."
     },
     {
+      "firstFrame": 588,
+      "lastFrame": 774,
+      "kind": "legacy_cross_scene_import",
+      "evidence": "Jesus in the boat addresses the Mark 4:1-2 shoreline crowd; saved take was attached to a Mark 4:24 shot. Original donor shot 8698ecb1-3d4f-475e-a798-39156449f04c."
+    },
+    {
       "firstFrame": 775,
       "lastFrame": 1024,
       "kind": "legacy_editorial_import",
       "evidence": "Dan directed exact preservation of the second move on the shore/boat editorial still as a distinct beat."
     },
     {
+      "firstFrame": 2385,
+      "lastFrame": 2550,
+      "kind": "legacy_cross_scene_import",
+      "evidence": "Seedlings in the sower story's fruitful soil; saved take was attached to the later growing-seed parable. Original donor shot 20496fa7-983d-47a3-ab9d-67d796aaef20."
+    },
+    {
+      "firstFrame": 2827,
+      "lastFrame": 3017,
+      "kind": "legacy_cross_scene_import",
+      "evidence": "Jesus completes the opening sower teaching; saved take was attached to the later mustard-seed scene. Original donor shot 4934ce6e-3894-4800-a8b9-c380d91ae570."
+    },
+    {
+      "firstFrame": 3964,
+      "lastFrame": 4023,
+      "kind": "legacy_cross_scene_import",
+      "evidence": "Disciples listen during the private Mark 4:10-12 exchange; saved take was attached to the next explanation scene. Original donor shot dc9accab-c310-48b2-901a-44c6fc29b0e6."
+    },
+    {
+      "firstFrame": 5924,
+      "lastFrame": 6023,
+      "kind": "legacy_cross_scene_import",
+      "evidence": "Two disciples listen during the sower explanation; saved take was attached to the prior private exchange. Original donor shot db0de7b7-3b29-4c71-bfe6-558c5193919d."
+    },
+    {
       "firstFrame": 7759,
       "lastFrame": 7826,
       "kind": "legacy_cross_chapter_import",
       "evidence": "Saved picture is a Mark 3:30 listener asset reused in final Hatam Mark 4; create an explicit Mark 4 editorial beat and flag target-picture review."
+    },
+    {
+      "firstFrame": 9240,
+      "lastFrame": 9321,
+      "kind": "legacy_cross_scene_import",
+      "evidence": "Crowd listener in the mustard-seed scene; saved take was attached to the earlier lamp teaching. Original donor shot c84b12da-2581-4e08-8bcc-513e41b6b79b."
+    },
+    {
+      "firstFrame": 10146,
+      "lastFrame": 10245,
+      "kind": "legacy_cross_scene_import",
+      "evidence": "Disciples listen after the mustard-seed teaching; saved take was attached to the earlier lamp teaching. Original donor shot 6628e1e9-47ee-42de-b7b9-e3f578847c5b."
+    },
+    {
+      "firstFrame": 10246,
+      "lastFrame": 10373,
+      "kind": "legacy_cross_scene_import",
+      "evidence": "Disciples listen before the private explanation; saved take was attached to the earlier lamp teaching. Original donor shot 0003976f-7c1a-4508-a40c-cad61cd7bb37."
     },
     {
       "firstFrame": 13100,
