@@ -15,6 +15,7 @@ function error(message){$("error").textContent=message??"";$("error").hidden=!me
 function activeVerified(i){return !!i.current?.verified&&!draft(i).dirty;}
 function resolved(i){return !!i.resolution||activeVerified(i);}
 function speakerLabel(i){return i.resolution?.treatment==="narration"?"Original narrator":i.resolution?.treatment==="covered"?(data.items.find(p=>p.id===i.resolution.coveredBy)?.speakerName??i.speakerName)+" · merged utterance":draft(i).speakerLabel;}
+function updateLeadIn(i){const quoteAt=i.textHatam.search(/["“]/u),mixed=/^Narrator,\s*\S/u.test(speakerLabel(i));$("speech-leadin").hidden=!(mixed&&quoteAt>0);$("speech-leadin").textContent=mixed&&quoteAt>0?`Narrator lead-in before the first opening quotation mark: “${i.textHatam.slice(0,quoteAt).trim()}” The quoted speech starts after that mark; listen to locate the exact audio handoff.`:"";}
 function list() {
  const filter=$("filter").value;
  $("progress").textContent=data.application?data.verifiedCount+" verified · "+data.resolvedCount+" / "+data.items.length+" resolved · boundaries applied":data.items.filter(activeVerified).length+" / "+data.items.length+" windows verified";
@@ -63,6 +64,7 @@ function draw() {
 }
 function summary() {
  const i=item(),d=draft(),ok=valid(d),verified=activeVerified(i);
+ updateLeadIn(i);$("speaker").textContent=speakerLabel(i)+(i.voiceName?" · "+i.voiceName:"");
  $("status").textContent=i.resolution?(i.resolution.treatment==="covered"?"Covered by merged utterance":"Narrator confirmed"):d.dirty?"Unsaved changes":verified?"Verified":i.current?"Saved draft":"Proposed timing";
  $("status").className="pill"+(verified?" verified":"");
  $("start-clock").textContent=clock(d.startMs);$("end-clock").textContent=clock(d.endMs);
@@ -81,7 +83,7 @@ function select(id) {
  $("workspace").hidden=false;$("kind").textContent=i.kind==="character"?"Spoken quotation":i.kind==="narration"?"Narration passage":"Alignment check";
  $("title").textContent=i.verseRef+" · "+i.title;$("speaker").textContent=speakerLabel(i)+(i.voiceName?" · "+i.voiceName:"");
  $("hatam").textContent=i.textHatam||"Listen to the original context and note what you hear.";$("english").textContent=i.englishContext;
- $("confidence").textContent=[i.timingConfidence==null?null:`Timing boundary confidence ${i.timingConfidence}%`,i.geminiMatchConfidence==null?null:`Gemini text-match score ${i.geminiMatchConfidence}%`,i.speakerConfidence==null?null:`English speaker evidence score ${i.speakerConfidence}%`].filter(Boolean).join(" · ")||"Confidence has not been estimated.";
+ $("confidence").textContent=[i.timingConfidence==null?null:`Timing boundary confidence ${i.timingConfidence}%`,i.geminiMatchConfidence==null?null:`Gemini text-match score ${i.geminiMatchConfidence}%`,i.speakerConfidence==null?null:`English speaker evidence score ${i.speakerConfidence}%`,i.current?.speakerLabel&&i.current.speakerLabel!==i.speakerName?"Saved speaker correction; exact handoff still unreviewed":null].filter(Boolean).join(" · ")||"Confidence has not been estimated.";
  $("warnings").textContent=i.warnings.join(" ");$("warnings").hidden=!i.warnings.length;
  $("start").value=(d.startMs/1000).toFixed(3);$("end").value=(d.endMs/1000).toFixed(3);$("note").value=d.note;$("speaker-choice").value=d.speakerLabel;
  $("saved").textContent=i.resolution?i.resolution.evidence:i.current?(i.current.verified?"Verified":"Draft saved")+" by "+i.current.reviewerName+" · "+new Date(i.current.createdAt).toLocaleString():"No verification recorded.";

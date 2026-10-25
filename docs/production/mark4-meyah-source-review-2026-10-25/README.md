@@ -84,3 +84,15 @@ PCM and initial/context clips are under
 `output/mark4-donor-20261024/assets/source-listening-review/a5a40890-8bb0-4856-aacb-1dcad97074bb/`.
 No Gemini request was repeated, no review was auto-verified, and no live or
 isolated source/cast database row was rewritten.
+
+Later review correction: the prepared Mark 4:3 Meyah text begins `Ofa agot
+oida,` before its first opening quotation mark. That lead-in belongs to the
+narrator; Jesus' quoted speech follows it. Dan's saved v3 timing draft
+(34.913–50.313 s) remains in history. A subsequent Codex-authored **draft**
+corrects the verse-level speaker label to `Narrator, Jesus` and records why;
+neither draft verifies the exact narrator-to-Jesus audio handoff. The four
+existing Dan verifications for v1, v2, v5 and v7 remain intact. The reviewer
+now displays the narrator lead-in separately when a mixed speaker label and
+opening quotation are present, and offers ±0.100 s boundary buttons alongside
+the 1 ms and 10 ms controls. The immutable base manifest and saved review
+history were not rewritten.

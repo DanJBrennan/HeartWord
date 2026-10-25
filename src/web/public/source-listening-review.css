@@ -3,3 +3,4 @@
 
 aside{min-width:0}@media(max-width:850px){main{grid-template-columns:minmax(0,1fr)}}
 #speaker-choice{display:block;width:min(100%,460px);margin:6px 0 14px}
+#speech-leadin{margin:0 0 14px;padding:9px 12px;border-left:3px solid var(--gold);background:#39342b;color:#f5ddb0;font-size:14px}

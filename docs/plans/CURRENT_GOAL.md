@@ -303,3 +303,14 @@ Meyah performance and the ordinary producer edit/review path. Model scores and
 English speaker proposals are inspectable evidence, never source truth or
 automatic casting. The full suite passed 868 tests in 127 files, both
 configured TypeScript checks passed, and the web build passed.
+
+Dan's next review correction: add ±0.100 s controls beside the existing 1 ms
+and 10 ms nudges. Meyah v3 begins with the narrator lead-in `Ofa agot oida,`
+before its opening quotation; the whole verse must be labeled `Narrator,
+Jesus`, with the exact spoken handoff still pending listening review. The
+correction is a separate Codex-authored draft after Dan's saved v3 timing
+draft (34.913–50.313 s), preserving both records and the four other verified
+windows. A quote-start cue is shown from the source punctuation without
+moving the verse window, changing cast attribution, or treating the Gemini
+phrase anchor as a word boundary. The existing manifest and source rows stay
+unchanged; no re-verification is silently required.

@@ -93,7 +93,7 @@ it("serves the review page, precise saved WAV and current verification through t
  const url=`http://127.0.0.1:${(server.address() as {port:number}).port}/api/projects/p/source-listening-review`;
  expect(await (await fetch(url.replace('/source-listening-review','/audio-segments?layer=original_reading'))).json()).toMatchObject({sourceListeningReviewAvailable:true});
  expect(await (await fetch(url.replace('/p/source-listening-review','/other/audio-segments?layer=original_reading'))).json()).toMatchObject({sourceListeningReviewAvailable:false});
- const html=await (await fetch(url)).text();expect(html).toContain('step="0.001"');expect(html).toContain('data-step="-1"');expect(html).toContain('data-step="10"');expect(html).toContain('data-action="verify"');expect(html).toContain('source-listening-review.js');
+ const html=await (await fetch(url)).text();expect(html).toContain('step="0.001"');expect(html).toContain('data-step="-1"');expect(html).toContain('data-step="10"');expect(html).toContain('data-step="-100"');expect(html).toContain('data-step="100"');expect(html).toContain('data-action="verify"');expect(html).toContain('source-listening-review.js');
  expect(await (await fetch(url+"/data")).json()).toMatchObject({verifiedCount:0});
  const response=await fetch(url+"/items/quote-1",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(request())});expect(response.status).toBe(201);
  expect(await (await fetch(url+"/data")).json()).toMatchObject({verifiedCount:1});
