@@ -11,7 +11,8 @@ import { readConfirmedSpeechRuns } from "./ingestion/continuous-speech.js";
 type Project = { id: string; language: string; book: string; chapter: number; updated_at: number };
 type Render = { id: string; project_id: string; result_asset_path: string; total_duration_ms:number; timeline_json: string | null; source_audio_json: string | null };
 type Voice = { characterId: string; versionId: string; voiceId: string; voiceProvider: string; approvedBy: string; approvedAt: number;
-  effectiveSettings: ReVoiceResult["requestSettings"]; voiceEvidence:{path:string;sha256:string};visualAssets: Array<{ id: string; path: string; sha256: string }> };
+  effectiveSettings: ReVoiceResult["requestSettings"] | null; settingsProvenance:"retained_request_sidecar"|"historical_settings_unknown";
+  voiceEvidence:{path:string;sha256:string};visualAssets: Array<{ id: string; path: string; sha256: string }> };
 export interface EditionTitle { bookChapter: string; languageName: string; authority: string; durationMs: number; profile: "mark4-serif-over-establishing"; backgroundFramePath:string }
 export interface EditionRequest { renderId: string; targetLanguage: string; title: EditionTitle }
 export interface EditionPreflight {
@@ -140,33 +141,46 @@ export function preflightLanguageEdition(db: DatabaseSync, dataDir: string, sour
   for (const binding of bindings) {
     if (!binding.voiceId || binding.voiceProvider !== "elevenlabs" || binding.versionStatus!=="approved" || binding.canonStatus!=="approved" || binding.region!=="Papuan" || !binding.approvedBy?.trim() || !binding.approvedAt) { holds.push(`Approved Papuan ElevenLabs identity and exact utterance review are unavailable for character ${binding.characterId}.`); continue; }
     let voiceEvidence:{path:string;sha256:string}|null=null,effectiveSettings:ReVoiceResult["requestSettings"]|null=null;
-    if(binding.castPath)try{
-      const sidecar=asset(dataDir,`${binding.castPath}.json`);
-      const saved=JSON.parse(readFileSync(resolve(dataDir,"assets",sidecar.path),"utf8")) as {voiceId?:string;requestSettings?:ReVoiceResult["requestSettings"]};
-      if(saved.voiceId===binding.voiceId && saved.requestSettings?.model_id===VOICE_CHANGER_DEFAULTS.model_id &&
-          saved.requestSettings.remove_background_noise===VOICE_CHANGER_DEFAULTS.remove_background_noise && saved.requestSettings.output_format===VOICE_CHANGER_DEFAULTS.output_format){
-        voiceEvidence=sidecar;effectiveSettings=saved.requestSettings;
+    let settingsProvenance:Voice["settingsProvenance"]="historical_settings_unknown";
+    if(binding.castPath){
+      try{voiceEvidence=asset(dataDir,binding.castPath);}catch{/* held below */}
+      if(voiceEvidence && existsSync(resolve(dataDir,"assets",`${voiceEvidence.path}.json`))){
+        try{
+          const sidecar=asset(dataDir,`${voiceEvidence.path}.json`);
+          const saved=JSON.parse(readFileSync(resolve(dataDir,"assets",sidecar.path),"utf8")) as {voiceId?:string;requestSettings?:ReVoiceResult["requestSettings"]};
+          if(saved.voiceId!==binding.voiceId || saved.requestSettings?.model_id!==VOICE_CHANGER_DEFAULTS.model_id ||
+              saved.requestSettings.remove_background_noise!==VOICE_CHANGER_DEFAULTS.remove_background_noise ||
+              saved.requestSettings.output_format!==VOICE_CHANGER_DEFAULTS.output_format)
+            throw new Error("inconsistent sidecar");
+          voiceEvidence=sidecar;effectiveSettings=saved.requestSettings;settingsProvenance="retained_request_sidecar";
+        }catch{holds.push(`Historical voice request sidecar for character ${binding.characterId} conflicts with its approved identity or current adapter.`);}
       }
-    }catch{/* held below */}
-    if(!voiceEvidence||!effectiveSettings){holds.push(`Historical voice request/settings for character ${binding.characterId} cannot be proven from its retained cast master.`);continue;}
+    }
+    if(!voiceEvidence){holds.push(`Retained cast-master evidence for character ${binding.characterId} is unavailable.`);continue;}
     const rows = db.prepare("SELECT id,path,content_hash FROM character_assets WHERE character_version_id=? AND asset_role='scene_reference' ORDER BY id").all(binding.versionId) as Array<{id:string;path:string;content_hash:string|null}>;
     const visualAssets: Voice["visualAssets"] = [];
     for (const row of rows) {
       try {
         const file = asset(dataDir,row.path);
-        if (row.content_hash && row.content_hash !== file.sha256) holds.push(`Approved visual asset changed for character ${binding.characterId}.`);
+        if (row.content_hash && row.content_hash.toLowerCase() !== file.sha256) holds.push(`Approved visual asset changed for character ${binding.characterId}.`);
         visualAssets.push({id:row.id,...file});
       } catch { holds.push(`Approved visual asset is unavailable for character ${binding.characterId}.`); }
     }
     if (!visualAssets.length) holds.push(`No retained scene reference exists for character ${binding.characterId}.`);
     const prior=voices.find(voice=>voice.characterId===binding.characterId);
-    if(prior){if(prior.versionId!==binding.versionId || prior.voiceId!==binding.voiceId || canonical(prior.effectiveSettings)!==canonical(effectiveSettings))holds.push(`Donor character ${binding.characterId} has inconsistent historical voice identities or settings.`);continue;}
+    if(prior){if(prior.versionId!==binding.versionId || prior.voiceId!==binding.voiceId ||
+        (prior.effectiveSettings && effectiveSettings && canonical(prior.effectiveSettings)!==canonical(effectiveSettings)))
+      holds.push(`Donor character ${binding.characterId} has inconsistent historical voice identities or settings.`);
+      else if(!prior.effectiveSettings && effectiveSettings){prior.effectiveSettings=effectiveSettings;prior.settingsProvenance=settingsProvenance;prior.voiceEvidence=voiceEvidence;}
+      continue;}
     voices.push({characterId:binding.characterId,versionId:binding.versionId,voiceId:binding.voiceId,voiceProvider:binding.voiceProvider,
-      approvedBy:binding.approvedBy,approvedAt:binding.approvedAt,effectiveSettings,voiceEvidence,visualAssets});
+      approvedBy:binding.approvedBy,approvedAt:binding.approvedAt,effectiveSettings,settingsProvenance,voiceEvidence,visualAssets});
   }
   if (!voices.length) holds.push("The donor has no exact approved speaking-shot voice bindings to pin.");
-  const estimate = {newSpeakingPictures: Array.isArray(timeline) ? bindings.length : null,
-    reuseCandidates: Array.isArray(timeline) ? Math.max(0,timeline.length-bindings.length) : null,costUsd:null};
+  const speakingPlacements=Array.isArray(timeline)?pictureEvidence.filter(item=>
+    (db.prepare("SELECT needs_lip_sync FROM shots WHERE id=?").get(item.shotId) as {needs_lip_sync:number}|undefined)?.needs_lip_sync===1).length:null;
+  const estimate = {newSpeakingPictures:speakingPlacements,
+    reuseCandidates:speakingPlacements===null?null:pictureEvidence.length-speakingPlacements,costUsd:null};
   const evidence = {version:1,sourceProjectId:project.id,sourceRevision:project.updated_at,renderId:render.id,
     renderSha256:renderFile?.sha256 ?? null,approvalId:approval?.id ?? null,timelineSha256:render.timeline_json ? sha(render.timeline_json) : null,
     sourceAudioSha256:render.source_audio_json ? sha(render.source_audio_json) : null,
@@ -258,7 +272,7 @@ export function assertEditionInputsCurrent(db:DatabaseSync,dataDir:string,projec
     if(asset(dataDir,pinned.path).sha256!==pinned.sha256)throw new Error("Pinned approved character visual changed.");
   for(const voice of origin.preflight.voices)
     if(asset(dataDir,voice.voiceEvidence.path).sha256!==voice.voiceEvidence.sha256)
-      throw new Error("Pinned historical ElevenLabs voice/settings evidence changed.");
+      throw new Error("Pinned historical ElevenLabs voice evidence changed.");
   for(const pinned of origin.preflight.sourceAudioEvidence)
     if(asset(dataDir,pinned.path).sha256!==pinned.sha256)throw new Error("Pinned donor source-audio evidence changed.");
   for(const pinned of origin.preflight.pictureEvidence){

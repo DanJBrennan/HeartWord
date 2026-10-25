@@ -216,3 +216,63 @@ The local Mark 4 title renderer also produced a review-only, four-second
 `Markus 4` / `Meyah` preview from the retained clean lake still. FFprobe confirms
 96 video frames at 24 fps with no audio stream. The preview is in the shot-map
 pack; it has not been selected into a target edition or written to any DB.
+
+Approved donor preparation, 2026-10-25: Dan approved the 114-placement map as
+drafted and chose the fifteen original v34 Jesus keyframes for this donor. The
+isolated copy now contains fourteen scene-correct legacy beats and new accepted
+donor-reference keyframe rows; old held-review decisions and statuses remain
+unchanged. No Hatam utterance binding was invented. The fixed-root normalizer
+applied the complete, gap-free plan and retained the prior custom recipe in
+edit history. Timeline SHA-256:
+`42c8c09c9c447d57b9980a4aad0e9aba18ae4e5648bde3269202c924d500a912`.
+The approved plan, import specification, provenance and exact picture review
+are in `docs/production/mark4-shot-map-2026-10-25/`.
+
+Meyah project preparation, 2026-10-25: the supplied `Mark 4.docx` and the
+managed HeartWord text are byte-identical. Twenty-five target source, cast and
+approved visual files were copied read-only from live assets into the ignored
+isolated root. Some legacy visual hashes used uppercase SHA-256; preflight now
+compares hexadecimal digests without case sensitivity. The approved Jesus and
+Peter ElevenLabs voice IDs are pinned, and their absent historical request
+sidecars are recorded as **settings unknown**. Dan authorized a new reviewed
+2–15 second Meyah audition to establish explicit current settings before bulk
+conversion. The isolated preflight is ready with no holds, 113 pinned story
+picture placements and two approved voice identities. It still reports the
+reference-only entries `6 (4:5)` and `19 (4:18)` for target source review.
+The normal isolated Meyah/Mark/4 project is
+`a5a40890-8bb0-4856-aacb-1dcad97074bb`; it has no stage completions or
+provider work. The project is not a reviewed or finished Meyah film.
+
+Implementation check: target casting can now bind an original-keyframe speaking
+shot with no saved donor utterance to the unique pinned approved character
+voice, only with an exact reviewed Meyah speech window. The target edit command
+records that voice provenance. A stale approved voice audition blocks another
+scoped conversion; it cannot be bypassed by the pilot path. Focused edition
+tests and the full suite pass (**867 tests in 127 files**); both configured
+TypeScript checks and the web build pass. The isolated target title candidate
+is video-only, 1280×720, 96 frames and exactly four seconds; it has not been
+editorially selected. Local ingestion drafted 39 contiguous, low-confidence
+verse-group intervals for the 13:25.685 Meyah recording without speaker
+inference or a Gemini request. Dan then heard a spoken Meyah chapter heading
+before verse 1 at about four seconds. A measured 3.327–4.861 second pause
+supports a provisional 4.094-second split. Local ingestion was rerun after
+that split, retaining a separate heading interval and 39 verse-group rows
+(40 total), still without speaker inference or a Gemini request. The exact
+heading/verse edge remains for Dan's listening review. A listening page and
+timing TSV are in
+`docs/production/mark4-meyah-source-review-2026-10-25/`. Dan volunteered to
+review the source. The next real
+production work is target source alignment/listening, a reviewed exact
+correspondence for the longer 13:26 recording, a bounded voice/Avatar audition,
+target title selection, complete film QC and fresh-root editable restore. Mark 5
+and the live database remain untouched.
+
+Goal Guardian review after the spoken-heading correction: the normal source
+recording still supplies every word and time window, including the separately
+retained heading. The 4.094-second split is an observed-pause estimate, not a
+claim of verified Meyah word timing. No translation, dialogue, speaker,
+theological beat or target approval was invented. The edition remains a normal
+editable project using the existing ingestion, casting, voice, media and
+assembly stages. The static listening page is a review aid, not another
+pipeline stage. The user's current workflow is preserved: source and title
+decisions remain inspectable before provider work or target film assembly.

@@ -1,6 +1,7 @@
 # Language editions from an editable chapter
 
-Status: isolated implementation, held for donor edit reconstruction and safe deployment.
+Status: isolated Mark 4 donor normalized and Meyah project identity created;
+target source, voice, picture and film reviews remain open.
 Producer decisions: Dan's October 2026 language-edition conversation and
 `C:/Users/danbr/HeartWordData/reviews/2026-10-22-language-editions/LANGUAGE_EDITION_HANDOFF.md`.
 
@@ -47,10 +48,17 @@ plan, source/canon checks, spend controls and actual result review.
   isolated donor, retaining the source clip link; otherwise target scene
   inheritance would assign its action and verse to the wrong passage.
 - Preflight pins the Meyah non-drama recording, supplied DOCX and English
-  reference; selected Papuan character versions, visual hashes, retained
-  cast-master sidecars with the effective ElevenLabs voice/model/settings;
-  clean title background; and title words and duration. Changes hold before
-  reuse or provider submission.
+  reference; selected Papuan character versions, visual hashes and cast-master
+  evidence; clean title background; and title words and duration. A retained
+  cast-master request sidecar pins effective historical ElevenLabs settings
+  when present. The final Mark 4 cast masters have no such sidecars: their
+  approved voice IDs stay pinned, while `effectiveSettings: null` and
+  `historical_settings_unknown` explicitly record that gap. Missing cast audio
+  or a conflicting sidecar holds. A reviewed target audition pins explicit
+  current adapter settings before bulk conversion. Those current settings apply
+  to any selected voice identity with unknown historical settings; each
+  character keeps its own approved voice ID. Changes to pinned evidence hold
+  before reuse or provider submission.
 - The initial Meyah title is `Markus 4` with smaller `Meyah`, composed in the
   Mark 4 style for four seconds over the retained clean lake frame. Uppercase
   is a typography operation, not a spelling change. A local preview is
@@ -63,6 +71,21 @@ plan, source/canon checks, spend controls and actual result review.
   correspondence is a named revision with a parent hash and per-placement
   reason. A confirmed continuous speech run may carry a reviewed mouth
   window across old audio-row boundaries.
+  Dan heard a spoken Meyah chapter heading before verse 1. The local
+  estimated-timing fallback accepts that named observation only at a measured
+  opening-pause midpoint and retains the heading as a separate `verse_ref=null`
+  source interval. The current 4.094-second edge is provisional; all 40 source
+  intervals still need listening review. The heading audio remains source
+  evidence, with film treatment decided in the normal target editorial review.
+- The final Mark 4 picture includes fifteen original speaking performance
+  keyframes whose older producer note only approved held motion/lip-sync
+  review. Dan separately selected these originals for the isolated editable
+  donor on 2026-10-25. New donor-reference attempt rows record that decision;
+  the earlier note and old attempts keep their original statuses. No Hatam
+  utterance binding is inferred. When a selected speaking shot lacks one,
+  target casting may use the unique pinned approved character voice only after
+  an exact reviewed Meyah audio window. The target binding records the voice
+  provenance and reviewer.
 - The original target source recording remains the narrator and the timing
   authority. Existing voicing forms a target-only cast master with the pinned
   voice settings. Short Avatar audio may receive trailing non-speech padding
@@ -72,8 +95,10 @@ plan, source/canon checks, spend controls and actual result review.
   after source and correspondence review. The existing voicing route converts
   only that sample. A named listener hears its retained cast audio and records
   pronunciation/source-fidelity evidence. The approval pins the source bytes,
-  cast bytes, voice sidecar and plan revision. Changed evidence holds bulk
-  voicing. The first paid audition is a later explicit producer action.
+  cast bytes, voice sidecar, exact current settings and plan revision. Changed
+  evidence holds bulk voicing. A stale saved audition cannot be bypassed by
+  starting another scoped provider request. The first paid audition is a later
+  explicit producer action.
 - Local picture reuse is derived from selected donor clip stems, muted and
   trimmed with FFmpeg. The mixed finished donor film cannot be a picture stem.
   The five retained Mark 4 final-picture chunks are already video-only and
@@ -119,12 +144,14 @@ or cost ledger charges to the target.
 
 Run implementation checks on an isolated worktree and disposable data. The
 real Mark 4 `Markus-4.mp4` was confirmed by Dan on 2026-10-24 as his final
-distribution-named output. Its historical recipe remains held and lacks an
-exact linked producer decision in the database. See
+distribution-named output. Its original historical recipe was custom and
+held, and it lacked an exact linked producer decision in the live database. A
+separate decision and the approved 114-placement normalization now exist only
+in the isolated donor copy. See
 `docs/production/mark4-final-donor-evidence-2026-10-24.md`. Record that
 producer selection only in an isolated donor copy; do not alter the live
 database. Before rollout, reconcile
-the current Mark 5 production state, take a consistent DB/media backup, pin
+  the current Mark 5 production state, take a consistent DB/media backup, pin
 the code revision and validate an isolated restore. Roll back application
 code while preserving any newer edition rows/assets; never restore the old
 review snapshot over current production. Paid Meyah voice audition, Avatar

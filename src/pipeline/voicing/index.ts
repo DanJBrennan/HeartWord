@@ -2,14 +2,14 @@ import { createHash, randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
-import { reVoiceAudio } from "../../providers/elevenlabs.js";
+import { reVoiceAudio, type ReVoiceResult } from "../../providers/elevenlabs.js";
 import { getAudioDurationMs } from "../ingestion/detect-silences.js";
 import type { ProjectRow } from "../ingestion/index.js";
 import { extractClip } from "./extract-clip.js";
 import { readConfirmedSpeechRuns } from "../ingestion/continuous-speech.js";
 import { assertEditionInputsCurrent, readLanguageEditionOrigin } from "../language-edition.js";
 import { VOICE_CHANGER_DEFAULTS } from "../../providers/elevenlabs.js";
-import { assertEditionVoiceAuditionApproved, validateEditionAuditionScope } from "../language-edition-audition.js";
+import { assertEditionVoiceAuditionApproved, validateEditionAuditionScope, type AuditionEvidence } from "../language-edition-audition.js";
 
 interface OriginalSegmentRow {
   id: string;
@@ -109,11 +109,13 @@ async function runVoicingImpl(projectId: string, opts: VoicingOptions): Promise<
 
   const scopedIds = opts.sourceSegmentIds ? [...new Set(opts.sourceSegmentIds)] : null;
   if (scopedIds && scopedIds.length === 0) return { ok: false, reasoning: "A scoped voicing run needs at least one approved source interval.", generated: 0, reused: 0, passthrough: 0, skippedNoVoice: 0 };
+  let editionAudition:AuditionEvidence|null=null;
   if(edition)try{
     if(scopedIds){
-      try{assertEditionVoiceAuditionApproved(db,getDataDir(),projectId);}
-      catch{validateEditionAuditionScope(db,getDataDir(),projectId,scopedIds);}
-    }else assertEditionVoiceAuditionApproved(db,getDataDir(),projectId);
+      const reviewed=db.prepare("SELECT 1 FROM edit_commands WHERE project_id=? AND command_type='approve_edition_voice_audition' AND undone=0 LIMIT 1").get(projectId);
+      if(reviewed)editionAudition=assertEditionVoiceAuditionApproved(db,getDataDir(),projectId);
+      else validateEditionAuditionScope(db,getDataDir(),projectId,scopedIds);
+    }else editionAudition=assertEditionVoiceAuditionApproved(db,getDataDir(),projectId);
   }catch(error){return {ok:false,reasoning:(error as Error).message,generated:0,reused:0,passthrough:0,skippedNoVoice:0};}
   const segments = db.prepare(
     `SELECT id, source_path, start_ms, end_ms, speaker_character_id, verse_ref
@@ -141,12 +143,16 @@ async function runVoicingImpl(projectId: string, opts: VoicingOptions): Promise<
     .all() as unknown as VoiceAssignmentRow[];
   const voiceByCharacter = new Map(voiceRows.map((v) => [v.characterId, v]));
   const pinnedVoices=new Map(edition?.preflight.voices.map(voice=>[voice.characterId,voice])??[]);
+  const editionSettings=new Map<string,ReVoiceResult["requestSettings"]>();
+  for(const voice of edition?.preflight.voices??[])
+    editionSettings.set(voice.characterId,voice.effectiveSettings??editionAudition?.requestSettings??VOICE_CHANGER_DEFAULTS);
   if(edition){
     for(const voice of edition.preflight.voices){
-      if(voice.effectiveSettings.model_id!==VOICE_CHANGER_DEFAULTS.model_id ||
-          voice.effectiveSettings.remove_background_noise!==VOICE_CHANGER_DEFAULTS.remove_background_noise ||
-          voice.effectiveSettings.output_format!==VOICE_CHANGER_DEFAULTS.output_format)
-        return {ok:false,reasoning:"The adapter cannot reproduce the pinned historical ElevenLabs model settings.",generated:0,reused:0,passthrough:0,skippedNoVoice:0};
+      const settings=editionSettings.get(voice.characterId)!;
+      if(settings.model_id!==VOICE_CHANGER_DEFAULTS.model_id ||
+          settings.remove_background_noise!==VOICE_CHANGER_DEFAULTS.remove_background_noise ||
+          settings.output_format!==VOICE_CHANGER_DEFAULTS.output_format)
+        return {ok:false,reasoning:"The adapter cannot reproduce the pinned edition ElevenLabs model settings.",generated:0,reused:0,passthrough:0,skippedNoVoice:0};
       const current=voiceRows.find(row=>row.versionId===voice.versionId && row.characterId===voice.characterId && row.voiceId===voice.voiceId);
       if(!current)return {ok:false,reasoning:"Pinned edition character voice changed; reconcile before any conversion.",generated:0,reused:0,passthrough:0,skippedNoVoice:0};
       voiceByCharacter.set(voice.characterId,current);
@@ -229,7 +235,7 @@ async function runVoicingImpl(projectId: string, opts: VoicingOptions): Promise<
     if(!edition || !assignment)return true;
     if(!existsSync(`${path}.json`))return false;
     try{const retained=JSON.parse(readFileSync(`${path}.json`,"utf8")) as {voiceId?:string;requestSettings?:unknown};
-      return retained.voiceId===assignment.voiceId && JSON.stringify(retained.requestSettings)===JSON.stringify(pinnedVoices.get(assignment.characterId)?.effectiveSettings);
+      return retained.voiceId===assignment.voiceId && JSON.stringify(retained.requestSettings)===JSON.stringify(editionSettings.get(assignment.characterId));
     }catch{return false;}
   };
 
@@ -287,7 +293,7 @@ async function runVoicingImpl(projectId: string, opts: VoicingOptions): Promise<
       if (assignment) {
         const tmp = join(outDir, `${randomUUID()}-source.tmp.mp3`);
         extractClip(absSourcePath, run.startMs, run.endMs, tmp);
-        const settings=edition ? pinnedVoices.get(assignment.characterId)?.effectiveSettings.voice_settings : opts.voiceSettings;
+        const settings=edition ? editionSettings.get(assignment.characterId)?.voice_settings : opts.voiceSettings;
         const result = await reVoiceAudio(assignment.voiceId, tmp, settings ? {voiceSettings:settings} : {});
         requestSettings = result.requestSettings ?? null;
         providerUsage = result.usage ?? null;
@@ -319,7 +325,7 @@ async function runVoicingImpl(projectId: string, opts: VoicingOptions): Promise<
     if (assignment) {
       const tmpClipPath = join(outDir, `${slug}-source-clip.tmp.mp3`);
       extractClip(absSourcePath, seg.start_ms, seg.end_ms, tmpClipPath);
-      const settings=edition ? pinnedVoices.get(assignment.characterId)?.effectiveSettings.voice_settings : opts.voiceSettings;
+      const settings=edition ? editionSettings.get(assignment.characterId)?.voice_settings : opts.voiceSettings;
       const result = await reVoiceAudio(assignment.voiceId, tmpClipPath, settings ? {voiceSettings:settings} : {});
       requestSettings = result.requestSettings ?? null;
       providerUsage = result.usage ?? null;

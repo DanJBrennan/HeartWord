@@ -1,14 +1,17 @@
 # First final Mark 4 shot map — 2026-10-25
 
-Status: **draft for producer review**. The final `Markus-4.mp4` has not been
-normalized, and this review has made no database or provider changes.
+Status: **approved and normalized in the isolated donor copy**. Dan approved
+the 114-placement map as drafted and selected the original v34 speaking
+keyframes on 2026-10-25. The live database and Mark 5 production remain
+untouched.
 
 ## Reviewable result
 
-- [First shot map](first-shot-map-DRAFT.tsv): 114 ordered placements covering
+- [Approved final picture plan](approved-final-picture-plan.json) and its
+  [review TSV](first-shot-map-DRAFT.tsv): 114 ordered placements covering
   every frame 0–13,483 exactly once, split at each of the five verified silent
   chunk boundaries. It identifies 84 existing Mark 4 donor shots; 14 intervals
-  await dedicated legacy shot records in the isolated copy. The first 96 frames
+  became dedicated legacy shot records in the isolated copy. The first 96 frames
   are an explicitly replaceable title card, not a reusable story shot.
 - [Meyah title preview](markus4-meyah-title-preview.mp4)
   ([still](markus4-meyah-title-preview.jpg)): `Markus 4` in large type and
@@ -41,7 +44,8 @@ normalized, and this review has made no database or provider changes.
   pins their shot IDs and exact Hatam audio windows. Those images, windows and
   manifest have been copied to the isolated root with SHA-256 checks. This is
   stronger historical evidence than extracting new stills from the final film,
-  but it does not silently promote the old approval scope.
+  and Dan's newer donor-reference decision is recorded separately. The old
+  approval scope was not rewritten.
 - [Historical keyframe evidence](historical-speaking-keyframes.tsv): exact shot,
   original keyframe and cast-audio paths/hashes, plus the retained producer
   note ID and its limited approval scope for all fifteen beats.
@@ -109,27 +113,38 @@ take path.
 | 10,146–10,245 | 6, Mark 4:33–34 | Disciples listen after the parable. |
 | 10,246–10,373 | 6, Mark 4:33–34 | Disciples listen before the private explanation. |
 
-The draft leaves the fourteen new shot IDs blank. No plan JSON bearing a producer
-name has been created or submitted.
+The review TSV retains blank provisional IDs as the historical review input.
+The [approved import specification](approved-legacy-imports.json) records the
+fourteen scene-correct aliases; the approved plan contains their stable IDs.
 
-## Remaining import checks
+## Isolated preparation result and remaining review
 
-1. Review the 114-placement map and the two contact sheets. Create fourteen
-   dedicated legacy editorial shots only in the isolated donor copy, with
-   frame-derived keyframes, exact picture intervals, original-source provenance
-   and Scripture-grounded scene placement. Keep the five mood intervals
-   unchanged in the Meyah edition except title text.
-2. The 15 canonical Jesus performance shots have original, historically
-   producer-approved **review inputs** and exact source windows, but still need
-   a scoped decision on how to represent that evidence as donor keyframe
-   attempts for an editable edition. Do not silently turn the held-review note
-   into chapter-placement approval or invent utterance bindings. Verify each
-   source window, especially those crossing two retained audio segments,
-   against the original recording before any new binding is recorded.
-3. Re-run read-only preflight, then the fixed-root normalizer on a complete,
-   named reviewed map only. Confirm preserved original recipe, exact frame
-   coverage, selected clip lineage, speaking voice evidence and a fresh-root
-   editable restore before creating the Meyah edition.
+1. `scripts/prepare-mark4-final-donor.py --apply` added the fourteen dedicated
+   scene-correct beats and accepted reference-keyframe attempts for them and the
+   fifteen original v34 performance frames. The original rows and limited
+   historical keyframe approval remain intact. No donor utterance binding was
+   fabricated. The isolated database backup is at
+   `output/mark4-donor-20261024/review/heartword.before-final-map-preparation.sqlite`.
+2. `scripts/normalize-mark4-final-donor.ts` applied the approved plan to the
+   isolated render. Its 114-placement timeline SHA-256 is
+   `42c8c09c9c447d57b9980a4aad0e9aba18ae4e5648bde3269202c924d500a912`.
+   The old custom recipe remains in the normalization edit command. Exact
+   opening and closing picture intervals remain represented separately; the
+   Hatam-lettered title is replaceable provenance only.
+3. The supplied Meyah Mark 4 DOCX matches HeartWord's managed source byte for
+   byte. The target recording, text, English reference, approved visual
+   references and cast masters were copied into the isolated root with SHA-256
+   checks. Real preflight reports `ready`, with 113 pinned story picture
+   placements and two approved Papuan voice identities. It records the absent
+   historical ElevenLabs request settings as unknown. The isolated Meyah
+   project is `a5a40890-8bb0-4856-aacb-1dcad97074bb`; it has no completed
+   stages or provider work.
+4. Review Meyah source alignment and the reference-only entries `6 (4:5)` and
+   `19 (4:18)`, then record exact target speech windows and source-grounded
+   coverage changes. A short reviewed target voice audition establishes current
+   settings before bulk conversion. The four-second title preview still needs
+   normal target editorial selection. The later target film needs new Avatar
+   takes, whole-film QC and a fresh-root editable restore.
 
-The live HeartWord database, Mark 5 production, original Mark 4 media and
-ElevenLabs/Kling providers were not touched by this review.
+No ElevenLabs or Kling provider request was made during donor normalization or
+target project creation.

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "approval": "Dan Brennan approved the 114-placement final Mark 4 shot map as drafted on 2026-10-25. The original final-picture frames remain the visual authority.",
+  "imports": [
+    {"firstFrame": 96, "lastFrame": 179, "sceneSequence": 1, "verseRef": "Mark 4:1", "action": "The clean lake establishing picture continues after the localized chapter title.", "framing": "wide", "cameraMovement": "static", "needsLipSync": false},
+    {"firstFrame": 180, "lastFrame": 347, "sceneSequence": 1, "verseRef": "Mark 4:1", "action": "An empty boat rests beside the shore before Jesus teaches the crowd.", "framing": "wide", "cameraMovement": "static", "needsLipSync": false},
+    {"firstFrame": 348, "lastFrame": 440, "sceneSequence": 1, "verseRef": "Mark 4:1", "action": "The shore crowd watches Jesus seated in the boat.", "framing": "wide", "cameraMovement": "push_in", "needsLipSync": false, "addApprovedCharacter": "Jesus"},
+    {"firstFrame": 588, "lastFrame": 774, "sceneSequence": 1, "verseRef": "Mark 4:1-2", "action": "Jesus addresses the gathered shore crowd from the boat in a wide view.", "framing": "wide", "cameraMovement": "static", "needsLipSync": false},
+    {"firstFrame": 775, "lastFrame": 1024, "sceneSequence": 1, "verseRef": "Mark 4:1-2", "action": "A second slow view moves toward Jesus in the boat as the crowd listens.", "framing": "wide", "cameraMovement": "push_in", "needsLipSync": false, "addApprovedCharacter": "Jesus"},
+    {"firstFrame": 2385, "lastFrame": 2550, "sceneSequence": 1, "verseRef": "Mark 4:8", "action": "Young shoots in good soil illustrate the seed yielding a crop.", "framing": "wide", "cameraMovement": "static", "needsLipSync": false},
+    {"firstFrame": 2827, "lastFrame": 3017, "sceneSequence": 1, "verseRef": "Mark 4:9", "action": "Jesus closes the sower teaching from the boat before the crowd.", "framing": "medium_close", "cameraMovement": "static", "needsLipSync": true},
+    {"firstFrame": 3964, "lastFrame": 4023, "sceneSequence": 2, "verseRef": "Mark 4:10-12", "action": "Disciples listen during the private exchange about the parables.", "framing": "medium", "cameraMovement": "static", "needsLipSync": false},
+    {"firstFrame": 5924, "lastFrame": 6023, "sceneSequence": 3, "verseRef": "Mark 4:14-20", "action": "Two disciples listen as Jesus explains the sower parable.", "framing": "medium", "cameraMovement": "static", "needsLipSync": false},
+    {"firstFrame": 7759, "lastFrame": 7826, "sceneSequence": 4, "verseRef": "Mark 4:24", "action": "A group of listeners considers Jesus's instruction to pay attention to what they hear.", "framing": "medium", "cameraMovement": "static", "needsLipSync": false},
+    {"firstFrame": 9240, "lastFrame": 9321, "sceneSequence": 6, "verseRef": "Mark 4:30-32", "action": "A listener in the shore crowd considers the mustard-seed comparison.", "framing": "medium", "cameraMovement": "static", "needsLipSync": false},
+    {"firstFrame": 10146, "lastFrame": 10245, "sceneSequence": 6, "verseRef": "Mark 4:33-34", "action": "Two disciples listen after Jesus speaks in parables to the crowd.", "framing": "medium", "cameraMovement": "static", "needsLipSync": false},
+    {"firstFrame": 10246, "lastFrame": 10373, "sceneSequence": 6, "verseRef": "Mark 4:33-34", "action": "Two disciples listen before Jesus explains privately to his followers.", "framing": "medium", "cameraMovement": "static", "needsLipSync": false},
+    {"firstFrame": 13100, "lastFrame": 13483, "sceneSequence": 7, "verseRef": "Mark 4:41", "action": "The calm night sea pulls away from the boat after the disciples' final question.", "framing": "wide", "cameraMovement": "pull_out", "needsLipSync": false}
+  ]
+}

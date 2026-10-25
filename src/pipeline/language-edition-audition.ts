@@ -5,12 +5,13 @@ import type { DatabaseSync } from "node:sqlite";
 import { assertEditionInputsCurrent, readLanguageEditionOrigin, readLanguageEditionPlan } from "./language-edition.js";
 import { readConfirmedSpeechRuns } from "./ingestion/continuous-speech.js";
 import { hasCurrentSourceReview } from "./ingestion/source-review.js";
+import { VOICE_CHANGER_DEFAULTS, type ReVoiceResult } from "../providers/elevenlabs.js";
 
 const hash=(bytes:Buffer|string)=>createHash("sha256").update(bytes).digest("hex");
 type Original={id:string;source_path:string;start_ms:number;end_ms:number;speaker_character_id:string|null};
 type Cast={source_path:string;source_hash:string;voice_version_id:string|null};
 export type AuditionEvidence={projectId:string;planHash:string;sourceSegmentIds:string[];sourceSha256:string;
-  castSha256:string;sidecarSha256:string;voiceId:string;voiceVersionId:string};
+  castSha256:string;sidecarSha256:string;voiceId:string;voiceVersionId:string;requestSettings:ReVoiceResult["requestSettings"]};
 
 /** One reviewed speech interval (or complete short speech run), never a chapter-wide paid audition. */
 export function validateEditionAuditionScope(db:DatabaseSync,dataDir:string,projectId:string,ids:readonly string[]):void{
@@ -56,16 +57,22 @@ export function editionAuditionEvidence(db:DatabaseSync,dataDir:string,projectId
     if(!member||member.source_path!==cast.source_path||member.source_hash!==sourceSha256||member.voice_version_id!==voice.versionId)
       throw new Error("The complete speech run does not share one proven cast master.");
   }
-  const sidecarBytes=readFileSync(sidecar),settings=JSON.parse(sidecarBytes.toString("utf8")) as {voiceId?:string;voiceVersionId?:string;requestSettings?:unknown;
+  const sidecarBytes=readFileSync(sidecar),settings=JSON.parse(sidecarBytes.toString("utf8")) as {voiceId?:string;voiceVersionId?:string;requestSettings?:ReVoiceResult["requestSettings"];
     sourceStartMs?:number;sourceEndMs?:number;originalSegmentId?:string;members?:Array<{id:string}>};
+  const currentSettings=settings.requestSettings;
+  if(!currentSettings || currentSettings.model_id!==VOICE_CHANGER_DEFAULTS.model_id ||
+      currentSettings.remove_background_noise!==VOICE_CHANGER_DEFAULTS.remove_background_noise ||
+      currentSettings.output_format!==VOICE_CHANGER_DEFAULTS.output_format)
+    throw new Error("Retained audition sidecar lacks explicit current ElevenLabs model and output settings.");
   if(settings.voiceId!==voice.voiceId||settings.voiceVersionId!==voice.versionId||
-      JSON.stringify(settings.requestSettings)!==JSON.stringify(voice.effectiveSettings)||
+      (voice.effectiveSettings!==null && JSON.stringify(currentSettings)!==JSON.stringify(voice.effectiveSettings))||
       settings.sourceStartMs!==segments[0]!.start_ms||settings.sourceEndMs!==segments.at(-1)!.end_ms||
       (segments.length===1 ? settings.originalSegmentId!==segments[0]!.id :
         settings.members?.length!==segments.length||segments.some(segment=>!settings.members?.some(member=>member.id===segment.id))))
     throw new Error("Retained audition sidecar does not prove the exact source window and pinned voice settings.");
   return {projectId,planHash:plan.hash,sourceSegmentIds:segments.map(item=>item.id),sourceSha256,
-    castSha256:hash(readFileSync(master)),sidecarSha256:hash(sidecarBytes),voiceId:voice.voiceId,voiceVersionId:voice.versionId};
+    castSha256:hash(readFileSync(master)),sidecarSha256:hash(sidecarBytes),voiceId:voice.voiceId,voiceVersionId:voice.versionId,
+    requestSettings:currentSettings};
 }
 
 export function approveEditionVoiceAudition(db:DatabaseSync,dataDir:string,projectId:string,input:{sourceSegmentIds:string[];reviewer:string;evidence:string}){
@@ -86,11 +93,12 @@ export function approveEditionVoiceAudition(db:DatabaseSync,dataDir:string,proje
   }catch(error){db.exec("ROLLBACK");throw error;}
 }
 
-export function assertEditionVoiceAuditionApproved(db:DatabaseSync,dataDir:string,projectId:string):void{
+export function assertEditionVoiceAuditionApproved(db:DatabaseSync,dataDir:string,projectId:string):AuditionEvidence{
   const row=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='approve_edition_voice_audition' AND undone=0 ORDER BY sequence DESC LIMIT 1").get(projectId) as {payload:string}|undefined;
   if(!row)throw new Error("Full target-language voicing is held until a short Meyah voice audition is heard and approved.");
   const saved=JSON.parse(row.payload) as AuditionEvidence & {reviewer:string;evidence:string};
   const current=editionAuditionEvidence(db,dataDir,projectId,saved.sourceSegmentIds);
   for(const key of Object.keys(current) as Array<keyof AuditionEvidence>)if(JSON.stringify(current[key])!==JSON.stringify(saved[key]))
     throw new Error("Approved voice audition is stale after a source, cast, voice or plan change.");
+  return current;
 }

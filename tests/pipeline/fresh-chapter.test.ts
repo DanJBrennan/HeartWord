@@ -26,6 +26,39 @@ it("ingests an isolated new chapter from real fixture files then holds before in
   expect(db.prepare("SELECT COUNT(*) n FROM scenes WHERE project_id='fresh'").get()).toMatchObject({n:0});
 });
 
+it("reruns local alignment with a separately heard spoken chapter heading before verse one", async () => {
+  delete process.env.GEMINI_API_KEY;
+  dataDir=mkdtempSync(join(tmpdir(),"hw-spoken-heading-"));cleanup.push(dataDir);
+  const source=join(dataDir,"assets","source","hatam","mark-3");mkdirSync(source,{recursive:true});
+  writeFileSync(join(source,"mark-3-text.docx"),docx(["MARK 3","1First verse words.","2Second verse words."]));
+  execFileSync("ffmpeg",["-v","error","-y",
+    "-f","lavfi","-i","sine=frequency=190:duration=0.7:sample_rate=8000",
+    "-f","lavfi","-i","anullsrc=r=8000:cl=mono:d=0.8",
+    "-f","lavfi","-i","sine=frequency=290:duration=0.7:sample_rate=8000",
+    "-f","lavfi","-i","anullsrc=r=8000:cl=mono:d=0.8",
+    "-f","lavfi","-i","sine=frequency=390:duration=0.7:sample_rate=8000",
+    "-filter_complex","[0:a][1:a][2:a][3:a][4:a]concat=n=5:v=0:a=1","-c:a","libmp3lame",join(source,"mark-3-fcbh-audio.mp3")]);
+  db=new DatabaseSync(":memory:");db.exec(readFileSync("src/db/schema.sql","utf8"));
+  db.exec("INSERT INTO projects (id,language,book,chapter,created_at,updated_at) VALUES ('fresh','hatam','mark',3,1,1)");
+  const {runIngestionWithAlignment}=await import("../../src/pipeline/ingestion/index.js");
+  const {detectSilences}=await import("../../src/pipeline/ingestion/detect-silences.js");
+  const audio=join(source,"mark-3-fcbh-audio.mp3");
+  expect((await runIngestionWithAlignment("fresh")).ok).toBe(true);
+  expect(db.prepare("SELECT COUNT(*) n FROM audio_segments WHERE project_id='fresh' AND layer='original_reading'").get()).toEqual({n:2});
+  const opening=detectSilences(audio).find(gap=>gap.startMs>500 && gap.endMs<1600)!;
+  const endMs=Math.round((opening.startMs+opening.endMs)/2);
+  const result=await runIngestionWithAlignment("fresh",undefined,{spokenChapterHeading:{endMs,reviewer:"Dan",evidence:"Heard the spoken chapter name before verse one."}});
+  expect(result.ok).toBe(true);
+  expect(result.reasoning).toContain("separate provisional spoken chapter heading");
+  const rows=db.prepare("SELECT verse_ref,start_ms,end_ms,speaker_character_id FROM audio_segments WHERE project_id='fresh' AND layer='original_reading' ORDER BY start_ms").all() as Array<{verse_ref:string|null;start_ms:number;end_ms:number;speaker_character_id:string|null}>;
+  expect(rows).toHaveLength(3);
+  expect(rows[0]).toMatchObject({verse_ref:null,start_ms:0,end_ms:endMs,speaker_character_id:null});
+  expect(rows[1]).toMatchObject({verse_ref:"Mark 3:1",start_ms:endMs});
+  expect(rows[2]).toMatchObject({verse_ref:"Mark 3:2"});
+  expect(rows[1]!.end_ms).toBe(rows[2]!.start_ms);
+  expect(db.prepare("SELECT COUNT(*) n FROM source_alignment_reviews WHERE project_id='fresh'").get()).toEqual({n:0});
+});
+
 it("moves an unreviewed source boundary into a clear pause without blocking on crossing activity", async () => {
   process.env.GEMINI_API_KEY = "offline-injected-aligner";
   dataDir=mkdtempSync(join(tmpdir(),"hw-boundary-snap-")); cleanup.push(dataDir);

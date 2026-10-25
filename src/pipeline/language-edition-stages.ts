@@ -116,7 +116,8 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
   for(const [index,item] of plan.revision.correspondence.entries())if(item.addedForEdition &&
       (item.treatment!=="needs_coverage" || index===0 || plan.revision.correspondence[index-1]?.donorShotId!==item.donorShotId))
     return {ok:false,reasoning:"An added target coverage beat must follow a selected donor shot in the same reviewed scene."};
-  const now=Date.now(),mapping:Array<{donorShotId:string;targetShotId:string;treatment:string;targetSegmentId:string|null;reason:string}>=[];
+  const now=Date.now(),mapping:Array<{donorShotId:string;targetShotId:string;treatment:string;targetSegmentId:string|null;reason:string;
+    voiceIdentitySource?:"donor_utterance_binding"|"pinned_approved_character"}>=[];
   let activeRuns:ReturnType<typeof readConfirmedSpeechRuns>;
   try{activeRuns=readConfirmedSpeechRuns(db,projectId,dataDir);}catch(error){return {ok:false,reasoning:`Target speech-run evidence changed: ${(error as Error).message}`};}
   db.exec("BEGIN IMMEDIATE");
@@ -135,12 +136,16 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
         if(!row(db,"SELECT id FROM characters WHERE id=? AND canon_status='approved' AND region='Papuan'",member.character_id))throw new Error("Donor shot names an unapproved target canon member.");
         db.prepare("INSERT INTO shot_characters(shot_id,character_id)VALUES(?,?)").run(targetShotId,member.character_id);
       }
+      let voiceIdentitySource: "donor_utterance_binding"|"pinned_approved_character"|undefined;
       if(Number(donor.needs_lip_sync)===1){
         const bindings=db.prepare("SELECT character_version_id FROM shot_utterance_bindings WHERE shot_id=?").all(item.donorShotId) as Array<{character_version_id:string}>;
-        if(bindings.length!==1)throw new Error("Selected donor speaking shot has an ambiguous retained utterance binding.");
-        const binding=bindings[0]!;
-        if(!binding || typeof binding.character_version_id!=="string" || !item.targetSegmentId || item.targetStartMs===null || item.targetEndMs===null)throw new Error("Speaking shot needs the selected donor's approved voice and an exact reviewed target window.");
-        if(!origin.preflight.voices.some(voice=>voice.versionId===binding.character_version_id))throw new Error("Speaking shot voice is outside the pinned edition identity.");
+        if(bindings.length>1)throw new Error("Selected donor speaking shot has an ambiguous retained utterance binding.");
+        const pinned=origin.preflight.voices.filter(voice=>voice.characterId===donor.dialogue_character_id);
+        const versionId=bindings.length===1?bindings[0]!.character_version_id:pinned.length===1?pinned[0]!.versionId:null;
+        voiceIdentitySource=bindings.length===1?"donor_utterance_binding":"pinned_approved_character";
+        if(!versionId || !item.targetSegmentId || item.targetStartMs===null || item.targetEndMs===null)
+          throw new Error("Speaking shot needs one pinned approved character voice and an exact reviewed target window.");
+        if(!pinned.some(voice=>voice.versionId===versionId))throw new Error("Speaking shot voice is outside the pinned edition identity.");
         const current=row(db,"SELECT start_ms,end_ms,speaker_character_id,source_path FROM audio_segments WHERE id=? AND project_id=? AND layer='original_reading'",item.targetSegmentId,projectId);
         const run=item.targetSpeechRunId?activeRuns.find(value=>value.id===item.targetSpeechRunId):null;
         if(item.targetSpeechRunId && (!run || !run.members.some(member=>member.id===item.targetSegmentId)))throw new Error("Reviewed target speech run changed or does not contain its anchor segment.");
@@ -149,14 +154,15 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
           throw new Error("Reviewed target utterance bounds, speaker or source changed after correspondence review.");
         const bindingId=randomUUID();
         db.prepare("INSERT INTO shot_utterance_bindings(id,shot_id,source_audio_segment_id,source_start_ms,source_end_ms,character_version_id,source_hash,approved_at,approved_by)VALUES(?,?,?,?,?,?,?,?,?)")
-          .run(bindingId,targetShotId,item.targetSegmentId,item.targetStartMs,item.targetEndMs,binding.character_version_id,run?.audioHash??origin.preflight.target.audio!.sha256,now,plan.revision.reviewer);
+          .run(bindingId,targetShotId,item.targetSegmentId,item.targetStartMs,item.targetEndMs,versionId,run?.audioHash??origin.preflight.target.audio!.sha256,now,plan.revision.reviewer);
         if(run){const sequence=Number((db.prepare("SELECT COALESCE(MAX(sequence),0)+1 n FROM edit_commands WHERE project_id=?").get(projectId) as {n:number}).n);
           db.prepare("INSERT INTO edit_commands(id,project_id,sequence,command_type,payload,idempotency_key,applied_at)VALUES(?,?,?,'bind_speech_run_utterance',?,?,?)")
             .run(randomUUID(),projectId,sequence,JSON.stringify({binding:{id:bindingId,shotId:targetShotId,sourceSegmentId:item.targetSegmentId,startMs:item.targetStartMs,endMs:item.targetEndMs,
-              characterVersionId:binding.character_version_id,sourceHash:run.audioHash},speechRunId:run.id,timingEvidence:item.reason,approvedBy:plan.revision.reviewer}),
+              characterVersionId:versionId,sourceHash:run.audioHash},speechRunId:run.id,timingEvidence:item.reason,approvedBy:plan.revision.reviewer,
+              voiceIdentitySource}),
               `speech-binding:${bindingId}`,now);}
       }
-      mapping.push({donorShotId:item.donorShotId,targetShotId,treatment:item.treatment,targetSegmentId:item.targetSegmentId,reason:item.reason});
+      mapping.push({donorShotId:item.donorShotId,targetShotId,treatment:item.treatment,targetSegmentId:item.targetSegmentId,reason:item.reason,voiceIdentitySource});
     }
     const title=origin.preflight.target.title;
     const intro=buildChapterIntroPlan({title:title.bookChapter,language:origin.preflight.target.language,languageLabel:title.languageName,

@@ -67,7 +67,8 @@ export function resolveSourcePaths(project: ProjectRow): { docxPath: string; aud
 export const runIngestion: Stage = (projectId) => observeWork(projectId, "ingestion", () => runIngestionWithAlignment(projectId));
 
 /** Injectable seam keeps tests offline; production always uses the provider. */
-export async function runIngestionWithAlignment(projectId: string, aligner = alignWithGemini) {
+export async function runIngestionWithAlignment(projectId: string, aligner = alignWithGemini,
+  options?: {spokenChapterHeading?:{endMs:number;reviewer:string;evidence:string}}) {
   const db = getDb();
   const project = db.prepare(`SELECT id, language, book, chapter FROM projects WHERE id = ?`).get(projectId) as
     | ProjectRow
@@ -132,6 +133,17 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
     return { ok: false, reasoning: `Ingestion failed reading/analyzing ${audioPath}: ${(err as Error).message}` };
   }
 
+  const spokenHeading=options?.spokenChapterHeading;
+  if(spokenHeading){
+    const gap=gaps.find(item=>item.startMs<spokenHeading.endMs && item.endMs>spokenHeading.endMs);
+    if(!spokenHeading.reviewer.trim() || !spokenHeading.evidence.trim() || !Number.isInteger(spokenHeading.endMs) ||
+        spokenHeading.endMs<=0 || spokenHeading.endMs>=totalDurationMs || !gap ||
+        Math.abs(Math.round((gap.startMs+gap.endMs)/2)-spokenHeading.endMs)>50)
+      return {ok:false,reasoning:"Spoken chapter heading needs a named observation and a boundary at the midpoint of a measured opening pause."};
+    if(process.env.GEMINI_API_KEY)
+      return {ok:false,reasoning:"A reviewed spoken-heading boundary cannot be mixed with a new provider alignment submission."};
+  }
+
   // General corpus alignment is evidence-first. It never supplies speaker
   // identities and never removes an unmatched interval; failures are retained
   // as reviewable evidence while the conservative timing fallback remains.
@@ -141,6 +153,8 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
   const sourceHash = alignmentKey(audioPath, verseRecords, undefined, chapterTitle ?? "");
   let geminiEvidence: Awaited<ReturnType<typeof alignWithGemini>> | null = null;
   const cached = db.prepare("SELECT result_json,status FROM alignment_evidence WHERE project_id=? AND source_hash=?").get(projectId, sourceHash) as {result_json:string;status:string}|undefined;
+  if(spokenHeading && cached && (cached.status==="provisional" || cached.status==="critical_hold"))
+    return {ok:false,reasoning:"A retained provider alignment already exists; reconcile it before applying a separate local spoken-heading boundary."};
   if (cached?.status === "submission_started" || cached?.status === "submission_uncertain") {
     return { ok: false, reasoning: "Ingestion is held: a previous Gemini alignment submission has no durable result. Reconcile its evidence explicitly; HeartWord will not repeat a possibly paid submission." };
   }
@@ -158,14 +172,22 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
       return { ok: false, reasoning: "Ingestion is held: Gemini alignment submission/result is uncertain. No fallback was written and no retry will be sent automatically." };
     }
   } else {
-    db.prepare("INSERT OR REPLACE INTO alignment_evidence(project_id,source_hash,model,result_json,status,created_at) VALUES (?,?,?,?,?,?)").run(projectId,sourceHash,"none",JSON.stringify({method:"estimated_timing"}),"estimated_timing",Date.now());
+    db.prepare("INSERT OR REPLACE INTO alignment_evidence(project_id,source_hash,model,result_json,status,created_at) VALUES (?,?,?,?,?,?)")
+      .run(projectId,sourceHash,"none",JSON.stringify({method:"estimated_timing",spokenChapterHeading:spokenHeading??null}),"estimated_timing",Date.now());
   }
 
   const evidenceSegments = geminiEvidence?.segments ?? [];
   let timings: ReturnType<typeof selectBoundaries> = [];
   if (evidenceSegments.length === 0) {
     try {
-      timings = selectBoundaries(gaps, verseGroups.length, totalDurationMs);
+      if(spokenHeading){
+        const offset=spokenHeading.endMs;
+        const remaining=gaps.filter(gap=>gap.startMs>=offset).map(gap=>({startMs:gap.startMs-offset,endMs:gap.endMs-offset,durationMs:gap.durationMs}));
+        const verses=selectBoundaries(remaining,verseGroups.length,totalDurationMs-offset)
+          .map(item=>({...item,startMs:item.startMs+offset,endMs:item.endMs+offset}));
+        verses[0]!.confidence=Math.min(60,verses[0]!.confidence??60);
+        timings=[{startMs:0,endMs:offset,confidence:60},...verses];
+      }else timings = selectBoundaries(gaps, verseGroups.length, totalDurationMs);
     } catch (err) {
       return {
         ok: false,
@@ -179,7 +201,10 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
   const persisted = evidenceSegments.length > 0 ? evidenceSegments.map(segment => ({
     startMs: segment.startMs, endMs: segment.endMs, verseRef: segment.verseRef ? `${project.book} ${project.chapter}:${segment.verseRef.replace(/^v/, "")}` : null,
     confidence: segment.status === "matched" ? Math.round(segment.score * 100) : null
-  })) : verseGroups.map((group, i) => ({ startMs: timings[i]!.startMs, endMs: timings[i]!.endMs, verseRef: group.verseRef, confidence: timings[i]!.confidence }));
+  })) : [
+    ...(spokenHeading?[{startMs:0,endMs:spokenHeading.endMs,verseRef:null,confidence:timings[0]!.confidence}]:[]),
+    ...verseGroups.map((group, i) => {const timing=timings[i+(spokenHeading?1:0)]!;return {startMs:timing.startMs,endMs:timing.endMs,verseRef:group.verseRef,confidence:timing.confidence};})
+  ];
   // Text-match confidence does not validate a segment's millisecond edge.
   // Crossing activity alone is not a fault: a speaker may continue through a
   // visual cut. Only a substantial measured pause permits an automatic timing
@@ -314,7 +339,7 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
     ok: !criticalEvidence,
     reasoning:
       criticalEvidence ? `Ingestion retained ${geminiEvidence!.segments.length} source intervals but is held: Gemini evidence covers ${(geminiEvidence!.coverage * 100).toFixed(1)}% of verified text, with uncovered verses ${geminiEvidence!.uncoveredVerses.join(",") || "none"}. Listen to the flagged intervals and reconcile before planning.` :
-      `${geminiEvidence ? `Gemini evidence retained ${geminiEvidence.segments.length} intervals with ${(geminiEvidence.coverage * 100).toFixed(1)}% text coverage.` : `Aligned ${verseGroups.length} verse-group intervals with silence-based estimated timing because no Gemini provider is configured.`} ${snappedBoundaries.size} clear-pause boundary corrections; ${boundaryFindings.length - snappedBoundaries.size} acoustic advisories (neither infers a speaker). ${lowConfidenceCount} intervals require named source review before downstream work.`
+      `${geminiEvidence ? `Gemini evidence retained ${geminiEvidence.segments.length} intervals with ${(geminiEvidence.coverage * 100).toFixed(1)}% text coverage.` : `Aligned ${verseGroups.length} verse-group intervals with silence-based estimated timing because no Gemini provider is configured.`} ${spokenHeading?`A separate provisional spoken chapter heading covers 0–${spokenHeading.endMs} ms before verse one. `:""}${snappedBoundaries.size} clear-pause boundary corrections; ${boundaryFindings.length - snappedBoundaries.size} acoustic advisories (neither infers a speaker). ${lowConfidenceCount} intervals require named source review before downstream work.`
   };
 }
 

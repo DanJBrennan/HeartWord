@@ -1,0 +1,693 @@
+{
+  "schemaVersion": 1,
+  "renderId": "deefa536-62f9-41b3-bbac-e9e8fb244206",
+  "expectedOriginalTimelineSha256": "a754c96659bdf280de5ec4a4a81f0673864d1d327078d1e002b5f986e75d7ce6",
+  "reviewer": "Dan Brennan",
+  "evidence": "Dan Brennan approved the 114-placement final Mark 4 shot map as drafted on 2026-10-25 and chose the original v34 keyframes as scene-specific donor references. Their prior held-review scope remains unchanged.",
+  "placements": [
+    {
+      "kind": "replaceable_title",
+      "startFrame": 0,
+      "endFrame": 95,
+      "reason": "The Hatam-lettered four-second card is replaced in place by the reviewed Markus 4 / Meyah card over the retained clean lake still."
+    },
+    {
+      "shotId": "4a4285d2-0b80-50bf-8b52-715595af5224",
+      "startFrame": 96,
+      "endFrame": 179,
+      "reason": "Dan directed exact preservation of the clean moving lake after the title as a dedicated opening beat."
+    },
+    {
+      "shotId": "8abb9307-603e-5133-93fa-e111e936e4d5",
+      "startFrame": 180,
+      "endFrame": 347,
+      "reason": "Dan directed exact preservation of the empty-boat mood insert as a dedicated opening beat."
+    },
+    {
+      "shotId": "c09bdee9-7dcf-5c81-b6b3-28146618095d",
+      "startFrame": 348,
+      "endFrame": 440,
+      "reason": "Dan directed exact preservation of this shore/boat editorial still as a dedicated opening beat."
+    },
+    {
+      "shotId": "5a812d41-8b6a-443e-9028-3dd8bc4649d2",
+      "startFrame": 441,
+      "endFrame": 587,
+      "reason": "v68 opening generated/video/mark4-v63-world-base-scene1-boat-reverse-933697403817955364.mp4 motion-compensated slow motion 0.8x, graded"
+    },
+    {
+      "shotId": "ab04211f-78d5-5f8b-9ca4-c6ca66daa446",
+      "startFrame": 588,
+      "endFrame": 774,
+      "reason": "Jesus in the boat addresses the Mark 4:1-2 shoreline crowd; saved take was attached to a Mark 4:24 shot. Original donor shot 8698ecb1-3d4f-475e-a798-39156449f04c."
+    },
+    {
+      "shotId": "15192b11-3ee2-597f-bff6-cf87bfd3e728",
+      "startFrame": 775,
+      "endFrame": 1024,
+      "reason": "Dan directed exact preservation of the second move on the shore/boat editorial still as a distinct beat."
+    },
+    {
+      "shotId": "b4f60ed5-c4f4-436f-bfac-fb0e8b357fdf",
+      "startFrame": 1025,
+      "endFrame": 1194,
+      "reason": "v68 opening generated/assembled/b4f60ed5-c4f4-436f-bfac-fb0e8b357fdf.mp4 real frames 1.0x, graded to v65 match; leads into the 4:3 performance at 1195"
+    },
+    {
+      "shotId": "7af4222c-ae6e-4577-abe7-65f904cbdb67",
+      "startFrame": 1195,
+      "endFrame": 1338,
+      "reason": "Direct source-frame comparison 0.991; Mark 4:3 Jesus speaking in boat."
+    },
+    {
+      "shotId": "1172d540-c778-46af-8c7e-9dfa2cc565a1",
+      "startFrame": 1339,
+      "endFrame": 1509,
+      "reason": "v66 p02 generated/assembled/1172d540-c778-46af-8c7e-9dfa2cc565a1.mp4 1 s frozen head -> real frames"
+    },
+    {
+      "shotId": "7d0820da-e220-4962-b711-ccc42447017b",
+      "startFrame": 1510,
+      "endFrame": 1578,
+      "reason": "v66 p03 generated/assembled/7d0820da-e220-4962-b711-ccc42447017b.mp4 clip restarted at f1486 -> continuous"
+    },
+    {
+      "shotId": "87ef49f3-1520-439a-9c0b-16827563033b",
+      "startFrame": 1579,
+      "endFrame": 1667,
+      "reason": "Direct source-frame comparison 0.924; rocky-ground sprouts."
+    },
+    {
+      "shotId": "f76279dd-4f87-4ecf-9e7e-1350cdb238c7",
+      "startFrame": 1668,
+      "endFrame": 1775,
+      "reason": "v45 piece-1 generated/lipsync-face/933580727550746706.mp4 Mark 4:3–8 3-8-beat-1 approved canonical Jesus performance (canonical_v34_lip_sync)"
+    },
+    {
+      "shotId": "06922215-fddd-4bb5-bfc7-583b9bd3f805",
+      "startFrame": 1776,
+      "endFrame": 1884,
+      "reason": "v66 p04 generated/assembled/06922215-fddd-4bb5-bfc7-583b9bd3f805.mp4 clip restarted at f1790 -> continuous"
+    },
+    {
+      "shotId": "0a87e9e8-122d-4d66-8d00-ea6946a33582",
+      "startFrame": 1885,
+      "endFrame": 2073,
+      "reason": "Direct source-frame comparison 0.999; wilting plants before cut at frame 2074."
+    },
+    {
+      "shotId": "f2d9bebb-77a7-4a38-8cb2-1f35ca06a711",
+      "startFrame": 2074,
+      "endFrame": 2124,
+      "reason": "Visible hot-sun cut at frame 2074, consistent with Mark 4:6 source shot."
+    },
+    {
+      "shotId": "24d79583-696a-4ed3-a18a-9a059398f59c",
+      "startFrame": 2125,
+      "endFrame": 2159,
+      "reason": "v66 p05 generated/assembled/24d79583-696a-4ed3-a18a-9a059398f59c.mp4 ping-pong/jitter -> continuous"
+    },
+    {
+      "shotId": "4f07697e-2bf5-4254-a24c-00afd7fb9748",
+      "startFrame": 2160,
+      "endFrame": 2267,
+      "reason": "v45 piece-3 generated/lipsync-face/933581379491729430.mp4 Mark 4:3–8 3-8-beat-2 approved canonical Jesus performance (canonical_v34_lip_sync)"
+    },
+    {
+      "shotId": "24d79583-696a-4ed3-a18a-9a059398f59c",
+      "startFrame": 2268,
+      "endFrame": 2384,
+      "reason": "v66 p06a generated/assembled/24d79583-696a-4ed3-a18a-9a059398f59c.mp4 thorns continues to end of 4:7 (was held frames + wheat bridge)"
+    },
+    {
+      "shotId": "ac1695e1-5a5d-5649-922a-24ceef98f06f",
+      "startFrame": 2385,
+      "endFrame": 2550,
+      "reason": "Seedlings in the sower story's fruitful soil; saved take was attached to the later growing-seed parable. Original donor shot 20496fa7-983d-47a3-ab9d-67d796aaef20."
+    },
+    {
+      "shotId": "9edf5781-cfc0-4975-8652-0f5a081a63f2",
+      "startFrame": 2551,
+      "endFrame": 2718,
+      "reason": "v66 p07 generated/assembled/9edf5781-cfc0-4975-8652-0f5a081a63f2.mp4 0.8 s frozen head -> real frames"
+    },
+    {
+      "shotId": "871b9833-386c-4130-8413-9f2ed0847760",
+      "startFrame": 2719,
+      "endFrame": 2826,
+      "reason": "v45 piece-5 generated/lipsync-face/933594340159524902.mp4 Mark 4:3–8 3-8-beat-3 approved canonical Jesus performance (canonical_v34_lip_sync)"
+    },
+    {
+      "shotId": "49186924-393e-562e-891d-d91910f7c0c1",
+      "startFrame": 2827,
+      "endFrame": 3017,
+      "reason": "Jesus completes the opening sower teaching; saved take was attached to the later mustard-seed scene. Original donor shot 4934ce6e-3894-4800-a8b9-c380d91ae570."
+    },
+    {
+      "shotId": "67a2d802-6a79-4461-bd99-aca44b3b7622",
+      "startFrame": 3018,
+      "endFrame": 3105,
+      "reason": "Direct source-frame comparison 0.980; Jesus closes the sower teaching."
+    },
+    {
+      "shotId": "3ff6fea1-2515-4410-883b-38ae4025ccbd",
+      "startFrame": 3106,
+      "endFrame": 3321,
+      "reason": "v69 e01_breath_to_field assembled/3ff6fea1-2515-4410-883b-38ae4025ccbd.mp4 "
+    },
+    {
+      "shotId": "51adeb68-f6ba-489e-a6c4-fe2fe43415fc",
+      "startFrame": 3322,
+      "endFrame": 3513,
+      "reason": "Direct source-frame comparison 0.999; group as crowd departs, before cut at 3514."
+    },
+    {
+      "shotId": "1486cad2-a9e7-49c5-b2f0-fddaec40225f",
+      "startFrame": 3514,
+      "endFrame": 3565,
+      "reason": "Direct source-frame comparison 0.999; Jesus close-up after cut at 3514."
+    },
+    {
+      "shotId": "17246352-3c8d-498a-b99e-47c70ff89d2a",
+      "startFrame": 3566,
+      "endFrame": 3648,
+      "reason": "v66 p09 generated/video/mark4-v11-three-clip-base-1-932998446301839368.mp4 jitter/loop -> continuous"
+    },
+    {
+      "shotId": "17246352-3c8d-498a-b99e-47c70ff89d2a",
+      "startFrame": 3649,
+      "endFrame": 3767,
+      "reason": "v69 e07_ls30 lipsync-face/933004242674786324.mp4 "
+    },
+    {
+      "shotId": "17246352-3c8d-498a-b99e-47c70ff89d2a",
+      "startFrame": 3768,
+      "endFrame": 3843,
+      "reason": "v70 e21_ls31_ext lipsync-face/933005032357371914.mp4 "
+    },
+    {
+      "shotId": "fc7ed23c-66de-4723-ab9b-0949088edd84",
+      "startFrame": 3844,
+      "endFrame": 3963,
+      "reason": "v71 e31_grove_listeners assembled/fc7ed23c-66de-4723-ab9b-0949088edd84.mp4 "
+    },
+    {
+      "shotId": "24a56814-ecab-51d7-a07d-d39c1dcf6665",
+      "startFrame": 3964,
+      "endFrame": 4023,
+      "reason": "Disciples listen during the private Mark 4:10-12 exchange; saved take was attached to the next explanation scene. Original donor shot dc9accab-c310-48b2-901a-44c6fc29b0e6."
+    },
+    {
+      "shotId": "320af5b4-3b1e-4345-83dd-c8aa3d184af5",
+      "startFrame": 4024,
+      "endFrame": 4215,
+      "reason": "Final hillside group visually matches the saved scene-2 group keyframe and Mark 4:11 action."
+    },
+    {
+      "shotId": "db0de7b7-3b29-4c71-bfe6-558c5193919d",
+      "startFrame": 4216,
+      "endFrame": 4319,
+      "reason": "v69 e02_jj_short assembled/db0de7b7-3b29-4c71-bfe6-558c5193919d.mp4 "
+    },
+    {
+      "shotId": "1df48c5d-55b4-43bc-872a-dde88846ef46",
+      "startFrame": 4320,
+      "endFrame": 4407,
+      "reason": "v71 e03_path_wide assembled/1df48c5d-55b4-43bc-872a-dde88846ef46.mp4 "
+    },
+    {
+      "shotId": "6096a4f9-7032-440d-97c8-ee2d92f377d7",
+      "startFrame": 4408,
+      "endFrame": 4524,
+      "reason": "Direct source-frame comparison 0.997; Peter and John listener reaction."
+    },
+    {
+      "shotId": "740eb1df-5b4b-4c69-958c-f6bb8032cc39",
+      "startFrame": 4525,
+      "endFrame": 4691,
+      "reason": "v69 e08_ls36 lipsync-face/933020659205799987.mp4 "
+    },
+    {
+      "shotId": "e31e2a51-e352-4e68-9e02-bf60b37be674",
+      "startFrame": 4692,
+      "endFrame": 4823,
+      "reason": "v66 p10 generated/assembled/e31e2a51-e352-4e68-9e02-bf60b37be674.mp4 grove rebuild S1"
+    },
+    {
+      "shotId": "dd78acd1-a146-48de-bddb-ac0a18a44674",
+      "startFrame": 4824,
+      "endFrame": 4943,
+      "reason": "v66 p11 generated/assembled/dd78acd1-a146-48de-bddb-ac0a18a44674.mp4 grove rebuild S1 (no frozen tail)"
+    },
+    {
+      "shotId": "31139734-b0c9-4454-b04a-d8d378d20ed6",
+      "startFrame": 4944,
+      "endFrame": 5063,
+      "reason": "v66 p12 generated/assembled/31139734-b0c9-4454-b04a-d8d378d20ed6.mp4 grove rebuild S1 (no frozen tail)"
+    },
+    {
+      "shotId": "680fba01-4960-404c-8a29-97f7fcdcba76",
+      "startFrame": 5064,
+      "endFrame": 5171,
+      "reason": "v45 piece-7 generated/lipsync-face/933634460178845775.mp4 Mark 4:14–20 14-20-beat-1 approved canonical Jesus performance (canonical_v34_close_lip_sync)"
+    },
+    {
+      "shotId": "fdf0aa09-ecb0-4373-a23c-0604eed55c5e",
+      "startFrame": 5172,
+      "endFrame": 5242,
+      "reason": "v66 p13 generated/assembled/fdf0aa09-ecb0-4373-a23c-0604eed55c5e.mp4 grove rebuild S2 (trimmed under 3 s: low-motion shot)"
+    },
+    {
+      "shotId": "cfdb65be-62c3-4c88-b2e7-8d2f5459ab39",
+      "startFrame": 5243,
+      "endFrame": 5543,
+      "reason": "v66 p14 generated/assembled/cfdb65be-62c3-4c88-b2e7-8d2f5459ab39.mp4 grove rebuild S2 (replaces 2.25 s freeze + repeated wide)"
+    },
+    {
+      "shotId": "c7034b8b-9139-474d-995e-c027d4cc5938",
+      "startFrame": 5544,
+      "endFrame": 5651,
+      "reason": "v45 piece-9 generated/lipsync-face/933583375460339797.mp4 Mark 4:14–20 14-20-beat-2 approved canonical Jesus performance (canonical_v34_lip_sync)"
+    },
+    {
+      "shotId": "dc9accab-c310-48b2-901a-44c6fc29b0e6",
+      "startFrame": 5652,
+      "endFrame": 5711,
+      "reason": "v71 e33_path_listeners_b assembled/dc9accab-c310-48b2-901a-44c6fc29b0e6.mp4 "
+    },
+    {
+      "shotId": "2d6b96b1-77c9-4cb8-9279-5eea5f0ff3f2",
+      "startFrame": 5712,
+      "endFrame": 5923,
+      "reason": "v66 p16 generated/assembled/2d6b96b1-77c9-4cb8-9279-5eea5f0ff3f2.mp4 grove rebuild S3"
+    },
+    {
+      "shotId": "89da7688-c1f7-5dae-956f-e452880ea32d",
+      "startFrame": 5924,
+      "endFrame": 6023,
+      "reason": "Two disciples listen during the sower explanation; saved take was attached to the prior private exchange. Original donor shot db0de7b7-3b29-4c71-bfe6-558c5193919d."
+    },
+    {
+      "shotId": "11e009c8-5914-4393-9129-4e8eb4c2b555",
+      "startFrame": 6024,
+      "endFrame": 6131,
+      "reason": "v45 piece-11 generated/lipsync-face/933583974096568383.mp4 Mark 4:14–20 14-20-beat-3 approved canonical Jesus performance (canonical_v34_lip_sync)"
+    },
+    {
+      "shotId": "dbdc468a-7d21-4651-a80d-2e98c52010da",
+      "startFrame": 6132,
+      "endFrame": 6290,
+      "reason": "v71 e35_wall_listeners assembled/dbdc468a-7d21-4651-a80d-2e98c52010da.mp4 "
+    },
+    {
+      "shotId": "e31e2a51-e352-4e68-9e02-bf60b37be674",
+      "startFrame": 6291,
+      "endFrame": 6397,
+      "reason": "v66 p19 generated/assembled/e31e2a51-e352-4e68-9e02-bf60b37be674.mp4 grove rebuild S4"
+    },
+    {
+      "shotId": "744e014d-126f-4782-9dc6-2facd051e60a",
+      "startFrame": 6398,
+      "endFrame": 6472,
+      "reason": "v69 e06_wall_alone assembled/744e014d-126f-4782-9dc6-2facd051e60a.mp4 "
+    },
+    {
+      "shotId": "3d161507-2eb4-4805-ad75-a759d8ec7580",
+      "startFrame": 6473,
+      "endFrame": 6603,
+      "reason": "v72 Avatar replacement spans v69 e09, whose saved attempt links to this Mark 4:20 Jesus shot."
+    },
+    {
+      "shotId": "6628e1e9-47ee-42de-b7b9-e3f578847c5b",
+      "startFrame": 6604,
+      "endFrame": 6695,
+      "reason": "Direct source-frame comparison 0.991; Peter listens before cut at 6696."
+    },
+    {
+      "shotId": "611a8078-e67e-47c3-9cff-8c920809798e",
+      "startFrame": 6696,
+      "endFrame": 6784,
+      "reason": "Direct source-frame comparison 0.999; Jesus lamp teaching after cut at 6696."
+    },
+    {
+      "shotId": "611a8078-e67e-47c3-9cff-8c920809798e",
+      "startFrame": 6785,
+      "endFrame": 6897,
+      "reason": "v69 e10_ls55 lipsync-face/933009326326415400.mp4 "
+    },
+    {
+      "shotId": "0003976f-7c1a-4508-a40c-cad61cd7bb37",
+      "startFrame": 6898,
+      "endFrame": 6963,
+      "reason": "Direct source-frame comparison 0.979; John and James listen before cut at 6964."
+    },
+    {
+      "shotId": "c84b12da-2581-4e08-8bcc-513e41b6b79b",
+      "startFrame": 6964,
+      "endFrame": 7131,
+      "reason": "Direct source-frame comparison 0.992; crowd listener after cut at 6964."
+    },
+    {
+      "shotId": "91cf250a-92f0-45cc-bf95-6fe627f9b5b1",
+      "startFrame": 7132,
+      "endFrame": 7228,
+      "reason": "v39 replacement generated/assembled/91cf250a-92f0-45cc-bf95-6fe627f9b5b1.mp4 nonspeaking shore listener cover"
+    },
+    {
+      "shotId": "1500fbb4-6e16-44fd-9f6a-e1b03a3fd11a",
+      "startFrame": 7229,
+      "endFrame": 7335,
+      "reason": "v45 piece-15 generated/lipsync-face/933585305729368116.mp4 Mark 4:21–25 21-25-beat-1 approved canonical Jesus performance (canonical_v34_lip_sync)"
+    },
+    {
+      "shotId": "c84b12da-2581-4e08-8bcc-513e41b6b79b",
+      "startFrame": 7336,
+      "endFrame": 7513,
+      "reason": "v60 replacement-3 generated/assembled/c84b12da-2581-4e08-8bcc-513e41b6b79b.mp4 distinct lakeshore listener replaces repeated shore pair"
+    },
+    {
+      "shotId": "82b420d8-6422-4185-a4d2-815824add384",
+      "startFrame": 7514,
+      "endFrame": 7622,
+      "reason": "v45 piece-17 generated/lipsync-face/933585974323052588.mp4 Mark 4:21–25 21-25-beat-2 approved canonical Jesus performance (canonical_v34_lip_sync)"
+    },
+    {
+      "shotId": "e85b706b-2cd3-4c60-93a8-4c508ac0e122",
+      "startFrame": 7623,
+      "endFrame": 7650,
+      "reason": "Direct source-frame comparison 0.994; Thomas and Philip listener response."
+    },
+    {
+      "shotId": "f2efed36-6f6d-4268-b506-46c9413ccbec",
+      "startFrame": 7651,
+      "endFrame": 7758,
+      "reason": "v45 piece-19 generated/lipsync-face/933586573508739163.mp4 Mark 4:21–25 21-25-beat-3 approved canonical Jesus performance (canonical_v34_lip_sync)"
+    },
+    {
+      "shotId": "bd218156-fb4b-55de-a5f7-725db0a5d83b",
+      "startFrame": 7759,
+      "endFrame": 7826,
+      "reason": "Saved picture is a Mark 3:30 listener asset reused in final Hatam Mark 4; create an explicit Mark 4 editorial beat and flag target-picture review."
+    },
+    {
+      "shotId": "e85b706b-2cd3-4c60-93a8-4c508ac0e122",
+      "startFrame": 7827,
+      "endFrame": 7923,
+      "reason": "v70 e25_shore_listeners assembled/e85b706b-2cd3-4c60-93a8-4c508ac0e122.mp4 "
+    },
+    {
+      "shotId": "e282642c-bacb-425b-815a-93d69dc1e243",
+      "startFrame": 7924,
+      "endFrame": 7979,
+      "reason": "Direct source-frame comparison 0.988; farmer sows field."
+    },
+    {
+      "shotId": "45aacff9-0266-4909-acb2-ce09f659b24a",
+      "startFrame": 7980,
+      "endFrame": 8116,
+      "reason": "v46 piece-15 generated/lipsync-face/933022447253717040.mp4 restored approved Mark 4:26 opening performance"
+    },
+    {
+      "shotId": "e282642c-bacb-425b-815a-93d69dc1e243",
+      "startFrame": 8117,
+      "endFrame": 8219,
+      "reason": "v59 replacement-5 generated/assembled/e282642c-bacb-425b-815a-93d69dc1e243.mp4 moving field illustration after shore performance"
+    },
+    {
+      "shotId": "9543eea6-1082-4b7c-ab33-4c3ea948457c",
+      "startFrame": 8220,
+      "endFrame": 8387,
+      "reason": "v66 p22a generated/assembled/9543eea6-1082-4b7c-ab33-4c3ea948457c.mp4 warm the blue-grey sprout toward scene (colour jump)"
+    },
+    {
+      "shotId": "9543eea6-1082-4b7c-ab33-4c3ea948457c",
+      "startFrame": 8388,
+      "endFrame": 8411,
+      "reason": "v66 p22 generated/assembled/9543eea6-1082-4b7c-ab33-4c3ea948457c.mp4 sprout continues (frees shoots clip for 4:8)"
+    },
+    {
+      "shotId": "41ef4134-46c3-4f88-8a64-3d2dca0e9b78",
+      "startFrame": 8412,
+      "endFrame": 8519,
+      "reason": "v45 piece-21 generated/lipsync-face/933587237920055350.mp4 Mark 4:26–29 26-29-beat-1 approved canonical Jesus performance (canonical_v34_lip_sync)"
+    },
+    {
+      "shotId": "4c3cea05-88ca-4d69-96b1-35ca1e05f7f0",
+      "startFrame": 8520,
+      "endFrame": 8691,
+      "reason": "v66 p23 generated/assembled/4c3cea05-88ca-4d69-96b1-35ca1e05f7f0.mp4 golden wheat absorbs 1.2 s shoots insert"
+    },
+    {
+      "shotId": "0662b8a6-134b-43d4-918c-21d938c79a5c",
+      "startFrame": 8692,
+      "endFrame": 8771,
+      "reason": "Direct source-frame comparison 0.967; sickle harvest insert."
+    },
+    {
+      "shotId": "0a6d5fa5-d5bf-47aa-a0ca-10228d91ae63",
+      "startFrame": 8772,
+      "endFrame": 8879,
+      "reason": "v45 piece-23 generated/lipsync-face/933587901928710184.mp4 Mark 4:26–29 26-29-beat-2 approved canonical Jesus performance (canonical_v34_lip_sync)"
+    },
+    {
+      "shotId": "049427ae-7663-418c-8e08-0104b12dcf1d",
+      "startFrame": 8880,
+      "endFrame": 8910,
+      "reason": "Direct source-frame comparison 0.987; harvest workers."
+    },
+    {
+      "shotId": "dbc3f313-54a7-4b06-b5de-1452629be4f3",
+      "startFrame": 8911,
+      "endFrame": 9047,
+      "reason": "v72 Avatar replacement begins at the saved Mark 4:29 canonical Jesus beat-3 frame, matching its selected shot."
+    },
+    {
+      "shotId": "7f3fb060-0836-4c33-a510-f678cf1959f3",
+      "startFrame": 9048,
+      "endFrame": 9120,
+      "reason": "Direct source-frame comparison 0.996; shore listeners before cut at 9121."
+    },
+    {
+      "shotId": "4934ce6e-3894-4800-a8b9-c380d91ae570",
+      "startFrame": 9121,
+      "endFrame": 9206,
+      "reason": "Direct source-frame comparison 0.997; Jesus speaks after cut at 9121."
+    },
+    {
+      "shotId": "7f3fb060-0836-4c33-a510-f678cf1959f3",
+      "startFrame": 9207,
+      "endFrame": 9239,
+      "reason": "Direct source-frame comparison 0.995; shore listener return after cut at 9207."
+    },
+    {
+      "shotId": "fc911f94-0379-5210-9f48-492085ff75ee",
+      "startFrame": 9240,
+      "endFrame": 9321,
+      "reason": "Crowd listener in the mustard-seed scene; saved take was attached to the earlier lamp teaching. Original donor shot c84b12da-2581-4e08-8bcc-513e41b6b79b."
+    },
+    {
+      "shotId": "cdc3d490-e11f-4e67-8d50-07e8112daa90",
+      "startFrame": 9322,
+      "endFrame": 9504,
+      "reason": "Saved held mustard-seed-scale attempt tied to this donor shot matches final source frames at 0.997."
+    },
+    {
+      "shotId": "7a4384ed-95dc-4f48-a63a-5f4c4aaa9dcd",
+      "startFrame": 9505,
+      "endFrame": 9612,
+      "reason": "v45 piece-27 generated/lipsync-face/933589166586204190.mp4 Mark 4:30–32 30-32-beat-1 approved canonical Jesus performance (canonical_v34_lip_sync)"
+    },
+    {
+      "shotId": "519df33a-1adc-4b10-9617-d9c4c3add6ed",
+      "startFrame": 9613,
+      "endFrame": 9660,
+      "reason": "v66 p24 generated/video/mark4-mustard-planting-2480dc06-0213-4798-a695-036342d8255b.mp4 restore mustard planting (was a 1 s freeze)"
+    },
+    {
+      "shotId": "9522db93-f598-4777-ac1f-58cf67e6f72f",
+      "startFrame": 9661,
+      "endFrame": 9773,
+      "reason": "v66 p25 generated/video/mark4-mustard-growth-a67d0440-66d0-413e-bf16-763ee91e8358.mp4 growth continues after planting"
+    },
+    {
+      "shotId": "cacd5540-4576-4a15-b2bd-708eb27a4f8b",
+      "startFrame": 9774,
+      "endFrame": 9850,
+      "reason": "Saved held mustard-branches-and-birds attempt tied to this donor shot matches final source frames at 0.999."
+    },
+    {
+      "shotId": "b791ad84-184e-4875-806b-2e0f2f9b29f6",
+      "startFrame": 9851,
+      "endFrame": 9959,
+      "reason": "v45 piece-29 generated/lipsync-face/933638312442208318.mp4 Mark 4:30–32 30-32-beat-2 approved canonical Jesus performance (canonical_v34_close_lip_sync)"
+    },
+    {
+      "shotId": "cacd5540-4576-4a15-b2bd-708eb27a4f8b",
+      "startFrame": 9960,
+      "endFrame": 9989,
+      "reason": "v46 piece-19 generated/assembled/cacd5540-4576-4a15-b2bd-708eb27a4f8b.mp4 live mustard listener reflection replaces frozen Mark 4:32 breath"
+    },
+    {
+      "shotId": "f86b670d-d8b2-4352-82c0-5fbb75eb702a",
+      "startFrame": 9990,
+      "endFrame": 10145,
+      "reason": "v66 p26 generated/assembled/f86b670d-d8b2-4352-82c0-5fbb75eb702a.mp4 4:33 crowd wide without the 11 s frozen/looped tail"
+    },
+    {
+      "shotId": "d74a9f53-4419-595d-8a76-67cddf2e27aa",
+      "startFrame": 10146,
+      "endFrame": 10245,
+      "reason": "Disciples listen after the mustard-seed teaching; saved take was attached to the earlier lamp teaching. Original donor shot 6628e1e9-47ee-42de-b7b9-e3f578847c5b."
+    },
+    {
+      "shotId": "f13436cd-b9d4-523f-8332-570940c480fc",
+      "startFrame": 10246,
+      "endFrame": 10373,
+      "reason": "Disciples listen before the private explanation; saved take was attached to the earlier lamp teaching. Original donor shot 0003976f-7c1a-4508-a40c-cad61cd7bb37."
+    },
+    {
+      "shotId": "29cda8f3-2c78-4cbb-829a-1d67be2951ef",
+      "startFrame": 10374,
+      "endFrame": 10565,
+      "reason": "v59 replacement-6 generated/assembled/29cda8f3-2c78-4cbb-829a-1d67be2951ef.mp4 moving private olive-grove explanation cover"
+    },
+    {
+      "shotId": "2c535588-4be0-4c0f-a6cc-47aa1fb5c186",
+      "startFrame": 10566,
+      "endFrame": 10685,
+      "reason": "v66 p29 generated/assembled/2c535588-4be0-4c0f-a6cc-47aa1fb5c186.mp4 dusk shore, no loop"
+    },
+    {
+      "shotId": "bd31a5e8-0a4b-4eac-bd58-5821bb4a3838",
+      "startFrame": 10686,
+      "endFrame": 10805,
+      "reason": "v66 p30 generated/assembled/bd31a5e8-0a4b-4eac-bd58-5821bb4a3838.mp4 Jesus directs departure (4:35) - now on the line"
+    },
+    {
+      "shotId": "1dcadb9d-f26b-4862-8683-ffc9c529d8e1",
+      "startFrame": 10806,
+      "endFrame": 10970,
+      "reason": "v66 p31 generated/assembled/1dcadb9d-f26b-4862-8683-ffc9c529d8e1.mp4 dusk boarding, longer real take"
+    },
+    {
+      "shotId": "758ae7b7-8a94-46c1-8f86-a7360d979f92",
+      "startFrame": 10971,
+      "endFrame": 11092,
+      "reason": "Direct source-frame comparison 0.984; boat launch before storm cut at 11093."
+    },
+    {
+      "shotId": "60c28de3-b880-43a8-a208-3e11fbf2c6a6",
+      "startFrame": 11093,
+      "endFrame": 11185,
+      "reason": "Direct source-frame comparison 0.829; squall after cut at 11093."
+    },
+    {
+      "shotId": "0396a389-3961-4dee-b53a-06a5731244e9",
+      "startFrame": 11186,
+      "endFrame": 11239,
+      "reason": "v71 e36_bailing assembled/0396a389-3961-4dee-b53a-06a5731244e9.mp4 "
+    },
+    {
+      "shotId": "f3cbda35-bdd3-4dd6-ad02-2dcaae6a3d95",
+      "startFrame": 11240,
+      "endFrame": 11359,
+      "reason": "Direct source-frame comparison 0.910; waves in boat before cut at 11360."
+    },
+    {
+      "shotId": "0396a389-3961-4dee-b53a-06a5731244e9",
+      "startFrame": 11360,
+      "endFrame": 11472,
+      "reason": "Direct source-frame comparison 0.926; water pooling in boat across chunk boundary."
+    },
+    {
+      "shotId": "0396a389-3961-4dee-b53a-06a5731244e9",
+      "startFrame": 11473,
+      "endFrame": 11495,
+      "reason": "Direct source-frame comparison 0.926; water pooling in boat across chunk boundary."
+    },
+    {
+      "shotId": "c73f71d3-64a6-48f2-967e-010e198b8d15",
+      "startFrame": 11496,
+      "endFrame": 11657,
+      "reason": "Accepted donor video comparison 0.998; Jesus sleeps in stern."
+    },
+    {
+      "shotId": "ce748f77-5e27-44b4-86ec-2069fe797347",
+      "startFrame": 11658,
+      "endFrame": 11831,
+      "reason": "Accepted donor video comparison 0.809; disciples struggle with wind and water."
+    },
+    {
+      "shotId": "f3cbda35-bdd3-4dd6-ad02-2dcaae6a3d95",
+      "startFrame": 11832,
+      "endFrame": 11873,
+      "reason": "Direct source-frame comparison 0.998; storm boat return."
+    },
+    {
+      "shotId": "6db6f5f1-ced4-4675-82f4-05c772333d01",
+      "startFrame": 11874,
+      "endFrame": 12001,
+      "reason": "v73 e51 Peter mouth replacement follows v69 e13 on this saved Peter shot."
+    },
+    {
+      "shotId": "d7cf6a81-3dc8-497c-8b33-9c57bbcc1d67",
+      "startFrame": 12002,
+      "endFrame": 12193,
+      "reason": "v73 e52 Jesus wakes and rises, matching saved Mark 4:39 action; clip is an editorial Veo source."
+    },
+    {
+      "shotId": "c02b7bd2-d16d-4163-b7a0-88f32ae3e1dd",
+      "startFrame": 12194,
+      "endFrame": 12240,
+      "reason": "v69 e15_ls104 lipsync-face/932975424261459971.mp4 "
+    },
+    {
+      "shotId": "b631cdf5-748c-4b70-901f-8f8501749163",
+      "startFrame": 12241,
+      "endFrame": 12432,
+      "reason": "v73 e53 storm dies replaces v71 e38 storm-to-calm on this saved shot."
+    },
+    {
+      "shotId": "3af6de74-e66b-43ed-8e22-427119efd0ed",
+      "startFrame": 12433,
+      "endFrame": 12547,
+      "reason": "v73 e54 great calm is a new editorial Veo take of Mark 4:39 moonlit calm water."
+    },
+    {
+      "shotId": "89ba4fb7-5e0a-4049-b4f2-6ec9fc778d64",
+      "startFrame": 12548,
+      "endFrame": 12611,
+      "reason": "v69 e17_ls107 lipsync-face/932976176195960850.mp4 "
+    },
+    {
+      "shotId": "404d00a7-a0c5-4d64-ae50-281e60f93302",
+      "startFrame": 12612,
+      "endFrame": 12687,
+      "reason": "v69 e18_ls108 lipsync-face/932976667302830086.mp4 "
+    },
+    {
+      "shotId": "0a8f900e-14c3-4490-b27b-f78ef2429292",
+      "startFrame": 12688,
+      "endFrame": 12879,
+      "reason": "v66 p35 generated/assembled/0a8f900e-14c3-4490-b27b-f78ef2429292.mp4 4:41 fear/awe, single pass (was looped 2x)"
+    },
+    {
+      "shotId": "1cc8c449-8de5-4e36-b5f8-95b2a25860f9",
+      "startFrame": 12880,
+      "endFrame": 13029,
+      "reason": "v66 p36 generated/assembled/1cc8c449-8de5-4e36-b5f8-95b2a25860f9.mp4 4:41 \"said one to another\" - two disciples whisper"
+    },
+    {
+      "shotId": "89ba4fb7-5e0a-4049-b4f2-6ec9fc778d64",
+      "startFrame": 13030,
+      "endFrame": 13099,
+      "reason": "v66 p37 generated/assembled/89ba4fb7-5e0a-4049-b4f2-6ec9fc778d64.mp4 4:41 end: Jesus standing among disciples"
+    },
+    {
+      "shotId": "fa7f1408-e9a1-5a7c-ba31-bfd980c88d0a",
+      "startFrame": 13100,
+      "endFrame": 13483,
+      "reason": "Dan directed exact preservation of the final night-sea mood pullout as a dedicated ending beat."
+    }
+  ]
+}

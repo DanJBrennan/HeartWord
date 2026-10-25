@@ -56,6 +56,8 @@ beforeEach(()=>{
 afterEach(()=>{db.close();rmSync(dataDir,{recursive:true,force:true});});
 describe("language edition identity",()=>{
   it("preflights read-only, then creates one normal target and immutable origin",()=>{
+    db.prepare("UPDATE character_assets SET content_hash=? WHERE id='portrait'")
+      .run(createHash("sha256").update("approved visual").digest("hex").toUpperCase());
     const before=Number((db.prepare("SELECT COUNT(*) n FROM projects").get() as {n:number}).n);
     const pre=preflightLanguageEdition(db,dataDir,"donor",input);
     expect(pre.status).toBe("ready");expect(pre.holds).toEqual([]);
@@ -153,6 +155,47 @@ describe("language edition identity",()=>{
     }finally{renameSync(join(dataDir,"assets-hidden"),join(dataDir,"assets"));reopened.close();}
     db.prepare("UPDATE audio_segments SET start_ms=10,end_ms=1010 WHERE id='target-speech'").run();
     expect(()=>assertEditionInputsCurrent(db,dataDir,target)).toThrow(/Target source interval/);
+  });
+  it("binds an original-keyframe speaking shot to the pinned approved character voice after target review",()=>{
+    db.exec(`INSERT INTO shots(id,scene_id,sequence,action,needs_lip_sync,dialogue_character_id,created_at)
+      VALUES('original-performance','scene',2,'Continued teaching',1,'jesus',1);
+      INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)
+      VALUES('original-frame','original-performance','retained','v34','generate','accepted','films/original-frame.png',0,2);
+      INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)
+      VALUES('original-picture','original-performance','retained','v34','lip_sync','accepted','films/original-picture.mp4',0,2);
+      INSERT INTO clips(id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)
+      VALUES('original-clip','original-performance','original-picture',0,1000,2);`);
+    asset("films/original-frame.png","approved original keyframe");
+    asset("films/original-picture.mp4","selected original performance");
+    const secondHash=createHash("sha256").update("selected original performance").digest("hex");
+    db.prepare("UPDATE chapter_render_manifests SET timeline_json=? WHERE render_id='render'").run(JSON.stringify([
+      {shotId:"shot",path:"films/scene.mp4",sha256:pictureHash,sourceStartMs:0,startMs:0,endMs:1000},
+      {shotId:"original-performance",path:"films/original-picture.mp4",sha256:secondHash,sourceStartMs:0,startMs:1000,endMs:2000}
+    ]));
+    const pre=preflightLanguageEdition(db,dataDir,"donor",input);
+    expect(pre.status).toBe("ready");
+    expect(pre.voices.map(voice=>voice.versionId)).toEqual(["voice"]);
+    expect(pre.estimate).toMatchObject({newSpeakingPictures:2,reuseCandidates:0});
+    const target=createLanguageEdition(db,dataDir,"donor",{...input,requestId:"original-frame-edition",checkedFingerprint:pre.fingerprint!}).project.id;
+    const audioPath="source/meyah/audio/Meyah_mej_TBL_NT_Non-Drama/B02___04_Markus______MEJTBLN1DA.mp3";
+    db.prepare("INSERT INTO audio_segments(id,project_id,layer,source_path,start_ms,end_ms,verse_ref,speaker_character_id,created_at)VALUES('target-first',?,'original_reading',?,0,1000,'Mark 4:1','jesus',1)").run(target,audioPath);
+    db.prepare("INSERT INTO audio_segments(id,project_id,layer,source_path,start_ms,end_ms,verse_ref,speaker_character_id,created_at)VALUES('target-second',?,'original_reading',?,1000,2000,'Mark 4:1','jesus',1)").run(target,audioPath);
+    const hashes=sourceReviewHashes(db,target,dataDir);
+    db.prepare("INSERT INTO source_alignment_reviews VALUES('original-frame-review',?,'Dan','confirm',?,?,'Reviewed target wording and timing',1)").run(target,hashes.sourceHash,hashes.alignmentHash);
+    expect(materializeEditionScenes(db,dataDir,target).ok).toBe(true);
+    reviseLanguageEdition(db,target,{requestId:"original-frame-map",expectedParentHash:readLanguageEditionPlan(db,target)!.hash,reviewer:"Dan",
+      evidence:"Exact Meyah speech windows reviewed",correspondence:[
+        {donorShotId:"shot",targetSegmentId:"target-first",targetStartMs:0,targetEndMs:1000,treatment:"replace_avatar",reason:"Same teaching"},
+        {donorShotId:"original-performance",targetSegmentId:"target-second",targetStartMs:1000,targetEndMs:2000,treatment:"replace_avatar",reason:"Continued teaching"}
+      ]});
+    expect(materializeEditionCasting(db,dataDir,target)).toMatchObject({ok:true});
+    const targetBinding=db.prepare(`SELECT b.character_version_id,b.source_audio_segment_id FROM shot_utterance_bindings b
+      JOIN shots sh ON sh.id=b.shot_id JOIN scenes sc ON sc.id=sh.scene_id
+      WHERE sc.project_id=? AND sh.action='Continued teaching'`).get(target);
+    expect(targetBinding).toEqual({character_version_id:"voice",source_audio_segment_id:"target-second"});
+    const saved=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_shots'").get(target) as {payload:string};
+    expect(JSON.parse(saved.payload).shots[1].voiceIdentitySource).toBe("pinned_approved_character");
+    expect(db.prepare("SELECT id FROM shot_utterance_bindings WHERE shot_id='original-performance'").get()).toBeUndefined();
   });
   it("holds changed pinned voice, title background, keyframe and target recording bytes",()=>{
     const pre=preflightLanguageEdition(db,dataDir,"donor",input);
@@ -331,6 +374,38 @@ describe("language edition identity",()=>{
     expect(()=>assertEditionVoiceAuditionApproved(db,dataDir,target)).not.toThrow();
     asset("generated/meyah/cast.mp3","changed converted voice");
     expect(()=>assertEditionVoiceAuditionApproved(db,dataDir,target)).toThrow(/stale/);
+  });
+  it("pins a legacy voice ID with unknown historical settings and uses reviewed current audition settings",()=>{
+    rmSync(join(dataDir,"assets/cast/master.mp3.json"));
+    const pre=preflightLanguageEdition(db,dataDir,"donor",input);
+    expect(pre.status).toBe("ready");
+    expect(pre.voices[0]).toMatchObject({voiceId:"voice-id",effectiveSettings:null,settingsProvenance:"historical_settings_unknown",
+      voiceEvidence:{path:"cast/master.mp3"}});
+    const target=createLanguageEdition(db,dataDir,"donor",{...input,requestId:"legacy-voice-edition",checkedFingerprint:pre.fingerprint!}).project.id;
+    const audioPath="source/meyah/audio/Meyah_mej_TBL_NT_Non-Drama/B02___04_Markus______MEJTBLN1DA.mp3";
+    db.prepare("INSERT INTO audio_segments(id,project_id,layer,source_path,start_ms,end_ms,verse_ref,speaker_character_id,created_at)VALUES('target-audition',?,'original_reading',?,0,3000,'Mark 4:1','jesus',1)").run(target,audioPath);
+    const hashes=sourceReviewHashes(db,target,dataDir);
+    db.prepare("INSERT INTO source_alignment_reviews VALUES('legacy-voice-review',?,'Dan','confirm',?,?,'Reviewed Meyah source',1)")
+      .run(target,hashes.sourceHash,hashes.alignmentHash);
+    reviseLanguageEdition(db,target,{requestId:"legacy-voice-map",expectedParentHash:readLanguageEditionPlan(db,target)!.hash,reviewer:"Dan",evidence:"Exact target words reviewed",
+      correspondence:[{donorShotId:"shot",targetSegmentId:"target-audition",targetStartMs:0,targetEndMs:3000,treatment:"replace_avatar",reason:"Same teaching"}]});
+    expect(()=>assertEditionVoiceAuditionApproved(db,dataDir,target)).toThrow(/held until/);
+    db.prepare("INSERT INTO audio_segments(id,project_id,layer,source_path,start_ms,end_ms,speaker_character_id,created_at)VALUES('target-cast',?,'composite_cast_master','generated/meyah/legacy-cast.mp3',0,3000,'jesus',1)").run(target);
+    const sourceSha=createHash("sha256").update(readFileSync(join(dataDir,"assets",audioPath))).digest("hex");
+    db.prepare("INSERT INTO composite_audio_source_map VALUES('target-cast','target-audition',?,'voice',1)").run(sourceSha);
+    asset("generated/meyah/legacy-cast.mp3","Meyah voice audition");
+    asset("generated/meyah/legacy-cast.mp3.json",JSON.stringify({voiceId:"voice-id",voiceVersionId:"voice",
+      requestSettings:{...VOICE_CHANGER_DEFAULTS,model_id:"unreviewed-model"},sourceStartMs:0,sourceEndMs:3000,originalSegmentId:"target-audition"}));
+    expect(()=>approveEditionVoiceAudition(db,dataDir,target,{sourceSegmentIds:["target-audition"],reviewer:"Dan",evidence:"Native listener heard this target sample"}))
+      .toThrow(/explicit current ElevenLabs/);
+    asset("generated/meyah/legacy-cast.mp3.json",JSON.stringify({voiceId:"voice-id",voiceVersionId:"voice",requestSettings:VOICE_CHANGER_DEFAULTS,
+      sourceStartMs:0,sourceEndMs:3000,originalSegmentId:"target-audition"}));
+    const approved=approveEditionVoiceAudition(db,dataDir,target,{sourceSegmentIds:["target-audition"],reviewer:"Dan",evidence:"Native listener heard this target sample"});
+    expect(approved.requestSettings).toEqual(VOICE_CHANGER_DEFAULTS);
+    expect(assertEditionVoiceAuditionApproved(db,dataDir,target).requestSettings).toEqual(VOICE_CHANGER_DEFAULTS);
+    expect(()=>assertEditionInputsCurrent(db,dataDir,target)).not.toThrow();
+    asset("cast/master.mp3","changed historical master");
+    expect(()=>assertEditionInputsCurrent(db,dataDir,target)).toThrow(/historical ElevenLabs voice evidence/);
   });
   it("renders generic Markus 5 and Hatam display strings on a clean title frame",()=>{
     const background=join(dataDir,"assets/mark5-clean.png"),video=join(dataDir,"mark5-title.mp4");
