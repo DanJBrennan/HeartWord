@@ -43,6 +43,7 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { approvedEditionCanon } from "../language-edition.js";
 import { getDataDir, getDb } from "../../db/client.js";
 import { parseSourceTextByVerse } from "../ingestion/parse-source-text.js";
 import { parseVerseRange } from "../scene-breakdown/build-scenes.js";
@@ -69,11 +70,11 @@ function loadScriptureText(db: ReturnType<typeof getDb>, dataDir: string, shotId
   // A Mark 5 picture must never receive the old Mark 2 pilot passage.
   const project = db
     .prepare(
-      `SELECT p.language, p.book, p.chapter FROM projects p JOIN scenes sc ON sc.project_id = p.id JOIN shots s ON s.scene_id = sc.id
+      `SELECT p.id, p.language, p.book, p.chapter FROM projects p JOIN scenes sc ON sc.project_id = p.id JOIN shots s ON s.scene_id = sc.id
        WHERE s.id = ?`
     )
-    .get(shotId) as { language: string; book: string; chapter: number } | undefined;
-  if (!project || project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || ![2,4,5].includes(project.chapter)) {
+    .get(shotId) as { id:string;language: string; book: string; chapter: number } | undefined;
+  if (!project || (!(project.language.toLowerCase() === "hatam" && project.book.toLowerCase() === "mark" && [2,4,5].includes(project.chapter)) && !approvedEditionCanon(db,project.id))) {
     return null;
   }
   let range: { start: number; end: number };
@@ -84,7 +85,7 @@ function loadScriptureText(db: ReturnType<typeof getDb>, dataDir: string, shotId
   }
   let paths;
   try { paths=discoverSourcePaths(project,undefined,dataDir,false); } catch { return null; }
-  const sources=[{role:"Hatam (verified source)",path:paths.docxPath},{role:"English (reference)",path:paths.referencePath}];
+  const sources=[{role:`${project.language} (verified source)`,path:paths.docxPath},{role:"English (reference)",path:paths.referencePath}];
   const parts: string[] = [];
   for (const source of sources) {
     const absPath = source.path;

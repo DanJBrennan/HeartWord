@@ -15,6 +15,8 @@ import type { StageResult } from "../types.js";
 import { acceptFinalVideoCandidate, generateNonSpeakingVideoCandidate } from "./final-video.js";
 import { chooseShotDraft, generateShotDraft } from "./draft-room.js";
 import { shotRiskFor } from "./shot-risk-lookup.js";
+import { readLanguageEditionOrigin } from "../language-edition.js";
+import { materializeEditionMedia } from "../language-edition-stages.js";
 
 interface ShotRow {
   id: string;
@@ -667,6 +669,7 @@ export const runMediaGeneration = async (projectId: string, onlyShotIds?: string
   return observeWork(projectId, "media_generation", () => runMediaGenerationImpl(projectId, onlyShotIds, imageTier, backend));
 };
 const runMediaGenerationImpl = async (projectId: string, onlyShotIds?: string[], imageTier?: "standard" | "pro", backend?: VideoBackend): Promise<StageResult> => {
+  if (readLanguageEditionOrigin(getDb(),projectId)) return materializeEditionMedia(getDb(),getDataDir(),projectId);
   if (activeGeneration.has(projectId)) return { ok: false, reasoning: "Keyframe generation is already running for this chapter." };
   activeGeneration.add(projectId);
   try {

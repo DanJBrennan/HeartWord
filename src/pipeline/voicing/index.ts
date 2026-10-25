@@ -7,6 +7,9 @@ import { getAudioDurationMs } from "../ingestion/detect-silences.js";
 import type { ProjectRow } from "../ingestion/index.js";
 import { extractClip } from "./extract-clip.js";
 import { readConfirmedSpeechRuns } from "../ingestion/continuous-speech.js";
+import { assertEditionInputsCurrent, readLanguageEditionOrigin } from "../language-edition.js";
+import { VOICE_CHANGER_DEFAULTS } from "../../providers/elevenlabs.js";
+import { assertEditionVoiceAuditionApproved, validateEditionAuditionScope } from "../language-edition-audition.js";
 
 interface OriginalSegmentRow {
   id: string;
@@ -98,9 +101,20 @@ async function runVoicingImpl(projectId: string, opts: VoicingOptions): Promise<
   if (!project) {
     return { ok: false, reasoning: `No project with id ${projectId}.`, generated: 0, reused: 0, passthrough: 0, skippedNoVoice: 0 };
   }
+  const edition=readLanguageEditionOrigin(db,projectId);
+  if(edition){
+    try{assertEditionInputsCurrent(db,getDataDir(),projectId);}catch(error){return {ok:false,reasoning:(error as Error).message,generated:0,reused:0,passthrough:0,skippedNoVoice:0};}
+    if(opts.voiceSettings && Object.keys(opts.voiceSettings).length)return {ok:false,reasoning:"Edition voice settings are pinned; revise and review the mapping before changing them.",generated:0,reused:0,passthrough:0,skippedNoVoice:0};
+  }
 
   const scopedIds = opts.sourceSegmentIds ? [...new Set(opts.sourceSegmentIds)] : null;
   if (scopedIds && scopedIds.length === 0) return { ok: false, reasoning: "A scoped voicing run needs at least one approved source interval.", generated: 0, reused: 0, passthrough: 0, skippedNoVoice: 0 };
+  if(edition)try{
+    if(scopedIds){
+      try{assertEditionVoiceAuditionApproved(db,getDataDir(),projectId);}
+      catch{validateEditionAuditionScope(db,getDataDir(),projectId,scopedIds);}
+    }else assertEditionVoiceAuditionApproved(db,getDataDir(),projectId);
+  }catch(error){return {ok:false,reasoning:(error as Error).message,generated:0,reused:0,passthrough:0,skippedNoVoice:0};}
   const segments = db.prepare(
     `SELECT id, source_path, start_ms, end_ms, speaker_character_id, verse_ref
      FROM audio_segments WHERE project_id = ? AND layer = 'original_reading'${scopedIds ? ` AND id IN (${scopedIds.map(() => "?").join(",")})` : ""} ORDER BY start_ms`
@@ -126,6 +140,20 @@ async function runVoicingImpl(projectId: string, opts: VoicingOptions): Promise<
     )
     .all() as unknown as VoiceAssignmentRow[];
   const voiceByCharacter = new Map(voiceRows.map((v) => [v.characterId, v]));
+  const pinnedVoices=new Map(edition?.preflight.voices.map(voice=>[voice.characterId,voice])??[]);
+  if(edition){
+    for(const voice of edition.preflight.voices){
+      if(voice.effectiveSettings.model_id!==VOICE_CHANGER_DEFAULTS.model_id ||
+          voice.effectiveSettings.remove_background_noise!==VOICE_CHANGER_DEFAULTS.remove_background_noise ||
+          voice.effectiveSettings.output_format!==VOICE_CHANGER_DEFAULTS.output_format)
+        return {ok:false,reasoning:"The adapter cannot reproduce the pinned historical ElevenLabs model settings.",generated:0,reused:0,passthrough:0,skippedNoVoice:0};
+      const current=voiceRows.find(row=>row.versionId===voice.versionId && row.characterId===voice.characterId && row.voiceId===voice.voiceId);
+      if(!current)return {ok:false,reasoning:"Pinned edition character voice changed; reconcile before any conversion.",generated:0,reused:0,passthrough:0,skippedNoVoice:0};
+      voiceByCharacter.set(voice.characterId,current);
+    }
+    for(const seg of segments)if(seg.speaker_character_id && !pinnedVoices.has(seg.speaker_character_id))
+      return {ok:false,reasoning:`Target speaker ${seg.speaker_character_id} has no pinned approved donor voice; no provider request was sent.`,generated:0,reused:0,passthrough:0,skippedNoVoice:0};
+  }
 
   const dataDir = getDataDir();
   let speechRuns: ReturnType<typeof readConfirmedSpeechRuns>;
@@ -197,6 +225,14 @@ async function runVoicingImpl(projectId: string, opts: VoicingOptions): Promise<
     castStartMs?: number;
   }> = [];
 
+  const editionSidecarMatches=(path:string,assignment:VoiceAssignmentRow|undefined)=>{
+    if(!edition || !assignment)return true;
+    if(!existsSync(`${path}.json`))return false;
+    try{const retained=JSON.parse(readFileSync(`${path}.json`,"utf8")) as {voiceId?:string;requestSettings?:unknown};
+      return retained.voiceId===assignment.voiceId && JSON.stringify(retained.requestSettings)===JSON.stringify(pinnedVoices.get(assignment.characterId)?.effectiveSettings);
+    }catch{return false;}
+  };
+
   const completed = new Set<string>();
   for (const [i, seg] of segments.entries()) {
     if (completed.has(seg.id)) continue;
@@ -207,6 +243,7 @@ async function runVoicingImpl(projectId: string, opts: VoicingOptions): Promise<
 
     const protectedMaster = reviewedByOriginal.get(seg.id);
     if (protectedMaster?.sourcePathRel && protectedMaster.endMs !== null && protectedMaster.sourceHash) {
+      if(!editionSidecarMatches(join(dataDir,"assets",protectedMaster.sourcePathRel),assignment))return {ok:false,reasoning:`Reviewed cast master for ${seg.id} lacks the pinned edition voice/settings fingerprint. Reconcile it before reuse or new spending.`,generated:0,reused:0,passthrough:0,skippedNoVoice:0};
       newRows.push({
         id: randomUUID(), sourcePathRel: protectedMaster.sourcePathRel,
         durationMs: protectedMaster.endMs, speakerCharacterId: seg.speaker_character_id,
@@ -223,6 +260,8 @@ async function runVoicingImpl(projectId: string, opts: VoicingOptions): Promise<
       .all(seg.id, project.id) as Array<{path:string;startMs:number;endMs:number;sourceHash:string;voiceVersionId:string|null}>;
     const reusable = !opts.force && mapped.length === 1 && mapped[0]!.sourceHash === sourceHash &&
       mapped[0]!.voiceVersionId === (assignment?.versionId ?? null) ? mapped[0] : undefined;
+    if(edition && mapped.length && (!reusable || !editionSidecarMatches(join(dataDir,"assets",mapped[0]!.path),assignment)))
+      return {ok:false,reasoning:`Retained cast master for ${seg.id} does not prove the pinned edition source, voice and settings; reconcile it before any new provider request.`,generated:0,reused:0,passthrough:0,skippedNoVoice:0};
     if (reusable) {
       const retainedPath = join(dataDir, "assets", reusable.path);
       if (!existsSync(retainedPath)) throw new Error(`Missing retained cast master for ${seg.id}: ${reusable.path}. Restore the asset before voicing; no automatic paid regeneration.`);
@@ -248,7 +287,8 @@ async function runVoicingImpl(projectId: string, opts: VoicingOptions): Promise<
       if (assignment) {
         const tmp = join(outDir, `${randomUUID()}-source.tmp.mp3`);
         extractClip(absSourcePath, run.startMs, run.endMs, tmp);
-        const result = await reVoiceAudio(assignment.voiceId, tmp, opts.voiceSettings ? {voiceSettings:opts.voiceSettings} : {});
+        const settings=edition ? pinnedVoices.get(assignment.characterId)?.effectiveSettings.voice_settings : opts.voiceSettings;
+        const result = await reVoiceAudio(assignment.voiceId, tmp, settings ? {voiceSettings:settings} : {});
         requestSettings = result.requestSettings ?? null;
         providerUsage = result.usage ?? null;
         writeFileSync(outPath, result.audioBuffer, { flag: "wx" });
@@ -258,7 +298,7 @@ async function runVoicingImpl(projectId: string, opts: VoicingOptions): Promise<
       writeFileSync(`${outPath}.json`, JSON.stringify({ format: "heartword-cast-master", version: 1,
         speechRunId: run.id, members: run.members, sourcePath: seg.source_path, sourceHash,
         sourceStartMs: run.startMs, sourceEndMs: run.endMs, verseRef: run.verseRef,
-        internalVerseTiming: run.internalVerseTiming, voiceVersionId: assignment?.versionId ?? null,
+        internalVerseTiming: run.internalVerseTiming, voiceVersionId: assignment?.versionId ?? null, voiceId:assignment?.voiceId ?? null,
         provider: assignment?.voiceProvider ?? "local", requestSettings, providerUsage, durationMs,
         usage: assignment ? "not_reported" : "local_extraction", directCostUsd: assignment ? null : 0 }, null, 2), { flag: "wx" });
       if (Math.abs(durationMs - (run.endMs - run.startMs)) > 100) throw new Error(`Continuous cast take ${run.id} does not match the unchanged source speed/duration; retain it for review before retrying.`);
@@ -279,7 +319,8 @@ async function runVoicingImpl(projectId: string, opts: VoicingOptions): Promise<
     if (assignment) {
       const tmpClipPath = join(outDir, `${slug}-source-clip.tmp.mp3`);
       extractClip(absSourcePath, seg.start_ms, seg.end_ms, tmpClipPath);
-      const result = await reVoiceAudio(assignment.voiceId, tmpClipPath, opts.voiceSettings ? {voiceSettings:opts.voiceSettings} : {});
+      const settings=edition ? pinnedVoices.get(assignment.characterId)?.effectiveSettings.voice_settings : opts.voiceSettings;
+      const result = await reVoiceAudio(assignment.voiceId, tmpClipPath, settings ? {voiceSettings:settings} : {});
       requestSettings = result.requestSettings ?? null;
       providerUsage = result.usage ?? null;
       writeFileSync(outPath, result.audioBuffer, { flag: "wx" });

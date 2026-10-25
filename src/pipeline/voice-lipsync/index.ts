@@ -3,18 +3,21 @@
  * an approved voice, accepted keyframe, and aligned source segment is eligible. */
 import { randomUUID } from "node:crypto";
 import { getDb, getDataDir } from "../../db/client.js";
-import { productionAuthorization, bindAttemptRevision } from "../creative-direction/crew-store.js";
+import { productionAuthorization, bindAttemptRevision, validateAttemptRevision } from "../creative-direction/crew-store.js";
 import { KlingLipSyncProvider } from "../../providers/kling/index.js";
 import { runVoicing } from "../voicing/index.js";
 import type { StageResult } from "../types.js";
 import { resolveSpeechRunCastAudio } from "./speech-run-audio.js";
 import { checkAvatarSpend,readPerformanceDirection,reserveAvatarSpend,settleAvatarSpend } from "./performance-direction.js";
 import { AVATAR_RESERVATION_RATE_USD } from "../../providers/kling/avatar-direction.js";
+import { assertEditionInputsCurrent, readLanguageEditionOrigin } from "../language-edition.js";
 
 type ReadyShot = { id: string; verse_ref: string | null; dialogue_character_id: string; keyframe: string | null; voice_id: string | null; version_id: string | null; locked_visual_facts:string|null; binding_id:string|null; source_segment_id:string|null; start_ms:number|null; end_ms:number|null; source_hash:string|null };
 export const runVoiceLipSync = (projectId:string,onlyShotIds?:readonly string[]):Promise<StageResult> => observeWork(projectId, "voice_lipsync", () => runVoiceLipSyncImpl(projectId,onlyShotIds));
 const runVoiceLipSyncImpl = async (projectId:string,onlyShotIds?:readonly string[]):Promise<StageResult> => {
   const db = getDb();
+  const edition=readLanguageEditionOrigin(db,projectId);
+  if(edition)try{assertEditionInputsCurrent(db,getDataDir(),projectId);}catch(error){return {ok:false,reasoning:(error as Error).message};}
   const allShots = db.prepare(`SELECT sh.id,sh.verse_ref,sh.dialogue_character_id,
     (SELECT result_asset_path FROM generation_attempts WHERE shot_id=sh.id AND operation='generate' AND status='accepted' ORDER BY created_at DESC LIMIT 1) keyframe,
     (SELECT cv.voice_id FROM character_versions cv WHERE cv.id=ub.character_version_id AND cv.character_id=sh.dialogue_character_id AND cv.status='approved') voice_id,
@@ -34,6 +37,12 @@ const runVoiceLipSyncImpl = async (projectId:string,onlyShotIds?:readonly string
   try { for (const shot of shots) directions.set(shot.id,readPerformanceDirection(db,projectId,shot.id)); }
   catch (error) { return {ok:false,reasoning:(error as Error).message}; }
   const pendingShots=shots.filter(shot=>!db.prepare(`SELECT c.id FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE ga.shot_id=? AND ga.operation='lip_sync' AND ga.status='accepted'`).get(shot.id));
+  if(edition)for(const shot of shots.filter(item=>!pendingShots.includes(item))){
+    const accepted=db.prepare(`SELECT ga.id FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE ga.shot_id=? AND ga.operation='lip_sync' AND ga.status='accepted'`).get(shot.id) as {id:string}|undefined;
+    if(!accepted || !db.prepare("SELECT id FROM edit_commands WHERE project_id=? AND idempotency_key=?").get(projectId,`production-revision:${accepted.id}`))
+      return {ok:false,reasoning:`Accepted edition Avatar take for ${shot.id} lacks its pinned production revision.`};
+    try{validateAttemptRevision(db,getDataDir(),projectId,accepted.id);}catch(error){return {ok:false,reasoning:(error as Error).message};}
+  }
   for(const shot of pendingShots){
     const prior=db.prepare("SELECT id FROM generation_attempts WHERE shot_id=? AND operation='lip_sync' LIMIT 1").get(shot.id);
     if(prior)return {ok:false,reasoning:`Lip-sync candidate ${prior.id} is retained for ${shot.id}; resolve its existing review before new spending.`};

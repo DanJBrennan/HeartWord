@@ -7,6 +7,9 @@ import { incompleteSpeakerAttributionHold, missingSpeakerAttributionHold } from 
 import { resolveAndBindSourcePaths } from "../ingestion/source-catalog.js";
 import { buildScenesFromHeadings, type SegmentInfo } from "./build-scenes.js";
 import { speechCoverageSegments } from "../ingestion/continuous-speech.js";
+import { readLanguageEditionOrigin } from "../language-edition.js";
+import { materializeEditionScenes } from "../language-edition-stages.js";
+import { getDataDir } from "../../db/client.js";
 
 /**
  * Stage 2: Scene breakdown -- groups the chapter's stage-1 audio segments
@@ -39,6 +42,7 @@ const runSceneBreakdownImpl: Stage = async (projectId) => {
   if (!project) {
     return { ok: false, reasoning: `Scene breakdown failed: no project with id ${projectId}.` };
   }
+  if (readLanguageEditionOrigin(db,projectId)) return materializeEditionScenes(db,getDataDir(),projectId);
 
   let docxPath: string;
   try {

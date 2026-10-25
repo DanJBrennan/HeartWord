@@ -31,6 +31,9 @@ import {renderSourceListeningReviewPage} from "../source-listening-review-page.j
 import { computeNarrationCoverage } from "../../pipeline/casting/narration-coverage.js";
 import { renderCanonReviewPage } from "../canon-review-page.js";
 import { applyProducerCreativeEdit } from "../../pipeline/creative-direction/crew-store.js";
+import { createLanguageEdition, preflightLanguageEdition, readLanguageEditionOrigin, readLanguageEditionPlan, reviseLanguageEdition } from "../../pipeline/language-edition.js";
+import { approveEditionVoiceAudition } from "../../pipeline/language-edition-audition.js";
+import { acceptEditionTitleCandidate, buildEditionTitleCandidate } from "../../pipeline/assembly/chapter-title-card.js";
 
 export const projectsRouter = Router();
 
@@ -124,6 +127,75 @@ projectsRouter.post("/", (req, res) => {
 
   const project = db.prepare(`SELECT * FROM projects WHERE id = ?`).get(id);
   res.status(201).json({ project, created: true });
+});
+
+projectsRouter.post("/:id/language-edition-preflight", (req, res) => {
+  try {
+    res.setHeader("Cache-Control","no-store");
+    res.json(preflightLanguageEdition(getDb(),getDataDir(),req.params.id,req.body));
+  } catch (error) { res.status(400).json({error:(error as Error).message}); }
+});
+projectsRouter.get("/:id/language-edition-renders", (req,res) => {
+  const db=getDb();
+  if(!db.prepare("SELECT id FROM projects WHERE id=?").get(req.params.id)){res.status(404).json({error:"Project not found."});return;}
+  res.setHeader("Cache-Control","no-store");
+  res.json({renders:db.prepare(`SELECT r.id,r.result_asset_path AS path,r.total_duration_ms AS durationMs,r.created_at AS createdAt,
+    CASE WHEN json_valid(m.timeline_json) AND json_type(m.timeline_json)='array' AND json_valid(m.source_audio_json) AND json_type(m.source_audio_json)='array' THEN 1 ELSE 0 END AS normalized
+    FROM chapter_renders r LEFT JOIN chapter_render_manifests m ON m.render_id=r.id WHERE r.project_id=? ORDER BY r.created_at DESC,r.id DESC`).all(req.params.id)});
+});
+
+projectsRouter.post("/:id/language-editions", (req, res) => {
+  try {
+    const result = createLanguageEdition(getDb(),getDataDir(),req.params.id,req.body);
+    res.status(result.created ? 201 : 200).json(result);
+  } catch (error) { res.status(409).json({error:(error as Error).message}); }
+});
+
+projectsRouter.get("/:id/language-edition-plan", (req,res) => {
+  try { res.setHeader("Cache-Control","no-store");res.json({plan:readLanguageEditionPlan(getDb(),req.params.id)}); }
+  catch(error){res.status(409).json({error:(error as Error).message});}
+});
+projectsRouter.get("/:id/language-edition-workspace", (req,res) => {
+  try {
+    const db=getDb(),origin=readLanguageEditionOrigin(db,req.params.id);
+    res.setHeader("Cache-Control","no-store");
+    if(!origin){res.json({edition:null});return;}
+    const manifest=db.prepare("SELECT timeline_json FROM chapter_render_manifests WHERE render_id=?").get(origin.preflight.donor.renderId) as {timeline_json:string}|undefined;
+    if(!manifest)throw new Error("Pinned donor manifest is unavailable.");
+    const timeline=JSON.parse(manifest.timeline_json) as Array<{shotId?:string;startMs?:number;endMs?:number}>;
+    if(!Array.isArray(timeline))throw new Error("Pinned donor picture recipe is not a timeline.");
+    const donorShots=timeline.filter(item=>typeof item.shotId==="string").map(item=>({
+      ...item,shot:db.prepare("SELECT action,verse_ref,needs_lip_sync,dialogue_character_id FROM shots WHERE id=?").get(item.shotId!) }));
+    const segments=db.prepare("SELECT id,start_ms AS startMs,end_ms AS endMs,verse_ref AS verseRef,speaker_character_id AS speakerId FROM audio_segments WHERE project_id=? AND layer='original_reading' ORDER BY start_ms,id").all(req.params.id);
+    const speechRuns=readConfirmedSpeechRuns(db,req.params.id,getDataDir()).map(run=>({id:run.id,verseRef:run.verseRef,startMs:run.startMs,endMs:run.endMs,
+      speakerId:run.characterId,anchorSegmentId:run.members[0]?.id??null,memberIds:run.members.map(member=>member.id)}));
+    const castAudio=db.prepare(`SELECT m.original_segment_id AS segmentId,a.source_path AS path FROM composite_audio_source_map m
+      JOIN audio_segments a ON a.id=m.composite_segment_id WHERE a.project_id=? AND a.layer='composite_cast_master'`).all(req.params.id);
+    const voiceAudition=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='approve_edition_voice_audition' AND undone=0 ORDER BY sequence DESC LIMIT 1").get(req.params.id) as {payload:string}|undefined;
+    const targetShotCount=Number((db.prepare("SELECT COUNT(*) n FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=?").get(req.params.id) as {n:number}).n);
+    const candidate=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='build_edition_title_candidate' AND undone=0 ORDER BY sequence DESC LIMIT 1").get(req.params.id) as {payload:string}|undefined;
+    const selectedTitle=db.prepare("SELECT id FROM editorial_beats WHERE project_id=? AND placement='pre_source' AND beat_type='title_card' AND status='accepted'").get(req.params.id) as {id:string}|undefined;
+    res.json({edition:{donor:origin.preflight.donor,target:origin.preflight.target,sourceQuestions:origin.preflight.sourceQuestions,
+      donorShots,segments,speechRuns,castAudio,voiceAudition:voiceAudition?JSON.parse(voiceAudition.payload):null,
+      targetShotCount,titleCandidate:candidate?JSON.parse(candidate.payload):null,selectedTitleId:selectedTitle?.id??null,
+      plan:readLanguageEditionPlan(db,req.params.id)}});
+  }catch(error){res.status(409).json({error:(error as Error).message});}
+});
+projectsRouter.post("/:id/language-edition-plan", (req,res) => {
+  try {const result=reviseLanguageEdition(getDb(),req.params.id,req.body,getDataDir());res.status(result.created?201:200).json(result);}
+  catch(error){res.status(409).json({error:(error as Error).message});}
+});
+projectsRouter.post("/:id/language-edition-title-candidate", (req,res) => {
+  try{res.status(201).json(buildEditionTitleCandidate(getDb(),getDataDir(),req.params.id));}
+  catch(error){res.status(409).json({error:(error as Error).message});}
+});
+projectsRouter.post("/:id/language-edition-title-selection", (req,res) => {
+  try{res.json(acceptEditionTitleCandidate(getDb(),getDataDir(),req.params.id,req.body));}
+  catch(error){res.status(409).json({error:(error as Error).message});}
+});
+projectsRouter.post("/:id/language-edition-voice-audition-approval", (req,res) => {
+  try{res.status(201).json(approveEditionVoiceAudition(getDb(),getDataDir(),req.params.id,req.body));}
+  catch(error){res.status(409).json({error:(error as Error).message});}
 });
 
 projectsRouter.post("/:id/run", async (req, res) => {
@@ -415,8 +487,12 @@ projectsRouter.post("/:id/voicing", async (req, res) => {
   }
 
   const force = req.body?.force === true;
+  const sourceSegmentIds=req.body?.sourceSegmentIds;
+  if(sourceSegmentIds!==undefined && (!Array.isArray(sourceSegmentIds)||sourceSegmentIds.some((id:unknown)=>typeof id!=="string"))){
+    res.status(400).json({error:"sourceSegmentIds must be an array of segment IDs."});return;
+  }
   try {
-    const result = await runVoicing(req.params.id, { force });
+    const result = await runVoicing(req.params.id, { force,sourceSegmentIds });
     res.json(result);
   } catch (err) {
     res.status(502).json({ error: (err as Error).message });

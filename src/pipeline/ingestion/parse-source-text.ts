@@ -96,6 +96,18 @@ export interface VerseRecord {
   paragraphIndex: number;
   /** A verse can continue before the next marker in the following paragraph. */
   continuationParagraphIndices?: number[];
+  /** Published reference-only entry, retained without inventing verse text. */
+  referenceOnlyFollowing?: Array<{verse:number;referencedVerse:number;raw:string;paragraphIndex:number}>;
+}
+
+/** A printed marker such as Meyah Mark 4's `6(4:5)` has no supplied words.
+ * Retain it as an unresolved coverage question attached to the preceding
+ * supplied verse; never turn it into a duplicate verse or audio segment. */
+export function parseReferenceOnlyVerseMarkers(docxPath:string):Array<{verse:number;referencedVerse:number;raw:string;paragraphIndex:number}>{
+  return xmlToParagraphLines(readDocumentXml(docxPath)).flatMap((line,paragraphIndex)=>{
+    const match=line.match(/^(\d{1,3})\s*\((\d{1,3}):(\d{1,3})\)$/u);
+    return match?[{verse:Number(match[1]),referencedVerse:Number(match[3]),raw:line,paragraphIndex}]:[];
+  });
 }
 
 /**
@@ -114,6 +126,13 @@ export function parseSourceTextByVerse(docxPath: string): VerseRecord[] {
 
   const records: VerseRecord[] = [];
   lines.forEach((line, paragraphIndex) => {
+    const referenceOnly=line.match(/^(\d{1,3})\s*\((\d{1,3}):(\d{1,3})\)$/u);
+    if(referenceOnly){
+      const previous=records.at(-1), verse=Number(referenceOnly[1]),referencedVerse=Number(referenceOnly[3]);
+      if(previous && previous.verse===referencedVerse && verse===referencedVerse+1)
+        (previous.referenceOnlyFollowing??=[]).push({verse,referencedVerse,raw:line,paragraphIndex});
+      return;
+    }
     const verses = splitParagraphIntoVerses(line);
     const firstMarker = [...line.matchAll(VERSE_MARKER)][0];
     const prefix = firstMarker ? line.slice(0, firstMarker.index).trim() : "";

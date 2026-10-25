@@ -12,7 +12,7 @@ export interface IntroProposal {
   shots: IntroShotProposal[];
 }
 export interface ChapterIntroPlan {
-  titleCard: { title: string; language: string; durationMs: 2500; background: "opening_establishing_frame" | "first_story_frame"; audio: "location_ambience" };
+  titleCard: { title: string; language: string; durationMs: number; background: "opening_establishing_frame" | "first_story_frame"; audio: "location_ambience"; profile?: "mark4-serif-over-establishing" };
   shots: Array<IntroShotProposal & {
     durationMs: number;
     audio: "location_ambience";
@@ -35,10 +35,16 @@ const norm = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
 export function buildChapterIntroPlan(input: {
   title: string | null;
   language: string;
+  languageLabel?: string;
+  titleDurationMs?: number;
+  titleProfile?: "mark4-serif-over-establishing";
   grounding: string;
   proposal?: IntroProposal | null;
 }): ChapterIntroPlan {
   if (!input.title) throw new Error("A verified source-language chapter title is required for the opening card.");
+  if (input.titleDurationMs !== undefined && (!Number.isInteger(input.titleDurationMs) || input.titleDurationMs < 1000 || input.titleDurationMs > 12000))
+    throw new Error("The approved opening title hold must be between 1 and 12 seconds.");
+  if (input.languageLabel !== undefined && !input.languageLabel.trim()) throw new Error("A verified language name is required for the opening card.");
   const notes: string[] = [];
   const proposal = input.proposal;
   let shots: IntroShotProposal[] = [];
@@ -82,10 +88,10 @@ export function buildChapterIntroPlan(input: {
     endpointRule: shot.role === "bridge" ? "match_adjacent_frames" as const : "none" as const,
   }));
   return {
-    titleCard: { title: input.title, language: input.language.toUpperCase(), durationMs: 2500,
-      background: planned.length ? "opening_establishing_frame" : "first_story_frame", audio: "location_ambience" },
+    titleCard: { title: input.title, language: input.languageLabel ?? input.language.toUpperCase(), durationMs: input.titleDurationMs ?? 2500,
+      background: planned.length ? "opening_establishing_frame" : "first_story_frame", audio: "location_ambience", ...(input.titleProfile ? {profile:input.titleProfile} : {}) },
     shots: planned,
-    sourceClockStartMs: 2500 + planned.reduce((sum, shot) => sum + shot.durationMs, 0),
+    sourceClockStartMs: (input.titleDurationMs ?? 2500) + planned.reduce((sum, shot) => sum + shot.durationMs, 0),
     reasoning: proposal?.reasoning?.trim() || "Series title card; location opening awaits grounded first-scene planning.",
     status: notes.length ? "needs_review" : "proposed",
     reviewNotes: notes,

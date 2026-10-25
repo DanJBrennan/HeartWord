@@ -11,6 +11,7 @@ import { readConfirmedSpeechRuns, speechRunPauseIsSafe } from "../ingestion/cont
 import { speechRunBinding } from "../voice-lipsync/speech-run-audio.js";
 import { decodeToPcm16Mono } from "../ingestion/pitch.js";
 import { readAcceptedEditorialOpening, readAcceptedEditorialClosing } from "../assembly/editorial-beats.js";
+import { approvedEditionCanon } from "../language-edition.js";
 
 export const digest = (value: string | Buffer): string => createHash("sha256").update(value).digest("hex");
 export function productionAssetPath(dataDir: string, path: string): string {
@@ -23,11 +24,11 @@ export function productionAssetPath(dataDir: string, path: string): string {
 export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: string, phase: CrewPhase): CrewBrief {
   const project = db.prepare("SELECT id, language, book, chapter FROM projects WHERE id = ?").get(projectId) as CrewBrief["project"] | undefined;
   if (!project) throw new Error("Project not found.");
-  if (project.language.toLowerCase() !== "hatam") throw new Error("Configure and approve a regional production canon before planning another language.");
+  if (project.language.toLowerCase() !== "hatam" && !approvedEditionCanon(db,projectId)) throw new Error("Configure and approve a regional production canon before planning another language.");
   // The current production-corpus decision has one explicit language-to-canon
   // authority. Lesson matching below uses the actual selected canon region,
   // rather than treating this policy value as a universal regional default.
-  const approvedRegion = project.language.toLowerCase() === "hatam" ? "Papuan" : null;
+  const approvedRegion = project.language.toLowerCase() === "hatam" || approvedEditionCanon(db,projectId) ? "Papuan" : null;
   // Catalog-aware (falls back to the legacy per-chapter layout automatically)
   // and respects this function's own injected dataDir, unlike calling
   // discoverSourcePaths with its default (the real HEARTWORD_DATA_DIR) would
@@ -37,14 +38,15 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
   // absent FCBH audio file must not block text/reference resolution.
   const textPaths = discoverSourcePaths(project, undefined, dataDir, false);
   const sources = [textPaths.docxPath, textPaths.referencePath];
-  const source: CrewBrief["source"] = { text: parseSourceTextByVerse(sources[0]!), reference: parseSourceTextByVerse(sources[1]!), hashes: sources.map(p => digest(readFileSync(p))) };
+  const sourceTextVerses=parseSourceTextByVerse(sources[0]!);
+  const source: CrewBrief["source"] = { text: sourceTextVerses, reference: parseSourceTextByVerse(sources[1]!), hashes: sources.map(p => digest(readFileSync(p))) };
   if (!source.text.length || !source.reference.length) throw new Error("Both source and reference Scripture text are required.");
   const normalizeBook = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
   const checkRef = (value: string | null) => {
     const match = value?.match(/^(.+?)\s+(\d+):\d+/);
     if (!match || normalizeBook(match[1]!) !== normalizeBook(project.book) || Number(match[2]) !== project.chapter) throw new Error("A verse reference belongs to another book or chapter.");
   };
-  const sourceVerses = source.text.map(v => v.verse).join(",");
+  const sourceVerses = sourceTextVerses.flatMap(v => [v.verse,...(v.referenceOnlyFollowing??[]).map(marker=>marker.verse)]).join(",");
   if (sourceVerses !== source.reference.map(v => v.verse).join(",")) throw new Error("Source and reference verse coverage differ; review source material first.");
   const alignedAudio = db.prepare(`SELECT id, start_ms AS startMs, end_ms AS endMs, verse_ref AS verseRef,
     speaker_character_id AS speakerId, source_path AS path, confidence FROM audio_segments

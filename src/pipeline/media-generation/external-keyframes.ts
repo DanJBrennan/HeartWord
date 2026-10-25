@@ -11,6 +11,7 @@ import { sceneReferenceAssetsForVerse } from "../../providers/story-state-assets
 import { getDataDir } from "../../db/client.js";
 import { sortAssetsByFreshness } from "../../characters/asset-freshness.js";
 import {wardrobeReferenceRole} from "../../characters/wardrobe-refinement.js";
+import { approvedEditionCanon } from "../language-edition.js";
 
 const REFERENCE_CATEGORY_RANK: Record<string, number> = { headshot: 0, body_pose: 1, turnaround: 2 };
 
@@ -207,7 +208,7 @@ export function getKeyframeContext(db: DatabaseSync, dataDir: string, shotId: st
     JOIN scenes sc ON sc.project_id = p.id WHERE sc.id = ?`).get(scene.id) as KeyframeContext["project"];
   // This bridge is deliberately scoped to the active production, not an implicit
   // approval of other books, languages or regional canons.
-  if (project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || ![2, 4, 5].includes(project.chapter)) {
+  if (!(project.language.toLowerCase() === "hatam" && project.book.toLowerCase() === "mark" && [2, 4, 5].includes(project.chapter)) && !approvedEditionCanon(db,project.id)) {
     throw new Error("The external keyframe handoff currently supports Hatam Mark 2 and the producer-approved Mark 4 and 5 plans only.");
   }
   const cast = db.prepare(`SELECT c.id, c.name, c.region, c.canon_status FROM shot_characters sh
@@ -267,7 +268,7 @@ export function prepareKeyframe(db: DatabaseSync, dataDir: string, shotId: strin
   prompt += keyframeFilmDirection(filmInput);
   const sourcePaths = discoverSourcePaths(context.project, undefined, dataDir, false);
   const sources = [
-    { role: "verified Hatam source", path: relative(join(dataDir, "assets"), sourcePaths.docxPath).replace(/\\/g, "/") },
+    { role: `verified ${context.project.language} source`, path: relative(join(dataDir, "assets"), sourcePaths.docxPath).replace(/\\/g, "/") },
     { role: "English reference", path: relative(join(dataDir, "assets"), sourcePaths.referencePath).replace(/\\/g, "/") }
   ].map(source => {
     const path = assetPath(dataDir, source.path);

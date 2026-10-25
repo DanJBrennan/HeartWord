@@ -56,8 +56,48 @@ export function productionRecords(db: DatabaseSync, projectId?: string): { table
   const schema = [...definitions, ...indexes].map(d => `${d.sql};`).join("\n");
   if (projectId === undefined) return { tables: all, schema };
   if (!selected.projects?.size) throw new Error("Project not found.");
+  // Edition origin IDs live inside typed JSON rather than SQL foreign keys.
+  // Retain the pinned donor render, its normalized recipe and only the
+  // selected historical shot identities needed to explain/replay lineage.
+  // Do not bring its source/audio approvals, costs or unrelated chapters into
+  // the target's active production rows.
+  const editionCommand=(all.edit_commands??[]).find(row=>row.project_id===projectId && row.command_type==="derive_language_edition");
+  if(editionCommand){
+    const origin=JSON.parse(String(editionCommand.payload)) as {targetProjectId?:string;preflight?:{donor?:{projectId:string;renderId:string;approvalId?:string};
+      pictureEvidence?:Array<{shotId:string;clipId:string;attemptId:string;path:string;keyframePath:string}>}};
+    if(origin.targetProjectId!==projectId || !origin.preflight?.donor)throw new Error("Malformed language-edition origin cannot be packaged.");
+    const donor=origin.preflight.donor;
+    const donorProject=all.projects?.find(row=>row.id===donor.projectId),render=all.chapter_renders?.find(row=>row.id===donor.renderId && row.project_id===donor.projectId),
+      manifest=all.chapter_render_manifests?.find(row=>row.render_id===donor.renderId);
+    if(!donorProject||!render||!manifest)throw new Error("Pinned donor render or normalized recipe is missing from the edition package graph.");
+    selected.projects!.add(donorProject);selected.chapter_renders!.add(render);selected.chapter_render_manifests!.add(manifest);
+    if(donor.approvalId){const approval=all.edit_commands?.find(row=>row.id===donor.approvalId && row.project_id===donor.projectId);
+      if(!approval)throw new Error("Pinned donor approval evidence is missing.");selected.edit_commands!.add(approval);}
+    const timeline=JSON.parse(String(manifest.timeline_json));
+    if(!Array.isArray(timeline))throw new Error("Pinned donor recipe is not an ordered picture timeline.");
+    const selectedIds=new Set(timeline.flatMap((item:unknown)=>item && typeof item==="object" && typeof (item as {shotId?:unknown}).shotId==="string"?[(item as {shotId:string}).shotId]:[]));
+    for(const shot of all.shots??[])if(selectedIds.has(String(shot.id))){
+      selected.shots!.add(shot);
+      const scene=all.scenes?.find(row=>row.id===shot.scene_id);
+      if(!scene||scene.project_id!==donor.projectId)throw new Error("Pinned donor timeline references a foreign shot.");
+      selected.scenes!.add(scene);
+      for(const relation of ["shot_characters","shot_character_states","shot_performance_briefs"])
+        for(const child of all[relation]??[])if(child.shot_id===shot.id)selected[relation]!.add(child);
+    }
+    for(const evidence of origin.preflight.pictureEvidence??[]){
+      const clip=all.clips?.find(row=>row.id===evidence.clipId && row.shot_id===evidence.shotId && row.generation_attempt_id===evidence.attemptId);
+      const attempt=all.generation_attempts?.find(row=>row.id===evidence.attemptId && row.shot_id===evidence.shotId && row.result_asset_path===evidence.path);
+      const keyframe=all.generation_attempts?.find(row=>row.shot_id===evidence.shotId && row.operation==="generate" && row.status==="accepted" && row.result_asset_path===evidence.keyframePath);
+      if(!clip||!attempt||!keyframe||!selectedIds.has(evidence.shotId))throw new Error("Pinned donor picture or keyframe lineage is incomplete.");
+      selected.clips!.add(clip);selected.generation_attempts!.add(attempt);selected.generation_attempts!.add(keyframe);
+      for(const reference of all.generation_attempt_references??[])if(reference.generation_attempt_id===attempt.id || reference.generation_attempt_id===keyframe.id)
+        selected.generation_attempt_references!.add(reference);
+    }
+  }
   let changed = true;
-  const owners: Record<string, string> = { shots: "scene_id", shot_characters: "shot_id", shot_utterance_bindings: "shot_id", generation_attempts: "shot_id",
+  const owners: Record<string, string> = { shots: "scene_id", shot_characters: "shot_id", shot_utterance_bindings: "shot_id",
+    shot_character_states: "shot_id", shot_performance_briefs: "shot_id", generation_attempts: "shot_id",
+    generation_attempt_references: "generation_attempt_id",
     media_reuse_candidates: "target_shot_id", coverage_beats: "shot_id", coverage_keyframe_attempts: "coverage_beat_id",
     clips: "shot_id", composite_audio_source_map: "composite_segment_id", chapter_render_manifests: "render_id",
     production_events: "run_id", character_versions: "character_id", character_assets: "character_version_id",
@@ -96,7 +136,7 @@ export function productionRecords(db: DatabaseSync, projectId?: string): { table
             selected[fk.table]!.add(parent); changed = true;
           }
         }
-      } else if (owners[table] && (!["shots", "shot_characters", "shot_utterance_bindings", "generation_attempts", "clips", "coverage_beats", "coverage_keyframe_attempts", "media_reuse_candidates"].includes(table) || !ownedByOtherChapter(table, row)) && keys[table]!.some(fk => fk.from === owners[table] &&
+      } else if (owners[table] && (!["shots", "shot_characters", "shot_utterance_bindings", "shot_character_states", "shot_performance_briefs", "generation_attempts", "generation_attempt_references", "clips", "coverage_beats", "coverage_keyframe_attempts", "media_reuse_candidates"].includes(table) || !ownedByOtherChapter(table, row)) && keys[table]!.some(fk => fk.from === owners[table] &&
         fk.table !== "projects" && row[fk.from] != null && [...(selected[fk.table] ?? [])].some(parent => parent[fk.to || "id"] === row[fk.from]))) {
         selected[table]!.add(row); changed = true;
       }
@@ -365,7 +405,11 @@ export function restoreProductionRecords(path: string, tables: Tables, schema: s
     db.exec(schema);
     db.exec("PRAGMA defer_foreign_keys=ON;");
     for (const [table, rows] of Object.entries(tables)) for (const original of rows) {
-      const row = relocate(original) as Row, columns = Object.keys(row);
+      // Origin and plan hashes are location-independent and append-only. The
+      // signed JSON keeps asset-relative tokens and must not be rewritten by
+      // the legacy recursive path projection on restore.
+      const row = table==="edit_commands" && ["derive_language_edition","revise_language_edition"].includes(String(original.command_type))
+        ? original : relocate(original) as Row, columns = Object.keys(row);
       db.prepare(`INSERT INTO ${quote(table)} (${columns.map(quote).join(",")}) VALUES (${columns.map(() => "?").join(",")})`).run(...columns.map(c => row[c]!));
     }
     if (db.prepare("PRAGMA foreign_key_check").all().length) throw new Error("Restored record relationships are incomplete.");

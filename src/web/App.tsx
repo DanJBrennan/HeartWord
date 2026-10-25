@@ -7,6 +7,7 @@ import { MediaLibrary } from "./MediaLibrary";
 import { BoundedIntervalAudio } from "./BoundedIntervalAudio";
 import { ContinuousSpeechReview } from "./ContinuousSpeechReview";
 import { ChapterEndingPlanView, type ChapterEndingPlan } from "./ChapterEndingPlanView";
+import { LanguageEditionPanel } from "./LanguageEditionPanel";
 
 interface Project {
   id: string;
@@ -505,6 +506,7 @@ export default function App() {
         </form>
         {activeProject && <p className="hint">Open workspace: {activeProject.language} / {activeProject.book} {activeProject.chapter}. A new chapter begins empty and never inherits another chapter’s shots, takes, timing, or provider work.</p>}
       </section>
+      {activeProject && <div data-tool-panel="edition"><LanguageEditionPanel key={activeProject.id} donorProjectId={activeProject.id} book={activeProject.book} chapter={activeProject.chapter} onCreated={async id=>{await refresh();selectProject(id);setWorkspaceTool(null);}} /></div>}
 
       <section data-tool-panel="source">
         <h2>Chapter preparation</h2>

@@ -21,6 +21,19 @@ const relativeToAssets = (assets: string, path: string) => path.replace(`${asset
 function sourceCandidates(project: SourceProject, edition: "non_drama" | "drama", dataDir: string, includeCatalog = true): SourcePaths[] {
   const assets = join(dataDir,"assets"), legacy = join(assets,"source",project.language,`${project.book}-${project.chapter}`);
   const candidates: SourcePaths[] = [{docxPath:join(legacy,`${project.book}-${project.chapter}-text.docx`),audioPath:join(legacy,`${project.book}-${project.chapter}-fcbh-audio.mp3`),referencePath:join(assets,"reference","english",`${project.book}-${project.chapter}`,`${project.book}-${project.chapter}-text.docx`),audioRelPath:`source/${project.language}/${project.book}-${project.chapter}/${project.book}-${project.chapter}-fcbh-audio.mp3`,edition:"non_drama",provenance:"legacy"}];
+  // The reviewed Meyah corpus has its own published spelling and folder
+  // layout. Acts files are retained as source material, but this profile only
+  // enables the explicitly approved Mark language-edition workflow.
+  if (includeCatalog && project.language === "meyah" && project.book === "mark" && edition === "non_drama") {
+    const chapter = String(project.chapter), audioDir = join(assets,"source","meyah","audio","Meyah_mej_TBL_NT_Non-Drama");
+    const prefix = `B02___${chapter.padStart(2,"0")}_`;
+    const audioName = existsSync(audioDir) ? readdirSync(audioDir).find(name => name.startsWith(prefix) && name.endsWith("MEJTBLN1DA.mp3")) : undefined;
+    const audioPath = join(audioDir,audioName ?? `${prefix}missing______MEJTBLN1DA.mp3`);
+    candidates.push({docxPath:join(assets,"source","meyah","text","Mark",`Mark ${chapter}.docx`),audioPath,
+      referencePath:join(assets,"source","english-esv","text","Mark",`Mark ${chapter}.docx`),
+      audioRelPath:relativeToAssets(assets,audioPath),edition,provenance:"catalog"});
+    return candidates;
+  }
   if (!includeCatalog || project.language !== "hatam") return candidates;
   const index=books.indexOf(project.book); if(index<0 && project.book!=="genesis") return candidates;
   const book=title(project.book), chapter=String(project.chapter), fileset=edition==="drama"?"HADLAIN2DA":"HADLAIN1DA";
@@ -71,12 +84,13 @@ export function inspectSourceAvailability(db: DatabaseSync, project: SourceProje
 export function discoverSourcePaths(project: SourceProject, edition: "non_drama" | "drama" = "non_drama", dataDir: string = getDataDir(), requireAudio = true): SourcePaths {
   const legacy=sourceCandidates(project,edition,dataDir,false)[0]!;
   if(existsSync(legacy.docxPath)&&(!requireAudio||existsSync(legacy.audioPath))) return legacy;
-  if(project.language!=="hatam") throw new Error(`No source catalog is configured for language '${project.language}'.`);
+  if(project.language!=="hatam" && !(project.language==="meyah" && project.book==="mark" && edition==="non_drama")) throw new Error(`No source catalog is configured for language '${project.language}'.`);
   const catalog=sourceCandidates(project,edition,dataDir)[1];
-  if(!catalog) throw new Error(`No Hatam FCBH catalog entry exists for ${project.book} ${project.chapter}.`);
-  const candidates: Array<[string,string]> = [["Hatam text",catalog.docxPath],["English reference",catalog.referencePath],...(requireAudio?[["Hatam FCBH audio",catalog.audioPath] as [string,string]]:[])];
+  if(!catalog) throw new Error(`No source catalog entry exists for ${project.language} ${project.book} ${project.chapter}.`);
+  const languageName=project.language==="hatam"?"Hatam":"Meyah";
+  const candidates: Array<[string,string]> = [[`${languageName} text`,catalog.docxPath],["English reference",catalog.referencePath],...(requireAudio?[[project.language==="hatam"?"Hatam FCBH audio":"Meyah non-drama audio",catalog.audioPath] as [string,string]]:[])];
   const missing=candidates.filter(([,path])=>!existsSync(path)).map(([name])=>name);
-  if(missing.length) throw new Error(`Source catalog is incomplete for Hatam ${title(project.book)} ${project.chapter}: missing ${missing.join(", ")}.`);
+  if(missing.length) throw new Error(`Source catalog is incomplete for ${languageName} ${title(project.book)} ${project.chapter}: missing ${missing.join(", ")}.`);
   return catalog;
 }
 

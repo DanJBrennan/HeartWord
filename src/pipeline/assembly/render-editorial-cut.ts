@@ -13,6 +13,7 @@ import { assertSpeakerAudioContinuity, continuousAudioGroups, type ResolvedAudio
 import { decodeToPcm16Mono } from "../ingestion/pitch.js";
 import { detectTruncatedRenewal } from "../qc/audio-tail.js";
 import { assertNoRenderedFlashes } from "../qc/flash-detection.js";
+import { assertEditionInputsCurrent } from "../language-edition.js";
 
 export function assertEditorialRebuildable(db: DatabaseSync, projectId: string): void {
   const render = db.prepare(`SELECT r.id,m.timeline_json,m.source_audio_json FROM chapter_renders r LEFT JOIN chapter_render_manifests m ON m.render_id=r.id
@@ -27,6 +28,7 @@ export function assertEditorialRebuildable(db: DatabaseSync, projectId: string):
 
 /** Executes the editor's bounded cut while rebuilding speech from immutable source segments. */
 export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId: string, runId: string): { path: string; renderId: string } {
+  assertEditionInputsCurrent(db,dataDir,projectId);
   const existing = db.prepare("SELECT payload FROM edit_commands WHERE idempotency_key = ?").get(`editorial:${runId}`) as { payload: string } | undefined;
   if (existing) { const { path, renderId } = JSON.parse(existing.payload); return { path, renderId }; }
   assertEditorialRebuildable(db, projectId);

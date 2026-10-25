@@ -31,6 +31,8 @@ import {
 } from "./coverage.js";
 import { narrationBudgetFor, resolveNarrationSpans, type NarrationBudget } from "./narration-coverage.js";
 import { buildChapterIntroPlan, type IntroProposal } from "./chapter-intro.js";
+import { approvedEditionCanon, languageEditionTitle, readLanguageEditionOrigin } from "../language-edition.js";
+import { materializeEditionCasting } from "../language-edition-stages.js";
 import { buildChapterEndingPlan, type ChapterEndingProposal } from "./chapter-ending.js";
 import { incompleteSpeakerAttributionHold, missingSpeakerAttributionHold } from "../ingestion/speaker-attribution-gate.js";
 import { readConfirmedSpeechRuns, speechCoverageSegments } from "../ingestion/continuous-speech.js";
@@ -323,7 +325,14 @@ const buildCasting: Stage = async (projectId) => {
   if (!project) {
     return { ok: false, reasoning: `Casting failed: no project with id ${projectId}.` };
   }
-  if (project.language.toLowerCase() !== "hatam") return { ok: false, reasoning: "Configure and approve the regional canon for this language before storyboard generation." };
+  if (readLanguageEditionOrigin(db,projectId)) {
+    const materialized=materializeEditionCasting(db,getDataDir(),projectId);
+    if(!materialized.ok)return materialized;
+    try{const review=await runProductionCrew(projectId,"planning");
+      return {ok:review.status==="approved",reasoning:`${materialized.reasoning} ${review.summary}`};
+    }catch(error){return {ok:false,reasoning:`Target chapter planning held: ${(error as Error).message}`};}
+  }
+  if (project.language.toLowerCase() !== "hatam" && !approvedEditionCanon(db,projectId)) return { ok: false, reasoning: "Configure and approve the regional canon for this language before storyboard generation." };
 
   // This must precede both initial casting and plan refinement. A previous
   // plan is not a reason to let unattributed quoted speech reach any further
@@ -375,7 +384,8 @@ const buildCasting: Stage = async (projectId) => {
     return { ok: false, reasoning: "Casting failed: no scenes found -- run scene breakdown (stage 2) first." };
   }
 
-  const chapterTitle = parseChapterTitle(sourceTextPath, project.chapter);
+  const editionTitle = languageEditionTitle(db, project.id);
+  const chapterTitle = editionTitle?.bookChapter ?? parseChapterTitle(sourceTextPath, project.chapter);
   if (!chapterTitle) return { ok: false, reasoning: "Casting held: the source document has no verifiable chapter title for the opening card." };
   let nextChapter: { ref: string; firstVerse: string } | null = null;
   try {
@@ -473,6 +483,7 @@ const buildCasting: Stage = async (projectId) => {
   const firstText = verses.filter(v => v.verse >= firstStart && v.verse <= firstEnd).map(v => v.text).join(" ");
   const introPlan = buildChapterIntroPlan({
     title: chapterTitle, language: project.language,
+    ...(editionTitle ? {languageLabel:editionTitle.languageName,titleDurationMs:editionTitle.durationMs,titleProfile:editionTitle.profile} : {}),
     grounding: `${firstText} ${firstResponse.spatialContinuity}`,
     proposal: firstResponse.chapterOpening,
   });

@@ -11,6 +11,7 @@ import { canonReferenceMedia, acceptedCoverageMedia } from "./visual-reference-m
 import { acceptedFilmDirection, newProductionRecord, same, type ProductionRecord } from "./production-record.js";
 import { emotionalDirection, validateEmotionalTreatment } from "./emotional-treatment.js";
 import { reserveCrewModelSpend, settleCrewModelSpend } from "./model-spend.js";
+import { assertEditionInputsCurrent } from "../language-edition.js";
 
 export interface StoredCrewRun { id: string; project_id: string; phase: CrewPhase; brief_hash: string;
   brief_json: string; status: string; result_json: string | null; created_at: number }
@@ -170,6 +171,7 @@ export function recoverInterruptedCrew(db: DatabaseSync, projectId: string, runI
 }
 
 export function requireCurrentPlan(db: DatabaseSync, dataDir: string, projectId: string): StoredCrewRun {
+  assertEditionInputsCurrent(db,dataDir,projectId);
   const run = latestCrewRun(db, projectId, "planning");
   if (!run || run.status !== "approved") throw new Error("Run the production crew and resolve its findings before generating new media.");
   if (crewBriefHash(loadCrewBrief(db, dataDir, projectId, "planning"), "planning") !== run.brief_hash) throw new Error("The production plan is stale; review the changed source, canon or shot plan first.");

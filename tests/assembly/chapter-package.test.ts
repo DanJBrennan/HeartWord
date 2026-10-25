@@ -119,6 +119,26 @@ describe("editable chapter preservation", () => {
       expect(reopened.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
     }finally{reopened.close();}
   });
+  it("closes all shot and attempt child relationships without collecting another chapter",()=>{
+    db.exec(`CREATE TABLE shot_character_states(id TEXT PRIMARY KEY,shot_id TEXT NOT NULL REFERENCES shots(id),state TEXT NOT NULL);
+      CREATE TABLE shot_performance_briefs(id TEXT PRIMARY KEY,shot_id TEXT NOT NULL REFERENCES shots(id),brief TEXT NOT NULL);
+      CREATE TABLE generation_attempt_references(id TEXT PRIMARY KEY,generation_attempt_id TEXT NOT NULL REFERENCES generation_attempts(id),reference TEXT NOT NULL);
+      INSERT INTO shot_character_states VALUES('state','shot','held'),('other-state','shot-other','held');
+      INSERT INTO shot_performance_briefs VALUES('brief','shot','approved intent'),('other-brief','shot-other','other intent');
+      INSERT INTO generation_attempt_references VALUES('ref','take','canon.png'),('other-ref','other-take','other.png');`);
+    const snapshot=inspectChapterPackage(db,directory,"p",{includeApplication:false});
+    expect(snapshot.tables.shot_character_states?.map(row=>row.id)).toEqual(["state"]);
+    expect(snapshot.tables.shot_performance_briefs?.map(row=>row.id)).toEqual(["brief"]);
+    expect(snapshot.tables.generation_attempt_references?.map(row=>row.id)).toEqual(["ref"]);
+    const packaged=join(directory,"closure-package"),restored=join(directory,"closure-restored");
+    exportChapterPackage(db,directory,"p",packaged,{includeApplication:false});restoreChapterPackage(packaged,restored);
+    const reopened=new DatabaseSync(join(restored,"db/heartword.sqlite"));try{
+      expect(reopened.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+      expect(reopened.prepare("SELECT id FROM shot_character_states").all()).toEqual([{id:"state"}]);
+      expect(reopened.prepare("SELECT id FROM shot_performance_briefs").all()).toEqual([{id:"brief"}]);
+      expect(reopened.prepare("SELECT id FROM generation_attempt_references").all()).toEqual([{id:"ref"}]);
+    }finally{reopened.close();}
+  });
   it("reopens immutable sidecars with Mac and old-root paths while the original assets are unavailable",()=>{
     const remote="/Users/synthetic/LTX-Inbox/unique-reference.png",absolute=join(directory,"assets/take.png"),sidecar=JSON.stringify({sourceKeyframe:"take.png",remoteInputPath:remote,localOutputPath:absolute});
     put("take.png.json",sidecar);mkdirSync(join(directory,"logs"));

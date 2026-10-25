@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { productionAssetPath } from "../creative-direction/crew-context.js";
+import { approvedEditionCanon, readLanguageEditionOrigin } from "../language-edition.js";
 
 type LibraryKind = "image" | "video" | "frame";
 const kindFor = (path: string): LibraryKind => /\.(mp4|mov|webm)$/i.test(path) ? "video" : "image";
@@ -83,14 +84,16 @@ export function createReuseCandidate(db: DatabaseSync, dataDir: string, itemId: 
   const item = db.prepare("SELECT * FROM media_library_items WHERE id=?").get(itemId) as { id:string; asset_path:string; provenance_json:string } | undefined;
   const target = db.prepare(`SELECT s.id,sc.project_id,p.language FROM shots s JOIN scenes sc ON sc.id=s.scene_id JOIN projects p ON p.id=sc.project_id WHERE s.id=?`).get(targetShotId) as { id:string; project_id:string; language:string } | undefined;
   if (!item || !target) throw new Error("Library item or target shot was not found.");
-  const donor = JSON.parse(item.provenance_json) as { origin?:{ language?:string; canonRegion?:string }, currentOriginCast?:Array<{region?:string}>, generation?:{contentHash?:string} };
+  const donor = JSON.parse(item.provenance_json) as { origin?:{ projectId?:string;language?:string; canonRegion?:string }, currentOriginCast?:Array<{region?:string}>, generation?:{contentHash?:string} };
   const source = productionAssetPath(dataDir,item.asset_path);
   if (!existsSync(source) || (donor.generation?.contentHash && sha256(source) !== donor.generation.contentHash)) throw new Error("Retained donor file is missing or changed; it cannot be reused.");
   const targetRegions = db.prepare(`SELECT DISTINCT c.region FROM shot_characters sc JOIN characters c ON c.id=sc.character_id JOIN character_versions cv ON cv.character_id=c.id AND cv.status='approved' WHERE sc.shot_id=?`).all(targetShotId) as Array<{ region:string }>;
   const donorRegions = [...new Set((donor.currentOriginCast ?? []).map(c => c.region).filter(Boolean))];
   const donorRegion = donor.origin?.canonRegion ?? donorRegions[0];
   const targetRegion = target.language.toLowerCase() === "hatam" ? "Papuan" : targetRegions[0]?.region;
-  if (donor.origin?.language !== target.language || !targetRegion || targetRegions.length > 1 || donorRegions.length > 1 || (donorRegion && donorRegion !== targetRegion)) throw new Error("Reuse candidate requires matching language and compatible approved regional canon context.");
+  const origin=readLanguageEditionOrigin(db,target.project_id);
+  const editionDonor=approvedEditionCanon(db,target.project_id) && origin?.preflight.donor.projectId===donor.origin?.projectId && donor.origin?.language==="hatam";
+  if ((donor.origin?.language !== target.language && !editionDonor) || !targetRegion || targetRegions.length > 1 || donorRegions.length > 1 || (donorRegion && donorRegion !== targetRegion)) throw new Error("Reuse candidate requires matching language or the pinned edition donor and compatible approved regional canon context.");
   const existing = db.prepare("SELECT id FROM media_reuse_candidates WHERE library_item_id=? AND target_shot_id=?").get(itemId,targetShotId) as {id:string}|undefined;
   if (existing) return { id:existing.id, existing:true };
   const context = donorRegions.length ? "Historical generation reference versions are unknown; Dottie must verify target canon before use." : "Characterless donor; Vera and Orion must verify target fitness.";

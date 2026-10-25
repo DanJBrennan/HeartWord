@@ -83,6 +83,7 @@ export interface ReVoiceResult {
   requestSettings: { model_id: string; remove_background_noise: boolean; output_format: string; voice_settings?: Record<string,number|boolean> };
   usage?: {requestId:string|null;historyItemId:string|null;characterCost:string|null};
 }
+export const VOICE_CHANGER_DEFAULTS = {model_id:"eleven_multilingual_sts_v2",remove_background_noise:true,output_format:"mp3_44100_128"} as const;
 
 /**
  * Speech-to-speech (voice changer): re-performs a REAL Hatam audio clip
@@ -104,7 +105,7 @@ export async function reVoiceAudio(voiceId: string, sourceAudioPath: string, opt
   }
 
   const audioBytes = await readFile(sourceAudioPath);
-  const requestSettings:ReVoiceResult["requestSettings"] = { model_id: "eleven_multilingual_sts_v2", remove_background_noise: true, output_format: "mp3_44100_128",...(options.voiceSettings?{voice_settings:options.voiceSettings}:{}) };
+  const requestSettings:ReVoiceResult["requestSettings"] = { ...VOICE_CHANGER_DEFAULTS,...(options.voiceSettings?{voice_settings:options.voiceSettings}:{}) };
   const form = new FormData();
   form.append("audio", new Blob([audioBytes]), basename(sourceAudioPath));
   form.append("model_id", requestSettings.model_id);

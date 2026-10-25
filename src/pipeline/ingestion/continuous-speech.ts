@@ -7,6 +7,7 @@ import { recordSourceAlignmentSpeakerAttribution } from "./source-alignment-spea
 import { sourceReviewHashes } from "./source-review.js";
 import { resolveAndBindSourcePaths } from "./source-catalog.js";
 import { parseSourceTextByVerse } from "./parse-source-text.js";
+import { approvedEditionCanon } from "../language-edition.js";
 
 export interface SpeechRunMember {
   id: string; source_path: string; start_ms: number; end_ms: number;
@@ -58,7 +59,7 @@ export function confirmContinuousSpeech(db: DatabaseSync, input: {
   }
   if (input.characterId !== null) {
     const character = db.prepare("SELECT id FROM characters WHERE id=? AND canon_status='approved' AND region='Papuan' AND (scope_kind='global' OR (lower(scope_book)=lower(?) AND (scope_kind='book' OR scope_chapter=?)))").get(input.characterId, project.book, project.chapter);
-    if (project.language.toLowerCase() !== "hatam" || !character) throw new Error("Speaker needs an approved project-appropriate regional canon.");
+    if ((project.language.toLowerCase() !== "hatam" && !approvedEditionCanon(db,input.projectId)) || !character) throw new Error("Speaker needs an approved project-appropriate regional canon.");
   }
   const all = db.prepare("SELECT id,source_path,start_ms,end_ms,speaker_character_id,verse_ref FROM audio_segments WHERE project_id=? AND layer='original_reading' ORDER BY start_ms,id").all(input.projectId) as unknown as SpeechRunMember[];
   const ids = input.audioSegmentIds;

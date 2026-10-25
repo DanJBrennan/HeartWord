@@ -1,0 +1,90 @@
+# Language editions from an editable chapter
+
+Status: isolated implementation, held for donor approval and safe deployment.
+Producer decisions: Dan's October 2026 language-edition conversation and
+`C:/Users/danbr/HeartWordData/reviews/2026-10-22-language-editions/LANGUAGE_EDITION_HANDOFF.md`.
+
+## Product contract
+
+Start with an explicitly selected, producer-approved editable Hatam Mark
+render. The first acceptance case is Mark 4 to Meyah. The new project is a
+normal Meyah/Mark/4 chapter with its own ingestion, source review, scenes,
+shots, cast audio, Avatar attempts, editorial cut, QC and export. It keeps the
+approved Papuan visual character versions and historical ElevenLabs voice
+identities; the target recording supplies all words, narration, order and
+speech timing. Narration is never sent to Avatar. A visible speaking mouth
+gets a new target-language Avatar candidate; a compatible listener or hidden
+mouth picture can be locally reused without duplicating provider cost.
+
+This uses the seven existing pipeline stages and the existing producer
+workspace. The edition origin and reviewed revisions are typed append-only
+`edit_commands` on a normal target project. Creation records identity and
+frozen evidence only. It does not clone donor stage completions, target audio
+or approvals, and never contacts a provider. The target stage ledger earns
+its own completions. New provider work still needs the current target crew
+plan, source/canon checks, spend controls and actual result review.
+
+## Identity and gates
+
+- Read-only preflight pins the exact donor render and linked producer decision,
+  original render/recipe hashes, selected clip/attempt/keyframe lineage and
+  source audio files. Custom historical recipes hold until reconstructed on
+  an isolated donor copy with a verifiable ordered timeline. Approval of an
+  older or different render is insufficient.
+- Preflight pins the Meyah non-drama recording, supplied DOCX and English
+  reference; selected Papuan character versions, visual hashes, retained
+  cast-master sidecars with the effective ElevenLabs voice/model/settings;
+  clean title background; and title words and duration. Changes hold before
+  reuse or provider submission.
+- The initial Meyah title is `Markus 4` with smaller `Meyah`, composed in the
+  Mark 4 style for four seconds over the retained clean lake frame. Uppercase
+  is a typography operation, not a spelling change. A local preview is
+  selected into the existing opening editorial beat only after named visual
+  review. The generic title renderer also supports a later `Markus 5` /
+  `Hatam` update, while the approved Mark 5 film stays untouched.
+- Target source alignment and its uncertainty are reviewed independently.
+  Meyah DOCX entries `6 (4:5)` and `19 (4:18)` remain reference-only markers;
+  they contribute no invented text or duplicated audio. Exact target
+  correspondence is a named revision with a parent hash and per-placement
+  reason. A confirmed continuous speech run may carry a reviewed mouth
+  window across old audio-row boundaries.
+- The original target source recording remains the narrator and the timing
+  authority. Existing voicing forms a target-only cast master with the pinned
+  voice settings. Short Avatar audio may receive trailing non-speech padding
+  under the existing Kling contract; every spoken sample remains intact.
+- Before whole-chapter voice conversion, the producer selects one complete
+  2–15 second target-language speech interval (or confirmed short speech run)
+  after source and correspondence review. The existing voicing route converts
+  only that sample. A named listener hears its retained cast audio and records
+  pronunciation/source-fidelity evidence. The approval pins the source bytes,
+  cast bytes, voice sidecar and plan revision. Changed evidence holds bulk
+  voicing. The first paid audition is a later explicit producer action.
+- Local picture reuse is derived from selected donor clip stems, muted and
+  trimmed with FFmpeg. The mixed finished donor film cannot be a picture stem.
+  Insufficient picture coverage is a visible hold, not a loop/freeze or a
+  silent story change. Editorial assembly adapts to the target audio clock
+  through the ordinary Picture Editor cut and source-coverage checks.
+
+Sougb remains held pending verified chapter text extraction and native title
+metadata. MP4-only import, translation/TTS and global voice reassignment
+remain outside this edition workflow. No language/canon eligibility is
+granted to an ordinary unlinked project.
+
+## Preservation and rollout
+
+Chapter packaging closes selected donor JSON lineage plus the four shot and
+attempt child relations; the target package restores with the original donor
+assets unavailable. Relative paths and hashes stay stable across relocation.
+An accepted donor does not transfer human film approval, QC, release rights
+or cost ledger charges to the target.
+
+Run implementation checks on an isolated worktree and disposable data. The
+real Mark 4 `Markus-4.mp4` is currently held by its recorded recipe and lacks
+an exact linked producer approval in the October 22 snapshot. Do not approve
+or normalize it in the live database by inference. Before rollout, reconcile
+the current Mark 5 production state, take a consistent DB/media backup, pin
+the code revision and validate an isolated restore. Roll back application
+code while preserving any newer edition rows/assets; never restore the old
+review snapshot over current production. Paid Meyah voice audition, Avatar
+pilot, whole-film review and field distribution require their normal later
+authorizations and evidence.

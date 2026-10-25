@@ -25,6 +25,8 @@ import { getDataDir } from "../../db/client.js";
 import { sceneReferenceAssetsForVerse } from "../../providers/story-state-assets.js";
 import { sortAssetsByFreshness } from "../../characters/asset-freshness.js";
 import {wardrobeReferenceRole} from "../../characters/wardrobe-refinement.js";
+import { discoverSourcePaths } from "../ingestion/source-catalog.js";
+import { approvedEditionCanon } from "../language-edition.js";
 
 const REFERENCE_CATEGORY_RANK: Record<string, number> = { headshot: 0, body_pose: 1, turnaround: 2 };
 
@@ -125,7 +127,7 @@ export function getCoverageBeatContext(db: DatabaseSync, dataDir: string, beatId
       `SELECT p.id, p.language, p.book, p.chapter FROM projects p JOIN scenes sc ON sc.project_id = p.id WHERE sc.id = ?`
     )
     .get(scene.id) as CoverageBeatContext["project"];
-  if (project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || ![2, 3, 4].includes(project.chapter)) {
+  if (!(project.language.toLowerCase() === "hatam" && project.book.toLowerCase() === "mark" && [2, 3, 4].includes(project.chapter)) && !approvedEditionCanon(db,project.id)) {
     throw new Error("The coverage-beat keyframe handoff currently supports Hatam Mark 2, Mark 3, and the producer-approved Mark 4 coverage plan only.");
   }
 
@@ -244,16 +246,11 @@ export function prepareCoverageBeatBrief(
     throw new Error(`Beat ${beatId} is already '${context.beat.status}' -- only a planned or unaccepted generated beat can be prepared.`);
   }
 
-  const chapterSlug = `${context.project.book.toLowerCase()}-${context.project.chapter}`;
-  const sources = (context.project.chapter === 4
-    ? [
-        { role: "verified Hatam source", path: "source/hatam/text/Mark/Mark 4.docx" },
-        { role: "English reference", path: "source/english-esv/text/Mark/Mark 4.docx" }
-      ]
-    : [
-        { role: "verified Hatam source", path: `source/hatam/${chapterSlug}/${chapterSlug}-text.docx` },
-        { role: "English reference", path: `reference/english/${chapterSlug}/${chapterSlug}-text.docx` }
-      ]).map((source) => {
+  const sourcePaths=discoverSourcePaths(context.project,undefined,dataDir,false);
+  const sources = [
+    { role: `verified ${context.project.language} source`, path: sourcePaths.docxPath },
+    { role: "English reference", path: sourcePaths.referencePath }
+  ].map((source) => {
     const path = assetPath(dataDir, source.path);
     return { ...source, sha256: sha256(readFileSync(path)), verses: parseSourceTextByVerse(path) };
   });

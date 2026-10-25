@@ -14,4 +14,4 @@ export function attestSourceAlignment(db:DatabaseSync,input:{projectId:string;re
  const {sourceHash,alignmentHash}=sourceReviewHashes(db,input.projectId); const id=randomUUID();
  db.prepare("INSERT INTO source_alignment_reviews (id,project_id,reviewer_name,reviewer_attestation,source_hash,alignment_hash,evidence,created_at) VALUES (?,?,?,?,?,?,?,?)").run(id,input.projectId,input.reviewerName.trim(),input.attestation.trim(),sourceHash,alignmentHash,input.evidence,Date.now()); return id;
 }
-export function hasCurrentSourceReview(db:DatabaseSync,projectId:string) { const h=sourceReviewHashes(db,projectId); return !!db.prepare("SELECT id FROM source_alignment_reviews WHERE project_id=? AND source_hash=? AND alignment_hash=?").get(projectId,h.sourceHash,h.alignmentHash); }
+export function hasCurrentSourceReview(db:DatabaseSync,projectId:string,dataDir?:string) { const h=sourceReviewHashes(db,projectId,dataDir); return !!db.prepare("SELECT id FROM source_alignment_reviews WHERE project_id=? AND source_hash=? AND alignment_hash=?").get(projectId,h.sourceHash,h.alignmentHash); }

@@ -17,6 +17,7 @@ import { runVoiceLipSync } from "./voice-lipsync/index.js";
 import { hasCurrentSourceReview } from "./ingestion/source-review.js";
 import { resolveAndBindSourcePaths } from "./ingestion/source-catalog.js";
 import { readConfirmedSpeechRuns } from "./ingestion/continuous-speech.js";
+import { assertEditionInputsCurrent, readLanguageEditionOrigin } from "./language-edition.js";
 
 const STAGES: Array<{ name: string; run: Stage }> = [
   { name: "ingestion", run: runIngestion }, { name: "scene_breakdown", run: runSceneBreakdown }, { name: "casting", run: runCasting }, { name: "media_generation", run: runMediaGeneration }, { name: "voice_lipsync", run: runVoiceLipSync }, { name: "assembly", run: runAssembly }, { name: "qc", run: runQualityControl }
@@ -53,9 +54,10 @@ function inputSignature(projectId: string, stage: string): string {
   // to the caller, which leaves the run without a completed lease.
   const rows = getDb().prepare(sql[stage]!).all(projectId);
   const speech = getDb().prepare("SELECT command_type,payload FROM edit_commands WHERE project_id=? AND command_type IN ('confirm_continuous_speech','bind_speech_run_utterance','confirm_speech_pause_boundary') AND undone=0 ORDER BY sequence").all(projectId);
+  const edition = getDb().prepare("SELECT command_type,payload FROM edit_commands WHERE project_id=? AND command_type IN ('derive_language_edition','revise_language_edition') AND undone=0 ORDER BY sequence").all(projectId);
   // Keep scene identity stable: attributing a speech is not a request to
   // replace existing scenes. Casting refines retained shots/crew direction.
-  return hash(speech.length && stage !== "scene_breakdown" ? { rows, speech } : rows);
+  return hash(edition.length ? {rows,edition,...(speech.length && stage!=="scene_breakdown"?{speech}:{})} : speech.length && stage !== "scene_breakdown" ? { rows, speech } : rows);
 }
 function outputIsStillUsable(projectId: string, stage: string): boolean {
   const db = getDb();
@@ -168,6 +170,8 @@ function validCompletion(projectId: string, stage: string, input: string, depend
 
 export async function runPipeline(projectId: string): Promise<OrchestratorRunResult> {
   const db = getDb(); const results: OrchestratorRunResult["results"] = []; let dependency = hash("root");
+  if(readLanguageEditionOrigin(db,projectId))try{assertEditionInputsCurrent(db,getDataDir(),projectId);}
+    catch(error){return {projectId,results:[{stage:"ingestion",ok:false,reasoning:`Edition inputs held: ${(error as Error).message}`}],stoppedAt:"ingestion"};}
   try { readConfirmedSpeechRuns(db, projectId); }
   catch (error) { return { projectId, results: [{ stage: "scene_breakdown", ok: false, reasoning: (error as Error).message }], stoppedAt: "scene_breakdown" }; }
   // Old projects predate the durable ledger.  Their scenes/shots can have

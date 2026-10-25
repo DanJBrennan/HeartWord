@@ -3,6 +3,7 @@ import { applyFinishing, finishingRecipe, reviewChapter } from "../assembly/fini
 import { generateRequestedSoundtrack } from "../assembly/soundtrack.js";
 import { getDataDir, getDb } from "../../db/client.js";
 import { loadCrewBrief } from "../creative-direction/crew-context.js";
+import { assertEditionInputsCurrent } from "../language-edition.js";
 
 /**
  * Stage 7: structural checks and specialist viewing/listening of the actual cut.
@@ -10,6 +11,8 @@ import { loadCrewBrief } from "../creative-direction/crew-context.js";
 export const runQualityControl: Stage = projectId => observeWork(projectId, "qc", () => runQualityControlImpl(projectId));
 const runQualityControlImpl: Stage = async (projectId) => {
   try {
+    const context=getDb();
+    if(typeof context.prepare==="function")assertEditionInputsCurrent(context,getDataDir(),projectId);
     // One bounded finishing cycle: review, obtain approved cues if needed,
     // mix once, then independently view/listen to the resulting film.
     let result = await reviewChapter(projectId, 17);

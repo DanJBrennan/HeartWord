@@ -42,3 +42,49 @@ Paths below are relative to C:/Users/danbr/HeartWordData/assets/preparation/hata
 Production report: http://127.0.0.1:4000/media/preparation/hatam-mark5-production-20261021/index.html#full-cut.
 
 **Distribution remains separate.** Ryan/native Hatam field review is required before distribution. No field approval, publication or messages to others have been authorized or invented. This is a future release gate, not unfinished work within the approved production goal.
+
+## In progress in an isolated checkout: editable language editions
+
+Dan authorized implementation of a separate editable target-language chapter,
+starting with Hatam Mark 4 to Meyah Mark 4, while preserving Mark 5 production
+and the live database. The isolated worktree starts from
+`dcca053151de2550fe98ebd457cab29def38e379`. The product goal is a
+source-faithful target recording, the same approved Papuan character/voice
+identities, only necessary new Avatar mouth performances, locally reused
+compatible picture, the normal producer review/edit/export path and a
+`Markus 4` / `Meyah` opening in the Mark 4 treatment. The future Hatam Mark 5
+title is `Markus 5` / `Hatam`; this checkout does not change its delivered film.
+
+The implementation lives in existing stages and is described in
+`docs/design/language-editions.md`. Creation requires exact linked donor
+approval, a normalized executable picture/audio recipe, source/canon/voice
+evidence and a clean title background. Target correspondence and title media
+need their own named reviews. Sougb remains held until its text/title evidence
+is verified; MP4-only import is later work.
+
+The latest registered Hatam Mark 4 `Markus-4.mp4` is a candidate only. The
+October 22 read-only snapshot records a held custom recipe and no approval
+linked to that render ID. No real Meyah edition or paid provider request is
+authorized by the isolated engineering checks. Before deployment, verify a
+current exact approval and reconstruct the selected donor recipe on an
+isolated copy, then run a bounded target-language voice/Avatar audition,
+whole-film review and editable fresh-root restoration. The live database,
+Mark 5 checkout and production services remain outside this worktree's test
+and migration commands.
+
+Implementation check, 2026-10-24: the isolated checkout passes 860 Vitest
+tests in 126 files, both TypeScript typechecks, the web build and three Python
+audio-timing tests. Real FFmpeg title/picture fixtures and a fresh-root package
+reopen were exercised. A separate Goal Guardian review found the source-faithful
+target, same approved canon/voice identities, ordinary stage/workspace path,
+new target-only reviews, local picture reuse and exact title treatment aligned
+with the product vision and user workflow. This is engineering evidence, not
+approval of a real Meyah film or of the donor. A 2026-10-24 read-only query of
+the current production database still found zero exact approved decisions for
+render `deefa536-62f9-41b3-bbac-e9e8fb244206` and a non-array custom
+picture recipe. The target-language voice audition has an explicit 2–15 second
+review gate before bulk voice work. The remaining real acceptance work is
+donor approval/isolated normalization, native Meyah source and voice listening,
+one bounded Avatar pilot, target credits/soundtrack review, complete target
+film QC and portable edit/render verification. No live rows or media were
+changed by this checkout.
