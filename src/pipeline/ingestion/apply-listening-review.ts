@@ -27,6 +27,7 @@ export function applyListeningReview(db:DatabaseSync,root:string,input:{projectI
  const {projectId,reviewerName,evidence,resolutions}=input;
  if(!reviewerName.trim()||!evidence.trim()||!input.backupPath.trim())throw Error("Named producer authorization, evidence and a retained backup are required.");
  const review=readListeningReview(db,root,projectId),prior=appliedListeningReview(db,projectId,review.manifestHash);
+ if(review.reconciliation)throw Error("Source rows were already reconciled; preserve the retained listening set and prepare a new source-binding revision.");
  if(prior){if(prior.reviewerName!==reviewerName||prior.evidence!==evidence||JSON.stringify(prior.resolutions)!==JSON.stringify(resolutions))throw Error("These windows were already applied with different decisions. Reconcile a new revision explicitly.");return prior;}
  if(db.prepare("SELECT status FROM projects WHERE id=?").get(projectId)?.status!=="held")throw Error("Retain the producer's film hold before applying this preparation.");
  if(db.prepare("SELECT 1 FROM scenes WHERE project_id=? LIMIT 1").get(projectId)||db.prepare("SELECT 1 FROM audio_segments WHERE project_id=? AND layer<>'original_reading' LIMIT 1").get(projectId))throw Error("This chapter already has downstream production; reconcile dependent bindings before changing source intervals.");

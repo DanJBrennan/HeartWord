@@ -224,3 +224,23 @@ replace its rows and clear project QC notes, so it is not a safe shortcut.
 The [source-row candidate](source-row-reconciliation-candidate.md) now gives
 the proposed seven boundary repairs over the contiguous 40-entry navigation
 manifest. It remains read-only until an application preserves review history.
+
+### Isolated source-row application, 2026-10-25
+
+The candidate was subsequently applied **only to the isolated Meyah project**
+as append-only reconciliation `f8c8883a-0c3c-4ac2-adaa-c0f78a0808d1`.
+Forty uncast original-reading rows still cover the full 0–805.685-second
+recording, with the seven listed boundaries revised. The alignment hash moved
+from `c01572ecb92dde388500c31bab5613df600a0b8bb832deb74a8aa35fe8966217`
+to `97cac1b52db6f9cd16018d4aebdae6e142f6f91a0f7ce8a7c76a4d8c329929b8`;
+the source hash remained unchanged. A consistent pre-application SQLite backup
+is retained at
+`output/mark4-donor-20261024/review/heartword.before-source-row-reconciliation.sqlite`
+(SHA-256 `6cfa6ed036c0db35945533770f160f2806914dcddf60477ab53b2e1a3705dd6a`).
+SQLite `quick_check` passed. Both original listening manifests, all saved
+clips/revisions, Dan's v39 narrator decision, and his targeted word answers
+remain readable. The reviewer displays each applied verse source row beside
+the saved listening window and is now read-only pending any new source-binding
+revision. It still reports 12/40 verse-window and 13/13 speech-entry
+verifications. No whole-chapter source attestation, cast/source-word binding,
+provider call, target shot correspondence or film approval was created.

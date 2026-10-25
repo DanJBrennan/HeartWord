@@ -227,6 +227,18 @@ immutable manifest hash. It does not impersonate a new human listening pass,
 rewrite the saved clip, or assign a character voice. A later change to that
 listening revision makes the content decision inactive until reconciled.
 
+When an estimated verse-row map is materially wrong, a source-row
+reconciliation may replace only uncast, unproduced original-reading rows under
+a retained SQLite backup and exact source/manifest hashes. It uses reviewed
+waveform windows as containment constraints while keeping internal verse edges
+approximate; the separate speech-turn reviews remain the source of exact
+character cutoffs. Before/after rows and boundary reasons are append-only
+project QC evidence. A bridge tied to the resulting alignment hash keeps both
+original listening manifests, saved WAVs and review history readable, then
+locks those reviews until a new source-binding revision. Reconciliation never
+supplies a whole-chapter human alignment attestation, speaker cast, translated
+words or provider request.
+
 The existing ingestion review can prepare source-only PCM excerpts and a listening
 page, with chapter-clock start/end controls in 10 ms increments. Web Audio schedules
 the selected interval from the decoded source; a timer or MP3 frame seek is not the

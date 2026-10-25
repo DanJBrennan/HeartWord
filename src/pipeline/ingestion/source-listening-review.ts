@@ -38,6 +38,17 @@ export interface ListeningApplication {
  beforeSegments:unknown[];afterSegments:unknown[];backupPath:string;
 }
 export const listeningApplicationPrefix="Source listening application v1\n";
+export interface SourceRowReconciliation {
+ id:string;projectId:string;sourceHash:string;originalAlignmentHash:string;appliedAlignmentHash:string;
+ manifestHashes:{verse:string;speech:string};reviewIds:{verse:string[];speech:string[]};
+ reviewerName:string;evidence:string;createdAt:number;backupPath:string;
+ beforeSegments:unknown[];afterSegments:unknown[];boundaryRevisions:Array<{afterItemId:string;fromMs:number;toMs:number;basis:string}>;
+}
+export const sourceRowReconciliationPrefix="Source row reconciliation v1\n";
+export function appliedSourceRowReconciliation(db:DatabaseSync,projectId:string):SourceRowReconciliation|null {
+ const rows=db.prepare("SELECT note FROM review_notes WHERE project_id=? AND subject_type='project' AND subject_id=? AND source='qc' AND note LIKE ? ORDER BY created_at,rowid").all(projectId,projectId,sourceRowReconciliationPrefix+"%");
+ return rows.map(r=>JSON.parse(String(r.note).slice(sourceRowReconciliationPrefix.length)) as SourceRowReconciliation).at(-1)??null;
+}
 export function appliedListeningReview(db:DatabaseSync,projectId:string,manifestHash:string):ListeningApplication|null {
  const rows=db.prepare("SELECT note FROM review_notes WHERE project_id=? AND subject_type='project' AND subject_id=? AND source='qc' AND note LIKE ? ORDER BY created_at,rowid").all(projectId,projectId,listeningApplicationPrefix+"%");
  return rows.map(r=>JSON.parse(String(r.note).slice(listeningApplicationPrefix.length)) as ListeningApplication).filter(r=>r.manifestHash===manifestHash).at(-1)??null;
@@ -80,10 +91,12 @@ function prepared(db:DatabaseSync,root:string,projectId:string,scope:ListeningSc
  if(!existsSync(path))throw Error("Source listening clips have not been prepared for this chapter.");
  const bytes=readFileSync(path),manifest=JSON.parse(bytes.toString("utf8")) as ListeningManifest;
  if(manifest.version!==1||manifest.projectId!==projectId||!Array.isArray(manifest.items)||!manifest.items.length)throw Error("Invalid prepared source review.");
- const current=sourceReviewHashes(db,projectId,root),manifestHash=listeningHash(bytes),application=appliedListeningReview(db,projectId,manifestHash);
- if(current.sourceHash!==manifest.sourceHash||(current.alignmentHash!==manifest.alignmentHash&&(!application||application.sourceHash!==current.sourceHash||application.originalAlignmentHash!==manifest.alignmentHash||application.appliedAlignmentHash!==current.alignmentHash)))throw Error("Source or alignment changed. Preserve these reviews and prepare a reconciled listening set.");
+ const current=sourceReviewHashes(db,projectId,root),manifestHash=listeningHash(bytes),application=appliedListeningReview(db,projectId,manifestHash),record=appliedSourceRowReconciliation(db,projectId);
+ const reconciliation=record&&record.sourceHash===current.sourceHash&&record.originalAlignmentHash===manifest.alignmentHash&&record.appliedAlignmentHash===current.alignmentHash&&record.manifestHashes[scope]===manifestHash?record:null;
+ if(current.sourceHash!==manifest.sourceHash||(current.alignmentHash!==manifest.alignmentHash&&(!application||application.sourceHash!==current.sourceHash||application.originalAlignmentHash!==manifest.alignmentHash||application.appliedAlignmentHash!==current.alignmentHash)&&!reconciliation))throw Error("Source or alignment changed. Preserve these reviews and prepare a reconciled listening set.");
  if(application){const latest=revisions(db,projectId).filter(r=>r.manifestHash===manifestHash),ids=manifest.items.flatMap(i=>{const r=latest.filter(r=>r.itemId===i.id).at(-1);return r?[r.id]:[];});if(JSON.stringify(ids.sort())!==JSON.stringify([...application.reviewIds].sort()))throw Error("Applied review decisions changed; reconcile the source bindings before continuing.");}
- return {manifest,manifestHash,application};
+ if(reconciliation){const latest=revisions(db,projectId).filter(r=>r.manifestHash===manifestHash),ids=manifest.items.flatMap(i=>{const r=latest.filter(r=>r.itemId===i.id).at(-1);return r?[r.id]:[];});if(JSON.stringify(ids.sort())!==JSON.stringify([...reconciliation.reviewIds[scope]].sort()))throw Error("A listening revision changed after source-row reconciliation; prepare a new source-binding revision.");}
+ return {manifest,manifestHash,application,reconciliation};
 }
 function revisions(db:DatabaseSync,projectId:string):ListeningRevision[] {
  return db.prepare("SELECT note FROM review_notes WHERE project_id=? AND subject_type='project' AND subject_id=? AND source='human' AND note LIKE ? ORDER BY created_at,rowid").all(projectId,projectId,prefix+"%").map(row=>{try{return JSON.parse(String(row.note).slice(prefix.length)) as ListeningRevision;}catch{throw Error("A saved listening review is unreadable; inspect its retained record.");}});
@@ -92,13 +105,16 @@ function narrationDecisions(db:DatabaseSync,projectId:string):ListeningNarration
  return db.prepare("SELECT note FROM review_notes WHERE project_id=? AND subject_type='project' AND subject_id=? AND source='qc' AND note LIKE ? ORDER BY created_at,rowid").all(projectId,projectId,listeningNarrationDecisionPrefix+"%").map(row=>JSON.parse(String(row.note).slice(listeningNarrationDecisionPrefix.length)) as ListeningNarrationDecision);
 }
 export function readListeningReview(db:DatabaseSync,root:string,projectId:string,scope:ListeningScope="verse") {
- const {manifest,manifestHash,application}=prepared(db,root,projectId,scope),history=revisions(db,projectId),decisions=narrationDecisions(db,projectId);
- const items=manifest.items.map(item=>{const records=history.filter(r=>r.itemId===item.id&&r.manifestHash===manifestHash);
+ const {manifest,manifestHash,application,reconciliation}=prepared(db,root,projectId,scope),history=revisions(db,projectId),decisions=narrationDecisions(db,projectId);
+ const rows=reconciliation&&scope==="verse"?reconciliation.afterSegments as Array<{start_ms:number;end_ms:number;verse_ref:string|null}>:null;
+ if(rows&&rows.length!==manifest.items.length)throw Error("Reconciled source-row history does not match the retained verse archive.");
+ const items=manifest.items.map((item,index)=>{const records=history.filter(r=>r.itemId===item.id&&r.manifestHash===manifestHash);
   const current=records.at(-1)??null;
   const decision=decisions.filter(d=>d.itemId===item.id&&d.manifestHash===manifestHash&&d.reviewId===current?.id).at(-1);
-  return {...item,current,resolution:application?.resolutions.find(r=>r.itemId===item.id)??(decision?{itemId:item.id,treatment:"narration" as const,evidence:decision.evidence}:null),history:records.map(r=>({id:r.id,startMs:r.startMs,endMs:r.endMs,verified:r.verified,reviewerName:r.reviewerName,speakerLabel:r.speakerLabel??null,createdAt:r.createdAt})),staleHistory:history.some(r=>r.itemId===item.id&&r.manifestHash!==manifestHash)};
+  const row=rows?.[index];
+  return {...item,current,sourceRow:row?{startMs:row.start_ms,endMs:row.end_ms,verseRef:row.verse_ref}:null,resolution:application?.resolutions.find(r=>r.itemId===item.id)??(decision?{itemId:item.id,treatment:"narration" as const,evidence:decision.evidence}:null),history:records.map(r=>({id:r.id,startMs:r.startMs,endMs:r.endMs,verified:r.verified,reviewerName:r.reviewerName,speakerLabel:r.speakerLabel??null,createdAt:r.createdAt})),staleHistory:history.some(r=>r.itemId===item.id&&r.manifestHash!==manifestHash)};
  });
- return {projectId,title:manifest.title,scope,manifestHash,sourceHash:manifest.sourceHash,durationMs:manifest.durationMs,sampleRate:manifest.sampleRate,pcmUrl:"/media/"+manifest.pcmPath.split(/[\\/]/).map(encodeURIComponent).join("/"),items,verifiedCount:items.filter(i=>i.current?.verified).length,resolvedCount:items.filter(i=>i.current?.verified||i.resolution).length,application:application?{id:application.id,createdAt:application.createdAt,reviewerName:application.reviewerName,evidence:application.evidence}:null};
+ return {projectId,title:manifest.title,scope,manifestHash,sourceHash:manifest.sourceHash,durationMs:manifest.durationMs,sampleRate:manifest.sampleRate,pcmUrl:"/media/"+manifest.pcmPath.split(/[\\/]/).map(encodeURIComponent).join("/"),items,verifiedCount:items.filter(i=>i.current?.verified).length,resolvedCount:items.filter(i=>i.current?.verified||i.resolution).length,application:application?{id:application.id,createdAt:application.createdAt,reviewerName:application.reviewerName,evidence:application.evidence}:null,reconciliation:reconciliation?{id:reconciliation.id,createdAt:reconciliation.createdAt,reviewerName:reconciliation.reviewerName,evidence:reconciliation.evidence}:null};
 }
 /** Record a producer's explicit content correction without impersonating a
  * listening verification or changing the immutable prepared manifest. */
@@ -106,8 +122,8 @@ export function recordListeningNarrationDecision(db:DatabaseSync,root:string,pro
  itemId:string;manifestHash:string;reviewId:string;reviewerName:string;evidence:string;scope?:ListeningScope;
 }):ListeningNarrationDecision {
  if(!input?.reviewerName?.trim()||!input.evidence?.trim()||!input.itemId||!input.reviewId)throw Error("Named narration decision and exact review evidence are required.");
- const {manifest,manifestHash,application}=prepared(db,root,projectId,input.scope??"verse");
- if(application||manifestHash!==input.manifestHash||!manifest.items.some(i=>i.id===input.itemId))throw Error("Narration decision does not match the current prepared review.");
+ const {manifest,manifestHash,application,reconciliation}=prepared(db,root,projectId,input.scope??"verse");
+ if(application||reconciliation||manifestHash!==input.manifestHash||!manifest.items.some(i=>i.id===input.itemId))throw Error("Narration decision does not match the current prepared review.");
  db.exec("BEGIN IMMEDIATE");
  try{
   const review=revisions(db,projectId).filter(r=>r.itemId===input.itemId&&r.manifestHash===manifestHash).at(-1);
@@ -125,8 +141,8 @@ export function saveListeningReview(db:DatabaseSync,root:string,projectId:string
 }) {
  if(!input||!["draft","verify"].includes(input.action)||!input.reviewerName?.trim()||input.reviewerName.length>160||typeof input.note!=="string"||input.note.length>8000||(input.speakerLabel!==undefined&&(typeof input.speakerLabel!=="string"||input.speakerLabel.length>160))||!/^[a-zA-Z0-9-]{1,100}$/.test(input.requestId??"")||!(input.baseRevision===null||typeof input.baseRevision==="string"))throw Error("Reviewer, valid request and draft/verification action are required.");
  if(input.action==="verify"&&input.attestation!=="confirm")throw Error("Verify explicitly confirms that you listened to this exact window.");
- const {manifest,manifestHash,application}=prepared(db,root,projectId,input.scope??"verse"),item=manifest.items.find(i=>i.id===itemId);
- if(application)throw Error("These reviewed windows have been applied. Prepare a source-binding revision before changing an applied review; retained history is read-only.");
+ const {manifest,manifestHash,application,reconciliation}=prepared(db,root,projectId,input.scope??"verse"),item=manifest.items.find(i=>i.id===itemId);
+ if(application||reconciliation)throw Error("These reviewed windows have been applied or reconciled. Prepare a source-binding revision before changing a retained review; history is read-only.");
  if(!item||input.manifestHash!==manifestHash)throw Error("The prepared item changed. Reload before saving.");
  if(!Number.isInteger(input.startMs)||!Number.isInteger(input.endMs)||input.startMs<0||input.endMs<=input.startMs||input.endMs>manifest.durationMs)throw Error("Start/end must be valid chapter times in 0.001-second increments.");
  const wav=readFileSync(assetPath(root,manifest.pcmPath));

@@ -391,3 +391,16 @@ remain authoritative; internal verse edges are approximate navigation.
 A read-only 40-row proposal with seven reviewed-evidence boundary repairs and
 the preserved 17 ms decoded-audio tail is in
 `docs/production/mark4-meyah-source-review-2026-10-25/source-row-reconciliation-candidate.md`.
+That proposal was applied only to the isolated Meyah project in reconciliation
+`f8c8883a-0c3c-4ac2-adaa-c0f78a0808d1`, under a consistent SQLite backup.
+The source hash is unchanged; the row-alignment hash is now
+`97cac1b52db6f9cd16018d4aebdae6e142f6f91a0f7ce8a7c76a4d8c329929b8`.
+All 40 rows cover 0–805.685 s, all 12 verified verse clips remain within
+their mapped rows, both review scopes and the v39 narrator decision remain
+readable, and the local reviewer projects the applied row times. There is
+still no whole-chapter source attestation or target correspondence. The next
+source action is Dan's named review of the approximate navigation map against
+the already verified word/speech evidence; exact character/source binding
+follows that approval. Goal Guardian: this extends ingestion's existing
+review/correction boundary, retains the original narrator and editable
+chapter workflow, and invents no dialogue, cast, separate stage or approval.

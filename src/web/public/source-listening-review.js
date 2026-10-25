@@ -21,7 +21,7 @@ function updateLeadIn(i){const quoteAt=i.textHatam.search(/["“]/u),mixed=/^Nar
 function list() {
  const filter=$("filter").value;
  const narrated=scope==="speech"?data.items.filter(i=>i.resolution?.treatment==="narration").length:0;
- $("progress").textContent=data.application?data.verifiedCount+" verified · "+data.resolvedCount+" / "+data.items.length+" resolved · boundaries applied":scope==="speech"?`${data.items.filter(i=>activeVerified(i)&&i.resolution?.treatment!=="narration").length} character windows verified · ${narrated} narrator decisions`:data.items.filter(activeVerified).length+" / "+data.items.length+" verse windows verified";
+ $("progress").textContent=data.application?data.verifiedCount+" verified · "+data.resolvedCount+" / "+data.items.length+" resolved · boundaries applied":data.reconciliation?data.verifiedCount+" / "+data.items.length+" listening windows verified · source rows reconciled":scope==="speech"?`${data.items.filter(i=>activeVerified(i)&&i.resolution?.treatment!=="narration").length} character windows verified · ${narrated} narrator decisions`:data.items.filter(activeVerified).length+" / "+data.items.length+" verse windows verified";
  $("items").innerHTML=data.items.filter(i=>filter==="all"||(filter==="pending"?!resolved(i):filter==="narration"?i.resolution?.treatment==="narration"||i.kind==="narration":filter==="character"?i.kind==="character"&&i.resolution?.treatment!=="narration":i.kind===filter)).map(i=>'<button class="clip" data-item="'+esc(i.id)+'" aria-current="'+(i.id===selected)+'"'+(busy?' disabled':'')+'><strong>'+esc(i.verseRef)+' · '+esc(displayTitle(i))+'</strong><small>'+esc(speakerLabel(i))+'</small><small class="'+(resolved(i)?"done":"")+'">'+(draft(i).dirty?"Unsaved changes":i.resolution?(i.resolution.treatment==="covered"?"✓ Covered by merged utterance":"✓ Narrator confirmed"):activeVerified(i)?"✓ Verified":i.current?"Saved draft":"Proposed timing")+'</small></button>').join("");
 }
 function contextRange() {
@@ -66,7 +66,7 @@ function draw() {
  ctx.fillStyle="#aab9c5";ctx.font="11px monospace";ctx.fillText(clock(range.start),8,h-8);ctx.fillText(clock(range.end),Math.max(8,w-75),h-8);
 }
 function summary() {
- const i=item(),d=draft(),ok=valid(d),verified=activeVerified(i),locked=!!data.application||i.resolution?.treatment==="narration";
+ const i=item(),d=draft(),ok=valid(d),verified=activeVerified(i),locked=!!data.application||!!data.reconciliation||i.resolution?.treatment==="narration";
  updateLeadIn(i);$("speaker").textContent=speakerLabel(i)+(i.voiceName?" · "+i.voiceName:"");
  $("status").textContent=i.resolution?(i.resolution.treatment==="covered"?"Covered by merged utterance":"Narrator confirmed"):d.dirty?"Unsaved changes":verified?"Verified":i.current?"Saved draft":"Proposed timing";
  $("status").className="pill"+(verified?" verified":"");
@@ -91,11 +91,12 @@ function select(id) {
   $("wave-hint").textContent=narration?"Gold: retained narrated passage. The original narrator stays on the soundtrack; no character voice is created.":"Gold: proposed speech interval. Gemini aligned the surrounding verses; the exact quote edges still need your ear.";
   $("review-scope").textContent=narration?"Dan confirmed that this passage narrates Jesus' action. The saved listening revision remains in history, and the producer's separate content decision keeps this passage in the original narrator voice. No cast or Avatar work follows from it.":"Each entry is one proposed quoted speech turn, even when it crosses verses. Set start at its first quoted word and end after its last spoken word. Verse markers and narrator lead-ins are context only. These reviews do not automatically attribute source rows, choose a canon character, approve a cast voice or dispatch generation.";
  }
- $("confidence").textContent=[i.timingConfidence==null?null:`Timing boundary confidence ${i.timingConfidence}%`,i.geminiMatchConfidence==null?null:`Gemini text-match score ${i.geminiMatchConfidence}%`,i.resolution?.treatment==="narration"?"Producer confirmed original narration":i.speakerConfidence==null?null:`English speaker evidence score ${i.speakerConfidence}%`,i.current?.speakerLabel&&i.current.speakerLabel!==i.speakerName?"Saved speaker correction; exact handoff still unreviewed":null].filter(Boolean).join(" · ")||"Confidence has not been estimated.";
+ $("confidence").textContent=[i.sourceRow?`Reconciled source row ${clock(i.sourceRow.startMs)}–${clock(i.sourceRow.endMs)} · approximate verse navigation`:null,i.timingConfidence==null?null:`Timing boundary confidence ${i.timingConfidence}%`,i.geminiMatchConfidence==null?null:`Gemini text-match score ${i.geminiMatchConfidence}%`,i.resolution?.treatment==="narration"?"Producer confirmed original narration":i.speakerConfidence==null?null:`English speaker evidence score ${i.speakerConfidence}%`,i.current?.speakerLabel&&i.current.speakerLabel!==i.speakerName?"Saved speaker correction; exact handoff still unreviewed":null].filter(Boolean).join(" · ")||"Confidence has not been estimated.";
  $("warnings").textContent=i.warnings.join(" ");$("warnings").hidden=!i.warnings.length;
  $("start").value=(d.startMs/1000).toFixed(3);$("end").value=(d.endMs/1000).toFixed(3);$("note").value=d.note;$("speaker-choice").value=i.resolution?.treatment==="narration"?"Original narrator":d.speakerLabel;
  $("saved").textContent=i.resolution?i.resolution.evidence:i.current?(i.current.verified?"Verified":"Draft saved")+" by "+i.current.reviewerName+" · "+new Date(i.current.createdAt).toLocaleString():"No verification recorded.";
- if(data.application)$("saved").textContent+=" Applied by producer instruction. This retained listening set is read-only; later changes require a source-binding revision.";
+  if(data.application)$("saved").textContent+=" Applied by producer instruction. This retained listening set is read-only; later changes require a source-binding revision.";
+  if(data.reconciliation)$("saved").textContent+=" Approximate source rows were reconciled while preserving this listening revision. This set is read-only; later changes require a source-binding revision.";
  $("history").innerHTML=i.history.length?i.history.slice().reverse().map(r=>"<li>"+clock(r.startMs)+"–"+clock(r.endMs)+" · "+(r.verified?"verified":"draft")+(r.speakerLabel?" · "+esc(r.speakerLabel):"")+" · "+esc(r.reviewerName)+" · "+esc(new Date(r.createdAt).toLocaleString())+"</li>").join(""):"<li>No saved history yet.</li>";
  history.replaceState(null,"","#"+encodeURIComponent(id));summary();
 }
