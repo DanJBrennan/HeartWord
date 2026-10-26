@@ -17,6 +17,7 @@ let health: Record<string, unknown>;
 let healthCode: number, generateCode: number, generationStatus: string;
 let requests: Array<{ path: string; auth?: string; body?: any }>;
 let pollCount: number, pollFailure: boolean, delayed: boolean, disconnect: boolean, generating: boolean;
+let dropHealthAfterAuthorization: boolean;
 let transport: LtxTransport & { remote: ReturnType<typeof vi.fn>; upload: ReturnType<typeof vi.fn>; download: ReturnType<typeof vi.fn> };
 let videoFixture: Buffer, audioVideoFixture: Buffer;
 
@@ -38,12 +39,15 @@ beforeEach(async () => {
   writeFileSync(join(root,"assets","key frame.png"),"synthetic keyframe");
   health = {status:"ok",models_loaded:true,active_model:"fast"};
   healthCode = generateCode = 200; generationStatus = "complete";
-  pollCount = 0; requests = []; pollFailure = delayed = disconnect = generating = false;
+  pollCount = 0; requests = []; pollFailure = delayed = disconnect = generating = dropHealthAfterAuthorization = false;
   server = createServer(async (req,res) => {
     let content = "";
     for await (const chunk of req) content += chunk;
     requests.push({path:req.url!,auth:req.headers.authorization,body:content ? JSON.parse(content) : undefined});
-    if (req.url === "/health") { res.writeHead(healthCode); res.end(JSON.stringify(health)); }
+    if (req.url === "/health") {
+      if (dropHealthAfterAuthorization) { req.socket.destroy(); return; }
+      res.writeHead(healthCode); res.end(JSON.stringify(health));
+    }
     else if (req.url === "/api/generation/progress") {
       pollCount++;
       if (pollFailure && pollCount > 1) { res.writeHead(503); res.end("progress temporarily unavailable"); }
@@ -112,6 +116,13 @@ describe("LTX Desktop adapter", () => {
     let stale=false;transport.upload.mockImplementationOnce(async()=>{stale=true;});
     await expect(provider().generateFinal({...request,authorizeSubmission:()=>{if(stale)throw new Error("Production revision became stale");}},options)).rejects.toThrow("revision became stale");
     expect(requests.filter(r=>r.path==="/api/generate")).toHaveLength(0);
+  });
+  it("reconnects a tunnel that closes during the production revision check before submitting once",async()=>{
+    transport.reset.mockImplementation(()=>{dropHealthAfterAuthorization=false;});
+    const result=await provider().generateFinal({...request,authorizeSubmission:()=>{dropHealthAfterAuthorization=true;}},options);
+    expect(result.status).toBe("accepted");
+    expect(transport.reset).toHaveBeenCalledTimes(1);
+    expect(requests.filter(r=>r.path==="/api/generate")).toHaveLength(1);
   });
   it("uploads a unique keyframe, authenticates every request, returns the exact MP4 and retains metadata",async()=>{
     delayed = true;

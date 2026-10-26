@@ -159,13 +159,17 @@ export class LtxVideoProvider implements VideoProvider {
       metadata.request = body;
       if(hashImage(input.absolute)!==inputHash || (endInput && hashImage(endInput.absolute)!==endHash))throw new Error("LTX input image changed during upload; prepare a new request.");
       request.authorizeSubmission?.();
+      // A production revision check can take long enough for Desktop's SSH
+      // forward to close while idle. Revalidate and reconnect before the only
+      // generation POST; never retry a POST after an uncertain submission.
+      const submissionUrl = (await this.ready(token)).baseUrl;
       metadata.productionRevision = request.productionRevision;
       metadata.status = "running";
       emit({ phase: "submitted", percentage: null, currentStep: null, totalSteps: null });
       submitted = true;
       let finished = false;
       // Attach both handlers immediately, so polling cannot create an unhandled rejection.
-      const generation = ltxJson(baseUrl, "/api/generate", token, timeoutSeconds * 1000, body).then(value => {
+      const generation = ltxJson(submissionUrl, "/api/generate", token, timeoutSeconds * 1000, body).then(value => {
         responseReceived = true; return value;
       }, error => { if (error instanceof LtxHttpError) responseReceived = true; throw error; });
       const completion = generation.then(value => { finished = true; return { value }; }, error => { finished = true; return { error }; });
@@ -176,7 +180,7 @@ export class LtxVideoProvider implements VideoProvider {
         await Promise.race([completion, sleep(3000)]);
         if (finished) break;
         try {
-          emit(ltxProgress(await ltxJson(baseUrl, "/api/generation/progress", token, 2000)));
+          emit(ltxProgress(await ltxJson(submissionUrl, "/api/generation/progress", token, 2000)));
           pollFailures = 0;
         } catch (error) {
           pollFailures++;

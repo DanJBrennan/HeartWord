@@ -72,15 +72,18 @@ One bounded, silent, five-second 720p diagnostic request succeeded on October
 The contact sheet is
 `output/mark4-donor-20261024/review/ltx-preview-contact-20261026.jpg`.
 This confirms one working local generation path, not approval of a target take
-or the full batch. Following crew approval, the fourth bounded target draft
-still ended in a socket hang-up before Desktop registered a new job. The
-target's four uncertain attempts and their metadata remain; exact Mac inputs
-and leases were cleared only after idle reconciliation. A shorter
-572-character shot prompt did not cure the fault. An exact repeat of the
-successful diagnostic entered Fast inference, confirming the backend can
-render. The target's longer Mac inbox name is now shortened for a single
-later test; local take names and provenance remain intact. No target LTX clip
-has been accepted and no batch has started.
+or the full batch. An exact repeat of the diagnostic also succeeded. Five
+bounded target drafts ended in socket hang-ups before Desktop registered a
+new job; all five uncertain attempts and metadata remain, with exact Mac
+inputs and leases cleared only after idle reconciliation. A short shot prompt
+and a short Mac upload filename did not cure the fault. A read-only tunnel
+test identified the cause: the pinned production revision check takes about
+16.5 seconds, and the tunnel that was healthy before it returned `socket hang
+up` afterward. The provider now checks health and reconnects after that
+check and before its one generation POST. A regression test and strict
+typecheck pass. A standalone diagnostic using the target's exact prompt,
+image and seed entered Fast inference, independently confirming those inputs.
+No target LTX clip has been accepted and no batch has started.
 
 Dan requested a revised map of eight optional wordless pauses. A read-only
 proposal under
@@ -91,12 +94,12 @@ the empty-boat opening, conflicting with Dan's earlier instruction to preserve
 that footage exactly, and every pause needs verified extra picture. The
 approved source timing remains the current production basis.
 
-Next: finish the exact-repeat LTX diagnostic, reconcile one target upload-path
-test, then review actual local LTX coverage,
+Next: finish the exact-target-prompt LTX diagnostic, then run one production-
+stage preview with the repaired tunnel and review actual local LTX coverage,
 Kling Avatar speaking takes, assembled film, soundtrack/timing QC and a
 fresh-root editable package. No film acceptance is claimed.
-The full repository suite passed 885 tests in 128 files, and TypeScript
-checking passed after the approved-order repair.
+The full repository suite passed 886 tests in 128 files. Root, server and web
+TypeScript checking passed after the transport repair.
 
 ## Earlier isolated Mark 4 → Meyah checkpoint (historical status)
 

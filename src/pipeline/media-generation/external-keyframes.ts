@@ -136,7 +136,7 @@ export function keyframeSetReferences(db: DatabaseSync, dataDir: string, shotId:
   // editorial anchor. Target-scene shots may not have accepted images yet.
   // This frame is picture continuity evidence only, never target approval.
   const origin = target ? readLanguageEditionOrigin(db,String(target.project_id)) : null;
-  if (origin) {
+  if (origin && target) {
     const plan=readLanguageEditionPlan(db,String(target.project_id));
     const saved=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_shots' AND undone=0 ORDER BY sequence DESC LIMIT 1")
       .get(String(target.project_id)) as {payload:string}|undefined;

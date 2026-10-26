@@ -2,7 +2,7 @@
  * Keeps the donor/live database outside this process and preserves every take. */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -13,7 +13,7 @@ if(rel===".."||rel.startsWith(`..${sep}`)||root.toLowerCase().includes("heartwor
 process.env.HEARTWORD_DATA_DIR=root;
 const projectId="a5a40890-8bb0-4856-aacb-1dcad97074bb";
 const [command,shotId,attemptId]=process.argv.slice(2);
-if(!command||!shotId)throw new Error("Usage: run-isolated-mark4-meyah-coverage <status|draft|choose|final|accept> <target-shot-id> [attempt-id|--after-desktop-restart]");
+if(!command||!shotId)throw new Error("Usage: run-isolated-mark4-meyah-coverage <status|draft|choose|final|accept> <target-shot-id> [attempt-id|--after-desktop-restart|--after-reconnected-tunnel]");
 const [{getDb},{readLanguageEditionPlan},{requireCurrentPlan},{generateShotDraft,chooseShotDraft},{generateNonSpeakingVideoCandidate,acceptFinalVideoCandidate},{createVideoProviders}]=await Promise.all([
   import("../src/db/client.js"),import("../src/pipeline/language-edition.js"),import("../src/pipeline/creative-direction/crew-store.js"),
   import("../src/pipeline/media-generation/draft-room.js"),import("../src/pipeline/media-generation/final-video.js"),
@@ -34,17 +34,29 @@ if(command==="status"){
 }else if(command==="draft"){
   const hold=db.prepare("SELECT id FROM review_notes WHERE project_id=? AND subject_type='shot' AND subject_id=? AND resolved=0 AND note LIKE 'Meyah Mark 4 shot 8 local LTX transport hold%'")
     .get(projectId,shotId) as {id:string}|undefined;
-  if(hold&&attemptId!=="--after-desktop-restart"&&attemptId!=="--after-reconciled-short-prompt")throw new Error("LTX transport hold: use one bounded recovery preview only after Desktop restart or an exact idle reconciliation with a focused prompt.");
-  if(hold&&attemptId==="--after-reconciled-short-prompt"){
-    const receipt=JSON.parse(readFileSync(join(root,"review","meyah-mark4-shot008-third-ltx-reconciliation-20261026.json"),"utf8")) as
+  if(hold&&attemptId!=="--after-desktop-restart"&&attemptId!=="--after-reconnected-tunnel")throw new Error("LTX transport hold: use one bounded recovery preview only after Desktop restart or an exact idle reconciliation of the latest attempt.");
+  if(hold&&attemptId==="--after-reconnected-tunnel"){
+    const receipt=JSON.parse(readFileSync(join(root,"review","meyah-mark4-shot008-fifth-ltx-reconciliation-20261026.json"),"utf8")) as
       {shotId:string;generationId:string;metadataPath:string;metadataSha256:string;result:string;macProgress:{status:string}};
     const metadataPath=resolve(root,receipt.metadataPath),metadataRel=relative(root,metadataPath);
     if(metadataRel===".."||metadataRel.startsWith(`..${sep}`)||!metadataRel.startsWith(`assets${sep}generated${sep}video${sep}`))
       throw new Error("LTX reconciliation metadata is outside isolated video assets.");
     const metadata=readFileSync(metadataPath);
+    const videoDir=join(root,"assets","generated","video");
+    const priorDrafts=readdirSync(videoDir)
+      .filter(name=>name.startsWith(`${shotId}-draft-`)&&name.endsWith(".mp4.json"));
+    const diagnosticFiles=readdirSync(videoDir).filter(name=>name.startsWith("diagnostic-target-prompt-")&&name.endsWith(".mp4.json"));
+    const diagnostic=diagnosticFiles.length===1?JSON.parse(readFileSync(join(videoDir,diagnosticFiles[0]!),"utf8")) as
+      {status:string;prompt:string;seed:number;sourceKeyframeSha256:string;localOutputPath:string}:null;
+    const diagnosticPath=diagnostic?resolve(diagnostic.localOutputPath):null;
+    const diagnosticRel=diagnosticPath?relative(videoDir,diagnosticPath):"";
+    const failed=JSON.parse(metadata.toString("utf8")) as {prompt:string;seed:number;sourceKeyframeSha256:string};
     if(shotId!=="ae96ed8d-d4e7-457e-b309-3390d2a3b362"||receipt.shotId!==shotId||
-      receipt.generationId!=="f0b01933-897b-4829-8e75-1e1dd0092056"||receipt.result!=="no_target_video"||
-      receipt.macProgress.status!=="complete"||createHash("sha256").update(metadata).digest("hex")!==receipt.metadataSha256)
+      receipt.generationId!=="887fd1db-b164-4fed-aa87-6772b907d4a2"||receipt.result!=="no_target_video"||priorDrafts.length!==5||
+      receipt.macProgress.status!=="complete"||createHash("sha256").update(metadata).digest("hex")!==receipt.metadataSha256||
+      diagnostic?.status!=="complete"||diagnostic.prompt!==failed.prompt||diagnostic.seed!==failed.seed||
+      diagnostic.sourceKeyframeSha256!==failed.sourceKeyframeSha256||!diagnosticPath||!diagnosticRel||
+      diagnosticRel===".."||diagnosticRel.startsWith(`..${sep}`)||!diagnosticRel.endsWith(".mp4")||!existsSync(diagnosticPath))
       throw new Error("The reconciled target LTX attempt changed; inspect it before another draft.");
   }
   const providers=createVideoProviders("ltx");

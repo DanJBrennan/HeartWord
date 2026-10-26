@@ -65,6 +65,10 @@ Log parsing is limited to port discovery and secondary diagnostics after
 progress failures. Requests are serialized against Desktop's single progress
 slot. Lost responses retain inputs/leases and hold for reconciliation, with
 no automatic paid fallback or duplicate submission.
+The pinned production-revision check runs after the input upload. It can take
+longer than an idle SSH forward survives, so the provider rechecks `/health`
+and reconnects the forward immediately before its single `/api/generate` POST.
+It never retries that POST after an uncertain response.
 
 See [local LTX operations](../production/LTX_LOCAL.md) for configuration,
 diagnostics, settings and recovery. The October 14 ending-frame extension below

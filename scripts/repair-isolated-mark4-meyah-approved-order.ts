@@ -50,6 +50,7 @@ const oldMap=saved?JSON.parse(saved.payload) as MapPayload:null;
 const oldPlan=readLanguageEditionPlan(db,projectId);
 if(!oldMap||!oldPlan?.revision||oldPlan.hash!==audit.savedPlanHash||oldMap.planHash!==oldPlan.hash||oldMap.shots.length!==147)
   throw Error("The isolated target is no longer at the audited plan");
+const oldPlanHash=oldPlan.hash;
 assertEditionInputsCurrent(db,root,projectId);
 const oldCorr=oldPlan.revision.correspondence;
 const correspondence:EditionShotCorrespondence[]=audit.approvedToCurrentPlacement.map(i=>oldCorr[i-1]!);
@@ -111,7 +112,7 @@ function reconcile(target:DatabaseSync,revision:EditionPlanRevision,insertRevisi
     append(target,"materialize_edition_shots",{...newMap,planHash:revision.revisionHash},
       `language-edition:${projectId}:materialize_edition_shots:approved-order-20261026`);
     append(target,"reconcile_edition_shot_order",{kind:"approved_source_clock_order_repair",projectId,
-      oldPlanHash:oldPlan.hash,newPlanHash:revision.revisionHash,
+      oldPlanHash,newPlanHash:revision.revisionHash,
       approvedMainProposalSha256:sha(readFileSync(mainPath)),approvedStormProposalSha256:sha(readFileSync(stormPath)),
       auditSha256:sha(readFileSync(auditPath)),approvedToPriorPlacement:audit.approvedToCurrentPlacement,
       targetShotIdsPreserved:true,sourceAudioChanged:false,donorRowsChanged:false,providerRequests:0,

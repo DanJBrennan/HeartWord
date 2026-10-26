@@ -52,7 +52,20 @@ if(metadataRerun){
   if(!saved||JSON.parse(saved.payload).changedShots!==34)
     throw new Error("The reviewed 34-shot correction has not been applied");
 }
-if(existing && !continuing && !correctedRerun && !metadataRerun && !orderRerun){
+const johnRerun=process.argv.includes("--after-john-clean-canon");
+if(johnRerun){
+  if(existing?.id!=="635718ea-884a-4e8c-afd2-f76d23c2ebd2"||existing.status!=="approved")
+    throw new Error("The producer-approved pre-John crew run changed; inspect before rerunning");
+  const currentJohn=db.prepare("SELECT id FROM character_versions WHERE character_id=? AND status='approved'")
+    .all("3179d3c7-201d-4365-9a41-0e7ef0c49257") as Array<{id:string}>;
+  if(currentJohn.length!==1||currentJohn[0]!.id!=="fd85079a-0f1c-57de-9f7f-9e69c0418744")
+    throw new Error("Dan's isolated clean-shaven John version is not current");
+  const revision=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='approve_isolated_character_version' AND undone=0 ORDER BY sequence DESC LIMIT 1")
+    .get(projectId) as {payload:string}|undefined;
+  if(!revision||JSON.parse(revision.payload).newVersionId!==currentJohn[0]!.id)
+    throw new Error("The reviewed John canon promotion is missing");
+}
+if(existing && !continuing && !correctedRerun && !metadataRerun && !orderRerun && !johnRerun){
   console.log(JSON.stringify({projectId,runId:existing.id,status:existing.status,
     summary:existing.result_json?JSON.parse(existing.result_json).summary:null,
     action:"Existing planning run retained; inspect before any repeat."},null,2));
@@ -61,11 +74,12 @@ if(existing && !continuing && !correctedRerun && !metadataRerun && !orderRerun){
 checkFilmSpend(db,projectId,2);
 const dbPath=join(root,"db","heartword.sqlite"),backup=join(root,"review",continuing?
   `pre-standard-crew-continuation-${existing!.id}.sqlite`:orderRerun?
-  "pre-approved-order-standard-crew-20261026.sqlite":metadataRerun?
+  "pre-approved-order-standard-crew-20261026.sqlite":johnRerun?
+  "pre-john-clean-canon-standard-crew-20261026.sqlite":metadataRerun?
   "pre-added-beat-corrected-standard-crew-20261026.sqlite":correctedRerun?
   "pre-corrected-standard-crew-20261025.sqlite":"pre-standard-crew-20261025.sqlite");
 if(!existsSync(backup))execFileSync("python",["-c","import sqlite3,sys; a=sqlite3.connect('file:'+sys.argv[1]+'?mode=ro',uri=True); b=sqlite3.connect(sys.argv[2]); a.backup(b); b.close(); a.close()",dbPath,backup]);
-console.log(`${continuing?"Continuing the saved":orderRerun?"Running a new crew after the approved source-clock repair":metadataRerun?"Rerunning after the reviewed 34-shot metadata correction":correctedRerun?"Rerunning the corrected":"Running the existing"} planning crew against all ${brief.shots.length} reviewed Meyah shots; each Gemini call has a conservative USD 2 reservation.`);
+console.log(`${continuing?"Continuing the saved":orderRerun?"Running a new crew after the approved source-clock repair":johnRerun?"Rerunning after Dan's clean-shaven John canon approval":metadataRerun?"Rerunning after the reviewed 34-shot metadata correction":correctedRerun?"Rerunning the corrected":"Running the existing"} planning crew against all ${brief.shots.length} reviewed Meyah shots; each Gemini call has a conservative USD 2 reservation.`);
 const result=await runProductionCrew(projectId,"planning",{db,dataDir:root,maxCalls:30,
   ...(continuing?{resumeRunId:existing!.id}:{})});
 const ledger=Number((db.prepare("SELECT COALESCE(SUM(amount_usd),0) AS n FROM cost_ledger_entries WHERE project_id=?").get(projectId) as {n:number}).n);
@@ -76,12 +90,14 @@ const report={kind:"isolated_meyah_mark4_standard_whole_chapter_crew",projectId,
   correctedPriorHeldRun:Boolean(correctedRerun),
   correctedAddedBeatMetadata:Boolean(metadataRerun),
   correctedApprovedPictureOrder:Boolean(orderRerun),
+  correctedJohnCanon:Boolean(johnRerun),
   openBlockingObjections:result.productionRecord?.objections.filter(item=>item.status==="open"&&item.severity==="blocking").length??null,
   recordedModelSpendUsd:ledger,callUpperBoundUsd:2,
   response:"Retained for producer/Goal Guardian review before new keyframes or LTX video",
   liveDatabaseOpened:false};
 writeFileSync(join(root,"review",continuing?`meyah-mark4-standard-crew-continuation-${existing!.id}.json`:orderRerun?
-  "meyah-mark4-approved-order-crew-result.json":metadataRerun?
+  "meyah-mark4-approved-order-crew-result.json":johnRerun?
+  "meyah-mark4-john-clean-crew-result.json":metadataRerun?
   "meyah-mark4-added-beat-corrected-crew-result.json":correctedRerun?
   "meyah-mark4-corrected-crew-result.json":"meyah-mark4-standard-crew-result.json"),JSON.stringify(report,null,2)+"\n");
 console.log(JSON.stringify(report,null,2));
