@@ -35,6 +35,11 @@ crew brief loads after 79 missing approved canon references were copied by
 hash from live assets into the isolated worktree; the live assets and database
 were only read. Dan is deciding whether to use the existing whole-chapter
 crew or a focused review grounded in his already approved detailed map.
+The [read-only target media worklist](http://127.0.0.1:4002/media/review/meyah-mark4-media-worklist-20261025/index.html)
+reconciles every new target shot to that map: 35 silent coverage shots totaling
+187.517 seconds (five require a ten-second local LTX request), 29 target
+speaking shots for Kling Avatar, 81 locally retained picture placements and
+the already approved Peter keyframe.
 Continue the normal editable assembly and QC path after that decision and
 the audio review. The latest full implementation suite
 passed 875 tests across 127 files; both product typechecks and the web build
