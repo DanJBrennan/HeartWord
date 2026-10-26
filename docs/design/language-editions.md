@@ -44,6 +44,12 @@ preserve the exact reviewed cast subset. The Mark 4:35–38 storm bridge beats
 use these fields for a dusk crossing and disciples turning toward the sleeping
 Jesus, who remains outside the second bridge frame.
 
+New coverage beats keep the donor scene but begin with unset shot-specific
+framing, camera movement, spatial view and continuity notes. These fields may
+describe the donor's different action or speaking mouth and must be directed
+for the new target action in crew review. Crowd density is `empty` when the
+reviewed cast selection is empty; otherwise it is unset for that review.
+
 When a visible-speaking target shot already has a producer-accepted Codex
 keyframe, stage 4 verifies its retained image and provenance hashes and keeps
 that target frame. It does not register the donor frame as a later accepted

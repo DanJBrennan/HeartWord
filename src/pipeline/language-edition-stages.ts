@@ -140,6 +140,8 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
       const copy:RecordRow={...donor,id:targetShotId,scene_id:targetSceneId,sequence:next,status:"planned",created_at:now,
         ...(item.addedForEdition && item.addedAction?{action:item.addedAction.trim(),verse_ref:item.addedVerseRef?.trim()??donor.verse_ref,
           needs_lip_sync:0,dialogue_character_id:null,
+          framing:null,camera_movement:null,spatial_view:null,continuity_notes:null,
+          crowd_density:item.addedCharacterIds?.length===0?"empty":null,
           coverage_notes:`New target-language picture beat based on reviewed donor scene. ${item.reason}`}:{ }),
         ...(item.narratorOnlyAction!==undefined?{action:item.narratorOnlyAction.trim(),needs_lip_sync:0,dialogue_character_id:null,
           coverage_notes:`Target narration describes this action without quoted character speech. ${item.reason}`}:{})};

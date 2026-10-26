@@ -91,8 +91,15 @@ on silent field cutaways. The read-only report is
 `output/mark4-donor-20261024/review/meyah-mark4-added-beat-inheritance-audit.json`.
 No target shot fields or approved crew record have been changed yet; Dan's
 architecture choice on correcting them and rerunning the crew is pending.
-The full suite passed 879 tests across 128 files after the local draft and
-donor-reference changes; TypeScript checking passed. These checks establish
+Future stage-3 materialization now clears donor-specific camera, spatial and
+continuity fields on a new beat and sets `empty` crowd density for a reviewed
+empty cast. This prevents the same inheritance error on later editions; it
+does not rewrite the existing Meyah shots or their crew record. LTX Desktop was
+gracefully restarted on the Mac after the two failed previews. The fresh backend
+started on October 26; its token differs from the copied older session, so a
+new Logs-footer clipboard token is needed before the bounded preview.
+The full suite passed 879 tests across 128 files after these corrections;
+TypeScript checking passed. These checks establish
 code health, not a completed film.
 
 Goal Guardian: this remains a source-faithful editable language edition using

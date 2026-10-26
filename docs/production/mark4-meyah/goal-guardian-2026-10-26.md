@@ -22,11 +22,13 @@ was introduced. Full tests and TypeScript checking passed.
 Two issues prevent a film claim. First, all 34 new picture beats inherited
 donor-specific camera and continuity fields, and 14 carry stale speaking
 notes; these need a producer-approved correction and a current crew basis
-before further media generation. Second, two five-second local LTX previews
-closed before inference. Both requests were reconciled while Desktop was
-idle, and no motion output exists. The Mac needs a successful bounded preview
-before bulk LTX coverage. The approved exact timing remains unchanged while
-Dan considers the crew's separate pause proposal.
+before further media generation. Future stage-3 materialization now clears
+those fields for a new beat, while the already materialized Meyah rows await
+Dan's decision. Second, two five-second local LTX previews closed before
+inference. Both requests were reconciled while Desktop was idle, and no motion
+output exists. Desktop was restarted; its fresh session requires a new token
+and a successful bounded preview before bulk LTX coverage. The approved exact
+timing remains unchanged while Dan considers the crew's separate pause proposal.
 
 Completion still requires reviewed LTX footage, the new Meyah Kling Avatar
 takes, locally retained picture assembly, soundtrack and timing QC, a

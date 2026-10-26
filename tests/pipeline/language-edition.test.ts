@@ -404,6 +404,8 @@ describe("language edition identity",()=>{
   });
   it("keeps reviewed added-beat cast exact, including a silent beat after a speaking donor shot",()=>{
     db.exec("INSERT INTO shot_characters(shot_id,character_id)VALUES('shot','jesus')");
+    db.exec(`UPDATE shots SET framing='medium_close',camera_movement='push_in',crowd_density='packed',
+      spatial_view='Jesus speaking directly to the crowd',continuity_notes='Old speaking-shot direction' WHERE id='shot'`);
     const pre=preflightLanguageEdition(db,dataDir,"donor",input);
     const target=createLanguageEdition(db,dataDir,"donor",{...input,requestId:"cast-choice-edition-001",checkedFingerprint:pre.fingerprint!}).project.id;
     const audioPath="source/meyah/audio/Meyah_mej_TBL_NT_Non-Drama/B02___04_Markus______MEJTBLN1DA.mp3";
@@ -429,6 +431,11 @@ describe("language edition identity",()=>{
     const cast=(id:string)=>(db.prepare("SELECT character_id FROM shot_characters WHERE shot_id=?").all(id) as Array<{character_id:string}>).map(row=>row.character_id);
     expect(cast(targetShots[1]!.id)).toEqual([]);
     expect(cast(targetShots[2]!.id)).toEqual(["jesus"]);
+    const metadata=(id:string)=>db.prepare("SELECT framing,camera_movement,crowd_density,spatial_view,continuity_notes FROM shots WHERE id=?").get(id);
+    expect(metadata(targetShots[1]!.id)).toEqual({framing:null,camera_movement:null,crowd_density:"empty",spatial_view:null,continuity_notes:null});
+    expect(metadata(targetShots[2]!.id)).toEqual({framing:null,camera_movement:null,crowd_density:null,spatial_view:null,continuity_notes:null});
+    expect(metadata("shot")).toEqual({framing:"medium_close",camera_movement:"push_in",crowd_density:"packed",
+      spatial_view:"Jesus speaking directly to the crowd",continuity_notes:"Old speaking-shot direction"});
     expect(()=>assertEditionInputsCurrent(db,dataDir,target)).not.toThrow();
     db.prepare("INSERT INTO shot_characters(shot_id,character_id)VALUES(?,'jesus')").run(targetShots[1]!.id);
     expect(()=>assertEditionInputsCurrent(db,dataDir,target)).toThrow(/cast changed/);
