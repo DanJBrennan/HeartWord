@@ -201,7 +201,10 @@ export class LtxVideoProvider implements VideoProvider {
       if (result.status !== "complete" || typeof result.video_path !== "string" || !result.video_path.startsWith("/") || /[\r\n\0]/.test(result.video_path)) throw new Error(`LTX did not complete successfully (status ${String(result.status)}).`);
       metadata.remoteOutputPath = result.video_path;
       emit({ phase: "downloading_output", percentage: 100, currentStep: null, totalSteps: null });
-      await this.transport.download(result.video_path, tempOutput);
+      // Desktop has definitively completed this generation. Retrying a failed
+      // file transfer is safe: it does not submit another inference request.
+      try { await this.transport.download(result.video_path, tempOutput); }
+      catch { await this.transport.download(result.video_path, tempOutput); }
       if (!existsSync(tempOutput) || !statSync(tempOutput).isFile() || statSync(tempOutput).size === 0) throw new Error("LTX returned no nonempty local MP4; retained Mac output path is in the metadata.");
       emit({ phase: "preparing_output", percentage: 100, currentStep: null, totalSteps: null });
       const properties = await prepareLtxVideoOutput(tempOutput, preparedOutput, { audioMode, ambientOutput: tempAmbient });

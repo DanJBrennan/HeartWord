@@ -124,6 +124,13 @@ describe("LTX Desktop adapter", () => {
     expect(transport.reset).toHaveBeenCalledTimes(1);
     expect(requests.filter(r=>r.path==="/api/generate")).toHaveLength(1);
   });
+  it("retries only the completed file transfer after a transient SCP failure",async()=>{
+    transport.download.mockRejectedValueOnce(new Error("SCP transport closed"));
+    const result=await provider().generateFinal(request,options);
+    expect(result.status).toBe("accepted");
+    expect(transport.download).toHaveBeenCalledTimes(2);
+    expect(requests.filter(r=>r.path==="/api/generate")).toHaveLength(1);
+  });
   it("uploads a unique keyframe, authenticates every request, returns the exact MP4 and retains metadata",async()=>{
     delayed = true;
     const output = join(root,"assets","generated","scene","shot.mp4"), progress = vi.fn();
@@ -211,9 +218,10 @@ describe("LTX Desktop adapter", () => {
     expect(transport.upload).not.toHaveBeenCalled();
   });
   it("retains the Mac output when SCP fails and never reports local success",async()=>{
-    transport.download.mockRejectedValueOnce(new Error("SCP failed"));
+    transport.download.mockRejectedValueOnce(new Error("SCP failed")).mockRejectedValueOnce(new Error("SCP failed"));
     await expect(provider().generateFinal(request,options)).rejects.toThrow("SCP failed");
     expect(requests.filter(r=>r.path === "/api/generate")).toHaveLength(1);
+    expect(transport.download).toHaveBeenCalledTimes(2);
   });
   it("rejects an empty downloaded file",async()=>{
     transport.download.mockImplementationOnce(async(_remote:string,local:string)=>writeFileSync(local,""));

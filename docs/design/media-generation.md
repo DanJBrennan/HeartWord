@@ -69,6 +69,10 @@ The pinned production-revision check runs after the input upload. It can take
 longer than an idle SSH forward survives, so the provider rechecks `/health`
 and reconnects the forward immediately before its single `/api/generate` POST.
 It never retries that POST after an uncertain response.
+After Desktop returns a definitive completed output path, one failed SCP
+download may be retried because that only transfers the existing file; it
+does not repeat generation. A second transfer failure retains the Mac path for
+manual reconciliation.
 
 See [local LTX operations](../production/LTX_LOCAL.md) for configuration,
 diagnostics, settings and recovery. The October 14 ending-frame extension below

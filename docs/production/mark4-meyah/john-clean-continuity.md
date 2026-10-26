@@ -8,7 +8,9 @@ Mark 5 Prep retain their own history.
 
 The approved standing candidate is recorded with its source hashes and prompt
 at `output/mark4-donor-20261024/assets/characters/john-son-of-zebedee/motion/motion-neutral-standing-v5-meyah-candidate.json`.
-The v4 headshot, walking, teaching, and seated references were already
+The isolated v5 package was approved with a checked database backup and an
+append-only edit command. The earlier v4 is marked superseded in this isolated
+copy. The v4 headshot, walking, teaching, and seated references were already
 clean-shaven; their hashes are verified when the isolated v5 package is
 promoted. The v4 standing reference had a short chin beard and must not be
 used for newly generated Meyah footage.

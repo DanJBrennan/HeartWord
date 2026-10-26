@@ -1,6 +1,6 @@
 # Current Goal
 
-## Current: review the repaired Meyah picture order and resume production
+## Current: produce the reviewed Meyah edition from the repaired picture order
 
 The product goal remains an editable, source-faithful Mark 4 film in Meyah, using
 the approved Papuan cast, voice identities, `Markus 4` / `Meyah` title, and
@@ -83,7 +83,31 @@ up` afterward. The provider now checks health and reconnects after that
 check and before its one generation POST. A regression test and strict
 typecheck pass. A standalone diagnostic using the target's exact prompt,
 image and seed entered Fast inference, independently confirming those inputs.
-No target LTX clip has been accepted and no batch has started.
+The first production-stage LTX preview completed on the Mac, but its SCP
+download failed. The recovered Mac file and local transfer matched SHA256;
+the 121 picture frames were kept and Desktop's unexpected audio stream was
+stripped for this silent shot. The recovery and original failure metadata
+remain at `output/mark4-donor-20261024/review/meyah-mark4-shot008-ltx-draft-recovery-20261026.json`
+and under `assets/generated/video/`. The recovered draft is selected for
+shot 8; it is not final footage. Automated QC described the subtle motion and
+identity as sound but scored confidence 70, below its pass threshold. The
+verdict and editorial choice remain in history. The provider now permits one
+retry of a *completed file download*; it never repeats generation on an
+uncertain submission. No production batch has started.
+
+Dan approved a clean-shaven John son of Zebedee throughout this isolated
+edition, including the exact revised standing reference. A three-point
+sample of all 24 retained picture placements tagged with John showed that
+recognizable appearances are already clean-shaven; wide storm views do not
+justify discarding approved picture solely for this correction. The new
+isolated `v5-meyah-clean` canon version is approved; old v4 and historical
+footage remain preserved. Its backup and receipt are under
+`output/mark4-donor-20261024/review/heartword.before-john-clean-canon-20261026.sqlite`
+and `output/mark4-donor-20261024/review/meyah-mark4-john-clean-canon-application-20261026.json`.
+The bearded private-group keyframe for 4:10–11 is superseded and needs a
+formal replacement using the new approved reference. A standard whole-chapter
+crew rerun is under way because this canon change invalidates the prior
+production brief.
 
 Dan requested a revised map of eight optional wordless pauses. A read-only
 proposal under
@@ -94,10 +118,10 @@ the empty-boat opening, conflicting with Dan's earlier instruction to preserve
 that footage exactly, and every pause needs verified extra picture. The
 approved source timing remains the current production basis.
 
-Next: finish the exact-target-prompt LTX diagnostic, then run one production-
-stage preview with the repaired tunnel and review actual local LTX coverage,
-Kling Avatar speaking takes, assembled film, soundtrack/timing QC and a
-fresh-root editable package. No film acceptance is claimed.
+Next: finish the crew rerun, create and review the clean-shaven private-group
+keyframe, complete local LTX coverage and Kling Avatar speaking takes, then
+assemble and QC the film and its fresh-root editable package. No film
+acceptance is claimed.
 The full repository suite passed 886 tests in 128 files. Root, server and web
 TypeScript checking passed after the transport repair.
 
