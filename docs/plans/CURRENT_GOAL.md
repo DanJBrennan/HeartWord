@@ -24,24 +24,31 @@ No image or video provider call was needed for that selection.
 The remaining nine reviewed Jesus/Peter speech runs were converted in scoped
 batches. A final local pass mapped all 54 source rows: 30 approved-identity
 character rows and 24 original Meyah narration rows, with no new provider
-request in that final pass. The [ten-run source-versus-cast listening pack](http://127.0.0.1:4002/media/review/meyah-mark4-bulk-voice-review-20261025/index.html)
-is ready for Dan's review of the new outputs. The original source recording,
-spoken heading and 4:41 group performance remain unchanged.
+request in that final pass. Dan reviewed the [ten-run source-versus-cast listening pack](http://127.0.0.1:4002/media/review/meyah-mark4-bulk-voice-review-20261025/index.html)
+and answered **“Approve the new cast audio.”** The isolated edition records
+that named decision with hashes for all ten cast/source/sidecar pairs and the
+current plan. The original source recording, spoken heading and 4:41 group
+performance remain unchanged. A read-only ElevenLabs subscription snapshot
+and retained request sidecars informed a provisional USD 10 film-cost
+reconciliation; it is an upper-bound liability, not a provider invoice. The
+project cost gate includes that amount before further requests.
 
 No target Kling Avatar video, local LTX coverage, assembled Meyah film, or
 target-film approval has occurred. Before normal keyframe handoff, the target
 needs an approved production planning record. Its 145-shot, 54-source-row
 crew brief loads after 79 missing approved canon references were copied by
 hash from live assets into the isolated worktree; the live assets and database
-were only read. Dan is deciding whether to use the existing whole-chapter
-crew or a focused review grounded in his already approved detailed map.
+were only read. Dan selected the standard whole-chapter production crew. Its
+isolated 145-shot planning review is now running, with every Gemini request
+metered and reserved against the film cost gate. Saved specialist outputs are
+reviewable evidence, not yet a producer-approved production plan.
 The [read-only target media worklist](http://127.0.0.1:4002/media/review/meyah-mark4-media-worklist-20261025/index.html)
 reconciles every new target shot to that map: 35 silent coverage shots totaling
 187.517 seconds (five require a ten-second local LTX request), 29 target
 speaking shots for Kling Avatar, 81 locally retained picture placements and
 the already approved Peter keyframe.
-Continue the normal editable assembly and QC path after that decision and
-the audio review. The latest full implementation suite
+Continue the normal editable assembly and QC path after the planning result
+is checked against the approved map. The latest full implementation suite
 passed 875 tests across 127 files; both product typechecks and the web build
 passed. These checks establish code health, not a completed film.
 
