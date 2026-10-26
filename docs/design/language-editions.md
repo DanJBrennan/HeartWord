@@ -193,6 +193,10 @@ plan, source/canon checks, spend controls and actual result review.
   holds an exact `needs_coverage` shot until its Codex keyframe
   and, for a non-speaking shot, accepted local LTX picture exist. A speaking
   shot proceeds to a new target-language Avatar take after its keyframe.
+  A new target LTX take may be longer than its approved source-clock placement.
+  Probe that the raw take covers the placement, then store the selected clip
+  handle at the reviewed picture duration; keep the full raw take intact as
+  generation evidence. Normal shot assembly trims to the clip handle.
   When the final donor visibly speaks but the target recording only narrates
   that action, the reviewed correspondence may replace that insert with a
   passage-grounded non-speaking `needs_coverage` shot. It records the target

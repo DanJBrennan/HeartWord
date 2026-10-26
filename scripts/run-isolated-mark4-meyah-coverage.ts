@@ -75,10 +75,14 @@ if(command==="status"){
   console.log(JSON.stringify(await generateNonSpeakingVideoCandidate(db,projectId,shotId,createVideoProviders("ltx"),{durationSeconds:duration}),null,2));
 }else if(command==="accept"){
   if(!attemptId)throw new Error("Accept needs a reviewed final-video attempt ID");
+  const worklist=JSON.parse(readFileSync(join(root,"assets","review","meyah-mark4-media-worklist-20261026","worklist.json"),"utf8")) as
+    {items:Array<{targetShotId:string;durationMs:number;treatment:string}>};
+  const item=worklist.items.find(row=>row.targetShotId===shotId&&row.treatment==="needs_coverage");
+  if(!item || !Number.isInteger(item.durationMs) || item.durationMs<1)throw new Error("Approved picture placement duration is missing");
   const attempt=db.prepare("SELECT result_asset_path FROM generation_attempts WHERE id=? AND shot_id=? AND operation='generate_final_video'")
     .get(attemptId,shotId) as {result_asset_path:string}|undefined;
   if(!attempt?.result_asset_path)throw new Error("Final candidate missing");
   const seconds=Number(execFileSync("ffprobe",["-v","error","-show_entries","format=duration","-of","csv=p=0",join(root,"assets",attempt.result_asset_path)],{encoding:"utf8"}).trim());
-  if(!Number.isFinite(seconds)||seconds<=0)throw new Error("Final duration probe failed");
-  console.log(JSON.stringify(acceptFinalVideoCandidate(db,projectId,attemptId,Math.round(seconds*1000)),null,2));
+  if(!Number.isFinite(seconds)||seconds*1000+50<item.durationMs)throw new Error("Final take cannot cover its approved picture placement");
+  console.log(JSON.stringify(acceptFinalVideoCandidate(db,projectId,attemptId,item.durationMs),null,2));
 }else throw new Error("Unknown command");

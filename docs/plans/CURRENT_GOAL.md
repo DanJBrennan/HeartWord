@@ -163,16 +163,40 @@ draft remained held after whole-take QC flagged possible visible speech.
 The exact first 3.25 seconds planned for the film received a second review:
 no visible speech or identity drift was reported, though confidence 70 is
 below automatic approval. Codex selected that draft for composition only;
-the separately generated 720p final is still in progress and must clear its
-own exact-placement review. The recovered Mac video, exact hashes and both
-verdicts remain in the isolated review history.
+the separately generated 720p final then completed. Its native ambience
+passed listening QC. Whole-take picture QC described intact identities and
+no visible speech but scored 72, below the automatic 80 threshold. Exact
+3.25-second placement QC likewise described no visible speech or drift at
+confidence 65. Codex independently checked the full-group and face contact
+sheets, selected only those first 78 frames, and accepted final attempt
+`91f77d41-179d-4a93-a0b0-00ffa6360cc6` with a 3250 ms clip handle.
+The draft, final Mac output, exact hashes and all lower-confidence verdicts
+remain in the isolated review history.
 
-The isolated keyframe worklist now has **11 accepted target keyframes** and
-one accepted local LTX final. New accepted pictures include the short 4:9
+Shot 8's earlier accepted eight-second raw take had an 8042 ms clip handle,
+although its approved source-clock placement is 4094 ms. A narrow isolated
+transaction corrected that one clip handle to 4094 ms, retained a database
+backup and edit command, and passed SQLite `quick_check`. Raw media and the
+original acceptance remain intact. Future isolated LTX acceptance now probes
+that a take covers the approved placement and records the placement duration
+in `clips`, so normal shot assembly trims the longer raw file.
+
+The isolated keyframe worklist now has **16 accepted target keyframes** and
+three accepted local LTX finals. New accepted pictures include the short 4:9
 shore reaction, exposed seed on the 4:15 hard footpath, fresh sprouts in
 shallow rocky soil at 4:16, and the matching early heat/wilting view for
-4:17. Their prompts, formal briefs, Critic decisions and editorial reasons
+4:17, followed by two escalating thorn-patch views at 4:18–19. Their prompts,
+formal briefs, Critic decisions and editorial reasons
 are retained under `docs/production/mark4-meyah/` and the isolated assets.
+The good-soil growth at 4:20, the lakeside oil lamp at 4:21, and the corrected
+silent elder listener at 4:22 also passed formal keyframe review. The elder's
+first candidate was held for tall tower-like background buildings; a second
+candidate kept his approved likeness and the lamp but replaced those with
+the lake, boat and low natural hills. The local 720p path-seed video at 4:15
+completed and was accepted for its first 4807 ms after the recorded QC
+described continuity and no added event; its confidence 72 remains below
+automatic approval and visible in history. The next LTX job is the rocky
+sprout shot at 4:16.
 
 Next: complete local LTX coverage and Kling Avatar speaking takes, then
 assemble and QC the film and its fresh-root editable package. No film
