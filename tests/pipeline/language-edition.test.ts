@@ -191,6 +191,32 @@ describe("language edition identity",()=>{
     db.prepare("UPDATE audio_segments SET start_ms=10,end_ms=1010 WHERE id='target-speech'").run();
     expect(()=>assertEditionInputsCurrent(db,dataDir,target)).toThrow(/Target source interval/);
   });
+  it("keeps an already approved target speaking keyframe instead of registering the donor frame",()=>{
+    const pre=preflightLanguageEdition(db,dataDir,"donor",input);
+    const target=createLanguageEdition(db,dataDir,"donor",{...input,requestId:"target-keyframe-001",checkedFingerprint:pre.fingerprint!}).project.id;
+    const audioPath="source/meyah/audio/Meyah_mej_TBL_NT_Non-Drama/B02___04_Markus______MEJTBLN1DA.mp3";
+    db.prepare("INSERT INTO audio_segments(id,project_id,layer,source_path,start_ms,end_ms,verse_ref,speaker_character_id,created_at)VALUES('target-speech',?,'original_reading',?,0,1000,'Mark 4:1','jesus',1)").run(target,audioPath);
+    const hashes=sourceReviewHashes(db,target,dataDir);
+    db.prepare("INSERT INTO source_alignment_reviews VALUES('target-review',?,'Dan','confirm',?,?,'Reviewed speech',1)").run(target,hashes.sourceHash,hashes.alignmentHash);
+    expect(materializeEditionScenes(db,dataDir,target).ok).toBe(true);
+    reviseLanguageEdition(db,target,{requestId:"target-keyframe-map-001",expectedParentHash:readLanguageEditionPlan(db,target)!.hash,
+      reviewer:"Dan",evidence:"Reviewed speaking picture",correspondence:[{donorShotId:"shot",targetSegmentId:"target-speech",
+        targetStartMs:0,targetEndMs:1000,treatment:"replace_avatar",reason:"Visible target speech"}]});
+    expect(materializeEditionCasting(db,dataDir,target).ok).toBe(true);
+    const targetShot=db.prepare("SELECT sh.id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=?").get(target) as {id:string};
+    const path="generated/target-jesus.png",bytes="approved target speaking frame";
+    asset(path,bytes);asset("generated/target-jesus.json",JSON.stringify({provider:"codex_imagegen",resultPath:path,
+      resultHash:createHash("sha256").update(bytes).digest("hex")}));
+    db.prepare("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('target-frame',?,'codex_imagegen','not_reported','generate','accepted',?,0,2)")
+      .run(targetShot.id,path);
+    expect(materializeEditionMedia(db,dataDir,target)).toMatchObject({ok:true});
+    const prepared=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_media'").get(target) as {payload:string};
+    expect(JSON.parse(prepared.payload).assets).toMatchObject([{path,operation:"generate",targetShotId:targetShot.id}]);
+    expect((db.prepare("SELECT COUNT(*) n FROM generation_attempts WHERE shot_id=? AND operation='generate'").get(targetShot.id) as {n:number}).n).toBe(1);
+    expect(materializeEditionMedia(db,dataDir,target)).toMatchObject({ok:true});
+    asset("generated/target-jesus.json",JSON.stringify({provider:"codex_imagegen",resultPath:path,resultHash:"changed"}));
+    expect(materializeEditionMedia(db,dataDir,target)).toMatchObject({ok:false,reasoning:expect.stringContaining("changed or is missing")});
+  });
   it("replaces a donor speaking insert with source-grounded narrator-only picture coverage",()=>{
     const pre=preflightLanguageEdition(db,dataDir,"donor",input),target=createLanguageEdition(db,dataDir,"donor",{...input,requestId:"narrator-edition-001",checkedFingerprint:pre.fingerprint!}).project.id;
     const audioPath="source/meyah/audio/Meyah_mej_TBL_NT_Non-Drama/B02___04_Markus______MEJTBLN1DA.mp3";
@@ -287,6 +313,7 @@ describe("language edition identity",()=>{
       INSERT INTO clips(id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)VALUES('cutaway-clip','cutaway','cutaway-picture',0,1200,1);
       INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('cutaway-handle','cutaway','fixture','fixture','generate_final_video','accepted','films/cutaway-handle.mp4',0,2);
       INSERT INTO clips(id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)VALUES('handle-clip','cutaway','cutaway-handle',0,3200,2);`);
+    db.prepare("UPDATE generation_attempts SET result_asset_path=? WHERE id='cutaway-handle'").run("films\\cutaway-handle.mp4");
     asset("films/cutaway-frame.png","accepted scene frame");
     db.prepare("UPDATE chapter_render_manifests SET timeline_json=? WHERE render_id='render'").run(JSON.stringify([
       {shotId:"shot",path:"films/scene.mp4",sha256:pictureHash,sourceStartMs:0,startMs:0,endMs:1000},
@@ -369,6 +396,37 @@ describe("language edition identity",()=>{
     db.prepare("INSERT INTO clips(id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)VALUES('new-clip',?,'new-motion',0,1000,2)").run(targetShot.id);
     expect(materializeEditionMedia(db,dataDir,target).ok).toBe(true);
     expect(db.prepare("SELECT id FROM generation_attempts WHERE shot_id=? AND provider='retained_edition_picture'").get(targetShot.id)).toBeUndefined();
+  });
+  it("keeps reviewed added-beat cast exact, including a silent beat after a speaking donor shot",()=>{
+    db.exec("INSERT INTO shot_characters(shot_id,character_id)VALUES('shot','jesus')");
+    const pre=preflightLanguageEdition(db,dataDir,"donor",input);
+    const target=createLanguageEdition(db,dataDir,"donor",{...input,requestId:"cast-choice-edition-001",checkedFingerprint:pre.fingerprint!}).project.id;
+    const audioPath="source/meyah/audio/Meyah_mej_TBL_NT_Non-Drama/B02___04_Markus______MEJTBLN1DA.mp3";
+    db.prepare("INSERT INTO audio_segments(id,project_id,layer,source_path,start_ms,end_ms,verse_ref,speaker_character_id,created_at)VALUES('target-speech',?,'original_reading',?,0,1000,'Mark 4:1','jesus',1)").run(target,audioPath);
+    const hashes=sourceReviewHashes(db,target,dataDir);
+    db.prepare("INSERT INTO source_alignment_reviews VALUES('cast-choice-review',?,'Dan','confirm',?,?,'Reviewed target source',1)").run(target,hashes.sourceHash,hashes.alignmentHash);
+    expect(materializeEditionScenes(db,dataDir,target).ok).toBe(true);
+    const base={donorShotId:"shot",targetSegmentId:"target-speech",targetStartMs:0,targetEndMs:1000,treatment:"replace_avatar" as const,reason:"Reviewed Jesus quote"};
+    const field={donorShotId:"shot",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"needs_coverage" as const,
+      reason:"Source-grounded silent field cutaway",addedForEdition:true,addedVerseRef:"Mark 4:1",addedAction:"A view of the field without a named person.",addedCharacterIds:[]};
+    const listener={...field,reason:"Distinct listener angle",addedAction:"Jesus listens from a different angle without speaking.",addedCharacterIds:["jesus"]};
+    const parent=readLanguageEditionPlan(db,target)!.hash;
+    expect(()=>reviseLanguageEdition(db,target,{requestId:"cast-choice-invalid-001",expectedParentHash:parent,
+      correspondence:[base,{...field,addedCharacterIds:["outside-scene"]}],reviewer:"Dan",evidence:"Exact beat cast"})).toThrow(/approved Papuan characters already in its donor scene/);
+    expect(()=>reviseLanguageEdition(db,target,{requestId:"cast-choice-invalid-002",expectedParentHash:parent,
+      correspondence:[base,{...field,addedCharacterIds:["jesus","jesus"]}],reviewer:"Dan",evidence:"Exact beat cast"})).toThrow(/distinct character IDs/);
+    reviseLanguageEdition(db,target,{requestId:"cast-choice-reviewed-001",expectedParentHash:parent,
+      correspondence:[base,field,listener],reviewer:"Dan",evidence:"Reviewed separate no-cast field and Jesus listener beats"});
+    expect(materializeEditionCasting(db,dataDir,target).ok).toBe(true);
+    const targetShots=db.prepare("SELECT sh.id,sh.needs_lip_sync,sh.dialogue_character_id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=? ORDER BY sh.sequence").all(target) as Array<{id:string;needs_lip_sync:number;dialogue_character_id:string|null}>;
+    expect(targetShots).toHaveLength(3);
+    expect(targetShots.slice(1).map(shot=>[shot.needs_lip_sync,shot.dialogue_character_id])).toEqual([[0,null],[0,null]]);
+    const cast=(id:string)=>(db.prepare("SELECT character_id FROM shot_characters WHERE shot_id=?").all(id) as Array<{character_id:string}>).map(row=>row.character_id);
+    expect(cast(targetShots[1]!.id)).toEqual([]);
+    expect(cast(targetShots[2]!.id)).toEqual(["jesus"]);
+    expect(()=>assertEditionInputsCurrent(db,dataDir,target)).not.toThrow();
+    db.prepare("INSERT INTO shot_characters(shot_id,character_id)VALUES(?,'jesus')").run(targetShots[1]!.id);
+    expect(()=>assertEditionInputsCurrent(db,dataDir,target)).toThrow(/cast changed/);
   });
   it("builds and explicitly selects the pinned Meyah title through the normal opening beat",()=>{
     const background=join(dataDir,"assets",title.backgroundFramePath);

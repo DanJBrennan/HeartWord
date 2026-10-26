@@ -9,6 +9,17 @@ has every donor placement, exact proposed target clock, treatment, reason,
 handle ID/trim and reviewed speaker window. Regenerate it with
 `python scripts/prepare-isolated-mark4-meyah-storm-shot-review.py`.
 
+Dan approved this editorial direction. A subsequent Picture Editor contract
+check found that placement 19's 0.300-second visible-mouth tail extends beyond
+Jesus' reviewed 4:40 quotation. The read-only
+`assembly-ready-proposal.json` moves those 300 ms to the immediately
+following retained group reaction (placement 20). The Jesus mouth now ends
+at 13:08.136; the same reaction starts there and ends at 13:09.685; the exact
+sixteen-second final sea, all selected footage, two omissions and all source
+audio remain unchanged. Generate this technical refinement with
+`python scripts/prepare-isolated-mark4-meyah-storm-assembly-refinement.py`.
+The original approved proposal and its hash-bound receipt remain intact.
+
 | Meyah source clock | Picture proposal |
 | --- | --- |
 | 11:12.893–11:42.410 | Evening shore and boat crossing. Keep donor placements 1–2 at five seconds, add a 3.517-second silent dusk-to-boat bridge after placement 2, then use eight seconds each from the retained crossing and launch takes (3–4). Jesus' exact 4:35 quotation remains mapped voice-over amid the original narration. |

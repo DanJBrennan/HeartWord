@@ -1,6 +1,51 @@
 # Current Goal
 
-## In progress: isolated Mark 4 → Meyah language edition
+## Current: isolated Mark 4 → Meyah language edition
+
+Dan approved the detailed whole-chapter shot map and the cast list for all 34
+new picture beats. The exact 147-row correspondence is now saved only in the
+isolated Meyah database. Stage 3 created 145 editable target shots, retained
+two edition omissions, and selected the approved four-second `Markus 4` /
+`Meyah` title. The target source remains the reviewed 54-row map; donor rows,
+source bytes, and the live `HeartWordData` database were not changed. The
+application receipt is
+`output/mark4-donor-20261024/review/meyah-mark4-reviewed-correspondence-application.json`.
+
+The first bounded voice audition converts only the reviewed Jesus 4:9 quote
+(142.703–152.394 seconds) into the approved Jesus voice. Its current
+ElevenLabs settings and 9.706-second result are retained in the isolated
+project. Dan listened to the source-versus-cast comparison and answered
+**“Approve this audition.”** That decision now pins the exact source,
+cast bytes, settings sidecar and correspondence hash. The review remains at
+`http://127.0.0.1:4002/media/review/meyah-mark4-voice-audition-20261025/index.html`.
+Dan's previously approved Peter 4:38 version-3 image is now attached to its
+new isolated target shot, with its original hash and approval scope retained.
+No image or video provider call was needed for that selection.
+The remaining nine reviewed Jesus/Peter speech runs were converted in scoped
+batches. A final local pass mapped all 54 source rows: 30 approved-identity
+character rows and 24 original Meyah narration rows, with no new provider
+request in that final pass. The [ten-run source-versus-cast listening pack](http://127.0.0.1:4002/media/review/meyah-mark4-bulk-voice-review-20261025/index.html)
+is ready for Dan's review of the new outputs. The original source recording,
+spoken heading and 4:41 group performance remain unchanged.
+
+No target Kling Avatar video, local LTX coverage, assembled Meyah film, or
+target-film approval has occurred. Before normal keyframe handoff, the target
+needs an approved production planning record. Its 145-shot, 54-source-row
+crew brief loads after 79 missing approved canon references were copied by
+hash from live assets into the isolated worktree; the live assets and database
+were only read. Dan is deciding whether to use the existing whole-chapter
+crew or a focused review grounded in his already approved detailed map.
+Continue the normal editable assembly and QC path after that decision and
+the audio review. The latest full implementation suite
+passed 875 tests across 127 files; both product typechecks and the web build
+passed. These checks establish code health, not a completed film.
+
+Goal Guardian: this remains a source-faithful editable language edition using
+the seven existing stages and Dan's shot, cast, title and speech decisions.
+The complete watchable Meyah Mark 4 film and fresh-root editable delivery are
+still the acceptance goal. Keep Mark 5 Prep and the live database untouched.
+
+## Earlier Mark 4 → Meyah checkpoints (historical status at each step)
 
 Dan approved projecting the verified Meyah speech turns onto the isolated
 source rows. Binding `6fbea6d4-b75e-43c5-bc09-b80921c7078a` applied the
@@ -28,6 +73,40 @@ hash. The prior 40-row scene-planning review remains historical. Approval
 does not select target shots, title picture, voice audition, Avatar takes or
 film. A SQLite-consistent pre-approval backup is retained under the isolated
 `review/` directory.
+
+Dan next approved the first-pass whole-chapter **editorial direction**, the
+four-second `Markus 4` / `Meyah` **title visual**, and the detailed 4:35–41
+**storm shot plan**. The isolated, read-only approval receipt pins the exact
+title asset hash and storm editorial choices while leaving target shots and
+title-beat selection unmodified. The [4:1–34 paper edit](../production/mark4-meyah-correspondence-2026-10-25/main-shot-map-proposal.md)
+now proposes a gap-free 122-row source-clock map: all 90 donor placements
+plus 32 verse-named silent beats totaling 176.181 seconds. Its graphical
+review is at
+`http://127.0.0.1:4002/media/review/meyah-mark4-main-shot-review-20261025/index.html`.
+This detailed map still needs Dan's review. No target correspondence revision,
+target shot, new picture or paid provider request has been saved. Scene 3
+reorders illustrative donor cutaways after materialization through the normal
+Picture Editor; its editor-level execution remains unverified. A separate
+0.980-second silent crowd beat covers the 4:9 source tail after the Jesus
+mouth. The four-second approved title is pre-source; the exact clean lake and
+first 0.594 seconds of the empty-boat beat cover the complete 4.094-second
+spoken heading after it.
+The approved storm picture has a 300 ms technical timing refinement in a
+separate read-only JSON proposal: Jesus' last 4:40 mouth ends with his speech,
+and the same retained group reaction takes those 300 ms before the unchanged
+final sea. The original approved proposal and receipt remain intact.
+Dan then explicitly approved the detailed 4:1–34 paper edit. Its exact JSON
+hash is pinned in the isolated producer receipt. He also approved an explicit
+cast subset for each new beat, including an empty named cast for environmental
+cutaways. The 34-beat [cast review](http://127.0.0.1:4002/media/review/meyah-mark4-new-beat-cast-review-20261025.html)
+is pending his choice of actual names. A disposable SQLite rehearsal of the
+full 147-row correspondence created 145 editable target shots, retained two
+omissions and passed the normal stage-3 materializer; it did not mutate the
+isolated Meyah project or request media. The Picture Editor timing validator
+also accepted the full proposed 805.685-second source cut after the separate
+four-second title. A legacy Windows path-separator check was corrected for
+retained donor handles, and the stage-3 added-beat cast choice is now explicit
+and checked for later changes.
 
 **Next gate:** review the [first shot-planning brief](http://127.0.0.1:4002/media/review/meyah-mark4-shot-plan-20261025/index.html)
 and its 113-placement visual inventory before recording exact target

@@ -1,11 +1,50 @@
 # Meyah Mark 4 picture correspondence review
 
+## Current isolated result
+
+Dan approved the detailed 4:1–34 map, the storm map, and the explicit cast
+list for 34 new picture beats. The exact 147-row correspondence has been
+applied to the isolated Meyah project: 145 editable target shots and two
+edition-only omissions. The approved `Markus 4` / `Meyah` visual is selected
+as a four-second pre-source title. The stage-3 application report is
+`output/mark4-donor-20261024/review/meyah-mark4-reviewed-correspondence-application.json`.
+Dan approved the bounded Jesus 4:9 audition in the
+[source-versus-cast listening review](http://127.0.0.1:4002/media/review/meyah-mark4-voice-audition-20261025/index.html).
+The full target cast master maps all 54 source rows, preserving 24 original
+Meyah rows and using scoped conversions for 30 Jesus/Peter rows. The
+[ten-run listening pack](http://127.0.0.1:4002/media/review/meyah-mark4-bulk-voice-review-20261025/index.html)
+awaits Dan's review of the nine new cast performances. His approved Peter
+4:38 version-3 image is attached to the new target shot. New video coverage,
+Kling Avatar and final film assembly are still pending. All earlier "read-only" and
+"zero target shots" statements below describe their historical planning
+checkpoint, before Dan's approvals and the stage-3 application.
+
+## Earlier planning evidence
+
 This is a **read-only first pass** over the approved final Hatam Mark 4
 picture and the separately approved Meyah source map. Open the [local visual
 review](http://127.0.0.1:4002/media/review/meyah-mark4-correspondence-20261025/index.html)
 while `scripts/serve-isolated-mark4-meyah-review.ts` runs. It shows the final
 Hatam picture, Meyah source recording, all 113 story placements and their
 pinned donor keyframes. The original 114th placement is the replaceable title.
+
+Dan has since approved the overall editorial direction, the four-second
+`Markus 4` / `Meyah` title visual, and the detailed storm ending plan. The
+[4:1–34 graphical paper edit](http://127.0.0.1:4002/media/review/meyah-mark4-main-shot-review-20261025/index.html)
+and [its editorial notes](main-shot-map-proposal.md) are the next detailed
+review. They remain read-only; target shots and generated media are still
+absent. The earlier first-pass brief and inventory below remain historical
+planning evidence.
+
+Dan also approved the detailed 4:1–34 picture map and authorized explicit
+cast subsets for new edition beats. The [34-beat cast review](http://127.0.0.1:4002/media/review/meyah-mark4-new-beat-cast-review-20261025.html)
+is awaiting his review of the actual names and no-named-character choices.
+The full 147-row correspondence has passed an isolated SQLite-copy stage-3
+rehearsal and a full-picture timing check. Its draft and rehearsal report are
+under `output/mark4-donor-20261024/review/`; the real target still has zero
+shots. The approved storm's last Jesus close-up is shortened by 300 ms and
+the same group reaction extended by 300 ms so that visible speech ends at
+the reviewed source boundary. The exact final sea remains unchanged.
 The generated page and JSON inventory are under
 `output/mark4-donor-20261024/assets/review/meyah-mark4-correspondence-20261025/`.
 Run `python scripts/prepare-isolated-mark4-meyah-correspondence-review.py` to

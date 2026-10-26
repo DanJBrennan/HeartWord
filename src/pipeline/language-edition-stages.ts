@@ -139,12 +139,15 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
       const targetShotId=randomUUID(),next=(sequences.get(targetSceneId)??0)+1;sequences.set(targetSceneId,next);
       const copy:RecordRow={...donor,id:targetShotId,scene_id:targetSceneId,sequence:next,status:"planned",created_at:now,
         ...(item.addedForEdition && item.addedAction?{action:item.addedAction.trim(),verse_ref:item.addedVerseRef?.trim()??donor.verse_ref,
+          needs_lip_sync:0,dialogue_character_id:null,
           coverage_notes:`New target-language picture beat based on reviewed donor scene. ${item.reason}`}:{ }),
         ...(item.narratorOnlyAction!==undefined?{action:item.narratorOnlyAction.trim(),needs_lip_sync:0,dialogue_character_id:null,
           coverage_notes:`Target narration describes this action without quoted character speech. ${item.reason}`}:{})};
       const columns=Object.keys(copy);
       db.prepare(`INSERT INTO shots (${columns.map(name=>`"${name}"`).join(",")})VALUES(${columns.map(()=>"?").join(",")})`).run(...columns.map(name=>copy[name]??null));
-      const cast=db.prepare("SELECT character_id FROM shot_characters WHERE shot_id=?").all(item.donorShotId) as Array<{character_id:string}>;
+      const cast=item.addedForEdition && item.addedCharacterIds!==undefined
+        ? item.addedCharacterIds.map(character_id=>({character_id}))
+        : db.prepare("SELECT character_id FROM shot_characters WHERE shot_id=?").all(item.donorShotId) as Array<{character_id:string}>;
       for(const member of cast){
         if(!row(db,"SELECT id FROM characters WHERE id=? AND canon_status='approved' AND region='Papuan'",member.character_id))throw new Error("Donor shot names an unapproved target canon member.");
         db.prepare("INSERT INTO shot_characters(shot_id,character_id)VALUES(?,?)").run(targetShotId,member.character_id);
@@ -200,9 +203,11 @@ export function materializeEditionMedia(db:DatabaseSync,dataDir:string,projectId
   if(mapped.planHash!==plan.hash)return {ok:false,reasoning:"Target shot correspondence changed; picture reuse must be reconciled."};
   const previous=command(db,projectId,"materialize_edition_media");
   if(previous){
-    const saved=JSON.parse(previous.payload) as {planHash:string;assets:Array<{path:string;sha256:string;targetShotId:string;operation:string}>};
+    const saved=JSON.parse(previous.payload) as {planHash:string;assets:Array<{path:string;sha256:string;targetShotId:string;operation:string;provenanceSha256?:string}>};
     if(saved.planHash!==plan.hash)return {ok:false,reasoning:"Edition picture plan changed after media preparation; retain the old assets for review."};
     if(saved.assets.every(asset=>existsSync(productionAssetPath(dataDir,asset.path)) && digest(readFileSync(productionAssetPath(dataDir,asset.path)))===asset.sha256 &&
+      (!asset.provenanceSha256 || (existsSync(productionAssetPath(dataDir,asset.path).replace(/\.png$/,".json")) &&
+        digest(readFileSync(productionAssetPath(dataDir,asset.path).replace(/\.png$/,".json")))===asset.provenanceSha256)) &&
       row(db,"SELECT ga.id FROM generation_attempts ga JOIN shots sh ON sh.id=ga.shot_id JOIN scenes sc ON sc.id=sh.scene_id WHERE ga.shot_id=? AND ga.operation=? AND ga.status='accepted' AND ga.result_asset_path=? AND sc.project_id=?",asset.targetShotId,asset.operation,asset.path,projectId)))
       return {ok:true,reasoning:`Retained ${saved.assets.length} reviewed picture reuse assets; no provider request was made.`};
     return {ok:false,reasoning:"A retained edition picture changed or is missing; do not regenerate or approve it automatically."};
@@ -226,7 +231,7 @@ export function materializeEditionMedia(db:DatabaseSync,dataDir:string,projectId
   for(const item of timeline)if(item.shotId){const list=placements.get(item.shotId)??[];list.push(item);placements.set(item.shotId,list);}
   const pinned=new Map<string,typeof origin.preflight.pictureEvidence>();
   for(const item of origin.preflight.pictureEvidence){const list=pinned.get(item.shotId)??[];list.push(item);pinned.set(item.shotId,list);}
-  const preparations:Array<{targetShotId:string;operation:"generate"|"generate_final_video";path:string;sha256:string;durationMs:number|null;donorShotId:string;donorPath:string}>=[];
+  const preparations:Array<{targetShotId:string;operation:"generate"|"generate_final_video";path:string;sha256:string;durationMs:number|null;donorShotId:string;donorPath:string;existingAttemptId?:string;provenanceSha256?:string}>=[];
   try{
     for(const [index,item] of mapped.shots.entries()){
       const reviewed=plan.revision?.correspondence[index];
@@ -249,6 +254,22 @@ export function materializeEditionMedia(db:DatabaseSync,dataDir:string,projectId
       if(!item.targetShotId)throw new Error("Selected picture lost its target shot.");
       const target=row(db,"SELECT needs_lip_sync FROM shots WHERE id=?",item.targetShotId);
       if(!target)throw new Error("Target shot was removed after correspondence review.");
+      if(Number(target.needs_lip_sync)===1 && item.treatment==="replace_avatar"){
+        const selected=row(db,`SELECT id,result_asset_path FROM generation_attempts WHERE shot_id=? AND operation='generate'
+          AND provider='codex_imagegen' AND status='accepted' AND result_asset_path IS NOT NULL
+          ORDER BY created_at DESC,id DESC LIMIT 1`,item.targetShotId);
+        if(selected){
+          const path=String(selected.result_asset_path),image=productionAssetPath(dataDir,path),imageHash=digest(readFileSync(image));
+          if(!path.endsWith(".png"))throw new Error("Accepted target keyframe must be a PNG with retained provenance.");
+          const provenanceBytes=readFileSync(image.replace(/\.png$/,".json"));
+          const provenance=JSON.parse(provenanceBytes.toString("utf8")) as {provider?:string;resultPath?:string;resultHash?:string};
+          if(provenance.provider!=="codex_imagegen"||provenance.resultPath!==path||provenance.resultHash!==imageHash)
+            throw new Error("Accepted target keyframe or its provenance changed.");
+          preparations.push({targetShotId:item.targetShotId,operation:"generate",path,sha256:imageHash,durationMs:null,
+            donorShotId:item.donorShotId,donorPath:path,existingAttemptId:String(selected.id),provenanceSha256:digest(provenanceBytes)});
+          continue;
+        }
+      }
       const keyPath=evidence.keyframePath,keyAbs=productionAssetPath(dataDir,keyPath),keyHash=digest(readFileSync(keyAbs));
       if(keyHash!==evidence.keyframeSha256)throw new Error("Pinned donor scene-specific keyframe changed.");
       preparations.push({targetShotId:item.targetShotId,operation:"generate",path:keyPath,sha256:keyHash,durationMs:null,donorShotId:item.donorShotId,donorPath:keyPath});
@@ -264,7 +285,7 @@ export function materializeEditionMedia(db:DatabaseSync,dataDir:string,projectId
       if(reuse){
         const selected=row(db,`SELECT ga.result_asset_path AS path FROM generation_attempts ga JOIN clips c ON c.generation_attempt_id=ga.id
           WHERE ga.id=? AND ga.shot_id=? AND ga.operation='generate_final_video' AND ga.status='accepted' LIMIT 1`,reuse.attemptId,item.donorShotId);
-        if(selected?.path!==donorPath)throw new Error("Reviewed donor picture handle selection changed.");
+        if(typeof selected?.path!=="string"||selected.path.replaceAll("\\","/")!==donorPath)throw new Error("Reviewed donor picture handle selection changed.");
       }
       const source=productionAssetPath(dataDir,donorPath);
       if(digest(readFileSync(source))!==donorSha)throw new Error("Pinned donor picture clip or reviewed handle changed.");
@@ -283,13 +304,14 @@ export function materializeEditionMedia(db:DatabaseSync,dataDir:string,projectId
   try{
     if(command(db,projectId,"materialize_edition_media"))throw new Error("Another picture reuse operation was recorded; refresh before retrying.");
     for(const prepared of preparations){
+      if(prepared.existingAttemptId)continue;
       const attempt=randomUUID();
       db.prepare("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,prompt,status,result_asset_path,cost_usd,created_at)VALUES(?,?,'retained_edition_picture','local_verified_reuse',?,?,'accepted',?,0,?)")
         .run(attempt,prepared.targetShotId,prepared.operation,`Reviewed edition correspondence ${plan.hash}; donor shot ${prepared.donorShotId}; source ${prepared.donorPath}; SHA256 ${prepared.sha256}`,prepared.path,now);
       if(prepared.durationMs!==null)db.prepare("INSERT INTO clips(id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)VALUES(?,?,?,0,?,?)")
         .run(randomUUID(),prepared.targetShotId,attempt,prepared.durationMs,now);
     }
-    appendCommand(db,projectId,"materialize_edition_media",{planHash:plan.hash,assets:preparations.map(({path,sha256,operation,targetShotId,donorShotId,donorPath})=>({path,sha256,operation,targetShotId,donorShotId,donorPath})),
+    appendCommand(db,projectId,"materialize_edition_media",{planHash:plan.hash,assets:preparations.map(({path,sha256,operation,targetShotId,donorShotId,donorPath,provenanceSha256})=>({path,sha256,operation,targetShotId,donorShotId,donorPath,...(provenanceSha256?{provenanceSha256}:{})})),
       reviewer:plan.revision.reviewer,evidence:plan.revision.evidence,noProviderCalls:true,noNewCost:true},now);
     db.exec("COMMIT");
     return {ok:true,reasoning:`Prepared ${preparations.length} reviewed target picture assets from pinned donor media with zero provider requests and no duplicate cost entries.`};

@@ -165,14 +165,22 @@ projectsRouter.get("/:id/language-edition-workspace", (req,res) => {
     if(!manifest)throw new Error("Pinned donor manifest is unavailable.");
     const timeline=JSON.parse(manifest.timeline_json) as Array<{shotId?:string;startMs?:number;endMs?:number}>;
     if(!Array.isArray(timeline))throw new Error("Pinned donor picture recipe is not a timeline.");
-    const donorShots=timeline.filter(item=>typeof item.shotId==="string").map(item=>({
-      ...item,shot:db.prepare("SELECT action,verse_ref,needs_lip_sync,dialogue_character_id FROM shots WHERE id=?").get(item.shotId!),
+    const castRows=db.prepare(`SELECT DISTINCT sh.scene_id AS sceneId,c.id,c.name FROM shots sh
+      JOIN scenes sc ON sc.id=sh.scene_id JOIN shot_characters member ON member.shot_id=sh.id
+      JOIN characters c ON c.id=member.character_id WHERE sc.project_id=?
+      AND c.canon_status='approved' AND c.region='Papuan' ORDER BY c.name`).all(origin.preflight.donor.projectId) as Array<{sceneId:string;id:string;name:string}>;
+    const sceneCast=new Map<string,Array<{id:string;name:string}>>();
+    for(const member of castRows){const list=sceneCast.get(member.sceneId)??[];list.push({id:member.id,name:member.name});sceneCast.set(member.sceneId,list);}
+    const donorShots=timeline.filter(item=>typeof item.shotId==="string").map(item=>{
+      const shot=db.prepare("SELECT scene_id,action,verse_ref,needs_lip_sync,dialogue_character_id FROM shots WHERE id=?").get(item.shotId!) as {scene_id:string}|undefined;
+      return {...item,shot,sceneCast:sceneCast.get(shot?.scene_id??"")??[],
       reuseCandidates:db.prepare(`SELECT ga.id AS attemptId,ga.result_asset_path AS path,ga.provider,
         MAX(c.timeline_end_ms-c.timeline_start_ms) AS recordedDurationMs
         FROM generation_attempts ga JOIN clips c ON c.generation_attempt_id=ga.id
         WHERE ga.shot_id=? AND ga.operation='generate_final_video' AND ga.status='accepted'
           AND ga.provider!='legacy_silent_picture' AND ga.result_asset_path IS NOT NULL
-        GROUP BY ga.id ORDER BY ga.created_at DESC`).all(item.shotId!) }));
+        GROUP BY ga.id ORDER BY ga.created_at DESC`).all(item.shotId!) };
+    });
     const segments=db.prepare("SELECT id,start_ms AS startMs,end_ms AS endMs,verse_ref AS verseRef,speaker_character_id AS speakerId FROM audio_segments WHERE project_id=? AND layer='original_reading' ORDER BY start_ms,id").all(req.params.id);
     const speechRuns=readConfirmedSpeechRuns(db,req.params.id,getDataDir()).map(run=>({id:run.id,verseRef:run.verseRef,startMs:run.startMs,endMs:run.endMs,
       speakerId:run.characterId,anchorSegmentId:run.members[0]?.id??null,memberIds:run.members.map(member=>member.id)}));

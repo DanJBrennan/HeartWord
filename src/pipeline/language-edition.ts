@@ -31,7 +31,7 @@ function canonical(value: unknown): string {
   return JSON.stringify(value);
 }
 function asset(dataDir: string, path: string): { path: string; sha256: string } {
-  const root = resolve(dataDir,"assets"), full = isAbsolute(path) ? resolve(path) : resolve(root,path);
+  const root = resolve(dataDir,"assets"), full = isAbsolute(path) ? resolve(path) : resolve(root,path.replaceAll("\\","/"));
   const rel = relative(root,full);
   if (rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel) || !existsSync(full)) throw new Error("Required chapter asset is unavailable inside the selected data root.");
   return { path: rel.replaceAll("\\","/"), sha256: sha(readFileSync(full)) };
@@ -299,7 +299,7 @@ export function assertEditionInputsCurrent(db:DatabaseSync,dataDir:string,projec
     const selected=db.prepare(`SELECT ga.result_asset_path AS path FROM generation_attempts ga JOIN clips c ON c.generation_attempt_id=ga.id
       WHERE ga.id=? AND ga.shot_id=? AND ga.operation='generate_final_video' AND ga.status='accepted' LIMIT 1`)
       .get(reuse.attemptId,item.donorShotId) as {path:string}|undefined;
-    if(!reuse.path || !reuse.sha256 || selected?.path!==reuse.path || asset(dataDir,reuse.path).sha256!==reuse.sha256)
+    if(!reuse.path || !reuse.sha256 || selected?.path?.replaceAll("\\","/")!==reuse.path || asset(dataDir,reuse.path).sha256!==reuse.sha256)
       throw new Error("Pinned donor picture handle changed after correspondence review.");
   }
   const cast=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_shots' AND undone=0 ORDER BY sequence DESC LIMIT 1").get(projectId) as {payload:string}|undefined;
@@ -318,9 +318,15 @@ export function assertEditionInputsCurrent(db:DatabaseSync,dataDir:string,projec
       if(!selected.targetShotId || !db.prepare("SELECT sh.id FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=? AND sc.project_id=?").get(selected.targetShotId,projectId))
         throw new Error("A selected edition target shot is missing.");
       if(reviewed.addedForEdition && reviewed.addedAction!==undefined){
-        const targetShot=db.prepare("SELECT action,verse_ref FROM shots WHERE id=?").get(selected.targetShotId) as {action:string;verse_ref:string|null}|undefined;
-        if(!targetShot || targetShot.action!==reviewed.addedAction?.trim() || targetShot.verse_ref!==reviewed.addedVerseRef)
+        const targetShot=db.prepare("SELECT action,verse_ref,needs_lip_sync,dialogue_character_id FROM shots WHERE id=?").get(selected.targetShotId) as {action:string;verse_ref:string|null;needs_lip_sync:number;dialogue_character_id:string|null}|undefined;
+        if(!targetShot || targetShot.action!==reviewed.addedAction?.trim() || targetShot.verse_ref!==reviewed.addedVerseRef ||
+            targetShot.needs_lip_sync!==0 || targetShot.dialogue_character_id!==null)
           throw new Error("Added target picture action or verse changed after correspondence review.");
+        if(reviewed.addedCharacterIds!==undefined){
+          const savedCast=(db.prepare("SELECT character_id FROM shot_characters WHERE shot_id=? ORDER BY character_id").all(selected.targetShotId) as Array<{character_id:string}>).map(row=>row.character_id);
+          if(JSON.stringify(savedCast)!==JSON.stringify([...reviewed.addedCharacterIds].sort()))
+            throw new Error("Added target picture cast changed after correspondence review.");
+        }
       }
       if(reviewed.narratorOnlyAction!==undefined){
         const targetShot=db.prepare("SELECT action,needs_lip_sync,dialogue_character_id FROM shots WHERE id=?").get(selected.targetShotId) as {action:string;needs_lip_sync:number;dialogue_character_id:string|null}|undefined;
@@ -362,6 +368,9 @@ export interface EditionShotCorrespondence {
    * donor shot's different historical action. */
   addedAction?: string;
   addedVerseRef?: string;
+  /** Producer-reviewed cast for a new beat. [] means a pure environmental
+   * cutaway; omission preserves the earlier inherited-cast behavior. */
+  addedCharacterIds?: string[];
 }
 export interface EditionPlanRevision {
   version: 1; targetProjectId: string; parentHash: string; revisionHash: string;
@@ -419,9 +428,9 @@ export function reviseLanguageEdition(db: DatabaseSync, projectId: string, input
     if(item.addedForEdition && (item.treatment!=="needs_coverage" || typeof item.addedAction!=="string" || !item.addedAction.trim() ||
         typeof item.addedVerseRef!=="string" || !item.addedVerseRef.trim() || item.narratorOnlyAction!==undefined))
       throw new Error("An added target beat needs its own reviewed verse, action and picture coverage.");
-    if(!item.addedForEdition && (item.addedAction!==undefined || item.addedVerseRef!==undefined))
+    if(!item.addedForEdition && (item.addedAction!==undefined || item.addedVerseRef!==undefined || item.addedCharacterIds!==undefined))
       throw new Error("Only a new target beat can replace its donor verse and action.");
-    const shot=db.prepare(`SELECT sh.needs_lip_sync AS speaking,sh.dialogue_character_id AS speaker,sc.verse_start AS sceneStart,sc.verse_end AS sceneEnd FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=? AND sc.project_id=?`).get(item.donorShotId,donorProjectId) as {speaking:number;speaker:string|null;sceneStart:string;sceneEnd:string}|undefined;
+    const shot=db.prepare(`SELECT sh.needs_lip_sync AS speaking,sh.dialogue_character_id AS speaker,sh.scene_id AS sceneId,sc.verse_start AS sceneStart,sc.verse_end AS sceneEnd FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=? AND sc.project_id=?`).get(item.donorShotId,donorProjectId) as {speaking:number;speaker:string|null;sceneId:string;sceneStart:string;sceneEnd:string}|undefined;
     if (!shot) throw new Error("Correspondence references a foreign or missing donor shot.");
     if(item.addedForEdition){
       const chapter=origin.preflight.target.chapter,ref=item.addedVerseRef!;
@@ -430,6 +439,16 @@ export function reviseLanguageEdition(db: DatabaseSync, projectId: string, input
       const range=parseVerseRange(ref),sceneStart=parseVerseRange(shot.sceneStart).start,sceneEnd=parseVerseRange(shot.sceneEnd).end;
       if(range.start<sceneStart || range.end>sceneEnd || range.start>range.end)
         throw new Error("Added target beat verse must stay within its inherited narrative scene.");
+      if(item.addedCharacterIds!==undefined){
+        if(!Array.isArray(item.addedCharacterIds)||new Set(item.addedCharacterIds).size!==item.addedCharacterIds.length ||
+            item.addedCharacterIds.some(id=>typeof id!=="string"||!id))
+          throw new Error("A new beat's reviewed cast must contain distinct character IDs, or be empty for pure environmental picture.");
+        for(const id of item.addedCharacterIds){
+          const approved=db.prepare(`SELECT 1 FROM characters c JOIN shot_characters sc ON sc.character_id=c.id
+            JOIN shots sh ON sh.id=sc.shot_id WHERE sh.scene_id=? AND c.id=? AND c.canon_status='approved' AND c.region='Papuan' LIMIT 1`).get(shot.sceneId,id);
+          if(!approved)throw new Error("A new beat's cast must be selected from approved Papuan characters already in its donor scene.");
+        }
+      }
     }
     const key=canonical(item);if(seen.has(key))throw new Error("Duplicate shot correspondence is not allowed.");seen.add(key);
     if(item.treatment==="omit_picture"){
@@ -443,7 +462,7 @@ export function reviseLanguageEdition(db: DatabaseSync, projectId: string, input
     if(narratorOnly && (typeof item.narratorOnlyAction!=="string" || !item.narratorOnlyAction.trim() || !shot.speaking || item.treatment!=="needs_coverage" || item.targetSegmentId!==null || item.targetSpeechRunId || item.targetStartMs!==null || item.targetEndMs!==null))
       throw new Error("Narrator-only replacement needs a reviewed non-speaking action and new target picture coverage, without a character source window.");
     if (item.targetSegmentId === null) {
-      if ((shot.speaking&&!narratorOnly) || item.targetSpeechRunId || item.targetStartMs !== null || item.targetEndMs !== null) throw new Error("Speaking shots require an exact target source window.");
+      if ((shot.speaking&&!narratorOnly&&!item.addedForEdition) || item.targetSpeechRunId || item.targetStartMs !== null || item.targetEndMs !== null) throw new Error("Speaking shots require an exact target source window.");
       continue;
     }
     const segment=db.prepare("SELECT start_ms AS startMs,end_ms AS endMs,speaker_character_id AS speaker FROM audio_segments WHERE id=? AND project_id=? AND layer='original_reading'").get(item.targetSegmentId,projectId) as {startMs:number;endMs:number;speaker:string|null}|undefined;

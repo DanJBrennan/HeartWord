@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 type Segment={id:string;startMs:number;endMs:number;verseRef:string|null;speakerId:string|null};
 type Disposition="reuse_picture"|"replace_avatar"|"needs_coverage"|"omit_picture";
 type PictureReuse={attemptId:string;sourceStartMs:number;durationMs:number;path?:string;sha256?:string};
-type Mapping={donorShotId:string;targetSegmentId:string|null;targetSpeechRunId?:string|null;targetStartMs:number|null;targetEndMs:number|null;treatment:Disposition;reason:string;pictureReuse?:PictureReuse;narratorOnlyAction?:string;addedForEdition?:boolean;addedAction?:string;addedVerseRef?:string};
-type Shot={shotId:string;startMs:number;endMs:number;shot:{action:string;verse_ref:string|null;needs_lip_sync:number;dialogue_character_id:string|null};
+type Mapping={donorShotId:string;targetSegmentId:string|null;targetSpeechRunId?:string|null;targetStartMs:number|null;targetEndMs:number|null;treatment:Disposition;reason:string;pictureReuse?:PictureReuse;narratorOnlyAction?:string;addedForEdition?:boolean;addedAction?:string;addedVerseRef?:string;addedCharacterIds?:string[]};
+type Shot={shotId:string;startMs:number;endMs:number;shot:{action:string;verse_ref:string|null;needs_lip_sync:number;dialogue_character_id:string|null};sceneCast:Array<{id:string;name:string}>;
   reuseCandidates:Array<{attemptId:string;path:string;provider:string;recordedDurationMs:number}>};
 type Workspace={edition:null|{donor:{renderId:string};target:{language:string;book:string;chapter:number;title:{bookChapter:string;languageName:string}};
   donorShots:Shot[];segments:Segment[];speechRuns:Array<{id:string;verseRef:string;startMs:number;endMs:number;speakerId:string|null;anchorSegmentId:string|null;memberIds:string[]}>;
@@ -76,7 +76,14 @@ export function LanguageEditionReviewPanel({projectId}:{projectId:string}){
         {value.addedForEdition&&<><label>New beat verse (for example, Mark 4:38) <input value={value.addedVerseRef??""}
           onChange={event=>edit(index,{addedVerseRef:event.target.value})} /></label>
           <label>New source-grounded beat action <input value={value.addedAction??""}
-            onChange={event=>edit(index,{addedAction:event.target.value})} /> Describe this new picture instead of repeating the donor shot action.</label></>}
+            onChange={event=>edit(index,{addedAction:event.target.value})} /> Describe this new picture instead of repeating the donor shot action.</label>
+          <label><input type="checkbox" checked={value.addedCharacterIds!==undefined}
+            onChange={event=>edit(index,{addedCharacterIds:event.target.checked?[]:undefined})} /> Select the cast for this beat explicitly</label>
+          {value.addedCharacterIds!==undefined&&<details><summary>Approved scene cast · {value.addedCharacterIds.length?`${value.addedCharacterIds.length} selected`:"no named character"}</summary>
+            <p>Leave every box clear for an environmental or anonymous-actor cutaway. Select only approved Papuan characters actually shown in this new beat.</p>
+            {item.sceneCast.map(member=><label key={member.id}><input type="checkbox" checked={value.addedCharacterIds?.includes(member.id)??false}
+              onChange={event=>edit(index,{addedCharacterIds:event.target.checked?[...(value.addedCharacterIds??[]),member.id]:(value.addedCharacterIds??[]).filter(id=>id!==member.id)})} /> {member.name}</label>)}
+          </details>}</>}
         <label>Treatment <select value={value.treatment} onChange={event=>{const treatment=event.target.value as Disposition;
           edit(index,{treatment,pictureReuse:undefined,...(treatment==="needs_coverage"?{}:{narratorOnlyAction:undefined}),
             ...(treatment==="omit_picture"?{targetSegmentId:null,targetSpeechRunId:null,targetStartMs:null,targetEndMs:null}: {})});}}>

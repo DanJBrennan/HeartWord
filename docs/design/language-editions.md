@@ -1,8 +1,13 @@
 # Language editions from an editable chapter
 
-Status: isolated Mark 4 donor normalized and Meyah project identity created;
-the 54-row target speaker map is approved for shot planning. Target picture,
-voice, title selection and film reviews remain open.
+Status: isolated Mark 4 donor normalized; the Meyah source map, detailed
+correspondence, cast subsets and title visual have Dan's named reviews.
+The isolated target now has 145 editable shots, two explicit omissions and
+the selected four-second title. Dan approved the 4:9 Jesus audition; all ten
+reviewed character speech runs are converted, and the 54-row cast master
+preserves the other 24 original Meyah source rows. The new cast takes are
+pending Dan's listening review. New picture, Kling Avatar, assembly, film QC
+and editable delivery remain open.
 
 October 25 source-binding update: Dan approved applying the projected 54-row
 Meyah speaker map after exact listening review. The existing ingestion stage
@@ -25,11 +30,32 @@ target action, and the edition must retain at least one selected picture shot.
 An `addedForEdition` coverage beat names its own reviewed, source-grounded
 `addedVerseRef` and `addedAction` so image generation does not repeat the
 anchor donor shot's historical verse and action. The new verse must fall within
-the inherited narrative scene. The beat continues to inherit that donor
-scene's selected Papuan cast; the producer reviews its verse, action and reason
-before stage 3 creates a target shot. The Mark 4:35–38 storm bridge beats use
-these fields for a dusk crossing and disciples turning toward the sleeping
+the inherited narrative scene. Dan approved an optional explicit
+`addedCharacterIds` selection for these beats after the Meyah Mark 4 map
+exposed plant/field cutaways whose donor anchors contain people. The selected
+IDs must be distinct, approved Papuan characters already cast anywhere in
+that donor narrative scene; an empty array explicitly means no named
+character. An omitted field retains the previous inherited-shot-cast behavior
+for older editions. The producer reviews the new verse, action, cast and
+reason before stage 3 creates a target shot. A new beat is always silent,
+even when its preceding donor anchor visibly speaks; the donor's original
+speaker binding remains on the inherited shot. Stage 3 and later input checks
+preserve the exact reviewed cast subset. The Mark 4:35–38 storm bridge beats
+use these fields for a dusk crossing and disciples turning toward the sleeping
 Jesus, who remains outside the second bridge frame.
+
+When a visible-speaking target shot already has a producer-accepted Codex
+keyframe, stage 4 verifies its retained image and provenance hashes and keeps
+that target frame. It does not register the donor frame as a later accepted
+alternative. This applies to Dan's approved Peter 4:38 version-3 close-up in
+the isolated Meyah edition; accepting that image does not approve its future
+Kling Avatar take or voice.
+
+Retained Windows donor attempts may spell their relative asset path with
+backslashes. Edition preflight canonicalizes that spelling to a forward-slash
+relative path inside the selected asset root, then pins and rechecks the file
+hash. A separator difference alone does not invalidate an approved handle;
+a changed path, file or hash still holds stage 3 or picture reuse.
 Producer decisions: Dan's October 2026 language-edition conversation and
 `C:/Users/danbr/HeartWordData/reviews/2026-10-22-language-editions/LANGUAGE_EDITION_HANDOFF.md`.
 
@@ -129,8 +155,15 @@ plan, source/canon checks, spend controls and actual result review.
   pronunciation/source-fidelity evidence. The approval pins the source bytes,
   cast bytes, voice sidecar, exact current settings and plan revision. Changed
   evidence holds bulk voicing. A stale saved audition cannot be bypassed by
-  starting another scoped provider request. The first paid audition is a later
-  explicit producer action.
+  starting another scoped provider request. The first paid audition is now a
+  single isolated Jesus 4:9 candidate; its source is 142.703–152.394 seconds
+  and its generated cast duration is 9.706 seconds. Dan approved that audition
+  after the source-versus-cast listening review. The approval pins source,
+  cast, sidecar, voice identity, exact current settings and correspondence
+  revision. Nine other reviewed speech runs were then converted in scoped
+  batches; the final 54-row cast master reused all 30 character rows and
+  locally carried through 24 original Meyah rows. Their cast output review
+  remains distinct from the earlier audition approval.
 - Local picture reuse is derived from selected donor clip stems, muted and
   trimmed with FFmpeg. The mixed finished donor film cannot be a picture stem.
   The five retained Mark 4 final-picture chunks are already video-only and
