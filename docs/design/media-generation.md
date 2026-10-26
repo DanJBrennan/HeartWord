@@ -61,6 +61,9 @@ from Desktop's preset labels. See [audio design](audio-and-speakers.md).
 
 Progress uses authenticated `/api/generation/progress` every three seconds,
 surfaced through the existing production monitor and data-directory logs.
+An SCP keyframe-upload failure may retry the same destination once before
+submission; this cannot duplicate inference because no generation POST exists
+yet. A completed output-file download may likewise retry without a new POST.
 If a concurrent isolated DB writer briefly locks the job-status projection,
 the progress event is retained in the log with `persisted:false`; that status
 write cannot abort an already submitted Desktop inference. The next progress
@@ -73,10 +76,10 @@ The pinned production-revision check runs after the input upload. It can take
 longer than an idle SSH forward survives, so the provider rechecks `/health`
 and reconnects the forward immediately before its single `/api/generate` POST.
 It never retries that POST after an uncertain response.
-After Desktop returns a definitive completed output path, one failed SCP
-download may be retried because that only transfers the existing file; it
-does not repeat generation. A second transfer failure retains the Mac path for
-manual reconciliation.
+After Desktop returns a definitive completed output path, SCP download of
+that exact file may be retried up to four times, with 10/30/60-second delays
+after failures. This only transfers the existing file and never repeats
+generation. Exhausted transfers retain the Mac path for exact-file recovery.
 
 See [local LTX operations](../production/LTX_LOCAL.md) for configuration,
 diagnostics, settings and recovery. The October 14 ending-frame extension below

@@ -91,9 +91,11 @@ remain at `output/mark4-donor-20261024/review/meyah-mark4-shot008-ltx-draft-reco
 and under `assets/generated/video/`. The recovered draft is selected for
 shot 8; it is not final footage. Automated QC described the subtle motion and
 identity as sound but scored confidence 70, below its pass threshold. The
-verdict and editorial choice remain in history. The provider now permits one
-retry of a *completed file download*; it never repeats generation on an
-uncertain submission. No production batch has started.
+verdict and editorial choice remain in history. The provider retries a
+completed file download with bounded 10/30/60-second backoff, up to four
+transfers of the same Mac file; it never repeats generation on an uncertain
+submission. A failed keyframe upload may retry once before the only generation
+POST. No production batch has started.
 
 Dan approved a clean-shaven John son of Zebedee throughout this isolated
 edition, including the exact revised standing reference. A three-point
@@ -153,10 +155,29 @@ separate still-frame fidelity check correctly notes that seed has not yet
 left the hand. Final video QC must show the broadcast and seed landing on the
 path or hold the take. Earlier failed poses remain in history.
 
+Dan asked Codex to decide routine visual choices without further comparison
+questions. Shot 36 uses the approved-cast over-the-shoulder version, and
+shot 39 uses the revised four-person private-circle image; both selections
+and likeness evidence are retained. A recovered shot-29 five-second LTX
+draft remained held after whole-take QC flagged possible visible speech.
+The exact first 3.25 seconds planned for the film received a second review:
+no visible speech or identity drift was reported, though confidence 70 is
+below automatic approval. Codex selected that draft for composition only;
+the separately generated 720p final is still in progress and must clear its
+own exact-placement review. The recovered Mac video, exact hashes and both
+verdicts remain in the isolated review history.
+
+The isolated keyframe worklist now has **11 accepted target keyframes** and
+one accepted local LTX final. New accepted pictures include the short 4:9
+shore reaction, exposed seed on the 4:15 hard footpath, fresh sprouts in
+shallow rocky soil at 4:16, and the matching early heat/wilting view for
+4:17. Their prompts, formal briefs, Critic decisions and editorial reasons
+are retained under `docs/production/mark4-meyah/` and the isolated assets.
+
 Next: complete local LTX coverage and Kling Avatar speaking takes, then
 assemble and QC the film and its fresh-root editable package. No film
 acceptance is claimed.
-The full repository suite passed 890 tests in 129 files. Root, server and web
+The full repository suite passed 891 tests in 129 files. Root, server and web
 TypeScript checking passed after the transport and crew recovery changes.
 
 ## Earlier isolated Mark 4 → Meyah checkpoint (historical status)

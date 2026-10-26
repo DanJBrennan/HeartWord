@@ -124,11 +124,21 @@ describe("LTX Desktop adapter", () => {
     expect(transport.reset).toHaveBeenCalledTimes(1);
     expect(requests.filter(r=>r.path==="/api/generate")).toHaveLength(1);
   });
-  it("retries only the completed file transfer after a transient SCP failure",async()=>{
-    transport.download.mockRejectedValueOnce(new Error("SCP transport closed"));
+  it("retries only the completed file transfer after transient SCP failures",async()=>{
+    transport.download.mockRejectedValueOnce(new Error("SCP transport closed"))
+      .mockRejectedValueOnce(new Error("SCP transport still closed"));
     const result=await provider().generateFinal(request,options);
     expect(result.status).toBe("accepted");
-    expect(transport.download).toHaveBeenCalledTimes(2);
+    expect(transport.download).toHaveBeenCalledTimes(3);
+    expect(new Set(transport.download.mock.calls.map(([, local])=>local)).size).toBe(1);
+    expect(requests.filter(r=>r.path==="/api/generate")).toHaveLength(1);
+  });
+  it("retries a failed keyframe upload before the only generation POST",async()=>{
+    transport.upload.mockRejectedValueOnce(new Error("SCP transport closed"));
+    const result=await provider().generateFinal(request,options);
+    expect(result.status).toBe("accepted");
+    expect(transport.upload).toHaveBeenCalledTimes(2);
+    expect(transport.upload.mock.calls[0]![1]).toBe(transport.upload.mock.calls[1]![1]);
     expect(requests.filter(r=>r.path==="/api/generate")).toHaveLength(1);
   });
   it("uploads a unique keyframe, authenticates every request, returns the exact MP4 and retains metadata",async()=>{
@@ -218,10 +228,10 @@ describe("LTX Desktop adapter", () => {
     expect(transport.upload).not.toHaveBeenCalled();
   });
   it("retains the Mac output when SCP fails and never reports local success",async()=>{
-    transport.download.mockRejectedValueOnce(new Error("SCP failed")).mockRejectedValueOnce(new Error("SCP failed"));
+    transport.download.mockRejectedValue(new Error("SCP failed"));
     await expect(provider().generateFinal(request,options)).rejects.toThrow("SCP failed");
     expect(requests.filter(r=>r.path === "/api/generate")).toHaveLength(1);
-    expect(transport.download).toHaveBeenCalledTimes(2);
+    expect(transport.download).toHaveBeenCalledTimes(4);
   });
   it("rejects an empty downloaded file",async()=>{
     transport.download.mockImplementationOnce(async(_remote:string,local:string)=>writeFileSync(local,""));

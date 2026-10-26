@@ -147,13 +147,18 @@ export class LtxVideoProvider implements VideoProvider {
       remoteInput = `${inbox}/${remoteFileId}${suffix}`;
       metadata.remoteInputPath = remoteInput;
       emit({ phase: "uploading_keyframe", percentage: null, currentStep: null, totalSteps: null });
-      await this.transport.upload(input.absolute, remoteInput);
+      // This transfer precedes the sole generation POST. A failed SCP may
+      // leave a partial remote file; a second upload replaces that same path
+      // without risking a duplicate inference request.
+      try { await this.transport.upload(input.absolute, remoteInput); }
+      catch { await this.transport.upload(input.absolute, remoteInput); }
       if (endInput) {
         remoteEndInput = `${inbox}/${remoteFileId}-end${extname(endInput.absolute).toLowerCase()}`;
         metadata.sourceEndKeyframe = endInput.relative;
         metadata.sourceEndKeyframeSha256 = endHash;
         metadata.remoteEndInputPath = remoteEndInput;
-        await this.transport.upload(endInput.absolute, remoteEndInput);
+        try { await this.transport.upload(endInput.absolute, remoteEndInput); }
+        catch { await this.transport.upload(endInput.absolute, remoteEndInput); }
       }
       const body = { prompt, resolution, model: "fast", cameraMotion: "none", negativePrompt: "human speech, dialogue, narration, words, gibberish voices, singing, human vocals, music, visible talking", duration, fps, audio: audioMode === "ambient", imagePath: remoteInput, lastImagePath: remoteEndInput ?? null, keyframes: [], audioPath: null, aspectRatio: "16:9", seed, loras: [] };
       metadata.request = body;
@@ -201,10 +206,16 @@ export class LtxVideoProvider implements VideoProvider {
       if (result.status !== "complete" || typeof result.video_path !== "string" || !result.video_path.startsWith("/") || /[\r\n\0]/.test(result.video_path)) throw new Error(`LTX did not complete successfully (status ${String(result.status)}).`);
       metadata.remoteOutputPath = result.video_path;
       emit({ phase: "downloading_output", percentage: 100, currentStep: null, totalSteps: null });
-      // Desktop has definitively completed this generation. Retrying a failed
-      // file transfer is safe: it does not submit another inference request.
-      try { await this.transport.download(result.video_path, tempOutput); }
-      catch { await this.transport.download(result.video_path, tempOutput); }
+      // Desktop has definitively completed this generation. SCP can be
+      // temporarily unavailable while Desktop releases the inference GPU.
+      // Retry only this exact output path, with backoff; never repeat POST.
+      for (let downloadAttempt = 0; downloadAttempt < 4; downloadAttempt++) {
+        try { await this.transport.download(result.video_path, tempOutput); break; }
+        catch (error) {
+          if (downloadAttempt === 3) throw error;
+          await sleep([10_000, 30_000, 60_000][downloadAttempt]!);
+        }
+      }
       if (!existsSync(tempOutput) || !statSync(tempOutput).isFile() || statSync(tempOutput).size === 0) throw new Error("LTX returned no nonempty local MP4; retained Mac output path is in the metadata.");
       emit({ phase: "preparing_output", percentage: 100, currentStep: null, totalSteps: null });
       const properties = await prepareLtxVideoOutput(tempOutput, preparedOutput, { audioMode, ambientOutput: tempAmbient });
