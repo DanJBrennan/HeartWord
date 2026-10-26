@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
-import { assertEditionInputsCurrent, readLanguageEditionOrigin, readLanguageEditionPlan } from "./language-edition.js";
+import { assertEditionInputsCurrent, editionPlanIsOrderOnlySuccessor, readLanguageEditionOrigin, readLanguageEditionPlan } from "./language-edition.js";
 import { readConfirmedSpeechRuns } from "./ingestion/continuous-speech.js";
 import { hasCurrentSourceReview } from "./ingestion/source-review.js";
 import { VOICE_CHANGER_DEFAULTS, type ReVoiceResult } from "../providers/elevenlabs.js";
@@ -98,7 +98,9 @@ export function assertEditionVoiceAuditionApproved(db:DatabaseSync,dataDir:strin
   if(!row)throw new Error("Full target-language voicing is held until a short Meyah voice audition is heard and approved.");
   const saved=JSON.parse(row.payload) as AuditionEvidence & {reviewer:string;evidence:string};
   const current=editionAuditionEvidence(db,dataDir,projectId,saved.sourceSegmentIds);
-  for(const key of Object.keys(current) as Array<keyof AuditionEvidence>)if(JSON.stringify(current[key])!==JSON.stringify(saved[key]))
+  for(const key of Object.keys(current) as Array<keyof AuditionEvidence>)if(
+    key==="planHash" ? !editionPlanIsOrderOnlySuccessor(db,projectId,saved.planHash) :
+    JSON.stringify(current[key])!==JSON.stringify(saved[key]))
     throw new Error("Approved voice audition is stale after a source, cast, voice or plan change.");
   return current;
 }

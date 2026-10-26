@@ -392,6 +392,28 @@ export function readLanguageEditionPlan(db: DatabaseSync, projectId: string): {h
   return {hash,sequence,revision};
 }
 
+/** A picture-only permutation keeps every reviewed utterance, trim and cast
+ * choice intact. It may carry a source/voice audition, but any changed item
+ * makes that approval stale. The revision chain is validated first. */
+export function editionPlanIsOrderOnlySuccessor(db:DatabaseSync,projectId:string,priorHash:string):boolean {
+  const current=readLanguageEditionPlan(db,projectId);
+  if(!current?.revision)return false;
+  if(current.hash===priorHash)return true;
+  const rows=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='revise_language_edition' AND undone=0 ORDER BY sequence")
+    .all(projectId) as Array<{payload:string}>;
+  let previous:EditionPlanRevision|null=null,found=false;
+  for(const row of rows){
+    const revision=JSON.parse(row.payload) as EditionPlanRevision;
+    if(found){
+      if(!previous || JSON.stringify(previous.correspondence.map(canonical).sort())!==
+          JSON.stringify(revision.correspondence.map(canonical).sort()))return false;
+    }
+    if(revision.revisionHash===priorHash)found=true;
+    if(found)previous=revision;
+  }
+  return found && previous?.revisionHash===current.hash;
+}
+
 /** Explicit source-clock correspondence, saved before stage 3 uses it. */
 export function reviseLanguageEdition(db: DatabaseSync, projectId: string, input: {
   requestId:string; expectedParentHash:string; correspondence:EditionShotCorrespondence[]; reviewer:string; evidence:string;

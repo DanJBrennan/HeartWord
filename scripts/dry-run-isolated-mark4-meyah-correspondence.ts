@@ -98,7 +98,10 @@ for (let scene=1;scene<=7;scene++) {
   if (placementIds.size !== inherited.length || Math.min(...placementIds) !== 1 || Math.max(...placementIds) !== inherited.length) {
     throw new Error(`Scene ${scene} lost or repeated an inherited donor placement`);
   }
-  rows.sort((a,b) => a.anchorPlacement-b.anchorPlacement || (a.addedForEdition?1:0)-(b.addedForEdition?1:0) || a.targetStartMs-b.targetStartMs);
+  // The producer approved these rows in source-clock picture order. Sorting
+  // by the old donor anchor would silently move spoken picture out of sync.
+  for(let index=1;index<rows.length;index++)if(rows[index]!.targetStartMs<rows[index-1]!.targetStartMs)
+    throw new Error(`Scene ${scene} source-clock picture order went backwards`);
   for (const row of rows) {
     const treatment = row.pipelineTreatment as EditionShotCorrespondence["treatment"];
     const speech = row.targetSpeech;

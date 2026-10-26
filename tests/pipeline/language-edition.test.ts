@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { assertEditionInputsCurrent, createLanguageEdition, preflightLanguageEdition, readLanguageEditionOrigin, readLanguageEditionPlan, reviseLanguageEdition } from "../../src/pipeline/language-edition.js";
+import { assertEditionInputsCurrent, createLanguageEdition, editionPlanIsOrderOnlySuccessor, preflightLanguageEdition, readLanguageEditionOrigin, readLanguageEditionPlan, reviseLanguageEdition } from "../../src/pipeline/language-edition.js";
 import { parseReferenceOnlyVerseMarkers, parseSourceTextByVerse } from "../../src/pipeline/ingestion/parse-source-text.js";
 import { materializeEditionCasting, materializeEditionMedia, materializeEditionScenes } from "../../src/pipeline/language-edition-stages.js";
 import { sourceReviewHashes } from "../../src/pipeline/ingestion/source-review.js";
@@ -440,6 +440,32 @@ describe("language edition identity",()=>{
     db.prepare("INSERT INTO shot_characters(shot_id,character_id)VALUES(?,'jesus')").run(targetShots[1]!.id);
     expect(()=>assertEditionInputsCurrent(db,dataDir,target)).toThrow(/cast changed/);
   });
+  it("places a reviewed silent beat before its donor anchor when the target source clock calls for it",()=>{
+    const pre=preflightLanguageEdition(db,dataDir,"donor",input);
+    const target=createLanguageEdition(db,dataDir,"donor",{...input,requestId:"clock-order-edition-001",checkedFingerprint:pre.fingerprint!}).project.id;
+    const audioPath="source/meyah/audio/Meyah_mej_TBL_NT_Non-Drama/B02___04_Markus______MEJTBLN1DA.mp3";
+    db.prepare("INSERT INTO audio_segments(id,project_id,layer,source_path,start_ms,end_ms,verse_ref,speaker_character_id,created_at)VALUES('target-clock-speech',?,'original_reading',?,0,1000,'Mark 4:1','jesus',1)").run(target,audioPath);
+    const hashes=sourceReviewHashes(db,target,dataDir);
+    db.prepare("INSERT INTO source_alignment_reviews VALUES('clock-review',?,'Dan','confirm',?,?,'Reviewed source clock',1)").run(target,hashes.sourceHash,hashes.alignmentHash);
+    expect(materializeEditionScenes(db,dataDir,target).ok).toBe(true);
+    const speaking={donorShotId:"shot",targetSegmentId:"target-clock-speech",targetStartMs:0,targetEndMs:1000,
+      treatment:"replace_avatar" as const,reason:"Reviewed Jesus speech"};
+    const picture={donorShotId:"shot",targetSegmentId:null,targetStartMs:null,targetEndMs:null,
+      treatment:"needs_coverage" as const,reason:"Wordless scene-setting before the quotation",addedForEdition:true,
+      addedVerseRef:"Mark 4:1",addedAction:"The listeners settle by the shore.",addedCharacterIds:[]};
+    const parent=readLanguageEditionPlan(db,target)!.hash;
+    const first=reviseLanguageEdition(db,target,{requestId:"clock-order-map-001",expectedParentHash:parent,
+      correspondence:[picture,speaking],reviewer:"Dan",evidence:"Reviewed source-clock picture order"});
+    expect(materializeEditionCasting(db,dataDir,target)).toMatchObject({ok:true});
+    const mapping=JSON.parse((db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_shots' ORDER BY sequence DESC LIMIT 1").get(target) as {payload:string}).payload);
+    expect(mapping.shots.map((item:{treatment:string})=>item.treatment)).toEqual(["needs_coverage","replace_avatar"]);
+    const second=reviseLanguageEdition(db,target,{requestId:"clock-order-map-002",expectedParentHash:first.revision.revisionHash,
+      correspondence:[speaking,picture],reviewer:"Dan",evidence:"Reordered only the picture placements"});
+    expect(editionPlanIsOrderOnlySuccessor(db,target,first.revision.revisionHash)).toBe(true);
+    reviseLanguageEdition(db,target,{requestId:"clock-order-map-003",expectedParentHash:second.revision.revisionHash,
+      correspondence:[{...speaking,targetEndMs:999},picture],reviewer:"Dan",evidence:"Changed a speech cutoff"});
+    expect(editionPlanIsOrderOnlySuccessor(db,target,first.revision.revisionHash)).toBe(false);
+  });
   it("builds and explicitly selects the pinned Meyah title through the normal opening beat",()=>{
     const background=join(dataDir,"assets",title.backgroundFramePath);
     execFileSync("ffmpeg",["-v","error","-f","lavfi","-i","color=c=navy:s=1280x720:r=24","-frames:v","1","-y",background]);
@@ -498,8 +524,11 @@ describe("language edition identity",()=>{
     const hashes=sourceReviewHashes(db,target,dataDir);
     db.prepare("INSERT INTO source_alignment_reviews VALUES('audition-source-review',?,'Dan','confirm',?,?,'Reviewed exact target words',1)")
       .run(target,hashes.sourceHash,hashes.alignmentHash);
-    reviseLanguageEdition(db,target,{requestId:"audition-map-001",expectedParentHash:readLanguageEditionPlan(db,target)!.hash,reviewer:"Dan",evidence:"Matched Jesus target words",
-      correspondence:[{donorShotId:"shot",targetSegmentId:"target-audition",targetStartMs:0,targetEndMs:3000,treatment:"replace_avatar",reason:"Same teaching"}]});
+    const speaking={donorShotId:"shot",targetSegmentId:"target-audition",targetStartMs:0,targetEndMs:3000,treatment:"replace_avatar" as const,reason:"Same teaching"};
+    const cutaway={donorShotId:"shot",targetSegmentId:null,targetStartMs:null,targetEndMs:null,treatment:"needs_coverage" as const,
+      reason:"Wordless audience cutaway",addedForEdition:true,addedVerseRef:"Mark 4:1",addedAction:"The listeners gather by the shore."};
+    const first=reviseLanguageEdition(db,target,{requestId:"audition-map-001",expectedParentHash:readLanguageEditionPlan(db,target)!.hash,reviewer:"Dan",evidence:"Matched Jesus target words",
+      correspondence:[speaking,cutaway]});
     expect(()=>assertEditionVoiceAuditionApproved(db,dataDir,target)).toThrow(/held until/);
     expect(()=>validateEditionAuditionScope(db,dataDir,target,["target-audition"])).not.toThrow();
     db.prepare("INSERT INTO audio_segments(id,project_id,layer,source_path,start_ms,end_ms,speaker_character_id,created_at)VALUES('target-cast',?,'composite_cast_master','generated/meyah/cast.mp3',0,3000,'jesus',1)").run(target);
@@ -509,6 +538,9 @@ describe("language edition identity",()=>{
     asset("generated/meyah/cast.mp3.json",JSON.stringify({voiceId:"voice-id",voiceVersionId:"voice",requestSettings:VOICE_CHANGER_DEFAULTS,
       sourceStartMs:0,sourceEndMs:3000,originalSegmentId:"target-audition"}));
     expect(()=>approveEditionVoiceAudition(db,dataDir,target,{sourceSegmentIds:["target-audition"],reviewer:"Dan",evidence:"Native listener approved exact words"})).not.toThrow();
+    expect(()=>assertEditionVoiceAuditionApproved(db,dataDir,target)).not.toThrow();
+    reviseLanguageEdition(db,target,{requestId:"audition-picture-reorder-001",expectedParentHash:first.revision.revisionHash,
+      correspondence:[cutaway,speaking],reviewer:"Dan",evidence:"Moved picture only; speech and voice unchanged"});
     expect(()=>assertEditionVoiceAuditionApproved(db,dataDir,target)).not.toThrow();
     asset("generated/meyah/cast.mp3","changed converted voice");
     expect(()=>assertEditionVoiceAuditionApproved(db,dataDir,target)).toThrow(/stale/);

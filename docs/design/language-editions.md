@@ -7,10 +7,13 @@ selected four-second title. Dan approved the 4:9 Jesus audition and the ten
 converted character speech runs; the 54-row cast master preserves the other
 24 original Meyah source rows. The first new keyframe and one bounded local
 LTX diagnostic are retained. A read-only October 26 audit found that the
-saved target shot order differs from the approved source-clock picture map at
-40 positions, including eight speaking shots at the wrong picture windows.
-Production is held for Dan's choice of isolated in-place repair or target
-rebuild. Kling Avatar, assembly, film QC and editable delivery remain open.
+original saved target shot order differed from the approved source-clock
+picture map at 40 positions, including eight speaking shots at the wrong
+picture windows. Dan delegated a story-first editorial choice; an append-only
+isolated repair restored the approved 147-row order while preserving all 145
+target shots, 29 speaking bindings and approved voices. A fresh whole-chapter
+crew is reviewing the corrected brief. Kling Avatar, assembly, film QC and
+editable delivery remain open.
 
 October 25 source-binding update: Dan approved applying the projected 54-row
 Meyah speaker map after exact listening review. The existing ingestion stage
@@ -200,9 +203,21 @@ plan, source/canon checks, spend controls and actual result review.
   There is no loop/freeze or silent story change. Editorial assembly adapts to
   the target audio clock through the ordinary Picture Editor cut and
   source-coverage checks.
+  A named, append-only correction may permute already reviewed picture
+  correspondence within a narrative scene while preserving every target shot
+  ID and exact source-audio binding. A prior voice audition remains current
+  only when each successor revision contains exactly the same correspondence
+  items; any changed source window, treatment, cast or picture handle stales
+  that approval. The corrected shot map is appended as a new command and the
+  old one remains available for audit.
 - The longer Meyah source may need more than extended handles. A reviewed
-  correspondence can add a target-only coverage beat immediately after an
-  inherited donor shot in the same scene. It records a passage-grounded reason
+  correspondence can add a target-only coverage beat at its reviewed source
+  clock position within the same narrative scene as its donor anchor. The
+  producer may reorder compatible donor shots within that scene to keep
+  visible speech and picture aligned with the target recording. Each donor
+  shot's repeated source-picture placements retain their original occurrence
+  order, and narrative scene order remains fixed. A new beat records a
+  passage-grounded reason
   and, for visible speech, an exact target-audio window. Stage 3 creates a new
   target shot; stage 4 requires its own Codex keyframe and local LTX video for
   non-speaking action, while visible target speech uses Kling Avatar in stage

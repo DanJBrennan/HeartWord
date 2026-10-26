@@ -1,6 +1,6 @@
 # Current Goal
 
-## Current: correct the isolated Meyah picture order, then resume production
+## Current: review the repaired Meyah picture order and resume production
 
 The product goal remains an editable, source-faithful Mark 4 film in Meyah, using
 the approved Papuan cast, voice identities, `Markus 4` / `Meyah` title, and
@@ -20,15 +20,31 @@ independent read-only comparison found a more serious saved order problem. Its
 partial run `cb3359cb-fdbd-44c9-9273-a66794bda1da` is retained as
 `incomplete`; it must not be resumed against the old shot order.
 
-Dan's approved source-clock picture proposal and the saved stage-3 target
-correspondence disagree at 40 positions; eight speaking shots occupy picture
-windows different from their saved speech windows. The read-only report and
-graphical review are under
+Dan's approved source-clock picture proposal and the original stage-3 target
+correspondence disagreed at 40 positions; eight speaking shots had picture
+windows different from their saved speech windows. The retained discrepancy
+report and graphical review are under
 `output/mark4-donor-20261024/assets/review/meyah-mark4-approved-order-audit-20261026/`.
-No target order has been changed yet. Dan has been asked whether to repair this
-isolated edition in place or rebuild the target; that architecture choice is
-pending. Cast audio and the approved keyframe are retained as evidence, but
-their association with a corrected correspondence needs explicit validation.
+Dan delegated a story-first choice, preferring retained footage where it
+supports the flow. A disposable rehearsal then an append-only isolated
+correction restored all 147 approved source-clock placements. It preserved
+all 145 target shot IDs, 29 speaking bindings, approved cast audio and voice
+audition, the Peter keyframe, donor rows and source bytes. The old map remains
+in history; the corrected revision hash is
+`1c31f3ea3013eef2cccba36c4bf46ec353b2afb421d03afdbb7704560fdd293f`.
+Its checked backup and receipt are
+`output/mark4-donor-20261024/review/heartword.before-approved-order-repair-20261026.sqlite`
+and `output/mark4-donor-20261024/review/meyah-mark4-approved-order-repair-20261026.json`.
+Stage 3 now permits reviewed picture intercuts within a narrative scene while
+retaining scene order. The previously accepted cast audio carries forward only
+because the new plan is an exact permutation of the same correspondence
+items; a changed speech boundary, source, voice or item still stales approval.
+A fresh whole-chapter crew run `635718ea-884a-4e8c-afd2-f76d23c2ebd2` is
+underway on the corrected 145-shot brief; no production batch has begun.
+The [current read-only media worklist](http://127.0.0.1:4002/media/review/meyah-mark4-media-worklist-20261026/index.html)
+reconciles the repaired map to 35 new silent coverage shots, 29 visible
+speaking shots and 81 retained picture placements. Each retained clip is
+still subject to actual picture-flow review.
 
 The Mac has the LTX 2.5 Fast checkpoint downloaded. Its Desktop health can
 report an unloaded model after restart because the pipeline loads on demand.
@@ -40,7 +56,7 @@ The contact sheet is
 `output/mark4-donor-20261024/review/ltx-preview-contact-20261026.jpg`.
 This confirms one working local generation path, not approval of a target take
 or the full batch. The source target shot and batch remain held until the
-picture-order issue is resolved.
+current whole-chapter crew and normal picture review finish.
 
 Dan requested a revised map of eight optional wordless pauses. A read-only
 proposal under
@@ -51,8 +67,8 @@ the empty-boat opening, conflicting with Dan's earlier instruction to preserve
 that footage exactly, and every pause needs verified extra picture. The
 approved source timing remains the current production basis.
 
-Next: resolve and validate the saved picture order, establish a current crew
-review against corrected target shots, then review actual local LTX coverage,
+Next: review the current crew against corrected target shots, then review
+actual local LTX coverage,
 Kling Avatar speaking takes, assembled film, soundtrack/timing QC and a
 fresh-root editable package. No film acceptance is claimed.
 The full repository suite passed 880 tests in 128 files, and TypeScript

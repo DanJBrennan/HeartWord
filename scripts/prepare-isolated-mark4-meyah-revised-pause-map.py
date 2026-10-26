@@ -20,10 +20,10 @@ assert len(rows) == 147 and old["proposedPauseCount"] == 8 and old["addedDuratio
 project = "a5a40890-8bb0-4856-aacb-1dcad97074bb"
 db = sqlite3.connect(f"file:{(root / 'db' / 'heartword.sqlite').as_posix()}?mode=ro", uri=True)
 mapping = json.loads(db.execute("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_shots' AND undone=0 ORDER BY sequence DESC LIMIT 1", (project,)).fetchone()[0])
-assert len(mapping["shots"]) == 147 and mapping["planHash"] == "34bdfedd82b4b7dead32019850877115e69a7935c578b42b988ec90d17c696e7"
+assert len(mapping["shots"]) == 147 and mapping["planHash"] == "1c31f3ea3013eef2cccba36c4bf46ec353b2afb421d03afdbb7704560fdd293f"
 order_audit = json.loads((review / "meyah-mark4-approved-order-audit-20261026" / "report.json").read_text(encoding="utf8"))
 assert not order_audit["ambiguousRepeatedDonorMatches"] and len(order_audit["approvedToCurrentPlacement"]) == 147
-approved_mapping = [mapping["shots"][current - 1] for current in order_audit["approvedToCurrentPlacement"]]
+approved_mapping = mapping["shots"]
 assert all(row["donorShotId"] == mapped["donorShotId"] for row, mapped in zip(rows, approved_mapping))
 
 # Use the picture already adjacent to the exact source edge. The old crew's
@@ -112,7 +112,7 @@ report = {"kind": "review_only_meyah_mark4_revised_pause_map", "projectId": proj
           "status": "proposal_only_not_applied", "producerDirection": "Dan: Prepare a revised pause map",
           "sourceMapHash": mapping["planHash"], "sourceCrewRunId": old["runId"],
           "approvedOrderAudit": "meyah-mark4-approved-order-audit-20261026/report.json",
-          "orderCorrectionPrerequisite": True,
+          "orderCorrectionPrerequisite": False,
           "sourceProposalHashes": {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in (main_path, storm_path, old_path)},
           "titleDurationMs": title_ms, "sourceDurationMs": source_cursor, "pauseDurationMs": offset,
           "projectedFilmDurationMs": title_ms + source_cursor + offset, "pauseCount": len(items),
@@ -141,7 +141,7 @@ for item in items:
       <p class="hold">Extra picture must be verified before use. This is a planning proposal.</p></div></article>''')
 page = f'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Meyah Mark 4 revised pause map</title><style>body{{margin:0;background:#eef2ef;color:#1d3338;font:16px/1.45 system-ui,sans-serif}}main{{max-width:1350px;margin:auto;padding:2rem}}.intro{{background:white;padding:1.2rem;border-radius:12px;border:1px solid #cbd8d2}}article{{display:grid;grid-template-columns:minmax(220px,330px) 1fr;background:white;border:1px solid #ccd8d2;border-radius:12px;overflow:hidden;margin:1rem 0}}.picture{{background:#20383b;min-height:185px;display:grid;place-items:center}}img{{width:100%;height:100%;object-fit:cover}}.noimage{{color:#d4dfd9}}.content{{padding:1rem 1.3rem}}h1{{margin-top:0}}h2{{margin:.2rem 0 .7rem;font-size:1.25rem}}p{{margin:.55rem 0}}.old{{color:#586766}}.hold{{color:#864d16;background:#fff4dc;padding:.45rem .6rem}}@media(max-width:760px){{article{{grid-template-columns:1fr}}.picture{{max-height:220px}}}}</style><main>
-<h1>Meyah Mark 4 · revised pause map</h1><div class="intro"><p><b>Review only.</b> Eight wordless pauses add 8.067 seconds. The complete 13:25.685 source recording, four-second approved title, Dan-approved 147-row picture order and all exact speech boundaries remain intact. The projected screen length is <b>{clock(report['projectedFilmDurationMs'])}</b>.</p><p>The saved stage-3 shot order first needs the separate <a href="/media/review/meyah-mark4-approved-order-audit-20261026/index.html">approved-order correction</a>. This preview maps target IDs back onto your approved paper edit without changing the database. The previous crew's suggested coverage was sometimes far from the proposed audio boundary. Each card places the pause on an adjacent non-speaking picture instead. None has an approved extra video handle yet. Pause 1 would extend the empty-boat opening, which conflicts with Dan's earlier instruction to preserve the opening footage exactly; it requires an explicit editorial decision before application.</p><p>The <a href="proposal.json">machine-readable timeline</a> projects every source picture and pause to an exact screen clock. No database, source audio, media or approved timing has changed.</p></div>{''.join(cards)}</main>'''
+<h1>Meyah Mark 4 · revised pause map</h1><div class="intro"><p><b>Review only.</b> Eight wordless pauses add 8.067 seconds. The complete 13:25.685 source recording, four-second approved title, Dan-approved 147-row picture order and all exact speech boundaries remain intact. The projected screen length is <b>{clock(report['projectedFilmDurationMs'])}</b>.</p><p>The saved stage-3 shot order now matches the <a href="/media/review/meyah-mark4-approved-order-audit-20261026/index.html">approved source-clock map</a>. The previous crew's suggested coverage was sometimes far from the proposed audio boundary. Each card places the pause on an adjacent non-speaking picture instead. None has an approved extra video handle yet. Pause 1 would extend the empty-boat opening, which conflicts with Dan's earlier instruction to preserve the opening footage exactly; it requires an explicit editorial decision before application.</p><p>The <a href="proposal.json">machine-readable timeline</a> projects every source picture and pause to an exact screen clock. No source audio, media or approved timing has changed.</p></div>{''.join(cards)}</main>'''
 (out / "index.html").write_text(page, encoding="utf8")
 db.close()
 print(json.dumps({"pauseCount": len(items), "addedDurationMs": offset, "projectedFilmDurationMs": report["projectedFilmDurationMs"],

@@ -111,16 +111,28 @@ export function materializeEditionCasting(db:DatabaseSync,dataDir:string,project
   const inherited=plan.revision.correspondence.filter(item=>!item.addedForEdition);
   if(!plan.revision.correspondence.some(item=>item.treatment!=="omit_picture"))
     return {ok:false,reasoning:"A language edition needs at least one selected target picture shot."};
-  if(JSON.stringify(picture.filter(item=>typeof item?.shotId==="string").map(item=>item.shotId))!==JSON.stringify(inherited.map(item=>item.donorShotId)))
-    return {ok:false,reasoning:"Reviewed target correspondence must retain the selected donor picture order."};
+  // An approved target-language edit can intercut donor shots within a scene.
+  // Stage 4 consumes each donor shot's frozen placements in their original
+  // occurrence order; the chapter-wide donor order is not the target clock.
+  const donorSceneOrder=new Map<string,number>();
+  for(const id of selected){
+    const donor=row(db,"SELECT sc.sequence FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sh.id=?",id);
+    if(!donor)return {ok:false,reasoning:"A selected donor shot lost its narrative scene."};
+    donorSceneOrder.set(id,Number(donor.sequence));
+  }
+  let lastScene=0;
+  for(const item of plan.revision.correspondence){
+    const scene=donorSceneOrder.get(item.donorShotId);
+    if(scene===undefined || scene<lastScene)return {ok:false,reasoning:"Reviewed target correspondence must keep narrative scene order."};
+    lastScene=scene;
+  }
   for(const id of selected){
     const count=picture.filter(item=>item?.shotId===id).length;
     if(inherited.filter(item=>item.donorShotId===id).length!==count)
       return {ok:false,reasoning:`Selected donor shot ${id} has ${count} picture placements; provide one explicit target correspondence for each.`};
   }
-  for(const [index,item] of plan.revision.correspondence.entries())if(item.addedForEdition &&
-      (item.treatment!=="needs_coverage" || index===0 || plan.revision.correspondence[index-1]?.donorShotId!==item.donorShotId))
-    return {ok:false,reasoning:"An added target coverage beat must follow a selected donor shot in the same reviewed scene."};
+  for(const item of plan.revision.correspondence)if(item.addedForEdition && item.treatment!=="needs_coverage")
+    return {ok:false,reasoning:"An added target coverage beat must request its own picture."};
   const now=Date.now(),mapping:Array<{donorShotId:string;targetShotId:string|null;treatment:string;targetSegmentId:string|null;reason:string;
     voiceIdentitySource?:"donor_utterance_binding"|"pinned_approved_character"}>=[];
   let activeRuns:ReturnType<typeof readConfirmedSpeechRuns>;
