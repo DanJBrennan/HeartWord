@@ -222,6 +222,49 @@ describe("bounded evidence-based craft feedback",()=>{
         .rejects.toThrow("latest incomplete run");
     } finally {db.close();rmSync(root,{recursive:true,force:true});}
   });
+  it("identifies an invalid saved pause segment when retrying the same crew run",async()=>{
+    const root=mkdtempSync(join(tmpdir(),"hw-pause-resume-")),db=new DatabaseSync(join(root,"proof.sqlite"));
+    try {
+      db.exec(readFileSync("src/db/schema.sql","utf8"));
+      db.exec("INSERT INTO projects(id,language,book,chapter,created_at,updated_at) VALUES('p','hatam','mark',5,1,1)");
+      const b=brief();
+      const first=await runProductionCrew("p","planning",{db,dataDir:root,brief:b,call:async p=>{
+        const out=response(p);
+        if(roleOf(p)==="creative_director")out.emotionalTreatment!.pauses.push({beatId:"beat-1",afterSegmentId:"missing-source",
+          durationMs:500,purpose:"Synthetic reflection",timingBasis:"Synthetic",coverageShotIds:["s"],
+          coverageNeed:"Synthetic wordless picture",costImplication:"No provider call"});
+        return out;
+      }});
+      expect(first.status).toBe("incomplete");expect(first.calls).toBe(1);
+      const resumed=await runProductionCrew("p","planning",{db,dataDir:root,brief:b,resumeRunId:first.runId,call:async p=>{
+        if(roleOf(p)==="creative_director")expect(p).toContain("missing-source");
+        return response(p);
+      }});
+      expect(resumed.status,resumed.summary).toBe("approved");expect(resumed.calls).toBe(16);
+      expect(db.prepare("SELECT COUNT(*) n FROM production_events WHERE run_id=?").get(first.runId)).toMatchObject({n:16});
+    }finally{db.close();rmSync(root,{recursive:true,force:true});}
+  });
+  it("identifies a foreign objection response without accepting it",async()=>{
+    const root=mkdtempSync(join(tmpdir(),"hw-objection-resume-")),db=new DatabaseSync(join(root,"proof.sqlite"));
+    try{
+      db.exec(readFileSync("src/db/schema.sql","utf8"));
+      db.exec("INSERT INTO projects(id,language,book,chapter,created_at,updated_at) VALUES('p','hatam','mark',5,1,1)");
+      const b=brief();
+      const first=await runProductionCrew("p","planning",{db,dataDir:root,brief:b,call:async p=>{
+        const out=response(p);
+        if(roleOf(p)==="creative_director")out.objectionResponses=[{objectionId:"foreign-objection",outcome:"resolved",
+          rationale:"Synthetic invalid response",evidence:"Not this role's finding"}];
+        return out;
+      }});
+      expect(first.status).toBe("incomplete");expect(first.summary).toContain("Only the original objector");
+      const resumed=await runProductionCrew("p","planning",{db,dataDir:root,brief:b,resumeRunId:first.runId,call:async p=>{
+        if(roleOf(p)==="creative_director")expect(p).toContain("foreign-objection (owner unknown)");
+        return response(p);
+      }});
+      expect(resumed.status,resumed.summary).toBe("approved");
+      expect(resumed.productionRecord!.objections).toEqual([]);
+    }finally{db.close();rmSync(root,{recursive:true,force:true});}
+  });
   it("attaches only bounded selected media evidence and labels partial coverage",()=>{
     const root=mkdtempSync(join(tmpdir(),"hw-craft-media-"));
     try {mkdirSync(join(root,"assets"));writeFileSync(join(root,"assets","clip.mp4"),"synthetic video bytes");

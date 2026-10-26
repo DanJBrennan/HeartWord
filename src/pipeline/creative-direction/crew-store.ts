@@ -72,11 +72,40 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
       priorResult.calls !== priorEvents.length || !priorEvents.at(-1)?.error || priorEvents.some(event=>event.round!==1) ||
       Object.keys(priorResult.contributions).length!==completedEvents.length))
     throw new Error("Planning continuation lacks an exact saved first-pass failure.");
+  let previousError=priorEvents.at(-1)?.error ?? "";
+  if(resume && previousError.startsWith("Emotional pause")){
+    const last=db.prepare("SELECT output_json FROM production_events WHERE run_id=? ORDER BY sequence DESC LIMIT 1")
+      .get(resume.id) as {output_json:string|null}|undefined;
+    const rejected=last?.output_json ? (JSON.parse(last.output_json) as {rejectedOutput?:{emotionalTreatment?:{
+      pauses?:Array<{afterSegmentId:string|null;coverageShotIds:string[]}>}}}).rejectedOutput : undefined;
+    const pauses=rejected?.emotionalTreatment?.pauses??[];
+    if(previousError.includes("complete known source segment")){
+      const known=new Set(brief.audio.map(segment=>segment.id));
+      const invalid=[...new Set(pauses.map(pause=>pause.afterSegmentId).filter((id):id is string=>Boolean(id&&!known.has(id))))];
+      if(invalid.length)previousError+=` Rejected afterSegmentId(s) absent from this crew's audio rows: ${invalid.join(", ")}. Omit these pauses or use verified complete source rows.`;
+    }
+    if(previousError.includes("wordless coverage")){
+      const silent=new Set(brief.shots.filter(shot=>!shot.needsLipSync).map(shot=>shot.id));
+      const invalid=[...new Set(pauses.flatMap(pause=>pause.coverageShotIds??[]).filter(id=>!silent.has(id)))];
+      if(invalid.length)previousError+=` Rejected speaking or unknown coverageShotIds: ${invalid.join(", ")}. Choose planned wordless shots only.`;
+    }
+  }
+  if(resume && previousError.includes("Only the original objector")){
+    const last=db.prepare("SELECT output_json FROM production_events WHERE run_id=? ORDER BY sequence DESC LIMIT 1")
+      .get(resume.id) as {output_json:string|null}|undefined;
+    const rejected=last?.output_json ? (JSON.parse(last.output_json) as {rejectedOutput?:{
+      objectionResponses?:Array<{objectionId:string}>}}).rejectedOutput : undefined;
+    const owners=new Map(priorResult!.productionRecord!.objections.map(objection=>[objection.id,objection.owner]));
+    const role=priorEvents.at(-1)!.role;
+    const foreign=[...new Set((rejected?.objectionResponses??[]).map(response=>response.objectionId)
+      .filter(id=>owners.get(id)!==role))];
+    if(foreign.length)previousError+=` ${role} cannot resolve these other owners' retained objections: ${foreign.map(id=>`${id} (owner ${owners.get(id)??"unknown"})`).join(", ")}. Leave them in history and return no response for them.`;
+  }
   const resumeFirstPass: CrewRunnerOptions["resumeFirstPass"] | undefined = resume && priorResult ? {
     contributions:priorResult.contributions,
     completedRoles:completedEvents.map(event=>event.role as keyof CrewResult["contributions"]),
     calls:priorEvents.length,failedRole:priorEvents.at(-1)!.role as keyof CrewResult["contributions"],
-    previousError:priorEvents.at(-1)!.error! } : undefined;
+    previousError } : undefined;
   const id = resume?.id ?? randomUUID();
   const productionRecord = resume ? structuredClone(priorResult!.productionRecord!) :
     newProductionRecord(brief, id, hash, savedProductionRecord(accepted));
