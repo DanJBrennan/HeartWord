@@ -61,6 +61,10 @@ from Desktop's preset labels. See [audio design](audio-and-speakers.md).
 
 Progress uses authenticated `/api/generation/progress` every three seconds,
 surfaced through the existing production monitor and data-directory logs.
+If a concurrent isolated DB writer briefly locks the job-status projection,
+the progress event is retained in the log with `persisted:false`; that status
+write cannot abort an already submitted Desktop inference. The next progress
+event may refresh the DB, and a final status write is attempted separately.
 Log parsing is limited to port discovery and secondary diagnostics after
 progress failures. Requests are serialized against Desktop's single progress
 slot. Lost responses retain inputs/leases and hold for reconciliation, with

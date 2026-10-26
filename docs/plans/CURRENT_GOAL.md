@@ -104,17 +104,39 @@ isolated `v5-meyah-clean` canon version is approved; old v4 and historical
 footage remain preserved. Its backup and receipt are under
 `output/mark4-donor-20261024/review/heartword.before-john-clean-canon-20261026.sqlite`
 and `output/mark4-donor-20261024/review/meyah-mark4-john-clean-canon-application-20261026.json`.
-The bearded private-group keyframe for 4:10–11 is superseded and needs a
-formal replacement using the new approved reference. A standard whole-chapter
-crew rerun is under way because this canon change invalidates the prior
-production brief. Its first two saved creative-director replies were held by
-the exact Scripture-trigger gate. The recovered source map intentionally has
-no spoken Meyah rows at the printed, unspoken 4:6 and 4:19 markers. A beat
-range spanning those markers must use an exact phrase from the supplied
-English reference, or a range with complete Meyah rows; the missing words
-cannot be invented. The saved continuation now explains those exact missing
-rows and altered quotations while preserving both rejected replies and all
-metered costs.
+The bearded private-group keyframe for 4:10–11 was superseded. A fresh
+whole-chapter crew run `a20d0850-fa4d-4832-8f55-126b63502ca7` passed for
+all 145 shots against John v5, with no optional pauses or open blocking
+objections. Its first four creative-director replies were retained as
+malformed; the fifth passed after bounded retry guidance identified the
+printed, unspoken 4:6 and 4:19 markers and an altered quotation. Missing
+Meyah words were not invented; English reference triggers were used where
+the source map has no spoken row. The saved run retains all metered calls.
+Dan reviewed and approved the new four-person 4:10–11 private-group image,
+which is now an accepted isolated keyframe at target shot
+`632e9a87-93d3-49cc-a3a0-394e0f8ee121`. A Peter-and-John listening image
+for the next silent shot passed formal review and is accepted. Dan delegated
+routine visual selection to Codex after reviewing shot 36 and shot 39
+candidates. Codex chose the shot 36 over-the-shoulder version, then revised
+shot 39 until the four-person view passed both canon likeness and scene
+fidelity with clean-shaven John and James's correct face and sash. These
+selections, prior candidates, QC and reasoning remain in
+`docs/production/mark4-meyah/`.
+
+The current Mac LTX Desktop token was refreshed and saved outside Git at
+`%LOCALAPPDATA%\HeartWord\ltx-desktop-session.token`; health confirmed Fast
+loaded. The installed backend generates a token per Desktop launch, with no
+time-based expiry in its request check. The read-only SSH helper
+`scripts/refresh-ltx-desktop-token.ps1` can retrieve the new token from the
+running Mac backend after a restart without another clipboard copy. The
+single eight-second final shot-8 request completed, but a concurrent SQLite
+status-write lock detached the caller while Desktop continued. Its exact Mac
+output was recovered with matching SHA256 and registered from a one-time
+isolated receipt without resubmitting generation. Codex reviewed and accepted
+the first 4.094 seconds for the approved placement. Automated picture
+confidence 72 and accepted native ambience remain separate review facts. A
+generic status-projection fix logs `persisted:false` on a brief busy SQLite
+write without aborting an already submitted inference.
 
 Dan requested a revised map of eight optional wordless pauses. A read-only
 proposal under
@@ -125,12 +147,17 @@ the empty-boat opening, conflicting with Dan's earlier instruction to preserve
 that footage exactly, and every pause needs verified extra picture. The
 approved source timing remains the current production basis.
 
-Next: finish the crew rerun, create and review the clean-shaven private-group
-keyframe, complete local LTX coverage and Kling Avatar speaking takes, then
+The Mark 4:14 seed-on-path start frame now has a cropped anonymous pouch and
+bent sowing arm. Codex accepted it after scene Critic and canon passed; the
+separate still-frame fidelity check correctly notes that seed has not yet
+left the hand. Final video QC must show the broadcast and seed landing on the
+path or hold the take. Earlier failed poses remain in history.
+
+Next: complete local LTX coverage and Kling Avatar speaking takes, then
 assemble and QC the film and its fresh-root editable package. No film
 acceptance is claimed.
-The full repository suite passed 886 tests in 128 files. Root, server and web
-TypeScript checking passed after the transport repair.
+The full repository suite passed 890 tests in 129 files. Root, server and web
+TypeScript checking passed after the transport and crew recovery changes.
 
 ## Earlier isolated Mark 4 → Meyah checkpoint (historical status)
 

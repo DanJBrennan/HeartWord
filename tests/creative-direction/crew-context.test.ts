@@ -92,6 +92,15 @@ describe("immutable project brief", () => {
     expect(b.canon).toMatchObject([{ id: "c", versionId: "v", notes: "Approved brown robe" }]);
     expect(b.audio[0]!.endMs).toBe(8000);
   });
+  it("keeps a reviewed keyframe selection from staling the chapter crew while retaining creative producer edits", () => {
+    const before = crewBriefHash(loadCrewBrief(db, directory, "p", "planning"), "planning");
+    db.exec(`INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at)
+      VALUES ('keyframe-choice','p','shot','shot','human','Producer override for Codex keyframe attempt-1\nDan delegated visual selection',1,2)`);
+    expect(crewBriefHash(loadCrewBrief(db, directory, "p", "planning"), "planning")).toBe(before);
+    db.exec(`INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at)
+      VALUES ('story-change','p','shot','shot','human','Change the shot action to a different story beat',1,3)`);
+    expect(crewBriefHash(loadCrewBrief(db, directory, "p", "planning"), "planning")).not.toBe(before);
+  });
   it("surfaces a producer-resolved title-card decision instead of the default do-not-display note", () => {
     file("source/hatam/mark-2/mark-2-text.docx", docxParagraphs([
       "MARKUS 2", "Yesus dimig Lewi", "(Mat. 9:9-13; Luk. 5:27-32)", "1Original words. 2More words."

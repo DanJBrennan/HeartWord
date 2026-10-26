@@ -49,11 +49,13 @@ The correct fingerprint must appear and the SSH directory/files must belong
 to the Mac account. Do not regenerate or overwrite an existing private key
 while diagnosing a server-side rejection.
 
-Copy the masked backend token from the footer of the Mac's LTX Desktop Logs
-window, then in the PowerShell session that starts HeartWord:
+Once passwordless SSH is working, read the current backend token directly from
+the Mac's running LTX Desktop process. The helper saves it outside the repo in
+`%LOCALAPPDATA%\HeartWord\ltx-desktop-session.token` and sets `LTX_TOKEN` for
+the current PowerShell session:
 
 ```powershell
-$env:LTX_TOKEN = (ssh danieljbrennan@192.168.77.2 'pbpaste').Trim()
+& .\scripts\refresh-ltx-desktop-token.ps1
 npm run ltx:test -- --health
 npm run ltx:test -- --image "C:\Users\danbr\HeartWordData\assets\generated\keyframes\codex\8534f367-c673-4b45-a7a4-d42401f157a7\4f6db394-9055-4198-91f2-aa1008d38df7.png" --prompt "Natural cinematic movement. Preserve character identity, clothing, environment, composition and historical setting." --duration 5 --resolution 720p --seed 42
 ```
@@ -61,11 +63,14 @@ npm run ltx:test -- --image "C:\Users\danbr\HeartWordData\assets\generated\keyfr
 That image is an existing accepted Mark 4 keyframe checked on 2026-10-06.
 `C:\path\keyframe.png` in CLI examples is only a placeholder, not a real file.
 
-This is the local session token, not the cloud API key. Never save it in
-`.env`, source, logs, project files or chat. SSH/SCP subprocesses do not receive
-it. An existing process cannot inherit a token set in another shell: start
-`npm run dev` from this configured shell. Refresh the token after a Desktop
-restart if authentication fails.
+This is the local session token, not the cloud API key. The installed LTX
+Desktop backend generates a random token per app launch and compares it on
+each request; its code has no time-based expiry. A Desktop restart changes the
+token. Run the helper again after a restart; it does not need the Mac clipboard.
+Never save the token in `.env`, source, logs, project files or chat. The local
+copy is outside Git. SSH/SCP subprocesses do not receive it. An existing
+process cannot inherit a token set in another shell: start `npm run dev` from
+the configured shell.
 
 The diagnostic retains a copy of the keyframe in the asset area and writes a
 unique MP4 plus JSON metadata under `assets/generated/video`. It prints the
