@@ -94,7 +94,7 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
     if(previousError.includes("wordless coverage")){
       const silent=new Set(brief.shots.filter(shot=>!shot.needsLipSync).map(shot=>shot.id));
       const invalid=[...new Set(pauses.flatMap(pause=>pause.coverageShotIds??[]).filter(id=>!silent.has(id)))];
-      if(invalid.length)previousError+=` Rejected speaking or unknown coverageShotIds: ${invalid.join(", ")}. Choose planned wordless shots only.`;
+      if(invalid.length)previousError+=` Rejected speaking or unknown coverageShotIds: ${invalid.join(", ")}. Delete every proposed pause containing any listed ID from the next reply; do not reuse it or substitute another shot. Pauses are optional, so return pauses: [] if necessary. Keep coverage ideas in filmableMeans or findings without adding time to the approved edit.`;
     }
   }
   if(resume && previousError.includes("Only the original objector")){
