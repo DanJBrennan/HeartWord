@@ -18,7 +18,7 @@ const [{getDb},{readLanguageEditionPlan},{requireCurrentPlan},{generateShotDraft
   import("../src/pipeline/media-generation/draft-room.js"),import("../src/pipeline/media-generation/final-video.js"),
   import("../src/providers/video-selection.js")]);
 const db=getDb(),plan=readLanguageEditionPlan(db,projectId);
-if(plan?.hash!=="34bdfedd82b4b7dead32019850877115e69a7935c578b42b988ec90d17c696e7")
+if(plan?.hash!=="1c31f3ea3013eef2cccba36c4bf46ec353b2afb421d03afdbb7704560fdd293f")
   throw new Error("Producer-approved shot map changed");
 requireCurrentPlan(db,root,projectId);
 const mapped=JSON.parse(String((db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_shots' AND undone=0 ORDER BY sequence DESC LIMIT 1")
@@ -42,7 +42,7 @@ if(command==="status"){
   if(!attemptId)throw new Error("Choose needs a reviewed draft attempt ID");
   console.log(JSON.stringify(chooseShotDraft(db,projectId,attemptId),null,2));
 }else if(command==="final"){
-  const worklist=JSON.parse(readFileSync(join(root,"assets","review","meyah-mark4-media-worklist-20261025","worklist.json"),"utf8")) as
+  const worklist=JSON.parse(readFileSync(join(root,"assets","review","meyah-mark4-media-worklist-20261026","worklist.json"),"utf8")) as
     {items:Array<{targetShotId:string;durationMs:number;treatment:string}>};
   const item=worklist.items.find(row=>row.targetShotId===shotId&&row.treatment==="needs_coverage");
   if(!item)throw new Error("Reviewed picture duration is missing");

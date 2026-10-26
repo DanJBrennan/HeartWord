@@ -41,6 +41,10 @@ because the new plan is an exact permutation of the same correspondence
 items; a changed speech boundary, source, voice or item still stales approval.
 A fresh whole-chapter crew run `635718ea-884a-4e8c-afd2-f76d23c2ebd2` is
 underway on the corrected 145-shot brief; no production batch has begun.
+Its first Gemini creative-director call timed out without usage metadata.
+The USD 2 reservation remains open and a new named budget reconciliation
+records that uncertainty before the saved run continued. The retry returned
+metered output and the crew is reviewing its remaining roles.
 The [current read-only media worklist](http://127.0.0.1:4002/media/review/meyah-mark4-media-worklist-20261026/index.html)
 reconciles the repaired map to 35 new silent coverage shots, 29 visible
 speaking shots and 81 retained picture placements. Each retained clip is
@@ -71,8 +75,8 @@ Next: review the current crew against corrected target shots, then review
 actual local LTX coverage,
 Kling Avatar speaking takes, assembled film, soundtrack/timing QC and a
 fresh-root editable package. No film acceptance is claimed.
-The full repository suite passed 880 tests in 128 files, and TypeScript
-checking passed, after the lazy LTX readiness change and this audit.
+The full repository suite passed 881 tests in 128 files, and TypeScript
+checking passed after the approved-order repair.
 
 ## Earlier isolated Mark 4 → Meyah checkpoint (historical status)
 
