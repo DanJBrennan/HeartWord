@@ -99,6 +99,11 @@ intensity, filmable means, the transition from the preceding beat and limitation
 Every source verse and planned shot must be represented; that coverage check
 does not prove that the interpretation or beat divisions are good. The existing
 specialists and independent critics judge those choices.
+If a printed verse marker has no spoken source-text row, a beat spanning that
+verse uses a verbatim short quotation from the supplied English reference with
+`textKind: reference`. The marker does not authorize inventing source-language
+words. A saved malformed crew reply receives the missing verse numbers and
+quote mismatch as bounded continuation guidance; the exact-quote gate remains.
 
 Live Mark 5 compatibility check (October 21): the Gemini `responseSchema`
 transport rejects a numeric enum entry for this version field before model

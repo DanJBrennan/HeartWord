@@ -107,7 +107,14 @@ and `output/mark4-donor-20261024/review/meyah-mark4-john-clean-canon-application
 The bearded private-group keyframe for 4:10–11 is superseded and needs a
 formal replacement using the new approved reference. A standard whole-chapter
 crew rerun is under way because this canon change invalidates the prior
-production brief.
+production brief. Its first two saved creative-director replies were held by
+the exact Scripture-trigger gate. The recovered source map intentionally has
+no spoken Meyah rows at the printed, unspoken 4:6 and 4:19 markers. A beat
+range spanning those markers must use an exact phrase from the supplied
+English reference, or a range with complete Meyah rows; the missing words
+cannot be invented. The saved continuation now explains those exact missing
+rows and altered quotations while preserving both rejected replies and all
+metered costs.
 
 Dan requested a revised map of eight optional wordless pauses. A read-only
 proposal under

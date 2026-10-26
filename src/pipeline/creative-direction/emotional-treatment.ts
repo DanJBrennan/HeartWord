@@ -23,6 +23,35 @@ export interface EmotionalTreatment {
     speechPriority: string;
   }>;
 }
+
+/** Explain a rejected trigger using only the immutable brief and bounded beat
+ * numbers. This guides continuation without treating an unspoken marker as
+ * invented Meyah text or weakening the exact-quote validation. */
+export function emotionalTriggerRecoveryHint(raw: unknown, brief: CrewBrief): string {
+  if (!raw || typeof raw !== "object" || !Array.isArray((raw as {beats?:unknown}).beats)) return "";
+  const beats=(raw as {beats:unknown[]}).beats.slice(0,16);
+  const hints:string[]=[];
+  beats.forEach((value,index)=>{
+    if(!value||typeof value!=="object")return;
+    const trigger=(value as {sourceTrigger?:unknown}).sourceTrigger;
+    if(!trigger||typeof trigger!=="object")return;
+    const t=trigger as {verseRef?:unknown;textKind?:unknown;quote?:unknown};
+    if(typeof t.verseRef!=="string"||typeof t.quote!=="string"||!["source","reference"].includes(String(t.textKind)))return;
+    let range:{start:number;end:number};
+    try{range=parseVerseRange(t.verseRef);}catch{return;}
+    const source=t.textKind==="source"?brief.source.text:brief.source.reference;
+    const rows=source.filter(row=>row.verse>=range.start&&row.verse<=range.end);
+    const present=new Set(rows.map(row=>row.verse));
+    const missing=Array.from({length:Math.max(0,Math.min(200,range.end-range.start+1))},(_,i)=>range.start+i)
+      .filter(verse=>!present.has(verse));
+    if(missing.length){
+      hints.push(`Beat ${index+1}: ${t.textKind} text has no row for verse ${missing.join(", ")}. Keep the full beat verseRef, use textKind "reference", and copy a short exact phrase from its supplied English reference range.`);
+    }else if(!rows.map(row=>row.text).join(" ").includes(t.quote)){
+      hints.push(`Beat ${index+1}: quote differs from the supplied ${t.textKind} text. Copy one short contiguous phrase exactly; do not reproduce the whole passage from memory.`);
+    }
+  });
+  return hints.join(" ");
+}
 export interface TreatmentReview {
   status: "clear" | "concern" | "unverified"; evidence: string; requestedChange: string;
   confidence: number; limitations: string;

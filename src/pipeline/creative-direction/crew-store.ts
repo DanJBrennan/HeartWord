@@ -9,7 +9,7 @@ import type { CrewBrief, CrewPhase, CrewResult, CrewContribution } from "./crew-
 import { saveDeliberationExport } from "./deliberation-export.js";
 import { canonReferenceMedia, acceptedCoverageMedia } from "./visual-reference-media.js";
 import { acceptedFilmDirection, newProductionRecord, same, type ProductionRecord } from "./production-record.js";
-import { emotionalDirection, validateEmotionalTreatment } from "./emotional-treatment.js";
+import { emotionalDirection, emotionalTriggerRecoveryHint, validateEmotionalTreatment } from "./emotional-treatment.js";
 import { reserveCrewModelSpend, settleCrewModelSpend } from "./model-spend.js";
 import { assertEditionInputsCurrent } from "../language-edition.js";
 
@@ -73,6 +73,13 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
       Object.keys(priorResult.contributions).length!==completedEvents.length))
     throw new Error("Planning continuation lacks an exact saved first-pass failure.");
   let previousError=priorEvents.at(-1)?.error ?? "";
+  if(resume && previousError==="Emotional trigger must quote the supplied Scripture range exactly."){
+    const last=db.prepare("SELECT output_json FROM production_events WHERE run_id=? ORDER BY sequence DESC LIMIT 1")
+      .get(resume.id) as {output_json:string|null}|undefined;
+    const rejected=last?.output_json ? (JSON.parse(last.output_json) as {rejectedOutput?:{emotionalTreatment?:unknown}}).rejectedOutput : undefined;
+    const hint=emotionalTriggerRecoveryHint(rejected?.emotionalTreatment,brief);
+    if(hint)previousError+=` ${hint}`;
+  }
   if(resume && previousError.startsWith("Emotional pause")){
     const last=db.prepare("SELECT output_json FROM production_events WHERE run_id=? ORDER BY sequence DESC LIMIT 1")
       .get(resume.id) as {output_json:string|null}|undefined;

@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CrewBrief, CrewContribution, CrewEvent, CrewRole } from "../../src/pipeline/creative-direction/crew-types.js";
-import { emotionalTreatmentSchema, validateEmotionalTreatment, validateTreatmentHandoff } from "../../src/pipeline/creative-direction/emotional-treatment.js";
+import { emotionalTreatmentSchema, emotionalTriggerRecoveryHint, validateEmotionalTreatment, validateTreatmentHandoff } from "../../src/pipeline/creative-direction/emotional-treatment.js";
 import { runCrew } from "../../src/pipeline/creative-direction/crew.js";
 import { newProductionRecord } from "../../src/pipeline/creative-direction/production-record.js";
 import { directionsFromRun } from "../../src/pipeline/creative-direction/crew-store.js";
@@ -39,6 +39,18 @@ function treatment(b=brief()) {
 }
 afterEach(()=>vi.unstubAllEnvs());
 describe("advance emotional treatment",()=>{
+  it("explains unspoken verse markers and altered quotations without inventing source text",()=>{
+    const b=brief();b.source.text=b.source.text.filter(row=>row.verse!==2);
+    const raw={beats:[
+      {sourceTrigger:{verseRef:"Mark 5:1-2",textKind:"source",quote:"Synthetic original one."}},
+      {sourceTrigger:{verseRef:"Mark 5:1",textKind:"source",quote:"Changed words"}},
+    ]};
+    const hint=emotionalTriggerRecoveryHint(raw,b);
+    expect(hint).toContain('Beat 1: source text has no row for verse 2');
+    expect(hint).toContain('use textKind "reference"');
+    expect(hint).toContain('Beat 2: quote differs');
+    expect(hint).not.toContain("Synthetic original two");
+  });
   it("uses a Gemini-compatible version field while rejecting unsupported returned versions",()=>{
     const version = emotionalTreatmentSchema.properties.version;
     expect(version).toMatchObject({type:"integer"});
