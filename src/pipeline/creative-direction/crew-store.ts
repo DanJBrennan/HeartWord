@@ -48,7 +48,7 @@ export function productionRecordForRun(db:DatabaseSync,run:StoredCrewRun|undefin
 }
 export async function runProductionCrew(projectId: string, phase: CrewPhase, options: {
   db?: DatabaseSync; dataDir?: string; maxCalls?: number; call?: CrewRunnerOptions["call"];
-  brief?: CrewBrief; media?: CrewRunnerOptions["media"];
+  brief?: CrewBrief; media?: CrewRunnerOptions["media"]; resumeRunId?: string;
 } = {}): Promise<CrewResult & { runId: string }> {
   const db = options.db ?? getDb();
   const dataDir = options.dataDir ?? getDataDir();
@@ -59,12 +59,31 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
   const accepted = db.prepare("SELECT * FROM production_runs WHERE project_id=? AND phase=? AND status='approved' ORDER BY created_at DESC,rowid DESC LIMIT 1").get(projectId, phase) as unknown as StoredCrewRun | undefined;
   const active = db.prepare("SELECT id FROM production_runs WHERE project_id=? AND status='running' LIMIT 1").get(projectId);
   if (active) throw new Error("A production crew run is already active. Recover an interrupted run before restarting.");
-  const id = randomUUID();
   const hash = crewBriefHash(brief, phase);
-  const productionRecord = newProductionRecord(brief, id, hash, savedProductionRecord(accepted));
+  const resume = options.resumeRunId ? previous : undefined;
+  if (options.resumeRunId && (phase !== "planning" || resume?.id !== options.resumeRunId ||
+      resume.status !== "incomplete" || resume.brief_hash !== hash))
+    throw new Error("Planning continuation requires the latest incomplete run and unchanged creative brief.");
+  const priorResult = resume?.result_json ? JSON.parse(resume.result_json) as CrewResult : undefined;
+  const priorEvents = resume ? db.prepare("SELECT role,round,error FROM production_events WHERE run_id=? ORDER BY sequence")
+    .all(resume.id) as Array<{role:string;round:number;error:string|null}> : [];
+  const completedEvents=priorEvents.filter(event=>!event.error);
+  if (resume && (!priorResult?.productionRecord || priorResult.productionRecord.revision !== resume.id ||
+      priorResult.calls !== priorEvents.length || !priorEvents.at(-1)?.error || priorEvents.some(event=>event.round!==1) ||
+      Object.keys(priorResult.contributions).length!==completedEvents.length))
+    throw new Error("Planning continuation lacks an exact saved first-pass failure.");
+  const resumeFirstPass: CrewRunnerOptions["resumeFirstPass"] | undefined = resume && priorResult ? {
+    contributions:priorResult.contributions,
+    completedRoles:completedEvents.map(event=>event.role as keyof CrewResult["contributions"]),
+    calls:priorEvents.length,failedRole:priorEvents.at(-1)!.role as keyof CrewResult["contributions"],
+    previousError:priorEvents.at(-1)!.error! } : undefined;
+  const id = resume?.id ?? randomUUID();
+  const productionRecord = resume ? structuredClone(priorResult!.productionRecord!) :
+    newProductionRecord(brief, id, hash, savedProductionRecord(accepted));
+  if (resume) productionRecord.status="proposed";
   // New guidance changes the review context, but does not delete previously
   // accepted facts when the actual source/canon/shot inputs are unchanged.
-  if(accepted?.result_json){
+  if(!resume && accepted?.result_json){
     const oldBrief=JSON.parse(accepted.brief_json) as CrewBrief,oldRecord=savedProductionRecord(accepted);
     const creativeInputs=(b:CrewBrief)=>({project:b.project,source:b.source,canon:b.canon,audio:b.audio,shots:b.shots.map(s=>({...s,clip:null}))});
     if(oldRecord&&same(creativeInputs(oldBrief),creativeInputs(brief)))for(const snapshot of productionRecord.snapshots){
@@ -74,15 +93,26 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
   }
   // Retain unresolved and resolved history across held runs and phases. No
   // historical row is rewritten or given invented lifecycle decisions.
-  for (const context of [productionRecordForRun(db,planning), prior]) if (context) {
+  for (const context of resume ? [] : [productionRecordForRun(db,planning), prior]) if (context) {
     productionRecord.history = [...new Map([...productionRecord.history, ...context.history].map(h => [h.id, h])).values()];
     productionRecord.objections = [...new Map([...productionRecord.objections, ...context.objections].map(o => [o.id, o])).values()];
   }
-  db.prepare(`INSERT INTO production_runs (id, project_id, phase, brief_hash, brief_json, status, result_json, created_at, worker_pid)
-    VALUES (?, ?, ?, ?, ?, 'running', ?, ?, ?)`).run(id, projectId, phase, hash, JSON.stringify(brief),
-      JSON.stringify({status:"incomplete",summary:"Crew review started; retained objections remain current until explicitly resolved.",calls:0,contributions:{},productionRecord,emotionalTreatmentRequired:phase==="planning"?true:undefined}),Date.now(),process.pid);
+  const seenContributions: CrewResult["contributions"] = structuredClone(resumeFirstPass?.contributions ?? {});
+  const openingResult={status:"incomplete",summary:resume ? "Continuing the exact saved first-pass failure; earlier replies remain retained." :
+    "Crew review started; retained objections remain current until explicitly resolved.",
+    calls:resumeFirstPass?.calls ?? 0,contributions:seenContributions,productionRecord,emotionalTreatmentRequired:phase==="planning"?true:undefined};
+  if(resume){
+    const updated=db.prepare("UPDATE production_runs SET status='running',result_json=?,completed_at=NULL,worker_pid=? WHERE id=? AND status='incomplete'")
+      .run(JSON.stringify(openingResult),process.pid,id);
+    if(updated.changes!==1)throw new Error("The saved crew run changed before continuation.");
+  }else db.prepare(`INSERT INTO production_runs (id, project_id, phase, brief_hash, brief_json, status, result_json, created_at, worker_pid)
+    VALUES (?, ?, ?, ?, ?, 'running', ?, ?, ?)`).run(id, projectId, phase, hash, JSON.stringify(brief),JSON.stringify(openingResult),Date.now(),process.pid);
   const stopObserving = beginObservedWork(projectId, phase === "planning" ? "casting" : phase === "editing" ? "assembly" : "qc", id);
-  let sequence = 0;
+  let sequence = priorEvents.length;
+  const eventIdFor=(role:string,round:number)=>{
+    const base=`${id}:${role}:${round}`;
+    return db.prepare("SELECT id FROM production_events WHERE id=?").get(base) ? `${base}:retry${sequence+1}` : base;
+  };
   let result: CrewResult;
   // Set only by the real default `call` below, from Gemini's own reported
   // usageMetadata -- reset before each attempt so a failed call never
@@ -95,6 +125,7 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
   try {
     const configuredBound = Number(process.env.HEARTWORD_CREW_CALL_UPPER_BOUND_USD);
     result = await runCrew({ phase, brief, maxCalls: options.maxCalls, media: options.media, productionRecord, creativeFeedback: true,
+      resumeFirstPass,
       callUpperBoundUsd: options.call ? null : Number.isFinite(configuredBound) && configuredBound > 0 ? configuredBound : null,
       coverageMedia: phase === "editing" ? acceptedCoverageMedia(dataDir,brief) : [],
       visualMedia: canonReferenceMedia(db, dataDir, brief),
@@ -106,7 +137,7 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
         if (options.call) return options.call(prompt,schema,media);
         const role = prompt.match(/^You are HeartWord's (.*?)\. Phase:/)![1]!.replaceAll(" ", "_");
         const round = prompt.match(/pass (\d)\/2/)![1]!;
-        const eventId = `${id}:${role}:${round}`;
+        const eventId = eventIdFor(role,Number(round));
         lastCallCostUsd = 0; // A local pre-submission hold incurs no provider charge.
         callReservation = {id:reserveCrewModelSpend(db,projectId,eventId),eventId};
         lastCallCostUsd = null; // Submission/result/usage may now be uncertain.
@@ -117,11 +148,13 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
       log: event => {
         const costUsd = lastCallCostUsd;
         lastCallCostUsd = null;
+        const eventId=callReservation?.eventId ?? eventIdFor(event.role,event.round);
         db.prepare(`INSERT INTO production_events
           (id, run_id, sequence, role, round, prompt, output_json, error, model, cost_usd, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(`${id}:${event.role}:${event.round}`, id, ++sequence, event.role,
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(eventId, id, ++sequence, event.role,
             event.round, event.prompt, event.output ? JSON.stringify(event.output) : event.rejectedOutput===undefined ? null : JSON.stringify({summary:"Rejected malformed role reply; not a contribution or approval.",directions:[],findings:[],rejectedOutput:event.rejectedOutput}), event.error, GEMINI_TEXT_MODEL, costUsd, Date.now());
-        db.prepare("UPDATE production_runs SET result_json=? WHERE id=? AND status='running'").run(JSON.stringify({status:"incomplete",summary:"Review in progress; saved exchanges are not approval.",calls:sequence,contributions:{},productionRecord,emotionalTreatmentRequired:phase==="planning"?true:undefined}),id);
+        if(event.output)seenContributions[event.role]=event.output;
+        db.prepare("UPDATE production_runs SET result_json=? WHERE id=? AND status='running'").run(JSON.stringify({status:"incomplete",summary:"Review in progress; saved exchanges are not approval.",calls:sequence,contributions:seenContributions,productionRecord,emotionalTreatmentRequired:phase==="planning"?true:undefined}),id);
         if (costUsd !== null) db.prepare(`INSERT INTO cost_ledger_entries (id, project_id, generation_attempt_id, amount_usd, created_at) VALUES (?, ?, NULL, ?, ?)`)
           .run(randomUUID(), projectId, costUsd, Date.now());
         if (callReservation) settleCrewModelSpend(db,projectId,callReservation.id,callReservation.eventId,costUsd);
@@ -132,7 +165,7 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
       result = { ...result, status: "held", summary: "Production inputs changed during review. Run the crew against the current brief." };
     }
   } catch (error) {
-    result = { status: "incomplete", summary: (error as Error).message, calls: sequence, contributions: {}, productionRecord, emotionalTreatmentRequired:phase==="planning"?true:undefined };
+    result = { status: "incomplete", summary: (error as Error).message, calls: sequence, contributions:seenContributions, productionRecord, emotionalTreatmentRequired:phase==="planning"?true:undefined };
   } finally { stopObserving(); }
   db.exec("BEGIN IMMEDIATE");
   try {

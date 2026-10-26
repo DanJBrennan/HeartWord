@@ -38,19 +38,31 @@ target-film approval has occurred. Before normal keyframe handoff, the target
 needs an approved production planning record. Its 145-shot, 54-source-row
 crew brief loads after 79 missing approved canon references were copied by
 hash from live assets into the isolated worktree; the live assets and database
-were only read. Dan selected the standard whole-chapter production crew. Its
-isolated 145-shot planning review is now running, with every Gemini request
-metered and reserved against the film cost gate. Saved specialist outputs are
-reviewable evidence, not yet a producer-approved production plan.
+were only read. Dan selected the standard whole-chapter production crew. The
+first isolated review retained all 145-shot specialist replies but finished
+**held** after the Picture Editor requested three speaking keyframes already
+accounted for by accepted donor/Peter images, and repeated an incorrect claim
+that Jesus speaks at Meyah 4:39. Dan's earlier source review explicitly says
+4:39 is narrated action. A saved, named correction now pins that decision,
+the narrator-only source row, the silent target shot, and the three existing
+selected keyframes. The corrected whole-chapter crew is running against this
+new brief. The first run's wrong findings and USD 9.077689 metered model spend
+remain visible as history; no media was generated from them. A malformed
+fractional Picture Editor craft score was also retained. The review resumed
+that same saved run after a response-schema repair, without repeating its ten
+completed specialist calls. A regression covers the saved continuation.
 The [read-only target media worklist](http://127.0.0.1:4002/media/review/meyah-mark4-media-worklist-20261025/index.html)
 reconciles every new target shot to that map: 35 silent coverage shots totaling
 187.517 seconds (five require a ten-second local LTX request), 29 target
 speaking shots for Kling Avatar, 81 locally retained picture placements and
 the already approved Peter keyframe.
 Continue the normal editable assembly and QC path after the planning result
-is checked against the approved map. The latest full implementation suite
-passed 875 tests across 127 files; both product typechecks and the web build
-passed. These checks establish code health, not a completed film.
+is checked against the approved map. Before the crew-runtime repair, the full
+implementation suite passed 875 tests across 127 files. After the repair, the
+full suite passed 875 of 876 tests; one unrelated five-second test timed out
+under concurrent crew load and passed on its own with a 20-second timeout.
+Rerun the full suite after crew completion. These checks establish code health,
+not a completed film.
 
 Goal Guardian: this remains a source-faithful editable language edition using
 the seven existing stages and Dan's shot, cast, title and speech decisions.

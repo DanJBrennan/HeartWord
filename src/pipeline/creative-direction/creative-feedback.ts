@@ -27,7 +27,7 @@ const array = (items: unknown) => ({ type: "array", items });
 export const craftAssessmentSchema = object({
   rubric: { type: "string", enum: [CRAFT_RUBRIC] },
   recommendation: { type: "string", enum: ["satisfactory", "revise", "unverified"] },
-  dimensions: array(object({ name: { type: "string", enum: [...CRAFT_DIMENSIONS] }, score: { type: "number", nullable: true },
+  dimensions: array(object({ name: { type: "string", enum: [...CRAFT_DIMENSIONS] }, score: { type: "integer", nullable: true, description: "Ordinal craft score: whole number 0, 1, 2, 3, or 4; use null when unobservable. Never use half points." },
     evidence: text, shotIds: array(text), startMs: { type: "number", nullable: true }, endMs: { type: "number", nullable: true }, confidence: { type: "number" }, limitations: text })),
   concerns: array(object({ owner: { type: "string", enum: [...CRAFT_OWNERS] }, shotId: { type: "string", nullable: true }, evidence: text, requestedChange: text }))
 });

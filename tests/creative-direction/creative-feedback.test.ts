@@ -181,6 +181,47 @@ describe("bounded evidence-based craft feedback",()=>{
       }
     } finally {db.close();rmSync(root,{recursive:true,force:true});}
   });
+  it("continues a saved malformed picture-editor reply without repeating paid earlier roles",async()=>{
+    const root=mkdtempSync(join(tmpdir(),"hw-craft-resume-")),db=new DatabaseSync(join(root,"proof.sqlite"));
+    try {
+      db.exec(readFileSync("src/db/schema.sql","utf8"));
+      db.exec("INSERT INTO projects(id,language,book,chapter,created_at,updated_at) VALUES('p','hatam','mark',5,1,1)");
+      const b=brief(),firstCalls:string[]=[];
+      const first=await runProductionCrew("p","planning",{db,dataDir:root,brief:b,call:async p=>{
+        const role=roleOf(p);firstCalls.push(role);
+        const out=response(p);
+        if(role==="picture_editor")out.craftAssessment!.dimensions[0]!.score=3.5;
+        return out;
+      }});
+      expect(first.status).toBe("incomplete");expect(first.calls).toBe(11);
+      expect(firstCalls.at(-1)).toBe("picture_editor");
+      const before=db.prepare("SELECT id,output_json FROM production_events WHERE run_id=? ORDER BY sequence")
+        .all(first.runId) as Array<{id:string;output_json:string}>;
+      expect(before).toHaveLength(11);
+      expect(JSON.parse(before.at(-1)!.output_json).rejectedOutput.craftAssessment.dimensions[0].score).toBe(3.5);
+      b.spentUsd=6; // Metered review cost changes, while the creative brief hash stays fixed.
+      const resumedCalls:string[]=[];
+      const resumed=await runProductionCrew("p","planning",{db,dataDir:root,brief:b,resumeRunId:first.runId,call:async p=>{
+        resumedCalls.push(roleOf(p));
+        if(resumedCalls.length===1)expect(p).toContain("PRIOR REJECTED REPLY: Invalid craft dimension or evidence.");
+        return response(p);
+      }});
+      expect(resumed.status,resumed.summary).toBe("approved");
+      expect(resumed.runId).toBe(first.runId);
+      expect(resumed.calls).toBe(16);
+      expect(resumedCalls).toHaveLength(5);
+      expect(resumedCalls[0]).toBe("picture_editor");
+      expect(resumedCalls).not.toContain("creative_director");
+      const after=db.prepare("SELECT id,output_json FROM production_events WHERE run_id=? ORDER BY sequence")
+        .all(first.runId) as Array<{id:string;output_json:string}>;
+      expect(after.slice(0,11)).toEqual(before);
+      expect(new Set(after.map(event=>event.id)).size).toBe(16);
+      expect(after[11]!.id).toContain(":picture_editor:1:retry12");
+      expect(productionRecordForRun(db,latestCrewRun(db,"p","planning"))!.status).toBe("accepted");
+      await expect(runProductionCrew("p","planning",{db,dataDir:root,brief:b,resumeRunId:first.runId,call:async()=>{throw Error("must not call");}}))
+        .rejects.toThrow("latest incomplete run");
+    } finally {db.close();rmSync(root,{recursive:true,force:true});}
+  });
   it("attaches only bounded selected media evidence and labels partial coverage",()=>{
     const root=mkdtempSync(join(tmpdir(),"hw-craft-media-"));
     try {mkdirSync(join(root,"assets"));writeFileSync(join(root,"assets","clip.mp4"),"synthetic video bytes");
