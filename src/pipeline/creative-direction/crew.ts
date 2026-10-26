@@ -225,6 +225,26 @@ function challengerBrief(brief: CrewBrief, role: ChallengerRole): CrewBrief {
   return { ...brief, source: { ...brief.source, text: [] }, canon: bareCanon, producerNotes: [], appliedLessons: [] };
 }
 
+/** A full FDL snapshot is saved and validated locally. Repeating it alongside
+ * every specialist's chapter plan can exceed the model's input limit late in
+ * a whole-chapter review. Keep the decision trail and exact proposals in the
+ * prompt, while requiring a finding for any new fact whose exact before-value
+ * is not present. The canonical record is never changed by this projection. */
+function compactProductionRecordForPrompt(record: ProductionRecord) {
+  return {
+    version: record.version, revision: record.revision, inputRevision: record.inputRevision,
+    parentRevision: record.parentRevision, briefHash: record.briefHash, status: record.status,
+    snapshotRefs: record.snapshots.map(snapshot => ({ sceneId: snapshot.context.sceneId,
+      shotIds: snapshot.shots.map(shot => shot.id), sha256: recordHash(snapshot) })),
+    history: record.history.map(item => ({ id: item.id, kind: item.kind, inputRevision: item.inputRevision,
+      inputBriefSha256: item.inputBriefSha256, owner: item.owner, proposedChanges: item.proposedChanges,
+      rationale: item.rationale, finding: item.finding, relatedContributions: item.relatedContributions,
+      supersedes: item.supersedes, resolution: item.resolution })),
+    objections: record.objections, acceptedContributionIds: record.acceptedContributionIds,
+    producerOverrideShotIds: record.producerOverrideShotIds
+  };
+}
+
 // Roles whose job is inherently visual -- everyone else reasons about the
 // chapter in text, same as before. See docs/plans/CURRENT_GOAL.md,
 // 2026-09-19: without seeing the actual approved art, a visual
@@ -313,6 +333,8 @@ export async function runCrew(options: CrewRunnerOptions): Promise<CrewResult> {
         return complete({ status: "incomplete", summary: `${role} is a declared role and has no executable handler.`, calls, contributions });
       }
       if (calls >= maxCalls) return complete({ status: "incomplete", summary: "Role-call budget exhausted; no further calls or automatic approval.", calls, contributions });
+      const compactRecord = productionRecord && JSON.stringify(productionRecord).length > 700_000;
+      const promptRecord = compactRecord ? compactProductionRecordForPrompt(productionRecord) : productionRecord;
       const prompt = `You are HeartWord's ${role.replaceAll("_", " ")}. Phase: ${phase}; pass ${round}/2.\n${DUTIES[role]}\n${IMPLIED_EMOTION_POLICY}\n${AVATAR_PERFORMANCE_POLICY}\n${EMOTIONAL_TREATMENT_POLICY}\n` +
         (round === 1 && role === options.resumeFirstPass?.failedRole ? `PRIOR REJECTED REPLY: ${options.resumeFirstPass.previousError}. Correct this role's reply to the current phase contract. The matching completed first-pass role replies below are retained evidence, not new calls.\n` : "") +
         (feedback ? `${CREATIVE_FEEDBACK_POLICY}\nRETAINED CREATIVE FEEDBACK:\n${JSON.stringify(feedback)}\n` : "") +
@@ -337,7 +359,8 @@ export async function runCrew(options: CrewRunnerOptions): Promise<CrewResult> {
         (CHALLENGER_ROLES.includes(role as ChallengerRole) ? "Your brief below is narrowed to your own lens; a field you don't need has been removed, not hidden evidence -- do not infer withholding.\n" : "") +
         (VISUAL_ROLES.includes(role as typeof VISUAL_ROLES[number]) ? "Attached are this chapter's approved canon reference images, one per character, each preceded by a caption naming which character it shows. Judge actual appearance (build, costume, coloring) from these images, not from a character's name or notes alone; record a finding if what's proposed conflicts with what the image actually shows.\n" : "") +
         `CHAPTER BRIEF:\n${JSON.stringify(CHALLENGER_ROLES.includes(role as ChallengerRole) ? challengerBrief(brief, role as ChallengerRole) : brief)}\nTEAM CONTRIBUTIONS AND PREVIOUS DECISION:\n${JSON.stringify(contributions)}` +
-        (productionRecord ? `\nSAVED PRODUCTION RECORD:\n${JSON.stringify(productionRecord)}\n` +
+        (productionRecord ? `\nSAVED PRODUCTION RECORD:\n${JSON.stringify(promptRecord)}\n` +
+          (compactRecord ? "The complete FDL snapshots and full exchange scopes are retained in the saved project and checked locally, but omitted from this model prompt to fit the input limit. The snapshot hashes and all decision/history IDs, rationales, exact proposed changes, resolutions and objections are above. If an exact current before-fact is absent here, raise a specific finding for its owner instead of inventing a filmChange before-value.\n" : "") +
           "Use filmChanges for qualitative FDL fact proposals with exact before-facts; preserve the accountable fact owner even when suggesting a change outside your domain. Never rewrite source/canon or producer decisions. " +
           "Use ownerResponses to explicitly accept/reject cross-domain proposals addressed to your domain. Use objectionResponses with exact saved objection IDs and concrete rationale/evidence to resolve or carry your OWN earlier findings; an empty findings array does not close them. Use withdrawals to explicitly withdraw your own earlier proposals, retaining rationale and evidence. " +
           "Review relevant earlier proposals, including rejected alternatives and unresolved objections across runs. The Production Director selects only reviewed current contribution IDs in acceptedContributionIds; omitted alternatives stay inactive. Director verdicts need decisionConfidence (0–100, uncalibrated) and decisionLimitations. No role may silently overwrite another owner's decision. Return empty arrays when there is no applicable proposal or response." : "");

@@ -44,9 +44,16 @@ underway on the corrected 145-shot brief; no production batch has begun.
 Its first Gemini creative-director and choreographer calls timed out without
 usage metadata. Both USD 2 reservations remain open, with named budget
 reconciliations recording that uncertainty before the saved run continued.
-The retries returned metered output and the crew is reviewing its remaining
-roles. Chapter-sized planning calls now have a bounded six-minute timeout;
-other Gemini calls retain the ordinary three-minute limit.
+The retries returned metered output. Eleven successful specialist reviews then
+reached the fidelity challenger, whose full-context call received an HTTP 400
+input-token-limit rejection without usage metadata. Its USD 2 reservation
+remains open under a named reconciliation. The full saved FDL and role outputs
+remain intact; the model prompt now uses a compact decision projection when
+the saved record is large. A read-only rehearsal reduced this exact prompt
+from 2,255,183 to 807,901 characters. The saved run is continuing from the
+fidelity challenger without repeating successful roles. Chapter-sized
+planning calls have a bounded six-minute timeout; other Gemini calls retain
+the ordinary three-minute limit.
 The [current read-only media worklist](http://127.0.0.1:4002/media/review/meyah-mark4-media-worklist-20261026/index.html)
 reconciles the repaired map to 35 new silent coverage shots, 29 visible
 speaking shots and 81 retained picture placements. Each retained clip is
@@ -77,7 +84,7 @@ Next: review the current crew against corrected target shots, then review
 actual local LTX coverage,
 Kling Avatar speaking takes, assembled film, soundtrack/timing QC and a
 fresh-root editable package. No film acceptance is claimed.
-The full repository suite passed 882 tests in 128 files, and TypeScript
+The full repository suite passed 883 tests in 128 files, and TypeScript
 checking passed after the approved-order repair.
 
 ## Earlier isolated Mark 4 → Meyah checkpoint (historical status)

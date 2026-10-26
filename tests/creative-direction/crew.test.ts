@@ -11,6 +11,7 @@ import { EDITORIAL_CHECKS, editorialReviewTargets } from "../../src/pipeline/qc/
 import { fixtureTreatment, fixtureTreatmentReview, fixtureCraftAssessment } from "../helpers/crew-treatment.js";
 import { TREATMENT_REVIEW_ROLES } from "../../src/pipeline/creative-direction/emotional-treatment.js";
 import { reconcileAvatarBudget } from "../../src/pipeline/voice-lipsync/performance-direction.js";
+import { newProductionRecord } from "../../src/pipeline/creative-direction/production-record.js";
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 function brief(): CrewBrief {
@@ -41,6 +42,23 @@ function response(role: CrewRole): CrewContribution {
 const roleFromPrompt = (prompt: string): CrewRole => prompt.match(/You are HeartWord's ([^.]+)\./)![1]!.replaceAll(" ", "_") as CrewRole;
 
 describe("coordinated filmmaking", () => {
+  it("keeps saved decisions visible while bounding a chapter-sized FDL prompt", async () => {
+    const b=brief(),record=newProductionRecord(b,"revision","brief-hash");
+    record.snapshots[0]!.prose="snapshot-only-evidence-".repeat(50000);
+    record.objections.push({id:"prior-objection",owner:"fidelity_challenger",status:"resolved",shotId:"s1",
+      severity:"advisory",evidence:"Earlier issue",requestedChange:"Keep the reviewed roof",confidence:85,limitations:"Historical review"});
+    let prompt="";
+    const result=await runCrew({phase:"planning",brief:b,productionRecord:record,log:()=>{},call:async value=>{
+      prompt=value;throw new Error("capture only");
+    }});
+    expect(result.status).toBe("incomplete");
+    expect(prompt.length).toBeLessThan(200000);
+    expect(prompt).toContain("prior-objection");
+    expect(prompt).toContain("brief-hash");
+    expect(prompt).toContain("raise a specific finding");
+    expect(prompt).not.toContain("snapshot-only-evidence-");
+    expect(record.snapshots[0]!.prose).toContain("snapshot-only-evidence-");
+  });
   it("rejects invalid cue envelopes while preserving legacy cues without fades", () => {
     const b=brief(), out=response("composer");
     out.audioCues=[{assetId:"music",startMs:0,endMs:4000,sourceStartMs:0,gainDb:-24,reason:"Restrained music"}];

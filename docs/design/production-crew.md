@@ -156,6 +156,16 @@ window changes neither the number of calls nor the spend cap. A timeout after
 submission remains an unknown-cost event with its reservation open until
 named reconciliation before a deliberate continuation.
 
+A chapter-sized FDL snapshot repeated beside every specialist's complete
+directions can exceed Gemini's input limit late in planning. When the saved
+record exceeds 700,000 characters, the model prompt carries scene and shot
+snapshot hashes, the full decision and objection trail, and exact proposed
+fact changes, while omitting the repeated fact snapshots and exchange scopes.
+The canonical record remains saved and is used for local validation and final
+acceptance. A reviewer without an exact current fact in its prompt reports a
+finding for the accountable owner instead of inventing a before-value.
+This prompt projection cannot approve or alter the saved production record.
+
 Provider references: [Google music generation](https://ai.google.dev/gemini-api/docs/music-generation)
 and [ElevenLabs sound effects API](https://elevenlabs.io/docs/api-reference/text-to-sound-effects/convert).
 
