@@ -11,7 +11,7 @@ import { sceneReferenceAssetsForVerse } from "../../providers/story-state-assets
 import { getDataDir } from "../../db/client.js";
 import { sortAssetsByFreshness } from "../../characters/asset-freshness.js";
 import {wardrobeReferenceRole} from "../../characters/wardrobe-refinement.js";
-import { approvedEditionCanon } from "../language-edition.js";
+import { approvedEditionCanon, readLanguageEditionOrigin, readLanguageEditionPlan } from "../language-edition.js";
 
 const REFERENCE_CATEGORY_RANK: Record<string, number> = { headshot: 0, body_pose: 1, turnaround: 2 };
 
@@ -29,7 +29,7 @@ export interface KeyframeContext {
   sceneReferences?: SetReference[];
 }
 
-export interface SetReference { path: string; sha256: string; recordRef: string; role: "accepted_scene_view" | "reviewed_set_reference" }
+export interface SetReference { path: string; sha256: string; recordRef: string; role: "accepted_scene_view" | "reviewed_set_reference" | "pinned_edition_donor_view" }
 export interface FilmInput { snapshot: FilmSnapshot; sha256: string }
 export const BUILTIN_REFERENCE_SLOTS = 5;
 
@@ -95,7 +95,7 @@ export function referenceGroups(references: KeyframeContext["references"], sets:
 /** Existing accepted scene views are continuity evidence, not building canon.
  * Explicit library set refs need the existing target-shot approval as well. */
 export function keyframeSetReferences(db: DatabaseSync, dataDir: string, shotId: string): SetReference[] {
-  const target = db.prepare("SELECT scene_id,sequence,action FROM shots WHERE id=?").get(shotId);
+  const target = db.prepare("SELECT s.scene_id,s.sequence,s.action,sc.project_id FROM shots s JOIN scenes sc ON sc.id=s.scene_id WHERE s.id=?").get(shotId);
   // materializeGapIdea appends supplementary shots to the scene roster. Their
   // saved editorial anchor supplies the story position; the appended sequence
   // can follow an entirely different location (for example shore vs bedroom).
@@ -131,6 +131,29 @@ export function keyframeSetReferences(db: DatabaseSync, dataDir: string, shotId:
     const hash = sha256(readFileSync(assetPath(dataDir,path)));
     if (provenance.generation?.contentHash !== hash) throw new Error("Set reference hash mismatch.");
     if (!paths.has(path)) { paths.add(path); refs.push({path,sha256:hash,recordRef:`media_library_items:${row.id}`,role:"reviewed_set_reference"}); }
+  }
+  // New coverage in an approved language edition must see its own frozen
+  // editorial anchor. Target-scene shots may not have accepted images yet.
+  // This frame is picture continuity evidence only, never target approval.
+  const origin = target ? readLanguageEditionOrigin(db,String(target.project_id)) : null;
+  if (origin) {
+    const plan=readLanguageEditionPlan(db,String(target.project_id));
+    const saved=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_shots' AND undone=0 ORDER BY sequence DESC LIMIT 1")
+      .get(String(target.project_id)) as {payload:string}|undefined;
+    if (!plan?.revision || !saved) throw new Error("Edition keyframe needs its reviewed target shot map.");
+    const mapped=JSON.parse(saved.payload) as {planHash:string;shots:Array<{targetShotId:string|null;donorShotId:string;treatment:string}>};
+    if(mapped.planHash!==plan.hash || mapped.shots.length!==plan.revision.correspondence.length)
+      throw new Error("Edition keyframe shot map changed after producer review.");
+    const index=mapped.shots.findIndex(item=>item.targetShotId===shotId);
+    const row=mapped.shots[index],reviewed=plan.revision.correspondence[index];
+    if(!row || !reviewed || row.donorShotId!==reviewed.donorShotId || row.treatment!==reviewed.treatment)
+      throw new Error("Edition keyframe has no matching reviewed donor anchor.");
+    const pinned=origin.preflight.pictureEvidence.find(item=>item.shotId===row.donorShotId);
+    if(!pinned)throw new Error("Edition donor anchor has no frozen scene frame.");
+    const hash=sha256(readFileSync(assetPath(dataDir,pinned.keyframePath)));
+    if(hash!==pinned.keyframeSha256)throw new Error("Edition donor anchor frame changed.");
+    if(!paths.has(pinned.keyframePath))refs.push({path:pinned.keyframePath,sha256:hash,
+      recordRef:`language_edition_donor_shot:${row.donorShotId}`,role:"pinned_edition_donor_view"});
   }
   return refs;
 }

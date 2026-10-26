@@ -1,6 +1,7 @@
 import { GeminiDraftVideoProvider, GeminiVideoProvider } from "./gemini/index.js";
 import { KlingVideoProvider } from "./kling/index.js";
 import { LtxVideoProvider } from "./ltx/index.js";
+import { LtxDraftVideoProvider } from "./ltx/draft.js";
 import type { DraftVideoProvider, VideoProvider } from "./types.js";
 
 export type VideoBackend = "ltx" | "veo" | "kling";
@@ -17,5 +18,7 @@ export function videoBackend(value: unknown = process.env.HEARTWORD_VIDEO_PROVID
   return value;
 }
 export function createVideoProviders(backend?: unknown): VideoProviders {
-  return { primaryBackend: videoBackend(backend), ltx: new LtxVideoProvider(), veo: new GeminiVideoProvider(), kling: new KlingVideoProvider(), draft: new GeminiDraftVideoProvider() };
+  const selected=videoBackend(backend);
+  return { primaryBackend:selected, ltx:new LtxVideoProvider(), veo:new GeminiVideoProvider(), kling:new KlingVideoProvider(),
+    draft:selected==="ltx" ? new LtxDraftVideoProvider() : new GeminiDraftVideoProvider() };
 }

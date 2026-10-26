@@ -6,11 +6,14 @@ import type { DraftVideoProvider } from "../../providers/types.js";
 import { reviewGeneratedVideo, videoReviewPassed } from "../qc/video-review.js";
 import { shotRiskFor } from "./shot-risk-lookup.js";
 import { productionAuthorization, bindAttemptRevision, directionsFromRun, requireCurrentPlan, validateAttemptRevision } from "../creative-direction/crew-store.js";
+import { LtxDraftVideoProvider } from "../../providers/ltx/draft.js";
+import { localMotionDirection } from "./final-video.js";
 
 /**
- * The draft room: cheap 360p Omni passes a producer can compare before
- * committing to a full render -- docs/design/media-generation.md's "Draft
- * Room and Cost-Tiered Generation".
+ * The draft room: producer-comparable motion previews before committing to a
+ * final render -- docs/design/media-generation.md's "Draft Room and Cost-Tiered
+ * Generation". The configured LTX backend uses a local 720p, five-second
+ * preview; cloud backends retain their existing Omni path.
  *
  * Deliberately separate from generateNonSpeakingVideoCandidate, which
  * still holds exactly one final-render candidate at a time. A draft and a
@@ -24,11 +27,9 @@ import { productionAuthorization, bindAttemptRevision, directionsFromRun, requir
  */
 
 /**
- * How many drafts may be held at once for one shot. At roughly $0.26 for
- * an 8s Omni draft, three is about $0.78 -- still less than the single
- * premium render ($1.60) the draft room exists to avoid wasting, which is
- * the only reason drafting first is worth doing at all. Raising this past
- * the cost of the render it protects would defeat the purpose.
+ * How many drafts may be held at once for one shot. Three cloud Omni drafts
+ * cost less than one premium final render; the same cap bounds local LTX
+ * retries and keeps an editorial choice visible.
  */
 export const MAX_HELD_DRAFTS = 3;
 
@@ -100,7 +101,8 @@ NON-SPEAKING VIDEO RULE: This is a non-speaking shot. Do not generate dialogue, 
 NATURAL CROWD MOTION RULE: People in a crowd move on independent, staggered timings. At most a few people may reach, shift, or react at once while others hold, breathe, look, edge forward, or respond subtly at different moments. Never generate a synchronized wave of arms, a repeated group gesture, mirrored movement, or a mass simultaneous reach-and-retract.`;
   const authorization=productionAuthorization(db,dataDir,projectId);
   authorization.assertCurrent();
-  const acceptedPrompt = draftPrompt + directionsFromRun(requireCurrentPlan(db,dataDir,projectId),shot.id);
+  const direction=directionsFromRun(requireCurrentPlan(db,dataDir,projectId),shot.id);
+  const acceptedPrompt = draftPrompt + "\n\n" + (draftProvider instanceof LtxDraftVideoProvider ? localMotionDirection(direction) : direction);
   const result = await draftProvider.generateDraft(
     // Do not attach named canonical reference sheets: the accepted frame is
     // the identity reference for video generation and avoids Gemini's block.

@@ -243,6 +243,15 @@ reuse is a separate producer decision, not an inference from an empty cast.
 
 ## Draft Room and Cost-Tiered Generation
 
+For the selected local LTX backend, the same risky-shot draft gate now uses a
+silent 720p, five-second Fast preview from the accepted keyframe. It remains a
+`generate_draft` attempt requiring a reviewed choice before an ordinary final
+video request; it is never promoted to deliverable footage by changing its
+label. LTX submissions use the shot's concise direction, while the complete
+crew treatment and FDL stay pinned in the production record. Other backends
+retain the existing Omni draft path and accounting. Local LTX has no per-call
+API generation charge, though review calls remain metered.
+
 October 22 execution: the existing draft stage may receive a local LTX preview
 through its provider interface when the configured cloud draft request is held.
 It records the provider's actual declared resolution, retaining 360p for the

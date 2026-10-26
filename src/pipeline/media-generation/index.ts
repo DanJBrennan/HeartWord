@@ -3,7 +3,6 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
 import { GeminiImageProvider } from "../../providers/gemini/index.js";
-import { GeminiDraftVideoProvider } from "../../providers/gemini/index.js";
 import { createVideoProviders, type VideoBackend } from "../../providers/video-selection.js";
 import type { CharacterRef, LockedVisualFacts } from "../../providers/types.js";
 import type { ProjectRow } from "../ingestion/index.js";
@@ -693,17 +692,15 @@ const runMediaGenerationImpl = async (projectId: string, onlyShotIds?: string[],
     const outcomes=[] as string[];
     for (const shot of shots) {
       if (onlyShotIds && !onlyShotIds.includes(shot.id)) continue;
-      // A risky shot spends ~$0.26 on a 360p draft to be judged before it
-      // spends up to $1.60 committing a render -- the draft-then-commit
-      // rule in docs/design/media-generation.md. Only once a draft has
-      // been chosen (or the shot was never risky) does the full render
-      // run.
+      // A risky shot receives a reviewable draft before the final render.
+      // LTX uses a local 720p preview; cloud backends keep the Omni draft.
+      // The draft is not deliverable footage, whichever backend made it.
       if (shotRiskFor(db,shot.id).draftFirst) {
         const heldDraft=db.prepare("SELECT id FROM generation_attempts WHERE shot_id=? AND operation='generate_draft' AND status='hold_for_review' ORDER BY created_at LIMIT 1").get(shot.id) as {id:string}|undefined;
         if (heldDraft) {
           chooseShotDraft(db,projectId,heldDraft.id);
         } else {
-          const draft=await generateShotDraft(db,projectId,shot.id,new GeminiDraftVideoProvider());
+          const draft=await generateShotDraft(db,projectId,shot.id,videoProviders.draft);
           if (draft.status==="draft") chooseShotDraft(db,projectId,draft.attemptId);
           else if (draft.status!=="chosen"&&draft.status!=="settled") { outcomes.push(draft.status); continue; }
         }

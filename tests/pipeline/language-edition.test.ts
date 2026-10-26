@@ -14,7 +14,7 @@ import { acceptEditionTitleCandidate, buildChapterTitleCard, buildEditionTitleCa
 import { approveEditionVoiceAudition, assertEditionVoiceAuditionApproved, validateEditionAuditionScope } from "../../src/pipeline/language-edition-audition.js";
 import { readAcceptedEditorialOpening } from "../../src/pipeline/assembly/editorial-beats.js";
 import { VOICE_CHANGER_DEFAULTS } from "../../src/providers/elevenlabs.js";
-import { getKeyframeContext } from "../../src/pipeline/media-generation/external-keyframes.js";
+import { getKeyframeContext, keyframeSetReferences } from "../../src/pipeline/media-generation/external-keyframes.js";
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 let dataDir:string, db:InstanceType<typeof DatabaseSync>;
 const title={bookChapter:"Markus 4",languageName:"Meyah",authority:"Dan approved 2026-10-22",durationMs:4000,profile:"mark4-serif-over-establishing" as const,
@@ -384,6 +384,11 @@ describe("language edition identity",()=>{
     const targetShot=db.prepare("SELECT sh.id,sh.action,sh.verse_ref FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id WHERE sc.project_id=? AND sh.sequence=3").get(target) as {id:string;action:string;verse_ref:string};
     expect(targetShot.action).toBe("The listeners turn together toward Jesus from a new angle.");
     expect(targetShot.verse_ref).toBe("Mark 4:1");
+    expect(keyframeSetReferences(db,dataDir,targetShot.id)).toMatchObject([{path:"films/cutaway-frame.png",
+      recordRef:"language_edition_donor_shot:cutaway",role:"pinned_edition_donor_view"}]);
+    asset("films/cutaway-frame.png","changed donor anchor");
+    expect(()=>keyframeSetReferences(db,dataDir,targetShot.id)).toThrow(/donor anchor frame changed/);
+    asset("films/cutaway-frame.png","old frame");
     db.prepare("UPDATE shots SET verse_ref='Mark 4:2' WHERE id=?").run(targetShot.id);
     expect(()=>assertEditionInputsCurrent(db,dataDir,target)).toThrow(/Added target picture action or verse/);
     db.prepare("UPDATE shots SET verse_ref=? WHERE id=?").run(targetShot.verse_ref,targetShot.id);

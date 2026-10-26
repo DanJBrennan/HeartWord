@@ -45,24 +45,55 @@ accounted for by accepted donor/Peter images, and repeated an incorrect claim
 that Jesus speaks at Meyah 4:39. Dan's earlier source review explicitly says
 4:39 is narrated action. A saved, named correction now pins that decision,
 the narrator-only source row, the silent target shot, and the three existing
-selected keyframes. The corrected whole-chapter crew is running against this
-new brief. The first run's wrong findings and USD 9.077689 metered model spend
-remain visible as history; no media was generated from them. A malformed
-fractional Picture Editor craft score was also retained. The review resumed
-that same saved run after a response-schema repair, without repeating its ten
-completed specialist calls. A regression covers the saved continuation.
+selected keyframes. The corrected whole-chapter crew finished **approved** with
+an accepted production record, all 15 first-pass roles, zero new findings,
+zero coverage requests and zero open blocking objections. The first run's
+wrong findings and USD 9.077689 metered model spend remain visible as history;
+no media was generated from them. A malformed fractional Picture Editor craft
+score was also retained. The review resumed that same saved run after a
+response-schema repair, without repeating its ten completed specialist calls.
+The corrected run needed four rejected Creative Director replies before a fifth
+valid one; both runs spent USD 21.827693 together. The independent read-only
+gate audit at `output/mark4-donor-20261024/review/meyah-mark4-approved-crew-gate-audit.json`
+confirms the plan hash, 145 shots, 54 source rows, narrator-only 4:39, accepted
+FDL and remaining film ceiling of USD 168.172307 before later QC.
 The [read-only target media worklist](http://127.0.0.1:4002/media/review/meyah-mark4-media-worklist-20261025/index.html)
 reconciles every new target shot to that map: 35 silent coverage shots totaling
 187.517 seconds (five require a ten-second local LTX request), 29 target
 speaking shots for Kling Avatar, 81 locally retained picture placements and
-the already approved Peter keyframe.
-Continue the normal editable assembly and QC path after the planning result
-is checked against the approved map. Before the crew-runtime repair, the full
-implementation suite passed 875 tests across 127 files. After the repair, the
-full suite passed 875 of 876 tests; one unrelated five-second test timed out
-under concurrent crew load and passed on its own with a 20-second timeout.
-Rerun the full suite after crew completion. These checks establish code health,
-not a completed film.
+the already approved Peter keyframe. The Mac's local LTX Desktop Fast model
+passed a read-only health check over SSH with a short-lived session token;
+no token was saved. The corrected Director's
+valid treatment proposed [eight extra wordless pauses](http://127.0.0.1:4002/media/review/meyah-mark4-crew-pause-review-20261025/index.html)
+totaling 8.067 seconds. They are not in the approved exact picture timing;
+Dan's choice on preserving that timing versus reviewing a revised pause map
+is pending. Neither option has been applied.
+The first new coverage beat (Mark 4:1–3, 4.094 seconds) now has an accepted
+target-owned Codex still. The existing keyframe handoff was extended narrowly
+to include its hash-pinned donor frame as scene-continuity evidence. The first
+candidate remained held after QC found a young-woman wardrobe mismatch; the
+second corrected her all-cream clothing, passed scene fidelity and the Critic,
+and was accepted for local motion. Both candidates, prompts and QC reports are
+retained in the isolated project. No LTX final coverage or Kling Avatar take
+has been generated yet. The existing risky-shot draft room now selects a local
+silent 720p, five-second LTX preview when LTX is the chosen backend. Shot 8's
+first two previews both ended in a socket hang-up before any inference evidence;
+Desktop remained healthy and idle and no MP4 appeared. Both failed request
+metadata files and read-only reconciliation reports are retained. Their exact
+remote input/leases were cleared after idle verification, and an unresolved
+shot review note records the hold. No further LTX request will be submitted
+until Desktop is restarted and one bounded preview succeeds.
+
+An independent added-beat audit then found that all 34 newly materialized Meyah
+picture beats copied donor-specific camera/continuity fields despite their
+different approved target actions. Fourteen carry stale speaking notes, even
+on silent field cutaways. The read-only report is
+`output/mark4-donor-20261024/review/meyah-mark4-added-beat-inheritance-audit.json`.
+No target shot fields or approved crew record have been changed yet; Dan's
+architecture choice on correcting them and rerunning the crew is pending.
+The full suite passed 879 tests across 128 files after the local draft and
+donor-reference changes; TypeScript checking passed. These checks establish
+code health, not a completed film.
 
 Goal Guardian: this remains a source-faithful editable language edition using
 the seven existing stages and Dan's shot, cast, title and speech decisions.
