@@ -103,6 +103,10 @@ export class LtxVideoProvider implements VideoProvider {
     const inputHash=hashImage(input.absolute),endHash=endInput ? hashImage(endInput.absolute) : undefined;
     const generationId = randomUUID();
     const fileId = `${request.shotId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 80)}-ltx-${generationId}`;
+    // Desktop only needs a unique inbox filename. Keep the descriptive shot
+    // label in the local take and metadata; short Mac paths match the proven
+    // diagnostic request and avoid carrying draft/shot UUIDs into its loader.
+    const remoteFileId = `heartword-${generationId}`;
     const output = assetPath(dataDir, opts.outputPath ?? `generated/video/${fileId}.mp4`);
     if (existsSync(output.absolute)) throw new Error("LTX output already exists. Choose a new output path to preserve the retained take.");
     const ambientOutput = assetPath(dataDir, `${output.absolute}.ambience.wav`);
@@ -140,12 +144,12 @@ export class LtxVideoProvider implements VideoProvider {
       await this.transport.remote(`printf '%s' ${shellQuote(generationId)} > ${shellQuote(`${lease}/owner`)}`);
       const progress = await ltxJson(baseUrl, "/api/generation/progress", token, 5000);
       if (progress.status === "running") throw new Error("LTX Desktop is already generating. Wait for its current job to finish.");
-      remoteInput = `${inbox}/${fileId}${suffix}`;
+      remoteInput = `${inbox}/${remoteFileId}${suffix}`;
       metadata.remoteInputPath = remoteInput;
       emit({ phase: "uploading_keyframe", percentage: null, currentStep: null, totalSteps: null });
       await this.transport.upload(input.absolute, remoteInput);
       if (endInput) {
-        remoteEndInput = `${inbox}/${fileId}-end${extname(endInput.absolute).toLowerCase()}`;
+        remoteEndInput = `${inbox}/${remoteFileId}-end${extname(endInput.absolute).toLowerCase()}`;
         metadata.sourceEndKeyframe = endInput.relative;
         metadata.sourceEndKeyframeSha256 = endHash;
         metadata.remoteEndInputPath = remoteEndInput;

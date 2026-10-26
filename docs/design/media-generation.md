@@ -257,6 +257,18 @@ crew treatment and FDL stay pinned in the production record. Other backends
 retain the existing Omni draft path and accounting. Local LTX has no per-call
 API generation charge, though review calls remain metered.
 
+For local LTX, the prompt names the approved frame, the shot's action and
+Director motion direction, and a short visual identity, no-speech and natural
+crowd-motion guard. The longer cloud-vendor rule paragraphs remain on cloud
+requests. This keeps local text encoding focused; the full approved crew
+record remains the authority for visual QC. A transport failure after LTX
+submission retains its metadata and generation lease until a read-only idle
+reconciliation; it is never silently retried or accepted as footage.
+The Mac inbox uses a short unique generation filename; the descriptive shot
+and attempt IDs remain in the local take and metadata. This matches the
+successful diagnostic's upload shape and keeps long draft IDs out of Desktop's
+image-loading path without weakening provenance.
+
 October 22 execution: the existing draft stage may receive a local LTX preview
 through its provider interface when the configured cloud draft request is held.
 It records the provider's actual declared resolution, retaining 360p for the

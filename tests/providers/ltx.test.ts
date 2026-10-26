@@ -119,7 +119,7 @@ describe("LTX Desktop adapter", () => {
     const result = await provider().generateFinal(request,{...options,outputPath:output,onProgress:progress});
     expect(result).toMatchObject({media:{path:"generated/scene/shot.mp4"},cost:{usd:0},provenance:{provider:"ltx_local",model:"ltx-2.5-fast"}});
     expect(readFileSync(output)).toEqual(videoFixture);
-    expect(transport.upload).toHaveBeenCalledWith(join(root,"assets","key frame.png"),expect.stringMatching(/\/LTX-Inbox\/mark4-scene1-shot2-ltx-[a-f0-9-]+\.png$/));
+    expect(transport.upload).toHaveBeenCalledWith(join(root,"assets","key frame.png"),expect.stringMatching(/\/LTX-Inbox\/heartword-[a-f0-9-]+\.png$/));
     const body = requests.find(r=>r.path === "/api/generate")!.body;
     expect(body).toMatchObject({prompt:`${request.prompt}\n\n${LTX_AMBIENT_DIRECTION}`,resolution:"720p",model:"fast",duration:5,fps:24,audio:true,aspectRatio:"16:9",seed:42,cameraMotion:"none",keyframes:[],lastImagePath:null,audioPath:null,loras:[]});
     expect(body.negativePrompt).toContain("speech, dialogue, narration");

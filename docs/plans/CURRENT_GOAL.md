@@ -39,8 +39,9 @@ Stage 3 now permits reviewed picture intercuts within a narrative scene while
 retaining scene order. The previously accepted cast audio carries forward only
 because the new plan is an exact permutation of the same correspondence
 items; a changed speech boundary, source, voice or item still stales approval.
-A fresh whole-chapter crew run `635718ea-884a-4e8c-afd2-f76d23c2ebd2` is
-underway on the corrected 145-shot brief; no production batch has begun.
+A fresh whole-chapter crew run `635718ea-884a-4e8c-afd2-f76d23c2ebd2`
+finished **approved** on the corrected 145-shot brief; no production batch
+has begun.
 Its first Gemini creative-director and choreographer calls timed out without
 usage metadata. Both USD 2 reservations remain open, with named budget
 reconciliations recording that uncertainty before the saved run continued.
@@ -50,10 +51,13 @@ input-token-limit rejection without usage metadata. Its USD 2 reservation
 remains open under a named reconciliation. The full saved FDL and role outputs
 remain intact; the model prompt now uses a compact decision projection when
 the saved record is large. A read-only rehearsal reduced this exact prompt
-from 2,255,183 to 807,901 characters. The saved run is continuing from the
-fidelity challenger without repeating successful roles. Chapter-sized
-planning calls have a bounded six-minute timeout; other Gemini calls retain
-the ordinary three-minute limit.
+from 2,255,183 to 807,901 characters. The saved run resumed from the fidelity
+challenger without repeating successful roles and finished with 145 Director
+directions, accepted FDL, no open objections and no added coverage requests.
+Chapter-sized planning calls have a bounded six-minute timeout; other Gemini
+calls retain the ordinary three-minute limit. The Director's prose quotes
+the brief's earlier USD 33.44 spend snapshot; the actual isolated cost gate
+includes later charges and open reservations.
 The [current read-only media worklist](http://127.0.0.1:4002/media/review/meyah-mark4-media-worklist-20261026/index.html)
 reconciles the repaired map to 35 new silent coverage shots, 29 visible
 speaking shots and 81 retained picture placements. Each retained clip is
@@ -68,8 +72,15 @@ One bounded, silent, five-second 720p diagnostic request succeeded on October
 The contact sheet is
 `output/mark4-donor-20261024/review/ltx-preview-contact-20261026.jpg`.
 This confirms one working local generation path, not approval of a target take
-or the full batch. The source target shot and batch remain held until the
-current whole-chapter crew and normal picture review finish.
+or the full batch. Following crew approval, the fourth bounded target draft
+still ended in a socket hang-up before Desktop registered a new job. The
+target's four uncertain attempts and their metadata remain; exact Mac inputs
+and leases were cleared only after idle reconciliation. A shorter
+572-character shot prompt did not cure the fault. An exact repeat of the
+successful diagnostic entered Fast inference, confirming the backend can
+render. The target's longer Mac inbox name is now shortened for a single
+later test; local take names and provenance remain intact. No target LTX clip
+has been accepted and no batch has started.
 
 Dan requested a revised map of eight optional wordless pauses. A read-only
 proposal under
@@ -80,11 +91,11 @@ the empty-boat opening, conflicting with Dan's earlier instruction to preserve
 that footage exactly, and every pause needs verified extra picture. The
 approved source timing remains the current production basis.
 
-Next: review the current crew against corrected target shots, then review
-actual local LTX coverage,
+Next: finish the exact-repeat LTX diagnostic, reconcile one target upload-path
+test, then review actual local LTX coverage,
 Kling Avatar speaking takes, assembled film, soundtrack/timing QC and a
 fresh-root editable package. No film acceptance is claimed.
-The full repository suite passed 883 tests in 128 files, and TypeScript
+The full repository suite passed 885 tests in 128 files, and TypeScript
 checking passed after the approved-order repair.
 
 ## Earlier isolated Mark 4 → Meyah checkpoint (historical status)

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import express from "express";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { generateNonSpeakingVideoCandidate, localMotionDirection } from "../../src/pipeline/media-generation/final-video.js";
+import { generateNonSpeakingVideoCandidate, localLtxMotionPrompt, localMotionDirection } from "../../src/pipeline/media-generation/final-video.js";
 import { generateSelectedFinalVideo } from "../../src/pipeline/media-generation/select-final-video.js";
 import { createVideoProviders, videoBackend, type VideoProviders } from "../../src/providers/video-selection.js";
 import { LtxVideoProvider } from "../../src/providers/ltx/index.js";
@@ -39,6 +39,15 @@ it("sends focused shot direction without the full chapter treatment or FDL and n
 });
 it("does not turn a broader wardrobe list into additional visible cast",()=>{
  expect(localMotionDirection("Wide static view. The boat reaches gravel. Jesus wears cream; James wears terracotta. Cool light from the left.")).toBe("Wide static view. The boat reaches gravel. Cool light from the left.");
+});
+it("sends LTX a focused approved action and direction with the visual and speech guards",()=>{
+ const prompt=localLtxMotionPrompt("The shore crowd listens while the teacher begins the sower story; no readable mouth.",
+   "production director: Reaction view of the shore crowd listening quietly. Mid-morning clear sky illumination.");
+ expect(prompt).toContain("shore crowd listens");
+ expect(prompt).toContain("Reaction view");
+ expect(prompt).toContain("Papuan clothing");
+ expect(prompt).toContain("no synchronized crowd gesture, visible speech, new person or invented action");
+ expect(prompt.length).toBeLessThan(500);
 });
 it("defaults to LTX while keeping both cloud providers selectable",()=>{
   vi.stubEnv("HEARTWORD_VIDEO_PROVIDER",undefined);

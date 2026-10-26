@@ -7,7 +7,7 @@ import { reviewGeneratedVideo, videoReviewPassed } from "../qc/video-review.js";
 import { shotRiskFor } from "./shot-risk-lookup.js";
 import { productionAuthorization, bindAttemptRevision, directionsFromRun, requireCurrentPlan, validateAttemptRevision } from "../creative-direction/crew-store.js";
 import { LtxDraftVideoProvider } from "../../providers/ltx/draft.js";
-import { localMotionDirection } from "./final-video.js";
+import { localLtxMotionPrompt } from "./final-video.js";
 
 /**
  * The draft room: producer-comparable motion previews before committing to a
@@ -102,7 +102,9 @@ NATURAL CROWD MOTION RULE: People in a crowd move on independent, staggered timi
   const authorization=productionAuthorization(db,dataDir,projectId);
   authorization.assertCurrent();
   const direction=directionsFromRun(requireCurrentPlan(db,dataDir,projectId),shot.id);
-  const acceptedPrompt = draftPrompt + "\n\n" + (draftProvider instanceof LtxDraftVideoProvider ? localMotionDirection(direction) : direction);
+  const acceptedPrompt = draftProvider instanceof LtxDraftVideoProvider
+    ? redactCharacterNames(localLtxMotionPrompt(safeAction,direction),characters.map(character => character.name))
+    : draftPrompt + "\n\n" + direction;
   const result = await draftProvider.generateDraft(
     // Do not attach named canonical reference sheets: the accepted frame is
     // the identity reference for video generation and avoids Gemini's block.

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { expect, it, vi } from "vitest";
 import { MAX_HELD_DRAFTS, chooseShotDraft, generateShotDraft } from "./draft-room.js";
 import type { DraftVideoProvider } from "../../providers/types.js";
+import { LtxDraftVideoProvider } from "../../providers/ltx/draft.js";
 vi.mock("../creative-direction/crew-store.js",async original=>({...await original<object>(),...(await import("../../../tests/helpers/reviewed-plan-gate.js")).reviewedPlanGateFixture}));
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
@@ -60,6 +61,22 @@ it("holds several drafts for the same shot instead of refusing the second", asyn
   expect(prompts.every(prompt => prompt.includes("NON-SPEAKING VIDEO RULE"))).toBe(true);
   expect(prompts.every(prompt => prompt.includes("Papuan/Hatam casting"))).toBe(true);
   expect(prompts.every(prompt => prompt.includes("NATURAL CROWD MOTION RULE"))).toBe(true);
+});
+
+it("uses the concise local motion request for a real LTX draft adapter", async () => {
+  const db=setup();let sent="";
+  const provider=new LtxDraftVideoProvider({generateFinal:vi.fn(async request=>{
+    sent=request.prompt;
+    return {status:"accepted" as const,media:{path:"generated/drafts/local.mp4"},cost:{usd:0},
+      provenance:{provider:"ltx_local",model:"ltx-2.5-fast",prompt:request.prompt},metadata:{resolution:"720p"}};
+  })} as any);
+  const result=await generateShotDraft(db,"p","shot",provider);
+  expect(result.status).toBe("draft");
+  expect(sent).toContain("The crowd presses in");
+  expect(sent).toContain("Papuan clothing");
+  expect(sent).toContain("no synchronized crowd gesture, visible speech, new person or invented action");
+  expect(sent).not.toContain("NON-SPEAKING VIDEO RULE");
+  expect(sent.length).toBeLessThan(500);
 });
 
 it("stops at the cap rather than letting a retry loop spend without limit", async () => {

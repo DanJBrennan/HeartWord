@@ -1,6 +1,7 @@
 /** Production control for one reviewed Meyah Mark 4 silent coverage shot.
  * Keeps the donor/live database outside this process and preserves every take. */
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,7 +34,19 @@ if(command==="status"){
 }else if(command==="draft"){
   const hold=db.prepare("SELECT id FROM review_notes WHERE project_id=? AND subject_type='shot' AND subject_id=? AND resolved=0 AND note LIKE 'Meyah Mark 4 shot 8 local LTX transport hold%'")
     .get(projectId,shotId) as {id:string}|undefined;
-  if(hold&&attemptId!=="--after-desktop-restart")throw new Error("Two LTX requests closed before inference. Restart Desktop and pass --after-desktop-restart for one bounded recovery preview.");
+  if(hold&&attemptId!=="--after-desktop-restart"&&attemptId!=="--after-reconciled-short-prompt")throw new Error("LTX transport hold: use one bounded recovery preview only after Desktop restart or an exact idle reconciliation with a focused prompt.");
+  if(hold&&attemptId==="--after-reconciled-short-prompt"){
+    const receipt=JSON.parse(readFileSync(join(root,"review","meyah-mark4-shot008-third-ltx-reconciliation-20261026.json"),"utf8")) as
+      {shotId:string;generationId:string;metadataPath:string;metadataSha256:string;result:string;macProgress:{status:string}};
+    const metadataPath=resolve(root,receipt.metadataPath),metadataRel=relative(root,metadataPath);
+    if(metadataRel===".."||metadataRel.startsWith(`..${sep}`)||!metadataRel.startsWith(`assets${sep}generated${sep}video${sep}`))
+      throw new Error("LTX reconciliation metadata is outside isolated video assets.");
+    const metadata=readFileSync(metadataPath);
+    if(shotId!=="ae96ed8d-d4e7-457e-b309-3390d2a3b362"||receipt.shotId!==shotId||
+      receipt.generationId!=="f0b01933-897b-4829-8e75-1e1dd0092056"||receipt.result!=="no_target_video"||
+      receipt.macProgress.status!=="complete"||createHash("sha256").update(metadata).digest("hex")!==receipt.metadataSha256)
+      throw new Error("The reconciled target LTX attempt changed; inspect it before another draft.");
+  }
   const providers=createVideoProviders("ltx");
   const result=await generateShotDraft(db,projectId,shotId,providers.draft);
   if(result.status==="draft"&&hold)db.prepare("UPDATE review_notes SET resolved=1 WHERE id=? AND resolved=0").run(hold.id);

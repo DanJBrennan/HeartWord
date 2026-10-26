@@ -22,6 +22,13 @@ export function localMotionDirection(direction:string):string {
     .replace(/[^.!?]*\bwears?\s[^.!?]*[.!?]?/gi,"").trim();
 }
 
+/** LTX reads the accepted image for identity and composition. The motion
+ * request carries this shot's action and Director direction, without the
+ * cloud-vendor rule paragraphs that repeated the same constraints at length. */
+export function localLtxMotionPrompt(action:string,direction:string):string {
+  return `Animate the approved start frame: ${action.trim()}\n${localMotionDirection(direction)}\nPreserve the exact visible people, Papuan clothing, setting and framing. Use subtle, staggered natural motion; no synchronized crowd gesture, visible speech, new person or invented action.`;
+}
+
 export interface NonSpeakingVideoPolicy {
   allowDraftFallback?: boolean;
   durationSeconds?: 8 | 10;
@@ -93,9 +100,9 @@ NON-SPEAKING VIDEO RULE: Do not generate dialogue, narration, singing, lip-sync 
 NATURAL CROWD MOTION RULE: Crowd movement is independently timed and irregular. At most a few people reach, shift, or react at once while others hold, breathe, look, edge forward, or respond subtly at different moments. Never generate a synchronized wave of arms, a repeated group gesture, mirrored movement, or a mass simultaneous reach-and-retract.`;
   const authorization=productionAuthorization(db,getDataDir(),projectId);
   const direction=directionsFromRun(requireCurrentPlan(db,getDataDir(),projectId),shotId);
-  const acceptedPrompt=redactCharacterNames(prompt+(local?localMotionDirection(direction):direction),characters.map(c=>c.name))+
-    "\nVISIBLE CAST SCOPE: Preserve the actual people visible in the approved start frame throughout this clip. Broader chapter or wardrobe directions mentioning other people are off-screen context, not permission to introduce another person. Do not add, duplicate or replace any face or figure.\n"+
-    (characters.length>0 && ["sparse","empty"].includes(shot.crowd_density??"") ? `This sparse shot has exactly ${characters.length} established named people. Keep that same count throughout; nobody else appears from inside the boat, behind a person, or at a frame edge.\n` : "");
+  const acceptedPrompt=redactCharacterNames(local?localLtxMotionPrompt(safeAction,direction):prompt+direction,characters.map(c=>c.name))+
+    (local ? "" : "\nVISIBLE CAST SCOPE: Preserve the actual people visible in the approved start frame throughout this clip. Broader chapter or wardrobe directions mentioning other people are off-screen context, not permission to introduce another person. Do not add, duplicate or replace any face or figure.\n")+
+    (characters.length>0 && ["sparse","empty"].includes(shot.crowd_density??"") ? `Keep exactly ${characters.length} established named people; nobody else enters the shot.\n` : "");
   const job = local ? beginVideoJob(db,projectId,shotId,"ltx") : undefined;
   let submitted = false;
   let result;
