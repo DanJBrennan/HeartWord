@@ -181,8 +181,8 @@ original acceptance remain intact. Future isolated LTX acceptance now probes
 that a take covers the approved placement and records the placement duration
 in `clips`, so normal shot assembly trims the longer raw file.
 
-The isolated keyframe worklist now has **16 accepted target keyframes** and
-three accepted local LTX finals. New accepted pictures include the short 4:9
+The isolated keyframe worklist now has **19 accepted target keyframes** and
+four accepted local LTX finals. New accepted pictures include the short 4:9
 shore reaction, exposed seed on the 4:15 hard footpath, fresh sprouts in
 shallow rocky soil at 4:16, and the matching early heat/wilting view for
 4:17, followed by two escalating thorn-patch views at 4:18–19. Their prompts,
@@ -195,8 +195,22 @@ candidate kept his approved likeness and the lamp but replaced those with
 the lake, boat and low natural hills. The local 720p path-seed video at 4:15
 completed and was accepted for its first 4807 ms after the recorded QC
 described continuity and no added event; its confidence 72 remains below
-automatic approval and visible in history. The next LTX job is the rocky
-sprout shot at 4:16.
+automatic approval and visible in history. The 4:16 rocky-sprout video was
+accepted for its first 7097 ms after frame inspection confirmed the requested
+growth and stable lake setting. Its generated native ambience was held for
+music/vocals and must remain excluded; shot assembly strips provider audio.
+The next LTX job, 4:17 shallow sprouts facing heat, is running as a single
+local Fast request.
+
+Three more silent lakeshore listener keyframes are accepted: James and the
+isolated clean-shaven John at 4:23; Philip and Thomas, then Andrew and Peter,
+at 4:24. The James/John view required a fresh identity-first third candidate
+after the earlier two showed facial drift. The third passed formal scene,
+canon-likeness and fidelity checks. Philip's independent likeness score was
+68/100, just below its 70 threshold, while the scene Critic and visual review
+found his actor and wardrobe consistent; that two-point exception and the
+accepted decision remain explicit in the review history. Andrew and Peter
+passed all three checks. No routine visual choice was sent back to Dan.
 
 Next: complete local LTX coverage and Kling Avatar speaking takes, then
 assemble and QC the film and its fresh-root editable package. No film

@@ -1,0 +1,2 @@
+The candidate shows exactly Andrew and Peter by the calm Galilean lake, with separate approved green-trimmed and rust-cloaked costumes, dry hair and closed mouths. They look toward the same off-camera teacher as the preceding reaction. Submit for formal scene and canon review before selection.
+Formal scene Critic found no concern; canonical likeness and scene fidelity both passed. Select this silent Andrew/Peter reaction. Peter remains dry in the teaching sequence; the later storm performance is a separate beat.

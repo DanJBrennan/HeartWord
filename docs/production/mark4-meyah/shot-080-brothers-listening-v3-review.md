@@ -1,0 +1,2 @@
+The identity-first frame places James and clean-shaven John in a near-frontal silent listener composition and preserves each approved robe. It is visually distinct from the earlier candidate, with clearer faces and no added cast or action. Submit to formal scene and canon review before selection.
+Formal scene Critic found no concern; canonical likeness and scene fidelity both passed. Select this third, identity-first candidate. The earlier two candidates remain in isolated history, with their weaker James likeness evidence retained.

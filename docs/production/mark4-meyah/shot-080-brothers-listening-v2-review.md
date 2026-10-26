@@ -1,0 +1,1 @@
+The second candidate directly uses the two approved standalone actor references to correct James and John while retaining the scene composition. John remains clean-shaven, with his teal trim; James retains his separate beard and reddish stripes. Submit for formal canon and scene critique before a selection.
