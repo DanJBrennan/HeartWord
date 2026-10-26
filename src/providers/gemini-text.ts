@@ -63,7 +63,8 @@ async function callGemini<T>(
   prompt: string,
   images: GeminiMediaInput[],
   schema: GeminiJsonSchema,
-  model: string
+  model: string,
+  timeoutMs = 180000
 ): Promise<GeminiMeteredResult<T>> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -89,7 +90,7 @@ async function callGemini<T>(
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const res = await fetch(url, {
     method: "POST",
-    signal: AbortSignal.timeout(180000),
+    signal: AbortSignal.timeout(timeoutMs),
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ role: "user", parts }],
@@ -160,9 +161,11 @@ export async function generateJsonWithImagesMetered<T>(
   prompt: string,
   images: GeminiMediaInput[],
   schema: GeminiJsonSchema,
-  model = GEMINI_TEXT_MODEL
+  model = GEMINI_TEXT_MODEL,
+  timeoutMs = 180000
 ): Promise<GeminiMeteredResult<T>> {
-  return callGemini<T>(prompt, images, schema, model);
+  if(!Number.isInteger(timeoutMs)||timeoutMs<1000||timeoutMs>360000)throw new Error("Gemini request timeout must be 1–360 seconds.");
+  return callGemini<T>(prompt, images, schema, model, timeoutMs);
 }
 
 /**

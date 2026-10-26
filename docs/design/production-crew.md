@@ -150,6 +150,12 @@ are conservative bounds/estimates rather than invoice reconciliation or a new
 spending authority. No silent paid retry follows a failed review. Synthetic
 injected calls in tests do not submit or reserve provider work.
 
+Full-chapter crew calls may use a bounded six-minute HTTP response window;
+the ordinary Gemini JSON adapter keeps its three-minute default. The larger
+window changes neither the number of calls nor the spend cap. A timeout after
+submission remains an unknown-cost event with its reservation open until
+named reconciliation before a deliberate continuation.
+
 Provider references: [Google music generation](https://ai.google.dev/gemini-api/docs/music-generation)
 and [ElevenLabs sound effects API](https://elevenlabs.io/docs/api-reference/text-to-sound-effects/convert).
 

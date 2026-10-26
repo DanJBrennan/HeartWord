@@ -33,9 +33,11 @@ rehearsal and was applied as an append-only revision. It restored the approved
 source-clock order while preserving the same 145 shot IDs, 29 speech bindings,
 cast audio, voice audition and reviewed keyframe. A fresh crew run is underway
 on the corrected brief; neither previous run is current media authorization.
-Its first Gemini call timed out with unknown usage; the separate USD 2
-reservation remains open and a named budget reconciliation captures that
-uncertainty. The saved run's retry returned metered review and continues.
+Its first creative-director and choreographer calls timed out with unknown
+usage; separate USD 2 reservations remain open and named budget
+reconciliations capture that uncertainty. The saved run's retries returned
+metered review and it continues. Chapter-sized planning calls now have a
+bounded six-minute timeout; ordinary calls retain their prior limit.
 
 A bounded five-second LTX Fast request succeeded after lazy model loading.
 The downloaded silent H.264 clip has 121 frames and a retained contact sheet.
@@ -44,7 +46,7 @@ picture remains a diagnostic pending the current crew and normal
 media review. No batch was started. The proposed eight pauses remain a
 read-only revision; the first would alter the opening footage Dan asked to
 keep exact, so it is not an approved timing change.
-The full repository suite passed 881 tests in 128 files and TypeScript
+The full repository suite passed 882 tests in 128 files and TypeScript
 checking passed. Those checks support the adapter and audit code; they do not
 authorize a film claim. The source-clock mismatch has been corrected and
 checked in the isolated database; individual picture flow still needs review.

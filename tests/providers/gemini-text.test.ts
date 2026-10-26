@@ -24,3 +24,16 @@ it("sends requested video sampling on the video part and retains captions and me
     promptTokenCount: 1000, candidatesTokenCount: 100, thoughtsTokenCount: 0, totalTokenCount: 1100
   }, costUsd: 0.001125 });
 });
+
+it("allows a bounded longer response window for whole-chapter crew calls", async () => {
+  vi.stubEnv("GEMINI_API_KEY", "test-only");
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ok:true,json:async()=>({
+    candidates:[{content:{parts:[{text:"{}"}]}}],usageMetadata:{totalTokenCount:1}
+  })}));
+  const timeout=vi.spyOn(AbortSignal,"timeout");
+  try{
+    await generateJsonWithImagesMetered("Whole chapter",[],{type:"object"},undefined,360000);
+    expect(timeout).toHaveBeenCalledWith(360000);
+    await expect(generateJsonWithImagesMetered("Invalid",[],{type:"object"},undefined,360001)).rejects.toThrow(/timeout/);
+  }finally{timeout.mockRestore();}
+});

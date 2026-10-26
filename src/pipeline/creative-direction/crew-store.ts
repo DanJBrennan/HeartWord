@@ -170,7 +170,10 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
         lastCallCostUsd = 0; // A local pre-submission hold incurs no provider charge.
         callReservation = {id:reserveCrewModelSpend(db,projectId,eventId),eventId};
         lastCallCostUsd = null; // Submission/result/usage may now be uncertain.
-        const metered = await generateJsonWithImagesMetered(prompt, media, schema);
+        // Full-chapter crew prompts include the retained production record and
+        // can exceed the ordinary JSON call's three-minute response window.
+        const metered = await generateJsonWithImagesMetered(prompt, media, schema, GEMINI_TEXT_MODEL,
+          phase === "planning" ? 360000 : 180000);
         lastCallCostUsd = metered.usage?.totalTokenCount > 0 ? metered.costUsd : null;
         return metered.result;
       },
