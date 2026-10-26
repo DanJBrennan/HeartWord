@@ -42,6 +42,11 @@ checks environment-only session authentication, discovers the Mac port over
 SSH, owns a loopback-only tunnel, transfers a unique input and retrieves the
 MP4 with credential-free metadata. Local API generation cost is zero; other
 stage costs and the existing risky-shot approved-draft gate are preserved.
+After a Desktop restart, `/health` may report `models_loaded=false` and no
+active model until the first generation loads the downloaded Fast pipeline.
+That state permits one bounded request only when `/health` confirms the Fast
+checkpoint is downloaded. A different active model or missing checkpoint
+still holds before submission.
 LTX requests environmental ambience (`audio: true`) with explicit no-speech
 direction. It preserves the raw MP4 and exposes native audio as a separate
 WAV `GenerationResult.ambientAudio` candidate. The existing candidate and

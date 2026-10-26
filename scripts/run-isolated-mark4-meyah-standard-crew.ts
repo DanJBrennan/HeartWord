@@ -34,7 +34,16 @@ const continuing=existing?.status==="incomplete" && Boolean(existing.result_json
     Boolean(correction?.note.includes("Dan confirmed that 4:39 is narrated action")));
 const correctedRerun=existing?.id==="0a52e4dd-b723-4e1a-94bf-41e0ecaae65f" &&
   existing.status==="held" && Boolean(correction?.note.includes("Dan confirmed that 4:39 is narrated action"));
-if(existing && !continuing && !correctedRerun){
+const metadataRerun=process.argv.includes("--after-added-beat-correction");
+if(metadataRerun){
+  if(existing?.id!=="f88ea439-307c-4370-9d6d-dec4697d6e30"||existing.status!=="approved")
+    throw new Error("The approved prior crew run changed; inspect before a metadata rerun");
+  const saved=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND idempotency_key='meyah-mark4-added-beat-metadata-correction-20261026' AND command_type='correct_edition_added_beat_metadata' AND undone=0")
+    .get(projectId) as {payload:string}|undefined;
+  if(!saved||JSON.parse(saved.payload).changedShots!==34)
+    throw new Error("The reviewed 34-shot correction has not been applied");
+}
+if(existing && !continuing && !correctedRerun && !metadataRerun){
   console.log(JSON.stringify({projectId,runId:existing.id,status:existing.status,
     summary:existing.result_json?JSON.parse(existing.result_json).summary:null,
     action:"Existing planning run retained; inspect before any repeat."},null,2));
@@ -42,10 +51,11 @@ if(existing && !continuing && !correctedRerun){
 }
 checkFilmSpend(db,projectId,2);
 const dbPath=join(root,"db","heartword.sqlite"),backup=join(root,"review",continuing?
-  `pre-standard-crew-continuation-${existing!.id}.sqlite`:correctedRerun?
+  `pre-standard-crew-continuation-${existing!.id}.sqlite`:metadataRerun?
+  "pre-added-beat-corrected-standard-crew-20261026.sqlite":correctedRerun?
   "pre-corrected-standard-crew-20261025.sqlite":"pre-standard-crew-20261025.sqlite");
 if(!existsSync(backup))execFileSync("python",["-c","import sqlite3,sys; a=sqlite3.connect('file:'+sys.argv[1]+'?mode=ro',uri=True); b=sqlite3.connect(sys.argv[2]); a.backup(b); b.close(); a.close()",dbPath,backup]);
-console.log(`${continuing?"Continuing the saved":correctedRerun?"Rerunning the corrected":"Running the existing"} planning crew against all ${brief.shots.length} reviewed Meyah shots; each Gemini call has a conservative USD 2 reservation.`);
+console.log(`${continuing?"Continuing the saved":metadataRerun?"Rerunning after the reviewed 34-shot metadata correction":correctedRerun?"Rerunning the corrected":"Running the existing"} planning crew against all ${brief.shots.length} reviewed Meyah shots; each Gemini call has a conservative USD 2 reservation.`);
 const result=await runProductionCrew(projectId,"planning",{db,dataDir:root,maxCalls:30,
   ...(continuing?{resumeRunId:existing!.id}:{})});
 const ledger=Number((db.prepare("SELECT COALESCE(SUM(amount_usd),0) AS n FROM cost_ledger_entries WHERE project_id=?").get(projectId) as {n:number}).n);
@@ -54,10 +64,12 @@ const report={kind:"isolated_meyah_mark4_standard_whole_chapter_crew",projectId,
   productionRecordStatus:result.productionRecord?.status??null,
   continuedSavedRun:Boolean(continuing),
   correctedPriorHeldRun:Boolean(correctedRerun),
+  correctedAddedBeatMetadata:Boolean(metadataRerun),
   openBlockingObjections:result.productionRecord?.objections.filter(item=>item.status==="open"&&item.severity==="blocking").length??null,
   recordedModelSpendUsd:ledger,callUpperBoundUsd:2,
   response:"Retained for producer/Goal Guardian review before new keyframes or LTX video",
   liveDatabaseOpened:false};
-writeFileSync(join(root,"review",continuing?`meyah-mark4-standard-crew-continuation-${existing!.id}.json`:correctedRerun?
+writeFileSync(join(root,"review",continuing?`meyah-mark4-standard-crew-continuation-${existing!.id}.json`:metadataRerun?
+  "meyah-mark4-added-beat-corrected-crew-result.json":correctedRerun?
   "meyah-mark4-corrected-crew-result.json":"meyah-mark4-standard-crew-result.json"),JSON.stringify(report,null,2)+"\n");
 console.log(JSON.stringify(report,null,2));

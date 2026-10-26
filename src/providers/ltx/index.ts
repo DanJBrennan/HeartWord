@@ -53,7 +53,13 @@ export class LtxVideoProvider implements VideoProvider {
       const baseUrl = await this.transport.connect();
       try {
         const health = await ltxJson(baseUrl, "/health", token, 10_000);
-        if (health.status !== "ok" || health.models_loaded !== true || health.active_model !== "fast") throw new LtxHttpError(503, "LTX Desktop is not ready: /health must report status=ok, models_loaded=true, active_model=fast. Load the local Fast model on the Mac.");
+        const fast = Array.isArray(health.models_status)
+          ? health.models_status.find((model:unknown)=>model && typeof model==="object" && (model as {id?:unknown}).id==="fast") as {downloaded?:unknown}|undefined
+          : undefined;
+        const loadedFast = health.models_loaded === true && health.active_model === "fast";
+        const downloadedLazyFast = health.models_loaded === false && health.active_model == null && fast?.downloaded === true;
+        if (health.status !== "ok" || !(loadedFast || downloadedLazyFast))
+          throw new LtxHttpError(503, "LTX Desktop is not ready: Fast must be loaded or downloaded for lazy loading, with no different active model.");
         return { baseUrl, health };
       } catch (error) {
         if (error instanceof LtxHttpError || attempt === 1) throw error;

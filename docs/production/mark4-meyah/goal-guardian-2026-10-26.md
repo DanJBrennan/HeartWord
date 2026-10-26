@@ -19,18 +19,27 @@ LTX draft adapter remains inside stage 4 and preserves the ordinary draft
 versus final distinction. No new pipeline stage or separate production state
 was introduced. Full tests and TypeScript checking passed.
 
-Two issues prevent a film claim. First, all 34 new picture beats inherited
-donor-specific camera and continuity fields, and 14 carry stale speaking
-notes; these need a producer-approved correction and a current crew basis
-before further media generation. Future stage-3 materialization now clears
-those fields for a new beat, while the already materialized Meyah rows await
-Dan's decision. Second, two five-second local LTX previews closed before
-inference. Both requests were reconciled while Desktop was idle, and no motion
-output exists. Desktop was restarted; its fresh session requires a new token
-and a successful bounded preview before bulk LTX coverage. The approved exact
-timing remains unchanged while Dan considers the crew's separate pause proposal.
+Dan approved the 34-shot metadata correction and a whole-chapter crew rerun.
+The correction was confined to the isolated target with before/after history.
+The rerun was stopped and recovered as incomplete after four calls because a
+separate source-clock audit found the saved target order differs from Dan's
+approved picture map at 40 positions, including eight misplaced speaking
+windows. That defect directly affects Dan's film workflow and cannot be
+ignored because the saved plan passed earlier gates. The approved audio,
+keyframe, and previous crew records remain evidence; they are not a current
+crew basis for media generation. Dan's architecture choice for repairing or
+rebuilding this isolated target is pending.
 
-Completion still requires reviewed LTX footage, the new Meyah Kling Avatar
+A bounded five-second LTX Fast request succeeded after lazy model loading.
+The downloaded silent H.264 clip has 121 frames and a retained contact sheet.
+This establishes that the local adapter can complete one request, while its
+picture remains a diagnostic pending the corrected target order and normal
+media review. No batch was started. The proposed eight pauses remain a
+read-only revision; the first would alter the opening footage Dan asked to
+keep exact, so it is not an approved timing change.
+
+Completion still requires a corrected approved-order target, current crew,
+reviewed LTX footage, the new Meyah Kling Avatar
 takes, locally retained picture assembly, soundtrack and timing QC, a
 watchable chapter review, and a fresh-root editable package. Mark 5 Prep and
 the live database are outside this isolated work.

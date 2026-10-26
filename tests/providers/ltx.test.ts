@@ -184,6 +184,16 @@ describe("LTX Desktop adapter", () => {
     await expect(provider().generateFinal(request,options)).rejects.toThrow("not ready");
     expect(transport.upload).not.toHaveBeenCalled();
   });
+  it("allows Desktop to load a downloaded Fast model lazily on the first bounded generation",async()=>{
+    health={status:"ok",models_loaded:false,active_model:null,
+      models_status:[{id:"fast",downloaded:true,loaded:false}]};
+    const result=await provider().generateFinal(request,options);
+    expect(result.media?.path).toBeTruthy();
+    expect(requests.filter(item=>item.path==="/api/generate")).toHaveLength(1);
+    health={status:"ok",models_loaded:false,active_model:null,
+      models_status:[{id:"fast",downloaded:false,loaded:false}]};
+    await expect(provider().generateFinal(request,options)).rejects.toThrow("not ready");
+  });
   it("reports rejected session authentication without leaking the token",async()=>{
     healthCode = 401;
     await expect(provider().generateFinal(request,options)).rejects.toThrow("LTX_TOKEN was rejected");

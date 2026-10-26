@@ -1,6 +1,62 @@
 # Current Goal
 
-## Current: isolated Mark 4 → Meyah language edition
+## Current: correct the isolated Meyah picture order, then resume production
+
+The product goal remains an editable, source-faithful Mark 4 film in Meyah, using
+the approved Papuan cast, voice identities, `Markus 4` / `Meyah` title, and
+original opening and closing mood footage. Dan must be able to review the
+assembled chapter and correct individual scenes. The worktree and its
+`output/mark4-donor-20261024` data root are isolated from Mark 5 Prep and the
+live HeartWord database.
+
+Dan approved clearing stale donor camera, spatial and continuity fields on the
+34 newly added target picture beats and rerunning the standard whole-chapter
+crew. The isolated transaction corrected those 34 rows, retained a SQLite
+backup and an edit command with before/after values, and passed `quick_check`.
+The correction receipt is
+`output/mark4-donor-20261024/review/meyah-mark4-added-beat-metadata-correction-20261026.json`.
+The crew rerun began, then was stopped after four metered calls when an
+independent read-only comparison found a more serious saved order problem. Its
+partial run `cb3359cb-fdbd-44c9-9273-a66794bda1da` is retained as
+`incomplete`; it must not be resumed against the old shot order.
+
+Dan's approved source-clock picture proposal and the saved stage-3 target
+correspondence disagree at 40 positions; eight speaking shots occupy picture
+windows different from their saved speech windows. The read-only report and
+graphical review are under
+`output/mark4-donor-20261024/assets/review/meyah-mark4-approved-order-audit-20261026/`.
+No target order has been changed yet. Dan has been asked whether to repair this
+isolated edition in place or rebuild the target; that architecture choice is
+pending. Cast audio and the approved keyframe are retained as evidence, but
+their association with a corrected correspondence needs explicit validation.
+
+The Mac has the LTX 2.5 Fast checkpoint downloaded. Its Desktop health can
+report an unloaded model after restart because the pipeline loads on demand.
+One bounded, silent, five-second 720p diagnostic request succeeded on October
+26. The local MP4 has 121 H.264 frames at 24 fps, 1280 × 704 pixels, duration
+5.042 seconds, and SHA256
+`e27e59c691c1d45313902b80040d239f3200dff3b9b018b54e44d80074424864`.
+The contact sheet is
+`output/mark4-donor-20261024/review/ltx-preview-contact-20261026.jpg`.
+This confirms one working local generation path, not approval of a target take
+or the full batch. The source target shot and batch remain held until the
+picture-order issue is resolved.
+
+Dan requested a revised map of eight optional wordless pauses. A read-only
+proposal under
+`output/mark4-donor-20261024/assets/review/meyah-mark4-revised-pause-map-20261026/`
+places their 8.067 seconds on adjacent non-speaking picture and projects a
+13:37.752 screen duration. No pause has been applied. The first would extend
+the empty-boat opening, conflicting with Dan's earlier instruction to preserve
+that footage exactly, and every pause needs verified extra picture. The
+approved source timing remains the current production basis.
+
+Next: resolve and validate the saved picture order, establish a current crew
+review against corrected target shots, then review actual local LTX coverage,
+Kling Avatar speaking takes, assembled film, soundtrack/timing QC and a
+fresh-root editable package. No film acceptance is claimed.
+
+## Earlier isolated Mark 4 → Meyah checkpoint (historical status)
 
 Dan approved the detailed whole-chapter shot map and the cast list for all 34
 new picture beats. The exact 147-row correspondence is now saved only in the
