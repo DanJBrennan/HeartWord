@@ -55,6 +55,8 @@ Next: resolve and validate the saved picture order, establish a current crew
 review against corrected target shots, then review actual local LTX coverage,
 Kling Avatar speaking takes, assembled film, soundtrack/timing QC and a
 fresh-root editable package. No film acceptance is claimed.
+The full repository suite passed 880 tests in 128 files, and TypeScript
+checking passed, after the lazy LTX readiness change and this audit.
 
 ## Earlier isolated Mark 4 → Meyah checkpoint (historical status)
 

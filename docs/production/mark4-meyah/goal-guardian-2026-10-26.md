@@ -37,6 +37,9 @@ picture remains a diagnostic pending the corrected target order and normal
 media review. No batch was started. The proposed eight pauses remain a
 read-only revision; the first would alter the opening footage Dan asked to
 keep exact, so it is not an approved timing change.
+The full repository suite passed 880 tests in 128 files and TypeScript
+checking passed. Those checks support the adapter and audit code; they do not
+resolve the source-clock picture mismatch or authorize a film claim.
 
 Completion still requires a corrected approved-order target, current crew,
 reviewed LTX footage, the new Meyah Kling Avatar

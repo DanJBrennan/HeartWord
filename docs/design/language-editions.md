@@ -2,12 +2,15 @@
 
 Status: isolated Mark 4 donor normalized; the Meyah source map, detailed
 correspondence, cast subsets and title visual have Dan's named reviews.
-The isolated target now has 145 editable shots, two explicit omissions and
-the selected four-second title. Dan approved the 4:9 Jesus audition; all ten
-reviewed character speech runs are converted, and the 54-row cast master
-preserves the other 24 original Meyah source rows. The new cast takes are
-pending Dan's listening review. New picture, Kling Avatar, assembly, film QC
-and editable delivery remain open.
+The isolated target has 145 editable shots, two explicit omissions and the
+selected four-second title. Dan approved the 4:9 Jesus audition and the ten
+converted character speech runs; the 54-row cast master preserves the other
+24 original Meyah source rows. The first new keyframe and one bounded local
+LTX diagnostic are retained. A read-only October 26 audit found that the
+saved target shot order differs from the approved source-clock picture map at
+40 positions, including eight speaking shots at the wrong picture windows.
+Production is held for Dan's choice of isolated in-place repair or target
+rebuild. Kling Avatar, assembly, film QC and editable delivery remain open.
 
 October 25 source-binding update: Dan approved applying the projected 54-row
 Meyah speaker map after exact listening review. The existing ingestion stage
