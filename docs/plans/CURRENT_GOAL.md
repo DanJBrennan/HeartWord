@@ -9,6 +9,28 @@ assembled chapter and correct individual scenes. The worktree and its
 `output/mark4-donor-20261024` data root are isolated from Mark 5 Prep and the
 live HeartWord database.
 
+October 27 latest checkpoint: Dan delegated routine visual decisions to Codex
+and asked for fewer comparison questions. Codex kept shot 36 version 2 and
+the four-person shot 39 keyframe. Shot 39's five-second draft and eight-second
+final both completed on local LTX; its first 7.050 seconds are selected as a
+silent picture clip. Automatic QC wrongly described John's pale hood as
+missing at confidence 72. The saved contact and full-size frames show the
+hood over his clean-shaven head throughout. The separate ambience review
+accepted only natural outdoor sound. The isolated worklist now has **12 of
+35** silent coverage videos and **2 of 29** speaking shots selected. The
+evidence is in `docs/production/mark4-meyah/shot-039-final-selection.md`.
+
+Two new, distinct Jesus medium-close 4:11 images now serve the approved
+speaking-shot map after the selected wide opening. Both passed independent
+likeness and scene checks and are attached as isolated accepted stills only.
+Their actual image prompts were not retained verbatim; provenance says so.
+`docs/production/mark4-meyah/jesus-v11-insert-keyframes.md` records the
+checks, crop-only wardrobe observation and costs. Next: inspect the first
+insert's guarded Kling base, face-map only Jesus, and select only after
+source-bound motion, audio and lip-sync review. Complete the remaining
+picture and speaking takes, assemble and QC the film, and package its editable
+project. No whole-film acceptance is claimed.
+
 October 27 Peter 4:38 milestone: the approved wet, alarmed Peter keyframe was
 used for a face-targeted Kling base. Real provider face thumbnails established
 Peter as face `0` and the sleeping Jesus as face `1`; Codex selected Peter
