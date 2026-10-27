@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
+import { observeWork } from "../observed-work.js";
 import type { Stage } from "../types.js";
 import { runProductionCrew } from "../creative-direction/crew-store.js";
 import { assertEditorialRebuildable, renderEditorialCut } from "./render-editorial-cut.js";

@@ -9,6 +9,16 @@ assembled chapter and correct individual scenes. The worktree and its
 `output/mark4-donor-20261024` data root are isolated from Mark 5 Prep and the
 live HeartWord database.
 
+October 27, 12:45 p.m. ET checkpoint: **18 of 35** silent clips and all
+**29 of 29** speaking clips are selected; 47 selected shots are normalized as
+editable `assemble_shot` clips. Local LTX's five-second preset completed the
+Mark 4:20 grain insert in about 14 minutes. The Mark 4:21 lamp insert is now
+in inference. The Mark 4:18–19 listener picture passed visual review, while its
+native ambience stem was held for a human gasp and will not enter the film.
+Whole-chapter retained-picture preparation, assembly and QC still wait for
+the remaining silent shots. A missing `observeWork` import in the assembly
+entry point was corrected and its module load was checked before rendering.
+
 October 27, noon ET checkpoint: all **35 of 35** new silent keyframes and all
 **29 of 29** source-bound speaking clips are selected. **16 of 35** new silent
 clips are selected, and 45 accepted shots have been normalized into editable
