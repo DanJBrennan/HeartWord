@@ -126,7 +126,11 @@ export class LtxVideoProvider implements VideoProvider {
     };
     save();
     let remoteInput: string | undefined, remoteEndInput: string | undefined, lease: string | undefined, submitted = false, responseReceived = false;
-    const tempOutput = `${output.absolute}.${generationId}.part`;
+    // The published shot filename can already be long. Appending another UUID
+    // exceeded Windows path limits for edition drafts even though the final
+    // path itself was valid, so keep the transfer scratch name short and
+    // unique in the same isolated asset directory.
+    const tempOutput = join(dirname(output.absolute), `.ltx-${generationId}.part.mp4`);
     const preparedOutput = `${tempOutput}.video.mp4`;
     const tempAmbient = `${tempOutput}.ambience.wav`;
     let ambientAudio: { path: string } | undefined;

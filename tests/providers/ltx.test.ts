@@ -2,7 +2,7 @@ import { createServer, type Server } from "node:http";
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { LtxVideoProvider, LTX_AMBIENT_DIRECTION, LTX_MAX_PROMPT_CHARACTERS, ltxProgress, validateLtxOptions } from "../../src/providers/ltx/index.js";
 import { parseBackendPort, shellQuote, type LtxTransport } from "../../src/providers/ltx/transport.js";
@@ -131,6 +131,17 @@ describe("LTX Desktop adapter", () => {
     expect(result.status).toBe("accepted");
     expect(transport.download).toHaveBeenCalledTimes(3);
     expect(new Set(transport.download.mock.calls.map(([, local])=>local)).size).toBe(1);
+    expect(requests.filter(r=>r.path==="/api/generate")).toHaveLength(1);
+  });
+  it("keeps the SCP scratch path short when an edition shot has a long final filename",async()=>{
+    const output=join(root,"assets","generated","scene",`shot-${"x".repeat(90)}.mp4`);
+    const result=await provider().generateFinal(request,{...options,outputPath:output});
+    expect(result.status).toBe("accepted");
+    const scratch=transport.download.mock.calls[0]![1] as string;
+    expect(dirname(scratch)).toBe(dirname(output));
+    expect(basename(scratch)).toMatch(/^\.ltx-[0-9a-f-]{36}\.part\.mp4$/);
+    expect(scratch.length).toBeLessThan(output.length);
+    expect(readFileSync(output)).toEqual(videoFixture);
     expect(requests.filter(r=>r.path==="/api/generate")).toHaveLength(1);
   });
   it("retries a failed keyframe upload before the only generation POST",async()=>{

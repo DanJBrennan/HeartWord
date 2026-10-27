@@ -91,7 +91,10 @@ It never retries that POST after an uncertain response.
 After Desktop returns a definitive completed output path, SCP download of
 that exact file may be retried up to four times, with 10/30/60-second delays
 after failures. This only transfers the existing file and never repeats
-generation. Exhausted transfers retain the Mac path for exact-file recovery.
+generation. The local transfer uses a short unique scratch filename beside
+the final asset, because appending another UUID to a long edition shot path
+can exceed Windows path limits. Exhausted transfers retain the Mac path for
+exact-file recovery.
 
 See [local LTX operations](../production/LTX_LOCAL.md) for configuration,
 diagnostics, settings and recovery. The October 14 ending-frame extension below
