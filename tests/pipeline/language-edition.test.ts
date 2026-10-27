@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { assertEditionInputsCurrent, createLanguageEdition, editionPlanIsOrderOnlySuccessor, preflightLanguageEdition, readLanguageEditionOrigin, readLanguageEditionPlan, reviseLanguageEdition } from "../../src/pipeline/language-edition.js";
+import { assertEditionInputsCurrent, createLanguageEdition, editionPlanIsOrderOnlySuccessor, editionSpeakingDonorKeyframe, preflightLanguageEdition, readLanguageEditionOrigin, readLanguageEditionPlan, reviseLanguageEdition } from "../../src/pipeline/language-edition.js";
 import { parseReferenceOnlyVerseMarkers, parseSourceTextByVerse } from "../../src/pipeline/ingestion/parse-source-text.js";
 import { materializeEditionCasting, materializeEditionMedia, materializeEditionScenes } from "../../src/pipeline/language-edition-stages.js";
 import { sourceReviewHashes } from "../../src/pipeline/ingestion/source-review.js";
@@ -279,6 +279,20 @@ describe("language edition identity",()=>{
     const saved=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_shots'").get(target) as {payload:string};
     expect(JSON.parse(saved.payload).shots[1].voiceIdentitySource).toBe("pinned_approved_character");
     expect(db.prepare("SELECT id FROM shot_utterance_bindings WHERE shot_id='original-performance'").get()).toBeUndefined();
+    const targetShotId=JSON.parse(saved.payload).shots[1].targetShotId as string;
+    // This fixture's donor has no picture-cast rows; the actual one-face
+    // Avatar treatment requires its explicitly reviewed target cast.
+    db.prepare("INSERT INTO shot_characters(shot_id,character_id) VALUES (?,'jesus')").run(targetShotId);
+    expect(editionSpeakingDonorKeyframe(db,dataDir,"donor","shot")).toBeNull();
+    expect(editionSpeakingDonorKeyframe(db,dataDir,target,targetShotId)).toEqual({
+      path:"films/original-frame.png",sha256:createHash("sha256").update("approved original keyframe").digest("hex"),
+      donorShotId:"original-performance"
+    });
+    asset("films/original-frame.png","changed after approval");
+    expect(()=>editionSpeakingDonorKeyframe(db,dataDir,target,targetShotId)).toThrow(/keyframe changed/);
+    asset("films/original-frame.png","approved original keyframe");
+    db.prepare("UPDATE shots SET dialogue_character_id=NULL WHERE id='original-performance'").run();
+    expect(()=>editionSpeakingDonorKeyframe(db,dataDir,target,targetShotId)).toThrow(/approved target speaker/);
   });
   it("holds changed pinned voice, title background, keyframe and target recording bytes",()=>{
     const pre=preflightLanguageEdition(db,dataDir,"donor",input);

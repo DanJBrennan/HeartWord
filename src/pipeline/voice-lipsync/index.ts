@@ -10,7 +10,7 @@ import type { StageResult } from "../types.js";
 import { resolveSpeechRunCastAudio } from "./speech-run-audio.js";
 import { checkAvatarSpend,readPerformanceDirection,reserveAvatarSpend,settleAvatarSpend } from "./performance-direction.js";
 import { AVATAR_RESERVATION_RATE_USD } from "../../providers/kling/avatar-direction.js";
-import { assertEditionInputsCurrent, readLanguageEditionOrigin } from "../language-edition.js";
+import { assertEditionInputsCurrent, editionSpeakingDonorKeyframe, readLanguageEditionOrigin } from "../language-edition.js";
 
 type ReadyShot = { id: string; verse_ref: string | null; dialogue_character_id: string; keyframe: string | null; voice_id: string | null; version_id: string | null; locked_visual_facts:string|null; binding_id:string|null; source_segment_id:string|null; start_ms:number|null; end_ms:number|null; source_hash:string|null };
 export const runVoiceLipSync = (projectId:string,onlyShotIds?:readonly string[]):Promise<StageResult> => observeWork(projectId, "voice_lipsync", () => runVoiceLipSyncImpl(projectId,onlyShotIds));
@@ -30,6 +30,12 @@ const runVoiceLipSyncImpl = async (projectId:string,onlyShotIds?:readonly string
   if(scope && (!scope.size || [...scope].some(id=>!allShots.some(s=>s.id===id))))return {ok:false,reasoning:"Scoped lip-sync needs speaking shots belonging to this chapter; no voice or video request was sent."};
   const shots=scope ? allShots.filter(s=>scope.has(s.id)) : allShots;
   if (!shots.length) return { ok: true, reasoning: "No on-camera speech is planned; narration remains unsynchronised as required." };
+  if(edition)try{
+    for(const shot of shots)if(!shot.keyframe){
+      const donor=editionSpeakingDonorKeyframe(db,getDataDir(),projectId,shot.id);
+      if(donor)shot.keyframe=donor.path;
+    }
+  }catch(error){return {ok:false,reasoning:(error as Error).message};}
   const missing = shots.filter(s => !s.keyframe || !s.voice_id || !s.version_id || !s.binding_id || !s.source_segment_id || s.start_ms===null || s.end_ms===null);
   if (missing.length) return { ok: false, reasoning: `Voice/lip-sync is held for ${missing.length} speaking shot(s): each needs an accepted keyframe, approved speaking voice, and producer-approved exact utterance binding. Voicing and provider calls were not started.` };
   // Validate the saved direction for the entire batch before any paid voicing.

@@ -16,13 +16,16 @@ project_id = "a5a40890-8bb0-4856-aacb-1dcad97074bb"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("attempt_id")
+parser.add_argument("--draft", action="store_true", help="Inspect a held local draft instead of a final take")
+parser.add_argument("--full", action="store_true", help="Show the entire retained take instead of only the approved placement")
 args = parser.parse_args()
+operation = "generate_draft" if args.draft else "generate_final_video"
 with sqlite3.connect(f"file:{(root/'db'/'heartword.sqlite').as_posix()}?mode=ro", uri=True) as db:
     record = db.execute(
         """SELECT ga.shot_id,ga.result_asset_path FROM generation_attempts ga
            JOIN shots sh ON sh.id=ga.shot_id JOIN scenes sc ON sc.id=sh.scene_id
-           WHERE ga.id=? AND ga.operation='generate_final_video' AND ga.provider='ltx_local'
-             AND sc.project_id=?""", (args.attempt_id, project_id)
+           WHERE ga.id=? AND ga.operation=? AND ga.provider='ltx_local'
+             AND sc.project_id=?""", (args.attempt_id, operation, project_id)
     ).fetchone()
 if not record or not record[1]:
     raise SystemExit("The exact retained local LTX final attempt is unavailable")
@@ -35,10 +38,12 @@ if not source.is_relative_to(assets.resolve()) or not source.is_file():
     raise SystemExit("The retained video is missing or outside isolated assets")
 probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(source)], capture_output=True, text=True, check=True)
 duration = float(probe.stdout.strip())
-window = min(duration, placement["durationMs"] / 1000)
+window = duration if args.full else min(duration, placement["durationMs"] / 1000)
 if window <= 0:
     raise SystemExit("The approved picture window is empty")
-out = root / "review" / "ltx-contacts" / args.attempt_id
+out = root / "review" / ("ltx-draft-contacts" if args.draft else "ltx-contacts") / args.attempt_id
+if args.draft or args.full:
+    out /= "full" if args.full else "placement"
 out.mkdir(parents=True, exist_ok=True)
 thumbs = []
 for index in range(8):
@@ -55,4 +60,4 @@ for index, (second, image) in enumerate(thumbs):
     draw.text((x + 8, y + 275), f"Placement {placement['placement']}  |  {second:.3f}s", fill="#20343b")
 contact = out / "contact.jpg"
 sheet.save(contact, quality=90)
-print(json.dumps({"attemptId": args.attempt_id, "shotId": record[0], "placement": placement["placement"], "approvedWindowMs": placement["durationMs"], "sourceDurationSeconds": duration, "contact": str(contact.resolve())}, indent=2))
+print(json.dumps({"attemptId": args.attempt_id, "shotId": record[0], "placement": placement["placement"], "approvedWindowMs": placement["durationMs"], "inspectedWindowSeconds": window, "sourceDurationSeconds": duration, "contact": str(contact.resolve())}, indent=2))

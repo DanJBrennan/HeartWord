@@ -392,6 +392,54 @@ export function readLanguageEditionPlan(db: DatabaseSync, projectId: string): {h
   return {hash,sequence,revision};
 }
 
+/** One-face edition Avatar fallback to the exact frame pinned by the approved donor cut.
+ * The caller checks the full edition inputs first. A target-owned accepted
+ * keyframe takes precedence; this resolves only an absent target frame. */
+export function editionSpeakingDonorKeyframe(db:DatabaseSync,dataDir:string,projectId:string,targetShotId:string):
+  {path:string;sha256:string;donorShotId:string}|null {
+  const origin=readLanguageEditionOrigin(db,projectId);
+  if(!origin)return null;
+  const plan=readLanguageEditionPlan(db,projectId);
+  if(!plan?.revision)throw new Error("Edition speaking keyframe needs a reviewed shot correspondence.");
+  const saved=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_shots' AND undone=0 ORDER BY sequence DESC LIMIT 1")
+    .get(projectId) as {payload:string}|undefined;
+  if(!saved)throw new Error("Edition speaking keyframe needs materialized target shots.");
+  const mapped=JSON.parse(saved.payload) as {planHash:string;shots:Array<{
+    targetShotId:string|null;donorShotId:string;treatment:string;targetSegmentId:string|null}>};
+  if(mapped.planHash!==plan.hash||mapped.shots.length!==plan.revision.correspondence.length)
+    throw new Error("Edition speaking keyframe shot map changed after review.");
+  const indexes=mapped.shots.flatMap((row,index)=>row.targetShotId===targetShotId?[index]:[]);
+  if(indexes.length!==1)throw new Error("Edition speaking keyframe has no unique reviewed target placement.");
+  const index=indexes[0]!,row=mapped.shots[index]!,reviewed=plan.revision.correspondence[index]!;
+  if(row.donorShotId!==reviewed.donorShotId||row.treatment!==reviewed.treatment||
+    row.targetSegmentId!==reviewed.targetSegmentId)
+    throw new Error("Edition speaking keyframe donor correspondence changed.");
+  if(row.treatment!=="replace_avatar")return null;
+  const target=db.prepare("SELECT needs_lip_sync,dialogue_character_id FROM shots WHERE id=?").get(targetShotId) as
+    {needs_lip_sync:number;dialogue_character_id:string|null}|undefined;
+  const binding=db.prepare("SELECT source_audio_segment_id,character_version_id FROM shot_utterance_bindings WHERE shot_id=?")
+    .get(targetShotId) as {source_audio_segment_id:string;character_version_id:string}|undefined;
+  if(target?.needs_lip_sync!==1||!target.dialogue_character_id||!binding||
+    binding.source_audio_segment_id!==row.targetSegmentId)
+    throw new Error("Edition speaking keyframe source or speaker binding changed.");
+  const cast=db.prepare("SELECT character_id FROM shot_characters WHERE shot_id=?").all(targetShotId) as
+    Array<{character_id:string}>;
+  if(cast.length!==1)return null; // An ensemble needs its face-targeted treatment.
+  if(cast[0]!.character_id!==target.dialogue_character_id)
+    throw new Error("Edition speaking keyframe has the wrong on-camera cast.");
+  const donor=db.prepare("SELECT needs_lip_sync,dialogue_character_id FROM shots WHERE id=?")
+    .get(row.donorShotId) as {needs_lip_sync:number;dialogue_character_id:string|null}|undefined;
+  if(donor?.needs_lip_sync!==1||donor.dialogue_character_id!==target.dialogue_character_id||
+    !origin.preflight.voices.some(voice=>voice.characterId===target.dialogue_character_id&&voice.versionId===binding.character_version_id))
+    throw new Error("Edition donor frame does not belong to the approved target speaker and voice.");
+  const views=origin.preflight.pictureEvidence.filter(item=>item.shotId===row.donorShotId);
+  const frames=new Set(views.map(item=>`${item.keyframePath}|${item.keyframeSha256}`));
+  if(frames.size!==1)throw new Error("Edition donor speaking shot has no single pinned keyframe.");
+  const frame=views[0]!,file=asset(dataDir,frame.keyframePath);
+  if(file.sha256!==frame.keyframeSha256)throw new Error("Pinned edition donor speaking keyframe changed.");
+  return {path:file.path,sha256:file.sha256,donorShotId:row.donorShotId};
+}
+
 /** A picture-only permutation keeps every reviewed utterance, trim and cast
  * choice intact. It may carry a source/voice audition, but any changed item
  * makes that approval stale. The revision chain is validated first. */

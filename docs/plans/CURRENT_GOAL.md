@@ -17,7 +17,7 @@ silent picture clip. Automatic QC wrongly described John's pale hood as
 missing at confidence 72. The saved contact and full-size frames show the
 hood over his clean-shaven head throughout. The separate ambience review
 accepted only natural outdoor sound. The isolated worklist now has **12 of
-35** silent coverage videos and **2 of 29** speaking shots selected. The
+35** silent coverage videos and **4 of 29** speaking shots selected. The
 evidence is in `docs/production/mark4-meyah/shot-039-final-selection.md`.
 
 Two new, distinct Jesus medium-close 4:11 images now serve the approved
@@ -32,10 +32,19 @@ frame and exact approved audio without another provider request. Picture and
 audio review passed, including 0 ms lag and 0.99955 audio correlation. The
 raw charge and take remain in history; see
 `docs/production/mark4-meyah/shot-031-ensemble-sync-selection.md`. The
-worklist has **3 of 29** speaking shots selected. The second closer Jesus
-insert has passed its guarded preflight and its first silent Kling base is
-running. A separate local LTX draft for the short 4:9 reaction is also
-running, as its five-person cast requires a draft gate. Complete the remaining
+second closer Jesus insert is now also a selected source-bound five-second
+clip. Its raw Kling result had the same one-frame shortfall, repaired locally
+without another provider request. The full approved audio matches at 0 ms lag
+and 0.99824 correlation. See
+`docs/production/mark4-meyah/shot-032-ensemble-sync-selection.md`. For
+single-face speaking shots, the existing stage 5 can now use the donor cut's
+original keyframe only when the target has no accepted replacement; it checks
+the immutable correspondence, speaker, sole cast, voice version and image
+hash before submitting. The local LTX
+draft for the short 4:9 reaction completed with stable identities and no
+audio; Codex selected it despite a 75/100 automatic score with no named flaw.
+Its one guarded eight-second final is running for the 0.980-second placement;
+see `docs/production/mark4-meyah/shot-025-draft-selection.md`. Complete the remaining
 picture and speaking takes, assemble and QC the film, and package its editable
 project. No whole-film acceptance is claimed.
 

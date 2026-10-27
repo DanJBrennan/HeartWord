@@ -58,6 +58,15 @@ prepared. Empty/foreign scopes hold before spending. The ordinary unscoped
 chapter run retains its full-batch checks, source bindings, budget reservations,
 single-face rule and candidate acceptance requirements.
 
+For a reviewed language edition with exactly one visible approved speaker,
+stage 5 may use the donor cut's pinned original keyframe when the target has
+no accepted replacement still. The exact target-to-donor shot correspondence,
+speaker and voice-version binding, sole on-camera cast, and saved image hash
+must still match. An accepted target-owned keyframe takes precedence. The
+Kling request retains the actual image path and hash; its returned video is
+still a held candidate requiring source-bound picture and audio review.
+Ensemble shots keep the separate face-targeted treatment below.
+
 For an edition speaking shot with several visible people, use the existing
 face-targeted Kling treatment rather than the single-image Avatar request.
 First render a silent base from the reviewed target keyframe or pinned donor
