@@ -65,6 +65,11 @@ audio remains muted in production assembly; source/cast speech retains its
 authority. `audioMode: "none"` strips even unexpected Desktop audio with video
 stream copy. Output dimensions and duration are recorded rather than assumed
 from Desktop's preset labels. See [audio design](audio-and-speakers.md).
+For a retained silent shot whose local take invents speech and visible mouth
+motion, a shot-scoped, reviewed motion correction may request `audioMode:
+"none"`. The exact saved review must name that mode; the original take and
+ambience verdict remain in history. This does not change the default ambience
+request for other shots or the target-language narration in assembly.
 
 Progress uses authenticated `/api/generation/progress` every three seconds,
 surfaced through the existing production monitor and data-directory logs.

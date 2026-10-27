@@ -1,6 +1,7 @@
 param(
   [int]$Take = 1,
-  [int]$StartPlacement = 1
+  [int]$StartPlacement = 1,
+  [switch]$ListOnly
 )
 
 # Submit at most one new local LTX final candidate per approved silent shot.
@@ -20,6 +21,7 @@ $attempted = 0
 Push-Location $checkout
 try {
   foreach ($item in $worklist.items) {
+    if ($attempted -ge $Take) { break }
     if ($item.treatment -ne 'needs_coverage' -or $item.placement -lt $StartPlacement) { continue }
     if (-not $item.acceptedTargetKeyframe) { throw "Placement $($item.placement) lacks an accepted start frame." }
     $statusText = & npx tsx scripts/run-isolated-mark4-meyah-coverage.ts status $item.targetShotId
@@ -31,7 +33,11 @@ try {
         ConvertTo-Json -Compress | Add-Content -LiteralPath $logPath
       continue
     }
-    if ($attempted -ge $Take) { break }
+    if ($ListOnly) {
+      Write-Output "Would submit placement $($item.placement): $($item.targetShotId) ($($item.durationMs) ms)."
+      $attempted++
+      continue
+    }
     . (Join-Path $PSScriptRoot 'refresh-ltx-desktop-token.ps1') | Out-Null
     @{ at = (Get-Date).ToUniversalTime().ToString('o'); placement = $item.placement; shotId = $item.targetShotId; action = 'submit_one_local_final' } |
       ConvertTo-Json -Compress | Add-Content -LiteralPath $logPath
@@ -44,4 +50,4 @@ try {
 } finally {
   Pop-Location
 }
-Write-Output "Recorded $attempted new local candidate(s); no candidate was accepted."
+if (-not $ListOnly) { Write-Output "Recorded $attempted new local candidate(s); no candidate was accepted." }

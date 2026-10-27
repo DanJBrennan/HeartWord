@@ -91,3 +91,18 @@ it("holds a shot-specific LTX motion correction without its exact saved review",
   await expect(generateNonSpeakingVideoCandidate(db, "p", "shot", providers, { localMotionCorrection: correction })).rejects.toThrow("exact reviewed correction");
   expect(vi.mocked(ltx.generateFinal)).not.toHaveBeenCalled();
 });
+
+it("only disables local model audio when the shot's reviewed correction says so", async () => {
+  const db = setup({ characters: 0 });
+  const ltx = videoProvider();
+  const providers = { primaryBackend: "ltx" as const, ltx, veo: videoProvider(), kling: videoProvider(), draft: draftProvider() };
+  const correction = { reviewNoteId: "correction", direction: "Both listeners keep their lips closed and only shift their gaze.", audioMode: "none" as const };
+  db.prepare("INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES ('correction','p','shot','shot','qc',?,1,1)")
+    .run(`Approved local LTX motion correction: ${correction.direction}`);
+  await expect(generateNonSpeakingVideoCandidate(db, "p", "shot", providers, { localMotionCorrection: correction })).rejects.toThrow("exact reviewed correction");
+  expect(vi.mocked(ltx.generateFinal)).not.toHaveBeenCalled();
+  db.prepare("UPDATE review_notes SET note=? WHERE id='correction'").run(`Approved local LTX motion correction: ${correction.direction}\naudioMode=none`);
+  const result = await generateNonSpeakingVideoCandidate(db, "p", "shot", providers, { localMotionCorrection: correction });
+  expect(result.status).toBe("candidate");
+  expect(vi.mocked(ltx.generateFinal)).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ audioMode: "none" }));
+});

@@ -72,14 +72,19 @@ if(command==="status"){
   const item=worklist.items.find(row=>row.targetShotId===shotId&&row.treatment==="needs_coverage");
   if(!item)throw new Error("Reviewed picture duration is missing");
   const duration=item.durationMs>8000?10:8;
-  const correction=shotId==="23e06237-a507-4b8a-b941-75b5c37cbac3"
-    ? JSON.parse(readFileSync(join(root,"review","meyah-mark4-shot093-motion-correction-20261027.json"),"utf8")) as
-      {kind:string;shotId:string;reviewNoteId:string;direction:string;planHash:string}
-    : null;
-  if(correction&&(correction.kind!=="isolated_meyah_mark4_shot093_local_motion_correction"||correction.shotId!==shotId||correction.planHash!==plan.hash))
-    throw new Error("Shot 93 motion correction does not match the approved plan.");
+  const correctionSpecs=new Map([
+    ["23e06237-a507-4b8a-b941-75b5c37cbac3",{file:"meyah-mark4-shot093-motion-correction-20261027.json",kind:"isolated_meyah_mark4_shot093_local_motion_correction"}],
+    ["cb4aff40-0cf8-47b1-a8e7-13781d00654a",{file:"meyah-mark4-shot044-silent-motion-correction-20261027.json",kind:"isolated_meyah_mark4_shot044_silent_motion_correction"}]
+  ]);
+  const spec=correctionSpecs.get(shotId);
+  const correction=spec?JSON.parse(readFileSync(join(root,"review",spec.file),"utf8")) as
+    {kind:string;shotId:string;reviewNoteId:string;direction:string;planHash:string;audioMode?:"none"}:null;
+  if(correction&&(correction.kind!==spec?.kind||correction.shotId!==shotId||correction.planHash!==plan.hash||
+    (shotId==="cb4aff40-0cf8-47b1-a8e7-13781d00654a"&&correction.audioMode!=="none")))
+    throw new Error("Shot-specific motion correction does not match the approved plan.");
   console.log(JSON.stringify(await generateNonSpeakingVideoCandidate(db,projectId,shotId,createVideoProviders("ltx"),{
-    durationSeconds:duration,...(correction?{localMotionCorrection:{reviewNoteId:correction.reviewNoteId,direction:correction.direction}}:{})}),null,2));
+    durationSeconds:duration,...(correction?{localMotionCorrection:{reviewNoteId:correction.reviewNoteId,direction:correction.direction,
+      ...(correction.audioMode==="none"?{audioMode:"none" as const}:{})}}:{})}),null,2));
 }else if(command==="accept"){
   if(!attemptId)throw new Error("Accept needs a reviewed final-video attempt ID");
   const worklist=JSON.parse(readFileSync(join(root,"assets","review","meyah-mark4-media-worklist-20261026","worklist.json"),"utf8")) as

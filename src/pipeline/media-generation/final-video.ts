@@ -35,7 +35,7 @@ export interface NonSpeakingVideoPolicy {
   /** A reviewed, shot-scoped correction when a crew motion direction
    * contradicts the approved action. The crew run and original take remain
    * retained; this affects only the new local LTX request. */
-  localMotionCorrection?: { reviewNoteId: string; direction: string };
+  localMotionCorrection?: { reviewNoteId: string; direction: string; audioMode?: "none" };
   /** A saved Director extension request can add a take without removing the
    * reviewed short take. Later held jobs/candidates still stop submission. */
   additionalCoverage?: { acceptedAttemptId: string; requestNoteId: string; reason: string };
@@ -77,7 +77,9 @@ export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, project
     const note=db.prepare(`SELECT note FROM review_notes WHERE id=? AND project_id=? AND subject_type='shot'
       AND subject_id=? AND source='qc' AND resolved=1 AND note LIKE 'Approved local LTX motion correction:%'`)
       .get(policy.localMotionCorrection.reviewNoteId,projectId,shotId) as {note:string}|undefined;
-    if (!note || !note.note.includes(policy.localMotionCorrection.direction.trim())) throw new Error("An exact reviewed correction for this shot is required before overriding the crew motion direction.");
+    if (!note || !note.note.includes(policy.localMotionCorrection.direction.trim()) ||
+      (policy.localMotionCorrection.audioMode === "none" && !note.note.includes("audioMode=none")))
+      throw new Error("An exact reviewed correction for this shot is required before overriding the crew motion direction.");
     correctedDirection=policy.localMotionCorrection.direction.trim();
   }
   if (durationSeconds !== 8 && (durationSeconds !== 10 || !local)) throw new Error("Ten-second non-speaking coverage requires the configured local LTX backend; other final requests remain eight seconds.");
@@ -127,7 +129,9 @@ NATURAL CROWD MOTION RULE: Crowd movement is independently timed and irregular. 
   let result;
   try {
     authorization.assertCurrent();
-    result = await generateSelectedFinalVideo(providers,{shotId,prompt:acceptedPrompt,characters:[],authorizeSubmission:authorization.assertCurrent,productionRevision:{runId:authorization.runId,briefHash:authorization.briefHash}},{resolution:"720p",startFrame:{path:keyframe.result_asset_path},durationSeconds,tier,allowKlingSceneFallback:false,allowDraftFallback:policy.allowDraftFallback,onProgress:(progress:GenerationProgress) => { if(progress.phase === "submitted") submitted = true; job?.progress(progress); }});
+    result = await generateSelectedFinalVideo(providers,{shotId,prompt:acceptedPrompt,characters:[],authorizeSubmission:authorization.assertCurrent,productionRevision:{runId:authorization.runId,briefHash:authorization.briefHash}},{resolution:"720p",startFrame:{path:keyframe.result_asset_path},durationSeconds,tier,allowKlingSceneFallback:false,allowDraftFallback:policy.allowDraftFallback,
+      ...(policy.localMotionCorrection?.audioMode === "none" ? {audioMode:"none" as const} : {}),
+      onProgress:(progress:GenerationProgress) => { if(progress.phase === "submitted") submitted = true; job?.progress(progress); }});
   } catch(error) {
     job?.finish(submitted ? "held" : "error",{error:(error as Error).message,submissionMayHaveStarted:submitted});
     throw error;
