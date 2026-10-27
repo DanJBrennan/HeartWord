@@ -16,9 +16,9 @@ final both completed on local LTX; its first 7.050 seconds are selected as a
 silent picture clip. Automatic QC wrongly described John's pale hood as
 missing at confidence 72. The saved contact and full-size frames show the
 hood over his clean-shaven head throughout. The separate ambience review
-accepted only natural outdoor sound. The isolated worklist now has **12 of
-35** silent coverage videos and **4 of 29** speaking shots selected. The
-evidence is in `docs/production/mark4-meyah/shot-039-final-selection.md`.
+accepted only natural outdoor sound. The isolated worklist now has **13 of
+35** silent coverage videos and **5 of 29** speaking shots selected. The
+shot 39 evidence is in `docs/production/mark4-meyah/shot-039-final-selection.md`.
 
 Two new, distinct Jesus medium-close 4:11 images now serve the approved
 speaking-shot map after the selected wide opening. Both passed independent
@@ -40,11 +40,16 @@ and 0.99824 correlation. See
 single-face speaking shots, the existing stage 5 can now use the donor cut's
 original keyframe only when the target has no accepted replacement; it checks
 the immutable correspondence, speaker, sole cast, voice version and image
-hash before submitting. The local LTX
-draft for the short 4:9 reaction completed with stable identities and no
-audio; Codex selected it despite a 75/100 automatic score with no named flaw.
-Its one guarded eight-second final is running for the 0.980-second placement;
-see `docs/production/mark4-meyah/shot-025-draft-selection.md`. Complete the remaining
+hash before submitting. A read-only sweep found 19 one-face speaking shots
+eligible to reuse pinned originals, three with target-owned stills, and seven
+ensemble shots that need their own image treatment. The scoped 4:3 Jesus Avatar
+take is selected after picture and audio review; its provider audio is delayed
+25 ms, while assembly uses the independent approved cast master. See
+`docs/production/mark4-meyah/shot-009-single-face-sync-selection.md`. The
+0.980-second 4:9 reaction also has a selected local LTX final; the automatic
+score was 70 without a concrete flaw, and its native ambience is speech-free.
+See `docs/production/mark4-meyah/shot-025-final-selection.md`. A single local
+LTX final for the approved 4:14 sowing-hand cutaway is now running. Complete the remaining
 picture and speaking takes, assemble and QC the film, and package its editable
 project. No whole-film acceptance is claimed.
 
