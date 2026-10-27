@@ -9,6 +9,21 @@ assembled chapter and correct individual scenes. The worktree and its
 `output/mark4-donor-20261024` data root are isolated from Mark 5 Prep and the
 live HeartWord database.
 
+October 27 Peter 4:38 milestone: the approved wet, alarmed Peter keyframe was
+used for a face-targeted Kling base. Real provider face thumbnails established
+Peter as face `0` and the sleeping Jesus as face `1`; Codex selected Peter
+under Dan's delegation of routine visual decisions. The exact approved Meyah
+Peter voice was applied only to his face, then the 8.281-second source-bound
+clip was selected through the normal lip-sync gate. Visual review showed
+Peter speaking toward Jesus while Jesus stayed asleep. Decoded result audio
+matched the approved cast clip at 0 ms lag and 0.99931 normalized correlation.
+The evidence, provider tasks, asset hashes, backups, cost entries and selected
+clip ID are in `docs/production/mark4-meyah/peter-v38-face-sync-selection.md`.
+This is one accepted speaking shot, not a completed chapter. A guarded local
+LTX final for silent placement 33 remains in progress. After limiting Vitest
+concurrency, the full suite passes **894 tests in 129 files**; server and web
+typechecks pass.
+
 October 27 continuation: Dan delegated routine image decisions to Codex and
 requested fewer comparison questions. Shot 53's footpath-listener keyframe
 passed formal scene review and was accepted with Jesus' mouth unreadable in a
