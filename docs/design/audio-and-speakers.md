@@ -58,6 +58,20 @@ prepared. Empty/foreign scopes hold before spending. The ordinary unscoped
 chapter run retains its full-batch checks, source bindings, budget reservations,
 single-face rule and candidate acceptance requirements.
 
+For an edition speaking shot with several visible people, use the existing
+face-targeted Kling treatment rather than the single-image Avatar request.
+First render a silent base from the reviewed target keyframe or pinned donor
+scene keyframe, with the current Director's shot direction and no new words.
+Retain the provider task ID, returned bytes, cost and production revision.
+Then retain every actual provider face thumbnail and identify the approved
+speaker by visual review; a face ID alone is not evidence of identity. Only
+that identified face may receive the approved, exact source-bound cast audio.
+The sync result remains a held candidate until its picture, other faces,
+source audio and timing are reviewed; selection creates the editable clip.
+An uncertain task is recovered by its saved provider ID and is never
+submitted a second time. The isolated Meyah Mark 4 production uses this
+within stage 5 while the ordinary one-face Avatar path remains available.
+
 ## Inputs
 
 - A narrator's full recording of the chapter/book in the heart language (the

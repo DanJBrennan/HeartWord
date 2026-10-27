@@ -35,6 +35,28 @@ selected clip are recorded in
 **10 of 35** silent coverage videos selected. Continue the guarded local
 coverage batch and inspect each returned candidate before selection.
 
+The next 7.100-second Thomas/Judas listening shot (placement 36) also
+completed locally. A concurrent SQLite write prevented its first database
+registration after the MP4 was saved. A guarded replay used the same saved
+Mac output and current keyframe/crew proof without a second provider POST.
+Codex reviewed and selected the shot despite automatic confidence 70 because
+the review named no visible flaw. The native ambience passed its separate
+no-speech check. The worklist has **11 of 35** silent coverage videos selected.
+The repair and exact clip are documented in
+`docs/production/mark4-meyah/shot-036-ltx-recovery-selection.md`.
+
+The first reusable ensemble face-targeted treatment also produced a selected
+Jesus 4:11 clip. Kling's 149-frame output omitted 33 ms of picture and
+101 ms of active speech. The exact raw result and estimated provider charge
+remain; a local one-frame picture completion and restoration of the full
+approved five-second cast clip passed frame and audio review. Jesus alone was
+face-synced, with the other people unchanged. Evidence, timings, hashes,
+cost and selected clip are in
+`docs/production/mark4-meyah/shot-030-ensemble-sync-selection.md`. Two of
+29 speaking shots are selected. LTX is now making the required draft for the
+four-person silent placement 39. To prevent another final-write collision,
+new paid Kling submissions are held while this local job runs.
+
 October 27 continuation: Dan delegated routine image decisions to Codex and
 requested fewer comparison questions. Shot 53's footpath-listener keyframe
 passed formal scene review and was accepted with Jesus' mouth unreadable in a
