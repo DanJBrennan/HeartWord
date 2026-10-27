@@ -68,6 +68,10 @@ speaker by visual review; a face ID alone is not evidence of identity. Only
 that identified face may receive the approved, exact source-bound cast audio.
 The sync result remains a held candidate until its picture, other faces,
 source audio and timing are reviewed; selection creates the editable clip.
+If Kling returns a shorter picture than the bound speech window, retain the
+raw task, output and charge as a held attempt. Mark it unusable for selection
+until a local completion or another reviewed correction covers the exact
+source window; never hide the spend by treating the provider result as absent.
 An uncertain task is recovered by its saved provider ID and is never
 submitted a second time. The isolated Meyah Mark 4 production uses this
 within stage 5 while the ordinary one-face Avatar path remains available.

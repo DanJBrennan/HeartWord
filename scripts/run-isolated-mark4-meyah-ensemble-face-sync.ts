@@ -75,15 +75,16 @@ const result=await new KlingFaceLipSyncProvider().syncFace(provenance.videoUrl,m
 if(!pending.taskId||!result.media||!existsSync(assetPath(result.media.path)))throw new Error("Kling result or submitted task is missing; recover exact task without resubmitting.");
 const output=assetPath(result.media.path);
 const durationMs=Math.round(Number(execFileSync("ffprobe",["-v","error","-show_entries","format=duration","-of","csv=p=0",output],{encoding:"utf8"}).trim())*1000);
-if(durationMs<provenance.sourceEndMs-provenance.sourceStartMs)throw new Error(`Face-sync result ${pending.taskId} is too short; hold for review.`);
+if(!Number.isFinite(durationMs)||durationMs<=0)throw new Error(`Face-sync result ${pending.taskId} has no measurable picture; recover its saved task.`);
+const shortfallMs=Math.max(0,provenance.sourceEndMs-provenance.sourceStartMs-durationMs);
 const outputSha256=hash(output),attemptId=randomUUID(),now=Date.now();
 const evidence={kind:pending.kind,projectId,shotId,planHash,baseAttemptId:manifest.baseAttemptId,baseTaskId:manifest.taskId,
   baseSha256:manifest.videoSha256,faceManifest:relative(root,manifestPath).replaceAll("\\","/"),
   selectedFaceId:manifest.selectedFaceId,faceThumbSha256:chosen.thumbnailSha256,faceReview:manifest.reviewRationale,
   audio:{...audio,sha256:provenance.audio.sha256},sourceStartMs:provenance.sourceStartMs,sourceEndMs:provenance.sourceEndMs,
-  taskId:pending.taskId,outputPath:result.media.path,outputSha256,durationMs,estimatedUsd:result.cost.usd,reservationId,
+  taskId:pending.taskId,outputPath:result.media.path,outputSha256,durationMs,shortfallMs,estimatedUsd:result.cost.usd,reservationId,
   productionRevision:{runId:authorization.runId,briefHash:authorization.briefHash},backup:relative(root,backup).replaceAll("\\","/"),
-  status:"hold_for_review",liveDatabaseOpened:false};
+  status:shortfallMs>0?"short_output_held_for_reconciliation":"hold_for_review",liveDatabaseOpened:false};
 writeFileSync(`${output}.json`,JSON.stringify(evidence,null,2)+"\n",{flag:"wx"});
 db.exec("BEGIN IMMEDIATE");
 try{
@@ -96,8 +97,11 @@ try{
     .run(randomUUID(),projectId,attemptId,result.cost.usd,now);
   settleAvatarSpend(db,projectId,reservationId,attemptId);
   db.prepare("INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'qc',?,0,?)")
-    .run(randomUUID(),projectId,shotId,`Ensemble ${speaker.name} face-targeted Meyah lip-sync candidate ${attemptId}; inspect lips, other faces, exact audio and source-bound picture before selection. Task ${pending.taskId}; SHA256 ${outputSha256}.`,now);
+    .run(randomUUID(),projectId,shotId,shortfallMs>0
+      ?`Ensemble ${speaker.name} face-targeted Meyah Kling task ${pending.taskId} is ${shortfallMs} ms short. Raw candidate ${attemptId} and provider charge are retained. Reconcile its exact saved bytes and approved audio before picture review or selection. SHA256 ${outputSha256}.`
+      :`Ensemble ${speaker.name} face-targeted Meyah lip-sync candidate ${attemptId}; inspect lips, other faces, exact audio and source-bound picture before selection. Task ${pending.taskId}; SHA256 ${outputSha256}.`,now);
   db.exec("COMMIT");
 }catch(error){db.exec("ROLLBACK");throw error;}
-pending.status="held_for_picture_audio_review";save();
-console.log(JSON.stringify({attemptId,taskId:pending.taskId,outputPath:result.media.path,outputSha256,durationMs,heldForReview:true,quickCheck:db.prepare("PRAGMA quick_check").get()},null,2));
+pending.status=shortfallMs>0?"short_output_held_for_reconciliation":"held_for_picture_audio_review";save();
+console.log(JSON.stringify({attemptId,taskId:pending.taskId,outputPath:result.media.path,outputSha256,durationMs,shortfallMs,
+  heldForReview:true,usableForSelection:shortfallMs===0,quickCheck:db.prepare("PRAGMA quick_check").get()},null,2));
