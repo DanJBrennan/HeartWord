@@ -39,11 +39,16 @@ try {
       continue
     }
     . (Join-Path $PSScriptRoot 'refresh-ltx-desktop-token.ps1') | Out-Null
-    @{ at = (Get-Date).ToUniversalTime().ToString('o'); placement = $item.placement; shotId = $item.targetShotId; action = 'submit_one_local_final' } |
+    @{ at = (Get-Date).ToUniversalTime().ToString('o'); placement = $item.placement; shotId = $item.targetShotId; action = 'request_or_check_one_local_final' } |
       ConvertTo-Json -Compress | Add-Content -LiteralPath $logPath
     $resultText = & npx tsx scripts/run-isolated-mark4-meyah-coverage.ts final $item.targetShotId
     if ($LASTEXITCODE -ne 0) { throw "Placement $($item.placement) LTX request failed or is uncertain; reconcile before any further submissions." }
     $result = $resultText | ConvertFrom-Json
+    if ($result.status -eq 'needs_draft') {
+      @{ at = (Get-Date).ToUniversalTime().ToString('o'); placement = $item.placement; shotId = $item.targetShotId; action = 'skip_reviewed_draft_gate'; reason = $result.reason } |
+        ConvertTo-Json -Compress | Add-Content -LiteralPath $logPath
+      continue
+    }
     if ($result.status -ne 'candidate') { throw "Placement $($item.placement) returned $($result.status); review that gate before any further submissions." }
     @{ at = (Get-Date).ToUniversalTime().ToString('o'); placement = $item.placement; shotId = $item.targetShotId; action = 'candidate_recorded'; result = $result } |
       ConvertTo-Json -Compress -Depth 12 | Add-Content -LiteralPath $logPath

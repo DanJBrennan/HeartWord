@@ -39,14 +39,18 @@ serve the reviewed Meyah source-clock picture and existing Papuan cast; no
 new speech, source wording, scene action or chapter workflow was introduced.
 
 The next silent 4:13 listener take for placement 44 returned, but John visibly
-talks during its first 2.343 seconds and the native ambience contains
-hallucinated speech. Both picture and ambience are held; the first take is
-retained. A shot-scoped correction records the failed evidence, retains an
-isolated SQLite backup, tells John and Peter to keep closed lips, and disables
-model-generated audio only for the retry. The source Meyah narration remains
-the authority. The corrected local LTX request is in progress; no clip from
-this shot is selected yet. The guarded batch runner skips any shot with a
-retained final attempt and does not accept generated candidates.
+talked and the native ambience contained hallucinated speech. Its audio-off
+retry still made John talk within the target window. Codex inspected every
+frame of the retry's clean first 0.5 seconds and selected a local 5.6×
+temporal retime of those LTX frames for the 2.343-second beat. Independent
+short-clip QC found correct identities, no speech and no temporal artifacts;
+confidence 72 remained below the automatic 80 threshold, so this is an
+explicit, documented editorial decision. The selected MP4, input/output
+hashes, exact filter, both held raw takes and isolated database backups are
+retained. The source Meyah narration remains the authority. The current
+worklist has **9 of 35** silent coverage videos selected. The guarded batch
+runner skips any shot with a retained final attempt, honors draft gates, and
+does not accept generated candidates.
 
 Dan approved clearing stale donor camera, spatial and continuity fields on the
 34 newly added target picture beats and rerunning the standard whole-chapter
