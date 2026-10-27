@@ -14,9 +14,11 @@ requested fewer comparison questions. Shot 53's footpath-listener keyframe
 passed formal scene review and was accepted with Jesus' mouth unreadable in a
 side/back view; the low auxiliary face score reflects that deliberate framing,
 not a new Jesus likeness. Six further silent start frames for placements 58,
-64, 121, 125, 136 and 139 are generated from approved references and have
-individual source-grounded briefs; they await formal import, Critic review and
-selection. No further target shot media was selected from those candidates.
+64, 121, 125, 136 and 139 were formally imported, reviewed and accepted.
+Shot 64 required four refinements after its first image: the final version
+turns Philip into a separate profile so he and Matthew no longer read as one
+duplicated face. All 35 planned silent coverage beats now have accepted start
+frames; 27 still need reviewed local motion takes.
 
 The first shot 93 local LTX final completed on the Mac but its caller lost a
 SQLite write race while a keyframe critique ran. Exact Mac/local SHA256
@@ -27,15 +29,14 @@ his satchel, so the take does not show the approved seed broadcast. The
 accepted final Hatam donor clip visibly scatters seed, but its whole eight
 seconds already fill placements 90 and 92 immediately before placement 93;
 replaying it would repeat the action. A narrow, reviewed local LTX motion
-correction now overrides the conflicting shot 93 crew motion prose for one
-new take while preserving the approved 147-placement map, old take and full
-crew history. The corrected local request is running; no film clip has been
-selected from it. During this request, isolated SQLite writes are serialized
-to avoid another finish-time lock. The full suite passes **893 tests in 129
-files**, and TypeScript typecheck passes. Goal Guardian: every proposed image
-and motion correction serves the reviewed Meyah source-clock picture and
-existing Papuan cast; no new speech, source wording, scene action or chapter
-workflow has been introduced.
+correction overrode the conflicting shot 93 crew motion prose for one new
+take while preserving the approved 147-placement map, old take and full crew
+history. Its first 4.916 seconds visibly show seed released over the field;
+that reviewed slice was selected for the target shot and the prior held take
+remains in history. The full suite passes **893 tests in 129 files**, and
+TypeScript typecheck passes. Goal Guardian: the selected images and motion
+serve the reviewed Meyah source-clock picture and existing Papuan cast; no
+new speech, source wording, scene action or chapter workflow was introduced.
 
 Dan approved clearing stale donor camera, spatial and continuity fields on the
 34 newly added target picture beats and rerunning the standard whole-chapter

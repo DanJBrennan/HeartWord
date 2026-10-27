@@ -1,0 +1,1 @@
+Formal Critic held v2 because Philip's face looked duplicated from Matthew despite different costumes. This v3 uses Philip's current approved face reference and changes only the right-hand disciple, keeping the source-grounded thorns, Jesus, Matthew and silent composition. V1 and v2 plus their review evidence remain retained.

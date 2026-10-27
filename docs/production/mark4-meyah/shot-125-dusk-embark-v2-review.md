@@ -1,0 +1,1 @@
+Candidate `review/keyframe-candidates/shot-125-v2.png` (SHA256 `4ab2832feba3de1de9d35c6946e37a5cb7f8517b9cd815f912f06547eb787131`) displays the two rust-red inner-tunic stripes on Peter at the chest and skirt. His rope handling and the other three approved people, boat and blue-hour geography remain. No readable mouth. Submit for formal canon and scene review before selection.

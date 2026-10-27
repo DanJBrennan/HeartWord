@@ -1,0 +1,1 @@
+The fourth candidate met the verse, cast, and wardrobe requirements but the dedicated duplicate-face check found Matthew and Philip too similar. This correction changes Philip's viewing angle and depth while preserving the approved scene and character identities. It is a silent listener beat and does not add narrative content.

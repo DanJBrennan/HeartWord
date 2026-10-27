@@ -1,0 +1,1 @@
+The v1 scene Critic and source check passed, but canon review held the image because Peter's inner tunic lacked its two approved red vertical stripes. This narrow edit corrects that costume detail without changing the reviewed 3.517-second silent embarkation, cast, boat or dusk continuity.

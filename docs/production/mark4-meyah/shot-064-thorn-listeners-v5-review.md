@@ -1,0 +1,3 @@
+Candidate `review/keyframe-candidates/shot-064-v5.png` (SHA256 `f65de571719f2c4520ee8d85119fe5cfd02b0b6b0371a6bdbc009e4cbeaa1966`) restages Philip at right in left-facing profile, with Matthew still centered and Jesus at left. The thorn patch and lake geography remain. Submit for formal duplicate, canon, and scene review before selection.
+
+Formal attempt `8498a211-8ea6-45f6-aa54-b416812d613a` passed the scene and duplicate checks and was accepted. The auxiliary Jesus likeness score was 68/100 because his face is deliberately turned away; the visual reviewer confirmed the robe, hair and placement match the approved canon. This is a silent beat, so no readable Jesus mouth is needed.

@@ -1,0 +1,1 @@
+The v1 scene Critic and source check passed, but canon review held the image for Jesus' patterned blue waist belt and additional sleeve cuff bands. This narrow v2 changes those details to the current approved brown rope belt and plain cream sleeve while preserving the silent narrated action and storm geography.

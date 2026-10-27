@@ -1,0 +1,1 @@
+V3 passed source and scene review but the separate duplicate-face checker still found Matthew and Philip too similar at nearly the same angle and depth. V4 changes the camera staging, depth and head profiles while preserving their current canon wardrobes and the reviewed silent thorn-field action. The prior three candidates and all formal review evidence remain in history.

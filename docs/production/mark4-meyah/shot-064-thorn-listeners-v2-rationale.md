@@ -1,0 +1,1 @@
+The shot 58 formal review revealed that the first scene-3 listener images used older pose-reference wardrobes rather than the current standing canon. This v2 proactively corrects Jesus, Matthew and Philip to their current approved costumes while preserving the reviewed thorn-field action, cast subset, silent staging and geography. The v1 candidate remains retained for comparison.
