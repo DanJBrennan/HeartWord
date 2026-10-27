@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
@@ -14,6 +15,11 @@ import { readAcceptedEditorialOpening, readAcceptedEditorialClosing } from "../a
 import { approvedEditionCanon } from "../language-edition.js";
 
 export const digest = (value: string | Buffer): string => createHash("sha256").update(value).digest("hex");
+/** MP3's reported container endpoint can include one final encoder frame after decoded PCM. */
+export function reconcileMp3End(decodedEndMs: number, alignedEndMs: number, containerEndMs: number): number {
+  return alignedEndMs > decodedEndMs && alignedEndMs - decodedEndMs <= 26 &&
+    alignedEndMs <= containerEndMs ? alignedEndMs : decodedEndMs;
+}
 export function productionAssetPath(dataDir: string, path: string): string {
   const root = resolve(dataDir, "assets");
   const absolute = resolve(root, path);
@@ -90,7 +96,13 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
   // changing reviewed attribution rows or invalidating a current planning run.
   if (phase !== "planning") {
     const last = alignedAudio.at(-1)!;
-    const recordingEndMs = Math.ceil(decodeToPcm16Mono(productionAssetPath(dataDir, last.path), 8000).length / 8);
+    const sourceFile=productionAssetPath(dataDir,last.path);
+    const decodedEndMs = Math.ceil(decodeToPcm16Mono(sourceFile, 8000).length / 8);
+    let recordingEndMs=decodedEndMs;
+    if(decodedEndMs<end && last.path.toLowerCase().endsWith(".mp3") && end-decodedEndMs<=26){
+      const containerEndMs=Math.ceil(Number(execFileSync("ffprobe",["-v","error","-show_entries","format=duration","-of","csv=p=0",sourceFile],{encoding:"utf8"}).trim())*1000);
+      recordingEndMs=reconcileMp3End(decodedEndMs,end,containerEndMs);
+    }
     if (recordingEndMs < end) throw new Error("Aligned source audio extends beyond its decoded recording; reconcile the source before editing.");
     if (recordingEndMs > end) audio.push({ id: `source-tail:${last.id}`, startMs: end, endMs: recordingEndMs,
       verseRef: null, speakerId: null, path: last.path, confidence: null, provenance: "unassigned_source_interval" });

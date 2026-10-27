@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, beforeEach, expect, it } from "vitest";
-import { crewBriefHash, loadCrewBrief } from "../../src/pipeline/creative-direction/crew-context.js";
+import { crewBriefHash, loadCrewBrief, reconcileMp3End } from "../../src/pipeline/creative-direction/crew-context.js";
 import { renderEditorialCut } from "../../src/pipeline/assembly/render-editorial-cut.js";
 import { fixtureWave } from "../helpers/pcm-wave.js";
 import { readProgrammePreview } from "../../src/server/producer-preview.js";
@@ -77,6 +77,11 @@ it("holds an alignment beyond the decoded recording without rewriting reviewed r
   db.exec("UPDATE audio_segments SET end_ms=1600 WHERE id='d'");
   expect(() => loadCrewBrief(db, root, "p", "editing")).toThrow("beyond its decoded recording");
   expect(db.prepare("SELECT end_ms FROM audio_segments WHERE id='d'").get()!.end_ms).toBe(1600);
+});
+it("accepts only one MP3 encoder-frame discrepancy within the recorded container", () => {
+  expect(reconcileMp3End(805669,805685,805685)).toBe(805685);
+  expect(reconcileMp3End(805669,805685,805684)).toBe(805669);
+  expect(reconcileMp3End(805669,805696,805696)).toBe(805669);
 });
 it("previews a proven original-audio gap and tail, and holds fabricated interval identity", () => {
   db.exec("UPDATE audio_segments SET end_ms=250 WHERE id='n'; INSERT INTO chapter_renders(id,project_id,result_asset_path,total_duration_ms,shot_count,created_at)VALUES('gap-map','p','picture.mp4',1500,1,1)");
