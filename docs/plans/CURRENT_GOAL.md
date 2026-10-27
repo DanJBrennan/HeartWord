@@ -9,6 +9,18 @@ assembled chapter and correct individual scenes. The worktree and its
 `output/mark4-donor-20261024` data root are isolated from Mark 5 Prep and the
 live HeartWord database.
 
+October 27, 6 p.m. ET checkpoint: all **35 of 35** silent keyframes and
+**29 of 29** speaking clips remain selected. **30 of 35** silent clips are
+selected, and 59 target shots have normalized editable `assemble_shot` clips.
+The growth sequence now has reviewed soil, night, morning, young-stalk and
+full-grain picture. The guarded local queue is finishing two storm cutaways;
+three ensemble shots still require reviewed motion drafts and finals. A
+transient Mac SSH failure on shot 94 was confirmed pre-submission, and the
+single retry succeeded without duplicating work. Source timing, cast windows,
+shot order and the approved title have not changed. Whole-chapter retained
+picture preparation, assembly, QC and final package still follow the last
+five silent clips; no film completion is claimed.
+
 October 27, 2:50 p.m. ET checkpoint: all **35 of 35** silent keyframes and
 **29 of 29** speaking clips are selected. **23 of 35** silent clips are selected,
 with 52 target shots normalized as editable `assemble_shot` clips. Twelve silent
