@@ -43,7 +43,9 @@ try {
       ConvertTo-Json -Compress | Add-Content -LiteralPath $logPath
     $resultText = & npx tsx scripts/run-isolated-mark4-meyah-coverage.ts final $item.targetShotId
     if ($LASTEXITCODE -ne 0) { throw "Placement $($item.placement) LTX request failed or is uncertain; reconcile before any further submissions." }
-    @{ at = (Get-Date).ToUniversalTime().ToString('o'); placement = $item.placement; shotId = $item.targetShotId; action = 'candidate_recorded'; result = ($resultText | ConvertFrom-Json) } |
+    $result = $resultText | ConvertFrom-Json
+    if ($result.status -ne 'candidate') { throw "Placement $($item.placement) returned $($result.status); review that gate before any further submissions." }
+    @{ at = (Get-Date).ToUniversalTime().ToString('o'); placement = $item.placement; shotId = $item.targetShotId; action = 'candidate_recorded'; result = $result } |
       ConvertTo-Json -Compress -Depth 12 | Add-Content -LiteralPath $logPath
     $attempted++
   }
