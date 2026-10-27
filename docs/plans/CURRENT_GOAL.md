@@ -19,10 +19,21 @@ Peter speaking toward Jesus while Jesus stayed asleep. Decoded result audio
 matched the approved cast clip at 0 ms lag and 0.99931 normalized correlation.
 The evidence, provider tasks, asset hashes, backups, cost entries and selected
 clip ID are in `docs/production/mark4-meyah/peter-v38-face-sync-selection.md`.
-This is one accepted speaking shot, not a completed chapter. A guarded local
-LTX final for silent placement 33 remains in progress. After limiting Vitest
+This is one accepted speaking shot, not a completed chapter. At this
+checkpoint, the guarded local LTX final for silent placement 33 was in
+progress. After limiting Vitest
 concurrency, the full suite passes **894 tests in 129 files**; server and web
 typechecks pass.
+
+Placement 33 then completed in about 24 minutes on local LTX Fast. Codex
+reviewed and selected its first 7.100 seconds: Peter and clean-shaven John
+listen to Jesus without visible speech. The model picture confidence was 72
+with no named flaw, so the below-threshold choice is explicit editorial QC;
+native ambience passed its separate no-speech review. The evidence and
+selected clip are recorded in
+`docs/production/mark4-meyah/shot-033-ltx-selection.md`. The worklist now has
+**10 of 35** silent coverage videos selected. Continue the guarded local
+coverage batch and inspect each returned candidate before selection.
 
 October 27 continuation: Dan delegated routine image decisions to Codex and
 requested fewer comparison questions. Shot 53's footpath-listener keyframe
