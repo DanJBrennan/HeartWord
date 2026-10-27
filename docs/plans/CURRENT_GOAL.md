@@ -9,6 +9,46 @@ assembled chapter and correct individual scenes. The worktree and its
 `output/mark4-donor-20261024` data root are isolated from Mark 5 Prep and the
 live HeartWord database.
 
+October 27, noon ET checkpoint: all **35 of 35** new silent keyframes and all
+**29 of 29** source-bound speaking clips are selected. **16 of 35** new silent
+clips are selected, and 45 accepted shots have been normalized into editable
+`assemble_shot` clips. The remaining serial local LTX queue restarted at
+placement 64 after an uncertain submission was reconciled against the Mac's
+unchanged progress, output directory, and backend log; that request never
+entered inference. The fresh placement 64 request has entered inference. The
+full suite again passes **896 tests in 129 files** and server and web
+typechecks pass. Retained donor picture preparation, whole-film assembly and
+QC still await the remaining silent coverage.
+
+October 27, 11:45 a.m. ET checkpoint: the full suite passes **896 tests in
+129 files**, and server and web typechecks pass. **26 of 29** reviewed speaking
+clips and **15 of 35** new silent clips are selected. The last three speaking
+takes are being processed by the guarded Kling queue. Forty-one selected raw
+shots have already been normalized as editable `assemble_shot` clips in the
+isolated database; this parallel finishing work does not change their source
+performance or the approved picture order. The local LTX ten-second shot at
+placement 58 is still in inference. Three outstanding silent beats have a
+mandatory draft-first risk gate; they will need reviewed local previews before
+their finals. The retained donor picture placements are intentionally prepared
+by the existing edition stage only after all new target coverage is accepted.
+No chapter render or whole-film acceptance is claimed.
+
+October 27, 11:10 a.m. ET checkpoint: Dan requested completion of the full
+editable film by late tonight where feasible and delegated routine editorial
+choices. All **35 of 35** new silent keyframes are accepted, including a new
+scene-reviewed Jesus 4:9 group keyframe; five remaining ensemble speaking
+shots can use inspected original donor frames. The isolated target has **15 of
+35** silent clips and **13 of 29** lip-sync clips selected. Thus 20 silent
+and 16 lip-sync selections remain. The guarded local LTX queue restarted at
+placement 58 after its prior attempt stopped on a pre-submission SQLite lock;
+there was no LTX request to duplicate. The Kling one-face queue and the next
+ensemble face sync are also in progress. Short silent placements now request
+the local five-second preset, subject to full scene, ambience and timing QC.
+At the measured eight-second rate of about 24 minutes, the remaining serial
+LTX work could consume roughly six to eight hours before final assembly and
+chapter QC. This is a working estimate, not a promise of delivery. The film
+remains unfinished and no whole-film acceptance is claimed.
+
 October 27 latest checkpoint: Dan delegated routine visual decisions to Codex
 and asked for fewer comparison questions. Codex kept shot 36 version 2 and
 the four-person shot 39 keyframe. Shot 39's five-second draft and eight-second

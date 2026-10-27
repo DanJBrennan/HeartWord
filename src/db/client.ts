@@ -59,7 +59,10 @@ export function getDb(): DatabaseSync {
     mkdirSync(dbDir, { recursive: true });
   }
 
-  db = new DatabaseSync(join(dbDir, "heartword.sqlite"));
+  // The producer UI and isolated media workers may briefly commit together.
+  // Give a second writer time to finish rather than dropping a pre-submission
+  // video job with SQLITE_BUSY; this does not retry a provider request.
+  db = new DatabaseSync(join(dbDir, "heartword.sqlite"), { timeout: 30000 });
   openedDataDir = dataDir;
   // journal_mode=PERSIST, not the SQLite default (DELETE) or WAL:
   //   - WAL's mmap-based shared memory fails outright ("disk I/O error")

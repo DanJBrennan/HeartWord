@@ -36,6 +36,7 @@ try{
   assertEditionInputsCurrent(db,root,projectId);
   const plan=readLanguageEditionPlan(db,projectId),authorization=productionAuthorization(db,root,projectId);
   if(plan?.hash!==planHash||!plan.revision)throw new Error("Reviewed edition correspondence changed.");
+  const revision=plan.revision;
   const materialized=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_shots' AND undone=0 ORDER BY sequence DESC LIMIT 1")
     .get(projectId) as {payload:string}|undefined;
   const mapped=materialized?JSON.parse(materialized.payload) as {planHash:string;shots:Array<{targetShotId:string|null;treatment:string}>}:null;
@@ -58,7 +59,7 @@ try{
       if(sourceRel===".."||sourceRel.startsWith(`..${sep}`)||sha(source)!==reference.sha256)
         throw new Error("Image generation reference changed.");
     }
-    const row=mapped.shots[item.placement-1],reviewed=plan.revision.correspondence[item.placement-1];
+    const row=mapped.shots[item.placement-1],reviewed=revision.correspondence[item.placement-1];
     if(row?.targetShotId!==item.shotId||row.treatment!=="replace_avatar"||reviewed?.treatment!=="replace_avatar")
       throw new Error(`Placement ${item.placement} no longer needs a Jesus speaking insert.`);
     const shot=db.prepare("SELECT sh.needs_lip_sync,sh.verse_ref,c.name AS speaker FROM shots sh JOIN characters c ON c.id=sh.dialogue_character_id WHERE sh.id=?")

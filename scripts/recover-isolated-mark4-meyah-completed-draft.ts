@@ -17,7 +17,7 @@ if(rootRel===".."||rootRel.startsWith(`..${sep}`)||root.toLowerCase().includes("
   throw new Error("Draft recovery is limited to the isolated Meyah worktree.");
 process.env.HEARTWORD_DATA_DIR=root;
 const projectId="a5a40890-8bb0-4856-aacb-1dcad97074bb";
-const [shotId,attemptId,generationId]=process.argv.slice(2);
+const [shotId,attemptId,generationId]=process.argv.slice(2) as [string,string,string];
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 if(![shotId,attemptId,generationId].every(value=>value&&uuid.test(value)))
   throw new Error("Usage: recover-isolated-mark4-meyah-completed-draft <shot-id> <draft-attempt-id> <ltx-generation-id>");

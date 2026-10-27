@@ -6,6 +6,11 @@ coverage needs it; resolution, frame rate, source performance and fallback gates
 remain unchanged. Existing accepted or uncertain takes are still reconciled
 before another submission. A requested duration is not proof of usable returned
 coverage; measure and review the actual result before selecting its interval.
+For the isolated Meyah Mark 4 edition, a reviewed silent placement of at most
+4.9 seconds may request Desktop's five-second final preset. This keeps at least
+100 ms of encoder headroom and shortens the serial local rendering queue.
+Returned duration, picture, native ambience and the exact selected handle still
+require their ordinary reviews.
 
 When an accepted short interval leaves source narration uncovered, the existing
 candidate stage can request additional coverage explicitly. It requires the

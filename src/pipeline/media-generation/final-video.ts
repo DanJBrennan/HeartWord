@@ -31,7 +31,7 @@ export function localLtxMotionPrompt(action:string,direction:string):string {
 
 export interface NonSpeakingVideoPolicy {
   allowDraftFallback?: boolean;
-  durationSeconds?: 8 | 10;
+  durationSeconds?: 5 | 8 | 10;
   /** A reviewed, shot-scoped correction when a crew motion direction
    * contradicts the approved action. The crew run and original take remain
    * retained; this affects only the new local LTX request. */
@@ -82,7 +82,7 @@ export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, project
       throw new Error("An exact reviewed correction for this shot is required before overriding the crew motion direction.");
     correctedDirection=policy.localMotionCorrection.direction.trim();
   }
-  if (durationSeconds !== 8 && (durationSeconds !== 10 || !local)) throw new Error("Ten-second non-speaking coverage requires the configured local LTX backend; other final requests remain eight seconds.");
+  if (durationSeconds !== 8 && ((durationSeconds !== 5 && durationSeconds !== 10) || !local)) throw new Error("Five- or ten-second non-speaking coverage requires the configured local LTX backend; other final requests remain eight seconds.");
   if (local) {
     const unfinished = db.prepare("SELECT id,status FROM video_generation_jobs WHERE shot_id=? AND status IN ('active','held') ORDER BY updated_at DESC LIMIT 1").get(shotId) as {id:string;status:string}|undefined;
     if (unfinished) return {status:"held" as const,reason:`LTX job ${unfinished.id} is ${unfinished.status}; reconcile its retained output before another submission.`};

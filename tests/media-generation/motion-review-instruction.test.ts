@@ -93,6 +93,15 @@ it("holds an unsupported ten-second backend request before any provider submissi
   await expect(generateNonSpeakingVideoCandidate(db,"p","shot",{ primaryBackend: "veo",veo: { generateFinal: generate } } as any,{ durationSeconds: 10 })).rejects.toThrow("configured local LTX");
   expect(generate).not.toHaveBeenCalled(); expect(db.prepare("SELECT COUNT(*) n FROM video_generation_jobs").get()!.n).toBe(0);
 });
+it("allows a five-second final on local LTX while keeping the cloud final at eight seconds", async()=>{
+  const generate=vi.fn(async()=>({status:"accepted" as const,media:{path:"motion.mp4"},cost:{usd:0},provenance:{provider:"ltx_local",model:"fixture",prompt:"Five-second field motion"}}));
+  const other=vi.fn();
+  await expect(generateNonSpeakingVideoCandidate(db,"p","shot",{primaryBackend:"veo",veo:{generateFinal:other}} as any,{durationSeconds:5})).rejects.toThrow("configured local LTX");
+  expect(other).not.toHaveBeenCalled();
+  const local={primaryBackend:"ltx",ltx:{generateFinal:generate}} as any;
+  expect((await generateNonSpeakingVideoCandidate(db,"p","shot",local,{durationSeconds:5})).status).toBe("candidate");
+  expect(generate.mock.calls[0]![1]).toMatchObject({durationSeconds:5,resolution:"720p"});
+});
 it("forwards and retains the provider-pinned ending reference without inventing an endpoint",async()=>{
   const sha256="a".repeat(64),reference={path:join(root,"assets","end.png"),sha256};
   vi.mocked(reviewGeneratedVideo).mockResolvedValueOnce({verdict:{pass:true,confidence:70,reason:"Synthetic endpoint evidence retained"},costUsd:.01,endFrameReference:reference});

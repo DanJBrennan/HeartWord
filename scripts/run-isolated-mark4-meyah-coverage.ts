@@ -71,7 +71,9 @@ if(command==="status"){
     {items:Array<{targetShotId:string;durationMs:number;treatment:string}>};
   const item=worklist.items.find(row=>row.targetShotId===shotId&&row.treatment==="needs_coverage");
   if(!item)throw new Error("Reviewed picture duration is missing");
-  const duration=item.durationMs>8000?10:8;
+  // A reviewed short placement can use Desktop's five-second final preset.
+  // Keep 100 ms of encode headroom and leave longer placements at 8/10 s.
+  const duration=item.durationMs<=4900?5:item.durationMs>8000?10:8;
   const correctionSpecs=new Map([
     ["23e06237-a507-4b8a-b941-75b5c37cbac3",{file:"meyah-mark4-shot093-motion-correction-20261027.json",kind:"isolated_meyah_mark4_shot093_local_motion_correction"}],
     ["cb4aff40-0cf8-47b1-a8e7-13781d00654a",{file:"meyah-mark4-shot044-silent-motion-correction-20261027.json",kind:"isolated_meyah_mark4_shot044_silent_motion_correction"}]
