@@ -1,0 +1,3 @@
+# Mark 4:26 partial donor-farmer action
+
+The empty visible-person attempts were escalated: a static field cannot perform the approved action of the farmer continuing to scatter seed, and floating kernels make an unstable video start. The approved cast subset remains empty of named characters. This narrow revision shows only the existing donor sower's sleeve and hand at the very edge, with grain still supported in the hand and no face or new identity. It honors the source action and retains the field cutaway's focus. The later video must be reviewed for a natural single scattering motion and no materialized extra person.

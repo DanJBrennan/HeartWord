@@ -25,6 +25,13 @@ established photorealistic visual style (see
 `docs/design/canonical-characters.md`; an earlier "Pixar-style 3D" direction
 was considered and rejected).
 
+The ordinary final-video gate uses explicit `shot_characters` assignments to
+require an approved version for every named on-screen character. A name in
+action prose can be a narration reference (for example, "the plants Jesus
+describes") and does not alone make that person visible. The separately
+accepted keyframe and its scene/canon review establish the actual picture for
+an empty named-cast shot; final-video review still checks the returned frames.
+
 ## Local LTX primary backend (2026-10-06)
 
 Dan's proven M4 Pro Mac mini is the primary scene-video backend through LTX

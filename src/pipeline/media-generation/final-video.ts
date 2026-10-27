@@ -83,8 +83,14 @@ export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, project
   }
   const keyframe=db.prepare("SELECT result_asset_path,prompt FROM generation_attempts WHERE shot_id=? AND operation='generate' AND status='accepted' AND result_asset_path IS NOT NULL ORDER BY created_at DESC LIMIT 1").get(shotId) as {result_asset_path:string;prompt:string|null}|undefined;
   if (!keyframe) throw new Error("Final video is held: this shot needs an accepted reviewed keyframe.");
+  // Casting is explicit. A narration clause such as "the consequence Jesus
+  // describes" does not put Jesus on screen, while an assigned but unapproved
+  // character must still block video before a provider request.
+  const unapprovedCast=db.prepare(`SELECT sc.character_id FROM shot_characters sc
+    WHERE sc.shot_id=? AND NOT EXISTS (SELECT 1 FROM character_versions cv
+      WHERE cv.character_id=sc.character_id AND cv.status='approved') LIMIT 1`).get(shotId);
+  if (unapprovedCast) throw new Error("Final video is held: visible canon characters need approved versions.");
   const characters=db.prepare("SELECT sc.character_id characterId,cv.id characterVersionId,c.name FROM shot_characters sc JOIN character_versions cv ON cv.character_id=sc.character_id AND cv.status='approved' JOIN characters c ON c.id=sc.character_id WHERE sc.shot_id=?").all(shotId) as Array<{characterId:string;characterVersionId:string;name:string}>;
-  if (!characters.length && /character|person|jesus/i.test(shot.action)) throw new Error("Final video is held: visible canon characters need approved versions.");
   // A shot's own crowd/cast/camera facts decide how good a render it gets
   // -- see casting/shot-risk.ts. Routine frames stay on the cheapest tier
   // instead of every shot buying the same render.

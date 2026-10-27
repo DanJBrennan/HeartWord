@@ -1,0 +1,1 @@
+The original image produced too many large airborne grains. The refined candidate confines a modest number of small cereal seeds to the lower-left field, with none in the sky. It preserves the donor dark tilled soil, lake and hills and excludes all people as required by the approved empty cast. Submit this refined frame for formal scene review before selection.

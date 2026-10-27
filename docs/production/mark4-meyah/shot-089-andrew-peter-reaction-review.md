@@ -1,0 +1,2 @@
+The closer Andrew/Peter reaction preserves their approved faces and separate green/rust clothing, with both mouths closed and the calm afternoon boat/lake behind. It varies the earlier 4:24 view without implying a new event. Submit for formal scene and canon review before selection.
+Formal scene Critic found no concern; canonical likeness and scene fidelity passed. Select this close silent reaction. The earlier medium Andrew/Peter keyframe stays separately accepted for its own 4:24 placement.

@@ -1,0 +1,1 @@
+The night edit preserves the same furrows, lake and hills as the preceding approved sowing cutaway, changing only to dim blue moonlit light. The field is empty and the planted grain has no visible growth yet, matching Mark 4:27's resting interval. Submit for formal scene and continuity review before selection.

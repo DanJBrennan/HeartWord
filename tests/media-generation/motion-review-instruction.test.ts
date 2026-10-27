@@ -59,6 +59,24 @@ it("uses the submitted motion request when an older draft adapter omits prompt p
   expect(instruction).not.toContain("gate hardware");
   expect(db.prepare("SELECT resolution FROM generation_attempts WHERE operation='generate_draft'").get()!.resolution).toBe("360p");
 });
+it("treats a narrator's mention of Jesus as off-screen while holding an unapproved assigned character", async () => {
+  db.prepare("UPDATE shots SET action=? WHERE id='shot'").run("A second view of thorn-choked plants shows the consequence Jesus describes; no readable mouth.");
+  const generate = vi.fn(async () => ({ status: "accepted" as const, media: { path: "motion.mp4" },
+    cost: { usd: 0 }, provenance: { provider: "fixture", model: "fixture", prompt: "field motion" } }));
+  const providers = { primaryBackend: "veo", veo: { generateFinal: generate }, kling: { generateFinal: vi.fn() },
+    draft: { generateDraft: vi.fn(), generateGuided: vi.fn() } } as any;
+  expect((await generateNonSpeakingVideoCandidate(db, "p", "shot", providers)).status).toBe("candidate");
+  expect(generate).toHaveBeenCalledOnce();
+
+  db.exec(`INSERT INTO shots(id,scene_id,sequence,action,created_at) VALUES('shot2','s',2,'Jesus stands in the boat.',1);
+    INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,prompt,cost_usd,created_at)
+    VALUES('key2','shot2','fixture','fixture','generate','accepted','key.png','Jesus in boat',0,1);
+    INSERT INTO characters(id,name,scope_kind,canon_status,region,created_at,updated_at)
+    VALUES('jesus','Jesus','global','approved','Papuan',1,1);
+    INSERT INTO shot_characters(shot_id,character_id) VALUES('shot2','jesus')`);
+  await expect(generateNonSpeakingVideoCandidate(db, "p", "shot2", providers)).rejects.toThrow("approved versions");
+  expect(generate).toHaveBeenCalledOnce();
+});
 it("requests ten seconds of new local coverage and retains the verified review-input proof without selecting held picture or audio", async () => {
   const proof = { originalPath: "motion.mp4", originalSha256: "fixture-original", path: "motion.mp4.picture-review-proxy.mp4", sha256: "fixture-proxy", provenancePath: "motion.mp4.picture-review-proxy.mp4.json" };
   vi.mocked(reviewGeneratedVideo).mockResolvedValueOnce({ verdict: { pass: true,confidence: 70,reason: "Synthetic visible picture; uncalibrated low score retained" },costUsd: .01,reviewInput: proof });

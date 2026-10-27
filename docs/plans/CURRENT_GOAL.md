@@ -181,8 +181,8 @@ original acceptance remain intact. Future isolated LTX acceptance now probes
 that a take covers the approved placement and records the placement duration
 in `clips`, so normal shot assembly trims the longer raw file.
 
-The isolated keyframe worklist now has **19 accepted target keyframes** and
-four accepted local LTX finals. New accepted pictures include the short 4:9
+The isolated keyframe worklist now has **25 accepted target keyframes** and
+six accepted local LTX finals. New accepted pictures include the short 4:9
 shore reaction, exposed seed on the 4:15 hard footpath, fresh sprouts in
 shallow rocky soil at 4:16, and the matching early heat/wilting view for
 4:17, followed by two escalating thorn-patch views at 4:18–19. Their prompts,
@@ -199,8 +199,11 @@ automatic approval and visible in history. The 4:16 rocky-sprout video was
 accepted for its first 7097 ms after frame inspection confirmed the requested
 growth and stable lake setting. Its generated native ambience was held for
 music/vocals and must remain excluded; shot assembly strips provider audio.
-The next LTX job, 4:17 shallow sprouts facing heat, is running as a single
-local Fast request.
+The 4:17 wilting-sprout video was accepted for its first 8411 ms after frame
+review. The 4:18–19 thorn-growth video was accepted for its first 6392 ms;
+its first-window contact sheet confirms stable thorns and living shoots
+despite automated confidence 72. The next local Fast final for the matching
+thorn-consequence shot is running.
 
 Three more silent lakeshore listener keyframes are accepted: James and the
 isolated clean-shaven John at 4:23; Philip and Thomas, then Andrew and Peter,
@@ -212,10 +215,31 @@ found his actor and wardrobe consistent; that two-point exception and the
 accepted decision remain explicit in the review history. Andrew and Peter
 passed all three checks. No routine visual choice was sent back to Dan.
 
+Three more lakeshore listening images at 4:25 are accepted: Philip/Thomas,
+the five-person wide view, and Andrew/Peter. The wide scene passed formal
+fidelity and Critic review; minor auxiliary likeness scores remain in the
+individual reviews. The growing-seed sequence now has accepted start frames
+for the anonymous donor sower at 4:26, the nearby seed-settling cutaway and
+the same field at night in 4:27. Six sowing-frame revisions were held or
+discarded for large grains, unsupported particles or unworkable arm poses.
+The selected seventh frame shows the original Papuan sower taking grain from
+his pouch before the broadcast stroke; formal scene, canon and fidelity
+review passed. These are still-picture approvals only; the local video must
+actually show a credible sowing action. The seed-settling and night frames
+also passed formal review with no visible named cast.
+
+An empty thorn-field shot was blocked before video by a prose name check on
+"the consequence Jesus describes." The final-video gate now checks explicit
+shot-cast assignments for missing approved character versions; accepted
+keyframe review and returned-picture review still guard what appears in an
+uncast shot. The focused tests, root TypeScript check and full suite pass:
+**892 tests in 129 files**. The approved source-clock map and production
+crew record were not edited by this correction.
+
 Next: complete local LTX coverage and Kling Avatar speaking takes, then
 assemble and QC the film and its fresh-root editable package. No film
 acceptance is claimed.
-The full repository suite passed 891 tests in 129 files. Root, server and web
+The full repository suite passed 892 tests in 129 files. Root, server and web
 TypeScript checking passed after the transport and crew recovery changes.
 
 ## Earlier isolated Mark 4 → Meyah checkpoint (historical status)

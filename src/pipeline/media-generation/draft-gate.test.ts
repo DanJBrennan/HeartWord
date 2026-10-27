@@ -23,6 +23,7 @@ function setup(options: { characters?: number; crowd?: string } = {}) {
   `);
   for (let i = 0; i < (options.characters ?? 1); i++) {
     db.prepare("INSERT INTO characters (id,name,scope_kind,canon_status,region,created_at,updated_at) VALUES (?,?,'global','approved','Papuan',1,1)").run(`c${i}`, `Character ${i}`);
+    db.prepare("INSERT INTO character_versions (id,character_id,version_label,status,created_at) VALUES (?,?,'v1','approved',1)").run(`v${i}`, `c${i}`);
     db.prepare("INSERT INTO shot_characters (shot_id,character_id) VALUES ('shot',?)").run(`c${i}`);
   }
   return db;
