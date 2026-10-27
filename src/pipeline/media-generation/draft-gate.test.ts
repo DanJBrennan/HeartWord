@@ -79,3 +79,15 @@ it("buys the better render only for the risky shot that earned it", async () => 
   await generateNonSpeakingVideoCandidate(db, "p", "shot", { veo, kling: videoProvider(), draft: draftProvider() });
   expect(vi.mocked(veo.generateFinal)).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ tier: "premium" }));
 });
+
+it("holds a shot-specific LTX motion correction without its exact saved review", async () => {
+  const db = setup({ characters: 0 });
+  const ltx = videoProvider();
+  const providers = { primaryBackend: "ltx" as const, ltx, veo: videoProvider(), kling: videoProvider(), draft: draftProvider() };
+  const correction = { reviewNoteId: "correction", direction: "The farmer releases seed from his hand into the furrow." };
+  await expect(generateNonSpeakingVideoCandidate(db, "p", "shot", providers, { localMotionCorrection: correction })).rejects.toThrow("exact reviewed correction");
+  db.prepare("INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES ('correction','p','shot','shot','qc',?,1,1)")
+    .run("Approved local LTX motion correction: A different motion instruction.");
+  await expect(generateNonSpeakingVideoCandidate(db, "p", "shot", providers, { localMotionCorrection: correction })).rejects.toThrow("exact reviewed correction");
+  expect(vi.mocked(ltx.generateFinal)).not.toHaveBeenCalled();
+});

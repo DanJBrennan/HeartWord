@@ -1,0 +1,1 @@
+The approved storm map inserts a wordless turn toward the stern between retained storm footage and Peter's reviewed 4:38 Avatar quotation. Jesus is outside this frame. The exact Peter, clean-shaven John and Andrew identities and the donor boat geography anchor the composition; closed mouths keep the subsequent lip-sync boundary clear.

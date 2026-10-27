@@ -1,0 +1,3 @@
+The first morning candidate restores dawn light on the same field and lake geometry used by the preceding night cutaway. Only a few short green cereal blades emerge in the foreground furrow; most soil remains bare. No farmer, named cast or added event appears. Submit for formal Mark 4:27 scene and growth-stage review before selection.
+
+Formal scene, canon and fidelity review passed. The Critic logged a minor, low-confidence foreground soil microtexture concern (55/100) with no growth-stage, cast or continuity objection. Select this frame for motion testing; the foreground texture remains visible in the saved review and final picture QC must decide whether it survives at display size.

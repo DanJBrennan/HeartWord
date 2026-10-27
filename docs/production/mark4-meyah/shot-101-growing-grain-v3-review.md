@@ -1,0 +1,1 @@
+The third candidate replaces the rejected corn-like stalks with many thin cereal-grass tillers and narrow blades. No head, ear or loose seed is visible; the field has advanced from sparse dawn shoots over elapsed story time, while lake, hills, slope, light and empty cast remain consistent. Submit for formal botanical, scripture-stage and scene review before selection.

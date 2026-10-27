@@ -1,0 +1,1 @@
+Dan confirmed that the Meyah 4:39 recording narrates the action without an explicit Jesus quotation. This silent picture connects the retained standing-Jesus storm view to the existing calm-water view. The side/back framing makes the mouth unreadable while keeping the approved Papuan costume and boat setting.

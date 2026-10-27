@@ -1,0 +1,1 @@
+The source narration says Jesus explained privately to the disciples. The reviewed target cast is Jesus, Peter, John and Andrew. This picture extends the approved grove geography and clean-shaven John identity without lip-sync or a new speech event; an earlier four-person private-circle frame supplies continuity, and Andrew's approved board replaces the earlier James appearance.

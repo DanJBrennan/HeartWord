@@ -32,6 +32,10 @@ export function localLtxMotionPrompt(action:string,direction:string):string {
 export interface NonSpeakingVideoPolicy {
   allowDraftFallback?: boolean;
   durationSeconds?: 8 | 10;
+  /** A reviewed, shot-scoped correction when a crew motion direction
+   * contradicts the approved action. The crew run and original take remain
+   * retained; this affects only the new local LTX request. */
+  localMotionCorrection?: { reviewNoteId: string; direction: string };
   /** A saved Director extension request can add a take without removing the
    * reviewed short take. Later held jobs/candidates still stop submission. */
   additionalCoverage?: { acceptedAttemptId: string; requestNoteId: string; reason: string };
@@ -67,6 +71,15 @@ export async function generateNonSpeakingVideoCandidate(db:DatabaseSync, project
     ORDER BY ga.created_at DESC LIMIT 1`).get(shotId,coverageBasisCreatedAt,coverageBasisCreatedAt) as {id:string;status:string;result_asset_path:string|null}|undefined;
   if (prior) return {status:"held" as const,attemptId:prior.id,reason:`Existing final-video candidate is ${prior.status}; reconcile or review it before another request.`};
   const local = providers.primaryBackend === "ltx";
+  let correctedDirection: string | undefined;
+  if (policy.localMotionCorrection) {
+    if (!local || !policy.localMotionCorrection.direction.trim()) throw new Error("A motion correction requires a nonempty local LTX direction.");
+    const note=db.prepare(`SELECT note FROM review_notes WHERE id=? AND project_id=? AND subject_type='shot'
+      AND subject_id=? AND source='qc' AND resolved=1 AND note LIKE 'Approved local LTX motion correction:%'`)
+      .get(policy.localMotionCorrection.reviewNoteId,projectId,shotId) as {note:string}|undefined;
+    if (!note || !note.note.includes(policy.localMotionCorrection.direction.trim())) throw new Error("An exact reviewed correction for this shot is required before overriding the crew motion direction.");
+    correctedDirection=policy.localMotionCorrection.direction.trim();
+  }
   if (durationSeconds !== 8 && (durationSeconds !== 10 || !local)) throw new Error("Ten-second non-speaking coverage requires the configured local LTX backend; other final requests remain eight seconds.");
   if (local) {
     const unfinished = db.prepare("SELECT id,status FROM video_generation_jobs WHERE shot_id=? AND status IN ('active','held') ORDER BY updated_at DESC LIMIT 1").get(shotId) as {id:string;status:string}|undefined;
@@ -105,7 +118,7 @@ NON-SPEAKING VIDEO RULE: Do not generate dialogue, narration, singing, lip-sync 
 
 NATURAL CROWD MOTION RULE: Crowd movement is independently timed and irregular. At most a few people reach, shift, or react at once while others hold, breathe, look, edge forward, or respond subtly at different moments. Never generate a synchronized wave of arms, a repeated group gesture, mirrored movement, or a mass simultaneous reach-and-retract.`;
   const authorization=productionAuthorization(db,getDataDir(),projectId);
-  const direction=directionsFromRun(requireCurrentPlan(db,getDataDir(),projectId),shotId);
+  const direction=correctedDirection ?? directionsFromRun(requireCurrentPlan(db,getDataDir(),projectId),shotId);
   const acceptedPrompt=redactCharacterNames(local?localLtxMotionPrompt(safeAction,direction):prompt+direction,characters.map(c=>c.name))+
     (local ? "" : "\nVISIBLE CAST SCOPE: Preserve the actual people visible in the approved start frame throughout this clip. Broader chapter or wardrobe directions mentioning other people are off-screen context, not permission to introduce another person. Do not add, duplicate or replace any face or figure.\n")+
     (characters.length>0 && ["sparse","empty"].includes(shot.crowd_density??"") ? `Keep exactly ${characters.length} established named people; nobody else enters the shot.\n` : "");
@@ -170,7 +183,7 @@ NATURAL CROWD MOTION RULE: Crowd movement is independently timed and irregular. 
     db.prepare("INSERT INTO cost_ledger_entries (id,project_id,generation_attempt_id,amount_usd,created_at) VALUES (?,?,?,?,?)").run(randomUUID(),projectId,id,reviewCostUsd,Date.now());
   }
   const coverageNote=policy.additionalCoverage ? ` Additional source coverage: ${JSON.stringify(policy.additionalCoverage)}. Existing accepted take and clip remain retained; this candidate needs independent review.` : "";
-  db.prepare("INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'qc',?,0,?)").run(randomUUID(),projectId,shotId,`Final-video candidate ${id}. ${reviewNote} Risk ${risk.tier} (${risk.reasons.join("; ")}) -> ${tier} render. Cost policy: ${result.fallbackReason}${coverageNote}`,now);
+  db.prepare("INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,'shot',?,'qc',?,0,?)").run(randomUUID(),projectId,shotId,`Final-video candidate ${id}. ${reviewNote} Risk ${risk.tier} (${risk.reasons.join("; ")}) -> ${tier} render. Cost policy: ${result.fallbackReason}${coverageNote}${policy.localMotionCorrection ? ` Scoped motion correction review ${policy.localMotionCorrection.reviewNoteId}.` : ""}`,now);
   return {status:"candidate" as const,attemptId:id,reviewPassed,...(reviewInput?{reviewInput}:{}),...(endFrameReference?{endFrameReference}:{})};
 }
 

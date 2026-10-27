@@ -1,0 +1,1 @@
+This reviewed 3.517-second silent transition connects the existing shore invitation to the retained boat departure. The same four named Papuan cast members and donor boat geography remain, but a fresh rope-handling angle avoids replaying the existing shot. It adds no dialogue or story event outside the recorded crossing preparation.

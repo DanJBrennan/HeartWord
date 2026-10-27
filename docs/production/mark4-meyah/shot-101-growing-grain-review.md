@@ -1,0 +1,1 @@
+The first 4:28 candidate continues the accepted dawn field with sparse green stalks and young green grain heads. Dark soil, lake, hills and warm daylight remain visible; the crop has not turned into a ripe golden harvest. No person or additional action appears. Submit for formal growth-stage, scene and continuity review before selection.

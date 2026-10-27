@@ -1,0 +1,1 @@
+The first full-grain candidate advances the same wheat/barley field from the preceding accepted grass-blade frame. Several rooted, slender stalks now carry formed, full grain heads with fine awns; lake, hills and warm light are continuous. No person, sickle or harvest action appears. Submit for formal Mark 4:28 botanical and scene review before selection.

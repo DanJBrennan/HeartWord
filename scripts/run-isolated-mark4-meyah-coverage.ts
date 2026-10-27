@@ -72,7 +72,14 @@ if(command==="status"){
   const item=worklist.items.find(row=>row.targetShotId===shotId&&row.treatment==="needs_coverage");
   if(!item)throw new Error("Reviewed picture duration is missing");
   const duration=item.durationMs>8000?10:8;
-  console.log(JSON.stringify(await generateNonSpeakingVideoCandidate(db,projectId,shotId,createVideoProviders("ltx"),{durationSeconds:duration}),null,2));
+  const correction=shotId==="23e06237-a507-4b8a-b941-75b5c37cbac3"
+    ? JSON.parse(readFileSync(join(root,"review","meyah-mark4-shot093-motion-correction-20261027.json"),"utf8")) as
+      {kind:string;shotId:string;reviewNoteId:string;direction:string;planHash:string}
+    : null;
+  if(correction&&(correction.kind!=="isolated_meyah_mark4_shot093_local_motion_correction"||correction.shotId!==shotId||correction.planHash!==plan.hash))
+    throw new Error("Shot 93 motion correction does not match the approved plan.");
+  console.log(JSON.stringify(await generateNonSpeakingVideoCandidate(db,projectId,shotId,createVideoProviders("ltx"),{
+    durationSeconds:duration,...(correction?{localMotionCorrection:{reviewNoteId:correction.reviewNoteId,direction:correction.direction}}:{})}),null,2));
 }else if(command==="accept"){
   if(!attemptId)throw new Error("Accept needs a reviewed final-video attempt ID");
   const worklist=JSON.parse(readFileSync(join(root,"assets","review","meyah-mark4-media-worklist-20261026","worklist.json"),"utf8")) as

@@ -286,6 +286,12 @@ requests. This keeps local text encoding focused; the full approved crew
 record remains the authority for visual QC. A transport failure after LTX
 submission retains its metadata and generation lease until a read-only idle
 reconciliation; it is never silently retried or accepted as footage.
+If the Director's retained motion prose conflicts with the approved shot
+action, a scoped, resolved QC review note may pin an exact replacement motion
+direction for one new local LTX request. The ordinary current-plan, cast,
+keyframe, draft-risk, and candidate-review gates still apply; the original
+crew direction and previous take remain in history. An unsaved or changed
+instruction cannot override the crew by merely appearing in caller input.
 The Mac inbox uses a short unique generation filename; the descriptive shot
 and attempt IDs remain in the local take and metadata. This matches the
 successful diagnostic's upload shape and keeps long draft IDs out of Desktop's

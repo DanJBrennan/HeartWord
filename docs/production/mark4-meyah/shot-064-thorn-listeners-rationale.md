@@ -1,0 +1,1 @@
+This silent listening beat returns from the two thorn close-ups to the reviewed Jesus, Matthew and Philip subset without inventing speech. The foreground plants connect the picture to the source description of thorns crowding growth. Character boards and the accepted thorn-field start frame anchor the visual facts.

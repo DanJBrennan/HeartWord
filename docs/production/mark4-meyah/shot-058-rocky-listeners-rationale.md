@@ -1,0 +1,1 @@
+The approved 4:17 beat needs a quiet listener reaction beside the rocky soil, not a new Jesus utterance. James son of Alphaeus and Thaddaeus remain the reviewed cast subset. The accepted Papuan character boards and lakeside field scene ground identity, clothing and geography. Jesus is present but his mouth is not readable under the existing source performance.
