@@ -86,8 +86,8 @@ export function productionRecords(db: DatabaseSync, projectId?: string): { table
     }
     for(const evidence of origin.preflight.pictureEvidence??[]){
       const clip=all.clips?.find(row=>row.id===evidence.clipId && row.shot_id===evidence.shotId && row.generation_attempt_id===evidence.attemptId);
-      const attempt=all.generation_attempts?.find(row=>row.id===evidence.attemptId && row.shot_id===evidence.shotId && row.result_asset_path===evidence.path);
-      const keyframe=all.generation_attempts?.find(row=>row.shot_id===evidence.shotId && row.operation==="generate" && row.status==="accepted" && row.result_asset_path===evidence.keyframePath);
+      const attempt=all.generation_attempts?.find(row=>row.id===evidence.attemptId && row.shot_id===evidence.shotId && slash(String(row.result_asset_path))===slash(evidence.path));
+      const keyframe=all.generation_attempts?.find(row=>row.shot_id===evidence.shotId && row.operation==="generate" && row.status==="accepted" && slash(String(row.result_asset_path))===slash(evidence.keyframePath));
       if(!clip||!attempt||!keyframe||!selectedIds.has(evidence.shotId))throw new Error("Pinned donor picture or keyframe lineage is incomplete.");
       selected.clips!.add(clip);selected.generation_attempts!.add(attempt);selected.generation_attempts!.add(keyframe);
       for(const reference of all.generation_attempt_references??[])if(reference.generation_attempt_id===attempt.id || reference.generation_attempt_id===keyframe.id)
@@ -149,7 +149,7 @@ export function productionRecords(db: DatabaseSync, projectId?: string): { table
 }
 
 const pathKey = /(?:path|file|keyframe|^source$|^src$|^inputs$|^references$|^pictureBase$|^audioBase$|^basePath$)/i;
-const originKey = /^(?:imported_from|sourceRoot|originalPath|sourceOriginal|url|uri)$/;
+const originKey = /^(?:imported_from|sourceRoot|originalPath|sourceOriginal|remoteInputPath|remoteOutputPath|url|uri)$/;
 const fileSuffix = /\.(?:mp4|mov|mkv|webm|wav|mp3|flac|m4a|aac|ogg|png|jpe?g|webp|exr|tiff?|blend\d*|docx|json|py|ttf|otf|vdb|abc)$/i;
 
 /** No provider imports, retries, or generation are reachable from preservation. */
@@ -173,7 +173,9 @@ export function inspectChapterPackage(db: DatabaseSync, dataDir: string, project
   const restoredReferences = new Map(projection?.references ?? []);
   function add(value: string, reference: string, role: PreservedFile["role"] = "original", lockedDependency = false) {
     const retained = restoredReferences.get(value);
-    const full = retained ? portablePath(dataDir, retained) : isAbsolute(value) ? resolve(value) : resolve(assets, value);
+    const dataRootFile = /^(?:assets|review|logs)\//.test(slash(value)) ? resolve(dataDir, value) : null;
+    const full = retained ? portablePath(dataDir, retained) : isAbsolute(value) ? resolve(value)
+      : dataRootFile && existsSync(dataRootFile) ? dataRootFile : resolve(assets, value);
     if (!existsSync(full) || !statSync(full).isFile()) { problems.push(`Missing asset: ${value} (${reference})`); return; }
     const actual = realpathSync(full);
     if (inside(resolve(dataDir, "db"), actual)) throw new Error("The live database is represented by its consistent record snapshot; do not copy live database files into the package.");
@@ -211,7 +213,10 @@ export function inspectChapterPackage(db: DatabaseSync, dataDir: string, project
   }
   function visit(value: unknown, key: string, reference: string, legacyGeneratedRoot = false) {
     if (typeof value === "string") {
-      if (originKey.test(key)) return;
+      if (originKey.test(key) && !restoredReferences.has(value)) return;
+      // LTX Desktop's Mac inbox is a transient transport copy. The approved
+      // local keyframe and video are retained by their attempt records.
+      if (key === "imagePath" && /^\/Users\/[^/]+\/LTX-Inbox\//.test(value) && !restoredReferences.has(value)) return;
       if (value.startsWith("{") || value.startsWith("[")) {
         let parsed: unknown; try { parsed = JSON.parse(value); } catch { return; }
         visit(parsed, key, reference, legacyGeneratedRoot); return;

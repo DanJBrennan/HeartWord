@@ -23,4 +23,3 @@ const runAssemblyImpl: Stage = async (projectId) => {
     return { ok: false, reasoning: `Chapter assembly failed for project ${projectId}: ${(err as Error).message}` };
   }
 };
-import { observeWork } from "../observed-work.js";

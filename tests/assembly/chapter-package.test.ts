@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { exportChapterPackage, inspectChapterPackage, restoreChapterPackage, verifyChapterPackage } from "../../src/pipeline/assembly/chapter-package.js";
+import { exportChapterPackage, inspectChapterPackage, productionRecords, restoreChapterPackage, verifyChapterPackage } from "../../src/pipeline/assembly/chapter-package.js";
 import { assertEditorialRebuildable } from "../../src/pipeline/assembly/render-editorial-cut.js";
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 const digest = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -34,6 +34,37 @@ beforeEach(() => {
 });
 afterEach(() => { db.close(); if (resolve(directory).startsWith(resolve(tmpdir(), "heartword-package-"))) rmSync(directory, { recursive: true, force: true }); });
 describe("editable chapter preservation", () => {
+  it("finds pinned donor keyframes across legacy Windows path separators", () => {
+    db.exec(`INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)
+      VALUES('donor-frame','shot-other','fixture','fixture','generate','accepted','generated\\keyframes\\donor.png',0,1),
+      ('donor-motion','shot-other','fixture','fixture','generate_final_video','accepted','generated\\video\\donor.mp4',0,1);
+      INSERT INTO clips VALUES('donor-clip','shot-other','donor-motion',0,1000,1);
+      INSERT INTO chapter_renders VALUES('donor-render','other','generated/video/donor.mp4',1000,1,1);
+      INSERT INTO chapter_render_manifests VALUES('donor-render','[{"shotId":"shot-other"}]','[]');`);
+    const payload = { targetProjectId: "p", preflight: { donor: { projectId: "other", renderId: "donor-render" },
+      pictureEvidence: [{ shotId: "shot-other", clipId: "donor-clip", attemptId: "donor-motion",
+        path: "generated/video/donor.mp4", keyframePath: "generated/keyframes/donor.png" }] } };
+    db.prepare(`INSERT INTO edit_commands(id,project_id,sequence,command_type,payload,idempotency_key,applied_at)
+      VALUES('edition','p',2,'derive_language_edition',?,'edition',2)`).run(JSON.stringify(payload));
+    const records = productionRecords(db, "p").tables;
+    expect(records.generation_attempts?.map(row => row.id)).toContain("donor-frame");
+    expect(records.generation_attempts?.map(row => row.id)).toContain("donor-motion");
+  });
+  it("retains data-root review receipts without requiring transient Mac LTX transport files", () => {
+    const receipt = join(directory, "review", "shot", "receipt.json");
+    mkdirSync(dirname(receipt), { recursive: true }); writeFileSync(receipt, "{}");
+    db.prepare(`INSERT INTO edit_commands(id,project_id,sequence,command_type,payload,idempotency_key,applied_at)
+      VALUES('transport','p',2,'producer_decision',?,'transport',2)`).run(JSON.stringify({
+        independentReviewPath: "review/shot/receipt.json",
+        sourcePath: "assets/take.png",
+        remoteInputPath: "/Users/example/LTX-Inbox/staging.png",
+        request: { imagePath: "/Users/example/LTX-Inbox/staging.png" },
+        remoteOutputPath: "/Users/example/Library/Application Support/LTXDesktop/outputs/staging.mp4"
+      }));
+    const manifest = inspectChapterPackage(db, directory, "p", { includeApplication: false }).manifest;
+    expect(manifest.problems).toEqual([]);
+    expect(manifest.files.some(file => file.path === "review/shot/receipt.json")).toBe(true);
+  });
   it("retains rejected takes, old canon, source authority, producer history and lineage without copying unrelated chapters", () => {
     const packageDir = join(directory, "package"), restored = join(directory, "other-root");
     const manifest = exportChapterPackage(db, directory, "p", packageDir);

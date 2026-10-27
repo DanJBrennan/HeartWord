@@ -9,6 +9,19 @@ assembled chapter and correct individual scenes. The worktree and its
 `output/mark4-donor-20261024` data root are isolated from Mark 5 Prep and the
 live HeartWord database.
 
+October 27, 2:50 p.m. ET checkpoint: all **35 of 35** silent keyframes and
+**29 of 29** speaking clips are selected. **23 of 35** silent clips are selected,
+with 52 target shots normalized as editable `assemble_shot` clips. Twelve silent
+placements remain, including three with a mandatory reviewed draft before a
+final. The guarded serial local LTX queue is rendering placement 87; no second
+LTX request is being submitted. Package preflight found and corrected legacy
+Windows path spellings and transient Mac transfer paths; the required shared
+cast assets and pinned donor render were copied with hash checks into the
+isolated root. It now reports zero missing dependencies. The full suite passes
+**898 tests in 129 files**, and server and web typechecks pass. Chapter assembly
+and final film QC await the remaining footage; no whole-film acceptance is
+claimed.
+
 October 27, 12:45 p.m. ET checkpoint: **18 of 35** silent clips and all
 **29 of 29** speaking clips are selected; 47 selected shots are normalized as
 editable `assemble_shot` clips. Local LTX's five-second preset completed the
