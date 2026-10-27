@@ -25,9 +25,17 @@ speaking-shot map after the selected wide opening. Both passed independent
 likeness and scene checks and are attached as isolated accepted stills only.
 Their actual image prompts were not retained verbatim; provenance says so.
 `docs/production/mark4-meyah/jesus-v11-insert-keyframes.md` records the
-checks, crop-only wardrobe observation and costs. Next: inspect the first
-insert's guarded Kling base, face-map only Jesus, and select only after
-source-bound motion, audio and lip-sync review. Complete the remaining
+checks, crop-only wardrobe observation and costs. The first closer insert
+is now a selected source-bound Jesus speaking clip. Kling's raw output was
+one frame and 101 ms of audio short; a local held repair restored the missing
+frame and exact approved audio without another provider request. Picture and
+audio review passed, including 0 ms lag and 0.99955 audio correlation. The
+raw charge and take remain in history; see
+`docs/production/mark4-meyah/shot-031-ensemble-sync-selection.md`. The
+worklist has **3 of 29** speaking shots selected. The second closer Jesus
+insert has passed its guarded preflight and its first silent Kling base is
+running. A separate local LTX draft for the short 4:9 reaction is also
+running, as its five-person cast requires a draft gate. Complete the remaining
 picture and speaking takes, assemble and QC the film, and package its editable
 project. No whole-film acceptance is claimed.
 
