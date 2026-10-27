@@ -57,6 +57,16 @@ cost and selected clip are in
 four-person silent placement 39. To prevent another final-write collision,
 new paid Kling submissions are held while this local job runs.
 
+The four-person placement 39 draft completed on Mac LTX Fast. Its first SCP
+transfer failed after inference, so the exact Mac output was recovered by
+matching remote and local SHA256; no second generation was submitted. The
+native audio was removed from the silent draft. Codex inspected the contact
+and full frames, then chose the draft with distinct John, Peter, Jesus and
+James and no visible speech. The recovery and decision are in
+`docs/production/mark4-meyah/shot-039-draft-selection.md`. The eight-second
+final render for its 7.050-second placement is now running. It remains a held
+candidate until final picture and ambience review.
+
 October 27 continuation: Dan delegated routine image decisions to Codex and
 requested fewer comparison questions. Shot 53's footpath-listener keyframe
 passed formal scene review and was accepted with Jesus' mouth unreadable in a
