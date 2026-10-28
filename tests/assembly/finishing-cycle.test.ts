@@ -23,9 +23,12 @@ it("generates once, mixes once and watches the resulting film before completion"
   expect((await runQualityControl("p")).ok).toBe(true);
   expect(generateRequestedSoundtrack).toHaveBeenCalledTimes(1); expect(applyFinishing).toHaveBeenCalledTimes(1); expect(reviewChapter).toHaveBeenCalledTimes(3);
 });
-it("stops after an unsuccessful audio attempt instead of regenerating indefinitely", async () => {
+it("rechecks a failed optional audio attempt with accepted assets only", async () => {
   vi.mocked(reviewChapter).mockResolvedValue(review("awaiting_assets")); vi.mocked(generateRequestedSoundtrack).mockResolvedValue({ accepted: 0, failures: ["Uncertain provider request"] });
-  expect((await runQualityControl("p")).reasoning).toContain("Uncertain"); expect(reviewChapter).toHaveBeenCalledTimes(1); expect(applyFinishing).not.toHaveBeenCalled();
+  expect((await runQualityControl("p")).reasoning).toContain("Uncertain");
+  expect(reviewChapter).toHaveBeenCalledTimes(2);
+  expect(reviewChapter).toHaveBeenLastCalledWith("p", 17, { existingSoundtrackOnly: true });
+  expect(generateRequestedSoundtrack).toHaveBeenCalledTimes(1); expect(applyFinishing).not.toHaveBeenCalled();
 });
 it("retains further requested changes after the single mix instead of claiming completion", async () => {
   vi.mocked(reviewChapter).mockResolvedValue(review("approved"));

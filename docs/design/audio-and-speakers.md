@@ -202,6 +202,13 @@ findings remain retained. Accepted prior requests are reused, and all other save
 attempts hold without automatic provider or listening retries. This extends the
 existing soundtrack stage, not its creative or producer-approval workflow.
 
+Finishing closes after one bounded soundtrack generation cycle. Its final crew
+review can place only independently accepted registered audio assets; the live
+sound and composer schemas allow zero new generation requests in that review.
+A failed optional effect remains held in history and may be omitted if the
+actual cut still passes. If the crew finds an indispensable missing sound, it
+must record a blocking finding rather than start an unbounded request loop.
+
 Audio2Face-3D and cloud GPU evaluation were earlier candidate approaches,
 not the current lip-sync production path.
 

@@ -1,6 +1,25 @@
 # Current Goal
 
-## Current: produce the reviewed Meyah edition from the repaired picture order
+## Current: Meyah Mark 4 delivered; no active production step
+
+October 27, 11:35 p.m. ET completion: the isolated editable Meyah Mark 4
+edition is finished. Its 145 approved target shots plus the four-second
+`MARKUS 4` / `MEYAH` lake title render to 809.685 seconds. All 35 new silent
+keyframes, 35 local LTX silent clips and 29 Kling speaking clips are selected.
+The final soundtrack and corrected picture passed a fresh finishing crew
+review (`cfd98c9f-b45f-443d-9cb5-8331bfc83e32`). A one-frame stray angle
+at 257.708 seconds was replaced with the preceding approved disciples frame;
+the source shot and finished render were saved as new accepted records, with
+the earlier versions retained. The corrected cut preserves all 19,432 frames,
+the 809.685-second clock, and the exact approved audio stream. Its full flash
+scan found 23 candidates and zero held flashes. The seven-stage recovered
+pipeline ledger now reaches QC on current evidence. The exported chapter
+package verifies with 2,165 files, zero problems and zero editability issues.
+The full suite passes 906 tests in 130 files, and both server and web
+typechecks pass. See `docs/production/mark4-meyah/final-delivery-20261027.md`
+for the film, package and QC receipts. The live HeartWord database and Mark 5
+Prep were not opened for writes. Producer viewing may lead to later creative
+revisions, but no production or packaging step remains for this goal.
 
 The product goal remains an editable, source-faithful Mark 4 film in Meyah, using
 the approved Papuan cast, voice identities, `Markus 4` / `Meyah` title, and
@@ -8,6 +27,20 @@ original opening and closing mood footage. Dan must be able to review the
 assembled chapter and correct individual scenes. The worktree and its
 `output/mark4-donor-20261024` data root are isolated from Mark 5 Prep and the
 live HeartWord database.
+
+October 27, 10:10 p.m. ET checkpoint: all **35 of 35** new silent keyframes,
+**35 of 35** local LTX silent clips, and **29 of 29** Kling speaking clips are
+selected. The complete 145-shot editable target, plus the approved four-second
+`MARKUS 4` / `MEYAH` lake title, rendered to a 809.685-second H.264/AAC film.
+The approved 4:41 reaction was trimmed to its 1.549-second reviewed placement
+without changing donor bytes, and the approved editing crew passed. Render
+flash and audio-tail checks passed; package inspection found no missing or
+uneditable dependencies. Sampled title, teaching, field, storm and closing
+frames match the approved visual direction. Whole-film finishing review is in
+progress. The first pass held sound effects above the source-speech ceiling;
+the live sound schema now requests speech-safe gains, and the corrected pass
+has accepted the sound designer response. Final QC, package export, and final
+test run still remain; no release claim is made at this checkpoint.
 
 October 27, 6 p.m. ET checkpoint: all **35 of 35** silent keyframes and
 **29 of 29** speaking clips remain selected. **30 of 35** silent clips are

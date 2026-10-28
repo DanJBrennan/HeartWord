@@ -72,7 +72,9 @@ function outputIsStillUsable(projectId: string, stage: string): boolean {
       // silently waive the named source-review gate merely because it is high.
       const evidence=db.prepare("SELECT status FROM alignment_evidence WHERE project_id=? ORDER BY created_at DESC LIMIT 1").get(projectId) as {status:string}|undefined;
       const requiresSourceReview=!!evidence && ["provisional","critical_hold"].includes(evidence.status);
-      const reviewed=(lowConfidence > 0 || requiresSourceReview) && hasCurrentSourceReview(db,projectId);
+      // A named review also closes an older unresolved ingestion note after
+      // source rows have been reconciled and their confidence has improved.
+      const reviewed=(unresolved > 0 || lowConfidence > 0 || requiresSourceReview) && hasCurrentSourceReview(db,projectId);
       return segments > 0 && (unresolved === 0 || reviewed) && (lowConfidence === 0 || reviewed) && (!requiresSourceReview || reviewed);
     }
     case "scene_breakdown": return (db.prepare("SELECT COUNT(*) count FROM scenes WHERE project_id=?").get(projectId) as { count: number }).count > 0;

@@ -18,15 +18,19 @@ const runQualityControlImpl: Stage = async (projectId) => {
     let result = await reviewChapter(projectId, 17);
     if (result.status === "awaiting_assets") {
       const generated = await generateRequestedSoundtrack(projectId, result.runId);
-      if (generated.failures.length) return { ok: false, reasoning: generated.failures.join(" ") };
-      result = await reviewChapter(projectId, 17);
+      // A failed optional cue remains in history. Give the crew one final
+      // chance to approve the actual cut with accepted assets only; a truly
+      // indispensable missing sound becomes a blocking finding there.
+      result = await reviewChapter(projectId, 17, { existingSoundtrackOnly: true });
+      if (result.status !== "approved" && generated.failures.length)
+        return { ok: false, reasoning: `${result.summary} Soundtrack holds: ${generated.failures.join(" ")}` };
     }
     if (result.status !== "approved") return { ok: false, reasoning: result.summary };
     const db = getDb(), dataDir = getDataDir(), brief = loadCrewBrief(db, dataDir, projectId, "finishing");
     const recipe = finishingRecipe(brief, result);
     if (!recipe.inputs.length && recipe.filter === "[0:v]null[picture];[0:a]anull[sound]" && !brief.render?.finishing) return { ok: true, reasoning: result.summary };
     applyFinishing(db, dataDir, projectId, result.runId);
-    const finalReview = await reviewChapter(projectId, 17);
+    const finalReview = await reviewChapter(projectId, 17, { existingSoundtrackOnly: true });
     if (finalReview.status !== "approved") return { ok: false, reasoning: `Finished cut saved for review. ${finalReview.summary}` };
     const reviewed = finishingRecipe(loadCrewBrief(db, dataDir, projectId, "finishing"), finalReview);
     if (JSON.stringify(reviewed) !== JSON.stringify(recipe)) return { ok: false, reasoning: "The finished cut was reviewed and further changes were proposed. They are saved; this run stops after one mix to avoid an open-ended generation loop." };

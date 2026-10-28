@@ -99,7 +99,8 @@ export function finishingFilterArgs(recipe: { filter: string }): string[] {
   return ["-filter_complex", picture, "-filter_complex", audio.join(";")];
 }
 
-export async function reviewChapter(projectId: string, maxCalls = 17): Promise<CrewResult & { runId: string }> {
+export async function reviewChapter(projectId: string, maxCalls = 17,
+  options: { existingSoundtrackOnly?: boolean; resumeRunId?: string } = {}): Promise<CrewResult & { runId: string }> {
   const db = getDb(), dataDir = getDataDir();
   const brief = loadCrewBrief(db, dataDir, projectId, "finishing");
   const sourcePath = productionAssetPath(dataDir, brief.render!.path);
@@ -114,7 +115,10 @@ export async function reviewChapter(projectId: string, maxCalls = 17): Promise<C
       "-c:a", "aac", "-b:a", "32k", "-ac", "1", "-movflags", "+faststart", proxy], { stdio: ["ignore", "ignore", "pipe"] });
     const bytes = readFileSync(proxy);
     if (bytes.length > 18 * 1024 * 1024) throw new Error("Review proxy exceeds 18 MiB. Review a shorter approved cut instead of dropping footage silently.");
-    const result = await runProductionCrew(projectId, "finishing", { maxCalls, media: [{ mimeType: "video/mp4", data: bytes.toString("base64") }] });
+    const result = await runProductionCrew(projectId, "finishing", { maxCalls,
+      existingSoundtrackOnly: options.existingSoundtrackOnly,
+      resumeRunId: options.resumeRunId,
+      media: [{ mimeType: "video/mp4", data: bytes.toString("base64") }] });
     if (issues.length || crewBriefHash(loadCrewBrief(db, dataDir, projectId, "finishing"), "finishing") !== crewBriefHash(brief, "finishing")) {
       result.status = "held";
       result.summary += ` Structural review: ${issues.join(" ") || "The cut changed while the review proxy was being prepared."}`;

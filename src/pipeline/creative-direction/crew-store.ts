@@ -49,6 +49,7 @@ export function productionRecordForRun(db:DatabaseSync,run:StoredCrewRun|undefin
 export async function runProductionCrew(projectId: string, phase: CrewPhase, options: {
   db?: DatabaseSync; dataDir?: string; maxCalls?: number; call?: CrewRunnerOptions["call"];
   brief?: CrewBrief; media?: CrewRunnerOptions["media"]; resumeRunId?: string;
+  existingSoundtrackOnly?: boolean;
 } = {}): Promise<CrewResult & { runId: string }> {
   const db = options.db ?? getDb();
   const dataDir = options.dataDir ?? getDataDir();
@@ -61,9 +62,9 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
   if (active) throw new Error("A production crew run is already active. Recover an interrupted run before restarting.");
   const hash = crewBriefHash(brief, phase);
   const resume = options.resumeRunId ? previous : undefined;
-  if (options.resumeRunId && (phase !== "planning" || resume?.id !== options.resumeRunId ||
+  if (options.resumeRunId && (!(["planning", "finishing"] as CrewPhase[]).includes(phase) || resume?.id !== options.resumeRunId ||
       resume.status !== "incomplete" || resume.brief_hash !== hash))
-    throw new Error("Planning continuation requires the latest incomplete run and unchanged creative brief.");
+    throw new Error("Crew continuation requires the latest incomplete run in planning or finishing with an unchanged creative brief.");
   const priorResult = resume?.result_json ? JSON.parse(resume.result_json) as CrewResult : undefined;
   const priorEvents = resume ? db.prepare("SELECT role,round,error FROM production_events WHERE run_id=? ORDER BY sequence")
     .all(resume.id) as Array<{role:string;round:number;error:string|null}> : [];
@@ -71,7 +72,7 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
   if (resume && (!priorResult?.productionRecord || priorResult.productionRecord.revision !== resume.id ||
       priorResult.calls !== priorEvents.length || !priorEvents.at(-1)?.error || priorEvents.some(event=>event.round!==1) ||
       Object.keys(priorResult.contributions).length!==completedEvents.length))
-    throw new Error("Planning continuation lacks an exact saved first-pass failure.");
+    throw new Error("Crew continuation lacks an exact saved first-pass failure.");
   let previousError=priorEvents.at(-1)?.error ?? "";
   if(resume && previousError==="Emotional trigger must quote the supplied Scripture range exactly."){
     const last=db.prepare("SELECT output_json FROM production_events WHERE run_id=? ORDER BY sequence DESC LIMIT 1")
@@ -161,6 +162,7 @@ export async function runProductionCrew(projectId: string, phase: CrewPhase, opt
   try {
     const configuredBound = Number(process.env.HEARTWORD_CREW_CALL_UPPER_BOUND_USD);
     result = await runCrew({ phase, brief, maxCalls: options.maxCalls, media: options.media, productionRecord, creativeFeedback: true,
+      existingSoundtrackOnly: options.existingSoundtrackOnly,
       resumeFirstPass,
       callUpperBoundUsd: options.call ? null : Number.isFinite(configuredBound) && configuredBound > 0 ? configuredBound : null,
       coverageMedia: phase === "editing" ? acceptedCoverageMedia(dataDir,brief) : [],

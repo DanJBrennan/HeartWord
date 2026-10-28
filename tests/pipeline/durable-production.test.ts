@@ -54,6 +54,31 @@ function docx(text: string): Buffer {
 }
 
 describe.skipIf(!ffmpeg)("durable production recovery", () => {
+  it("accepts a current named source review over a stale estimated-ingestion hold", async () => {
+    dataDir = mkdtempSync(join(tmpdir(), "heartword-reviewed-recovery-")); cleanup.push(dataDir);
+    const put = (path: string, bytes: Buffer | string) => {
+      const absolute=join(dataDir,"assets",path); mkdirSync(dirname(absolute),{recursive:true}); writeFileSync(absolute,bytes);
+    };
+    put("source/hatam/mark-3/mark-3-text.docx",docx("1Synthetic source"));
+    put("source/hatam/mark-3/mark-3-fcbh-audio.mp3","synthetic audio bytes");
+    put("reference/english/mark-3/mark-3-text.docx",docx("1Synthetic reference"));
+    db=new DatabaseSync(":memory:"); db.exec(readFileSync("src/db/schema.sql","utf8"));
+    db.exec(`INSERT INTO projects(id,language,book,chapter,created_at,updated_at) VALUES('p','hatam','mark',3,1,1);
+      INSERT INTO audio_segments(id,project_id,layer,source_path,start_ms,end_ms,verse_ref,confidence,created_at)
+      VALUES('a','p','original_reading','source/hatam/mark-3/mark-3-fcbh-audio.mp3',0,1000,'Mark 3:1',90,1);
+      INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at)
+      VALUES('old','p','project','p','qc','Ingestion timing was estimated before named review.',0,1);`);
+    const {adoptRecoveredPipeline}=await import("../../src/pipeline/orchestrator.js");
+    expect(adoptRecoveredPipeline("p","Synthetic producer")).toMatchObject({stoppedAt:"ingestion"});
+    const {attestSourceAlignment}=await import("../../src/pipeline/ingestion/source-review.js");
+    attestSourceAlignment(db,{projectId:"p",reviewerName:"Synthetic producer",attestation:"I reviewed this source",
+      evidence:"Synthetic fixture source and its sole interval were checked."});
+    const result=adoptRecoveredPipeline("p","Synthetic producer");
+    expect(result.stoppedAt).toBe("scene_breakdown");
+    expect(result.results[0]).toMatchObject({stage:"ingestion",ok:true});
+    expect(db.prepare("SELECT resolved FROM review_notes WHERE id='old'").get()).toMatchObject({resolved:0});
+  });
+
   it("adopts only complete retained work and then resumes without executing a stage", async () => {
     dataDir = mkdtempSync(join(tmpdir(), "heartword-durable-")); cleanup.push(dataDir); mkdirSync(join(dataDir, "assets"));
     db = new DatabaseSync(":memory:"); db.exec(readFileSync("src/db/schema.sql", "utf8"));

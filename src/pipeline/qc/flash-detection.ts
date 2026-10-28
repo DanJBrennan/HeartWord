@@ -26,6 +26,7 @@ export type FlashContinuity = "continuous_with_preceding" | "continuous_with_fol
 export type RenderedFlashFinding = FlashFinding & {
   precedingSimilarity: number;
   followingSimilarity: number;
+  acrossSimilarity?: number;
   continuity: FlashContinuity;
 };
 
@@ -72,6 +73,19 @@ export function classifyFlashContinuity(precedingSimilarity: number, followingSi
   return "discontinuous";
 }
 
+/** A single moving frame is not an inserted flash when its two neighbours
+ * diverge even more from each other. Keep the ordinary threshold for dim or
+ * unrelated adjacent scenes, and require a clear cross-neighbour margin. */
+export function classifySingleFrameContinuity(precedingSimilarity: number, followingSimilarity: number,
+  acrossSimilarity: number): FlashContinuity {
+  const ordinary=classifyFlashContinuity(precedingSimilarity,followingSimilarity);
+  if(ordinary!=="discontinuous")return ordinary;
+  if(!Number.isFinite(acrossSimilarity))throw new Error("Finite continuity scores are required.");
+  return precedingSimilarity>=0.4 && followingSimilarity>=0.4 &&
+    acrossSimilarity+0.05<=Math.min(precedingSimilarity,followingSimilarity)
+    ? "continuous_with_preceding" : "discontinuous";
+}
+
 function runFfmpeg(args: string[]): string {
   const result = spawnSync("ffmpeg", args, { encoding: "utf8", maxBuffer: 8 * 1024 * 1024 });
   if (result.status !== 0) throw new Error(result.stderr || "FFmpeg flash analysis failed.");
@@ -106,7 +120,13 @@ export function auditRenderedFlashes(videoPath: string, fps = 24, sceneThreshold
     return candidates.map(candidate => {
       const precedingSimilarity = allSimilarity(imageFor.get(candidate.startFrame - 1)!, imageFor.get(candidate.startFrame)!);
       const followingSimilarity = allSimilarity(imageFor.get(candidate.endFrameExclusive - 1)!, imageFor.get(candidate.endFrameExclusive)!);
-      return { ...candidate, precedingSimilarity, followingSimilarity, continuity: classifyFlashContinuity(precedingSimilarity, followingSimilarity) };
+      const acrossSimilarity=candidate.frameCount===1
+        ? allSimilarity(imageFor.get(candidate.startFrame - 1)!,imageFor.get(candidate.endFrameExclusive)!) : undefined;
+      return { ...candidate, precedingSimilarity, followingSimilarity,
+        ...(acrossSimilarity===undefined?{}:{acrossSimilarity}),
+        continuity:acrossSimilarity===undefined
+          ? classifyFlashContinuity(precedingSimilarity,followingSimilarity)
+          : classifySingleFrameContinuity(precedingSimilarity,followingSimilarity,acrossSimilarity) };
     });
   } finally {
     rmSync(directory, { recursive: true, force: true });

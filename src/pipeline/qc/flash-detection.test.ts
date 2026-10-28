@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { classifyFlashContinuity, detectRapidVisualCutFlashes, detectTimelineFlashes } from "./flash-detection.js";
+import { classifyFlashContinuity, classifySingleFrameContinuity, detectRapidVisualCutFlashes, detectTimelineFlashes } from "./flash-detection.js";
 
 it("flags placements of five frames or fewer at the encoded frame boundary", () => {
   expect(detectTimelineFlashes([
@@ -21,4 +21,12 @@ it("keeps a short tail or head that visibly continues one adjacent shot", () => 
   expect(classifyFlashContinuity(0.2, 0.93)).toBe("continuous_with_following");
   expect(classifyFlashContinuity(0.51, 0.2)).toBe("continuous_with_preceding");
   expect(classifyFlashContinuity(0.2, 0.3)).toBe("discontinuous");
+});
+
+it("distinguishes a fast moving frame from a one-frame insert", () => {
+  // Measured adjacent-frame SSIMs from the reviewed Mark 4 storm cut.
+  expect(classifySingleFrameContinuity(0.484487,0.477879,0.405818)).toBe("continuous_with_preceding");
+  // A foreign frame briefly interrupting an otherwise similar view remains held.
+  expect(classifySingleFrameContinuity(0.2,0.25,0.93)).toBe("discontinuous");
+  expect(classifySingleFrameContinuity(0.46,0.47,0.44)).toBe("discontinuous");
 });

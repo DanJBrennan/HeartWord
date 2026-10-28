@@ -19,6 +19,17 @@ if(plan?.hash!==planHash)throw new Error("Approved Meyah shot correspondence cha
 const worklist=JSON.parse(readFileSync(join(root,"assets","review","meyah-mark4-media-worklist-20261026","worklist.json"),"utf8")) as
   {projectId:string;items:Array<{placement:number;targetShotId:string;treatment:string}>};
 if(worklist.projectId!==projectId)throw new Error("The media worklist belongs to another project.");
+const materialized=db.prepare(`SELECT payload FROM edit_commands WHERE project_id=? AND command_type='materialize_edition_shots'
+  AND undone=0 ORDER BY sequence DESC LIMIT 1`).get(projectId) as {payload:string}|undefined;
+if(!materialized)throw new Error("Reviewed target shot correspondence is missing.");
+const mapped=JSON.parse(materialized.payload) as {planHash:string;shots:Array<{targetShotId:string|null;treatment:string}>};
+if(mapped.planHash!==planHash)throw new Error("Materialized target shot correspondence changed.");
+const items=mapped.shots.map((shot,index)=>({...shot,placement:index+1}));
+for(const item of worklist.items){
+  const mappedItem=items[item.placement-1];
+  if(mappedItem?.targetShotId!==item.targetShotId||mappedItem.treatment!==item.treatment)
+    throw new Error("The reviewed coverage worklist differs from target shot correspondence.");
+}
 const selected=db.prepare(`SELECT c.id,ga.id attempt_id,ga.operation,ga.created_at
   FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id
   JOIN shots sh ON sh.id=c.shot_id JOIN scenes sc ON sc.id=sh.scene_id
@@ -30,8 +41,8 @@ const assembled=db.prepare(`SELECT ga.id,ga.created_at FROM generation_attempts 
   ORDER BY ga.created_at DESC,ga.id DESC LIMIT 1`);
 const logPath=join(root,"review","meyah-mark4-assembled-ready-shots-20261027.jsonl");
 let completed=0,skipped=0;
-for(const item of worklist.items){
-  if(!["needs_coverage","replace_avatar"].includes(item.treatment))continue;
+for(const item of items){
+  if(!["needs_coverage","replace_avatar","reuse_picture"].includes(item.treatment)||!item.targetShotId)continue;
   const raw=selected.get(item.targetShotId,projectId) as {id:string;attempt_id:string;operation:string;created_at:number}|undefined;
   if(!raw)continue;
   const prior=assembled.get(item.targetShotId) as {id:string;created_at:number}|undefined;

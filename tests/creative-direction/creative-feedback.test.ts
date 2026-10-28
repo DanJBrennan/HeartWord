@@ -222,6 +222,48 @@ describe("bounded evidence-based craft feedback",()=>{
         .rejects.toThrow("latest incomplete run");
     } finally {db.close();rmSync(root,{recursive:true,force:true});}
   });
+  it("retries only a malformed finishing Director reply against the same saved cut",async()=>{
+    const root=mkdtempSync(join(tmpdir(),"hw-finishing-resume-")),db=new DatabaseSync(join(root,"proof.sqlite"));
+    try {
+      db.exec(readFileSync("src/db/schema.sql","utf8"));
+      db.exec("INSERT INTO projects(id,language,book,chapter,created_at,updated_at) VALUES('p','hatam','mark',5,1,1)");
+      const b=brief();
+      b.render={id:"cut",path:"cut.mp4",sha256:"fixture-only",durationMs:1000,
+        timeline:[{shotId:"s",startMs:0,endMs:1000}],
+        audioMap:[{segmentId:"a",sourceStartMs:0,sourceEndMs:1000,startMs:0,endMs:1000}]};
+      const contribution=(prompt:string)=>{
+        const out=response(prompt),role=roleOf(prompt);
+        if(role==="picture_editor"){
+          out.craftAssessment={...assess(4),recommendation:"satisfactory",concerns:[]};
+          out.editorialChecks=EDITORIAL_CHECKS.map(name=>({name,status:"clear" as const,startMs:0,endMs:1000,
+            evidence:"Fixture cut checked",requestedChange:"None"}));
+        }
+        if(role==="production_director")out.acceptanceChecks={status:"clear",evidence:"Fixture cut passed"};
+        return out;
+      };
+      const first=await runProductionCrew("p","finishing",{db,dataDir:root,brief:b,existingSoundtrackOnly:true,
+        media:[{mimeType:"video/mp4",data:"same-fixture"}],call:async prompt=>{
+          const out=contribution(prompt);
+          if(roleOf(prompt)==="production_director")out.directions[0]!.shotId="foreign-shot";
+          return out;
+        }});
+      expect(first.status).toBe("incomplete");expect(first.calls).toBe(10);
+      expect(first.summary).toContain("Unknown or foreign shot ID");
+      const before=db.prepare("SELECT id,output_json FROM production_events WHERE run_id=? ORDER BY sequence")
+        .all(first.runId) as Array<{id:string;output_json:string}>;
+      const resumedCalls:string[]=[];
+      const resumed=await runProductionCrew("p","finishing",{db,dataDir:root,brief:b,existingSoundtrackOnly:true,
+        resumeRunId:first.runId,media:[{mimeType:"video/mp4",data:"same-fixture"}],call:async prompt=>{
+          resumedCalls.push(roleOf(prompt));return contribution(prompt);
+        }});
+      expect(resumed.status,resumed.summary).toBe("approved");expect(resumed.calls).toBe(11);
+      expect(resumedCalls).toEqual(["production_director"]);
+      const after=db.prepare("SELECT id,output_json FROM production_events WHERE run_id=? ORDER BY sequence")
+        .all(first.runId) as Array<{id:string;output_json:string}>;
+      expect(after.slice(0,10)).toEqual(before);
+      expect(after).toHaveLength(11);
+    } finally {db.close();rmSync(root,{recursive:true,force:true});}
+  });
   it("identifies an invalid saved pause segment when retrying the same crew run",async()=>{
     const root=mkdtempSync(join(tmpdir(),"hw-pause-resume-")),db=new DatabaseSync(join(root,"proof.sqlite"));
     try {
