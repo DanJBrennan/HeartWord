@@ -2,6 +2,18 @@
 
 ## Current: Meyah Mark 4 delivered; no active production step
 
+October 28 review handoff: two lower-resolution whole-film copies (240p at
+29.63 MB and 480p at 79.14 MB) and three numbered 480p scene parts (22.77,
+26.94 and 29.43 MB) are prepared for Ryan in
+`output/mark4-meyah-ryan-review-20261028/Send-to-Ryan/`. The parts break
+after Mark 4:12 and 4:25 inside quiet scene transitions. All five files
+decode, and the handoff copies match their encoded sources. Dan's requested
+later changes to Jesus lip-sync coverage, music audibility and bounded-scene
+occupant continuity are recorded in
+`docs/production/mark4-meyah/field-feedback-batch-20261028.md`; no film
+revision was made. Ryan's feedback is pending. See
+`docs/production/mark4-meyah/ryan-review-exports-20261028.md`.
+
 October 27, 11:35 p.m. ET completion: the isolated editable Meyah Mark 4
 edition is finished. Its 145 approved target shots plus the four-second
 `MARKUS 4` / `MEYAH` lake title render to 809.685 seconds. All 35 new silent
