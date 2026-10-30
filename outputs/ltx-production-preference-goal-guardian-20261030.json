@@ -1,0 +1,59 @@
+{
+  "reviewedAt": "2026-10-30T18:42:11.768900+00:00",
+  "method": "Dedicated separate Goal Guardian and documentation consistency pass",
+  "explicitProducerDecision": "Record short local LTX speaking clips with previous last retained frame as next initial image as preferred in production runs.",
+  "references": [
+    "docs/PRODUCT_VISION.md",
+    "docs/NON_GOALS.md",
+    "docs/ARCHITECTURE.md",
+    "docs/USER_WORKFLOW.md",
+    "docs/plans/CURRENT_GOAL.md"
+  ],
+  "outcome": "Recorded standing preference and superseded Kling-first policy while honestly retaining actual automatic-stage status.",
+  "preserved": [
+    "Original source/cast audio timing and words",
+    "Approved canon/voice bindings; derived references are not canon approval",
+    "Existing source/cost/acceptance and single-speaker constraints",
+    "Inspect/correct production workflow and complete-line review"
+  ],
+  "noNewRequirementsOrStages": true,
+  "automaticImplementationGap": "Normal stage still instantiates KlingLipSyncProvider; preferred segmentation/chaining/cleanup/assembly remains standalone.",
+  "noSilentMigrationClaim": true,
+  "relativeProcedureLinksChecked": [
+    {
+      "from": "docs/design/audio-and-speakers.md",
+      "target": "../production/LTX_LIPSYNC_EXPERIMENT.md"
+    },
+    {
+      "from": "docs/design/media-generation.md",
+      "target": "../production/LTX_LIPSYNC_EXPERIMENT.md"
+    },
+    {
+      "from": "docs/PRODUCT_VISION.md",
+      "target": "production/LTX_LIPSYNC_EXPERIMENT.md"
+    },
+    {
+      "from": "docs/ARCHITECTURE.md",
+      "target": "production/LTX_LIPSYNC_EXPERIMENT.md"
+    },
+    {
+      "from": "docs/USER_WORKFLOW.md",
+      "target": "production/LTX_LIPSYNC_EXPERIMENT.md"
+    }
+  ],
+  "producerAcceptanceRecorded": "C:/Users/danbr/HeartWordData/prototypes/ltx-peter-frame-chain-20261030/producer-review.json",
+  "validation": {
+    "documentationWhitespaceAndProcedureLinks": "passed",
+    "testFiles": 126,
+    "tests": 856
+  },
+  "noCoreCodeOrProviderWiringChanged": true,
+  "standingGuidanceRecorded": {
+    "activeLessonId": "968013ad-2358-4765-9372-5d6e8051ef89",
+    "scope": "global",
+    "method": "Existing guidance API, explicit reusable producer principle",
+    "activationHistoryVerified": true,
+    "conflictingActiveProviderLessons": 0,
+    "productionRunStarted": false
+  }
+}

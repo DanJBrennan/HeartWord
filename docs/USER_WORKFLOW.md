@@ -70,7 +70,14 @@ authority. Missing timing/footage and stale connections remain explicit.
    blocking is, and what each character says.
 4. Generate the scene's visuals (background, characters, camera).
 5. Lip-sync each character's on-screen speech to the corresponding slice of the
-   source-language audio.
+   source-language audio. Dan's October 30 preferred production technique is
+   local LTX Fast: short speech sections up to four seconds, carrying each
+   section's last retained frame into the next starting image. Preserve the
+   continuous original audio timing, remove generated text and review each
+   assembled line for sync and visible joins. See the
+   [procedure and current automation gap](production/LTX_LIPSYNC_EXPERIMENT.md):
+   the verified standalone workflow supports this; the normal automatic stage
+   still uses Kling until this technique is integrated.
 6. Assemble scenes into a single chapter video with continuous audio.
 
 ## Review and edit

@@ -60,11 +60,27 @@ accepted raw clip may enter assembly; a newer held take cannot replace it.
 This is local preparation for the existing chapter editor, with no new voice
 request or change to the protected source duration.
 
-**Confirmed provider: Kling Avatar.** Dan reaffirmed on 2026-10-06 that
-Kling Avatar continues to generate lip-synced speaking video, driven by the
-exact source-timed cast audio through the existing `LipSyncProvider` path.
-Local LTX 2.5 Fast is the primary scene-motion generator; selecting it does
-not replace Kling Avatar or authorize LTX-generated speech/lip-sync.
+**Preferred production technique, Dan's decision 2026-10-30: local LTX 2.5
+Fast A2V, short speaking clips with last-frame carry-over.** Aim for three
+seconds and allow up to four seconds of unchanged source-bound speech per
+section, split at natural pauses. Each continuation uses the preceding clip's
+last retained frame as its initial-image reference, preserving native framing
+and separately pinned approved canon. Stitch pictures over one uninterrupted
+original full-line audio track, with no audio shift, added lead, speed change
+or omitted/repeated samples. Remove generated text and review the complete line
+for sync, silence behavior, identity, expression and join quality. Five-second
+speaking windows failed the reviewed tests; the native five-second generation
+minimum is filled only with tail silence for short sections. Starting-image
+conditioning is not hard frame locking and does not guarantee later motion.
+See the [preferred procedure, evidence and implementation status](../production/LTX_LIPSYNC_EXPERIMENT.md).
+
+This supersedes the October 6 Kling-first preference. The normal automatic
+stage still constructs `KlingLipSyncProvider`; segmentation/chaining/assembly
+currently use the verified standalone procedure and are not yet integrated
+there. This wiring must not be mistaken for the new production preference.
+Kling remains available under existing production/source/cost/review gates.
+Ordinary scene-motion provider selection is separate from A2V lip-sync; this
+decision does not authorize synthesized replacement speech or alter canon.
 
 October 14 verified direction support: the existing Avatar adapter accepts
 saved descriptive acting intent compiled into documented `prompt` and optional
@@ -82,9 +98,11 @@ original mode/model/submitted JSON remain unknown. Dan clarified that the
 reference was a standalone proof of concept, never used in a film; no film
 binding/approval is inferred. Two bounded comparison requests were rejected for
 insufficient API balance, with no tasks returned or automatic retries.
-No controlled new Hatam-performance comparison or migration has been completed.
+That Avatar-specific comparison remains incomplete. The later local LTX tests
+and October 30 producer preference are recorded above; automatic-stage migration
+has not been implemented.
 
-Dan's standing preference (October 14): for most neutral and positive lip-sync
+Dan's standing preference when using Kling Avatar (October 14): for most neutral and positive lip-sync
 performances, prefer “Smiling warmly at the camera, the character exudes a calm
 and confident demeanor, standing still with a gentle expression.” This is a
 producer-approved creative baseline, not a verified service default or proof

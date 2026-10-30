@@ -1,0 +1,33 @@
+{
+  "recordedAt": "2026-10-30T18:46:12.966Z",
+  "dataDir": "C:\\Users\\danbr\\HeartWordData",
+  "projectId": "0694bfbf-5595-4531-8215-6242d4aea927",
+  "request": {
+    "note": "After reviewing the Peter last-frame continuity test, Dan said \"It looks good.\" He then instructed: \"OK. So let's record this technique as preferred in our production runs.\"",
+    "reusable": true,
+    "scope": "global",
+    "principle": "Preferred production lip-sync (Dan, 2026-10-30): use local LTX Fast A2V with short source-bound speaking sections, aiming for three seconds and never exceeding four seconds of speech per section. Split at natural pauses. Start the first clip from its approved shot-appropriate canon reference, then generate each continuation sequentially from the previous clip's last retained frame, not the padded native tail. Preserve native reference framing without progressive crop zoom; retain approved canon separately from derived frames and log source video/frame/hash provenance. The tested native minimum is five seconds: pad only the input tail with silence and select only the intended short picture interval. Stitch picture on the unchanged source clock over one continuous original full-line audio track; no inserted lead, audio shift, speed change, speech crossfade, added word or repeated/omitted source sample. Remove generated text and review the full assembled line for sync, pause behavior, speaking coverage, identity/clothing, expression and visible joins through existing production/QC. Carry-over is initial-image conditioning, not hard frame locking; later motion/expression may still drift. Keep existing source/canon/cost/acceptance and designated-speaker constraints. Follow docs/production/LTX_LIPSYNC_EXPERIMENT.md. The verified standalone procedure supports this; the automatic voice/lip-sync stage still constructs KlingLipSyncProvider and needs integration. Selecting ordinary LTX scene motion does not switch lip-sync; do not claim automatic implementation or silently invoke paid fallback.",
+    "rationale": "Explicit producer preference after accepted short Jesus/Peter trials and the Peter frame-chain result. Three-/four-second speech clips worked; five-second/longer speaking tests failed. This records guidance, not automatic-stage migration, new canon approval, blanket take acceptance or new speech. See approved example C:/Users/danbr/HeartWordData/prototypes/ltx-peter-frame-chain-20261030/RESULTS.md."
+  },
+  "apiResponse": {
+    "ok": true,
+    "lessonId": "8bb10bc6-da54-43ea-af87-75e870594390",
+    "synthesis": "candidate_needs_review"
+  },
+  "reusedExisting": false,
+  "activeLessonId": "968013ad-2358-4765-9372-5d6e8051ef89",
+  "sourceNoteId": "d08322c8-a6f4-4389-873e-1723fdf233c4",
+  "status": "active",
+  "scope": "global",
+  "activationHistory": [
+    {
+      "id": "3ee59c03-74e0-4a9d-a7ab-97bdfaccd651",
+      "lesson_id": "968013ad-2358-4765-9372-5d6e8051ef89",
+      "action": "activated",
+      "detail": "Explicit producer principle.",
+      "created_at": 1793385972955
+    }
+  ],
+  "applicableToProductionCrew": true,
+  "noProductionRunStarted": true
+}

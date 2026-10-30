@@ -33,8 +33,14 @@ Desktop's local LTX 2.5 Fast image-to-video API. It implements the existing
 and the per-shot candidate API, and shares retained attempts, cost ledger,
 canon review and timeline acceptance. It creates no separate pipeline stage.
 Veo and Kling remain selectable during the extended comparison period.
-Kling Avatar continues as the lip-sync video generator, independently of this
-scene-motion backend selection (Dan reaffirmed 2026-10-06).
+Lip-sync has a separate producer preference: on October 30 Dan chose local LTX
+Fast A2V short speaking clips (up to four seconds) chained from the preceding
+last retained frame, with unchanged continuous audio and no text. See
+[audio and speakers](audio-and-speakers.md#lip-sync) and the
+[verified procedure and current wiring](../production/LTX_LIPSYNC_EXPERIMENT.md).
+The automatic lip-sync stage is still wired to Kling Avatar; changing the
+scene-motion selector does not implement A2V chaining. This October 30 preference
+supersedes the October 6 Kling-first lip-sync decision.
 
 Normal generation requests 720p, 24 fps, 5–10-second shots (currently 8s for
 ordinary coverage). The provider validates Dan's proven duration matrix,
@@ -297,8 +303,10 @@ in without redesigning this workflow.
   window) — the targeted-edit capability above helps for single-detail
   fixes, but broader drift across many scenes is a separate problem.
 - Compute requirements: local scene video now uses Dan's dedicated M4 Pro
-  Mac mini with 64 GB unified memory and LTX Desktop. The other image, draft,
-  voice, review and lip-sync providers retain their cloud APIs.
+  Mac mini with 64 GB unified memory and LTX Desktop. The preferred short-clip
+  A2V lip-sync procedure also uses that Mac; the automatic lip-sync stage still
+  uses its existing cloud adapter pending integration. Image, draft, voice and
+  review providers retain their existing APIs.
 - The automated media review in `docs/design/automated-quality-control.md`
   resolves to one of: accept, retry same prompt, retry with a modified
   prompt, escalate to a different provider/tier, or hold for human review.

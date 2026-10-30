@@ -1,0 +1,78 @@
+{
+  "projectId": "0694bfbf-5595-4531-8215-6242d4aea927",
+  "passage": "Hatam Mark 5:31 — four-second diagnostic excerpt",
+  "characterName": "Peter",
+  "textHatam": "Andigpoi e, angat yo di ningot ndig di iba yok bidek yam nyen dini yok lo, ahig ser nye tut no di ngget Ade sinsun e?",
+  "english": "And his disciples said to him, “You see the crowd pressing around you, and yet you say, ‘Who touched me?’”",
+  "portrait": {
+    "id": "3c2a3ccc-2de7-409b-b5c8-e199d5e32ef6",
+    "character_version_id": "88e8eb71-6d59-4ba3-9e2b-b3e3ce544377",
+    "category": "headshot",
+    "path": "characters/peter/lip_sync_closeup/close-up-neutral-v3.png",
+    "content_hash": null,
+    "imported_from": "Carried forward unchanged from prior approved version",
+    "created_at": 1790019088483,
+    "story_state": null,
+    "available_from_verse": null,
+    "available_through_verse": null,
+    "asset_role": "scene_reference",
+    "narrative_state": null,
+    "version_label": "v4",
+    "status": "approved",
+    "name": "Peter",
+    "region": "Papuan",
+    "canon_status": "approved",
+    "sha256": "38ea1460f11de95b411c9e2ce13eddb13cb9ed798d2a82b4debb594ab0f661de"
+  },
+  "audio": {
+    "id": "c28ca26c-543a-4e30-bc32-1f83a391d97e",
+    "project_id": "0694bfbf-5595-4531-8215-6242d4aea927",
+    "layer": "composite_cast_master",
+    "source_path": "preparation/hatam-mark5-auditions-20261021/peter.mp3",
+    "start_ms": 0,
+    "end_ms": 9799,
+    "speaker_character_id": "9cbc4222-b194-4db4-baa9-2ba7083e31f3",
+    "verse_ref": "Mark 5:31",
+    "confidence": null,
+    "created_at": 1792623575969,
+    "original_segment_id": "b694febb-4248-4c52-94eb-f5068f98d6cd",
+    "source_hash": "cbc47abb4e0a861f246ad750070fcd4342d5a764d73002bcb5710e665ee7b14f",
+    "voice_version_id": "88e8eb71-6d59-4ba3-9e2b-b3e3ce544377",
+    "sha256": "670c81c448923ebe111424d062a1694bd7934b4861a8e28c1b2a8ce483210616"
+  },
+  "original": {
+    "id": "b694febb-4248-4c52-94eb-f5068f98d6cd",
+    "project_id": "0694bfbf-5595-4531-8215-6242d4aea927",
+    "layer": "original_reading",
+    "source_path": "source/hatam/audio/Hatam_had_LAI_NT_Non-Drama/B02___05_Markus______HADLAIN1DA.mp3",
+    "start_ms": 377950,
+    "end_ms": 387760,
+    "speaker_character_id": "9cbc4222-b194-4db4-baa9-2ba7083e31f3",
+    "verse_ref": "Mark 5:31",
+    "confidence": null,
+    "created_at": 1792604641232
+  },
+  "sourceTextEvidence": "assets/source-listening-review/0694bfbf-5595-4531-8215-6242d4aea927/manifest.json",
+  "rationale": "Second gated step: Dan judged Peter 3s promising through all three seconds. This continuous four-second window begins and ends inside measured pauses and contains unchanged existing Hatam speech. Five-second native request, exact four-second review, no inserted holds or timing shifts.",
+  "performancePrompt": "A steady photorealistic speaking portrait of the single Papuan man in the supplied approved canon headshot. Preserve his exact identity, age, short salt-and-pepper curls, broad face, gray beard, cream tunic, rust-red shoulder mantle and plain warm studio backdrop. Keep his face visible and the camera locked in a 16:9 landscape composition. He asks an earnest question with a mildly puzzled expression, without exaggerated surprise. His lips, jaw and facial movement follow the complete supplied audio performance at its original timing, including its pauses, pace and emphasis. Begin with the actual recording, without adding a preparatory performance or an invented delay. His head movement is subtle and natural; blinking and breathing are restrained. When the recorded speech ends, his lips settle naturally and remain at rest. The picture is plain photographic footage of this one person and the reference background. Keep every frame free of text, subtitles, captions, lettering, transcription, translations, titles, logos and graphic overlays. No additional people, dialogue, singing, music or invented vocal sounds.",
+  "shortExcerpt": {
+    "startSeconds": 1.2,
+    "durationSeconds": 4
+  },
+  "excerptBoundaryEvidence": {
+    "method": "Previously measured FFmpeg silencedetect, -34dB, minimum 45ms; waveform pauses, not a word-level transcript",
+    "startPauseSeconds": [
+      0.968277,
+      1.207324
+    ],
+    "endPauseSeconds": [
+      5.151746,
+      5.405079
+    ],
+    "selectedWindowSeconds": [
+      1.2,
+      5.2
+    ],
+    "fullLineTextIsContextOnly": true
+  }
+}

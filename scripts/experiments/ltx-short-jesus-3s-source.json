@@ -1,0 +1,82 @@
+{
+  "projectId": "0694bfbf-5595-4531-8215-6242d4aea927",
+  "passage": "Hatam Mark 5:19 — three-second diagnostic excerpt",
+  "characterName": "Jesus",
+  "textHatam": "E bi. Ma angkwei hanyen ba, apui sut notou Allah bibon mindur mem nani kin Nide ningon nggriu sut nati bak ade bat nya!",
+  "english": "And he did not permit him but said to him, “Go home to your friends and tell them how much the Lord has done for you, and how he has had mercy on you.”",
+  "portrait": {
+    "id": "29cb589b-49ad-4ce9-939b-371476e92bb8",
+    "character_version_id": "4e23012c-a74d-4e63-b4ae-a63d6847a02a",
+    "category": "headshot",
+    "path": "characters/jesus/lip_sync_closeup/close-up-neutral-v3.png",
+    "content_hash": "2DEF5561B44A38162A969D66CB802E65A234566E6127CD7DE7CDB286D98A54FB",
+    "imported_from": "Restored exactly from Dan-approved Jesus v3 reference package",
+    "created_at": 1790047688284,
+    "story_state": null,
+    "available_from_verse": null,
+    "available_through_verse": null,
+    "asset_role": "scene_reference",
+    "narrative_state": null,
+    "version_label": "v5",
+    "status": "approved",
+    "name": "Jesus",
+    "region": "Papuan",
+    "canon_status": "approved",
+    "sha256": "2def5561b44a38162a969d66cb802e65a234566e6127cd7de7cdb286d98a54fb"
+  },
+  "audio": {
+    "id": "c759d515-9c20-4b60-b10a-915883fed2d5",
+    "project_id": "0694bfbf-5595-4531-8215-6242d4aea927",
+    "layer": "composite_cast_master",
+    "source_path": "generated\\hatam\\mark-5\\composite_cast_master\\5eb5d8ac-9db6-4196-b158-45ba9aa0c535-mark-5-19-0b742284-f968-48ba-bb88-e6bc10ef0414-elevenlabs.mp3",
+    "start_ms": 0,
+    "end_ms": 7988,
+    "speaker_character_id": "b78bed54-1d53-4b9f-9070-549dddb71b19",
+    "verse_ref": "Mark 5:19",
+    "confidence": null,
+    "created_at": 1792623575969,
+    "original_segment_id": "5eb5d8ac-9db6-4196-b158-45ba9aa0c535",
+    "source_hash": "cbc47abb4e0a861f246ad750070fcd4342d5a764d73002bcb5710e665ee7b14f",
+    "voice_version_id": "4e23012c-a74d-4e63-b4ae-a63d6847a02a",
+    "sha256": "5b8d9880001118cbf53e578419b90a9987a7674e923298d319192dcec94e8e5d"
+  },
+  "original": {
+    "id": "5eb5d8ac-9db6-4196-b158-45ba9aa0c535",
+    "project_id": "0694bfbf-5595-4531-8215-6242d4aea927",
+    "layer": "original_reading",
+    "source_path": "source/hatam/audio/Hatam_had_LAI_NT_Non-Drama/B02___05_Markus______HADLAIN1DA.mp3",
+    "start_ms": 236470,
+    "end_ms": 244450,
+    "speaker_character_id": "b78bed54-1d53-4b9f-9070-549dddb71b19",
+    "verse_ref": "Mark 5:19",
+    "confidence": null,
+    "created_at": 1792604639258
+  },
+  "sourceTextEvidence": "assets/source-listening-review/0694bfbf-5595-4531-8215-6242d4aea927/manifest.json",
+  "rationale": "User requested unattended Jesus 3s and 4s tests. This continuous three-second window begins and ends in measured pauses at the end of the approved Mark 5:19 cast performance.",
+  "performancePrompt": "A steady photorealistic speaking portrait of the single Papuan man in the supplied approved canon headshot. Preserve his exact identity, age, shoulder-length dark hair, beard, cream tunic, indigo clothing bands and neutral light gray studio backdrop. Keep his face visible and the camera locked in a 16:9 landscape composition. He explains with calm compassion and a restrained, warm expression. His lips, jaw and facial movement follow the complete supplied audio performance at its original timing, including its pauses, pace and emphasis. Begin with the actual recording, without adding a preparatory performance or an invented delay. His head movement is subtle and natural; blinking and breathing are restrained. When the recorded speech ends, his lips settle naturally and remain at rest. The picture is plain photographic footage of this one person and the reference background. Keep every frame free of text, subtitles, captions, lettering, transcription, translations, titles, logos and graphic overlays. No additional people, dialogue, singing, music or invented vocal sounds.",
+  "shortExcerpt": {
+    "startSeconds": 4.987641723356009,
+    "durationSeconds": 3
+  },
+  "excerptBoundaryEvidence": {
+    "method": "Measured waveform pauses and complete retained cast-file endpoint",
+    "startPauseSeconds": [
+      4.84805,
+      5.068934
+    ],
+    "endPauseSeconds": [
+      7.963673,
+      7.987664399092971
+    ],
+    "selectedWindowSeconds": [
+      4.987641723356009,
+      7.987641723356009
+    ],
+    "sourceSampleRate": 44100,
+    "startSample": 219955,
+    "endSample": 352255,
+    "fullLineTextIsContextOnly": true,
+    "endpointNote": "Ends one PCM sample before the complete retained endpoint to stay within ffprobe rounded-duration bounds; both boundaries remain inside measured pauses."
+  }
+}

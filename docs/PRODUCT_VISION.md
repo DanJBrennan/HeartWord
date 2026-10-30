@@ -406,7 +406,20 @@ producer workflow remain the product; this is a provider choice rather than
 a reorganization around local hardware. Setup and limits are recorded in
 `docs/production/LTX_LOCAL.md`.
 
-Confirmed v1 providers (see `docs/ARCHITECTURE.md`'s Provider interface for
+Producer update (2026-10-30): prefer local LTX 2.5 Fast A2V for production
+lip-sync, using short speech sections (aim for three seconds, maximum four),
+each continuation starting from the previous clip's last retained frame.
+Preserve one continuous original audio performance and its source clock,
+remove generated text, and review the full line for sync, identity and joins.
+This follows Dan's accepted Peter frame-chain test; five-second speaking
+windows failed. The installed five-second generation minimum may contain only
+tail silence beyond the selected short section. This is a production preference,
+not blanket acceptance of future takes or a change to Scripture/canon/voice.
+The verified standalone procedure works; the normal automatic stage is still
+wired to Kling and does not yet implement chaining. See
+[procedure, evidence and implementation status](production/LTX_LIPSYNC_EXPERIMENT.md).
+
+Provider preferences and implementation status (see `docs/ARCHITECTURE.md`'s Provider interface for
 how these map onto the provider abstraction):
 
 - **Image generation:** Google Nano Banana for routine keyframes, Nano
@@ -439,14 +452,13 @@ how these map onto the provider abstraction):
   Hatam TTS model exists, so the actual heart-language audio a real
   narrator already recorded is what gets re-voiced, preserving Hatam
   pronunciation and performance rather than synthesizing it from text.
-- **Lip-sync:** Kling.ai's Avatar API, authenticated via `KLING_API_KEY_1`
-  (a separate credential/vendor from ElevenLabs and the Google-family
-  models above). Takes the composite-cast-master audio clip for a
-  character's line plus a scene keyframe -- close enough on the character
-  to show lip movement, but still framed with the scene's actual
-  background -- as the reference frame; the character's approved headshot
-  is also passed alongside the keyframe for added likeness/lip-sync
-  quality.
+- **Lip-sync preference (2026-10-30):** local LTX Fast A2V with three-/four-second
+  speaking sections and previous-last-frame initial-image conditioning, as above.
+  The existing automatic adapter is still Kling.ai's Avatar API, authenticated
+  via `KLING_API_KEY_1`; it remains available under existing production gates.
+  Its verified route takes the exact cast audio and one shot-appropriate image,
+  close enough to show mouth movement while preserving approved scene/canon
+  context. The production preference does not itself rewire that adapter.
 - Model choice must be visible and controllable inside HeartWord rather than
   buried in code.
 - HeartWord must monitor generation cost, especially keyframe and video

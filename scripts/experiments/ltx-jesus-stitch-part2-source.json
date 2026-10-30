@@ -1,0 +1,77 @@
+{
+  "projectId": "0694bfbf-5595-4531-8215-6242d4aea927",
+  "passage": "Hatam Mark 5:39 — continuation for two-clip stitch test",
+  "characterName": "Jesus",
+  "textHatam": "Nggon rino jihyet kui yam bijipim kep cem i? Lewo misop dini mai jit bi noro bong mai he!",
+  "english": "And when he had entered, he said to them, “Why are you making a commotion and weeping? The child is not dead but sleeping.”",
+  "portrait": {
+    "id": "29cb589b-49ad-4ce9-939b-371476e92bb8",
+    "character_version_id": "4e23012c-a74d-4e63-b4ae-a63d6847a02a",
+    "category": "headshot",
+    "path": "characters/jesus/lip_sync_closeup/close-up-neutral-v3.png",
+    "content_hash": "2DEF5561B44A38162A969D66CB802E65A234566E6127CD7DE7CDB286D98A54FB",
+    "imported_from": "Restored exactly from Dan-approved Jesus v3 reference package",
+    "created_at": 1790047688284,
+    "story_state": null,
+    "available_from_verse": null,
+    "available_through_verse": null,
+    "asset_role": "scene_reference",
+    "narrative_state": null,
+    "version_label": "v5",
+    "status": "approved",
+    "name": "Jesus",
+    "region": "Papuan",
+    "canon_status": "approved",
+    "sha256": "2def5561b44a38162a969d66cb802e65a234566e6127cd7de7cdb286d98a54fb"
+  },
+  "audio": {
+    "id": "a6a6c373-d6d1-48d0-9404-72dcc92f3857",
+    "project_id": "0694bfbf-5595-4531-8215-6242d4aea927",
+    "layer": "composite_cast_master",
+    "source_path": "generated\\hatam\\mark-5\\composite_cast_master\\e5e89837-1d08-4b84-84c8-4edcd851fd4f-mark-5-39-b4d76bb2-aef5-46f1-85a4-7cbe268ac5ab-elevenlabs.mp3",
+    "start_ms": 0,
+    "end_ms": 7848,
+    "speaker_character_id": "b78bed54-1d53-4b9f-9070-549dddb71b19",
+    "verse_ref": "Mark 5:39",
+    "confidence": null,
+    "created_at": 1792623575969,
+    "original_segment_id": "e5e89837-1d08-4b84-84c8-4edcd851fd4f",
+    "source_hash": "cbc47abb4e0a861f246ad750070fcd4342d5a764d73002bcb5710e665ee7b14f",
+    "voice_version_id": "4e23012c-a74d-4e63-b4ae-a63d6847a02a",
+    "sha256": "1aad726abf5ae31a16328baf106dcac9e9ea29b1b82d91bd0247796969d9375a"
+  },
+  "original": {
+    "id": "e5e89837-1d08-4b84-84c8-4edcd851fd4f",
+    "project_id": "0694bfbf-5595-4531-8215-6242d4aea927",
+    "layer": "original_reading",
+    "source_path": "source/hatam/audio/Hatam_had_LAI_NT_Non-Drama/B02___05_Markus______HADLAIN1DA.mp3",
+    "start_ms": 475990,
+    "end_ms": 483850,
+    "speaker_character_id": "b78bed54-1d53-4b9f-9070-549dddb71b19",
+    "verse_ref": "Mark 5:39",
+    "confidence": null,
+    "created_at": 1792604643920
+  },
+  "sourceTextEvidence": "assets/source-listening-review/0694bfbf-5595-4531-8215-6242d4aea927/manifest.json",
+  "rationale": "Continue the existing producer-reviewed first four-second Jesus take after a frame-aligned cut inside its mid-line pause. Preserve the complete remaining cast PCM with no gap, repetition, offset or speed change.",
+  "performancePrompt": "A steady photorealistic speaking portrait of the single Papuan man in the supplied approved canon headshot. Preserve his exact identity, age, shoulder-length dark hair, beard, cream tunic, indigo clothing bands and neutral light gray studio backdrop. Keep his face visible and the camera locked in a 16:9 landscape composition. He asks with quiet assurance and a restrained, serious expression, without amusement or exaggerated surprise. His lips, jaw and facial movement follow the complete supplied audio performance at its original timing, including its pauses, pace and emphasis. Begin with the actual recording, without adding a preparatory performance or an invented delay. His head movement is subtle and natural; blinking and breathing are restrained. When the recorded speech ends, his lips settle naturally and remain at rest. The picture is plain photographic footage of this one person and the reference background. Keep every frame free of text, subtitles, captions, lettering, transcription, translations, titles, logos and graphic overlays. No additional people, dialogue, singing, music or invented vocal sounds.",
+  "shortExcerpt": {
+    "startSeconds": 3.9166666666666665,
+    "durationSeconds": 3.9316780045351476
+  },
+  "excerptBoundaryEvidence": {
+    "method": "Measured waveform pause, exact PCM count and frame-aligned boundary",
+    "startPauseSeconds": [
+      3.660862,
+      4.150272
+    ],
+    "selectedWindowSeconds": [
+      3.9166666666666665,
+      7.848344671201814
+    ],
+    "sourceSampleRate": 44100,
+    "startSample": 172725,
+    "endSample": 346112,
+    "fullLineTextIsContextOnly": true
+  }
+}

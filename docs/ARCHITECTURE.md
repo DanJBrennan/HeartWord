@@ -298,6 +298,19 @@ next stage starts, so:
 
 ## Provider interface (v1 shape)
 
+Producer decision (2026-10-30): the preferred production lip-sync technique is
+local LTX Fast A2V with short speaking sections (aim three seconds, maximum
+four), chained from the preceding last retained frame, assembled over unchanged
+continuous original audio, with no text and full-line review. See
+[procedure, evidence and execution status](production/LTX_LIPSYNC_EXPERIMENT.md).
+This is part of the existing voice/lip-sync and assembly stages, not a new
+stage or a change to the approved source/canon/voice. The verified standalone
+runner supports it. The normal stage in `src/pipeline/voice-lipsync/index.ts`
+still instantiates `KlingLipSyncProvider`; automatic source-aware segmentation,
+frame carry-over and assembly remain unintegrated. The Kling implementation
+and interface descriptions below describe current wiring, not a contrary
+producer preference. Scene-motion provider selection does not switch lip-sync.
+
 October 14 extension: the actual `VideoGenerationOptions` also has optional
 `endFrame`. LTX uploads it as a final-frame anchor, preserving both inputs and
 the existing submission/candidate gates; cloud adapters reject unsupported
