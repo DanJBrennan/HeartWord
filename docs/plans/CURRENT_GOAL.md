@@ -1,5 +1,46 @@
 # Current Goal
 
+## R9 closing website-line removal (2026-10-31)
+
+Dan subsequently approved all three R9 versions and requested OneDrive copies
+for distribution to Ryan. The 720p, 540p and 360p MP4s were copied into
+`C:/Users/danbr/OneDrive/Documents/HeartWord Distribution/Hatam Mark 5 - Ryan - 2026-10-31/`
+and each copy's SHA-256 verified against its approved source. The exact approval,
+hashes and copy receipt are retained in
+`R9_PRODUCER_APPROVAL_AND_ONEDRIVE_COPY.json` beside the delivery report, and a
+verification record accompanies the copies. This supersedes the earlier R9
+producer-approval-pending state for these versions only. Native field approval
+is not inferred; no message, public publication or shared link was created.
+Local OneDrive copies are verified; cloud synchronization has not been verified.
+
+Dan has deferred a new ministry name pending partnership discussions and explicitly
+requested removal of only `heartword.ai` from this Hatam Mark 5 closing scroll.
+The revised candidate keeps the seven other credit lines, their original pixel
+positions, background, scroll speed and 14-second duration. This is a chapter-only
+override of the older website credit, not an adopted rebrand or new domain claim.
+
+`Markus5_Hatam_no_website_r9_720p.mp4` is under the same revision export directory
+as R8. All 13,402 delivery frames before the replacement are exactly R8; all
+audio packet data/timestamps and the full presentation clock are exactly R8.
+The 13,737-frame, 572.38-second film fully decodes. The 360p viewing copy is
+49,405,334 bytes. Dan also requested a 540p delivery: 960x540, 123,226,713
+bytes, with the same 13,737 frames, duration, clock and bit-identical AAC packets
+as the 720p revision; full decode passed. Source/canon rows, live database, approved master and all prior
+candidate/archive evidence remain intact. The producer-retained R5 bridge issue
+remains recorded and unresolved. No new provider calls or API fees.
+
+Existing editorial-media selection, native render/finishing records and the
+portable source recipe carry the edit in the isolated revision workspace. A
+fresh SQLite snapshot reopens with 112 picture placements, 146 source intervals,
+13 cue bindings, the revised closing and no programme issues. R9 scripts, graphics,
+text, checks and database snapshot are retained under
+`assets/preparation/sequence-score-revision-20261030/credits-r9/`.
+The existing self-contained R8 archive is unchanged; R9 is retained in the working
+revision and snapshot, with no new self-contained archive or clean-machine/full
+cold-render claim. Repository check outcomes are recorded in `R9_REPORT.txt`.
+Separate Goal Guardian review confirms the requested scope and editable chapter
+workflow, without introducing another brand, new stage, or release approval.
+
 ## Recorded: preferred production lip-sync technique (2026-10-30)
 
 After watching the Peter last-frame continuity test, Dan said "It looks good"
