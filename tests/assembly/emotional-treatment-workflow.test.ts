@@ -1,3 +1,4 @@
+import { reviewedEditorialCut as renderEditorialCut } from "../helpers/acceptance-evidence.js";
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -7,7 +8,7 @@ import { expect, it } from "vitest";
 import type { CrewBrief, CrewContribution } from "../../src/pipeline/creative-direction/crew-types.js";
 import { loadCrewBrief } from "../../src/pipeline/creative-direction/crew-context.js";
 import { runProductionCrew, requireCurrentPlan, directionsFromRun } from "../../src/pipeline/creative-direction/crew-store.js";
-import { renderEditorialCut } from "../../src/pipeline/assembly/render-editorial-cut.js";
+
 import { EDITORIAL_CHECKS } from "../../src/pipeline/qc/editorial-review.js";
 import { withFixtureTreatment } from "../helpers/crew-treatment.js";
 

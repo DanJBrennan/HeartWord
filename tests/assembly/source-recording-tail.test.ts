@@ -1,3 +1,4 @@
+import { reviewedEditorialCut as renderEditorialCut } from "../helpers/acceptance-evidence.js";
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
@@ -6,7 +7,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { crewBriefHash, loadCrewBrief } from "../../src/pipeline/creative-direction/crew-context.js";
-import { renderEditorialCut } from "../../src/pipeline/assembly/render-editorial-cut.js";
+
 import { fixtureWave } from "../helpers/pcm-wave.js";
 import { readProgrammePreview } from "../../src/server/producer-preview.js";
 import { pictureTimeline } from "../../src/web/producer-timeline.js";

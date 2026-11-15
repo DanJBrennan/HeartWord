@@ -16,7 +16,7 @@ export type PostRenderScorecard = {
   audio_sample_rate_hz: number;
 };
 
-export function postRenderPromotionHolds(report: PostRenderScorecard): string[] {
+export function postRenderPromotionHolds(report: PostRenderScorecard, scope = {ambienceFloor:true,breathLevels:true}): string[] {
   const holds: string[] = [];
   if (report.audio_sample_rate_hz !== 48000) holds.push(`Delivery audio is ${report.audio_sample_rate_hz} Hz; 48 kHz is required.`);
   if (report.flashes_le5frames.length) holds.push(`${report.flashes_le5frames.length} discontinuous flash candidate(s) require review.`);
@@ -25,10 +25,10 @@ export function postRenderPromotionHolds(report: PostRenderScorecard): string[] 
   if (report.unintended_sub_1p5s_shots.length) holds.push(`${report.unintended_sub_1p5s_shots.length} unintended sub-1.5-second picture insert(s) require review.`);
   if (report.within_scene_large_colour_jumps.length) holds.push(`${report.within_scene_large_colour_jumps.length} within-scene colour discontinuity candidate(s) require review.`);
   if (report.regression_failures.length) holds.push(`${report.regression_failures.length} previously repaired defect(s) recurred in this render.`);
-  if (report.minimum_minute_p10_db === null || report.minimum_minute_p10_db < -46) {
+  if (scope.ambienceFloor && (report.minimum_minute_p10_db === null || report.minimum_minute_p10_db < -46)) {
     holds.push(`Ambience floor's quietest program minute is ${report.minimum_minute_p10_db ?? "unmeasured"} dB; -46 dB or louder is required.`);
   }
   const outside = report.breath_levels_db.filter(level => level < -42 || level > -30);
-  if (outside.length) holds.push(`${outside.length} editorial breath ambience level(s) fall outside -42 to -30 dB.`);
+  if (scope.breathLevels && outside.length) holds.push(`${outside.length} editorial breath ambience level(s) fall outside -42 to -30 dB.`);
   return holds;
 }

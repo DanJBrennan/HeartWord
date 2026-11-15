@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
@@ -11,3 +12,8 @@ describe("lip-sync candidate selection",()=>it.each([undefined,{reviewer:"Synthe
     expect(db.prepare("SELECT source FROM review_notes ORDER BY created_at DESC LIMIT 1").get()!.source).toBe(selection?"qc":"human");
   } finally {db.close();}
 }));
+
+// Placeholder media in this legacy stage test cannot establish visual QC.
+// Actual acceptance gates run without mocks in tests/qc/acceptance-evidence.test.ts.
+vi.mock("../../src/pipeline/qc/acceptance-evidence.js",async original=>({...await original<object>(),
+  attemptAcceptanceTarget:()=>({key:"synthetic-stage-fixture",contextHash:"fixture"}),assertAcceptanceEvidence:vi.fn(()=>({checks:[]}))}));

@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
@@ -32,3 +33,8 @@ it("selects an approved speaking beat at its own offsets without occupying the s
     expect(db.prepare("SELECT COUNT(*) AS n FROM clips WHERE shot_id='shot'").get()).toMatchObject({ n: 2 });
   } finally { db.close(); }
 });
+
+// Placeholder media in this legacy stage test cannot establish visual QC.
+// Actual acceptance gates run without mocks in tests/qc/acceptance-evidence.test.ts.
+vi.mock("../../src/pipeline/qc/acceptance-evidence.js",async original=>({...await original<object>(),
+  attemptAcceptanceTarget:()=>({key:"synthetic-stage-fixture",contextHash:"fixture"}),assertAcceptanceEvidence:vi.fn(()=>({checks:[]}))}));

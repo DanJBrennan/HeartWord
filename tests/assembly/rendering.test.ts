@@ -1,3 +1,4 @@
+import { reviewedEditorialCut as renderEditorialCut, reviewedProducerCut as renderProducerReviewedCut, reviewedFinishing as applyFinishing, reviewedProducerFinishing as applyProducerReviewedFinishing } from "../helpers/acceptance-evidence.js";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
@@ -5,8 +6,8 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { expect, it } from "vitest";
 import { crewBriefHash, digest, loadCrewBrief } from "../../src/pipeline/creative-direction/crew-context.js";
-import { renderEditorialCut, renderProducerReviewedCut } from "../../src/pipeline/assembly/render-editorial-cut.js";
-import { applyFinishing, applyProducerReviewedFinishing, mediaDurationMs } from "../../src/pipeline/assembly/finishing.js";
+
+import { mediaDurationMs } from "../../src/pipeline/assembly/finishing.js";
 import type { CrewResult } from "../../src/pipeline/creative-direction/crew-types.js";
 import { exportChapterPackage, restoreChapterPackage, verifyChapterPackage } from "../../src/pipeline/assembly/chapter-package.js";
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");

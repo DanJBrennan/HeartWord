@@ -1,3 +1,5 @@
+import { cutAcceptanceTarget } from "../qc/acceptance-evidence.js";
+import { pendingEncodedCandidate, retainEncodedCandidate, assertEncodedAcceptance } from "../qc/encoded-acceptance.js";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -80,6 +82,29 @@ export function renderProducerReviewedCut(db: DatabaseSync, dataDir: string, pro
 function executeEditorialCut(db: DatabaseSync, dataDir: string, projectId: string, brief: CrewBrief,
   cut: ReturnType<typeof planEditorialCut>, authority: { idempotencyKey: string; runId?: string;
     producerReview?: ProducerReviewedCut & { reviewSha256: string } }): { path: string; renderId: string } {
+  // Resolve exact inputs before either encoding or resuming a held output.
+  for(const edit of cut.timeline)if(edit.shotId){
+    const clip=resolveEditorialClip(brief.shots.find(s=>s.id===edit.shotId),edit.clipId)!;
+    edit.path=clip.path;edit.sha256=digest(readFileSync(productionAssetPath(dataDir,clip.path)));
+  }
+  const promote=(candidate:{path:string;renderId:string;duration:number;auditedAudioMap:unknown[]})=>{
+    const {path,renderId,duration,auditedAudioMap}=candidate;
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      db.prepare("INSERT INTO chapter_renders (id,project_id,result_asset_path,total_duration_ms,shot_count,created_at) VALUES (?,?,?,?,?,?)").run(renderId, projectId, path, duration, cut.timeline.length, Date.now());
+      db.prepare("INSERT INTO chapter_render_manifests (render_id,timeline_json,source_audio_json) VALUES (?,?,?)").run(renderId, JSON.stringify(cut.timeline), JSON.stringify(auditedAudioMap));
+      const sequence = Number(db.prepare("SELECT COALESCE(MAX(sequence),0)+1 AS n FROM edit_commands WHERE project_id=?").get(projectId)!.n);
+      db.prepare("INSERT INTO edit_commands (id,project_id,sequence,command_type,payload,idempotency_key,applied_at) VALUES (?,?,?,'render_editorial_cut',?,?,?)")
+        .run(randomUUID(), projectId, sequence, JSON.stringify({ path, renderId, ...(authority.runId ? { runId: authority.runId } : { producerReview: { ...authority.producerReview!, outputSha256: digest(readFileSync(productionAssetPath(dataDir,path))) } }), cut }), authority.idempotencyKey, Date.now());
+      db.exec("COMMIT");
+    } catch (error) { db.exec("ROLLBACK"); throw error; }
+    return { path, renderId };
+  };
+  const pending=pendingEncodedCandidate<{path:string;renderId:string;duration:number;auditedAudioMap:unknown[]}>(db,projectId,authority.idempotencyKey);
+  if(pending){
+    const current=cutAcceptanceTarget(db,dataDir,projectId,authority.idempotencyKey,pending.target.path,brief,cut.timeline,cut.durationMs,cut.audioMap);
+    assertEncodedAcceptance(db,dataDir,projectId,current,pending);return promote(pending.metadata);
+  }
   const directory = mkdtempSync(join(tmpdir(), "heartword-edit-"));
   const runFfmpeg = (args: string[]) => execFileSync("ffmpeg", ["-v", "error", "-n", ...args], { stdio: ["ignore", "ignore", "pipe"] });
   try {
@@ -183,9 +208,6 @@ function executeEditorialCut(db: DatabaseSync, dataDir: string, projectId: strin
     if (authority.producerReview && crewBriefHash(loadCrewBrief(db, dataDir, projectId, "editing"), "editing") !== authority.producerReview.briefHash) {
       throw new Error("Editing inputs changed while rendering; the unpromoted output is retained for review.");
     }
-    db.exec("BEGIN IMMEDIATE");
-    try {
-      db.prepare("INSERT INTO chapter_renders (id,project_id,result_asset_path,total_duration_ms,shot_count,created_at) VALUES (?,?,?,?,?,?)").run(renderId, projectId, path, duration, cut.timeline.length, Date.now());
       const sourceHashes = new Map<string, string>();
       const auditedAudioMap = cut.audioMap.map((placement, index) => {
         const segment = brief.audio[index]!;
@@ -196,13 +218,10 @@ function executeEditorialCut(db: DatabaseSync, dataDir: string, projectId: strin
             originalInput:{path:resolvedAudio[index]!.path,sourceStartMs:resolvedAudio[index]!.sourceStartMs,sourceEndMs:resolvedAudio[index]!.sourceEndMs}} } : {}),
           ...(segment.provenance ? { provenance: segment.provenance, sourcePath: segment.path, sourceSha256: sourceHashes.get(segment.path)! } : {}) };
       });
-      db.prepare("INSERT INTO chapter_render_manifests (render_id,timeline_json,source_audio_json) VALUES (?,?,?)").run(renderId, JSON.stringify(cut.timeline), JSON.stringify(auditedAudioMap));
-      const sequence = Number(db.prepare("SELECT COALESCE(MAX(sequence),0)+1 AS n FROM edit_commands WHERE project_id=?").get(projectId)!.n);
-      db.prepare("INSERT INTO edit_commands (id,project_id,sequence,command_type,payload,idempotency_key,applied_at) VALUES (?,?,?,'render_editorial_cut',?,?,?)")
-        .run(randomUUID(), projectId, sequence, JSON.stringify({ path, renderId, ...(authority.runId ? { runId: authority.runId } : { producerReview: { ...authority.producerReview!, outputSha256: digest(readFileSync(output)) } }), cut }), authority.idempotencyKey, Date.now());
-      db.exec("COMMIT");
-    } catch (error) { db.exec("ROLLBACK"); throw error; }
-    return { path, renderId };
+    const target=cutAcceptanceTarget(db,dataDir,projectId,authority.idempotencyKey,path,brief,cut.timeline,cut.durationMs,cut.audioMap);
+    const candidate=retainEncodedCandidate(db,dataDir,projectId,target,{path,renderId,duration,auditedAudioMap});
+    assertEncodedAcceptance(db,dataDir,projectId,target,candidate);
+    return promote(candidate.metadata);
   } finally {
     if (relative(tmpdir(), directory).startsWith("heartword-edit-")) rmSync(directory, { recursive: true, force: true });
   }

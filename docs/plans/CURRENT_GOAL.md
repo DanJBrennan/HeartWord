@@ -1,3 +1,28 @@
+# Current goal: Mark6 QC recovery gates; production remains held
+
+Dan authorized only the three-unit QC plan in an isolated worktree from82850d5.
+Both forensic checkpoints and all production evidence remain preserved. Approved
+Mark5 R9 delivery and historical reopen behavior remain unchanged. No production
+regeneration, selection, migration, model/review request or publishing is authorized
+by this implementation. Stop after the rejection/positive-control report.
+
+The three implementation units are complete: shared acceptance evidence at all
+promotion routes and on encoded derivatives; source-boundary/whole-performance
+obligations independent of continuous transport; and retained action/canon/treatment
+obligations across replacements and the actual cut. Final validation and the
+separate Goal Guardian review are recorded in
+[the QC recovery report](completed/mark6-three-unit-qc-recovery-20261114.md).
+
+The two bad speaking outputs, missing banquet handoff and unverified identity
+remain held for new promotion. The three Hatam boundaries at8:05.600,9:28.600,
+and9:36.600 remain unverified: no native reviewer is available, and no replacement
+endpoint has been invented. Existing Mark6 film stays forensic evidence.
+
+The November12 delivery/readiness statements below are preserved historical
+context; they do not supersede the current recovery hold.
+
+---
+
 # Current goal: Hatam Mark 6 completed for review
 
 The complete film and portable editable project are ready for Dan's review.

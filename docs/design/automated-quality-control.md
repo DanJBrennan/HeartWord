@@ -1,5 +1,68 @@
 # Automated Quality Control
 
+November14 recovery gates (isolated branch from82850d5): NEW media promotions
+require structured actual-media assessments in the existing `review_notes`,
+kind `media_acceptance_v1`. Free-text approvals, a correct cast ID, accepted
+planning, and a craft continue-best-acceptable verdict cannot supply missing
+hard evidence. Historical saved selections/renders reopen through their existing
+idempotent paths; this does not retroactively reapprove them or approve derivatives.
+
+`qc/acceptance-evidence.ts` builds the current target and validates reviews.
+Context binds candidate request, selected duration/frame range/crop, source
+binding/file hash, current canon/version/reference bytes and approved plan.
+Existing LTX line receipts additionally bind native/source/submitted-audio/carry
+hashes and continuous sample/frame partitions. These are transport checks, not
+mouth-motion or linguistic judgments. A review names its actual reviewer, exact
+output hash, native input geometry/rate, audio inclusion, each obligation's text
+hash, status, evidence and observed intervals. Missing/stale/failed/unverified
+hard checks hold. Latest scoped evidence controls; an older clear cannot mask a
+newer hold. Speaking review requires native-rate audiovisual evidence over the
+complete selected performance, including pauses and joins.
+
+Ordinary/covered lip-sync, final motion and exact frame/crop selection apply the
+gate before a NEW clip is accepted. Editorial and finishing execution share
+`qc/encoded-acceptance.ts` for ordinary and producer-reviewed paths. An encoded
+candidate is retained as `encoded_candidate_v1` in the same QC notes, with its
+path/hash and original promotion metadata. It stays out of `chapter_renders`
+until its OWN bytes pass the flash guard, required observations and applicable
+post-render scorecard. Retry after review checks the retained bytes and current
+inputs, then promotes that output without another encoding/provider call.
+Changed input/output requires a separately identified review; history remains.
+Delivery sample rate is measured from that file. The legacy ambience-floor and
+breath thresholds remain scoped off in this shared path; intentional silence
+and the approved mix are preserved. Default legacy scorecard behavior is unchanged.
+
+Source ownership obligations are enumerated from unmerged source segments by
+`sourceTurnBoundaries`, independently of continuous-master transport grouping.
+Each transition requires its own observed mapped boundary interval. Complete
+sample transport and a renewal-tail heuristic cannot clear unknown word ownership.
+Planned shot actions remain required even when that shot disappears from a cut.
+Current visible cast recognition/body/wardrobe and the existing approved
+emotional treatment receive distinct observations. Treatment checks require an
+assessment of the actual effect; weak subjective impact remains a craft finding,
+separate from a missing required action/source/canon. No new emotion quota,
+visible-shot duration cap, translation, canon policy or routine chapter signature
+is introduced. Intentional listener coverage does not invent an on-screen speaker.
+
+Operational review handoff uses `attemptAcceptanceTarget` or the retained
+encoded candidate's `target`, then `recordAcceptanceReview` after actual review.
+Range times are selection-local milliseconds; frame bounds/crop are additionally
+pinned in the target. `requirementHash` is `evidenceHash(requirement.text)`.
+Boundary observations use mapped chapter time; whole-cut reviews use cut time.
+No helper fabricates clear results in production. Existing visual/linguistic
+review must supply honest observations; this change adds no automatic face,
+Hatam phoneme or emotional-effect detector and no paid review call. Until that
+evidence exists, new promotions hold. Tests' synthetic clear reviews are confined
+to test helpers and do not certify the retained films.
+
+The bounded read-only replay is `scripts/replay-mark6-qc.ts`: pass the frozen
+audit directory, data directory, frozen finishing brief and a new external JSON
+report path. It opens only the snapshot database read-only, hashes/inspects
+retained files, checks the final encoded flash, and verifies Mark5 delivery hashes.
+It never selects, migrates, generates or repairs production media. See the
+completed recovery report under `docs/plans/completed/` for evidence and limits.
+
+
 November11 producer decision: one specific failed Mark6 AV request may consume
 its entire $0.82 reserve after Dan explicitly authorizes that accounting. Its
 original error, unknown usage and unresolved provider charge remain unchanged.

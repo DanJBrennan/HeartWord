@@ -1,3 +1,4 @@
+import { reviewedEditorialCut as renderEditorialCut } from "../helpers/acceptance-evidence.js";
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -14,7 +15,7 @@ import { bindShotUtterance } from "../../src/pipeline/voice-lipsync/utterance-bi
 import { resolveSpeechRunCastAudio } from "../../src/pipeline/voice-lipsync/speech-run-audio.js";
 import { runVoicing } from "../../src/pipeline/voicing/index.js";
 import { crewBriefHash, loadCrewBrief } from "../../src/pipeline/creative-direction/crew-context.js";
-import { renderEditorialCut } from "../../src/pipeline/assembly/render-editorial-cut.js";
+
 import type { CrewResult } from "../../src/pipeline/creative-direction/crew-types.js";
 function docx(text: string) {
   const name = Buffer.from("word/document.xml"), bytes = Buffer.from(`<w:document><w:p><w:r><w:t>${text}</w:t></w:r></w:p></w:document>`);

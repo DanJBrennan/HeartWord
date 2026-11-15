@@ -110,3 +110,8 @@ it("takes a fresh reviewed chapter through real common stages without provider c
   const accepted=db.prepare("SELECT COUNT(*) n FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE ga.operation='lip_sync' AND ga.status='accepted'").get() as {n:number}; expect(accepted.n).toBe(2);
   expect((await runPipeline("fresh-full")).results.every(r=>r.reasoning.startsWith("Reused valid"))).toBe(true);
 },30000);
+
+// Placeholder media in this legacy stage test cannot establish visual QC.
+// Actual acceptance gates run without mocks in tests/qc/acceptance-evidence.test.ts.
+vi.mock("../../src/pipeline/qc/acceptance-evidence.js",async original=>({...await original<object>(),
+  attemptAcceptanceTarget:()=>({key:"synthetic-stage-fixture",contextHash:"fixture"}),assertAcceptanceEvidence:vi.fn(()=>({checks:[]}))}));

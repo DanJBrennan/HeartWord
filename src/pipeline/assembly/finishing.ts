@@ -1,3 +1,5 @@
+import { cutAcceptanceTarget } from "../qc/acceptance-evidence.js";
+import { pendingEncodedCandidate, retainEncodedCandidate, assertEncodedAcceptance } from "../qc/encoded-acceptance.js";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -201,6 +203,27 @@ export function applyProducerReviewedFinishing(db: DatabaseSync, dataDir: string
 function executeFinishing(db: DatabaseSync, dataDir: string, projectId: string, brief: CrewBrief,
   result: CrewResult, authority:{idempotencyKey:string;runId?:string;producerReview?:ProducerReviewedFinishing & {reviewSha256:string}}):{path:string;renderId:string}{
   const recipe = finishingRecipe(brief, result);
+  const finishTarget=(path:string)=>{
+    const target=cutAcceptanceTarget(db,dataDir,projectId,authority.idempotencyKey,path,brief,brief.render!.timeline,brief.render!.durationMs);
+    target.contextHash=digest(JSON.stringify({cut:target.contextHash,recipe,parent:brief.render!.sha256,base:brief.render!.finishing?.baseSha256??null}));
+    return target;
+  };
+  const promote=(candidate:{path:string;renderId:string;duration:number;payload:Record<string,unknown>})=>{
+    const {path,renderId,duration,payload}=candidate;
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.prepare("INSERT INTO chapter_renders (id, project_id, result_asset_path, total_duration_ms, shot_count, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+      .run(renderId, projectId, path, duration, brief.shots.length, Date.now());
+    db.prepare("INSERT INTO chapter_render_manifests (render_id, timeline_json, source_audio_json) SELECT ?, timeline_json, source_audio_json FROM chapter_render_manifests WHERE render_id = ?").run(renderId, brief.render!.id);
+    const sequence = Number(db.prepare("SELECT COALESCE(MAX(sequence), 0) + 1 AS n FROM edit_commands WHERE project_id = ?").get(projectId)!.n);
+    db.prepare("INSERT INTO edit_commands (id, project_id, sequence, command_type, payload, idempotency_key, applied_at) VALUES (?, ?, ?, 'apply_finishing', ?, ?, ?)")
+      .run(randomUUID(), projectId, sequence, JSON.stringify(payload), authority.idempotencyKey, Date.now());
+    db.exec("COMMIT");
+  } catch (error) { db.exec("ROLLBACK"); throw error; }
+  return { path, renderId };
+  };
+  const pending=pendingEncodedCandidate<{path:string;renderId:string;duration:number;payload:Record<string,unknown>}>(db,projectId,authority.idempotencyKey);
+  if(pending){assertEncodedAcceptance(db,dataDir,projectId,finishTarget(pending.target.path),pending);return promote(pending.metadata);}
   const renderId = randomUUID();
   const path = `generated/chapter/${projectId}/${renderId}.mp4`;
   const out = productionAssetPath(dataDir, path);
@@ -213,15 +236,8 @@ function executeFinishing(db: DatabaseSync, dataDir: string, projectId: string, 
   if (Math.abs(duration - brief.render!.durationMs) > 100) throw new Error("Finishing changed the cut duration; output was not promoted.");
   if(authority.producerReview && crewBriefHash(loadCrewBrief(db,dataDir,projectId,"finishing"),"finishing")!==authority.producerReview.briefHash) throw new Error("Finishing inputs changed while rendering; output was not promoted.");
   const payload = { path, renderId, parentRenderId: brief.render!.id, baseRenderId: brief.render!.finishing?.baseRenderId ?? brief.render!.id, ...(authority.runId ? {runId:authority.runId} : {}), ...(authority.producerReview ? {producerReview:authority.producerReview} : {}), recipe, sha256: digest(readFileSync(out)) };
-  db.exec("BEGIN IMMEDIATE");
-  try {
-    db.prepare("INSERT INTO chapter_renders (id, project_id, result_asset_path, total_duration_ms, shot_count, created_at) VALUES (?, ?, ?, ?, ?, ?)")
-      .run(renderId, projectId, path, duration, brief.shots.length, Date.now());
-    db.prepare("INSERT INTO chapter_render_manifests (render_id, timeline_json, source_audio_json) SELECT ?, timeline_json, source_audio_json FROM chapter_render_manifests WHERE render_id = ?").run(renderId, brief.render!.id);
-    const sequence = Number(db.prepare("SELECT COALESCE(MAX(sequence), 0) + 1 AS n FROM edit_commands WHERE project_id = ?").get(projectId)!.n);
-    db.prepare("INSERT INTO edit_commands (id, project_id, sequence, command_type, payload, idempotency_key, applied_at) VALUES (?, ?, ?, 'apply_finishing', ?, ?, ?)")
-      .run(randomUUID(), projectId, sequence, JSON.stringify(payload), authority.idempotencyKey, Date.now());
-    db.exec("COMMIT");
-  } catch (error) { db.exec("ROLLBACK"); throw error; }
-  return { path, renderId };
+  const target=finishTarget(path);
+  const candidate=retainEncodedCandidate(db,dataDir,projectId,target,{path,renderId,duration,payload});
+  assertEncodedAcceptance(db,dataDir,projectId,target,candidate);
+  return promote(candidate.metadata);
 }

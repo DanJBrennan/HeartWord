@@ -1,3 +1,4 @@
+import { assertAcceptanceEvidence, attemptAcceptanceTarget } from "../qc/acceptance-evidence.js";
 import { randomUUID, createHash } from "node:crypto";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
@@ -206,6 +207,8 @@ export function acceptFinalVideoCandidate(db:DatabaseSync, projectId:string, att
   const row=db.prepare(`SELECT ga.shot_id,ga.status,ga.result_asset_path FROM generation_attempts ga JOIN shots sh ON sh.id=ga.shot_id JOIN scenes s ON s.id=sh.scene_id WHERE ga.id=? AND s.project_id=? AND ga.operation='generate_final_video' AND sh.needs_lip_sync=0`).get(attemptId,projectId) as {shot_id:string;status:string;result_asset_path:string|null}|undefined;
   if (!row?.result_asset_path) throw new Error("Final-video candidate is not retained in this project.");
   const old=db.prepare("SELECT id FROM clips WHERE generation_attempt_id=?").get(attemptId) as {id:string}|undefined; if(old)return {clipId:old.id,reused:true};
+  validateAttemptRevision(db,getDataDir(),projectId,attemptId);
+  assertAcceptanceEvidence(db,getDataDir(),projectId,attemptAcceptanceTarget(db,getDataDir(),projectId,attemptId,durationMs));
   if(row.status!=="hold_for_review"&&row.status!=="accepted")throw new Error("Only a held final-video candidate can be accepted.");
   const id=randomUUID(); db.exec("BEGIN IMMEDIATE"); try { validateAttemptRevision(db,getDataDir(),projectId,attemptId); db.prepare("UPDATE generation_attempts SET status='accepted' WHERE id=? AND status='hold_for_review'").run(attemptId); db.prepare("INSERT INTO clips (id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at) VALUES (?,?,?,0,?,?)").run(id,row.shot_id,attemptId,durationMs,Date.now()); db.exec("COMMIT"); }catch(e){db.exec("ROLLBACK");throw e;} return {clipId:id,reused:false};
 }
@@ -226,12 +229,14 @@ export function selectFinalVideoRange(db:DatabaseSync,projectId:string,parentId:
   if(!row?.result_asset_path||!["hold_for_review","accepted"].includes(row.status))throw Error("Retained current non-speaking final candidate required.");
   validateAttemptRevision(db,dataDir,projectId,parentId);const auth=productionAuthorization(db,dataDir,projectId);
   const source=productionAssetPath(dataDir,row.result_asset_path),hash=(p:string)=>createHash("sha256").update(readFileSync(p)).digest("hex"),sourceSha256=hash(source),key=`final-video-range:${parentId}:${range.startFrame}:${range.endFrameExclusive}${crop?`:crop:${crop.x}:${crop.y}:${crop.width}:${crop.height}`:""}`;
-  const old=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND idempotency_key=?").get(projectId,key);
-  if(old){const saved=JSON.parse(String(old.payload));validateAttemptRevision(db,dataDir,projectId,saved.attemptId);if(saved.sourceSha256!==sourceSha256||hash(productionAssetPath(dataDir,saved.path))!==saved.sha256||!db.prepare("SELECT id FROM clips WHERE id=? AND generation_attempt_id=?").get(saved.clipId,saved.attemptId))throw Error("Retained range media or lineage changed.");return {...saved,reused:true};}
   const probe=(p:string)=>JSON.parse(execFileSync("ffprobe",["-v","error","-count_frames","-show_streams","-of","json",p],{encoding:"utf8",windowsHide:true}));
   const original=probe(source).streams.find((s:any)=>s.codec_type==="video"),parts=String(original?.avg_frame_rate).split("/").map(Number),fps=parts[0]!/parts[1]!;
   if(!original||!Number.isFinite(fps)||fps<=0||!Number.isSafeInteger(Number(original.nb_read_frames))||range.endFrameExclusive>Number(original.nb_read_frames))throw Error("Frame range exceeds actual decoded source.");
   if(crop&&(crop.x+crop.width>original.width||crop.y+crop.height>original.height))throw Error("Reviewed crop exceeds actual decoded source geometry.");
+  const reviewRate=JSON.parse(execFileSync("ffprobe",["-v","error","-show_streams","-of","json",source],{encoding:"utf8",windowsHide:true})).streams.find((s:any)=>s.codec_type==="video").r_frame_rate.split("/").map(Number);
+  const old=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND idempotency_key=?").get(projectId,key);
+  if(old){const saved=JSON.parse(String(old.payload));validateAttemptRevision(db,dataDir,projectId,saved.attemptId);if(saved.sourceSha256!==sourceSha256||hash(productionAssetPath(dataDir,saved.path))!==saved.sha256||!db.prepare("SELECT id FROM clips WHERE id=? AND generation_attempt_id=?").get(saved.clipId,saved.attemptId))throw Error("Retained range media or lineage changed.");return {...saved,reused:true};}
+  assertAcceptanceEvidence(db,dataDir,projectId,attemptAcceptanceTarget(db,dataDir,projectId,parentId,(range.endFrameExclusive-range.startFrame)*1000/(reviewRate[0]/reviewRate[1]),selection));
   const id=randomUUID(),path=join("generated","video-ranges",`${id}.mp4`),output=productionAssetPath(dataDir,path),provenancePath=output+".json",count=range.endFrameExclusive-range.startFrame,filter=`trim=start_frame=${range.startFrame}:end_frame=${range.endFrameExclusive},setpts=PTS-STARTPTS${crop?`,crop=${crop.width}:${crop.height}:${crop.x}:${crop.y}`:""}`;
   mkdirSync(join(dataDir,"assets","generated","video-ranges"),{recursive:true});
   execFileSync("ffmpeg",["-v","error","-nostdin","-n","-i",source,"-map","0:v:0","-an","-vf",filter,"-fps_mode","passthrough","-c:v","libx264","-qp","0",output],{windowsHide:true,stdio:"pipe"});

@@ -18,6 +18,17 @@ export interface ContinuousAudioGroup extends Omit<ResolvedAudioPlacement, "segm
   segmentIds: string[];
 }
 
+/** Linguistic/voice obligations survive transport grouping. No guessed safe
+ * edge and no mandatory silence: an unresolved boundary remains a QC hold. */
+export function sourceTurnBoundaries(source: Array<{id:string;startMs:number;endMs:number;speakerId:string|null}>) {
+  return source.slice(1).flatMap((next,index)=>{
+    const previous=source[index]!;
+    return previous.speakerId!==next.speakerId || previous.endMs!==next.startMs
+      ? [{id:`boundary:${previous.id}:${next.id}`,sourceMs:previous.endMs,nextSourceMs:next.startMs,
+          beforeSegmentId:previous.id,afterSegmentId:next.id,beforeSpeaker:previous.speakerId,afterSpeaker:next.speakerId}]:[];
+  });
+}
+
 /**
  * Makes the source-speaker rule explicit at the assembly boundary.  A camera
  * cut is never an audio handoff: an attributed source interval always gets

@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {afterEach,describe,it,expect,vi} from 'vitest';
-import {selectFinalVideoRange} from '../../src/pipeline/media-generation/final-video.js';
+import {reviewedRange as selectFinalVideoRange} from "../helpers/acceptance-evidence.js";
 import {assembleSingleShot} from '../../src/pipeline/assembly/assemble-single-shot.js';
 import {exportChapterPackage,restoreChapterPackage} from '../../src/pipeline/assembly/chapter-package.js';
 import {validateAttemptRevision} from '../../src/pipeline/creative-direction/crew-store.js';

@@ -146,3 +146,8 @@ describe("additional non-speaking source coverage", () => {
     } finally { db.close(); }
   });
 });
+
+// Placeholder media in this legacy stage test cannot establish visual QC.
+// Actual acceptance gates run without mocks in tests/qc/acceptance-evidence.test.ts.
+vi.mock("../../src/pipeline/qc/acceptance-evidence.js",async original=>({...await original<object>(),
+  attemptAcceptanceTarget:()=>({key:"synthetic-stage-fixture",contextHash:"fixture"}),assertAcceptanceEvidence:vi.fn(()=>({checks:[]}))}));

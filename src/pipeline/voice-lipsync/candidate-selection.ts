@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
+import { assertAcceptanceEvidence, attemptAcceptanceTarget } from "../qc/acceptance-evidence.js";
 import { getDataDir } from "../../db/client.js";
 import { validateAttemptRevision, recordMediaAcceptance } from "../creative-direction/crew-store.js";
 
@@ -14,7 +15,10 @@ export function acceptLipSyncCandidate(db: DatabaseSync, projectId: string, atte
   const covered=db.prepare("SELECT id FROM coverage_beats WHERE shot_id=? LIMIT 1").get(attempt.shot_id);
   if (covered) throw new Error("Covered lip-sync must be accepted for its exact coverage beat, not the whole shot.");
   const existing=db.prepare("SELECT id FROM clips WHERE generation_attempt_id=?").get(attemptId) as {id:string}|undefined;
+  // Reopening a saved selection is history, not a new promotion.
   if (existing) return {clipId:existing.id,reused:true};
+  validateAttemptRevision(db,getDataDir(),projectId,attemptId);
+  assertAcceptanceEvidence(db,getDataDir(),projectId,attemptAcceptanceTarget(db,getDataDir(),projectId,attemptId,attempt.duration_ms));
   if (attempt.status !== "hold_for_review" && attempt.status !== "accepted") throw new Error("Only a held lip-sync candidate can be accepted.");
   const clipId=randomUUID(), now=Date.now();
   db.exec("BEGIN IMMEDIATE");
@@ -51,6 +55,11 @@ export function acceptCoveredLipSyncCandidate(db: DatabaseSync, projectId: strin
     if (existing.timeline_start_ms!==row.audio_start_ms || existing.timeline_end_ms!==row.audio_end_ms) throw new Error("Candidate was selected for a different interval.");
     return {clipId:existing.id,reused:true};
   }
+  validateAttemptRevision(db,getDataDir(),projectId,attemptId);
+  const target=attemptAcceptanceTarget(db,getDataDir(),projectId,attemptId,row.audio_end_ms-row.audio_start_ms);
+  target.key+=`:beat:${beatId}`;
+  target.contextHash+=`:${beatId}:${row.audio_start_ms}:${row.audio_end_ms}`;
+  assertAcceptanceEvidence(db,getDataDir(),projectId,target);
   if (row.attempt_status!=="hold_for_review") throw new Error("Only a held coverage lip-sync candidate can be accepted.");
   const overlap=db.prepare("SELECT id FROM clips WHERE shot_id=? AND timeline_start_ms<? AND timeline_end_ms>? AND generation_attempt_id<>?").get(row.shot_id,row.audio_end_ms,row.audio_start_ms,attemptId);
   if (overlap) throw new Error("A different selected clip already overlaps this coverage beat.");
