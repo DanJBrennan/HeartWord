@@ -1,5 +1,58 @@
 # Automated Quality Control
 
+November15 evidence-contract correction: new speaking promotions additionally
+require independently decoded signal measurements and explicit whole-performance
+frame coverage. This extends the existing acceptance module/notes and call paths;
+there is no new stage, database table, generation provider or automatic repair.
+
+`measureSpeechEvidence` hashes the exact media and decoded mono8kHz float PCM,
+retains native frame count/rate and the measured audio-stream endpoint, and supplies
+uniform100ms level windows. The immutable packet uses the existing ingestion
+-30dBFS quiet-analysis reference as a signal-consistency check. That reference is
+neither a mix target nor a speech/phoneme classifier. Claimed quiet that contradicts
+the independently measured signal holds. Closed-mouth consonants, low-level words,
+breaths and intentional listener cutaways are not automatically rejected.
+
+A review's `speech` field links the measurement hash, `reviewedFrames` as integer
+[startFrame,endFrameExclusive) ranges, and separate time-indexed audio/mouth
+observations. Whole-performance coverage must actually be declared and supported;
+it is never silently extended. Individual pause examples may be narrower than the
+whole performance. Observation ranges cover the native picture clock. A short
+absent-audio tail after the measured stream endpoint can be explicitly marked
+`ended`, only within one retained frame; it does not manufacture silence, trim
+picture, or certify completed words. Missing/uncertain observations remain held.
+
+Source claims link independent `source_evidence_v1` records in existing review
+notes through `sourceEvidenceNoteIds`. Each record pins `sourceContextHash`, its
+specific check IDs, aspect, status, reviewer and evidence. Linguistic ownership
+requires an independently recorded human competent-language review with the
+matching language and explicit competence attestation. A human source label alone
+is insufficient. Known-voice attribution is distinct and can use a scoped human
+speaker comparison with its stated basis. Sample transport instead requires a
+separate QC measurement record identifying method, source-input hashes, result
+hash and this exact output-media hash. Transport cannot clear linguistic ownership.
+The latest matching scoped record governs; older clear evidence cannot override a
+later hold. A transport observation about a different output cannot retract one
+for this output. Source context is separate from output/canon context, allowing
+properly scoped source adjudication to remain usable when only picture changes.
+
+The model adapter `reviewWithSpeechEvidence` binds actual submitted inputs and
+copies observations without upgrading them. Model-supplied authority labels and
+note IDs are ignored. The shared acceptance gate, including ordinary/covered and
+producer/encoded paths, validates linked records itself; a canary-only downgrade
+is unnecessary. Raw responses remain separate from enforcement findings. These
+records do not establish cryptographic reviewer identity or replace honest human
+judgment; they prevent a model response from manufacturing absent authority.
+Typed source-evidence notes are excluded only from creative producer directions,
+so recording QC does not invalidate an otherwise unchanged approved creative plan.
+They remain retained and available to the QC gate. Ordinary producer guidance is
+unchanged.
+
+Approved historical playback/reopen paths retain their existing behavior. New
+outputs require current evidence; no legacy note or Mark5 record is migrated or
+reapproved. No native attestation has been invented for the unresolved Mark6 seams.
+
+
 November14 recovery gates (isolated branch from82850d5): NEW media promotions
 require structured actual-media assessments in the existing `review_notes`,
 kind `media_acceptance_v1`. Free-text approvals, a correct cast ID, accepted

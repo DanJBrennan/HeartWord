@@ -1,3 +1,17 @@
+# Current goal: stopped after evidence-contract fix and retained repeat
+
+The bounded fix is implemented and1455tests/152files plus typechecks pass. One
+exact retained Mark6:50 repeat still produced unsupported speech/boundary clears;
+the SHARED gate now rejects both for their intended evidence reasons. The reviewer
+remains unreliable. Stop before new footage or full regeneration.
+
+See [the completed report](completed/mark6-evidence-contract-repeat-20261115.md).
+One fresh review, estimated$0.015251, no retries or post-canary application changes.
+Both forensic checkpoints, all earlier evidence and approved Mark5 remain preserved.
+All3uncertain Hatam seams remain held. No live production DB or records changed.
+
+---
+
 # Current goal: stopped after retained-media canary
 
 November15: Dan authorized retained-media canary checks only. The first fresh

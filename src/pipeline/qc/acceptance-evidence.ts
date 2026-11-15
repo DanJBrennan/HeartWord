@@ -10,6 +10,7 @@ import { sourceTurnBoundaries } from "../assembly/continuous-audio.js";
 /** Evidence on existing review_notes, not a parallel approval database. */
 export interface AcceptanceTarget {
   key: string; path: string; contextHash: string; durationMs: number;
+  sourceContextHash?: string; sourceMediaHashes?: string[];
   requirements: Array<{ id: string; text: string; atMs?:number }>;
   range?: { startFrame: number; endFrameExclusive: number; crop?: {x:number;y:number;width:number;height:number} };
 }
@@ -17,11 +18,130 @@ export interface AcceptanceReview {
   kind: "media_acceptance_v1"; key: string; contextHash: string; mediaSha256: string;
   reviewer: string;
   input: { width: number; height: number; fps: number; audioIncluded: boolean };
+  sourceEvidenceNoteIds?: string[];
+  speech?: {
+    measurementHash: string;
+    reviewedFrames: Array<{startFrame:number;endFrameExclusive:number}>;
+    observations: Array<{startMs:number;endMs:number;audio:"quiet"|"signal_present"|"ended"|"unverified";
+      mouth:"articulating"|"closed"|"not_visible"|"unverified";evidence:string}>;
+  };
   checks: Array<{ id: string; requirementHash: string; status: "clear" | "hold" | "unverified";
     evidence: string; ranges: Array<{ startMs: number; endMs: number }> }>;
 }
 export const evidenceHash = (value: unknown): string => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 export const mediaHash = (path: string): string => createHash("sha256").update(readFileSync(path)).digest("hex");
+
+/** Signal measurements are contradiction evidence, never a voicing/phoneme detector.
+ * -30dBFS is the existing ingestion quiet-analysis reference, not a mix target. */
+export interface SpeechMeasurements {
+  mediaSha256:string;pcmSha256:string;sampleRate:number;fps:number;frames:number;
+  durationMs:number;audioEndMs:number;quietReferenceDb:number;
+  windows:Array<{startMs:number;endMs:number;rmsDbFS:number}>;
+}
+const measuredPcm=new WeakMap<SpeechMeasurements,Buffer>();
+const measurementCache=new Map<string,SpeechMeasurements>();
+function pcmLevel(pcm:Buffer,startMs:number,endMs:number):number|undefined {
+  const first=Math.round(startMs*8),last=Math.round(endMs*8);
+  if(first<0||last<=first||last*4>pcm.length)return undefined;
+  let sum=0;for(let i=first;i<last;i++){const v=pcm.readFloatLE(i*4);sum+=v*v;}
+  return 20*Math.log10(Math.max(1e-12,Math.sqrt(sum/(last-first))));
+}
+export function measureSpeechEvidence(path:string,fps:number,frames:number):SpeechMeasurements {
+  if(!Number.isFinite(fps)||fps<=0||!Number.isSafeInteger(frames)||frames<1)throw Error("QC hold: invalid measured frame clock.");
+  const sha256=mediaHash(path),key=`${sha256}:${fps}:${frames}`,cached=measurementCache.get(key);if(cached)return cached;
+  const pcm=execFileSync("ffmpeg",["-v","error","-i",path,"-map","0:a:0","-f","f32le","-ac","1","-ar","8000","pipe:1"],{windowsHide:true,maxBuffer:128*1024*1024});
+  const audioDuration=Number(execFileSync("ffprobe",["-v","error","-select_streams","a:0","-show_entries","stream=duration","-of","csv=p=0",path],{encoding:"utf8",windowsHide:true}).trim())*1000;
+  const audioEndMs=Math.min(pcm.length/32,Number.isFinite(audioDuration)&&audioDuration>0?audioDuration:pcm.length/32);
+  const durationMs=frames*1000/fps,windows:SpeechMeasurements["windows"]=[];
+  for(let startMs=0;startMs<Math.min(durationMs,audioEndMs);startMs+=100){const endMs=Math.min(durationMs,audioEndMs,startMs+100),db=pcmLevel(pcm,startMs,endMs);if(db!==undefined)windows.push({startMs,endMs,rmsDbFS:db});}
+  const result:SpeechMeasurements={mediaSha256:sha256,pcmSha256:createHash("sha256").update(pcm).digest("hex"),sampleRate:8000,fps,frames,durationMs,audioEndMs,quietReferenceDb:-30,windows};
+  for(const window of result.windows)Object.freeze(window);Object.freeze(result.windows);Object.freeze(result);
+  measuredPcm.set(result,pcm);measurementCache.set(key,result);if(measurementCache.size>4)measurementCache.delete(measurementCache.keys().next().value!);
+  return result;
+}
+// One microsecond handles decimal serialization, never an unreviewed frame.
+const TIME_EPSILON_MS=.001;
+function covers(ranges:Array<{start:number;end:number}>,endExclusive:number,epsilon=0):boolean {
+  let end=0;for(const r of [...ranges].sort((a,b)=>a.start-b.start)){if(r.start>end+epsilon)return false;end=Math.max(end,r.end);}return end>=endExclusive-epsilon;
+}
+function speechFindings(review:AcceptanceReview,measurements:SpeechMeasurements|undefined):string[] {
+  const supplied=review.speech,holds:string[]=[];
+  if(!measurements||!supplied||supplied.measurementHash!==evidenceHash(measurements))return ["speech_activity/speech_rest/speech_sync: missing or stale independent signal measurements and observations."];
+  const frames=supplied.reviewedFrames;
+  if(!Array.isArray(frames)||!frames.length||frames.some(r=>!r||!Number.isSafeInteger(r.startFrame)||!Number.isSafeInteger(r.endFrameExclusive)||r.startFrame<0||r.endFrameExclusive<=r.startFrame||r.endFrameExclusive>measurements.frames)||
+    !covers(frames.map(r=>({start:r.startFrame,end:r.endFrameExclusive})),measurements.frames))holds.push("speech: incomplete end-exclusive whole-performance frame review.");
+  const observations=supplied.observations;
+  if(!Array.isArray(observations)||!observations.length)return [...holds,"speech: missing time-indexed audio and visible-mouth observations."];
+  const pcm=measuredPcm.get(measurements);
+  if(!pcm)return [...holds,"speech: signal facts were not independently decoded."];
+  for(const o of observations){
+    if(!o||!Number.isFinite(o.startMs)||!Number.isFinite(o.endMs)||o.startMs<0||o.endMs<=o.startMs||o.endMs>measurements.durationMs+TIME_EPSILON_MS||typeof o.evidence!=="string"||!o.evidence.trim()) {holds.push("speech: invalid observed interval.");continue;}
+    if(!["quiet","signal_present","ended"].includes(o.audio)||!["articulating","closed","not_visible"].includes(o.mouth))holds.push("speech: audio or mouth state remains unverified.");
+    if(o.audio==="ended"){
+      if(o.startMs<measurements.audioEndMs-TIME_EPSILON_MS||measurements.durationMs-measurements.audioEndMs>1000/measurements.fps+TIME_EPSILON_MS)
+        holds.push("speech: audio-ended claim precedes the measured stream endpoint or exceeds one retained frame.");
+      continue; // Explicit absent track tail; never manufacture silence or infer completed words.
+    }
+    if(o.endMs>measurements.audioEndMs+TIME_EPSILON_MS){holds.push("speech: observation spans beyond the measured audio endpoint; split the absent track tail explicitly.");continue;}
+    const db=pcmLevel(pcm,o.startMs,o.endMs);
+    if(db===undefined)holds.push("speech: observed interval exceeds independently decoded audio.");
+    else {
+      const signal=db>=measurements.quietReferenceDb||measurements.windows.some(w=>w.startMs>=o.startMs&&w.endMs<=o.endMs&&w.rmsDbFS>=measurements.quietReferenceDb);
+      if(o.audio==="quiet"&&signal)holds.push(`speech_rest/speech_activity: claimed quiet ${o.startMs}-${o.endMs}ms contradicts measured signal (${db.toFixed(2)}dBFS); voicing remains a separate judgment.`);
+      if(o.audio==="signal_present"&&!signal)holds.push(`speech_activity: claimed signal ${o.startMs}-${o.endMs}ms is below the measured reference; this is not phoneme adjudication.`);
+    }
+    // Closed-mouth consonants, breaths and intentional listener cutaways are not automatic failures.
+  }
+  const valid=observations.filter(o=>o&&Number.isFinite(o.startMs)&&Number.isFinite(o.endMs)&&o.startMs>=0&&o.endMs>o.startMs&&o.endMs<=measurements.durationMs+TIME_EPSILON_MS);
+  if(!covers(valid.map(o=>({start:o.startMs,end:o.endMs})),measurements.durationMs,TIME_EPSILON_MS))holds.push("speech: observations do not cover the complete performance.");
+  return holds;
+}
+function sourceAspect(id:string):"linguistic_ownership"|"speaker_attribution"|"sample_transport"|undefined {
+  if(id==="source_boundaries"||id.startsWith("boundary:"))return "linguistic_ownership";
+  if(id==="audio:voice_ownership")return "speaker_attribution";
+  if(id==="source_transport"||id==="audio:source_integrity")return "sample_transport";
+  return undefined;
+}
+/** Separately recorded, scoped observations on existing notes. The model response
+ * cannot issue these records or upgrade its own authority through a label. */
+export interface SourceEvidence {
+  kind:"source_evidence_v1";sourceContextHash:string;aspect:"linguistic_ownership"|"speaker_attribution"|"sample_transport";
+  reviewer:string;status:"clear"|"hold"|"unverified";checkIds:string[];evidence:string;
+  provenance:{kind:"competent_language_review";language:string;competenceAttestation:string}|
+    {kind:"speaker_review";basis:string}|
+    {kind:"measured_transport";method:string;inputHashes:string[];resultHash:string};
+  mediaSha256?:string;
+}
+function validatedSourceChecks(db:DatabaseSync,projectId:string,target:AcceptanceTarget,review:AcceptanceReview,sha256:string):Set<string> {
+  const valid=new Set<string>(),seen=new Set<string>(),linked=new Set(review.sourceEvidenceNoteIds??[]);
+  const language=String(db.prepare("SELECT language FROM projects WHERE id=?").get(projectId)?.language??"").toLowerCase();
+  for(const row of db.prepare("SELECT id,source,note FROM review_notes WHERE project_id=? ORDER BY created_at DESC,rowid DESC").all(projectId)){
+    let n:SourceEvidence;try{n=JSON.parse(String(row.note));}catch{continue;}
+    if(n?.kind!=="source_evidence_v1"||!target.sourceContextHash||n.sourceContextHash!==target.sourceContextHash||!Array.isArray(n.checkIds)||(n.aspect==="sample_transport"&&n.mediaSha256!==sha256))continue;
+    for(const id of n.checkIds){
+      if(typeof id!=="string"||sourceAspect(id)!==n.aspect||seen.has(id))continue;seen.add(id);
+      if(!linked.has(String(row.id))||n.status!=="clear"||!n.reviewer?.trim()||!n.evidence?.trim())continue;
+      const p=n.provenance;
+      if(n.aspect==="sample_transport"){
+        if(row.source!=="qc"||p?.kind!=="measured_transport"||!p.method?.trim()||!Array.isArray(p.inputHashes)||!p.inputHashes.length||!target.sourceMediaHashes?.length||
+          !target.sourceMediaHashes.every(h=>p.inputHashes.includes(h))||!/^([a-f0-9]{64})$/.test(p.resultHash)||n.mediaSha256!==sha256)continue;
+      }else if(n.aspect==="speaker_attribution"&&p?.kind==="speaker_review"){
+        if(row.source!=="human"||!p.basis?.trim())continue;
+      }else if(row.source!=="human"||p?.kind!=="competent_language_review"||p.language?.toLowerCase()!==language||!p.competenceAttestation?.trim())continue;
+      valid.add(id);
+    }
+  }
+  return valid;
+}
+
+/** The adapter binds measured inputs; model-supplied authority labels/IDs are
+ * deliberately not copied. Raw review outputs are retained by the caller. */
+export function reviewWithSpeechEvidence(target:AcceptanceTarget,result:{checks:AcceptanceReview["checks"];speech?:AcceptanceReview["speech"]},
+  native:AcceptanceReview["input"],measurements:SpeechMeasurements,reviewer:string):AcceptanceReview {
+  return {kind:"media_acceptance_v1",key:target.key,contextHash:target.contextHash,mediaSha256:measurements.mediaSha256,reviewer,input:native,
+    checks:result.checks.map(c=>({...c,requirementHash:evidenceHash(target.requirements.find(r=>r.id===c.id)?.text??"UNKNOWN REQUIREMENT")})),
+    ...(result.speech?{speech:{measurementHash:evidenceHash(measurements),reviewedFrames:result.speech.reviewedFrames,observations:result.speech.observations}}:{})};
+}
 
 function canonInputs(db: DatabaseSync, dataDir: string, ids: string[]) {
   return [...new Set(ids)].sort().map(id => {
@@ -91,7 +211,8 @@ export function attemptAcceptanceTarget(db: DatabaseSync, dataDir: string, proje
   }
   if(row.needs_lip_sync)for(const id of ["speech_activity","speech_sync","speech_rest","joins","coverage","source_boundaries","source_transport"])
     requirements.push({id,text:`Whole selected performance ${id}: actual source-bound speech, pauses, visible-speaker/listener intervals and all joins; no claim from valid partitioning or files alone.`});
-  return {key:`attempt:${attemptId}${range?`:range:${evidenceHash(range)}`:""}`,path:String(row.result_asset_path),durationMs,range,requirements,
+  const sourceMediaHashes=binding?[String(binding.source_hash)]:[];
+  return {sourceContextHash:evidenceHash({projectId,binding}),sourceMediaHashes,key:`attempt:${attemptId}${range?`:range:${evidenceHash(range)}`:""}`,path:String(row.result_asset_path),durationMs,range,requirements,
     contextHash:evidenceHash({projectId,row,binding,canon,speakingInputs,plan,durationMs,range:range??null,requirements})};
 }
 
@@ -120,12 +241,13 @@ export function cutAcceptanceTarget(db: DatabaseSync,dataDir:string,projectId:st
   for(const id of ["static","duplicates","short_inserts","colour","regressions"])requirements.push({id:`render:${id}`,text:`Actual encoded-cut ${id} assessment with intentional editorial context; unknown is held.`});
   const plan=db.prepare("SELECT id,brief_hash,result_json FROM production_runs WHERE project_id=? AND phase='planning' AND status='approved' ORDER BY created_at DESC,rowid DESC LIMIT 1").get(projectId)??null;
   const inputs=timeline.map(p=>({ ...p,sha256:p.path?mediaHash(productionAssetPath(dataDir,p.path)):null }));
-  return {key,path,durationMs,requirements,contextHash:evidenceHash({projectId,inputs,source:brief.source.hashes,audio:brief.audio,
+  const sourceFiles=[...new Set(brief.audio.flatMap(a=>a.path?[a.path]:[]))].sort().map(path=>({path,sha256:mediaHash(productionAssetPath(dataDir,path))}));
+  return {sourceContextHash:evidenceHash({projectId,audio:brief.audio,sourceFiles}),sourceMediaHashes:sourceFiles.map(f=>f.sha256),key,path,durationMs,requirements,contextHash:evidenceHash({projectId,inputs,source:brief.source.hashes,audio:brief.audio,
     master:brief.retainedPerformanceMaster,plan,durationMs,audioMap,canon,treatment:brief.acceptedEmotionalTreatment,requirements})};
 }
 
 export function acceptanceFindings(target:AcceptanceTarget,review:AcceptanceReview|undefined,actualSha256:string,
-  native:{width:number;height:number;fps:number}):string[] {
+  native:{width:number;height:number;fps:number},facts?:{speech?:SpeechMeasurements;sourceChecks?:Set<string>}):string[] {
   const holds:string[]=[];
   if(!review || review.kind!=="media_acceptance_v1")return ["Missing structured actual-media acceptance evidence; a bare clear verdict is insufficient."];
   if(review.key!==target.key||review.contextHash!==target.contextHash||review.mediaSha256!==actualSha256)holds.push("Stale media, selection, source, canon or planned obligations.");
@@ -141,13 +263,11 @@ export function acceptanceFindings(target:AcceptanceTarget,review:AcceptanceRevi
     if(!check||check.requirementHash!==evidenceHash(required.text)||check.status!=="clear"||typeof check.evidence!=="string"||!check.evidence.trim()) {
       holds.push(`${required.id}: missing, changed, failed or unverified obligation.`);continue;
     }
-    if(!Array.isArray(check.ranges)||!check.ranges.length||check.ranges.some(r=>!r||!Number.isFinite(r.startMs)||!Number.isFinite(r.endMs)||r.startMs<0||r.endMs<=r.startMs||r.endMs>target.durationMs+1)){holds.push(`${required.id}: missing or invalid observed media intervals.`);continue;}
+    if(!Array.isArray(check.ranges)||!check.ranges.length||check.ranges.some(r=>!r||!Number.isFinite(r.startMs)||!Number.isFinite(r.endMs)||r.startMs<0||r.endMs<=r.startMs||r.endMs>Math.max(target.durationMs,facts?.speech?.durationMs??target.durationMs)+1)){holds.push(`${required.id}: missing or invalid observed media intervals.`);continue;}
     if(required.atMs!==undefined&&!check.ranges?.some(r=>r.startMs<=required.atMs!&&r.endMs>=required.atMs!))holds.push(`${required.id}: boundary itself was not inspected.`);
-    if(required.id.startsWith("speech")&&Array.isArray(check.ranges)){
-      let end=0;for(const r of [...check.ranges].sort((a,b)=>a.startMs-b.startMs)){if(r.startMs>end+1)break;end=Math.max(end,r.endMs);}
-      if(end<target.durationMs-1)holds.push(`${required.id}: incomplete whole-performance review.`);
-    }
+    if(sourceAspect(required.id)&&!facts?.sourceChecks?.has(required.id))holds.push(`${required.id}: missing current scoped ${sourceAspect(required.id)} evidence; model/file-endpoint claims are insufficient.`);
   }
+  if(target.requirements.some(r=>r.id.startsWith("speech")))holds.push(...speechFindings(review,facts?.speech));
   return holds;
 }
 
@@ -167,7 +287,9 @@ export function assertAcceptanceEvidence(db:DatabaseSync,dataDir:string,projectI
   if(!video||!parts[1])throw Error("QC hold: missing native video facts.");
   const fps=parts[0]!/parts[1]!,frames=Number(video.nb_read_frames);
   if(!Number.isSafeInteger(frames)||frames<1||!Number.isFinite(target.durationMs)||target.durationMs<=0||(!target.range&&frames*1000/fps+50<target.durationMs)||target.range&&target.range.endFrameExclusive>frames)throw Error("QC hold: selected video is shorter than the reviewed source interval.");
-  const holds=acceptanceFindings(target,review,sha256,{width:video.width,height:video.height,fps:parts[0]!/parts[1]!});
+  const facts={sourceChecks:validatedSourceChecks(db,projectId,target,review,sha256),
+    ...(target.requirements.some(r=>r.id.startsWith("speech"))?{speech:measureSpeechEvidence(path,fps,frames)}:{})};
+  const holds=acceptanceFindings(target,review,sha256,{width:video.width,height:video.height,fps},facts);
   if(holds.length)throw Error(`QC hold ${target.key}: ${holds.join(" ")}`);
   return review;
 }

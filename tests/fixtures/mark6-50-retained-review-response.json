@@ -1,0 +1,158 @@
+{
+  "result": {
+    "overall": "hold",
+    "checks": [
+      {
+        "id": "action:87935174-7179-4282-8e94-306b24cbaa62",
+        "status": "hold",
+        "evidence": "Jesus speaks from water, but the disciples and boat are not visible in frame.",
+        "ranges": [
+          {
+            "startMs": 0,
+            "endMs": 3875
+          }
+        ]
+      },
+      {
+        "id": "geometry",
+        "status": "clear",
+        "evidence": "Physical action, anatomy, and background elements remain consistent without pop-in.",
+        "ranges": [
+          {
+            "startMs": 0,
+            "endMs": 3875
+          }
+        ]
+      },
+      {
+        "id": "captions",
+        "status": "clear",
+        "evidence": "No unintended text overlay or graphic artifacts detected.",
+        "ranges": [
+          {
+            "startMs": 0,
+            "endMs": 3875
+          }
+        ]
+      },
+      {
+        "id": "identity:b78bed54-1d53-4b9f-9070-549dddb71b19",
+        "status": "clear",
+        "evidence": "Facial features, hair type, and skin tone match the approved face reference.",
+        "ranges": [
+          {
+            "startMs": 0,
+            "endMs": 3875
+          }
+        ]
+      },
+      {
+        "id": "wardrobe:b78bed54-1d53-4b9f-9070-549dddb71b19",
+        "status": "clear",
+        "evidence": "Tunic design with blue trim matches approved body reference.",
+        "ranges": [
+          {
+            "startMs": 0,
+            "endMs": 3875
+          }
+        ]
+      },
+      {
+        "id": "speech_activity",
+        "status": "clear",
+        "evidence": "Audio contains spoken words matching mouth movement segments.",
+        "ranges": [
+          {
+            "startMs": 0,
+            "endMs": 3875
+          }
+        ]
+      },
+      {
+        "id": "speech_sync",
+        "status": "clear",
+        "evidence": "Visible lip articulation aligns reasonably with vocal sound delivery.",
+        "ranges": [
+          {
+            "startMs": 0,
+            "endMs": 3875
+          }
+        ]
+      },
+      {
+        "id": "speech_rest",
+        "status": "clear",
+        "evidence": "Mouth rests closed during non-vocal audio intervals.",
+        "ranges": [
+          {
+            "startMs": 333,
+            "endMs": 708
+          },
+          {
+            "startMs": 1042,
+            "endMs": 1375
+          },
+          {
+            "startMs": 2042,
+            "endMs": 3000
+          }
+        ]
+      },
+      {
+        "id": "joins",
+        "status": "clear",
+        "evidence": "Audio-visual transitions and phrase boundaries function smoothly.",
+        "ranges": [
+          {
+            "startMs": 0,
+            "endMs": 3875
+          }
+        ]
+      },
+      {
+        "id": "coverage",
+        "status": "clear",
+        "evidence": "Continuous visual coverage throughout speech execution.",
+        "ranges": [
+          {
+            "startMs": 0,
+            "endMs": 3875
+          }
+        ]
+      },
+      {
+        "id": "source_boundaries",
+        "status": "clear",
+        "evidence": "Audio start and end coincide properly within frame bounds.",
+        "ranges": [
+          {
+            "startMs": 0,
+            "endMs": 3875
+          }
+        ]
+      },
+      {
+        "id": "source_transport",
+        "status": "unverified",
+        "evidence": "Transport layer verification cannot be independently confirmed from clip evidence alone.",
+        "ranges": [
+          {
+            "startMs": 0,
+            "endMs": 3875
+          }
+        ]
+      }
+    ],
+    "limitations": [
+      "No offscreen listener visibility.",
+      "Linguistic alignment evaluated purely visually without Hatam attestation."
+    ]
+  },
+  "usage": {
+    "promptTokenCount": 9462,
+    "candidatesTokenCount": 1121,
+    "thoughtsTokenCount": 0,
+    "totalTokenCount": 10583
+  },
+  "costUsd": 0.0113
+}

@@ -40,10 +40,14 @@ function fixture(kind:"lip"|"covered"|"final"|"range"="lip",audioRate=48000) {
 }
 it.each(['lip','covered','final','range'] as const)('holds %s before mutation on absent, stale, failed or unknown evidence, then admits a measured synthetic control',kind=>{
  const f=fixture(kind);try{
-  const hash=mediaHash(f.file),review=syntheticReview(f.target(),f.root);
+  const hash=mediaHash(f.file),review=syntheticReview(f.target(),f.root,f.db);
   f.db.exec("INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at)VALUES('old','p','shot','shot','qc','AV clear; correct IDs; best acceptable',1,1)");
   expect(f.accept).toThrow(/QC hold/);
   for(const status of ['hold','unverified'] as const){const held=structuredClone(review);held.checks[0]!.status=status;recordAcceptanceReview(f.db,'p',held);expect(f.accept).toThrow(/QC hold/);}
+  if(kind==='lip'||kind==='covered'){
+   const unscoped=structuredClone(review);unscoped.sourceEvidenceNoteIds=[];recordAcceptanceReview(f.db,'p',unscoped);expect(f.accept).toThrow(/source_boundaries: missing current scoped/);
+   const contradictory=structuredClone(review);contradictory.speech!.observations[0]!.audio='quiet';recordAcceptanceReview(f.db,'p',contradictory);expect(f.accept).toThrow(/claimed quiet/);
+  }
   const stale=structuredClone(review);stale.mediaSha256='parent-only';recordAcceptanceReview(f.db,'p',stale);expect(f.accept).toThrow(/Stale/);
   expect(f.db.prepare('SELECT COUNT(*) n FROM clips').get()!.n).toBe(0);expect(f.db.prepare("SELECT status FROM generation_attempts WHERE id='take'").get()!.status).toBe('hold_for_review');expect(mediaHash(f.file)).toBe(hash);
   recordAcceptanceReview(f.db,'p',review);expect(f.accept()).toMatchObject({reused:false});expect(f.accept()).toMatchObject({reused:true});
@@ -51,16 +55,16 @@ it.each(['lip','covered','final','range'] as const)('holds %s before mutation on
 });
 it('requires native audiovisual whole-line speech/activity/rest/joins/coverage and linguistic evidence independently',()=>{
  const f=fixture();try{
-  const target=f.target(),review=syntheticReview(target,f.root);
+  const target=f.target(),review=syntheticReview(target,f.root,f.db);
   for(const id of ['speech_activity','speech_sync','speech_rest','joins','coverage','source_boundaries']){const held=structuredClone(review);held.checks.find(c=>c.id===id)!.status='unverified';recordAcceptanceReview(f.db,'p',held);expect(f.accept).toThrow(new RegExp(id));}
   const sampled=structuredClone(review);sampled.input.fps=1;sampled.input.audioIncluded=false;expect(acceptanceFindings(target,sampled,review.mediaSha256,{width:128,height:72,fps:24}).join(' ')).toMatch(/native-rate audiovisual/);
-  const partial=structuredClone(review);partial.checks.find(c=>c.id==='speech_activity')!.ranges=[{startMs:100,endMs:1000}];recordAcceptanceReview(f.db,'p',partial);expect(f.accept).toThrow(/whole-performance/);
+  const partial=structuredClone(review);partial.speech!.reviewedFrames=[{startFrame:1,endFrameExclusive:24}];recordAcceptanceReview(f.db,'p',partial);expect(f.accept).toThrow(/whole-performance/);
   const malformed=structuredClone(review);(malformed.checks[0] as any).ranges={};expect(()=>acceptanceFindings(target,malformed,review.mediaSha256,{width:128,height:72,fps:24})).not.toThrow();
  }finally{f.db.close();}
 });
 it('invalidates changed request, action, canon, source, selected interval and media bytes',()=>{
  const f=fixture();try{
-  const target=f.target(),review=syntheticReview(target,f.root);recordAcceptanceReview(f.db,'p',review);
+  const target=f.target(),review=syntheticReview(target,f.root,f.db);recordAcceptanceReview(f.db,'p',review);
   f.db.exec("UPDATE generation_attempts SET prompt='Changed request'");expect(f.accept).toThrow(/Stale/);
   f.db.exec("UPDATE generation_attempts SET prompt='saved request';UPDATE shots SET action='Replacement reactions'");expect(f.accept).toThrow(/Stale/);
   f.db.exec("UPDATE shots SET action='Complete the platter handoff'");writeFileSync(join(f.root,'assets/ref.png'),'changed canon');expect(f.accept).toThrow(/Stale/);
@@ -72,7 +76,7 @@ it('invalidates changed request, action, canon, source, selected interval and me
 });
 it('cannot replace missing action or unverified face/wardrobe/treatment with valid cast IDs and a clear overview',()=>{
  const f=fixture('final');try{
-  const target=f.target();target.requirements.push({id:'treatment:banquet',text:'Observed effect of approved banquet beat'});const review=syntheticReview(target,f.root);
+  const target=f.target();target.requirements.push({id:'treatment:banquet',text:'Observed effect of approved banquet beat'});const review=syntheticReview(target,f.root,f.db);
   for(const id of ['action:shot','identity:c','wardrobe:c','treatment:banquet']){const held=structuredClone(review);held.checks.find(c=>c.id===id)!.status='unverified';expect(acceptanceFindings(target,held,review.mediaSha256,{width:128,height:72,fps:24}).join(' ')).toContain(id);}
  }finally{f.db.close();}
 });
@@ -84,9 +88,9 @@ it('keeps all source ownership obligations after 49 placements merge to one reta
   const brief={shots:[{id:'shot',action:'Complete the platter handoff',characterIds:['c'],needsLipSync:false},{id:'omitted',action:'Required source-grounded action replaced by reactions',characterIds:[],needsLipSync:false}],audio:source,source:{hashes:{}},acceptedEmotionalTreatment:{treatment:{beats:[{id:'banquet',effect:'Visible causal handoff'}]}}} as unknown as CrewBrief;
   const target=cutAcceptanceTarget(f.db,f.root,'p','cut','candidate.mp4',brief,[{shotId:'shot',path:'candidate.mp4',startMs:0,endMs:1000} as any],49000,placements);
   expect(target.requirements.some(r=>r.id==='action:omitted')).toBe(true);expect(target.requirements.filter(r=>r.id.startsWith('boundary:'))).toHaveLength(48);expect(target.requirements.some(r=>r.id==='treatment:banquet')).toBe(true);
-  const review=syntheticReview(target,f.root);for(const index of [10,20,30])review.checks.find(c=>c.id===sourceTurnBoundaries(source)[index]!.id)!.status='unverified';
-  expect(acceptanceFindings(target,review,review.mediaSha256,{width:128,height:72,fps:24}).filter(x=>x.includes('boundary:'))).toHaveLength(3);
-  const skipped=syntheticReview(target,f.root);skipped.checks.find(c=>c.id.startsWith('boundary:'))!.ranges=[{startMs:0,endMs:500}];expect(acceptanceFindings(target,skipped,skipped.mediaSha256,{width:128,height:72,fps:24}).join(' ')).toContain('boundary itself');
+  const review=syntheticReview(target,f.root,f.db);for(const index of [10,20,30])review.checks.find(c=>c.id===sourceTurnBoundaries(source)[index]!.id)!.status='unverified';
+  expect(acceptanceFindings(target,review,review.mediaSha256,{width:128,height:72,fps:24},{sourceChecks:new Set(target.requirements.filter(r=>r.id.startsWith('boundary:')).map(r=>r.id))}).filter(x=>x.includes('boundary:'))).toHaveLength(3);
+  const skipped=syntheticReview(target,f.root,f.db);skipped.checks.find(c=>c.id.startsWith('boundary:'))!.ranges=[{startMs:0,endMs:500}];expect(acceptanceFindings(target,skipped,skipped.mediaSha256,{width:128,height:72,fps:24}).join(' ')).toContain('boundary itself');
  }finally{f.db.close();}
 });
 it('requires own-byte encoded evidence and scorecard observations; parent evidence cannot promote a derivative',()=>{
@@ -94,20 +98,20 @@ it('requires own-byte encoded evidence and scorecard observations; parent eviden
   const target=f.target();target.key='encoded:test';for(const id of ['static','duplicates','short_inserts','colour','regressions'])target.requirements.push({id:'render:'+id,text:'Actual cut '+id});
   const candidate=retainEncodedCandidate(f.db,f.root,'p',target,{fixture:true});
   expect(()=>assertEncodedAcceptance(f.db,f.root,'p',target,candidate)).toThrow(/missing structured/);
-  const parent=syntheticReview(target,f.root);parent.key='parent';recordAcceptanceReview(f.db,'p',parent);expect(()=>assertEncodedAcceptance(f.db,f.root,'p',target,candidate)).toThrow(/missing structured/);
-  const review=syntheticReview(target,f.root);review.checks.find(c=>c.id==='render:duplicates')!.status='unverified';recordAcceptanceReview(f.db,'p',review);expect(()=>assertEncodedAcceptance(f.db,f.root,'p',target,candidate)).toThrow(/duplicates/);
-  recordAcceptanceReview(f.db,'p',syntheticReview(target,f.root));expect(()=>assertEncodedAcceptance(f.db,f.root,'p',target,candidate)).not.toThrow();
+  const parent=syntheticReview(target,f.root,f.db);parent.key='parent';recordAcceptanceReview(f.db,'p',parent);expect(()=>assertEncodedAcceptance(f.db,f.root,'p',target,candidate)).toThrow(/missing structured/);
+  const review=syntheticReview(target,f.root,f.db);review.checks.find(c=>c.id==='render:duplicates')!.status='unverified';recordAcceptanceReview(f.db,'p',review);expect(()=>assertEncodedAcceptance(f.db,f.root,'p',target,candidate)).toThrow(/duplicates/);
+  recordAcceptanceReview(f.db,'p',syntheticReview(target,f.root,f.db));expect(()=>assertEncodedAcceptance(f.db,f.root,'p',target,candidate)).not.toThrow();
   writeFileSync(f.file,'changed output');expect(()=>assertEncodedAcceptance(f.db,f.root,'p',target,candidate)).toThrow(/encoded candidate/);
  }finally{f.db.close();}
 });
 it('holds a shorter decoded speaking candidate even when review claims the full requested interval',()=>{
- const f=fixture();try{const target=attemptAcceptanceTarget(f.db,f.root,'p','take',2000);recordAcceptanceReview(f.db,'p',syntheticReview(target,f.root));expect(()=>assertAcceptanceEvidence(f.db,f.root,'p',target)).toThrow(/shorter/);}finally{f.db.close();}
+ const f=fixture();try{const target=attemptAcceptanceTarget(f.db,f.root,'p','take',2000);recordAcceptanceReview(f.db,'p',syntheticReview(target,f.root,f.db));expect(()=>assertAcceptanceEvidence(f.db,f.root,'p',target)).toThrow(/shorter/);}finally{f.db.close();}
 });
 
 it('invokes delivery sample-rate scorecard on the exact encoded file without imposing legacy ambience thresholds',()=>{
  const f=fixture('final',44100);try{
   const target=f.target();target.key='wrong-delivery-rate';for(const id of ['static','duplicates','short_inserts','colour','regressions'])target.requirements.push({id:'render:'+id,text:'Observed '+id});
-  const candidate=retainEncodedCandidate(f.db,f.root,'p',target,{});recordAcceptanceReview(f.db,'p',syntheticReview(target,f.root));
+  const candidate=retainEncodedCandidate(f.db,f.root,'p',target,{});recordAcceptanceReview(f.db,'p',syntheticReview(target,f.root,f.db));
   expect(()=>assertEncodedAcceptance(f.db,f.root,'p',target,candidate)).toThrow(/48 kHz/);
  }finally{f.db.close();}
 });
@@ -139,6 +143,6 @@ it('does not invent a visible speaker obligation for an intentional nonspeaking 
  const f=fixture('final');try{
   f.db.exec("DELETE FROM shot_characters"); // Dialogue owner remains c, entirely off screen.
   const target=f.target();expect(target.requirements.some(r=>r.id.startsWith('identity:')||r.id.startsWith('speech'))).toBe(false);
-  recordAcceptanceReview(f.db,'p',syntheticReview(target,f.root));expect(f.accept()).toMatchObject({reused:false});
+  recordAcceptanceReview(f.db,'p',syntheticReview(target,f.root,f.db));expect(f.accept()).toMatchObject({reused:false});
  }finally{f.db.close();}
 });

@@ -201,6 +201,7 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
   // that should invalidate other candidates in the same accepted revision.
   const producerNotes = db.prepare(`SELECT r.id, r.subject_id AS subjectId, r.note FROM review_notes r
     WHERE r.project_id = ? AND (r.source = 'human' OR (r.source = 'qc' AND r.note LIKE 'Production Director approved edit:%'))
+    AND CASE WHEN json_valid(r.note) THEN COALESCE(json_extract(r.note,'$.kind'),'') <> 'source_evidence_v1' ELSE 1 END
     AND NOT (r.subject_type='character_version' AND r.note LIKE 'HeartWord wardrobe refinement v1%')
     AND NOT EXISTS (SELECT 1 FROM edit_commands e WHERE e.project_id=r.project_id AND e.command_type='accept_media_candidate' AND json_extract(e.payload,'$.reviewNoteId')=r.id)
     ORDER BY r.created_at, r.id`).all(projectId) as CrewBrief["producerNotes"];
