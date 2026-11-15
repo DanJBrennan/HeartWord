@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-25T15:00:07.7896597Z",
+  "operation": "reapply Files On-Demand unpin to completed synced backup only",
+  "directory": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal",
+  "backupId": "47ff41ac-b914-4195-b8db-8a117caf0233",
+  "allInSync": true,
+  "files": 101157,
+  "priorOnlineOnly": 85105,
+  "reason": "Cloud metadata enumeration now uses extended-length paths; prior absent reports were MAX_PATH enumeration omissions. Direct Win32 and extended scandir metadata agree.",
+  "contentChanged": false,
+  "cloudFilesDeleted": false,
+  "rootCommandDiagnostic": "The extended root-only attrib command printed File not found despite exit 0. Descendant wildcard request completed; actual cloud-only state remains the acceptance gate.",
+  "nativeFollowup": {
+    "at": "2026-10-25T15:02:27.7264612Z",
+    "window": "HeartWordBackups - File Explorer",
+    "selectedFolder": "20261024-first-personal",
+    "action": "Free up space",
+    "observed": "Applying properties progress dialog; no deletion or sharing action"
+  }
+}

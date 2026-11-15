@@ -1,0 +1,13 @@
+{
+  "projectId": "0694bfbf-5595-4531-8215-6242d4aea927",
+  "files": 3225,
+  "problems": [],
+  "editability": [],
+  "application": {
+    "version": "0.1.0",
+    "gitCommit": "not_reported",
+    "node": "v24.14.0",
+    "ffmpeg": "ffmpeg version 8.1.2-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers\r",
+    "schemaSha256": "3f8a96355ee36981a386efa936eeb41e92cb8c7aa15859da5d28e35653436f2d"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-26T01:19:45.839Z",
+  "execArgv": [
+    "--max-old-space-size=8192",
+    "--permission",
+    "--allow-fs-read=C:\\Users\\danbr\\OneDrive\\Documents\\HeartWord",
+    "--allow-fs-read=C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal",
+    "--allow-fs-read=C:\\Users\\danbr\\HeartWordRecoveryDrill\\20261024-personal-cloud*",
+    "--allow-fs-write=C:\\Users\\danbr\\HeartWordRecoveryDrill\\20261024-personal-cloud*",
+    "--allow-fs-write=C:\\Users\\danbr\\OneDrive\\Documents\\HeartWord\\outputs"
+  ],
+  "destination": "C:\\Users\\danbr\\HeartWordRecoveryDrill\\20261024-personal-cloud",
+  "destinationRead": true,
+  "destinationWrite": true,
+  "namespacedRead": true,
+  "applicationRead": true,
+  "applicationWrite": true,
+  "liveRead": false
+}

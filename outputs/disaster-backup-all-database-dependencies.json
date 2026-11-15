@@ -1,0 +1,32 @@
+[
+  {
+    "database": "data/db/heartword-before-broll-20260924.sqlite",
+    "tables": 54,
+    "outsideData": []
+  },
+  {
+    "database": "data/db/heartword.sqlite",
+    "tables": 58,
+    "outsideData": []
+  },
+  {
+    "database": "data/exports/mark-2-timing-2026-09-11/before-import.sqlite",
+    "tables": 21,
+    "outsideData": []
+  },
+  {
+    "database": "data/exports/mark-2-timing-2026-09-11/validation.sqlite",
+    "tables": 27,
+    "outsideData": []
+  },
+  {
+    "database": "data/scratch/chapter-preservation-proof-2026-10-07/revised-data/db/heartword.sqlite",
+    "tables": 56,
+    "outsideData": []
+  },
+  {
+    "database": "data/scratch/mark4-preservation-restored-2026-10-07/db/heartword.sqlite",
+    "tables": 58,
+    "outsideData": []
+  }
+]

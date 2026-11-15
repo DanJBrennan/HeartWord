@@ -1,0 +1,23 @@
+{
+  "ok": true,
+  "revision": "ab715d94-e4cc-44d8-86c6-a026f1a6c4ac",
+  "replayed": false,
+  "shot": {
+    "id": "test-shot-1",
+    "scene_id": "test-scene",
+    "sequence": 1,
+    "action": "Producer edit: keep the test witness seated on the established mark; preserve cream mantle and source performance",
+    "verse_ref": "Mark 5:1",
+    "framing": "Wide",
+    "camera_movement": "Still",
+    "needs_lip_sync": 0,
+    "dialogue_character_id": null,
+    "coverage_plan": "single_clip",
+    "coverage_notes": null,
+    "crowd_density": null,
+    "continuity_notes": "Approved cream mantle; established witness mark",
+    "spatial_view": "Front view",
+    "status": "planned",
+    "created_at": 1792026324720
+  }
+}

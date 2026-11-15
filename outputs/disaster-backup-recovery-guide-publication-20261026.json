@@ -1,0 +1,26 @@
+{
+  "at": "2026-10-26T02:47:19.903Z",
+  "folder": "C:/Users/danbr/OneDrive/Documents/OneDrive - Personal/OneDrive/HeartWordBackups/recovery-guide-20261024-first-personal-20261026",
+  "files": [
+    {
+      "name": "disaster-recovery-design.md",
+      "path": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\recovery-guide-20261024-first-personal-20261026\\disaster-recovery-design.md",
+      "bytes": 23130,
+      "sha256": "6eb268980a3f399a9dae3221a19646213eafc77ec86a25e5e7dce27959283a98"
+    },
+    {
+      "name": "DISASTER_RECOVERY.md",
+      "path": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\recovery-guide-20261024-first-personal-20261026\\DISASTER_RECOVERY.md",
+      "bytes": 15121,
+      "sha256": "22a0128975cfd836e962eb2d7498d893580b3744fd7ee1740a64bb847b2490d1"
+    },
+    {
+      "name": "verification.json",
+      "path": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\recovery-guide-20261024-first-personal-20261026\\verification.json",
+      "bytes": 13509,
+      "sha256": "baf42606eba95b544c5f65c9bfafb4c8ab4730089f24c81b86b06de144ed39bc"
+    }
+  ],
+  "cloudVerified": true,
+  "cloudProof": "outputs/disaster-backup-recovery-guide-cloud-proof-20261026.json"
+}

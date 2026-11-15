@@ -1,0 +1,21 @@
+{
+  "backupId": "47ff41ac-b914-4195-b8db-8a117caf0233",
+  "directory": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal",
+  "pid": 260272,
+  "files": 16052,
+  "bytes": 27053991189,
+  "pinRequestsAccepted": 16052,
+  "phase": "failed",
+  "contentSupplied": false,
+  "hashVerification": "pending",
+  "at": "2026-10-25T16:37:56Z",
+  "pendingFiles": 1507,
+  "pendingExamples": [
+    "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal\\data\\m5delivery-20261024\\assets\\generated\\video\\47f33154-54a0-4af8-99f6-8dbde9c86799-ltx-198e7962-af34-43bb-8a26-6714fbb873d5.mp4.picture-review-proxy.mp4.json",
+    "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal\\data\\m5delivery-20261024\\assets\\generated\\video\\4a14812f-bf74-4faf-b757-88dc31883f60-ltx-f5616b1e-52d4-4995-a7a8-0330561a2968.mp4.ambience.wav.002be9b1-376a-4c07-b4aa-2e9b9308f43c.review.json",
+    "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal\\data\\m5delivery-20261024\\assets\\generated\\video\\5301e8a1-3055-48dc-a37c-ebba43b6a8c7-ltx-896fbe13-aaea-4164-b70d-e07066d8f519.mp4.ambience.wav.7a4b4de4-c07b-478e-95a9-bba3a40203c7.review.json",
+    "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal\\data\\m5delivery-20261024\\assets\\generated\\video\\5301e8a1-3055-48dc-a37c-ebba43b6a8c7-ltx-896fbe13-aaea-4164-b70d-e07066d8f519.mp4.picture-review-proxy.mp4.json",
+    "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal\\data\\m5delivery-20261024\\assets\\generated\\video\\5659f997-a5c8-4d48-b644-42055f26251d-ltx-8eaf63de-b0a7-430d-9fb1-0c256dbfba9c.mp4.ambience.wav.ff9da33d-313b-45d8-9f68-15eb8169d969.review.json"
+  ],
+  "error": "TimeoutError('Long-path explicit download did not finish in 30 minutes; preserve backup and inspect OneDrive')"
+}

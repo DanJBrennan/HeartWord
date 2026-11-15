@@ -1,11 +1,177 @@
 # Disaster recovery for HeartWordData
 
+## External deduplicated backup authorized November 13, 2026
+
+Dan authorized a current deduplicated backup on the newly attached D: drive,
+verification, then removal of only safely preserved old staging/recovery-test
+copies. Native restic repository format is used; no bespoke content store or
+production stage is added. Existing D: files and OneDrive snapshots are retained.
+
+`scripts/backup-restic-current.mjs` reserves every SQLite writer, rejects active
+production, uses SQLite's backup API and validates integrity/foreign keys. It
+captures ordinary data plus the existing application-source whitelist in restic,
+excluding original database/journal bytes and known secrets. Consistent databases
+are retained under a separate `sqlite/` tree with original relative paths and
+an explicit restore overlay map in `capture.json`. Tree membership and file
+identity/size/change times are checked again after restic exits successfully.
+A changed source or nonzero restic exit is not eligible for cleanup.
+
+Acceptance for this operation: restic full data verification, an independent
+restore with content verification and database checks, and retained native
+restic snapshots of each historical directory selected for removal. Historical
+directories are compared with their restored snapshot before removal; no current
+production tree, revision history, app worktree or OneDrive snapshot is removed.
+Cleanup paths must resolve within the two specifically authorized local staging
+and recovery-drill roots. Recovery tools, key and instructions must also survive
+C: failure. External-disk protection is separate from OneDrive cloud delivery.
+
+The recurring operation uses `backup-restic-scheduled.ps1` installed outside the
+checkout under `C:/Users/danbr/.config/HeartWordBackup`. It runs nightly at 23:30
+local Eastern time and retries hourly until that night's window is complete,
+while Dan is logged on. It requires the expected physical D: disk and personal
+OneDrive account/root, 20 GiB free on each local disk, and 15 minutes of user
+and database inactivity. SQLite writer reservations and active-production checks
+are authoritative; changes during capture fail the run rather than being ignored.
+
+Each run captures the existing data/application, supplements present external
+file references from the captured databases, checks all repository data, and
+independently restores/checks every database and supplementary external file.
+An explicit parent enables efficient native incremental capture. Restic keeps
+historical snapshots; no automatic retention/pruning decision is added.
+Only that run's verified scratch database/restore trees are removed. The logs,
+inventories, snapshot IDs and verification report remain in its D: run directory.
+
+After capture/verification processes release their locks, Robocopy copies the
+encrypted restic repository to the personal OneDrive deduplicated folder. It
+uses /E, not /MIR or /PURGE, excludes transient locks, and treats exit codes 8+
+as failures. New/changed destination files are SHA-256 checked against restic's
+content-addressed ciphertext names (config against its source hash). Unchanged
+cloud-only files need not hydrate. Local-copy verification does not prove upload
+or cloud recovery; runner state explicitly records remote delivery as unconfirmed.
+This Windows task is a deterministic filesystem operation, independent of a
+Codex model/session, rather than a recurring chat prompt.
+
+A small adjacent `verification/<run>/` catalog contains the verified snapshot
+IDs, original roots, SQLite-overlay location and completion report. It contains
+no repository password or database contents. Reports are hash-checked after the
+local copy. The runner uses a Windows named mutex, released by the OS if the
+process exits, to avoid an abandoned scheduler lock file. An interrupted native
+capture can still leave the shared HeartWordData backup lock; inspect active
+processes and failure logs before clearing that separate source-capture lock.
+
+Native format and copy semantics: [restic design](https://github.com/restic/restic/blob/master/doc/design.rst),
+[repository verification](https://restic.readthedocs.io/en/stable/045_working_with_repos.html),
+and [Microsoft Robocopy reference](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy).
+
+Restore native restic files to a new unsynced destination, then overlay each
+captured `sqlite/<relative-path>` onto the restored data root at that same relative
+path. Raw SQLite journal files are intentionally absent. Absolute saved paths
+still require the existing recovery path-projection procedure before normal
+use on a different data root; file/database verification alone does not establish
+universal historical project editability. Provider credentials/installed software
+remain separate recovery steps.
+
 October 7, 2026. This extends assembly's chapter-preservation primitives and
 the existing Production crew status. It adds no production stage or parallel
 project state. Dan selected completed backups in OneDrive, conditional on at
 least **750 GiB free**, and accepts losing up to **one working day**.
 Cloud capacity and remote delivery must be established before deployment is
 called complete. The live database remains outside synced storage.
+
+October 24 deployment continuation: Dan supplied a new personal OneDrive
+account and authorized starting backup. Its Settings show 97.4 GB used of
+2.0 TB for `danbrennan@verizon.net`, meeting the 750 GiB-free condition.
+The verified sync root is
+`C:\Users\danbr\OneDrive\Documents\OneDrive - Personal\OneDrive`; completed
+snapshots go in `HeartWordBackups/`, with explicit root selection instead of
+the stale business-account environment default. The new measured data is
+155.533 GiB / 99,896 files / 56 SQLite files; the October 7 inventory and failed
+business-account capacity check below are historical. Seven full copies now
+need roughly 1,089 GiB before growth. No production input, source performance,
+canon, accepted asset, approval or cost gate changes for backup deployment.
+
+The current tree contains several restored application directories. The
+backup inventory now validates ancestors once at its root and each directory
+as it walks, rather than rechecking all ancestors for every child. Actual
+source reads still reject linked ancestors, and destination/verification
+path checks remain. A real junction test covers nested links and a linked
+root ancestor. This avoids millions of redundant metadata checks without
+removing source-change detection or link rejection.
+
+The first new capture is `20261024-first-personal`. Deployment and recovery
+evidence is saved separately at `outputs/disaster-backup-deployment-20261024.json`;
+absence of a successful remote-recovery record means independent survival
+has not been established. No old verified snapshot is deleted by this setup.
+
+October 25 cloud-recovery drill (historical progress): all 101,157 files, including
+the completion manifest, reported IN_SYNC and online-only at 15:08:34Z. The first
+all-synced observation was 14:59:26Z, at most 14.425 hours after publication;
+an earlier metadata probe omitted some MAX_PATH descendants, so this is an
+observation bound rather than an exact upload duration. Extended-length
+enumeration corrected that diagnostic without changing any backup bytes.
+
+The actual cold read exposed a Windows/OneDrive recovery limitation: ordinary
+recall returns Win32 380 for sampled paths at least 260 characters long, even
+though their placeholders report IN_SYNC. Short-path samples recalled with
+matching hashes. Explicitly pinning the failing file through the supported
+CfSetPinState API downloaded it and its SHA-256 matched the immutable manifest.
+The drill is now requesting explicit downloads for the 16,052 affected files
+(27,053,991,189 bytes), before repeating the isolated hash/database restore.
+This changes local cache policy only; it never supplies replacement content or
+uses original production files to repair the cloud copy. No remote-recovery
+success or unattended schedule is claimed until the full drill passes.
+Evidence: `outputs/disaster-backup-cloud-recall-diagnostic-20261025.json`,
+`outputs/disaster-backup-long-path-recall-20261025.json`, and the deployment
+record. A sync icon alone demonstrably does not satisfy acceptance.
+
+October 26 UTC verified result: the full cloud baseline passed every retained
+file hash and all 56 SQLite integrity/foreign-key checks, then restored to
+`C:\Users\danbr\HeartWordRecoveryDrill\20261024-personal-cloud`, with its
+application in the `-application` sibling. The strict read audit denied live
+HeartWordData content. All 59 production tables / 16,423 rows, schema and all
+non-path values match; 1,623 exact retained-file references were projected for
+the restored location. A first audit incorrectly demanded byte-identical JSON
+path strings; a separate leaf comparison verified prose, decisions, IDs,
+amounts, timestamps and protected origin fields instead of altering records.
+The unprojected originals remain in the immutable baseline. No copy was repeated
+after the successful restore marker merely to repair that audit.
+
+The one-off strict drill additionally preflighted ancestor metadata without
+granting parent-directory content access. A single owned-drill-prefix grant
+avoids overlapping wildcard-grant behavior in the installed Node version.
+Node permission mode disables fsync; only new restored metadata deferred that
+flush to the outer worker, which validated the isolated paths and called
+Flush(true). The normal application/recovery implementation and sealed snapshot
+were unchanged by these drill adapters. Evidence is retained in the boundary,
+permission-selftest and metadata-flush reports under `outputs/`.
+
+The normal recovered app at port 4048 opened Mark 5, its retained storyboard,
+18 approved Papuan visual cast entries and 657 saved discussion entries.
+Its recorded-cut asset and delivered master both match the approved film SHA;
+native playback advanced beyond two minutes, and FFmpeg decoded the whole
+9:32.380 video/audio successfully. Its 3,225-file chapter audit reports no
+dependency or editability findings. Matching installed host software was used;
+this is an isolated data/application restore, not a clean-OS installation test.
+Historical Mark 2/Blender gaps and legacy status/cost displays remain explicit.
+
+The first-copy disk-loss acceptance passes. Ongoing one-working-day protection
+does not yet pass: publication to all-cloud-only acknowledgement took 14.577
+hours, and the existing nightly runner retains two local full copies per run.
+It remains disabled. Dan must choose separate fast nightly storage, a bounded
+changed-file upload approach, or a revised loss allowance before dependent
+scheduling work. There is no new provider, paid transport, pruning platform or
+SMS delivery claim. The separate Goal Guardian review records these outcomes.
+
+Final documentation/cache follow-through: all three updated notes in
+`HeartWordBackups/recovery-guide-20261024-first-personal-20261026/` passed
+IN_SYNC/online-only checks and cloud-read SHA-256 comparison against their
+publication receipt. At 2026-10-26T02:58:30Z, all 101,157 snapshot files were
+again IN_SYNC and online-only; C: had 350,629,101,568 bytes free. The restored
+working data/application remain retained. No cloud content was deleted. The
+follow-up stops pending Dan's already requested daily-policy decision; no
+nightly accumulation job is enabled. Exact evidence is in
+`outputs/disaster-backup-recovery-guide-cloud-proof-20261026.json` and the
+final deployment record.
 
 ## Product goal and acceptance
 

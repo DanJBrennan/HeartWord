@@ -1,0 +1,27 @@
+
+> heartword@0.1.0 test
+> vitest run tests/creative-direction/production-record.test.ts
+
+
+ RUN  v2.1.9 C:/Users/danbr/OneDrive/Documents/HeartWord
+
+(node:57716) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/creative-direction/production-record.test.ts (13 tests) 7424ms
+   ✓ saved crew production runtime > saves schema-compatible FDL and contribution envelopes without changing sources, canon or accepted media 480ms
+   ✓ saved crew production runtime > resolves camera versus blocking while retaining the original proposal, objection and owner resolution 578ms
+   ✓ saved crew production runtime > rejects a wardrobe redesign through continuity and carries the disagreement forward 795ms
+   ✓ saved crew production runtime > does not clear an old blocking objection just because later findings are empty 992ms
+   ✓ saved crew production runtime > holds cross-domain proposals without consent and accepts only a fresh owner-reviewed proposal 631ms
+   ✓ saved crew production runtime > retains a late review without replacing the producer's newer accepted revision 478ms
+   ✓ saved crew production runtime > shares manual API, autonomous caller, immutable producer edits, replay and reopened state 703ms
+   ✓ saved crew production runtime > keeps late blocking evidence visible on a newer immutable producer revision 701ms
+   ✓ saved crew production runtime > cannot reapprove a source/canon change as a producer creative edit and rolls back the edit 504ms
+   ✓ saved crew production runtime > holds a new candidate whose revision provenance was not saved 461ms
+   ✓ saved crew production runtime > holds absent/stale plans before provider submission and preserves a stale returned candidate 570ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  20:07:13
+   Duration  9.19s (transform 659ms, setup 0ms, collect 1.31s, tests 7.42s, environment 0ms, prepare 139ms)
+

@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-25T16:00:39.519Z",
+  "pid": 244984,
+  "state": "failed",
+  "path": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal\\data\\assets\\generated\\drafts\\e6c6e2b8-f0d7-42ca-adae-b84c38bd8a22-draft-49e7266c-ad59-4aa7-a3f7-acaffbad1423-guided-75aa7396-29bf-4081-ae4d-0a6f1e0dc80f.mp4",
+  "completedReads": 2629,
+  "completedBytes": 24150924316,
+  "detail": {
+    "message": "UNKNOWN: unknown error, read (backup read: C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal\\data\\assets\\generated\\drafts\\e6c6e2b8-f0d7-42ca-adae-b84c38bd8a22-draft-49e7266c-ad59-4aa7-a3f7-acaffbad1423-guided-75aa7396-29bf-4081-ae4d-0a6f1e0dc80f.mp4)",
+    "code": "UNKNOWN"
+  }
+}

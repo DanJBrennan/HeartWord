@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync, renameSync } from "node:fs";
+import { closeSync, mkdtempSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync, writeSync, existsSync, renameSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -34,6 +34,20 @@ beforeEach(() => {
 });
 afterEach(() => { db.close(); if (resolve(directory).startsWith(resolve(tmpdir(), "heartword-package-"))) rmSync(directory, { recursive: true, force: true }); });
 describe("editable chapter preservation", () => {
+  it("preserves a multi-chunk binary take and detects same-size corruption after a chunk boundary", () => {
+    const bytes = Buffer.alloc(2 * 1024 * 1024 + 37);
+    for (let i = 0; i < bytes.length; i++) bytes[i] = (i * 17 + Math.floor(i / 1024)) % 251;
+    const source = put("long-take.mp4", ""); writeFileSync(source, bytes);
+    db.exec("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('long','shot','fixture','fixture','generate','accepted','long-take.mp4',0,2)");
+    const packaged = join(directory, "binary-package"), restored = join(directory, "binary-restored");
+    const manifest = exportChapterPackage(db, directory, "p", packaged, { includeApplication: false });
+    expect(manifest.files.find(f => f.path === "assets/long-take.mp4")?.sha256).toBe(createHash("sha256").update(bytes).digest("hex"));
+    restoreChapterPackage(packaged, restored);
+    expect(readFileSync(join(restored, "assets/long-take.mp4"))).toEqual(bytes);
+    const fd = openSync(join(packaged, "assets/long-take.mp4"), "r+");
+    try { writeSync(fd, Buffer.from([255]), 0, 1, 1024 * 1024 + 5); } finally { closeSync(fd); }
+    expect(() => verifyChapterPackage(packaged)).toThrow("Retained asset integrity failed");
+  });
   it("retains rejected takes, old canon, source authority, producer history and lineage without copying unrelated chapters", () => {
     const packageDir = join(directory, "package"), restored = join(directory, "other-root");
     const manifest = exportChapterPackage(db, directory, "p", packageDir);

@@ -1,5 +1,9 @@
 # Editable chapter preservation
 
+Large retained review masters are hashed in bounded chunks during inspection,
+export verification and restore verification, including files above2GiB. The
+SHA-256, archive format, retention and corruption checks remain unchanged.
+
 Implemented October 7, 2026 in assembly's `chapter-package.ts`. This is a
 portable production snapshot, not a new pipeline stage or disaster-backup
 service. Whole-data disk-loss protection now has a separate

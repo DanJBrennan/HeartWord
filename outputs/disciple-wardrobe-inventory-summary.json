@@ -1,0 +1,530 @@
+[
+  {
+    "name": "Peter",
+    "approved": [
+      {
+        "id": "88e8eb71-6d59-4ba3-9e2b-b3e3ce544377",
+        "label": "v4",
+        "voice": "ZthjuvLPty3kTMaNKVKb",
+        "notes": "Dan-approved 2026-09-21 Mark 3 costume correction. Regenerated standing reference only: preserved the clavi-striped cream tunic, standardized a plain narrow waist strap, redraped the rust mantle over the shoulders rather than the hips, and replaced loose fringe with four small hand-knotted corner tzitzit. Headshot and remaining motion poses are carried forward unchanged."
+      }
+    ],
+    "references": [
+      {
+        "path": "characters/peter/motion/motion-neutral-standing-v4.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/peter/motion/motion-seated-listening-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/peter/motion/motion-teaching-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/peter/motion/motion-walking-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/peter/lip_sync_closeup/close-up-neutral-v3.png",
+        "category": "headshot",
+        "exists": true,
+        "hashMatches": null
+      }
+    ],
+    "reviews": 3
+  },
+  {
+    "name": "Andrew",
+    "approved": [
+      {
+        "id": "8c1be0de-b4dc-4fac-ae75-a872843776bd",
+        "label": "v2",
+        "voice": null,
+        "notes": "Garment corrected per Critic canon garment audit 2026-09-07, round 3 (tzitzit, draped mantle, corner gamma/notched motifs instead of continuous border trim, symmetric clavi, hardware-free belt, plain neck slit, authentic sandals). Only the motion-neutral-standing reference was regenerated -- headshot and other motion poses carried forward unchanged from the prior version and still show the pre-fix garment."
+      }
+    ],
+    "references": [
+      {
+        "path": "characters/andrew/motion/motion-neutral-standing-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/andrew/motion/motion-seated-listening-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/andrew/motion/motion-teaching-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/andrew/motion/motion-walking-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/andrew/lip_sync_closeup/close-up-neutral-v2.png",
+        "category": "headshot",
+        "exists": true,
+        "hashMatches": null
+      }
+    ],
+    "reviews": 1
+  },
+  {
+    "name": "James son of Zebedee",
+    "approved": [
+      {
+        "id": "3292fdd7-9a31-474d-887e-4835480a2076",
+        "label": "v3",
+        "voice": null,
+        "notes": "Dan-approved 2026-09-19 distinct headshot revision: a sturdy mid-40s man with a wide square jaw, closely cropped curls, and a compact squared black beard; cream flax with a terracotta-red mantle. This locks a face/hair/beard/age and color-language distinction from the similar disciples. The headshot is v3; existing motion references are carried forward unchanged from v2 pending a separately reviewed matching body-pose package."
+      }
+    ],
+    "references": [
+      {
+        "path": "characters/james-son-of-zebedee/motion/motion-neutral-standing-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/james-son-of-zebedee/motion/motion-seated-listening-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/james-son-of-zebedee/motion/motion-teaching-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/james-son-of-zebedee/motion/motion-walking-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/james-son-of-zebedee/lip_sync_closeup/close-up-neutral-v3.png",
+        "category": "headshot",
+        "exists": true,
+        "hashMatches": true
+      }
+    ],
+    "reviews": 1
+  },
+  {
+    "name": "John son of Zebedee",
+    "approved": [
+      {
+        "id": "f102a96e-54d0-42c7-ac44-7935e332f269",
+        "label": "v4",
+        "voice": null,
+        "notes": "Dan-approved 2026-09-21 Mark 3 costume correction. Regenerated standing reference only: retained teal clavi and gamma motifs while adding a short full beard, loose cream sudarium, naturally draped mantle, and small hand-knotted corner tzitzit. Close-up and remaining poses are carried forward unchanged."
+      }
+    ],
+    "references": [
+      {
+        "path": "characters/john-son-of-zebedee/motion/motion-neutral-standing-v4.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/john-son-of-zebedee/motion/motion-seated-listening-v3.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/john-son-of-zebedee/motion/motion-teaching-v3.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/john-son-of-zebedee/motion/motion-walking-v3.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/john-son-of-zebedee/lip_sync_closeup/close-up-neutral-v3.png",
+        "category": "headshot",
+        "exists": true,
+        "hashMatches": null
+      }
+    ],
+    "reviews": 2
+  },
+  {
+    "name": "Philip the Apostle",
+    "approved": [
+      {
+        "id": "0b824940-d749-4a31-ae1a-12a27dc437b0",
+        "label": "v4",
+        "voice": null,
+        "notes": "Dan-approved 2026-09-21 Philip body-reference repair. The approved clean-shaven, long-curled Papuan v3 close-up remains the identity lock and is carried forward unchanged. Regenerated standing, walking, teaching, and seated body poses to match that identity; addressed costume findings with four separate knotted corner tzitzit, symmetric tunic clavi from shoulder to hem, a thin leather girdle, natural drop-shoulder sleeves, and toe-loop leather sandals."
+      }
+    ],
+    "references": [
+      {
+        "path": "characters/philip-the-apostle/motion/motion-neutral-standing-v4.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/philip-the-apostle/motion/motion-seated-listening-v4.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/philip-the-apostle/motion/motion-teaching-v4.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/philip-the-apostle/motion/motion-walking-v4.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/philip-the-apostle/lip_sync_closeup/close-up-neutral-v3.png",
+        "category": "headshot",
+        "exists": true,
+        "hashMatches": true
+      }
+    ],
+    "reviews": 2
+  },
+  {
+    "name": "Bartholomew",
+    "approved": [
+      {
+        "id": "63277838-c03e-4b9a-9736-93bc05b812bf",
+        "label": "v4",
+        "voice": null,
+        "notes": "Dan-approved 2026-09-21 costume correction. Regenerated standing reference only: horizontal neck slit, drop sleeves, madder clavi, indigo mantle gamma marks, small knotted corner tzitzit, and flush wide woven sash. Other v3 identity assets carry forward unchanged."
+      }
+    ],
+    "references": [
+      {
+        "path": "characters/bartholomew/motion/motion-neutral-standing-v4.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/bartholomew/motion/motion-seated-listening-v3.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/bartholomew/motion/motion-teaching-v3.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/bartholomew/motion/motion-walking-v3.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/bartholomew/lip_sync_closeup/close-up-neutral-v3.png",
+        "category": "headshot",
+        "exists": true,
+        "hashMatches": true
+      }
+    ],
+    "reviews": 2
+  },
+  {
+    "name": "Thomas",
+    "approved": [
+      {
+        "id": "d8ccd715-130c-4d86-beaa-cf3b21145759",
+        "label": "v2",
+        "voice": null,
+        "notes": "Garment corrected per Critic canon garment audit 2026-09-07, round 6 (tzitzit added at mantle corners, corner gamma motifs replacing a continuous modern-style striped border, short sleeves, narrow cord belt, unstitched draped mantle). Critic severity: moderate -- one remaining nitpick (the tunic's clavus stripe only shows on one side, likely because this pose's mantle drape covers the other shoulder) survived three further correction attempts without improving and was accepted as a practical stopping point. Only the motion-neutral-standing reference was regenerated -- headshot and other motion poses carried forward unchanged from the prior version and still show the pre-fix garment."
+      }
+    ],
+    "references": [
+      {
+        "path": "characters/thomas/motion/motion-neutral-standing-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/thomas/motion/motion-seated-listening-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/thomas/motion/motion-teaching-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/thomas/motion/motion-walking-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/thomas/lip_sync_closeup/close-up-neutral-v2.png",
+        "category": "headshot",
+        "exists": true,
+        "hashMatches": null
+      }
+    ],
+    "reviews": 1
+  },
+  {
+    "name": "Matthew (Levi)",
+    "approved": [
+      {
+        "id": "afdbdea6-1eb6-4c51-83d9-fc52f95c7e84",
+        "label": "v6",
+        "voice": "CwhRBWXzGAHq8TQ4Fs17",
+        "notes": "Dan-approved 2026-09-21 Matthew costume correction, following garment-critic review. Regenerated standing reference only: flat plain-weave fabrics, solid indigo clavi without metallic edging, corner eyelet-tied cords, a narrow brown leather belt, narrower rectangular sleeves, and supported leather sandals. Matthew's approved v5 Papuan identity, tablet/stylus, close-up, and remaining poses are carried forward unchanged."
+      }
+    ],
+    "references": [
+      {
+        "path": "characters/matthew/motion/motion-neutral-standing-v6.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/matthew/motion/motion-seated-listening-v5.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/matthew/motion/motion-teaching-v5.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/matthew/motion/motion-walking-v5.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/matthew/lip_sync_closeup/close-up-neutral-v5.png",
+        "category": "headshot",
+        "exists": true,
+        "hashMatches": true
+      }
+    ],
+    "reviews": 2
+  },
+  {
+    "name": "James son of Alphaeus",
+    "approved": [
+      {
+        "id": "67ad8e3c-46ac-48d4-baf4-feb1ba79163a",
+        "label": "v4",
+        "voice": null,
+        "notes": "Dan-approved 2026-09-21 costume correction. Regenerated standing reference only: horizontal neck slit, unshaped sleeves, indigo clavi, mantle gamma marks, short plain corner-eyelet knotted tzitzit, flush sash and loose travel headwrap. His approved younger face and black beard remain unchanged; other v3 assets carry forward."
+      }
+    ],
+    "references": [
+      {
+        "path": "characters/james-son-of-alphaeus/motion/motion-neutral-standing-v4.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/james-son-of-alphaeus/motion/motion-seated-listening-v3.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/james-son-of-alphaeus/motion/motion-teaching-v3.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/james-son-of-alphaeus/motion/motion-walking-v3.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/james-son-of-alphaeus/lip_sync_closeup/close-up-neutral-v3.png",
+        "category": "headshot",
+        "exists": true,
+        "hashMatches": true
+      }
+    ],
+    "reviews": 2
+  },
+  {
+    "name": "Thaddaeus (Jude)",
+    "approved": [
+      {
+        "id": "eebba346-1e0f-41f7-8a36-5dff21e211cc",
+        "label": "v3",
+        "voice": null,
+        "notes": "Dan-approved 2026-09-19 distinct headshot revision: a slim mid-20s man with an angular face, crisp short coils, and a fine moustache; aubergine flax with a dusty-saffron mantle. This locks a face/hair/beard/age and color-language distinction from the similar disciples. The headshot is v3; existing motion references are carried forward unchanged from v2 pending a separately reviewed matching body-pose package."
+      }
+    ],
+    "references": [
+      {
+        "path": "characters/thaddaeus-jude/motion/motion-neutral-standing-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/thaddaeus-jude/motion/motion-seated-listening-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/thaddaeus-jude/motion/motion-teaching-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/thaddaeus-jude/motion/motion-walking-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/thaddaeus-jude/lip_sync_closeup/close-up-neutral-v3.png",
+        "category": "headshot",
+        "exists": true,
+        "hashMatches": true
+      }
+    ],
+    "reviews": 1
+  },
+  {
+    "name": "Simon the Zealot",
+    "approved": [
+      {
+        "id": "16454999-d1e7-4321-96df-ac8e45b7c151",
+        "label": "v2",
+        "voice": null,
+        "notes": "Garment corrected per Critic canon garment audit 2026-09-07 (tzitzit added, draped mantle instead of tailored coat, natural dye/clavi ornamentation instead of embroidered trim). Only the motion-neutral-standing reference was regenerated -- headshot and other motion poses carried forward unchanged from the prior version and still show the pre-fix garment."
+      }
+    ],
+    "references": [
+      {
+        "path": "characters/simon-the-zealot/motion/motion-neutral-standing-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/simon-the-zealot/motion/motion-seated-listening-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/simon-the-zealot/motion/motion-teaching-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/simon-the-zealot/motion/motion-walking-v2.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": null
+      },
+      {
+        "path": "characters/simon-the-zealot/lip_sync_closeup/close-up-neutral-v2.png",
+        "category": "headshot",
+        "exists": true,
+        "hashMatches": null
+      }
+    ],
+    "reviews": 1
+  },
+  {
+    "name": "Judas Iscariot",
+    "approved": [
+      {
+        "id": "c2ebbc51-4a11-444c-967c-4d208911dcc8",
+        "label": "v4",
+        "voice": null,
+        "notes": "Dan-approved 2026-09-21 costume correction. Regenerated standing reference only: clavi, mantle gamma marks, short corner tzitzit, flush sash, loose headcloth, and no visible exterior money pouch; funds are implied only within the belt fold. Judas's distinct identity and other v3 assets carry forward unchanged."
+      }
+    ],
+    "references": [
+      {
+        "path": "characters/judas-iscariot/motion/motion-neutral-standing-v4.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/judas-iscariot/motion/motion-seated-listening-v3.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/judas-iscariot/motion/motion-teaching-v3.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/judas-iscariot/motion/motion-walking-v3.png",
+        "category": "body_pose",
+        "exists": true,
+        "hashMatches": true
+      },
+      {
+        "path": "characters/judas-iscariot/lip_sync_closeup/close-up-neutral-v3.png",
+        "category": "headshot",
+        "exists": true,
+        "hashMatches": true
+      }
+    ],
+    "reviews": 2
+  }
+]

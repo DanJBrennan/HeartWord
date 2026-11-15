@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -31,6 +31,19 @@ beforeEach(() => {
 });
 afterEach(() => { vi.unstubAllEnvs(); db.close(); if (root.startsWith(join(tmpdir(), "heartword-disaster-"))) rmSync(root, { recursive: true, force: true }); });
 describe("whole production disaster recovery", () => {
+  it("rejects nested junctions and linked ancestors without following them", async () => {
+    const outside = join(root, "outside"); mkdirSync(outside);
+    writeFileSync(join(outside, "private.txt"), "must not enter the backup");
+    const linkedAsset = join(data, "assets", "linked");
+    symlinkSync(outside, linkedAsset, process.platform === "win32" ? "junction" : "dir");
+    expect(() => inventoryDisasterData(data)).toThrow(/link is not allowed/);
+    await expect(stageDisasterBackup(data, join(root, "linked-assets-stage"), app)).rejects.toThrow(/link is not allowed/);
+    expect(existsSync(join(root, "linked-assets-stage", "backup.json"))).toBe(false);
+    rmSync(linkedAsset);
+    const linkedParent = join(root, "linked-parent");
+    symlinkSync(root, linkedParent, process.platform === "win32" ? "junction" : "dir");
+    expect(() => inventoryDisasterData(join(linkedParent, "data"))).toThrow(/link is not allowed/);
+  }, 30000);
   it("snapshots committed WAL state, all databases and originals; restores history into a new isolated root without original access", async () => {
     expect(existsSync(join(data, "db/heartword.sqlite-wal"))).toBe(true);
     const staged = join(root, "stage"), restored = join(root, "restored");

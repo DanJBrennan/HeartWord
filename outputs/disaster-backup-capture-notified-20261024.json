@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-25T00:29:40.4260923Z",
+  "captureCompleted": true,
+  "captureCompletedAt": "2026-10-25T00:20:17.021Z",
+  "backupId": "47ff41ac-b914-4195-b8db-8a117caf0233",
+  "captureLockPresent": false,
+  "productionMayResume": true,
+  "cloudRecoveryVerified": false,
+  "notification": "Local capture finished; normal production and editing may resume while OneDrive transfer and recovery verification continue."
+}

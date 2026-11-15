@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-26T02:36:13Z",
+  "backupId": "47ff41ac-b914-4195-b8db-8a117caf0233",
+  "directory": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal",
+  "method": "CfSetPinState UNPINNED, RECURSE | STOP_ON_ERROR",
+  "hresult": "0x0",
+  "requestAccepted": true,
+  "cloudFilesDeleted": false,
+  "originalOrRestoreDataChanged": false,
+  "actualEviction": "await metadata-only verification"
+}

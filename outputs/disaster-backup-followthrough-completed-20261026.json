@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-26T03:00:01.1555450Z",
+  "backupId": "47ff41ac-b914-4195-b8db-8a117caf0233",
+  "guideCloudProof": "outputs/disaster-backup-recovery-guide-cloud-proof-20261026.json",
+  "guideFolder": "C:/Users/danbr/OneDrive/Documents/OneDrive - Personal/OneDrive/HeartWordBackups/recovery-guide-20261024-first-personal-20261026",
+  "guideFilesCloudReadbackVerified": 3,
+  "snapshotFiles": 101157,
+  "snapshotAllInSync": true,
+  "snapshotAllOnlineOnly": true,
+  "metadataObservedAt": "2026-10-26T02:58:30Z",
+  "freeBytesAtFinalMetadata": 350629101568,
+  "freeBytesNow": 350662668288,
+  "cloudContentDeleted": false,
+  "originalOrRestoredDataChanged": false,
+  "isolatedRestoreRetained": true,
+  "nightlyEnabled": false,
+  "productionChanges": false,
+  "smsSent": false,
+  "stopReason": "First snapshot, recovery workflow, recovery notes and cache follow-through are verified. Further daily setup requires the already pending policy choice from Dan."
+}

@@ -1,0 +1,12 @@
+{
+  "filesRead": 28915,
+  "sqliteHeaders": [
+    "db\\heartword-before-broll-20260924.sqlite",
+    "db\\heartword.sqlite",
+    "scratch\\mark4-preservation-restored-2026-10-07\\db\\heartword.sqlite",
+    "scratch\\chapter-preservation-proof-2026-10-07\\revised-data\\db\\heartword.sqlite",
+    "exports\\mark-2-timing-2026-09-11\\before-import.sqlite",
+    "exports\\mark-2-timing-2026-09-11\\validation.sqlite"
+  ],
+  "unreadable": []
+}

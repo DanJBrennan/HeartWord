@@ -1,0 +1,83 @@
+{
+  "at": "2026-10-26T02:44:20.420Z",
+  "reviewer": "Codex dedicated separate Goal Guardian review pass",
+  "independentAgent": false,
+  "documents": [
+    "AGENTS.md",
+    "docs/PRODUCT_VISION.md",
+    "docs/NON_GOALS.md",
+    "docs/ARCHITECTURE.md",
+    "docs/plans/CURRENT_GOAL.md",
+    "docs/USER_WORKFLOW.md",
+    "docs/design/disaster-recovery.md",
+    "docs/design/production-crew.md",
+    "docs/design/production-crew-communication.md"
+  ],
+  "goal": "Survive loss of the working disk and resume the same faithful, editable saved chapter without paid regeneration or lost producer authority.",
+  "result": "First independently surviving snapshot and useful isolated recovery pass; ongoing one-working-day protection is held for Dan’s daily-policy decision.",
+  "checks": [
+    {
+      "criterion": "Consistent database plus referenced production assets",
+      "result": "pass",
+      "evidence": "SQLite-supported snapshots with writer reservations, media/source stability checks, independent 56-database header inventory, 101156 retained-file hashes, all database integrity and foreign-key checks."
+    },
+    {
+      "criterion": "Copy survives the working disk",
+      "result": "pass",
+      "evidence": "All 101157 files were IN_SYNC and online-only before cold recall. Permission-restricted restore denied live production content; no original bytes repaired the cloud backup."
+    },
+    {
+      "criterion": "Production records and authority preserved",
+      "result": "pass",
+      "evidence": "All 59 main tables and 16423 rows compared. Only 1623 manifest-retained file-path leaves changed for the recovered location; non-path values and protected origins match. Immutable baseline retains unprojected records."
+    },
+    {
+      "criterion": "Dan’s ordinary chapter workflow",
+      "result": "pass",
+      "evidence": "Recovered source/lockfile installed and built; normal inventory selected Hatam/Mark/5, opened storyboard/canon and recorded cut, played beyond 2 minutes. 657 discussion entries retained. Full video/audio decode and approved film SHA passed. 3225-file chapter dependency/editability audit has no findings."
+    },
+    {
+      "criterion": "Failures remain visible and recoverable",
+      "result": "pass with notification limitation",
+      "evidence": "Failed-attempt logs, deployment errors and backup events retained; app/CLI status and ChatGPT follow-up expose issues. No SMS sender is connected, and no SMS delivery is claimed."
+    },
+    {
+      "criterion": "Preserved source, canon, assets, costs and release gates",
+      "result": "pass",
+      "evidence": "No provider or regeneration call. Source performance/wording/speed and approved assets were copied, not altered. All costs including unreported values remain unchanged. Mark 5 production approval and future field/distribution gates remain separate."
+    },
+    {
+      "criterion": "Scope and simplicity",
+      "result": "pass",
+      "evidence": "Existing backup/preservation stages and saved records were extended by a small walker optimization with junction tests. Other scripts are one-off capture/verification adapters and evidence, not a new production pipeline, transport or backup platform. No unrelated tickets, FDL rewrite or branding work."
+    },
+    {
+      "criterion": "Nightly schedule, retention and one-working-day loss target",
+      "result": "held",
+      "evidence": "First all-cloud-only acknowledgement took 14.577 hours after publication; existing runner accumulates staging/publication copies. No nightly task is registered. Do not claim ongoing one-day protection or enable that runner unchanged."
+    }
+  ],
+  "validation": {
+    "testFiles": 125,
+    "testsPassed": 849,
+    "typechecks": "both passed",
+    "webBuild": "passed; recovered application build also passed",
+    "opsChecks": "Python compilation, PowerShell parsing, strict filesystem/SQLite preflight, full restoration, semantic record audit and normal UI playback passed",
+    "gitDiffCheck": "passed"
+  },
+  "knownLimits": [
+    "Snapshot is the Oct24 capture; subsequent work needs the next backup.",
+    "Host software was reused, so this is not a clean-Windows installation claim. Credentials, MFA/recovery codes, SSH and the external LTX Mac need separate recovery.",
+    "Pre-existing Mark2/Blender gaps and legacy inventory/status/cost displays remain unchanged.",
+    "OneDrive long paths need explicit local download before verification/restoration.",
+    "Current UI overdue flag records operation activity; a verified first snapshot is not an ongoing daily-cadence certificate."
+  ],
+  "decisionNeededFromDan": "Choose separate fast nightly USB storage plus OneDrive, authorize a bounded changed-file OneDrive design, or explicitly revise the acceptable loss. No dependent scheduling or new format proceeds without that choice.",
+  "evidence": [
+    "outputs/disaster-backup-cloud-restore-proof-20261024.json",
+    "outputs/disaster-backup-row-path-audit-20261026.json",
+    "outputs/disaster-backup-normal-workflow-20261026.json",
+    "outputs/disaster-backup-restored-film-decode-20261026.json",
+    "outputs/disaster-backup-restored-metadata-flush-20261026.json"
+  ]
+}

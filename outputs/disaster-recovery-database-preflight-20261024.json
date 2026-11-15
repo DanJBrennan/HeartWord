@@ -1,0 +1,405 @@
+{
+  "databases": [
+    {
+      "path": "scratch\\production-view-demo-2026-10-15\\db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "scratch\\mark5-production-restore-test-r2-20261022\\db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "scratch\\mark5-production-restore-test-r2-20261022\\backups\\before-mark5-film-production-1792609607882.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "scratch\\mark5-production-restore-test-20261022\\db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "scratch\\mark5-production-restore-test-20261022\\backups\\before-mark5-film-production-1792609607882.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "scratch\\mark4-preservation-restored-2026-10-07\\db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "scratch\\emotional-treatment-proof-final-2026-10-14\\db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "scratch\\emotional-treatment-proof-2026-10-14\\db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "scratch\\crew-runtime-proof-2026-10-14\\state.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "scratch\\crew-app-demo-2026-10-14\\db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "scratch\\continuous-speech-demo-2026-10-14\\db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "scratch\\chapter-preservation-proof-2026-10-07\\revised-data\\db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "reviews\\2026-10-22-language-editions\\db-review-20261022T202846Z-4518c82b\\heartword-review.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "m5restored-20261024\\db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "m5restored-20261024\\backups\\before-mark5-film-production-1792609607882.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "m5restored-20261024\\backups\\before-mark5-retained-planning-prefix-continuation-1792787441435.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "m5final-20261024\\db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "m5final-20261024\\backups\\before-mark5-film-production-1792609607882.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "m5final-20261024\\backups\\before-mark5-retained-planning-prefix-continuation-1792787441435.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "m5delivery-20261024\\db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "m5delivery-20261024\\backups\\before-mark5-film-production-1792609607882.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "m5delivery-20261024\\backups\\before-mark5-retained-planning-prefix-continuation-1792787441435.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "exports\\mark-2-timing-2026-09-11\\before-import.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "exports\\mark-2-timing-2026-09-11\\validation.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "exports\\hatam-mark5-production-recovery-r2-20261022\\backups\\before-mark5-film-production-1792609607882.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "exports\\hatam-mark5-production-recovery-20261022\\backups\\before-mark5-film-production-1792609607882.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "exports\\hatam-mark5-20261024\\editable-chapter-r3\\backups\\before-mark5-film-production-1792609607882.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "exports\\hatam-mark5-20261024\\editable-chapter-r3\\backups\\before-mark5-retained-planning-prefix-continuation-1792787441435.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "exports\\hatam-mark5-20261024\\editable-chapter-r2\\backups\\before-mark5-film-production-1792609607882.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "exports\\hatam-mark5-20261024\\editable-chapter-r2\\backups\\before-mark5-retained-planning-prefix-continuation-1792787441435.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "exports\\hatam-mark5-20261024\\editable-chapter\\backups\\before-mark5-film-production-1792609607882.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "exports\\hatam-mark5-20261024\\editable-chapter\\backups\\before-mark5-retained-planning-prefix-continuation-1792787441435.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "db\\heartword-before-broll-20260924.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-gerasene-before-headshot-1792542878946.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-gerasene-before-headshot-1792543111215.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-gerasene-before-headshot-1792543382820.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-gerasene-body-preparation-1792543742594.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-gerasene-malvoryx-selection-1792555480166.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-gerasene-visual-approval-1792554764557.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-jairus-bian-selection-1792555927809.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-jairus-house-spokesman-1792556568524.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-mark5-audition-approval-1792605434565.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-mark5-audition-approval-1792605558973.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-mark5-crew-planning-1792606792280.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-mark5-film-production-1792609607882.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-mark5-final-cast-decisions-1792556852807.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-mark5-final-producer-approval-2026-10-24T14-57-13-214Z.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-mark5-preparation-1792539958367.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-mark5-remaining-cast-approval-1792555182302.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-mark5-retained-planning-prefix-continuation-1792787441435.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-mark5-reviewed-boundaries-1792604632125.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\before-mark5-six-gap-shots-1792785513774.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\wardrobe-refinement-1792194334238.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\normal-interface-2026-10-16T01-07-06-168Z\\preflight\\db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    },
+    {
+      "path": "backups\\normal-interface-2026-10-16T01-07-06-168Z\\db\\heartword.sqlite",
+      "integrity": [
+        "ok"
+      ],
+      "foreignKeyProblems": []
+    }
+  ],
+  "allIntegrityPassed": true,
+  "allForeignKeysPassed": true,
+  "activeJobs": {
+    "production_runs": [],
+    "stage_executions": [],
+    "video_generation_jobs": [],
+    "directed_video_jobs": []
+  },
+  "mainJournal": "delete"
+}

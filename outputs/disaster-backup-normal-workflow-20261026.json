@@ -1,0 +1,54 @@
+{
+  "at": "2026-10-26T02:33:42.9452277Z",
+  "backupId": "47ff41ac-b914-4195-b8db-8a117caf0233",
+  "appUrl": "http://127.0.0.1:4048/",
+  "appPid": 279056,
+  "dataRoot": "C:\\Users\\danbr\\HeartWordRecoveryDrill\\20261024-personal-cloud",
+  "appRoot": "C:\\Users\\danbr\\HeartWordRecoveryDrill\\20261024-personal-cloud-application",
+  "normalInventoryAndWorkspaceOpened": true,
+  "selection": "Hatam / Mark / chapter 5",
+  "recordedCutOpened": true,
+  "observedPlayback": "Native controls advanced from 0:00 to 1:02 and 2:03 of 9:32; changing picture inspected fullscreen; then explicitly paused.",
+  "renderId": "f6709702-7e82-4a99-b072-7358d9e685a8",
+  "programAsset": "generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/f6709702-7e82-4a99-b072-7358d9e685a8.mp4",
+  "programSha256": "286799361ba58fbcd190f7096d33ee2bf9016d2fd7eacdab4bb79f8ca844dc5b",
+  "retainedDiscussionEntries": 657,
+  "canonVisualCastEntries": 18,
+  "retainedStoryboardShots": 94,
+  "sourceIntervals": 86,
+  "sourceBinding": "Original approved Hatam non-drama chapter recording and chapter DOCX available",
+  "dependencies": {
+    "projectId": "0694bfbf-5595-4531-8215-6242d4aea927",
+    "files": 3225,
+    "problems": [],
+    "editability": [],
+    "application": {
+      "version": "0.1.0",
+      "gitCommit": "not_reported",
+      "node": "v24.14.0",
+      "ffmpeg": "ffmpeg version 8.1.2-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers\r",
+      "schemaSha256": "3f8a96355ee36981a386efa936eeb41e92cb8c7aa15859da5d28e35653436f2d"
+    }
+  },
+  "decode": {
+    "at": "2026-10-26T02:28:24.357579Z",
+    "exitCode": 0,
+    "file": "C:/Users/danbr/HeartWordRecoveryDrill/20261024-personal-cloud/exports/hatam-mark5-20261024/Markus5_Hatam_720p.mp4",
+    "fullVideoAndAudioDecoded": true,
+    "providerCalls": 0
+  },
+  "providerCalls": 0,
+  "credentialsRecovered": false,
+  "normalAppBuild": "npm ci (219 packages), Vite build (47 modules) passed",
+  "screenshots": [
+    "outputs/disaster-backup-recovered-mark5-playback-20261026.jpg",
+    "outputs/disaster-backup-recovered-workspace-paused-20261026.jpg"
+  ],
+  "limitations": [
+    "Matching host software was used; this is not a clean-Windows-install test.",
+    "Inventory legacy Uncertain/queued labels and estimate/reservation display remain as saved; no status, billing or review history was rewritten.",
+    "Physical speaker/phone field review and distribution approvals remain separate.",
+    "Snapshot reflects the Oct24 capture, not changes made afterward."
+  ],
+  "passed": true
+}

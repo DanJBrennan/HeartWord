@@ -1,0 +1,114 @@
+
+> heartword@0.1.0 test
+> vitest run tests/creative-direction tests/pipeline/fresh-chapter-full-production.test.ts tests/pipeline/durable-production.test.ts tests/media-generation/external-keyframes.test.ts src/pipeline/media-generation/draft-room.test.ts src/pipeline/media-generation/draft-gate.test.ts src/pipeline/media-generation/draft-review.test.ts tests/media-generation/ltx-pipeline.test.ts tests/architecture/media-stage-integration.test.ts tests/architecture/final-video-candidate.test.ts
+
+
+ RUN  v2.1.9 C:/Users/danbr/OneDrive/Documents/HeartWord
+
+(node:60828) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:54716) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48140) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58348) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:59256) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:60472) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:60232) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58848) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/creative-direction/crew-communication-design.test.ts (12 tests) 75ms
+ ✓ src/pipeline/media-generation/draft-review.test.ts (4 tests) 503ms
+   ✓ attaches a passing verdict and its confidence to the draft's review note 409ms
+ ✓ tests/creative-direction/crew.test.ts (27 tests) 122ms
+ ✓ src/pipeline/media-generation/draft-room.test.ts (8 tests) 176ms
+ ❯ tests/architecture/media-stage-integration.test.ts (3 tests | 1 failed) 581ms
+   × common media stage > creates a held non-speaking candidate then resumes the selected clip without another provider call 556ms
+     → [vitest] No "validateAttemptRevision" export is defined on the "../../src/pipeline/creative-direction/crew-store.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+(node:61028) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42400) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:59348) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:41388) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31748) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33200) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/architecture/final-video-candidate.test.ts (1 test) 28ms
+ ✓ src/pipeline/media-generation/draft-gate.test.ts (4 tests) 90ms
+ ✓ tests/creative-direction/negotiation.test.ts (4 tests) 85ms
+ ✓ tests/media-generation/external-keyframes.test.ts (15 tests) 958ms
+ ✓ tests/media-generation/ltx-pipeline.test.ts (8 tests) 515ms
+ ✓ tests/creative-direction/gap-implementation.test.ts (3 tests) 53ms
+ ✓ tests/creative-direction/crew-context.test.ts (19 tests) 1263ms
+ ❯ tests/pipeline/durable-production.test.ts (2 tests | 1 failed) 2545ms
+   ✓ durable production recovery > adopts only complete retained work and then resumes without executing a stage 1574ms
+   × durable production recovery > builds real cast-master intervals, never syncs narration, and resumes accepted exact utterances 969ms
+     → The production plan is stale; review the changed source, canon or shot plan first.
+ ❯ tests/pipeline/fresh-chapter-full-production.test.ts (1 test | 1 failed) 2797ms
+   × takes a fresh reviewed chapter through real common stages without provider calls 2795ms
+     → The production plan is stale; review the changed source, canon or shot plan first.
+ ✓ tests/creative-direction/production-record.test.ts (8 tests) 5714ms
+   ✓ saved crew production runtime > saves schema-compatible FDL and contribution envelopes without changing sources, canon or accepted media 832ms
+   ✓ saved crew production runtime > resolves camera versus blocking while retaining the original proposal, objection and owner resolution 670ms
+   ✓ saved crew production runtime > rejects a wardrobe redesign through continuity and carries the disagreement forward 808ms
+   ✓ saved crew production runtime > does not clear an old blocking objection just because later findings are empty 983ms
+   ✓ saved crew production runtime > holds cross-domain proposals without consent and accepts only a fresh owner-reviewed proposal 663ms
+   ✓ saved crew production runtime > retains a late review without replacing the producer's newer accepted revision 514ms
+   ✓ saved crew production runtime > shares manual API, autonomous caller, immutable producer edits, replay and reopened state 726ms
+   ✓ saved crew production runtime > holds absent/stale plans before provider submission and preserves a stale returned candidate 517ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/architecture/media-stage-integration.test.ts > common media stage > creates a held non-speaking candidate then resumes the selected clip without another provider call
+Error: [vitest] No "validateAttemptRevision" export is defined on the "../../src/pipeline/creative-direction/crew-store.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("../../src/pipeline/creative-direction/crew-store.js"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ acceptFinalVideoCandidate src/pipeline/media-generation/final-video.ts:118:3
+
+ ❯ tests/architecture/media-stage-integration.test.ts:11:2457
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/pipeline/durable-production.test.ts > durable production recovery > builds real cast-master intervals, never syncs narration, and resumes accepted exact utterances
+Error: The production plan is stale; review the changed source, canon or shot plan first.
+ ❯ requireCurrentPlan src/pipeline/creative-direction/crew-store.ts:124:110
+
+ ❯ Module.validateAttemptRevision src/pipeline/creative-direction/crew-store.ts:247:59
+ ❯ acceptLipSyncCandidate src/pipeline/voice-lipsync/candidate-selection.ts:15:3
+ ❯ tests/pipeline/durable-production.test.ts:127:128
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/pipeline/fresh-chapter-full-production.test.ts > takes a fresh reviewed chapter through real common stages without provider calls
+Error: The production plan is stale; review the changed source, canon or shot plan first.
+ ❯ requireCurrentPlan src/pipeline/creative-direction/crew-store.ts:124:110
+
+ ❯ Module.validateAttemptRevision src/pipeline/creative-direction/crew-store.ts:247:59
+ ❯ acceptLipSyncCandidate src/pipeline/voice-lipsync/candidate-selection.ts:15:3
+ ❯ tests/pipeline/fresh-chapter-full-production.test.ts:86:231
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+ Test Files  3 failed | 12 passed (15)
+      Tests  3 failed | 116 passed (119)
+   Start at  19:58:03
+   Duration  8.65s (transform 3.69s, setup 0ms, collect 9.57s, tests 15.50s, environment 5ms, prepare 3.58s)
+

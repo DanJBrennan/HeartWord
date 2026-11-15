@@ -1,0 +1,18 @@
+
+ RUN  v2.1.9 C:/Users/danbr/OneDrive/Documents/HeartWord
+
+(node:239992) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:240200) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/media-generation/external-keyframes.test.ts (22 tests) 1763ms
+   ✓ external keyframe handoff > uses the same reviewed set state for shot/coverage preparation and holds withdrawn references at acceptance 302ms
+   ✓ external keyframe handoff > creates a real letterboxed reference board without changing source pixels 464ms
+ ✓ tests/characters/wardrobe-refinement.test.ts (13 tests) 2437ms
+   ✓ controlled wardrobe refinement > uses the mounted producer API and saved service, and voice edits never select a candidate 1931ms
+
+ Test Files  2 passed (2)
+      Tests  35 passed (35)
+   Start at  19:43:59
+   Duration  3.61s (transform 1.68s, setup 0ms, collect 1.30s, tests 4.20s, environment 1ms, prepare 367ms)
+

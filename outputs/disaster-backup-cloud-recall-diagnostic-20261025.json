@@ -1,0 +1,58 @@
+{
+  "at": "2026-10-25T16:02:42Z",
+  "samples": [
+    {
+      "path": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal\\application\\docs\\production\\hatam-mark-2\\scene-04-shot-02\\producer-override-v1.md",
+      "length": 185,
+      "expectedBytes": 191,
+      "offlineBefore": true,
+      "bytesRead": 191,
+      "shaMatches": true
+    },
+    {
+      "path": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal\\application\\docs\\production\\hatam-mark-2\\scene-04-shot-01\\producer-override-v1.md",
+      "length": 185,
+      "expectedBytes": 271,
+      "offlineBefore": true,
+      "bytesRead": 271,
+      "shaMatches": true
+    },
+    {
+      "path": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal\\data\\scratch\\mark5-production-restore-test-r2-20261022\\assets\\preparation\\hatam-mark5-production-20261021\\video\\f584f63b-d7e5-481f-997c-2ca209756d55\\r2\\recovery.json",
+      "length": 269,
+      "expectedBytes": 9795,
+      "offlineBefore": true,
+      "readWinerror": 380,
+      "bytesRead": 0,
+      "shaMatches": false
+    },
+    {
+      "path": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal\\data\\scratch\\mark5-production-restore-test-r2-20261022\\assets\\preparation\\hatam-mark5-production-20261021\\opening\\establishing-motion-r1\\provider-original.mp4.json",
+      "length": 267,
+      "expectedBytes": 4716,
+      "offlineBefore": true,
+      "readWinerror": 380,
+      "bytesRead": 0,
+      "shaMatches": false
+    },
+    {
+      "path": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal\\data\\scratch\\mark5-production-restore-test-r2-20261022\\assets\\generated\\video\\f7406a99-dde6-4fa6-9fdc-13c47c99cf30-ltx-82f0b8d9-5729-4e93-a1cc-bc5de02dcea6.mp4.ambience.wav.49e8a831-f042-4743-8320-4bcf04628054.review.json",
+      "length": 325,
+      "expectedBytes": 3373,
+      "offlineBefore": true,
+      "readWinerror": 380,
+      "bytesRead": 0,
+      "shaMatches": false
+    },
+    {
+      "path": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal\\data\\scratch\\mark5-production-restore-test-r2-20261022\\assets\\generated\\video\\f584f63b-d7e5-481f-997c-2ca209756d55-ltx-6b691204-1b55-46f3-9c64-37a8e54676e4.mp4.ambience.wav.960c75c3-7bc8-4945-b4b8-83ace2eb55fa.review.json",
+      "length": 325,
+      "expectedBytes": 3560,
+      "offlineBefore": true,
+      "readWinerror": 380,
+      "bytesRead": 0,
+      "shaMatches": false
+    }
+  ],
+  "contentChanged": false
+}

@@ -1,0 +1,81 @@
+scripts\assemble-mark3-r11-review.ts:4:import { existsSync, readFileSync, writeFileSync } from "node:fs";
+scripts\assemble-mark3-r11-review.ts:130:writeFileSync(output.replace(/\.mp4$/, ".json"), JSON.stringify({ status: "held_for_producer_review", input, sound, output, sourceAudioPreserved: true,
+scripts\assemble-mark3-r10-nextchapter-bridge.ts:4:import { existsSync, readFileSync, writeFileSync } from "node:fs";
+scripts\assemble-mark3-r10-nextchapter-bridge.ts:57:writeFileSync(output.replace(/\.mp4$/, ".json"), JSON.stringify({
+scripts\assemble-full-chapter-with-inserts.ts:56:import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+scripts\assemble-full-chapter-with-inserts.ts:106:      "-y",
+scripts\assemble-full-chapter-with-inserts.ts:148:        "-y",
+scripts\assemble-full-chapter-with-inserts.ts:175:        "-y",
+scripts\assemble-full-chapter-with-inserts.ts:216:      "-y",
+scripts\assemble-full-chapter-with-inserts.ts:249:  writeFileSync(listPath, listContent);
+scripts\assemble-full-chapter-with-inserts.ts:250:  execFileSync("ffmpeg", ["-y", "-f", "concat", "-safe", "0", "-i", listPath, "-c", "copy", outPath], {
+scripts\assemble-mark3-chapter-review.ts:4:import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+scripts\assemble-mark3-chapter-review.ts:39:  writeFileSync(list, sections.map(s => `file '${join(root, s.path).replaceAll("\\", "/")}'`).join("\n"));
+scripts\assemble-mark3-chapter-review.ts:40:  execFileSync("ffmpeg", ["-v", "error", "-nostats", "-y", "-f", "concat", "-safe", "0", "-i", list,
+scripts\assemble-mark3-chapter-review.ts:59:writeFileSync(output.replace(/\.mp4$/, ".json"), JSON.stringify(manifest, null, 2));
+scripts\assemble-mark3-r7-review.ts:4:import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+scripts\assemble-mark3-r7-review.ts:58:  execFileSync("ffmpeg", ["-v", "error", "-nostats", "-y", ...args], { stdio: "inherit", timeout });
+scripts\assemble-mark3-r7-review.ts:88:  writeFileSync(list, parts.map(path => `file '${path.replaceAll("\\", "/")}'`).join("\n"));
+scripts\assemble-mark3-r7-review.ts:102:  writeFileSync(output.replace(/\.mp4$/, ".json"), JSON.stringify({ input: base, output, gapSourceMs, gapFrame, pauseFrames, audio: "r6 continuous, with eight-second crossfaded native room ambience from open-arms clip inserted at source pause", picture: manifest }, null, 2));
+scripts\assemble-mark3-r8-review.ts:4:import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+scripts\assemble-mark3-r8-review.ts:61:const run = (args: string[], timeout = 180000) => execFileSync("ffmpeg", ["-v", "error", "-nostats", "-y", ...args], { stdio: "inherit", timeout });
+scripts\assemble-mark3-r8-review.ts:95:  writeFileSync(list, parts.map(path => `file '${path.replaceAll("\\", "/")}'`).join("\n"));
+scripts\assemble-mark3-r8-review.ts:109:  writeFileSync(output.replace(/\.mp4$/, ".json"), JSON.stringify({ input: base, output, baseFrames, healFrame, healFrames,
+scripts\assemble-mark3-r8-score-review.ts:3:import { existsSync, readFileSync, writeFileSync } from "node:fs";
+scripts\assemble-mark3-r8-score-review.ts:51:writeFileSync(output.replace(/\.mp4$/, ".json"), JSON.stringify({ input, output, status: "held_for_producer_review",
+scripts\assemble-mark3-scenes3-5.ts:5:import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+scripts\assemble-mark3-scenes3-5.ts:47:    execFileSync("ffmpeg",["-v","error","-y","-i",join(root,beat.path),"-i",cast,"-filter_complex",filter,"-map","0:v:0","-map","[a]","-c:v","copy","-c:a","aac","-b:a","192k",abs],{stdio:["ignore","ignore","pipe"],timeout:120000});
+scripts\assemble-mark3-scenes3-5.ts:48:  } else copyFileSync(join(root,beat.path),abs);
+scripts\assemble-mark4-autonomous-review.ts:11:import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+scripts\assemble-mark4-autonomous-review.ts:93:  writeFileSync(visualManifest,["ffconcat version 1.0",...pieces.flatMap(piece=>[
+scripts\assemble-mark4-autonomous-review.ts:104:  const args=["-v","error","-y","-f","concat","-safe","0","-i",visualManifest,"-i",join(assets,sourceBinding.audio_path),...audioInputs,"-filter_complex",filter,"-map","[video]","-map","[audio]","-t",(chapterEnd/1000).toFixed(3),"-c:v","libx264","-preset","medium","-crf","18","-pix_fmt","yuv420p","-c:a","aac","-movflags","+faststart",out];
+scripts\assemble-mark4-autonomous-review.ts:105:  writeFileSync(join(tmp,"ffmpeg-args.json"),JSON.stringify(args));
+scripts\assemble-mark4-autonomous-review.ts:110:  const manifestRel="generated/chapter/mark4-autonomous-overnight-review.json";writeFileSync(join(assets,manifestRel),JSON.stringify(manifest,null,2));
+scripts\assemble-mark4-restart-four-clip-narrated-review.ts:3:import { mkdirSync, writeFileSync } from "node:fs";
+scripts\assemble-mark4-restart-four-clip-narrated-review.ts:28:execFileSync("ffmpeg",["-y","-f","lavfi","-i","color=c=black:s=1280x720:r=24:d=4.661",...clips.flatMap(path=>["-i",path]),"-i",source,"-filter_complex",filter,"-map","[v]","-map","[a]","-c:v","libx264","-crf","18","-c:a","aac","-movflags","+faststart",output],{stdio:["ignore","ignore","pipe"]});
+scripts\assemble-mark4-restart-four-clip-narrated-review.ts:29:writeFileSync(manifest,JSON.stringify({
+scripts\assemble-mark4-restart-four-clip-pilot.ts:3:import { mkdirSync, writeFileSync } from "node:fs";
+scripts\assemble-mark4-restart-four-clip-pilot.ts:30:execFileSync("ffmpeg",["-y",...clips.flatMap(clip=>["-i",clip.path]),"-filter_complex",filters,"-map","[v]","-map","[a]","-c:v","libx264","-crf","18","-c:a","aac","-movflags","+faststart",output],{stdio:["ignore","ignore","pipe"]});
+scripts\assemble-mark4-restart-four-clip-pilot.ts:31:writeFileSync(manifest,JSON.stringify({
+scripts\assemble-mark4-v45-approved-canonical-performances.ts:62:execFileSync("ffmpeg", ["-v", "error", "-y", ...paths.flatMap((path) => ["-i", join(assets, path)]), "-filter_complex", filters.join(";"), "-map", "[video]", "-map", "0:a:0", "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "copy", "-movflags", "+faststart", output], { stdio: "inherit" });
+scripts\assemble-mark4-v46-group1-picture-fixes.ts:72:execFileSync("ffmpeg", ["-v", "error", "-y", ...paths.flatMap((path) => ["-i", join(assets, path)]), "-filter_complex", filters.join(";"), "-map", "[video]", "-map", "0:a:0", "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "copy", "-movflags", "+faststart", output], { stdio: "inherit" });
+scripts\assemble-mark4-v47-continuous-ambience.ts:55:execFileSync("ffmpeg", ["-v", "error", "-y", "-i", input, ...unique.flatMap(asset => ["-stream_loop", "-1", "-i", join(assets, asset)]), "-filter_complex", filters.join(";"), "-map", "0:v:0", "-map", "[mix]", "-c:v", "copy", "-c:a", "aac", "-ar", "48000", "-ac", "2", "-b:a", "192k", "-movflags", "+faststart", output], { stdio: "inherit" });
+scripts\generate-capernaum-synagogue-arrival-draft.ts:10:import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+scripts\generate-capernaum-synagogue-arrival-draft.ts:58:  writeFileSync(rawPath, Buffer.from(encoded, "base64"));
+scripts\generate-capernaum-synagogue-arrival-draft.ts:63:  execFileSync("ffmpeg", ["-v", "error", "-y", "-i", rawPath, ...(ambient ? ["-map", "0:v:0", "-map", "0:a:0"] : ["-an"]), "-vf", "fps=24,scale=-2:360", "-c:v", "libx264", "-crf", "25", "-pix_fmt", "yuv420p", ...(ambient ? ["-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"] : []), "-movflags", "+faststart", `${outputPath}.normalized.mp4`]);
+scripts\generate-capernaum-synagogue-exterior.ts:4:import { writeFileSync } from "node:fs";
+scripts\generate-capernaum-synagogue-exterior.ts:31:execFileSync("ffmpeg", ["-v", "error", "-y", "-i", imagePath, "-vf", `crop=${cropWidth}:${cropHeight}:${cropX}:${cropY}`, "-frames:v", "1", finalPath]);
+scripts\generate-capernaum-synagogue-exterior.ts:32:writeFileSync(finalPath.replace(/\.png$/, ".json"), JSON.stringify({
+scripts\generate-capernaum-synagogue-zoom-bridge.ts:8:import { existsSync, readFileSync, writeFileSync } from "node:fs";
+scripts\generate-capernaum-synagogue-zoom-bridge.ts:39:writeFileSync(path(raw), bytes);
+scripts\generate-capernaum-synagogue-zoom-bridge.ts:60:writeFileSync(path(output.replace(/\.mp4$/, ".json")), JSON.stringify({
+scripts\generate-control-room-idle-motion.ts:14:import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+scripts\generate-control-room-idle-motion.ts:90:    writeFileSync(temporaryVideo, Buffer.from(base64, "base64"));
+scripts\generate-control-room-idle-motion.ts:91:    execFileSync("ffmpeg", ["-v", "error", "-y", "-i", temporaryVideo, "-an", "-vf", "fps=24,scale=-2:360", "-c:v", "libx264", "-crf", "25", "-pix_fmt", "yuv420p", "-movflags", "+faststart", outputPath]);
+scripts\generate-mark3-r11-ending-extension.ts:26:    execFileSync("ffmpeg", ["-v", "error", "-y", "-sseof", "-0.08", "-i", previousVideo,
+scripts\generate-mark3-r8-score.ts:5:import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+scripts\generate-mark3-r8-score.ts:46:writeFileSync(path, result.bytes, { flag: "wx" });
+scripts\generate-mark3-r8-score.ts:51:writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), { flag: "wx" });
+scripts\generate-mark4-autonomous-score.ts:4:import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+scripts\generate-mark4-autonomous-score.ts:47:  mkdirSync(dirname(absolute), { recursive: true }); writeFileSync(absolute, generated.bytes, { flag: "wx" });
+scripts\generate-mark4-editorial-breath-ambience.ts:3:import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+scripts\generate-mark4-editorial-breath-ambience.ts:25:    writeFileSync(absolute, result.bytes, { flag: "wx" });
+scripts\generate-mark4-editorial-breath-ambience.ts:26:    writeFileSync(meta, JSON.stringify({ ...result, bytes: undefined, prompt: request.prompt, heldForReview: true }, null, 2), { flag: "wx" });
+scripts\generate-mark4-title-calm-lake-ambience.ts:2:import { mkdirSync, writeFileSync } from "node:fs";
+scripts\generate-mark4-title-calm-lake-ambience.ts:13:writeFileSync(path,result.bytes,{flag:"wx"});
+scripts\generate-mark4-title-calm-lake-ambience.ts:14:writeFileSync(path.replace(/\.mp3$/,".json"),JSON.stringify({provider:result.provider,model:result.model,usage:result.usage,requestId:result.requestId,prompt:"Quiet calm lake dawn ambience: distant birds and leaves only; no waves."},null,2),{flag:"wx"});
+scripts\generate-mark4-v71-held.ts:35:import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+scripts\generate-mark4-v71-held.ts:49:const saveLog = () => writeFileSync(logPath, JSON.stringify(log, null, 2));
+scripts\generate-mark4-v71-held.ts:95:  writeFileSync(join(DIR, out), Buffer.from(await res.arrayBuffer()), { flag: "wx" });
+scripts\generate-mark4-v71-held.ts:131:  writeFileSync(join(DIR, out), Buffer.from(await res.arrayBuffer()), { flag: "wx" });
+scripts\generate-mark4-v71-held.ts:160:    if (v?.bytesBase64Encoded) { writeFileSync(join(DIR, item.out), Buffer.from(v.bytesBase64Encoded, "base64"), { flag: "wx" }); }
+scripts\generate-mark4-v71-held.ts:161:    else if (v?.uri) { const f = await fetch(v.uri, { headers: { "x-goog-api-key": key } }); writeFileSync(join(DIR, item.out), Buffer.from(await f.arrayBuffer()), { flag: "wx" }); }
+scripts\generate-mark4-v71-held.ts:176:    copyFileSync(join(assets, r.media.path), join(DIR, k.out));
+scripts\generate-mark4-v71-held.ts:197:  for (const f of faces) { const res = await fetch(f.thumbnailUrl); if (res.ok) writeFileSync(join(DIR, "faces", `face-${f.faceId}.jpg`), Buffer.from(await res.arrayBuffer())); }
+scripts\generate-mark4-v71-held.ts:209:  copyFileSync(join(assets, r.media.path), join(DIR, out));
+scripts\generate-mark4-v71-held.ts:219:  execFileSync("ffmpeg", ["-y", "-i", src, "-ss", "218.910", "-t", "17.200", "-ar", "44100", "-ac", "1", "-c:a", "libmp3lame", "-q:a", "2", clip], { stdio: ["ignore", "ignore", "pipe"] });
+scripts\generate-mark4-v71-held.ts:226:  writeFileSync(join(DIR, out), Buffer.from(await res.arrayBuffer()), { flag: "wx" });
+scripts\generate-mark4-v71-held.ts:237:  if (!existsSync(last)) execFileSync("ffmpeg", ["-y", "-sseof", "-0.05", "-i", join(DIR, e1), "-frames:v", "1", "-update", "1", last], { stdio: ["ignore", "ignore", "pipe"] });
+scripts\generate-rufus-loop-closure.ts:12:import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+scripts\generate-rufus-loop-closure.ts:43:  writeFileSync(temporaryVideo, generated);
+scripts\generate-rufus-loop-closure.ts:44:  execFileSync("ffmpeg", ["-v", "error", "-y", "-i", temporaryVideo, "-an", "-vf", "fps=24,scale=-2:720", "-c:v", "libx264", "-crf", "23", "-pix_fmt", "yuv420p", "-movflags", "+faststart", candidatePath]);

@@ -1,0 +1,54 @@
+
+> heartword@0.1.0 test
+> vitest run tests/pipeline/durable-production.test.ts tests/pipeline/fresh-chapter-full-production.test.ts tests/architecture/media-stage-integration.test.ts tests/creative-direction/production-record.test.ts
+
+
+ RUN  v2.1.9 C:/Users/danbr/OneDrive/Documents/HeartWord
+
+(node:52308) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:60700) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:59332) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/architecture/media-stage-integration.test.ts (3 tests) 585ms
+   ✓ common media stage > creates a held non-speaking candidate then resumes the selected clip without another provider call 565ms
+(node:13520) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/pipeline/durable-production.test.ts (2 tests) 3595ms
+   ✓ durable production recovery > adopts only complete retained work and then resumes without executing a stage 1030ms
+   ✓ durable production recovery > builds real cast-master intervals, never syncs narration, and resumes accepted exact utterances 2563ms
+ ❯ tests/pipeline/fresh-chapter-full-production.test.ts (1 test | 1 failed) 5024ms
+   × takes a fresh reviewed chapter through real common stages without provider calls 5023ms
+     → Chapter review incomplete: Unexpected field for colorist.: expected 'qc' to be undefined
+ ✓ tests/creative-direction/production-record.test.ts (8 tests) 6717ms
+   ✓ saved crew production runtime > saves schema-compatible FDL and contribution envelopes without changing sources, canon or accepted media 764ms
+   ✓ saved crew production runtime > resolves camera versus blocking while retaining the original proposal, objection and owner resolution 1149ms
+   ✓ saved crew production runtime > rejects a wardrobe redesign through continuity and carries the disagreement forward 1285ms
+   ✓ saved crew production runtime > does not clear an old blocking objection just because later findings are empty 1182ms
+   ✓ saved crew production runtime > holds cross-domain proposals without consent and accepts only a fresh owner-reviewed proposal 640ms
+   ✓ saved crew production runtime > retains a late review without replacing the producer's newer accepted revision 485ms
+   ✓ saved crew production runtime > shares manual API, autonomous caller, immutable producer edits, replay and reopened state 687ms
+   ✓ saved crew production runtime > holds absent/stale plans before provider submission and preserves a stale returned candidate 525ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/pipeline/fresh-chapter-full-production.test.ts > takes a fresh reviewed chapter through real common stages without provider calls
+AssertionError: Chapter review incomplete: Unexpected field for colorist.: expected 'qc' to be undefined
+
+- Expected: 
+undefined
+
++ Received: 
+"qc"
+
+ ❯ tests/pipeline/fresh-chapter-full-production.test.ts:88:114
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 13 passed (14)
+   Start at  19:59:06
+   Duration  8.70s (transform 1.39s, setup 0ms, collect 2.21s, tests 15.92s, environment 1ms, prepare 635ms)
+

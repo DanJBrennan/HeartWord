@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-26T02:20:31.3342367Z",
+  "backupId": "47ff41ac-b914-4195-b8db-8a117caf0233",
+  "flushed": [
+    "C:\\Users\\danbr\\HeartWordRecoveryDrill\\20261024-personal-cloud\\logs\\disaster-recovery-paths.json",
+    "C:\\Users\\danbr\\HeartWordRecoveryDrill\\20261024-personal-cloud\\restored-from.json"
+  ],
+  "contentChanged": false,
+  "liveProductionAccess": false
+}

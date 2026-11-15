@@ -1,0 +1,1369 @@
+{
+  "root": "C:\\Users\\danbr\\HeartWordData",
+  "files": 28912,
+  "bytes": 93327608211,
+  "groups": {
+    "exports/mark-2-blender-edit-2026-09-11": [
+      10946,
+      16231774019
+    ],
+    "chapter-packages/mark4-preserved-2026-10-07/assets": [
+      954,
+      16030137412
+    ],
+    "scratch/mark4-preservation-restored-2026-10-07/assets": [
+      954,
+      16030137412
+    ],
+    "assets/generated/chapter": [
+      178,
+      15532442800
+    ],
+    "assets/generated/video": [
+      681,
+      7066420928
+    ],
+    "assets/source/sougb": [
+      521,
+      3655265624
+    ],
+    "assets/source/meyah": [
+      520,
+      2777620312
+    ],
+    "assets/source/hatam": [
+      878,
+      1932264489
+    ],
+    "assets/generated/lipsync-face": [
+      74,
+      1289641868
+    ],
+    "chapter-packages/mark4-preserved-2026-10-07/scratch": [
+      636,
+      1276865403
+    ],
+    "scratch/mark4-preservation-restored-2026-10-07/scratch": [
+      636,
+      1276865403
+    ],
+    "assets/generated/keyframes": [
+      784,
+      1166861598
+    ],
+    "assets/source/english-esv": [
+      832,
+      1102703672
+    ],
+    "assets/generated/assembled": [
+      202,
+      776577025
+    ],
+    "assets/generated/review": [
+      380,
+      626509391
+    ],
+    "assets/generated/editorial": [
+      71,
+      486391937
+    ],
+    "exports/mark-2-blender-edit-2026-09-11/media-24fps": [
+      114,
+      406881518
+    ],
+    "scratch/claude-takeover/patches": [
+      45,
+      403124892
+    ],
+    "assets/characters/candidates": [
+      247,
+      303065637
+    ],
+    "assets/generated/lipsync": [
+      57,
+      230575175
+    ],
+    "assets/generated/keyframe-briefs": [
+      85,
+      183151201
+    ],
+    "assets/generated/drafts": [
+      63,
+      179910885
+    ],
+    "scratch/claude-takeover/v69": [
+      37,
+      177690823
+    ],
+    "scratch/claude-takeover/v71": [
+      16,
+      149381094
+    ],
+    "scratch/claude-takeover/v68": [
+      28,
+      118208612
+    ],
+    "scratch/claude-review-v39": [
+      28,
+      104786169
+    ],
+    "scratch/claude-review-v45": [
+      36,
+      104465989
+    ],
+    "scratch/claude-review-v65": [
+      16,
+      103979606
+    ],
+    "scratch/claude-review-v66": [
+      14,
+      102443001
+    ],
+    "scratch/claude-review-v34": [
+      31,
+      102293859
+    ],
+    "scratch/claude-takeover/v70": [
+      20,
+      101517638
+    ],
+    "scratch/claude-review-v57-metrics": [
+      8,
+      99725772
+    ],
+    "scratch/claude-review-v58-metrics": [
+      8,
+      99725769
+    ],
+    "scratch/claude-review-v55-metrics": [
+      8,
+      99725762
+    ],
+    "scratch/claude-review-v56-metrics": [
+      8,
+      99725761
+    ],
+    "scratch/claude-review-v59-metrics": [
+      8,
+      99725433
+    ],
+    "scratch/claude-review-v62-metrics": [
+      8,
+      99725077
+    ],
+    "scratch/claude-review-v63-metrics": [
+      8,
+      99724975
+    ],
+    "scratch/claude-review-v60-metrics": [
+      8,
+      99724974
+    ],
+    "scratch/claude-review-v61-metrics": [
+      8,
+      99724893
+    ],
+    "scratch/claude-review-v64-metrics": [
+      8,
+      99724692
+    ],
+    "db": [
+      3,
+      99582776
+    ],
+    "scratch/claude-review-v51-metrics": [
+      8,
+      96959972
+    ],
+    "scratch/claude-review-v47-metrics": [
+      8,
+      96959939
+    ],
+    "scratch/claude-review-v49-metrics": [
+      8,
+      96959939
+    ],
+    "scratch/claude-review-v48-metrics": [
+      8,
+      96959938
+    ],
+    "scratch/claude-review-v46-metrics": [
+      8,
+      96959935
+    ],
+    "scratch/claude-review-v53-metrics": [
+      8,
+      96957733
+    ],
+    "scratch/claude-takeover/v72": [
+      8,
+      89454669
+    ],
+    "scratch/claude-takeover": [
+      447,
+      87391689
+    ],
+    "tools": [
+      1,
+      84025440
+    ],
+    "assets/generated/captions": [
+      1353,
+      83932722
+    ],
+    "scratch/claude-takeover/v73": [
+      19,
+      82202002
+    ],
+    "scratch/claude-takeover/v67": [
+      7,
+      67835781
+    ],
+    "assets/generated/reference-packs": [
+      73,
+      45863541
+    ],
+    "exports/mark-2-crowd-spokesperson-kling-review-2026-09-12": [
+      19,
+      41366390
+    ],
+    "assets/characters/matthew": [
+      22,
+      41238441
+    ],
+    "control-room/wake-word": [
+      1,
+      41184862
+    ],
+    "assets/generated/alignment": [
+      110,
+      38009132
+    ],
+    "assets/generated/lipsync-probe": [
+      2,
+      36573672
+    ],
+    "assets/characters/jesus": [
+      20,
+      30283543
+    ],
+    "assets/generated/soundtrack": [
+      24,
+      29290434
+    ],
+    "assets/characters/man-with-withered-hand-mark-3": [
+      16,
+      27252734
+    ],
+    "assets/characters/judas-iscariot": [
+      16,
+      26497354
+    ],
+    "assets/characters/james-son-of-alphaeus": [
+      16,
+      25750627
+    ],
+    "assets/characters/bartholomew": [
+      16,
+      25488405
+    ],
+    "assets/characters/philip-the-apostle": [
+      15,
+      24075969
+    ],
+    "assets/generated/hatam": [
+      199,
+      23613502
+    ],
+    "scratch/v39-private-inspect": [
+      18,
+      23543472
+    ],
+    "chapter-packages/mark4-preserved-2026-10-07": [
+      3,
+      20473079
+    ],
+    "exports/openai-keyframe-trial-2026-09-11": [
+      20,
+      20072261
+    ],
+    "scratch/mark4-preservation-restored-2026-10-07/db": [
+      1,
+      19836928
+    ],
+    "assets/characters/john-son-of-zebedee": [
+      16,
+      19729392
+    ],
+    "exports/mark-2-matthew-follow-continuity-review-2026-09-12": [
+      9,
+      19505538
+    ],
+    "exports/mark-2-spokesperson-original-lipsync-review-2026-09-12": [
+      1,
+      16730360
+    ],
+    "assets/characters/peter": [
+      11,
+      16713377
+    ],
+    "assets/characters/james-son-of-zebedee": [
+      11,
+      16422136
+    ],
+    "assets/characters/thaddaeus-jude": [
+      11,
+      15820161
+    ],
+    "exports/mark-2-18-spokesperson-regeneration-review-2026-09-12": [
+      8,
+      15730094
+    ],
+    "exports/mark-2-corrected-cut-draft-2026-09-11": [
+      2,
+      15175113
+    ],
+    "exports/mark-2-blender-edit-2026-09-11/recovered-tax-booth-search": [
+      78,
+      15119770
+    ],
+    "assets/generated/pilot-source": [
+      36,
+      14903149
+    ],
+    "assets/characters/thomas": [
+      10,
+      14169571
+    ],
+    "assets/characters/andrew": [
+      10,
+      13671945
+    ],
+    "assets/characters/simon-the-zealot": [
+      10,
+      13579661
+    ],
+    "exports/mark-2-matthew-reaction-review-2026-09-12": [
+      5,
+      13473186
+    ],
+    "assets/generated/media-library": [
+      16,
+      13074431
+    ],
+    "scratch/shot4-beat3-review": [
+      5,
+      12416867
+    ],
+    "scratch/v41-inspect": [
+      10,
+      12138365
+    ],
+    "scratch": [
+      60,
+      11305249
+    ],
+    "assets/characters/mark-crowd-stern-man": [
+      6,
+      11111671
+    ],
+    "assets/characters/man-with-unclean-spirit-mark-3": [
+      5,
+      9648241
+    ],
+    "scratch/v39-late-inspect": [
+      9,
+      9501402
+    ],
+    "assets/generated/editor": [
+      10,
+      8296803
+    ],
+    "assets/generated/edits": [
+      10,
+      7887845
+    ],
+    "scratch/mark4-ending-inspect": [
+      6,
+      6992079
+    ],
+    "scratch/shot4-cutaway-review": [
+      1,
+      6310028
+    ],
+    "exports/mark-2-timing-2026-09-11": [
+      10,
+      6301197
+    ],
+    "scratch/ltx-local-diagnostic-e65f5879": [
+      7,
+      6275164
+    ],
+    "scratch/chapter-preservation-demo-final-2026-10-07/chapter-package": [
+      689,
+      5282727
+    ],
+    "scratch/chapter-preservation-proof-2026-10-07/chapter-package": [
+      689,
+      5282727
+    ],
+    "exports": [
+      7,
+      4850812
+    ],
+    "scratch/shot4-beat1-review": [
+      1,
+      4790464
+    ],
+    "exports/openai-keyframe-candidates-2026-09-11/9072e3ee-low-table": [
+      6,
+      4704213
+    ],
+    "scratch/v42-inspect": [
+      6,
+      4562011
+    ],
+    "scratch/mark4-boat-anchor-veo-review": [
+      5,
+      4515166
+    ],
+    "scratch/claude-review-v46-metrics/mid": [
+      124,
+      4225585
+    ],
+    "scratch/claude-review-v47-metrics/mid": [
+      124,
+      4225585
+    ],
+    "scratch/claude-review-v48-metrics/mid": [
+      124,
+      4225585
+    ],
+    "scratch/claude-review-v49-metrics/mid": [
+      124,
+      4225585
+    ],
+    "scratch/claude-review-v51-metrics/mid": [
+      124,
+      4225585
+    ],
+    "assets/generated/reviewframes": [
+      3,
+      4175982
+    ],
+    "assets/characters/mark-scribe-older-stout": [
+      3,
+      4152276
+    ],
+    "assets/characters/mark-crowd-man-headwrap": [
+      3,
+      4118131
+    ],
+    "scratch/claude-review-v45/mid": [
+      118,
+      4003390
+    ],
+    "scratch/mark4-boat-anchor-draft-review": [
+      5,
+      3969050
+    ],
+    "scratch/claude-review-v59-metrics/mid": [
+      115,
+      3896436
+    ],
+    "scratch/claude-review-v66/mid": [
+      115,
+      3875098
+    ],
+    "scratch/claude-review-v63-metrics/mid": [
+      115,
+      3872086
+    ],
+    "scratch/claude-review-v53-metrics/mid": [
+      114,
+      3862110
+    ],
+    "scratch/claude-review-v64-metrics/mid": [
+      115,
+      3861554
+    ],
+    "scratch/claude-review-v55-metrics/mid": [
+      115,
+      3854477
+    ],
+    "scratch/claude-review-v57-metrics/mid": [
+      115,
+      3854477
+    ],
+    "scratch/claude-review-v58-metrics/mid": [
+      115,
+      3854477
+    ],
+    "scratch/claude-review-v62-metrics/mid": [
+      114,
+      3845450
+    ],
+    "scratch/claude-review-v56-metrics/mid": [
+      115,
+      3840478
+    ],
+    "scratch/claude-review-v61-metrics/mid": [
+      113,
+      3810900
+    ],
+    "scratch/claude-review-v60-metrics/mid": [
+      113,
+      3807885
+    ],
+    "scratch/claude-review-v65/mid": [
+      113,
+      3789966
+    ],
+    "assets/characters/mark-scribe-younger-lean": [
+      3,
+      3784892
+    ],
+    "exports/critic-retries": [
+      4,
+      3759351
+    ],
+    "chapter-packages/mark4-preserved-2026-10-07/application": [
+      675,
+      3725659
+    ],
+    "scratch/mark4-preservation-restored-2026-10-07/application": [
+      675,
+      3725659
+    ],
+    "Claude outputs": [
+      7,
+      3691822
+    ],
+    "assets/characters/mark-crowd-young-man": [
+      3,
+      3566051
+    ],
+    "exports/previews": [
+      1,
+      3385072
+    ],
+    "exports/mark-2-blender-edit-2026-09-11/matthew-following-previews": [
+      3,
+      3292248
+    ],
+    "scratch/claude-review-v39/mid": [
+      95,
+      3198815
+    ],
+    "scratch/claude-review-v34/mid": [
+      96,
+      3183985
+    ],
+    "scratch/mark4-v39-private-audit": [
+      13,
+      3091907
+    ],
+    "assets/characters/mark-2-principal-scribe": [
+      3,
+      2939335
+    ],
+    "exports/mark-2-dinner-ambience-review-2026-09-12": [
+      14,
+      2812555
+    ],
+    "scratch/v43-inspect": [
+      29,
+      2723225
+    ],
+    "scratch/mark4-v38-arc-audit": [
+      12,
+      2678764
+    ],
+    "assets/characters/scribe-older-stout": [
+      2,
+      2640594
+    ],
+    "exports/openai-keyframe-candidates-2026-09-11/bc72eea2": [
+      7,
+      2569909
+    ],
+    "assets/characters/scribe-younger-lean": [
+      2,
+      2555875
+    ],
+    "assets/characters/principal-scribe": [
+      2,
+      2544028
+    ],
+    "assets/generated/face-thumbs": [
+      141,
+      2527304
+    ],
+    "assets/characters/crowd-man-headwrap": [
+      2,
+      2517146
+    ],
+    "assets/characters/crowd-young-man": [
+      2,
+      2509017
+    ],
+    "assets/generated/ltx-diagnostics": [
+      1,
+      2212341
+    ],
+    "exports/keyframe-briefs/9f41dbc1-b823-4dc4-aba1-8731e1807e79": [
+      4,
+      2210646
+    ],
+    "assets/characters/mark-crowd-elder-grey-beard": [
+      2,
+      2066448
+    ],
+    "review-inspection-20260924": [
+      11,
+      2053001
+    ],
+    "assets/characters/mark-crowd-older-woman-cream": [
+      2,
+      2042507
+    ],
+    "scratch/chapter-preservation-proof-2026-10-07/revised-data": [
+      13,
+      2040060
+    ],
+    "assets/characters/mark-crowd-older-woman-rust": [
+      2,
+      2013001
+    ],
+    "assets/characters/mark-crowd-young-woman": [
+      2,
+      1953624
+    ],
+    "assets/characters/mark-scribe-middleaged-tablet": [
+      2,
+      1947663
+    ],
+    "assets/characters/mark-crowd-woman-with-child": [
+      2,
+      1923373
+    ],
+    "exports/mark-2-blender-edit-2026-09-11/matthew-following-found": [
+      2,
+      1847919
+    ],
+    "exports/mark-2-jesus-full-call-review-2026-09-12": [
+      1,
+      1663088
+    ],
+    "scratch/mark4-v38-shore-audit": [
+      8,
+      1612799
+    ],
+    "scratch/motion-31139734-b0c9-4454-b04a-d8d378d20ed6": [
+      1,
+      1382528
+    ],
+    "scratch/motion-5ed18ff0-cfc2-4971-bffc-7d89fc02a3ff": [
+      1,
+      1382528
+    ],
+    "scratch/motion-dd78acd1-a146-48de-bddb-ac0a18a44674": [
+      1,
+      1382528
+    ],
+    "scratch/motion-e282642c-bacb-425b-815a-93d69dc1e243": [
+      1,
+      1382528
+    ],
+    "scratch/motion-fdf0aa09-ecb0-4373-a23c-0604eed55c5e": [
+      1,
+      1382528
+    ],
+    "scratch/chapter-preservation-demo-2026-10-07/chapter-package": [
+      14,
+      1278642
+    ],
+    "exports/audio-split-preview/58a49fa4-683c-4d9e-9a84-104026d47aae": [
+      4,
+      900314
+    ],
+    "assets/characters/mark-2-paralytic": [
+      1,
+      719121
+    ],
+    "assets/characters/mark-2-friend-4-brown": [
+      1,
+      707228
+    ],
+    "assets/characters/mark-2-crowd-witnesses": [
+      1,
+      705465
+    ],
+    "assets/characters/mark-2-friend-3-slate": [
+      1,
+      698739
+    ],
+    "assets/characters/mark-2-friend-1-rust": [
+      1,
+      676573
+    ],
+    "assets/generated/review-frames": [
+      6,
+      642177
+    ],
+    "assets/characters/crowd-stern-man": [
+      1,
+      638517
+    ],
+    "assets/characters/crowd-woman-with-child": [
+      1,
+      609876
+    ],
+    "assets/characters/crowd-elder-grey-beard": [
+      1,
+      609639
+    ],
+    "assets/characters/mark-2-friend-2-olive": [
+      1,
+      593781
+    ],
+    "assets/characters/crowd-older-woman-cream": [
+      1,
+      588375
+    ],
+    "assets/characters/crowd-young-woman": [
+      1,
+      574228
+    ],
+    "assets/characters/crowd-older-woman-rust": [
+      1,
+      573616
+    ],
+    "assets/characters/scribe-middleaged-tablet": [
+      1,
+      535687
+    ],
+    "exports/production-crew": [
+      4,
+      493292
+    ],
+    "exports/control-room-voice-auditions": [
+      5,
+      434857
+    ],
+    "exports/mark-2-blender-edit-2026-09-11/backups": [
+      2,
+      395493
+    ],
+    "exports/mark-2-blender-edit-2026-09-11/verification": [
+      2,
+      392854
+    ],
+    "assets/generated/pilot-source-frames": [
+      1,
+      290013
+    ],
+    "exports/mark-2-blender-edit-2026-09-11/recovery": [
+      1,
+      199598
+    ],
+    "assets/_scratch": [
+      2,
+      140370
+    ],
+    "assets/generated/lipsync-padded-audio": [
+      6,
+      92892
+    ],
+    "exports/imagen-trial-2026-09-11": [
+      8,
+      76417
+    ],
+    "assets/characters": [
+      1,
+      62014
+    ],
+    "scratch/claude-takeover/__pycache__": [
+      9,
+      58203
+    ],
+    "scratch/chapter-preservation-proof-2026-10-07": [
+      2,
+      57177
+    ],
+    "scratch/chapter-preservation-demo-2026-10-07": [
+      2,
+      57168
+    ],
+    "scratch/chapter-preservation-demo-final-2026-10-07": [
+      2,
+      57168
+    ],
+    "logs": [
+      77,
+      50132
+    ],
+    "assets/reference/english": [
+      1,
+      38221
+    ],
+    "exports/keyframe-briefs/b93a62cf-cb9b-4c82-934b-3f3df8407615": [
+      2,
+      32311
+    ],
+    "exports/keyframe-briefs/3994211d-9854-4a34-a1da-db5eddeaf9af": [
+      2,
+      30621
+    ],
+    "exports/keyframe-briefs/4ea52f66-1a69-404a-b338-d8537422d158": [
+      2,
+      30621
+    ],
+    "exports/keyframe-briefs/c93da2d9-e978-4360-bfc7-58fe17d9dbe3": [
+      2,
+      27832
+    ],
+    "exports/keyframe-briefs/5486a672-8c34-4472-86f9-594a2df18759": [
+      2,
+      26529
+    ],
+    "exports/keyframe-briefs/a599ad06-574d-4b17-9fad-b8b03ac62f82": [
+      2,
+      26137
+    ],
+    "exports/keyframe-briefs/cd88e8a0-1f6e-4ad4-855f-dde1fd08d3b8": [
+      1,
+      24007
+    ],
+    "exports/keyframe-briefs/b863e666-475b-4006-8f4d-a68694df5dfd": [
+      2,
+      23948
+    ],
+    "exports/keyframe-briefs/957643ef-3dff-42e2-8fba-d90723f44ad9": [
+      2,
+      23468
+    ],
+    "exports/keyframe-briefs/ad1e8943-ae7d-42c0-8e42-9a0f3ad422c9": [
+      2,
+      22840
+    ],
+    "exports/keyframe-briefs/6e60286e-1e3e-4d0d-bd02-ffd332c6f5e6": [
+      2,
+      22486
+    ],
+    "exports/keyframe-briefs/09859fa8-2f4a-42a0-84dc-677eda40f844": [
+      2,
+      22461
+    ],
+    "exports/coverage-beat-briefs/568594a9-a905-4253-8791-dc5ff1e9c109": [
+      2,
+      22458
+    ],
+    "exports/keyframe-briefs/4f370426-5ad0-47dd-8ac1-416c6e1ef853": [
+      2,
+      22262
+    ],
+    "exports/keyframe-briefs/e3c6a6b6-1a4d-4f8d-90ac-63bacee48294": [
+      2,
+      22130
+    ],
+    "exports/coverage-beat-briefs/8b36a487-b3a7-4cfc-a304-6412468320a0": [
+      2,
+      22091
+    ],
+    "exports/coverage-beat-briefs/9e63d480-cf93-49ac-9a75-9f3861afd8f7": [
+      2,
+      21900
+    ],
+    "exports/keyframe-briefs/9e5b04ba-dd21-4c13-b4de-786897896ad9": [
+      2,
+      21880
+    ],
+    "exports/coverage-beat-briefs/2ac1ce83-419f-49a3-85cd-9919c5fd66d1": [
+      2,
+      21666
+    ],
+    "exports/keyframe-briefs/8db216e9-679b-47d4-8c73-964c210e063d": [
+      2,
+      21642
+    ],
+    "exports/coverage-beat-briefs/4d4e2c2a-c620-42da-baff-489a2c40a36b": [
+      2,
+      21488
+    ],
+    "exports/coverage-beat-briefs/101a1924-0448-499f-837f-c52df5632214": [
+      2,
+      21469
+    ],
+    "exports/coverage-beat-briefs/8ace31a5-0bb3-41c3-8282-89c297c03245": [
+      2,
+      21393
+    ],
+    "exports/coverage-beat-briefs/83eba3bb-cf56-41c3-af1c-563f314ffd7f": [
+      2,
+      21367
+    ],
+    "exports/coverage-beat-briefs/c8e041ca-2884-4b13-9a13-1f09d29b954e": [
+      2,
+      21282
+    ],
+    "exports/coverage-beat-briefs/bcdf5591-e4cf-4df3-90bd-0cac2b9c3c40": [
+      2,
+      21278
+    ],
+    "exports/coverage-beat-briefs/5ee59f71-1f6a-4067-8a78-087004b78764": [
+      2,
+      21220
+    ],
+    "exports/keyframe-briefs/654ca90f-10bb-4131-88dc-d1a9885c70ed": [
+      2,
+      21147
+    ],
+    "exports/coverage-beat-briefs/1b49742d-d993-434a-9f1a-25818d0d2dd9": [
+      2,
+      20951
+    ],
+    "exports/keyframe-briefs/a192e012-224d-4851-b3c1-3da20d1932ef": [
+      2,
+      20931
+    ],
+    "exports/coverage-beat-briefs/3820d45a-f0fa-41c1-b288-e630f4f03c56": [
+      2,
+      20896
+    ],
+    "exports/coverage-beat-briefs/7976c170-271a-471f-8fbf-10babc34dd1f": [
+      2,
+      20782
+    ],
+    "exports/coverage-beat-briefs/0db9357b-9407-438e-b560-29315b2365ea": [
+      2,
+      20775
+    ],
+    "exports/coverage-beat-briefs/8a510d06-fbec-4fea-ad8c-34138c544555": [
+      2,
+      20765
+    ],
+    "exports/coverage-beat-briefs/68972cb6-99da-46fd-b20c-ea25541bf248": [
+      2,
+      20760
+    ],
+    "exports/keyframe-briefs/5a53d364-6a16-4282-80d6-509f6f40b0c7": [
+      1,
+      20732
+    ],
+    "exports/coverage-beat-briefs/c35a6514-1d1e-4360-b2e1-49ee40b090b8": [
+      2,
+      20723
+    ],
+    "exports/coverage-beat-briefs/0dbf96cd-d5d5-4a58-8dd2-42a578682761": [
+      2,
+      20693
+    ],
+    "exports/keyframe-briefs/1e6495e3-5385-48eb-aadc-9b7b381f90f3": [
+      2,
+      20692
+    ],
+    "exports/keyframe-briefs/87dfba06-0647-4459-b1b4-62393724391e": [
+      2,
+      20634
+    ],
+    "exports/keyframe-briefs/d91c4c29-8e0c-420d-bde5-025702f11615": [
+      2,
+      20583
+    ],
+    "exports/keyframe-briefs/b6a8878f-b3a2-40a9-82a5-eb32cc626abd": [
+      2,
+      20550
+    ],
+    "exports/keyframe-briefs/e6711628-900f-4292-9305-543164f4f1e3": [
+      2,
+      20492
+    ],
+    "exports/coverage-beat-briefs/1e805c95-c8d7-4ad5-9ced-3d1a93e0e0b4": [
+      2,
+      20491
+    ],
+    "exports/coverage-beat-briefs/bab6f19c-5ed2-460b-98da-5f9783588d75": [
+      2,
+      20454
+    ],
+    "exports/coverage-beat-briefs/d0ac74f9-9493-45d7-ad13-59542319e5d9": [
+      2,
+      20429
+    ],
+    "exports/keyframe-briefs/0920badb-6dad-4098-9ec9-7fa51206acf3": [
+      2,
+      20428
+    ],
+    "exports/keyframe-briefs/48605d35-81f7-4914-81aa-437d6387ed9d": [
+      2,
+      20419
+    ],
+    "exports/coverage-beat-briefs/13021e59-2f8b-4f52-a350-368269a66312": [
+      2,
+      20416
+    ],
+    "exports/keyframe-briefs/317fbce2-8d25-4694-9153-0029bca4a124": [
+      2,
+      20415
+    ],
+    "exports/coverage-beat-briefs/52cc759f-e2c7-46f4-99f5-b777f1ac95b0": [
+      2,
+      20391
+    ],
+    "exports/coverage-beat-briefs/c599ae91-76f8-4181-83f0-c879d0629f96": [
+      2,
+      20346
+    ],
+    "exports/coverage-beat-briefs/4d5b633b-34e2-4044-9f16-bec214482398": [
+      2,
+      20306
+    ],
+    "exports/coverage-beat-briefs/c8121ef6-98c4-438e-a770-0c9afd64e063": [
+      2,
+      20257
+    ],
+    "exports/coverage-beat-briefs/90b06cea-ea84-4fdb-ad28-f4a3ad2854fc": [
+      2,
+      20225
+    ],
+    "exports/coverage-beat-briefs/bf9ec372-c7fc-45f9-9645-1e3c665da4e2": [
+      2,
+      20195
+    ],
+    "exports/coverage-beat-briefs/247fbb33-9c5b-4647-8443-e2257a095cb0": [
+      2,
+      20115
+    ],
+    "exports/coverage-beat-briefs/47eb0020-feb0-4ac8-bfa5-853480cca6e3": [
+      2,
+      20075
+    ],
+    "exports/coverage-beat-briefs/a63d7b6b-c07a-4b7b-b2b1-7482f2fcc1de": [
+      2,
+      19941
+    ],
+    "exports/keyframe-briefs/0fb05e8c-167d-40de-9ebb-8cb3b693ae78": [
+      2,
+      19810
+    ],
+    "exports/keyframe-briefs/88f05548-d3d6-49d8-b662-ec9613175759": [
+      2,
+      19791
+    ],
+    "exports/coverage-beat-briefs/879c849b-7662-4d5b-b453-b2950d26e441": [
+      2,
+      19783
+    ],
+    "exports/coverage-beat-briefs/4ad130e5-7d32-46d1-bb6c-86150485d384": [
+      2,
+      19599
+    ],
+    "exports/keyframe-briefs/ae4de734-59b6-4756-96c7-b3ac89c72464": [
+      2,
+      19585
+    ],
+    "exports/coverage-beat-briefs/db9b4efa-abfa-4489-83a3-c27cc307d99a": [
+      2,
+      19570
+    ],
+    "exports/coverage-beat-briefs/42adaa2b-1ee9-4db0-9f59-281f88a532ab": [
+      2,
+      19527
+    ],
+    "exports/coverage-beat-briefs/26d7a47e-3f9a-4af4-9e26-85c3d695bfaa": [
+      2,
+      19522
+    ],
+    "exports/coverage-beat-briefs/6b5c2b1c-f5d3-4ca5-a2a6-eb29cd59b601": [
+      3,
+      19492
+    ],
+    "exports/coverage-beat-briefs/b5b7925e-274a-4daa-b8a4-1902da07521e": [
+      2,
+      19407
+    ],
+    "exports/coverage-beat-briefs/8406375d-13b2-45b0-a5d5-ee2f47e54993": [
+      2,
+      19397
+    ],
+    "exports/coverage-beat-briefs/98a216a8-65d2-4f99-b882-bfe849a1ca13": [
+      2,
+      19369
+    ],
+    "exports/coverage-beat-briefs/01de1774-20c9-4670-b4c3-b3b2a18e924a": [
+      2,
+      19354
+    ],
+    "exports/coverage-beat-briefs/b849a1ce-9222-4e15-b88a-57ac6610267b": [
+      2,
+      19306
+    ],
+    "exports/coverage-beat-briefs/1c01ec4e-13ef-45c9-959c-bf2e06036019": [
+      2,
+      19305
+    ],
+    "exports/keyframe-briefs/e52bfef1-03d1-42ce-84b9-7abebbb1549b": [
+      2,
+      19296
+    ],
+    "exports/coverage-beat-briefs/b2ab7110-04d4-43e7-932e-69f2f0ee3215": [
+      2,
+      19273
+    ],
+    "exports/keyframe-briefs/2a0c9308-e6ab-477e-a79d-12316296a7ef": [
+      2,
+      19250
+    ],
+    "exports/coverage-beat-briefs/35f05e7b-3d60-4d3d-902a-b108bff0c794": [
+      2,
+      19246
+    ],
+    "exports/coverage-beat-briefs/d8a6b206-ca7d-4e0d-8213-9292973b9113": [
+      2,
+      19152
+    ],
+    "exports/coverage-beat-briefs/41f89013-2620-4c52-b311-614d47631277": [
+      2,
+      19145
+    ],
+    "exports/coverage-beat-briefs/2b178dcc-3c5b-4bd1-8947-ca6c8ddd8561": [
+      2,
+      19089
+    ],
+    "exports/coverage-beat-briefs/689a81a6-9873-4b28-951d-55aa1a10f600": [
+      3,
+      18964
+    ],
+    "exports/coverage-beat-briefs/bf1306c8-9914-4070-8581-51a0eb65a54e": [
+      2,
+      18938
+    ],
+    "exports/coverage-beat-briefs/002475e0-b648-4795-8b8c-7f697d9d42b7": [
+      3,
+      18916
+    ],
+    "exports/coverage-beat-briefs/891b0bd4-ab14-4164-906a-c42eb62f4abb": [
+      3,
+      18864
+    ],
+    "exports/coverage-beat-briefs/70a6dab8-93ca-4c42-aaa7-7d63ce390fe9": [
+      2,
+      18832
+    ],
+    "exports/coverage-beat-briefs/78cfe5bb-d01e-4d4b-b7c5-436f1b5c6a93": [
+      2,
+      18820
+    ],
+    "exports/coverage-beat-briefs/2fb69621-9731-416a-872e-c503a4a7735d": [
+      2,
+      18816
+    ],
+    "exports/keyframe-briefs/5c33fb3f-6597-4feb-9ac7-4e75344d305e": [
+      2,
+      18775
+    ],
+    "exports/coverage-beat-briefs/b677de3e-d582-4db6-ad41-1b6354c6869f": [
+      2,
+      18769
+    ],
+    "exports/coverage-beat-briefs/d723aa31-dcb1-4e04-8a3c-ab5141a9a380": [
+      2,
+      18769
+    ],
+    "exports/coverage-beat-briefs/671f904a-ecdb-4f29-b672-89d0b5c71a90": [
+      2,
+      18760
+    ],
+    "exports/coverage-beat-briefs/9b7d10d3-3eec-4c38-b5fb-345a6cf8c5af": [
+      2,
+      18636
+    ],
+    "exports/coverage-beat-briefs/08f8a8c3-766d-4b33-80b4-bf528a7e3f9b": [
+      3,
+      18629
+    ],
+    "exports/keyframe-briefs/0250fe3a-08f8-4f05-a61b-e7a4ea6ff4a5": [
+      2,
+      18614
+    ],
+    "exports/coverage-beat-briefs/6437bb65-2604-4c59-be16-0cfa3384e7ce": [
+      3,
+      18605
+    ],
+    "exports/coverage-beat-briefs/ca56839c-854a-47e5-a3cd-6d21dae7a665": [
+      2,
+      18602
+    ],
+    "exports/coverage-beat-briefs/536820ae-ac1f-46ec-a7c0-08a330451c41": [
+      2,
+      18573
+    ],
+    "exports/keyframe-briefs/04f3a613-07b2-4f42-afd1-a2f87224e705": [
+      2,
+      18571
+    ],
+    "exports/coverage-beat-briefs/584965de-73b0-4e72-9044-0c7aa659f80f": [
+      2,
+      18564
+    ],
+    "exports/coverage-beat-briefs/78ab980b-3fff-4cc2-b91d-8a5fd37c038f": [
+      2,
+      18548
+    ],
+    "exports/keyframe-briefs/edbe8cfa-c061-4fcb-9b3b-eb858924c671": [
+      2,
+      18532
+    ],
+    "exports/keyframe-briefs/49fa74be-ce05-4e22-89ea-576ff0c35bbc": [
+      2,
+      18526
+    ],
+    "exports/coverage-beat-briefs/642f5435-4070-4e53-b9af-5b9e219d97a7": [
+      3,
+      18455
+    ],
+    "exports/coverage-beat-briefs/3b99dbfb-7e7b-4d82-8df0-c91b68eb4847": [
+      3,
+      18405
+    ],
+    "exports/coverage-beat-briefs/42d084fb-0725-4b1b-a1d8-3415140d9460": [
+      3,
+      18391
+    ],
+    "exports/coverage-beat-briefs/87b2840f-c300-45ac-9d82-24976605fc73": [
+      3,
+      18370
+    ],
+    "exports/coverage-beat-briefs/9fd2be26-3c80-4ee3-b20f-3de8ed33c01f": [
+      2,
+      18323
+    ],
+    "exports/keyframe-briefs/752a05fa-65da-4a7f-8738-4a6b0fee03a9": [
+      2,
+      18305
+    ],
+    "exports/coverage-beat-briefs/0576ffd3-a04c-45d8-8687-d069266dc1d3": [
+      2,
+      18144
+    ],
+    "exports/coverage-beat-briefs/ec978b14-712f-42ac-b7cd-5843cba1af9c": [
+      2,
+      18144
+    ],
+    "exports/coverage-beat-briefs/ef4543b5-fe0d-4342-a053-57db6ed6e7e3": [
+      2,
+      18108
+    ],
+    "exports/keyframe-briefs/69c4302a-9772-48a0-9f04-4dfc4f17f183": [
+      2,
+      17977
+    ],
+    "exports/keyframe-briefs/7d667b5f-de9d-4e7a-82a9-e6777a24c51a": [
+      2,
+      17877
+    ],
+    "exports/keyframe-briefs/66198729-79dd-4b30-a6d1-934c3595a0b7": [
+      2,
+      17802
+    ],
+    "scratch/claude-review-tools": [
+      2,
+      10508
+    ],
+    "exports/qc-runs/b3d2ab87-7379-456c-8851-61fc7942f536": [
+      2,
+      4354
+    ],
+    ".": [
+      2,
+      1359
+    ],
+    "scratch/mark4-preservation-restored-2026-10-07": [
+      1,
+      251
+    ],
+    "scratch/claude-review-v67": [
+      1,
+      137
+    ]
+  },
+  "databases": [
+    {
+      "path": "db\\heartword-before-broll-20260924.sqlite",
+      "bytes": 40091648
+    },
+    {
+      "path": "db\\heartword.sqlite",
+      "bytes": 59330560
+    },
+    {
+      "path": "exports\\mark-2-timing-2026-09-11\\before-import.sqlite",
+      "bytes": 1970176
+    },
+    {
+      "path": "exports\\mark-2-timing-2026-09-11\\validation.sqlite",
+      "bytes": 2076672
+    },
+    {
+      "path": "scratch\\chapter-preservation-proof-2026-10-07\\revised-data\\db\\heartword.sqlite",
+      "bytes": 774144
+    },
+    {
+      "path": "scratch\\mark4-preservation-restored-2026-10-07\\db\\heartword.sqlite",
+      "bytes": 19836928
+    }
+  ],
+  "links": [],
+  "errors": [],
+  "largest": [
+    [
+      279105553,
+      "scratch\\mark4-preservation-restored-2026-10-07\\assets\\generated\\chapter\\mark4-autonomous-overnight-final-v37-verse12-speaker-audio-held.mp4"
+    ],
+    [
+      279105553,
+      "chapter-packages\\mark4-preserved-2026-10-07\\assets\\generated\\chapter\\mark4-autonomous-overnight-final-v37-verse12-speaker-audio-held.mp4"
+    ],
+    [
+      279105553,
+      "assets\\generated\\chapter\\mark4-autonomous-overnight-final-v37-verse12-speaker-audio-held.mp4"
+    ],
+    [
+      279104518,
+      "scratch\\mark4-preservation-restored-2026-10-07\\assets\\generated\\chapter\\mark4-autonomous-overnight-final-v36-phrase-led-teaching-recut-v2.mp4"
+    ],
+    [
+      279104518,
+      "chapter-packages\\mark4-preserved-2026-10-07\\assets\\generated\\chapter\\mark4-autonomous-overnight-final-v36-phrase-led-teaching-recut-v2.mp4"
+    ],
+    [
+      279104518,
+      "assets\\generated\\chapter\\mark4-autonomous-overnight-final-v36-phrase-led-teaching-recut-v2.mp4"
+    ],
+    [
+      274914370,
+      "scratch\\mark4-preservation-restored-2026-10-07\\assets\\generated\\chapter\\mark4-autonomous-overnight-final-v36-phrase-led-teaching-recut.mp4"
+    ],
+    [
+      274914370,
+      "chapter-packages\\mark4-preserved-2026-10-07\\assets\\generated\\chapter\\mark4-autonomous-overnight-final-v36-phrase-led-teaching-recut.mp4"
+    ],
+    [
+      274914370,
+      "assets\\generated\\chapter\\mark4-autonomous-overnight-final-v36-phrase-led-teaching-recut.mp4"
+    ],
+    [
+      274302487,
+      "scratch\\mark4-preservation-restored-2026-10-07\\assets\\generated\\chapter\\mark4-autonomous-overnight-final-v24-post3034-continuity.mp4"
+    ],
+    [
+      274302487,
+      "chapter-packages\\mark4-preserved-2026-10-07\\assets\\generated\\chapter\\mark4-autonomous-overnight-final-v24-post3034-continuity.mp4"
+    ],
+    [
+      274302487,
+      "assets\\generated\\chapter\\mark4-autonomous-overnight-final-v24-post3034-continuity.mp4"
+    ]
+  ]
+}

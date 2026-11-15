@@ -1,0 +1,244 @@
+{
+  "baseline": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261030-before-gemma\\backup.json",
+  "baselineCompletedAt": "2026-10-30T20:18:00.032Z",
+  "baselineDataFiles": 121090,
+  "baselineDataBytes": 172518391626,
+  "currentFiles": 197166,
+  "currentBytes": 496188348413,
+  "counts": {
+    "unchanged": 121067,
+    "reusableFromBaseline": 174730,
+    "new": 76079,
+    "modified": 20
+  },
+  "bytes": {
+    "unchanged": 170356973817,
+    "reusableFromBaseline": 283324549807,
+    "new": 321877763200,
+    "modified": 3953611396
+  },
+  "deletedFiles": 3,
+  "deletedBaselineBytes": 8526797,
+  "uniqueNewContentBytes": 43694541035,
+  "freeBytes": 150927499264,
+  "pathDeltaWith10PercentHeadroomBytes": 358414512055,
+  "deduplicatedDeltaWith10PercentHeadroomBytes": 48063995138,
+  "unstable": [],
+  "groups": {
+    "assets": {
+      "newBytes": 12747567636,
+      "newFiles": 8735,
+      "modifiedBytes": 332177408,
+      "modifiedFiles": 1
+    },
+    "backups": {
+      "modifiedBytes": 389017600,
+      "modifiedFiles": 2,
+      "newBytes": 1984536843,
+      "newFiles": 10
+    },
+    "db": {
+      "modifiedBytes": 2132897792,
+      "modifiedFiles": 1,
+      "newBytes": 148256,
+      "newFiles": 1
+    },
+    "exports": {
+      "newBytes": 67739756,
+      "newFiles": 317,
+      "modifiedBytes": 2077316,
+      "modifiedFiles": 2
+    },
+    "heartword.db": {
+      "newBytes": 0,
+      "newFiles": 1
+    },
+    "logs": {
+      "newBytes": 19010654,
+      "newFiles": 1
+    },
+    "m5delivery-20261024": {
+      "modifiedBytes": 271708160,
+      "modifiedFiles": 1,
+      "newBytes": 16928,
+      "newFiles": 1
+    },
+    "m5final-20261024": {
+      "modifiedBytes": 271708160,
+      "modifiedFiles": 1,
+      "newBytes": 16928,
+      "newFiles": 1
+    },
+    "m5restored-20261024": {
+      "modifiedBytes": 271699968,
+      "modifiedFiles": 1
+    },
+    "reviews": {
+      "modifiedBytes": 122064896,
+      "modifiedFiles": 1
+    },
+    "revisions": {
+      "newBytes": 307058605135,
+      "newFiles": 67008
+    },
+    "scratch": {
+      "modifiedBytes": 160260096,
+      "modifiedFiles": 10,
+      "newBytes": 121064,
+      "newFiles": 4
+    }
+  },
+  "largestChangedFiles": [
+    {
+      "path": "revisions/hatam-mark5-r6-local-continuity-reopen-proof-20261030/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/b387b313-e3ef-479e-b9e8-7bfd13cfe299.mp4",
+      "bytes": 3898137454,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-r6-native-cues-final-reopen-proof-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/b387b313-e3ef-479e-b9e8-7bfd13cfe299.mp4",
+      "bytes": 3898137454,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-r7-R5-bridge-reopen-proof-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/b387b313-e3ef-479e-b9e8-7bfd13cfe299.mp4",
+      "bytes": 3898137454,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-r8-Jesus-close-reopen-proof-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/b387b313-e3ef-479e-b9e8-7bfd13cfe299.mp4",
+      "bytes": 3898137454,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-sequence-score-20261030/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/b387b313-e3ef-479e-b9e8-7bfd13cfe299.mp4",
+      "bytes": 3898137454,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-sequence-score-20261030/exports/sequence-score-review-candidate-20261030/editable-chapter-r6-local-continuity-20261030/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/b387b313-e3ef-479e-b9e8-7bfd13cfe299.mp4",
+      "bytes": 3898137454,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-sequence-score-20261030/exports/sequence-score-review-candidate-20261030/editable-chapter-r6-local-continuity-native-cues-final-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/b387b313-e3ef-479e-b9e8-7bfd13cfe299.mp4",
+      "bytes": 3898137454,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-sequence-score-20261030/exports/sequence-score-review-candidate-20261030/editable-chapter-r7-R5-bridge-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/b387b313-e3ef-479e-b9e8-7bfd13cfe299.mp4",
+      "bytes": 3898137454,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-sequence-score-20261030/exports/sequence-score-review-candidate-20261030/editable-chapter-r8-Jesus-close-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/b387b313-e3ef-479e-b9e8-7bfd13cfe299.mp4",
+      "bytes": 3898137454,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-sequence-score-20261030/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/6dab0084-3314-49b8-ac56-d369f0480a54-working.mp4",
+      "bytes": 3885285679,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-r6-local-continuity-reopen-proof-20261030/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/3e81a037-dd93-48b9-9e3f-a7718dce55a2.mp4",
+      "bytes": 3836567860,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-r6-native-cues-final-reopen-proof-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/3e81a037-dd93-48b9-9e3f-a7718dce55a2.mp4",
+      "bytes": 3836567860,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-r7-R5-bridge-reopen-proof-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/3e81a037-dd93-48b9-9e3f-a7718dce55a2.mp4",
+      "bytes": 3836567860,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-r8-Jesus-close-reopen-proof-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/3e81a037-dd93-48b9-9e3f-a7718dce55a2.mp4",
+      "bytes": 3836567860,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-sequence-score-20261030/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/3e81a037-dd93-48b9-9e3f-a7718dce55a2.mp4",
+      "bytes": 3836567860,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-sequence-score-20261030/exports/sequence-score-review-candidate-20261030/editable-chapter-r6-local-continuity-20261030/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/3e81a037-dd93-48b9-9e3f-a7718dce55a2.mp4",
+      "bytes": 3836567860,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-sequence-score-20261030/exports/sequence-score-review-candidate-20261030/editable-chapter-r6-local-continuity-native-cues-final-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/3e81a037-dd93-48b9-9e3f-a7718dce55a2.mp4",
+      "bytes": 3836567860,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-sequence-score-20261030/exports/sequence-score-review-candidate-20261030/editable-chapter-r7-R5-bridge-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/3e81a037-dd93-48b9-9e3f-a7718dce55a2.mp4",
+      "bytes": 3836567860,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-sequence-score-20261030/exports/sequence-score-review-candidate-20261030/editable-chapter-r8-Jesus-close-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/3e81a037-dd93-48b9-9e3f-a7718dce55a2.mp4",
+      "bytes": 3836567860,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-sequence-score-20261030/exports/sequence-score-review-candidate-20261030/Markus5_Hatam_sequence_score_handoff_candidate_r5_720p.mp4",
+      "bytes": 3836567860,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-sequence-score-20261030/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/e007b706-e2e0-48d5-8839-e34f1da4ead6-working.mp4",
+      "bytes": 3700036291,
+      "category": "new"
+    },
+    {
+      "path": "db/heartword.sqlite",
+      "bytes": 2132897792,
+      "category": "modified"
+    },
+    {
+      "path": "backups/mark6-executioner-canon-20261105T142733Z/heartword-before.sqlite",
+      "bytes": 652091392,
+      "category": "new"
+    },
+    {
+      "path": "assets/generated/chapter/c457a815-d07d-4902-91b5-7b936b549856/73ae44d5-5877-4b43-a69f-f562b6992b09.mp4",
+      "bytes": 398336735,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-r4-food-reviewed-native-reconciled-reopen-proof-20261030/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/ad8e16b6-d84c-47c6-b794-bb68cb025d64.mp4",
+      "bytes": 391110124,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-r4-food-reviewed-reopen-proof-20261030/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/ad8e16b6-d84c-47c6-b794-bb68cb025d64.mp4",
+      "bytes": 391110124,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-r6-local-continuity-reopen-proof-20261030/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/ad8e16b6-d84c-47c6-b794-bb68cb025d64.mp4",
+      "bytes": 391110124,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-r6-native-cues-final-reopen-proof-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/ad8e16b6-d84c-47c6-b794-bb68cb025d64.mp4",
+      "bytes": 391110124,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-r7-R5-bridge-reopen-proof-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/ad8e16b6-d84c-47c6-b794-bb68cb025d64.mp4",
+      "bytes": 391110124,
+      "category": "new"
+    },
+    {
+      "path": "revisions/hatam-mark5-r8-Jesus-close-reopen-proof-20261031/assets/generated/chapter/0694bfbf-5595-4531-8215-6242d4aea927/ad8e16b6-d84c-47c6-b794-bb68cb025d64.mp4",
+      "bytes": 391110124,
+      "category": "new"
+    }
+  ],
+  "scope": "HeartWordData compared with data entries; content reuse checked against all baseline entries. No baseline media recalled. Application changes, SQLite-consistent snapshots, backup metadata and any external referenced assets not measured. Whole-file deduplication, not chunk-level. Read-only measurement, not a backup."
+}

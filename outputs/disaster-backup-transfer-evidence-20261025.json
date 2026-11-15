@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-25T15:17:52.2813979Z",
+  "backupId": "47ff41ac-b914-4195-b8db-8a117caf0233",
+  "publicationAt": "2026-10-25T00:33:56.9202823Z",
+  "firstObservedAllInSyncAt": "2026-10-25T14:59:26Z",
+  "allCloudOnlyAt": "2026-10-25T15:08:34Z",
+  "files": 101157,
+  "bytes": 167169647070,
+  "observedTransferUpperBoundHours": 14.425,
+  "allCloudOnlyHours": 14.577,
+  "timingLimitation": "MAX_PATH omissions delayed the first all-synced observation; actual upload may have completed earlier. No nightly schedule has been enabled.",
+  "remoteRecoveryVerified": false,
+  "nightlyEnabled": false
+}

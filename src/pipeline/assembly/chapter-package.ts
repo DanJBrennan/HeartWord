@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { constants, copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { closeSync, constants, copyFileSync, existsSync, lstatSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { basename, dirname, extname, isAbsolute, relative, resolve } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -22,6 +22,17 @@ export interface ChapterPackageManifest {
 }
 export interface PackageOptions { extraFiles?: string[]; includeApplication?: boolean }
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
+// Review masters can exceed readFileSync's 2 GiB limit. Hash every byte without
+// retaining complete media in memory during inspect/copy/restore.
+function hashFile(path: string): string {
+  const digest = createHash("sha256"), buffer = Buffer.allocUnsafe(1024 * 1024);
+  const fd = openSync(path, "r");
+  try {
+    let bytes: number;
+    while ((bytes = readSync(fd, buffer, 0, buffer.length, null)) > 0) digest.update(buffer.subarray(0, bytes));
+    return digest.digest("hex");
+  } finally { closeSync(fd); }
+}
 const slash = (value: string) => value.replaceAll("\\", "/");
 const quote = (name: string) => `"${name.replaceAll('"', '""')}"`;
 function inside(root: string, path: string): boolean {
@@ -143,7 +154,7 @@ export function inspectChapterPackage(db: DatabaseSync, dataDir: string, project
       if (role === "original") prior.role = role;
       return;
     }
-    const sha256 = hash(readFileSync(actual));
+    const sha256 = hashFile(actual);
     const path = inside(dataDir, actual) ? slash(relative(resolve(dataDir), actual)) : `assets/preserved-external/${sha256}/${basename(actual)}`;
     bySource.set(actual, { path, sha256, bytes: statSync(actual).size, originals: [value], references: [reference], role });
     if (extname(actual).toLowerCase() === ".json" && !reference.startsWith("producer-supplied dependency")) pendingJson.push(actual);
@@ -163,7 +174,7 @@ export function inspectChapterPackage(db: DatabaseSync, dataDir: string, project
         else for (const item of dependency.files) {
           const file = portablePath(bundleRoot, item.path);
           add(file, `Blender dependency:${value}`, "original", true);
-          if (existsSync(file) && hash(readFileSync(file)) !== item.sha256) problems.push(`Changed Blender dependency: ${file}`);
+          if (existsSync(file) && hashFile(file) !== item.sha256) problems.push(`Changed Blender dependency: ${file}`);
         }
         add(lock, `Blender dependency lock:${value}`);
       }
@@ -214,7 +225,7 @@ export function inspectChapterPackage(db: DatabaseSync, dataDir: string, project
     if (statSync(path).isDirectory()) for (const name of readdirSync(path)) addApplication(resolve(path, name));
     else {
       const full = realpathSync(path), bytes = statSync(full).size;
-      bySource.set(full, { path: `application/${slash(relative(resolve("."), full))}`, bytes, sha256: hash(readFileSync(full)), originals: [full], references: ["application source snapshot"], role: "original" });
+      bySource.set(full, { path: `application/${slash(relative(resolve("."), full))}`, bytes, sha256: hashFile(full), originals: [full], references: ["application source snapshot"], role: "original" });
     }
   }
   if (options.includeApplication !== false) for (const path of ["src", "scripts", "package.json", "package-lock.json", "tsconfig.json", "tsconfig.base.json", "vite.config.ts", "vitest.config.ts", "docs/design/fdl",
@@ -271,7 +282,7 @@ export function exportChapterPackage(db: DatabaseSync, dataDir: string, projectI
   for (const [source, file] of snapshot.sources) {
     const out = portablePath(destination, file.path); mkdirSync(dirname(out), { recursive: true });
     copyFileSync(source, out, constants.COPYFILE_EXCL);
-    if (hash(readFileSync(out)) !== file.sha256) throw new Error(`Asset changed during packaging: ${source}`);
+    if (hashFile(out) !== file.sha256) throw new Error(`Asset changed during packaging: ${source}`);
   }
   writeFileSync(resolve(destination, "schema.sql"), snapshot.schema, { flag: "wx" });
   writeFileSync(resolve(destination, "records.json"), JSON.stringify(snapshot.tables), { flag: "wx" });
@@ -290,7 +301,7 @@ export function verifyChapterPackage(directory: string): ChapterPackageManifest 
     if (seen.has(file.path.toLowerCase())) throw new Error(`Duplicate portable asset: ${file.path}`);
     seen.add(file.path.toLowerCase());
     if (!existsSync(path)) throw new Error(`Missing retained asset: ${file.path}`);
-    if (statSync(path).size !== file.bytes || hash(readFileSync(path)) !== file.sha256) throw new Error(`Retained asset integrity failed: ${file.path}`);
+    if (statSync(path).size !== file.bytes || hashFile(path) !== file.sha256) throw new Error(`Retained asset integrity failed: ${file.path}`);
   }
   return manifest;
 }
@@ -317,7 +328,7 @@ export function restoreChapterPackage(directory: string, destination: string): C
   for (const file of manifest.files) {
     const target = portablePath(destination, file.path); mkdirSync(dirname(target), { recursive: true });
     copyFileSync(portablePath(directory, file.path), target, constants.COPYFILE_EXCL);
-    if (hash(readFileSync(target)) !== file.sha256) throw new Error(`Restore integrity failed: ${file.path}`);
+    if (hashFile(target) !== file.sha256) throw new Error(`Restore integrity failed: ${file.path}`);
   }
   restoreProductionRecords(resolve(destination, "db", "heartword.sqlite"), tables, readFileSync(portablePath(directory, manifest.schemaFile), "utf8"), relocations);
   // Provider/review sidecars are immutable and can contain absolute paths to

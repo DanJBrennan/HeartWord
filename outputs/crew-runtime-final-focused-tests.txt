@@ -1,0 +1,33 @@
+
+> heartword@0.1.0 test
+> vitest run tests/creative-direction/production-record.test.ts tests/providers/ltx.test.ts tests/pipeline/fresh-chapter-full-production.test.ts
+
+
+ RUN  v2.1.9 C:/Users/danbr/OneDrive/Documents/HeartWord
+
+(node:51960) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24228) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:60660) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/providers/ltx.test.ts (22 tests) 2274ms
+   ✓ LTX Desktop adapter > removes unexpected Desktop audio for an explicitly silent request while preserving every encoded picture frame 340ms
+   ✓ LTX Desktop adapter > serializes concurrent calls against Desktop's single progress slot 383ms
+ ✓ tests/pipeline/fresh-chapter-full-production.test.ts (1 test) 5115ms
+   ✓ takes a fresh reviewed chapter through real common stages without provider calls 5114ms
+ ✓ tests/creative-direction/production-record.test.ts (8 tests) 6451ms
+   ✓ saved crew production runtime > saves schema-compatible FDL and contribution envelopes without changing sources, canon or accepted media 734ms
+   ✓ saved crew production runtime > resolves camera versus blocking while retaining the original proposal, objection and owner resolution 971ms
+   ✓ saved crew production runtime > rejects a wardrobe redesign through continuity and carries the disagreement forward 1078ms
+   ✓ saved crew production runtime > does not clear an old blocking objection just because later findings are empty 1200ms
+   ✓ saved crew production runtime > holds cross-domain proposals without consent and accepts only a fresh owner-reviewed proposal 664ms
+   ✓ saved crew production runtime > retains a late review without replacing the producer's newer accepted revision 495ms
+   ✓ saved crew production runtime > shares manual API, autonomous caller, immutable producer edits, replay and reopened state 740ms
+   ✓ saved crew production runtime > holds absent/stale plans before provider submission and preserves a stale returned candidate 568ms
+
+ Test Files  3 passed (3)
+      Tests  31 passed (31)
+   Start at  20:01:40
+   Duration  8.65s (transform 1.32s, setup 0ms, collect 2.17s, tests 13.84s, environment 0ms, prepare 456ms)
+

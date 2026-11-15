@@ -1,0 +1,14 @@
+{
+  "checkedAtLocal": "2026-10-07T22:33:55-04:00",
+  "method": "Authenticated OneDrive browser page; Windows account metadata and environment root",
+  "account": "dan@brenn.onmicrosoft.com",
+  "page": "https://brenn-my.sharepoint.com/",
+  "displayedStorage": "495.9 GB used of 1 TB (48%)",
+  "configuredSyncRoot": "C:\\Users\\danbr\\OneDrive - dsc",
+  "requiredFreeGiB": 750,
+  "meetsSelectedCapacityCondition": false,
+  "uploadPerformed": false,
+  "scheduledTaskEnabled": false,
+  "oneDriveProcessObservedRunning": false,
+  "decisionNeeded": "Different separate storage, another qualifying account, or explicitly revised retention/capacity."
+}

@@ -1,0 +1,75 @@
+{
+  "at": "2026-10-25T16:47:09.507Z",
+  "roots": [
+    "C:\\Users\\danbr\\OneDrive\\Documents\\HeartWord",
+    "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal",
+    "C:\\Users\\danbr\\HeartWordRecoveryDrill\\20261024-personal-cloud",
+    "C:\\Users\\danbr\\HeartWordRecoveryDrill\\20261024-personal-cloud-application"
+  ],
+  "ancestors": [
+    {
+      "path": "C:\\Users\\danbr\\OneDrive\\Documents",
+      "directory": true,
+      "symbolicLink": false,
+      "ino": "1125899907124424",
+      "dev": "740384110"
+    },
+    {
+      "path": "C:\\Users\\danbr\\OneDrive",
+      "directory": true,
+      "symbolicLink": false,
+      "ino": "1125899907077475",
+      "dev": "740384110"
+    },
+    {
+      "path": "C:\\Users\\danbr",
+      "directory": true,
+      "symbolicLink": false,
+      "ino": "2814749767116745",
+      "dev": "740384110"
+    },
+    {
+      "path": "C:\\Users",
+      "directory": true,
+      "symbolicLink": false,
+      "ino": "844424930162281",
+      "dev": "740384110"
+    },
+    {
+      "path": "C:\\",
+      "directory": true,
+      "symbolicLink": false,
+      "ino": "1407374883553285",
+      "dev": "740384110"
+    },
+    {
+      "path": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups",
+      "directory": true,
+      "symbolicLink": false,
+      "ino": "9570149208341484",
+      "dev": "740384110"
+    },
+    {
+      "path": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive",
+      "directory": true,
+      "symbolicLink": false,
+      "ino": "12947848928694280",
+      "dev": "740384110"
+    },
+    {
+      "path": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal",
+      "directory": true,
+      "symbolicLink": false,
+      "ino": "3096224743821282",
+      "dev": "740384110"
+    },
+    {
+      "path": "C:\\Users\\danbr\\HeartWordRecoveryDrill",
+      "directory": true,
+      "symbolicLink": false,
+      "ino": "7881299349457123",
+      "dev": "740384110"
+    }
+  ],
+  "contentRead": false
+}

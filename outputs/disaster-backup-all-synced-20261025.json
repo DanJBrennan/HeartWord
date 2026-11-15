@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-25T14:59:26Z",
+  "backupId": "47ff41ac-b914-4195-b8db-8a117caf0233",
+  "directory": "C:\\Users\\danbr\\OneDrive\\Documents\\OneDrive - Personal\\OneDrive\\HeartWordBackups\\20261024-first-personal",
+  "expectedFiles": 101157,
+  "inSyncFiles": 101157,
+  "inSyncBytes": 167169647070,
+  "onlineOnlyFiles": 85105,
+  "pendingFiles": 0,
+  "allInSync": true,
+  "allCloudOnly": false,
+  "pendingExamples": [],
+  "metadataScanSeconds": 2.466832500009332,
+  "remoteRecoveryVerified": false,
+  "method": "Scandir FindData with exposed placeholders + CfGetPlaceholderStateFromAttributeTag; no content reads or file handles"
+}
