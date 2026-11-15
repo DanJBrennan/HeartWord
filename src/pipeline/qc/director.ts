@@ -1,3 +1,4 @@
+import {historicalSettingPrompt} from "../historical-setting.js";
 /**
  * Director agent: runs the Critic against one shot, gathers this
  * project's existing automated checks (canonical-likeness,
@@ -73,7 +74,7 @@ function loadScriptureText(db: ReturnType<typeof getDb>, dataDir: string, shotId
        WHERE s.id = ?`
     )
     .get(shotId) as { language: string; book: string; chapter: number } | undefined;
-  if (!project || project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || ![2,4,5].includes(project.chapter)) {
+  if (!project || project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || ![2,4,5,6].includes(project.chapter)) {
     return null;
   }
   let range: { start: number; end: number };
@@ -261,6 +262,12 @@ function criticRecord(report: CriticReport): string {
     `CRITIC_FINDINGS_JSON: ${JSON.stringify({ findings: report.structuredFindings })}`;
 }
 
+function historicalRulesForShot(db:ReturnType<typeof getDb>,shotId:string):string {
+  const row=db.prepare("SELECT p.book,p.chapter,sc.sequence FROM shots sh JOIN scenes sc ON sc.id=sh.scene_id JOIN projects p ON p.id=sc.project_id WHERE sh.id=?").get(shotId);
+  if(!row)throw Error("Historical review requires a chapter-scoped shot");
+  return historicalSettingPrompt({book:String(row.book),chapter:Number(row.chapter)},[Number(row.sequence)]);
+}
+
 function getProjectIdForShot(db: ReturnType<typeof getDb>, shotId: string): string {
   const row = db.prepare(`SELECT sc.project_id AS project_id FROM shots s JOIN scenes sc ON sc.id = s.scene_id WHERE s.id = ?`).get(shotId) as
     | { project_id: string }
@@ -407,6 +414,7 @@ export async function runShotReview(shotId: string): Promise<ShotReviewReport> {
     scriptureText: loadScriptureText(db, dataDir, shotId, shot.verse_ref),
     characterReferences: toCriticReferences(dataDir, characters),
     canonDecisions: loadCanonDecisions(db, getProjectIdForShot(db, shotId)),
+    historicalSettingRules: historicalRulesForShot(db, shotId),
     shotOverrides: loadShotOverrides(db, shotId)
   });
 
@@ -539,6 +547,7 @@ export async function runKeyframeCandidateReview(attemptId: string): Promise<Sho
     scriptureText: loadScriptureText(db, dataDir, candidate.id, candidate.verse_ref),
     characterReferences: toCriticReferences(dataDir, characters),
     canonDecisions: loadCanonDecisions(db, getProjectIdForShot(db, candidate.id)),
+    historicalSettingRules: historicalRulesForShot(db, candidate.id),
     shotOverrides: loadShotOverrides(db, candidate.id)
   });
 
@@ -709,6 +718,7 @@ async function runCoverageBeatCandidateReview(attemptId: string): Promise<ShotRe
     scriptureText: loadScriptureText(db, dataDir, candidate.shot_id, candidate.verse_ref),
     characterReferences: toCriticReferences(dataDir, characters),
     canonDecisions: loadCanonDecisions(db, getProjectIdForShot(db, candidate.shot_id)),
+    historicalSettingRules: historicalRulesForShot(db, candidate.shot_id),
     // Beat-scoped: an exception recorded for one beat's candidate (e.g.
     // "the missing debris here is fine, people obscure the floor") must
     // not silently excuse a DIFFERENT beat where the same thing is

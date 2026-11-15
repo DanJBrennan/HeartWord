@@ -1,0 +1,14 @@
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {join} from 'node:path';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {prepareKeyframe,sha256,assetPath} from '../../src/pipeline/media-generation/external-keyframes.js';
+const data=getDataDir(),db=getDb(),folder='outputs/mark6-production/keyframes/scene2-shot1-cast-edit-v1';mkdirSync(folder,{recursive:true});
+const target='generated/keyframes/codex/2408a829-dba4-43d6-89d3-09b02d9b77a0/ce71bd07-9efc-41f1-a0d2-a76b18e5e957.png';
+const edit='16:9 photographic frame. EDIT IMAGE5 only. Remove duplicate purple/saffron Jude beside Jesus (x1235); keep Jude at x460. Correct rear man x508 to clean-shaven Matthew with blue mantle per IMAGE4 lower-right. Keep all other faces, clothes, poses and scene. Exactly13people. No other change.';
+const brief=prepareKeyframe(db,data,'2408a829-dba4-43d6-89d3-09b02d9b77a0',edit,readFileSync('outputs/mark6-production/keyframes/scene2-shot1-v3/rationale.txt','utf8')+' Focused correction of14-person rejected take; exact13cast and Matthew canon.');
+if(brief.generationInputs.length!==4)throw Error('Reinspect changed input mapping');
+brief.generationInputs.push({path:target,sha256:sha256(readFileSync(assetPath(data,target))),referenceNumbers:[]});
+brief.prompt+='\nIMAGE5: same-shot EDIT TARGET, not canon.';brief.promptHash=sha256(brief.prompt);if(brief.prompt.length>32000)throw Error('Builtin prompt ceiling');
+const dir=join(data,'exports/keyframe-briefs',brief.id);mkdirSync(dir,{recursive:true});writeFileSync(join(dir,'brief.json'),JSON.stringify(brief,null,2),{flag:'wx'});writeFileSync(join(dir,'prompt.txt'),brief.prompt,{flag:'wx'});
+const result={brief:join(dir,'brief.json'),promptCharacters:brief.prompt.length,generationInputs:brief.generationInputs.map(r=>({...r,path:assetPath(data,r.path)}))};writeFileSync(join(folder,'prepare-result.json'),JSON.stringify(result,null,2),{flag:'wx'});
+const changed=db.prepare("UPDATE generation_attempts SET status='retry_modified' WHERE id=? AND status='hold_for_review'").run('ce71bd07-9efc-41f1-a0d2-a76b18e5e957');if(changed.changes!==1)throw Error('Expected rejected held take');console.log(JSON.stringify(result));

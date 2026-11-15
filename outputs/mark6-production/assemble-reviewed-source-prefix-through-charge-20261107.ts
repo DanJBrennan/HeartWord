@@ -1,0 +1,30 @@
+// Local source-clock preview only. Fixed pre-source opening/credits and editable film remain separate.
+import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+const top=resolve('outputs/mark6-production'),folder=join(top,'source-prefix-through-charge-20261107');
+const read=(p:string)=>JSON.parse(readFileSync(p,'utf8')),hash=(p:string)=>createHash('sha256').update(readFileSync(p)).digest('hex');
+if(existsSync(folder))throw Error('Existing actual prefix must be inspected, not overwritten.');
+const openingProof=read(join(top,'reviewed-opening-prefix-20261107/proof.json')),quotation=read(join(top,'complete-charge-source-window-20261107/manifest.json')),review=read(join(top,'complete-charge-source-window-20261107/root-joined-review.json'));
+const opening=resolve(openingProof.path),mix=quotation.sourceMixPath;
+if(hash(opening)!==openingProof.sha256||openingProof.sourceStartMs!==0||openingProof.sourceEndMs!==116189||openingProof.videoFrames!==2789||!openingProof.audioAacPacketsExactlyEqualSingleMasterEncode||review.status!=='clear_for_review_production'||review.candidateVideoSha256!==quotation.outputSha256||hash(quotation.output)!==quotation.outputSha256||quotation.frames!==1120||quotation.sourceStartMs!==116189||quotation.sourceEndMs!==162839||hash(mix)!==quotation.sourceMixSha256||quotation.sourceMixSha256!=='b2b68e5a0ec8446185d358318e8003f0159616c97d9863b06397924c44421547')throw Error('Exact unchanged reviewed source parts and approved master required.');
+const ff=(a:string[])=>execFileSync('ffmpeg',['-v','error','-nostdin','-n',...a],{windowsHide:true,maxBuffer:32*1024*1024});
+const probe=(p:string)=>JSON.parse(execFileSync('ffprobe',['-v','error','-count_frames','-show_streams','-of','json',p],{encoding:'utf8',windowsHide:true})).streams;
+for(const [path,frames] of [[opening,2789],[quotation.output,1120]] as const){const v=probe(path).find((s:any)=>s.codec_type==='video');if(v.width!==1280||v.height!==720||v.r_frame_rate!=='24/1'||Number(v.nb_read_frames)!==frames)throw Error('Actual reviewed picture geometry/frame count changed.');}
+const sourceEndMs=162839,sourceSamples=3908136,frames=Math.round(sourceEndMs*24/1000),quoteFrames=frames-2789;
+if(frames!==3908||quoteFrames!==1119)throw Error('Global picture rounding changed.');
+mkdirSync(folder);
+const audio=join(folder,'continuous-approved-source.wav'),output=join(folder,'mark6-source-opening-through-charge.mp4'),reference=join(folder,'single-continuous-audio-reference.m4a');
+ff(['-i',mix,'-af',`atrim=end_sample=${sourceSamples},asetpts=PTS-STARTPTS`,'-c:a','pcm_s16le',audio]);
+const pcm=(p:string,filter?:string)=>ff(['-i',p,...(filter?['-af',filter]:[]),'-map','0:a:0','-c:a','pcm_s16le','-f','s16le','-']);
+const actual=pcm(audio);if(actual.length!==sourceSamples*4||!actual.equals(pcm(mix,`atrim=end_sample=${sourceSamples},asetpts=PTS-STARTPTS`)))throw Error('Exact full source-clock PCM prefix mismatch.');
+const filters=`[0:v]trim=end_frame=2789,setpts=N/(24*TB)[a];[1:v]trim=end_frame=${quoteFrames},setpts=N/(24*TB)[b];[a][b]concat=n=2:v=1:a=0[v]`;
+ff(['-i',opening,'-i',quotation.output,'-i',audio,'-filter_complex',filters,'-map','[v]','-map','2:a:0','-c:v','libx264','-crf','20','-preset','fast','-pix_fmt','yuv420p','-fps_mode','passthrough','-enc_time_base:v','1:24','-c:a','aac','-b:a','160k','-movflags','+faststart',output]);
+ff(['-i',audio,'-c:a','aac','-b:a','160k',reference]);
+const packets=(p:string)=>JSON.parse(execFileSync('ffprobe',['-v','error','-select_streams','a:0','-show_packets','-show_data_hash','sha256','-show_entries','packet=pts,duration,data_hash','-of','json',p],{encoding:'utf8',windowsHide:true,maxBuffer:8*1024*1024})).packets;
+const streams=probe(output),v=streams.find((s:any)=>s.codec_type==='video'),a=streams.find((s:any)=>s.codec_type==='audio');
+if(Number(v.nb_read_frames)!==frames||v.width!==1280||v.height!==720||v.r_frame_rate!=='24/1'||a.time_base!=='1/24000'||Number(a.duration_ts)!==sourceSamples||a.channels!==2||JSON.stringify(packets(output))!==JSON.stringify(packets(reference)))throw Error('Actual prefix output frames/audio/single AAC encode failed.');
+const proof={at:new Date().toISOString(),scope:'Continuous SOURCE-CLOCK opening0–162.839s from reviewed parts; not complete chapter/fixed pre-source opening/credits/editable project or new whole-prefix AV approval',sourceStartMs:0,sourceEndMs,sourceStereoFrames:sourceSamples,sampleRate:24000,sourceSpeed:1,sourceMixPath:mix,sourceMixSha256:quotation.sourceMixSha256,exactPcmSha256:createHash('sha256').update(actual).digest('hex'),audioAacPacketsExactlyEqualSingleMasterEncode:true,videoFrames:frames,fps:24,pictureDurationMs:frames*1000/24,pictureEndOffsetMs:frames*1000/24-sourceEndMs,newJoinFrame:2789,newJoinPictureMs:2789*1000/24,newJoinSourceMs:116189,joinPictureOffsetMs:2789*1000/24-116189,quotationSelectedFrames:[0,quoteFrames],quotationUnusedFinalFrame:1119,globalPictureRounding:true,filters,inputs:[{path:opening,sha256:openingProof.sha256},{path:quotation.output,sha256:quotation.outputSha256}],output,outputSha256:hash(output),audio,audioSha256:hash(audio),reference,referenceSha256:hash(reference),sourceAudioDroppedOrRepeated:false,nativeSoundSelected:false,freezeLoopSlowMotionOrTailPad:false,providerCalls:0,databaseWrites:0,wholeFilmReady:false,newJoinReviewPending:true,limitations:['Final quiet picture frame excluded solely for global24fps rounding; all approved source audio/title/quiet retained. Picture ends5.667ms before audio, no cloned tail.','New commissioning-to-charge join needs direct and audiovisual review; earlier part reviews do not automatically approve the new join.','Normal final editable render, pre-source opening, remaining chapter, credits/QC and portable independent restore/rerender remain required.']};
+writeFileSync(join(folder,'proof.json'),JSON.stringify(proof,null,2),{flag:'wx'});
+console.log(JSON.stringify({output,frames,sourceSamples,newJoinFrame:2789,providerCalls:0,newJoinReviewPending:true}));

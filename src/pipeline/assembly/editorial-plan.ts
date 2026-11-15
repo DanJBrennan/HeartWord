@@ -1,4 +1,12 @@
-import type { AudioPlacement, CrewBrief, CrewContribution, PicturePlacement } from "../creative-direction/crew-types.js";
+import type { AudioPlacement, CrewBrief, CrewContribution, CrewShot, PicturePlacement } from "../creative-direction/crew-types.js";
+
+/** Resolve within the shot's accepted assembled choices, never a supplied path. */
+export function resolveEditorialClip(shot: CrewShot | undefined, clipId?: unknown): CrewShot["clip"] {
+  if (!shot) return null;
+  if (clipId === undefined) return shot.clip;
+  if (typeof clipId !== "string" || !clipId) return null;
+  return [shot.clip, ...shot.availableClips ?? []].find(clip => clip?.id === clipId) ?? null;
+}
 
 export function planEditorialCut(brief: CrewBrief, editor: CrewContribution): {
   durationMs: number; audioMap: AudioPlacement[]; timeline: Array<PicturePlacement & { sourceStartMs: number }>
@@ -30,7 +38,8 @@ export function planEditorialCut(brief: CrewBrief, editor: CrewContribution): {
   cursor = openingMs;
   const timeline = editor.edits.map(edit => {
     const shot = brief.shots.find(s => s.id === edit.shotId);
-    if (!shot?.clip || !Number.isFinite(edit.durationMs) || edit.durationMs <= 0 || !Number.isFinite(edit.sourceStartMs) || edit.sourceStartMs < 0 || edit.sourceStartMs + edit.durationMs > shot.clip.durationMs + 1) throw new Error("Editor selected unavailable footage or extended a clip beyond its content.");
+    const clip = resolveEditorialClip(shot, edit.clipId);
+    if (!shot || !clip || !Number.isFinite(edit.durationMs) || edit.durationMs <= 0 || !Number.isFinite(edit.sourceStartMs) || edit.sourceStartMs < 0 || edit.sourceStartMs + edit.durationMs > clip.durationMs + 1) throw new Error("Editor selected unavailable footage or extended a clip beyond its content.");
     const startMs = cursor; cursor += edit.durationMs;
     if (shot.needsLipSync) {
       const matching = audioMap.filter(p => {
@@ -47,7 +56,8 @@ export function planEditorialCut(brief: CrewBrief, editor: CrewContribution): {
       const expectedEnd = last.endMs - (shot.utterance ? lastSource.endMs - shot.utterance.endMs : 0);
       if (matching.some((p, i) => i > 0 && p.startMs !== matching[i - 1]!.endMs) || Math.abs(startMs - edit.sourceStartMs - expectedStart) > 50 || cursor > expectedEnd + 50) throw new Error("Edit would move a lip-synced mouth away from its actual dialogue.");
     }
-    return { shotId: edit.shotId, startMs, endMs: cursor, sourceStartMs: edit.sourceStartMs };
+    return { shotId: edit.shotId, startMs, endMs: cursor, sourceStartMs: edit.sourceStartMs,
+      ...(edit.clipId !== undefined ? { clipId: clip.id, path: clip.path } : {}) };
   });
   if (Math.abs(cursor - sourceCutEndMs) > 50) throw new Error(`Cut needs ${sourceCutEndMs}ms including intentional pauses before credits, but selected footage covers ${cursor}ms. Request the missing coverage.`);
   // Existing cut tolerance must never let credits cover the final source

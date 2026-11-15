@@ -50,11 +50,15 @@ function synced(path: string) {
   return configuredSyncFolder(path) || /(?:^|[\\/])OneDrive(?: - [^\\/]+)?(?:[\\/]|$)/i.test(path);
 }
 function filesIn(root: string, application = false) {
+  noLinks(root);
   const files = new Map<string, Stamp>(), exclusions: string[] = [];
   function walk(path: string) {
-    const rel = slash(relative(root, path)), name = basename(path); noLinks(path);
-    if (secret(name) || excluded.has(rel) || (application && ["node_modules", ".git", ".venv", "__pycache__", "dist"].includes(name))) { exclusions.push(rel); return; }
+    const rel = slash(relative(root, path)), name = basename(path);
+    // Each parent was checked on entry. Rechecking the entire ancestry for
+    // every child makes restored application trees need millions of stats.
     const s = lstatSync(path);
+    if (s.isSymbolicLink()) throw new Error(`Backup/restore link is not allowed: ${path}`);
+    if (secret(name) || excluded.has(rel) || (application && ["node_modules", ".git", ".venv", "__pycache__", "dist"].includes(name))) { exclusions.push(rel); return; }
     if (s.isDirectory()) for (const child of readdirSync(path).sort()) walk(resolve(path, child));
     else if (s.isFile()) files.set(rel, stamp(path));
     else throw new Error(`Unsupported backup file: ${path}`);
@@ -162,6 +166,7 @@ export async function stageDisasterBackup(dataDir: string, destination: string, 
     for (const [rel, before] of appTree.files) sources.set(resolve(applicationDir, rel), { path: `application/${rel}`, before });
     for (const [source, rel] of external) sources.set(source, { path: `data/${rel}`, before: stamp(source) });
     for (const [source, item] of sources) {
+      noLinks(source);
       if (!same(stamp(source), item.before)) throw new Error(`File changed before backup copy: ${source}`);
       item.digest = await fileDigest(source);
       const out = safe(destination, item.path); mkdirSync(dirname(out), { recursive: true });

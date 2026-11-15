@@ -11,6 +11,10 @@ import { sceneReferenceAssetsForVerse } from "../../providers/story-state-assets
 import { getDataDir } from "../../db/client.js";
 import { sortAssetsByFreshness } from "../../characters/asset-freshness.js";
 import {wardrobeReferenceRole} from "../../characters/wardrobe-refinement.js";
+import {historicalSettingPrompt} from "../historical-setting.js";
+
+import {referenceBoardFilter,referenceGridFilter} from "./reference-board-filters.js";
+export {referenceBoardFilter,referenceGridFilter} from "./reference-board-filters.js";
 
 const REFERENCE_CATEGORY_RANK: Record<string, number> = { headshot: 0, body_pose: 1, turnaround: 2 };
 
@@ -48,35 +52,6 @@ export interface KeyframeBrief {
 }
 
 export const sha256 = (data: string | Buffer): string => createHash("sha256").update(data).digest("hex");
-
-function imageHeight(path: string): number {
-  const bytes = readFileSync(path);
-  if (bytes.length >= 24 && bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10])) &&
-      bytes.toString("ascii", 12, 16) === "IHDR") return bytes.readUInt32BE(20);
-  // Legacy imports sometimes carry a .png name while their bytes are WebP.
-  // ffprobe reads their actual container, avoiding a silent bad contact sheet.
-  const output = execFileSync("ffprobe", ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=height", "-of", "csv=p=0", path], { encoding: "utf8" }).trim();
-  const height = Number(output);
-  if (!Number.isInteger(height) || height <= 0) throw new Error(`Could not read reference height: ${path}`);
-  return height;
-}
-
-export function referenceBoardFilter(referencePaths: string[]): string {
-  if (referencePaths.length < 2) throw new Error("A reference board needs at least two images.");
-  const height = Math.min(...referencePaths.map(imageHeight));
-  const labels = referencePaths.map((_, index) => `[${index}:v]scale=-2:${height}[r${index}]`).join(";");
-  return `${labels};${referencePaths.map((_, index) => `[r${index}]`).join("")}hstack=inputs=${referencePaths.length}`;
-}
-
-/** Package pixels without inventing intermediate character designs. Each cell
- * is letterboxed, never cropped; its order is recorded in the prompt. */
-export function referenceGridFilter(paths: string[]): string {
-  if (paths.length < 2) throw new Error("A reference grid needs at least two images.");
-  const size = Math.min(1024, ...paths.map(imageHeight));
-  const columns = Math.ceil(Math.sqrt(paths.length));
-  return paths.map((_, i) => `[${i}:v]scale=${size}:${size}:force_original_aspect_ratio=decrease,pad=${size}:${size}:(ow-iw)/2:(oh-ih)/2:color=white,setsar=1[r${i}]`).join(";") +
-    `;${paths.map((_, i) => `[r${i}]`).join("")}xstack=inputs=${paths.length}:layout=${paths.map((_, i) => `${i % columns * size}_${Math.floor(i / columns) * size}`).join("|")}:fill=white`;
-}
 
 export function referenceGroups(references: KeyframeContext["references"], sets: SetReference[] = []): number[][] {
   const jesus = references.flatMap((r, i) => r.name.trim().toLowerCase() === "jesus" ? [i + 1] : []);
@@ -207,8 +182,8 @@ export function getKeyframeContext(db: DatabaseSync, dataDir: string, shotId: st
     JOIN scenes sc ON sc.project_id = p.id WHERE sc.id = ?`).get(scene.id) as KeyframeContext["project"];
   // This bridge is deliberately scoped to the active production, not an implicit
   // approval of other books, languages or regional canons.
-  if (project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || ![2, 4, 5].includes(project.chapter)) {
-    throw new Error("The external keyframe handoff currently supports Hatam Mark 2 and the producer-approved Mark 4 and 5 plans only.");
+  if (project.language.toLowerCase() !== "hatam" || project.book.toLowerCase() !== "mark" || ![2, 4, 5, 6].includes(project.chapter)) {
+    throw new Error("The external keyframe handoff currently supports Hatam Mark 2 and the producer-authorized Mark 4, 5 and 6 plans only.");
   }
   const cast = db.prepare(`SELECT c.id, c.name, c.region, c.canon_status FROM shot_characters sh
     JOIN characters c ON c.id = sh.character_id WHERE sh.shot_id = ? ORDER BY c.id`).all(shotId) as
@@ -276,6 +251,7 @@ export function prepareKeyframe(db: DatabaseSync, dataDir: string, shotId: strin
   const id = randomUUID();
   const packet = prepareReferencePacket(dataDir,id,context.references,context.sceneReferences);
   prompt += packet.direction;
+  prompt += historicalSettingPrompt(context.project,[context.scene.sequence]);
   if (context.shot.needs_lip_sync) prompt += "\nPrefer a scene-context head-and-shoulders performance image with unobstructed face/mouth, especially Jesus facing or near the camera. A reasonable side angle/distance remains allowed when the accepted shot requires it; do not change approved blocking for this preference.\n";
   return { schemaVersion: 1, id, createdAt: Date.now(), context, productionRunId: plan.id,
     contextHash: sha256(JSON.stringify(context)), sources, prompt, promptHash: sha256(prompt), rationale, generationInputs:packet.inputs, ...(filmInput ? {filmInput} : {}) };

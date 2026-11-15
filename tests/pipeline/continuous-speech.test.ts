@@ -117,6 +117,16 @@ it("requires independent timing for a source-supported performance change and cr
   db.prepare("UPDATE composite_audio_source_map SET voice_version_id='pv' WHERE original_segment_id='b'").run();
   expect(() => resolveSpeechRunCastAudio(db, "beat", "jv")).toThrow("source/voice-matched");
 });
+it("retains fractional-millisecond sample endpoints through binding and shared cast resolution",async()=>{
+ const run=confirm(),input={projectId:"p",shotId:"beat",sourceSegmentId:"a",speechRunId:run.id,startMs:1800.125,endMs:5200.875,characterVersionId:"jv",approvedBy:"Synthetic sample reviewer",timingEvidence:"Independently supplied exact24kHz sample endpoints43203 and124821; no internal verse boundary asserted."};
+ for(const invalid of [{startMs:NaN},{endMs:Infinity},{startMs:-.125},{endMs:9000.125}])expect(()=>bindShotUtterance(db,{...input,...invalid})).toThrow("inside its matched");
+ bindShotUtterance(db,input);
+ expect(db.prepare("SELECT source_start_ms,source_end_ms FROM shot_utterance_bindings WHERE shot_id='beat'").get()).toMatchObject({source_start_ms:1800.125,source_end_ms:5200.875});
+ await runVoicing("p",{sourceSegmentIds:["a","b","c"]});
+ const resolved=resolveSpeechRunCastAudio(db,"beat","jv")!;
+ expect(resolved).toMatchObject({startMs:1800.125,endMs:5200.875});
+ expect(Math.round(resolved.startMs*24)).toBe(43203);expect(Math.round(resolved.endMs*24)).toBe(124821);
+});
 it("keeps an explicitly forced revision continuous and preserves the old accepted cast file", async () => {
   confirm(); await runVoicing("p", { sourceSegmentIds: ["a", "b", "c"] });
   const old = String(db.prepare("SELECT source_path FROM audio_segments WHERE layer='composite_cast_master' LIMIT 1").get()!.source_path);

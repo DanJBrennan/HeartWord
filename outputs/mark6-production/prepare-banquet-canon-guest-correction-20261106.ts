@@ -1,0 +1,46 @@
+import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
+import {join} from 'node:path';
+import {randomUUID} from 'node:crypto';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {requireCurrentPlan} from '../../src/pipeline/creative-direction/crew-store.js';
+import {crewBriefHash,loadCrewBrief} from '../../src/pipeline/creative-direction/crew-context.js';
+import {prepareKeyframe,prepareReferencePacket,sha256,assetPath,type KeyframeContext} from '../../src/pipeline/media-generation/external-keyframes.js';
+const db=getDb(),data=getDataDir(),projectId='c457a815-d07d-4902-91b5-7b936b549856',folder=process.argv[2]??'outputs/mark6-production/keyframes/scene3-shot21-canon-guests-v2';
+if(!/^outputs\/mark6-production\/keyframes\/scene3-shot21-canon-guests-v\d+$/.test(folder)||existsSync(join(folder,'prepare-result.json')))throw Error('Explicit new banquet correction evidence folder required');mkdirSync(folder,{recursive:true});
+const before=crewBriefHash(loadCrewBrief(db,data,projectId,'planning'),'planning'),plan=requireCurrentPlan(db,data,projectId);
+const group='cec56f2b-4dfb-41a1-bac7-3ff8d8ac76be',paths=['characters/crowd-elder-grey-beard/body_pose/motion-neutral-standing-v1.png','characters/crowd-man-headwrap/body_pose/motion-neutral-standing-v2.png','characters/mark-crowd-stern-man/body_pose/motion-seated-listening-v3.png','characters/crowd-young-man/body_pose/motion-neutral-standing-v2.png'];
+const guests:KeyframeContext['references']=paths.map(path=>{
+ const r=db.prepare("SELECT c.id,c.name,c.region,c.canon_status,v.id version_id,v.version_label,a.category,a.content_hash FROM characters c JOIN character_versions v ON v.character_id=c.id AND v.status='approved' JOIN character_assets a ON a.character_version_id=v.id WHERE c.group_id=? AND a.path=?").get(group,path);
+ if(!r||r.region!=='Papuan'||r.canon_status!=='approved')throw Error('Approved Papuan group body required');
+ if(Number(db.prepare("SELECT count(*) n FROM character_versions WHERE character_id=? AND status='approved'").get(String(r.id))?.n)!==1)throw Error('Unique approved version required');
+ const hash=sha256(readFileSync(assetPath(data,path)));if(r.content_hash&&String(r.content_hash).toLowerCase()!==hash)throw Error('Changed group body');
+ return{character_id:String(r.id),name:String(r.name),version_id:String(r.version_id),version_label:String(r.version_label),category:'body_pose',path,sha256:hash};
+});
+if(new Set(guests.map(g=>g.character_id)).size!==4)throw Error('Four distinct existing group designs required');
+const old='5b591128-64e0-4631-996c-bb40138a39c6',oldRow=db.prepare('SELECT shot_id,status,result_asset_path FROM generation_attempts WHERE id=?').get(old);
+if(!oldRow||oldRow.shot_id!=='059f3fd1-0b75-4bd7-bb6b-4c15371661f6'||!['accepted','retry_modified'].includes(String(oldRow.status)))throw Error('Expected exact retained prior banquet still');
+if(db.prepare('SELECT id FROM clips WHERE generation_attempt_id=?').get(old))throw Error('Reconcile used footage before superseding');
+const rationale='Correct missed canonical group reference coverage before any banquet video. Reuse four approved generic Mark crowd actor designs as unnamed male banquet extras; contextual casting under Dan delegated autonomous production, not identification of historical Nazareth witnesses at Herod court. Preserve each approved visible garment. No named apostle/Pharisee/messenger substitution, new canon identity, voice, uniforms, dialogue or source claim. Canon library and accepted114-shot plan remain unchanged. Prior banquet room/furniture geometry is retained history, not face authority.';
+db.prepare("UPDATE generation_attempts SET status='retry_modified' WHERE id=? AND status='accepted'").run(old);
+db.prepare("INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at)VALUES(?,?,'shot',?,'qc',?,0,?)").run(randomUUID(),projectId,String(oldRow.shot_id),rationale+' Prior still '+old+' superseded; all files/costs retained.',Date.now());
+const prompt='One photographic cinematic16:9 birthday banquet establishing frame for the exact appended Mark6:21 Director instruction. Preserve same substantial hall and raised royal mark, Herod seated bareheaded in exact cream/burgundy/narrow gold wardrobe, same chair/pots/curtains/warm light as final added approved wide. Add plain wooden banquet side tables, pottery, food and restrained dining places along BOTH sides, leaving the whole central dance route clear. Use ONLY the four approved generic male guest designs in the added group packet, with exact faces, hair, approved garments and mantle color-blocks. They are unnamed background banquet actors, not source-identified witnesses or speaking characters; retain headwrap where supplied. Seven side places may use these four designs with nonadjacent repetitions at different depths/angles, never merged people. Stagger ordinary closed-mouth dining/listening, reachable vessels and individually supported seats/feet; no group toast, revelry, occupational uniform or invented performance. Herod is the only named source cast. No daughter yet, Herodias, John, Jesus, disciples, platter/remains or new room. Human-eye-height28mm entrance-to-royal-end view, fixed hall-left warm light and weaker bounce consistent with the accepted palace. No new visible fixture, hard sunbeam, labels, text or reference board layout.';
+const brief=prepareKeyframe(db,data,String(oldRow.shot_id),prompt,rationale);
+// Retain the exact source/context snapshot. The clean palace wide below
+// supplies set appearance without a redundant board of absent people.
+const principalPacket=prepareReferencePacket(data,brief.id+'-principal-only',brief.context.references,[]);
+const mapStart=brief.prompt.indexOf('\nREFERENCE INPUT MAP:'),rulesStart=brief.prompt.indexOf('\nCONTROLLING SCOPED HISTORICAL',mapStart);
+if(mapStart<0||rulesStart<0)throw Error('Expected exact standard reference-map boundaries');
+brief.prompt=brief.prompt.slice(0,mapStart)+principalPacket.direction+brief.prompt.slice(rulesStart);
+brief.generationInputs=principalPacket.inputs;
+const groupPacket=prepareReferencePacket(data,brief.id+'-guest-canon',guests);
+if(groupPacket.inputs.length!==1||brief.generationInputs.length>3)throw Error('Review five-slot capacity before reservation');
+const guestImageNumber=brief.generationInputs.length+1;
+brief.generationInputs.push({...groupPacket.inputs[0]!,referenceNumbers:[]});
+brief.prompt+='\nADDITIONAL CANON GROUP MAP: IMAGE'+guestImageNumber+' is a row-major4-person board, not a scene: '+guests.map((g,i)=>`cell${i+1}=${g.name}; approved${g.version_label}; exactbodySHA256${g.sha256}`).join('; ')+'. Use these identities/wardrobes ONLY for unnamed banquet guests. Keep the complete board out of the rendered frame. This contextual actor reuse makes no shared historical witness assertion.\n';
+const wide='generated/keyframes/codex/ade62c6b-cc88-4ebc-8436-5dafb8d676a7/9d0c26c0-f798-40b3-9562-cab0be8cc32b.png';brief.generationInputs.push({path:wide,sha256:sha256(readFileSync(assetPath(data,wide))),referenceNumbers:[]});
+brief.prompt+='ADDITIONAL SET MAP: LAST IMAGE is the accepted unfurnished palace wide. It controls royal chair/mark, Herod seated pose, columns, curtains, pots and warm light only. Banquet dining places are the specified temporal advance. No early daughter or false new room. GUEST WARDROBE CHECK: elder=muted rust sleeves/diagonal plain cream wrap; headwrapped man=brown tunic/cream mantle with red bands; stern man=clean brown tunic with narrow indigo bands and diagonal cream wrap; young man=clean cream tunic with narrow paired indigo vertical bands. Every guest must use one of these complete approved combinations. No coarse mesh or rough sleeveless garment borrowed from absent scene characters.';
+brief.promptHash=sha256(brief.prompt);if(brief.prompt.length>32000)throw Error('Builtin prompt ceiling');
+if(crewBriefHash(loadCrewBrief(db,data,projectId,'planning'),'planning')!==before||requireCurrentPlan(db,data,projectId).id!==plan.id)throw Error('Correction changed current planning inputs');
+const dir=join(data,'exports/keyframe-briefs',brief.id);mkdirSync(dir,{recursive:true});writeFileSync(join(dir,'brief.json'),JSON.stringify(brief,null,2),{flag:'wx'});writeFileSync(join(dir,'prompt.txt'),brief.prompt,{flag:'wx'});
+const evidence={at:new Date().toISOString(),oldAttempt:old,oldRow,reason:rationale,groupId:group,guests,guestPacket:groupPacket.inputs[0],beforePlanningBriefHash:before,planId:plan.id,noCanonMutation:true,noCrewOrPaidCalls:true};writeFileSync(join(folder,'group-casting-and-supersession.json'),JSON.stringify(evidence,null,2),{flag:'wx'});
+const result={brief:join(dir,'brief.json'),promptCharacters:brief.prompt.length,generationInputs:brief.generationInputs.map(r=>({...r,path:assetPath(data,r.path)}))};writeFileSync(join(folder,'prepare-result.json'),JSON.stringify(result,null,2),{flag:'wx'});console.log(JSON.stringify(result));db.close();

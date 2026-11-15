@@ -44,12 +44,12 @@ function events(db:DatabaseSync,id:string):Array<Event&{id:string}> {
   return db.prepare("SELECT id,note,created_at FROM review_notes WHERE subject_type='character_version' AND subject_id=? AND note LIKE ? ORDER BY created_at,id")
     .all(id,PREFIX+"%") .map(r=>({...JSON.parse(String(r.note).slice(PREFIX.length)) as Event,id:String(r.id),recordedAt:Number(r.created_at)}));
 }
-function append(db:DatabaseSync,project:string,id:string,event:Event) {
+function append(db:DatabaseSync,project:string,id:string,event:Event,source?:"qc"|"human") {
   const noteId=randomUUID();
   // Ordering is deterministic even when several decisions occur in one ms.
   const last=db.prepare("SELECT MAX(created_at) t FROM review_notes WHERE subject_id=?").get(id) as {t:number|null};
   db.prepare("INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES(?,?,'character_version',?,?,?,0,?)")
-    .run(noteId,project,id,["review","promotion"].includes(event.kind)?"human":"qc",PREFIX+JSON.stringify(event),Math.max(Date.now(),(last.t??0)+1));
+    .run(noteId,project,id,source??(["review","promotion"].includes(event.kind)?"human":"qc"),PREFIX+JSON.stringify(event),Math.max(Date.now(),(last.t??0)+1));
   return noteId;
 }
 function transaction<T>(db:DatabaseSync,action:()=>T):T {
@@ -108,8 +108,17 @@ export function addWardrobeReference(db:DatabaseSync,root:string,id:string,input
   });
 }
 export type RefinementReview={candidateHash:string;domain:"identity"|"wardrobe";outcome:"approved"|"rejected";evidence:string;checks?:Array<{check:Check;status:"pass"|"fail"|"not_visible";evidence:string}>};
-export function reviewWardrobeCandidate(db:DatabaseSync,root:string,id:string,input:RefinementReview) {
+/** Internal caller attribution, separate from the HTTP review body. This logs
+ * an already authorized delegation; it grants no authority or visual approval. */
+export type WardrobeReviewAttribution={reviewer:string;authority:string};
+function reviewAttribution(value?:WardrobeReviewAttribution) {
+  if(value===undefined)return {source:"human" as const,reviewer:"producer",delegatedAuthority:undefined};
+  if(!value||!text(value.reviewer)||!text(value.authority))throw new Error("Delegated reviews require a named reviewer and explicit producer authority.");
+  return {source:"qc" as const,reviewer:value.reviewer.trim(),delegatedAuthority:value.authority.trim()};
+}
+export function reviewWardrobeCandidate(db:DatabaseSync,root:string,id:string,input:RefinementReview,attribution?:WardrobeReviewAttribution) {
   if(!input||!["identity","wardrobe"].includes(input.domain)||!["approved","rejected"].includes(input.outcome)||!text(input.evidence))throw new Error("Distinct domain, decision and visual evidence are required.");
+  const actor=reviewAttribution(attribution);
   return transaction(db,()=>{
     const d=refinementDetail(db,root,id);
     if(d.version.status!=="candidate"||d.candidateHash!==input.candidateHash)throw new Error("Stale candidate review; reload and compare.");
@@ -119,12 +128,13 @@ export function reviewWardrobeCandidate(db:DatabaseSync,root:string,id:string,in
       if(input.outcome==="approved"&&input.checks.some(c=>c.status!=="pass"))throw new Error("Failed or unverified wardrobe checks hold approval.");
     }
     append(db,d.proposal.projectId,id,{kind:"review",candidateHash:input.candidateHash,domain:input.domain,
-      outcome:input.outcome,evidence:input.evidence,...(input.domain==="wardrobe"?{checks:input.checks}:{}),reviewer:"producer"});
+      outcome:input.outcome,evidence:input.evidence,...(input.domain==="wardrobe"?{checks:input.checks}:{}),reviewer:actor.reviewer,...(actor.delegatedAuthority?{delegatedAuthority:actor.delegatedAuthority}:{})},actor.source);
     return refinementDetail(db,root,id);
   });
 }
-export function promoteWardrobeCandidate(db:DatabaseSync,root:string,id:string,input:{candidateHash:string;reason:string}) {
+export function promoteWardrobeCandidate(db:DatabaseSync,root:string,id:string,input:{candidateHash:string;reason:string},attribution?:WardrobeReviewAttribution) {
   if(!input||!text(input.reason))throw new Error("Promotion reason required.");
+  const actor=reviewAttribution(attribution);
   return transaction(db,()=>{
     const d=refinementDetail(db,root,id);
     if(d.version.status!=="candidate"||d.candidateHash!==input.candidateHash)throw new Error("Stale candidate promotion.");
@@ -150,7 +160,7 @@ export function promoteWardrobeCandidate(db:DatabaseSync,root:string,id:string,i
     const identity=d.baseAssets.find(a=>a.id===d.proposal.identityAssetId)!;
     db.prepare("INSERT INTO character_assets(id,character_version_id,category,path,content_hash,imported_from,asset_role,created_at) VALUES(?,?,'headshot',?,?,?,'scene_reference',?)")
       .run(randomUUID(),id,identity.path,identity.sha256,`Identity only; character_versions:${d.base.id}; character_assets:${identity.id}. Clothing is not wardrobe authority.`,Date.now());
-    append(db,d.proposal.projectId,id,{kind:"promotion",oldVersionId:d.base.id,newVersionId:id,candidateHash:d.candidateHash,reason:input.reason,voiceApproval:"unchanged",existingProductions:"retained; no regeneration or rebinding"});
+    append(db,d.proposal.projectId,id,{kind:"promotion",oldVersionId:d.base.id,newVersionId:id,candidateHash:d.candidateHash,reason:input.reason,voiceApproval:"unchanged",existingProductions:"retained; no regeneration or rebinding",...(actor.delegatedAuthority?{reviewer:actor.reviewer,delegatedAuthority:actor.delegatedAuthority}:{})},actor.source);
     return refinementDetail(db,root,id);
   });
 }

@@ -4,16 +4,25 @@
 import { randomUUID } from "node:crypto";
 import { getDb, getDataDir } from "../../db/client.js";
 import { productionAuthorization, bindAttemptRevision } from "../creative-direction/crew-store.js";
+import { LtxChainedSpeaking, type SpeakingPictureCrop } from "./ltx-speaking.js";
 import { KlingLipSyncProvider } from "../../providers/kling/index.js";
 import { runVoicing } from "../voicing/index.js";
 import type { StageResult } from "../types.js";
 import { resolveSpeechRunCastAudio } from "./speech-run-audio.js";
 import { checkAvatarSpend,readPerformanceDirection,reserveAvatarSpend,settleAvatarSpend } from "./performance-direction.js";
 import { AVATAR_RESERVATION_RATE_USD } from "../../providers/kling/avatar-direction.js";
+import type { generateA2vSection } from "../../providers/ltx/a2v.js";
 
 type ReadyShot = { id: string; verse_ref: string | null; dialogue_character_id: string; keyframe: string | null; voice_id: string | null; version_id: string | null; locked_visual_facts:string|null; binding_id:string|null; source_segment_id:string|null; start_ms:number|null; end_ms:number|null; source_hash:string|null };
-export const runVoiceLipSync = (projectId:string,onlyShotIds?:readonly string[]):Promise<StageResult> => observeWork(projectId, "voice_lipsync", () => runVoiceLipSyncImpl(projectId,onlyShotIds));
-const runVoiceLipSyncImpl = async (projectId:string,onlyShotIds?:readonly string[]):Promise<StageResult> => {
+export interface VoiceLipSyncOptions { provider?: "ltx" | "kling"; pictureCrops?: Record<string, SpeakingPictureCrop>;
+  /** Scene-specific native speaking direction, keyed by the exact speaking shot.
+   * The local provider still validates locked canon and records the final prompt. */
+  performancePrompts?: Record<string, string>;
+  /** Internal native-section dependency for an operational submission budget.
+   * Source/plan authorization still runs before every actual section. */
+  generateLtxSection?: typeof generateA2vSection }
+export const runVoiceLipSync = (projectId:string,onlyShotIds?:readonly string[],options:VoiceLipSyncOptions={}):Promise<StageResult> => observeWork(projectId, "voice_lipsync", () => runVoiceLipSyncImpl(projectId,onlyShotIds,options));
+const runVoiceLipSyncImpl = async (projectId:string,onlyShotIds:readonly string[]|undefined,options:VoiceLipSyncOptions):Promise<StageResult> => {
   const db = getDb();
   const allShots = db.prepare(`SELECT sh.id,sh.verse_ref,sh.dialogue_character_id,
     (SELECT result_asset_path FROM generation_attempts WHERE shot_id=sh.id AND operation='generate' AND status='accepted' ORDER BY created_at DESC LIMIT 1) keyframe,
@@ -39,14 +48,20 @@ const runVoiceLipSyncImpl = async (projectId:string,onlyShotIds?:readonly string
     if(prior)return {ok:false,reasoning:`Lip-sync candidate ${prior.id} is retained for ${shot.id}; resolve its existing review before new spending.`};
   }
   if(pendingShots.length)try { productionAuthorization(db,getDataDir(),projectId); checkAvatarSpend(db,projectId,0); }catch(error){return {ok:false,reasoning:(error as Error).message};}
+  const provider = options.provider ?? process.env.HEARTWORD_LIPSYNC_PROVIDER ?? "ltx";
+  if (provider !== "ltx" && provider !== "kling") return {ok:false,reasoning:"Choose ltx or kling explicitly; no provider fallback was attempted."};
+  if (provider === "ltx" && pendingShots.length) {
+    if (!process.env.LTX_TOKEN?.trim()) return {ok:false,reasoning:"Local LTX session credential is unavailable; no paid voicing or cloud fallback was started."};
+    if (pendingShots.some(s=>s.end_ms!-s.start_ms!>4000 && !options.pictureCrops?.[s.id])) return {ok:false,reasoning:"Local LTX chaining needs a scene-safe caption crop/cleanup recipe, selected against this scope's accepted framing, before voicing/generation. The old portrait crop is not universal."};
+  }
   // Only after every speaking shot has safe, explicit source identity may the
   // stage build/reuse the cast master (which can involve paid re-voicing).
   const master = await runVoicing(projectId);
   if (!master.ok) return master;
-  const sync = new KlingLipSyncProvider(); let made = 0;
+  let made = 0;
   for (const shot of shots) {
     const visible = (db.prepare(`SELECT COUNT(*) count FROM shot_characters WHERE shot_id=?`).get(shot.id) as { count: number }).count;
-    if (visible !== 1) return { ok: false, reasoning: `${master.reasoning} Voice/lip-sync is held for ${shot.id}: the generic Kling Avatar treatment can animate every detected face and is unsafe for an ensemble. Use the reviewed face-targeted treatment before submission.` };
+    if (visible !== 1) return { ok: false, reasoning: `${master.reasoning} Voice/lip-sync is held for ${shot.id}: the selected speaking treatment has no verified face-targeting capability for an ensemble. Use the reviewed face-targeted treatment before submission.` };
     // Do not let the first line by a recurring speaker stand in for a later
     // one. Stage 3's verse binding is the stable cross-stage identity.
     const matching = db.prepare(`SELECT a.source_path,a.start_ms,a.end_ms,m.source_hash,m.voice_version_id,o.start_ms original_start,o.end_ms original_end FROM audio_segments a JOIN composite_audio_source_map m ON m.composite_segment_id=a.id JOIN audio_segments o ON o.id=m.original_segment_id WHERE a.project_id=? AND a.layer='composite_cast_master' AND m.original_segment_id=?`).all(projectId,shot.source_segment_id) as Array<{source_path:string;start_ms:number;end_ms:number;source_hash:string;voice_version_id:string|null;original_start:number;original_end:number}>;
@@ -69,7 +84,7 @@ const runVoiceLipSyncImpl = async (projectId:string,onlyShotIds?:readonly string
     if (selected) continue;
     const prior = db.prepare(`SELECT id,status FROM generation_attempts WHERE shot_id=? AND operation='lip_sync' ORDER BY created_at DESC LIMIT 1`).get(shot.id) as { id:string; status:string } | undefined;
     if (prior) return { ok: false, reasoning: `${master.reasoning} Voice/lip-sync is held: shot ${shot.id} already has retained lip-sync candidate ${prior.id} (${prior.status}); review or explicitly supersede it before another paid request.` };
-    const upperBoundUsd=Math.ceil(Math.max(2000,audio.endMs-audio.startMs)/1000)*AVATAR_RESERVATION_RATE_USD;
+    const upperBoundUsd=provider === "ltx" ? 0 : Math.ceil(Math.max(2000,audio.endMs-audio.startMs)/1000)*AVATAR_RESERVATION_RATE_USD;
     let reservationId:string;
     let authorization:ReturnType<typeof productionAuthorization>;
     try { authorization=productionAuthorization(db,getDataDir(),projectId); }
@@ -78,9 +93,10 @@ const runVoiceLipSyncImpl = async (projectId:string,onlyShotIds?:readonly string
     catch(error){return {ok:false,reasoning:(error as Error).message};}
     // Lost/rejected responses leave their reservation outstanding. No implicit
     // retry or debit-to-zero; the next run holds for reconciliation.
+    const sync = provider === "ltx" ? new LtxChainedSpeaking({dataDir:getDataDir(),crop:options.pictureCrops?.[shot.id],performancePrompt:options.performancePrompts?.[shot.id],generateSection:options.generateLtxSection}) : new KlingLipSyncProvider();
     let result;
     try { authorization.assertCurrent(); result = await sync.sync({ characterId: shot.dialogue_character_id, characterVersionId: shot.version_id!,lockedVisualFacts:shot.locked_visual_facts ? JSON.parse(shot.locked_visual_facts) : undefined }, audio, { path: shot.keyframe! }, {avatarDirection:directions.get(shot.id),requestId:reservationId,authorizeSubmission:authorization.assertCurrent,productionRevision:{runId:authorization.runId,briefHash:authorization.briefHash}}); }
-    catch(error){return {ok:false,reasoning:`Avatar request remains outstanding (${reservationId}): ${(error as Error).message}`};}
+    catch(error){return {ok:false,reasoning:`Speaking request remains outstanding (${reservationId}): ${(error as Error).message}`};}
     if (!result.media) return { ok: false, reasoning: `Lip-sync provider returned no media for ${shot.id}; no clip was selected.` };
     const now = Date.now(), attempt = randomUUID();
     // A provider completion is evidence, never producer approval.  Keep the

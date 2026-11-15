@@ -1,0 +1,4 @@
+import{writeFileSync}from'node:fs';import{resolve}from'node:path';
+import{LtxVideoProvider}from'../../src/providers/ltx/index.js';
+(await import('dotenv')).config({path:'C:/Users/danbr/OneDrive/Documents/HeartWord/.env'});
+try{const h=await new LtxVideoProvider().checkHealth();const safe={status:'health_check_passed',healthFields:Object.keys(h),checkedAt:new Date().toISOString(),generationRequests:0};writeFileSync(resolve('outputs/mark6-production/ltx-health.json'),JSON.stringify(safe,null,2));console.log(JSON.stringify(safe));process.exit(0);}catch(e){const message=(e as Error).message;const safe={status:'health_check_failed',message:process.env.LTX_TOKEN?message.split(process.env.LTX_TOKEN).join('[redacted]'):message,generationRequests:0};writeFileSync(resolve('outputs/mark6-production/ltx-health.json'),JSON.stringify(safe,null,2));console.log(JSON.stringify(safe));process.exit(1);}

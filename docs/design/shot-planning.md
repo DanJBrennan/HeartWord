@@ -2,11 +2,77 @@
 
 ## Scope
 
+Planning approves source-grounded executable intent and governing references;
+media generation, selection and audiovisual QC fulfill that intent afterward.
+Missing future pixels alone cannot establish a defect in the written plan.
+Record those later identity, garment, contact, motion and sound checks as scoped
+advisory planning handoff conditions without claiming they passed. Actual source,
+canon, attribution, written continuity, unsupported timing and authorization/cost
+defects remain blocking before generation. Known defective preparation targets
+stay unselected; defective governing references still hold. Only the original
+owner can explicitly disposition an older planning blocker and retain its exact
+later-media requirement. No automatic severity conversion or media-QC waiver is
+introduced. Existing live workers retain their captured prompts; this clarification
+applies to subsequent normal reviews/continuations.
+
+November 5 Mark 6 transport verification: the installed Codex CLI rejects
+turn/start input above 1,048,576 characters independently of the model token
+window and HeartWord's configurable byte cap. Check the complete prompt and
+image captions locally before login/submission. Either a byte-budget failure
+or this transport failure uses the existing scoped chapter-detail review and
+mandatory whole-chapter rollup; neither can discard source, objections or
+exact evidence. Mark 6 currently uses a 1,000,000-byte chapter packet cap.
+Preserve bounded JSONL from unsuccessful process exits as failure evidence;
+transport completion must not imply successful inference or film acceptance.
+
+Planning sound, music and picture reviews use that same detail-and-rollup path
+when oversized. Scoped details keep source/shot findings and technical direction;
+whole-treatment/craft judgments and executable edit/audio recipes appear only in
+the mandatory whole-chapter consolidation. An explicitly selected completed
+initial direction review after Lighting may be reused only against its identical
+immutable brief and complete verified upstream prefix. Its original actual-model
+event and findings remain; it is rebased through normal contribution checks,
+with zero new inference calls and no inherited chapter approval. Changed inputs,
+missing parents, unreported models, partial coverage or mutating recipes hold.
+
+Scripture reference ranges accept the printed en dash as well as an ASCII
+hyphen. The shared range parser preserves both endpoints for source-trigger,
+coverage and scene checks; exact source-quote validation still applies. This
+does not change stored Scripture, timing or the interpretation of a single verse.
+
 How a chapter's storyboard and shot plan actually gets produced: the
 book/chapter storyboard hierarchy, the manual trigger for producer-controlled
 runs, and the multi-agent process that plans shots by having the film-
 production role agents interact with each other rather than one model
 deciding everything alone.
+
+Chapter packets carry a compact historical issue index (ID, owner, shot scope,
+severity and status), retaining complete global advisory requests. One archive
+hash pins the indexed issues; derive `contribution:<id>` to retrieve exact evidence
+and its resolution ID. Per-row duplicate retrieval strings and archive-ID arrays
+are replaced by hashes/counts and exact history paging. Owned, current, blocking,
+unknown and pending-linked evidence stays explicit. Indexes never clear findings.
+A locally rejected transport-size preflight can retain independently verified
+completed technical tasks, with no submitted consolidation or unknown receipt;
+normal full-owner reconciliation remains required. Transport ceilings still hold.
+If the next technical role is held locally before its first submission, retain
+the independently verified completed prefix and start that role normally. Empty
+task coverage is allowed only for this proven pre-submission failure, with no
+submission or unresolved receipt for the held role and all original counters kept.
+
+For a first-pass Script Supervisor consolidation held locally before submission,
+complete independently receipted detail coverage can be retained with its exact
+completed-role prefix. Only full unique chapter coverage and pure detail outputs
+qualify; global verdicts, missing receipts, changed inputs and unknown failures
+hold. The normal whole-chapter review still decides all original owner responses
+and preserves every detail finding. No partial proposal becomes an approval.
+
+Chapter consolidation keeps foreign-role committed response IDs/outcomes in a
+compact index, with the original response-array hash and exact field retrieval.
+Omitted explanations are not evidence that the model read them. The current-role
+proposal and response candidates stay complete, as do all required issue bodies.
+Only proposal/revision history IDs are repeated in the chapter history index;
+finding and resolution IDs remain in the issue records and exact archive.
 
 ## Book-Level and Chapter-Level Storyboards
 
@@ -258,6 +324,34 @@ the prior calls still count against the original cap. The rejected event,
 costs and pre-continuation envelope remain retained. Planning Picture Editor
 replies contain intent, with executable edits, pauses, audio cues and generation
 requests left empty for the existing editing and finishing controls.
+
+An editor, script, sound, music, independent reviewer or Director chapter review held locally before its final
+consolidation may retain complete scoped detail only after verifying every
+native request, reply, usage receipt, unchanged source/reference input and the
+exact completed role prefix. Coverage must contain every chapter shot once.
+Partial chapter coverage, unknown failures, unaccounted submissions and detail
+containing executable recipes or chapter verdicts cannot use this recovery.
+The normal whole-chapter owner review still runs; scoped outcomes remain
+proposals until that review explicitly reconciles them.
+
+In that consolidation packet, an exact duplicate foreign finding may refer to
+all matching saved issue IDs whose current state is supplied or indexed. Its
+owner, scope, severity, evidence, requested change, confidence and limitations
+must match. Unmatched findings and the reviewing owner's findings remain
+explicit. Indexing never changes issue status; omitted bodies and explanations
+remain retrievable by exact ID and must be retrieved before relying on them.
+
+If a complete detail proposal still exceeds a byte or transport guard, the
+consolidation may replace its instruction bodies with exact shot/hash indices.
+This requires complete unique chapter coverage from the completed detail
+reviews. Full source, baseline shots, current-role findings, current treatment
+reviews and issue/response evidence remain supplied. The instructions stay
+unchanged in the merged result and are retrievable as `current_direction:<shotId>`
+with the complete proposal hash. The final reviewer must retrieve an omitted
+instruction before relying on it, hold if required evidence is unavailable,
+and never claim to have reread indexed bodies. No disposition or chapter
+verdict is inferred from the index. Exact retrieval and the existing evidence
+round, size, receipt and acceptance guards still apply.
 
 An unresolved disagreement, or a chapter reaching a reviewable state, is
 also a candidate producer-notification event — see

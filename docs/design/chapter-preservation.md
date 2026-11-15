@@ -1,5 +1,30 @@
 # Editable chapter preservation
 
+Identical external dependencies with the same content-addressed archive path
+are copied once. Their original paths and record references are all retained,
+so restoration projects each origin to the verified retained bytes. Different
+bytes competing for the same portable path still hold export. This changes
+neither the package format nor retention of historical records.
+
+Large retained review masters are hashed in bounded chunks during inspection,
+export verification and restore verification, including files above2GiB. The
+SHA-256, archive format, retention and corruption checks remain unchanged.
+
+The v1 `records.json` is hashed, written and read one SQL row at a time, so retained
+crew history can exceed Node's aggregate string limit without truncating records.
+Normal exports retain exactly the earlier JSON bytes and SHA-256 ordering; existing
+packages remain readable. File verification also hashes records in bounded chunks.
+The consistent SQLite snapshot and restored row set still consume memory, and an
+individual row must fit the runtime's JSON limits. This changes serialization, not
+retention, source/canon authority, path projection or the archive format.
+
+Typed local-LTX metadata can bind transient Mac upload/output paths to retained
+local keyframes and downloaded video. Input bindings must match their recorded
+SHA-256; missing local files and unmatched remote request paths still hold export.
+These bindings are scoped to that metadata object and its captured request. Original
+remote strings stay unchanged in records and sidecars; only the local counterparts
+become file dependencies. Restoration therefore needs no Mac working directory.
+
 Implemented October 7, 2026 in assembly's `chapter-package.ts`. This is a
 portable production snapshot, not a new pipeline stage or disaster-backup
 service. Whole-data disk-loss protection now has a separate

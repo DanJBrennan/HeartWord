@@ -1,0 +1,18 @@
+// Exact native ending-frame projection, not image generation or selection.
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {validateAttemptRevision} from '../../src/pipeline/creative-direction/crew-store.js';
+const db=getDb(),data=getDataDir(),project='c457a815-d07d-4902-91b5-7b936b549856',id='f87070ab-5945-4545-9fec-dcbad8c0473e',root=join(data,'assets/generated/lip-sync/ltx-aeb45706-50a8-42b9-8df4-c3f30775b3fc-spokesperson-final-expression-repair-v2'),read=(p:string)=>JSON.parse(readFileSync(p,'utf8')),hash=(p:string)=>createHash('sha256').update(readFileSync(p)).digest('hex');
+validateAttemptRevision(db,data,project,id);const a=db.prepare("SELECT status,result_asset_path FROM generation_attempts WHERE id=? AND operation='lip_sync'").get(id),line=read(root+'/line.json'),s=line.sections[5],c=line.crop;
+if(!a||!['hold_for_review','accepted'].includes(String(a.status))||line.status!=='complete_line_held_for_review'||line.sections.length!==6||s.lastRetainedFrameIndex!==67||s.retainedFrames!==68||hash(s.rawPath)!==s.rawSha256||hash(join(data,'assets',String(a.result_asset_path)))!==line.outputSha256||c.x!==160||c.y!==0||c.width!==960||c.height!==540)throw Error('Actual unchanged complete first-window endpoint required');
+const probe=readProbe(s.rawPath),v=probe.streams.find((x:any)=>x.codec_type==='video');if(v.width!==1280||v.height!==704||v.r_frame_rate!=='24/1')throw Error('Measured actual native geometry changed');
+function readProbe(p:string){return JSON.parse(execFileSync('ffprobe',['-v','error','-show_streams','-of','json',p],{encoding:'utf8',windowsHide:true}));}
+const image=root+'/last-retained-native-carry.png',select=`select=eq(n\\,${s.lastRetainedFrameIndex})`,crop=`crop=${c.width}:${c.height}:${c.x}:${c.y}`;
+execFileSync('ffmpeg',['-v','error','-nostdin','-n','-i',s.rawPath,'-vf',`${select},${crop},pad=1280:704:160:0,fillborders=left=160:right=160:top=0:bottom=164:mode=smear`,'-frames:v','1',image],{windowsHide:true});
+const bytes=(path:string,filter:string)=>execFileSync('ffmpeg',['-v','error','-nostdin','-i',path,'-vf',filter,'-frames:v','1','-pix_fmt','rgb24','-f','rawvideo','pipe:1'],{windowsHide:true,maxBuffer:4*1024*1024});
+const original=bytes(s.rawPath,`${select},${crop}`),carried=bytes(image,crop);if(original.length!==1555200||!original.equals(carried))throw Error('Retained native face pixels changed during ending projection');
+const proof={at:new Date().toISOString(),kind:'actual_last_retained_native_frame_projection',attemptId:id,candidateStatus:a.status,lineOutputSha256:line.outputSha256,sourceRaw:s.rawPath,sourceRawSha256:s.rawSha256,nativeFrameIndex:67,globalPictureFrame:436,nativeGeometry:[1280,704],crop:c,endingImagePath:image,endingImageSha256:hash(image),retainedFaceRgbBytes:original.length,retainedFaceRgbSha256:createHash('sha256').update(original).digest('hex'),exactFacePixelsUnchanged:true,discardedBorderHandling:'Only pixels outside existing960x540x160y0 retained crop extended by same edge-smear rule as earlier carries',sourceSamplesAtBoundary:874000,completeQuoteSamples:1456848,nextWindowSamples:582848,qualityApproval:false,limitations:'Projection alone grants no picture/source/AV selection. Use as next-window seed ONLY after actual complete first-window acceptance. No Codex image-generation or test-provenance claim.',providerCalls:0};
+writeFileSync(image+'.proof.json',JSON.stringify(proof,null,2),{flag:'wx'});console.log(JSON.stringify(proof));db.close();

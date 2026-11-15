@@ -1,0 +1,53 @@
+import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {loadCrewBrief,crewBriefHash} from '../../src/pipeline/creative-direction/crew-context.js';
+import {generateCodexJson,parseCodexEvents,CODEX_CREW_MODEL,codexOutputSchema} from '../../src/providers/codex-text.js';
+import {crewInputBudget} from '../../src/providers/input-budget.js';
+import {taskSchema,normalizeTaskDirections} from '../../src/pipeline/creative-direction/crew-tasks.js';
+import {validateContribution} from '../../src/pipeline/creative-direction/crew.js';
+import {appendReasoningReceipt,assertNoUncertainReasoning} from '../../src/pipeline/creative-direction/reasoning-receipts.js';
+const projectId='c457a815-d07d-4902-91b5-7b936b549856',runId='9298c395-6570-444d-8b08-71244b1c8fc1';
+const db=getDb(),brief=loadCrewBrief(db,getDataDir(),projectId,'planning'),hash=crewBriefHash(brief,'planning');
+const run=db.prepare('SELECT status,brief_hash FROM production_runs WHERE id=? AND project_id=?').get(runId,projectId);
+if(!run||run.status!=='incomplete'||run.brief_hash!==hash)throw Error('Repair requires terminal same-input source run');
+if(db.prepare("SELECT id FROM production_runs WHERE project_id=? AND status='running'").get(projectId))throw Error('Active crew must not be duplicated');
+assertNoUncertainReasoning(db,projectId);
+const root=join(getDataDir(),'assets','preparation','crew-reasoning',projectId),original=join(root,`${runId}_staging_designer_1_task-15_evidence-0`),destination=join(root,`${runId}_staging_designer_1_task-15_repair-1`);
+const sha=(v:string|Buffer)=>createHash('sha256').update(v).digest('hex');
+const originalRequest=readFileSync(join(original,'request.json')),originalResponse=readFileSync(join(original,'response.jsonl'));
+const request=JSON.parse(originalRequest.toString('utf8')),usage=JSON.parse(readFileSync(join(original,'usage.json'),'utf8'));
+if(request.requestedModel!==CODEX_CREW_MODEL||usage.authentication!=='chatgpt'||usage.inputSha256!==request.input.sha256)throw Error('Original provenance mismatch');
+parseCodexEvents(originalResponse.toString('utf8'));
+const targets:string[]=request.schema.properties.directions.items.properties.shotId.enum;
+if(targets.length!==9||new Set(targets).size!==9)throw Error('Unexpected repair scope');
+const schema=taskSchema(request.schema,brief.shots.map(s=>s.id),targets,true);
+const prompt=request.prompt.replace(/Your directions array must contain exactly [^\n]+\n/g,'Return directions as a shot-keyed object with every TASK shotId exactly once, each value containing instruction and scriptureBasis.\n')+
+ '\nCorrection request: the original task response duplicated a shot identifier and omitted another. Reconsider these same nine task shots using the unchanged supplied evidence. Do not copy or infer a replacement identifier from the rejected reply. Return a complete contribution, with no contextRequests.\n';
+const media=request.media.map((m:any)=>{const bytes=readFileSync(m.path);if(sha(bytes)!==m.sha256)throw Error('Original media changed');return{mimeType:m.mimeType,caption:m.caption,data:bytes.toString('base64')};});
+const transportInput='Return only the requested JSON. Do not call tools, inspect files, browse, delegate or read any history. All evidence is supplied in this request.\n'+media.map((m:any,i:number)=>`Attached image ${i+1}: ${m.caption??'No caption supplied'}`).join('\n')+'\n'+prompt;
+const input=crewInputBudget(transportInput,codexOutputSchema(schema),200000);
+const submitted=db.prepare("SELECT COUNT(*) n FROM edit_commands WHERE project_id=? AND command_type='submit_crew_reasoning' AND json_extract(payload,'$.eventId') LIKE ?").get(projectId,`${runId}:%`);
+if(Number(submitted?.n)>=180)throw Error('Source run physical limit exhausted');
+const recoveryOf={requestSha256:sha(originalRequest),responseSha256:sha(originalResponse),originalDirectory:original};
+writeFileSync('outputs/mark6-production/staging-repair-preflight-r35.json',JSON.stringify({runId,hash,targets,input,priorPhysicalRequests:Number(submitted?.n),recoveryOf,submitRequested:process.argv.includes('--submit')},null,2));
+if(process.argv.includes('--submit')){
+ if(existsSync(destination))throw Error('Repair already exists; reconcile rather than repeat');
+ const eventId=`${runId}:staging_designer:1:task-15:repair-1`;
+ const response=await generateCodexJson(prompt,schema,media,{maxSuppliedTextBytes:200000,beforeSubmit:budget=>{
+  mkdirSync(destination);writeFileSync(join(destination,'request.json'),JSON.stringify({prompt,schema,input:budget,requestedModel:CODEX_CREW_MODEL,reasoningEffort:'medium',media:request.media,recoveryOf}),{flag:'wx'});
+  appendReasoningReceipt(db,projectId,eventId,'submit_crew_reasoning',{provider:'codex_cli',requestedModel:CODEX_CREW_MODEL,briefHash:hash,input:budget,evidenceDir:destination,recoveryOf});
+ },retainResponse:jsonl=>{
+  writeFileSync(join(destination,'response.jsonl'),jsonl,{flag:'wx'});
+  appendReasoningReceipt(db,projectId,eventId,'complete_crew_reasoning',{provider:'codex_cli',transport:'exited_successfully',responsePath:join(destination,'response.jsonl')});
+ }});
+ writeFileSync(join(destination,'usage.json'),JSON.stringify(response.receipt),{flag:'wx'});
+ const {contextRequests,...raw}=response.result as Record<string,any>;
+ if(contextRequests?.length)throw Error('Repair unexpectedly requested more evidence; hold');
+ const reply=validateContribution(normalizeTaskDirections(raw,targets),'staging_designer',brief);
+ if(reply.filmChanges?.length||reply.ownerResponses?.length||reply.withdrawals?.length)throw Error('Repair must remain direction/objection only');
+ writeFileSync(join(destination,'validated-reply.json'),JSON.stringify(reply),{flag:'wx'});
+ console.log(JSON.stringify({status:'repaired_task_validated_not_plan_approval',directions:reply.directions.length,destination,usage:response.receipt.usage}));
+}else console.log(JSON.stringify({status:'preflight_only',suppliedTextBytes:input.suppliedTextBytes,targets:targets.length,priorPhysicalRequests:Number(submitted?.n)}));
+db.close();

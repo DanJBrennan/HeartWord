@@ -1,3 +1,4 @@
+import {createHash} from "node:crypto";
 import { createRequire } from "node:module";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, rmSync, cpSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -9,17 +10,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fixtureWave } from "../helpers/pcm-wave.js";
 import type { CrewContribution, CrewRole } from "../../src/pipeline/creative-direction/crew-types.js";
 import type { ProductionRecord, FilmChange } from "../../src/pipeline/creative-direction/production-record.js";
-import { withFixtureTreatment } from "../helpers/crew-treatment.js";
+import { withFixtureTreatment, fixtureTreatment } from "../helpers/crew-treatment.js";
 import { reconcileAvatarBudget } from "../../src/pipeline/voice-lipsync/performance-direction.js";
 
 const state=vi.hoisted(()=>({db:null as any,dir:"",reply:null as any}));
 vi.mock("../../src/db/client.js",()=>({getDb:()=>state.db,getDataDir:()=>state.dir}));
 vi.mock("../../src/providers/gemini-text.js",async original=>({...await original<object>(),generateJsonWithImagesMetered:vi.fn(async(prompt:string)=>({result:await state.reply(prompt),usage:{totalTokenCount:2},costUsd:0}))}));
+vi.mock("../../src/providers/codex-text.js",async original=>({...await original<object>(),generateCodexJson:vi.fn(async(prompt:string,_schema:unknown,_media:unknown,options:any)=>{
+  options.beforeSubmit?.({suppliedTextBytes:500,sha256:"synthetic-input"});
+  options.retainResponse?.('{"synthetic":true}');
+  return {result:await state.reply(prompt),receipt:{provider:"codex_cli",requestedModel:"gpt-6.1-sol",reportedModel:null,reasoningEffort:"medium",authentication:"chatgpt",billing:"chatgpt_allowance_or_credits",costUsd:null,usage:{inputTokens:11000,cachedInputTokens:0,outputTokens:400,reasoningOutputTokens:null},suppliedTextBytes:500,inputSha256:"synthetic-input",diagnostics:[]}};
+})}));
 vi.mock("../../src/pipeline/qc/video-review.js",()=>({reviewGeneratedVideo:vi.fn(async()=>({verdict:{reason:"Synthetic review only",confidence:99},costUsd:0})),videoReviewPassed:()=>true}));
-import { runProductionCrew, requireCurrentPlan, productionRecordForRun, latestCrewRun, directionsFromRun, applyProducerCreativeEdit, productionAuthorization, validateHandoffPlan, recoverInterruptedCrew } from "../../src/pipeline/creative-direction/crew-store.js";
+import { runProductionCrew, retainedInitialCreativeProposal, requireCurrentPlan, productionRecordForRun, latestCrewRun, directionsFromRun, applyProducerCreativeEdit, productionAuthorization, validateHandoffPlan, recoverInterruptedCrew } from "../../src/pipeline/creative-direction/crew-store.js";
 import { generateNonSpeakingVideoCandidate, acceptFinalVideoCandidate } from "../../src/pipeline/media-generation/final-video.js";
 import { productionRouter } from "../../src/server/routes/production.js";
-import { loadCrewBrief } from "../../src/pipeline/creative-direction/crew-context.js";
+import { loadCrewBrief, crewBriefHash } from "../../src/pipeline/creative-direction/crew-context.js";
+import { crewSchema } from "../../src/pipeline/creative-direction/crew.js";
 import { projectsRouter } from "../../src/server/routes/projects.js";
 const {DatabaseSync}=createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 let db:InstanceType<typeof DatabaseSync>,server:Server|undefined;
@@ -40,7 +47,7 @@ function context(prompt:string):{role:CrewRole;round:number;record:ProductionRec
 }
 function reply(prompt:string):CrewContribution{
   const {role}=context(prompt);
-  const out:CrewContribution={summary:`${role} reviewed a synthetic fixture, not actual Hatam media.`,directions:["shot1","shot2"].map(shotId=>({shotId,instruction:"Preserve the established encounter, fixed wardrobe and source performance.",scriptureBasis:"Synthetic Mark 5:1–2 fixture context."})),findings:[]};
+  const out:CrewContribution={summary:`${role} reviewed a synthetic fixture, not actual Hatam media.`,directions:["shot1","shot2"].map(shotId=>({shotId,instruction:"Preserve the established encounter, fixed wardrobe and source performance.",scriptureBasis:"Synthetic Mark 5:1â€“2 fixture context."})),findings:[]};
   if(role==="picture_editor")Object.assign(out,{coverageRequests:[],edits:[],pauses:[],editorialChecks:[]});
   if(role==="production_director")Object.assign(out,{decision:"approve",decisionConfidence:88,decisionLimitations:"Synthetic local intent review; no actual media or language validation.",acceptedContributionIds:[]});
   return withFixtureTreatment(prompt,out);
@@ -77,6 +84,101 @@ beforeEach(()=>{
 afterEach(async()=>{vi.unstubAllEnvs();if(server){await new Promise<void>(resolve=>server!.close(()=>resolve()));server=undefined;}db.close();if(state.dir.startsWith(join(tmpdir(),"hw-crew-runtime-")))rmSync(state.dir,{recursive:true,force:true});});
 
 describe("saved crew production runtime",()=>{
+  it("reuses a completed exact-input initial proposal with provenance and rejects stale input before dispatch",async()=>{
+    const b=loadCrewBrief(db,state.dir,projectId,'planning'),hash=crewBriefHash(b,'planning'),sourceId='saved-initial';
+    db.prepare("INSERT INTO production_runs(id,project_id,phase,brief_hash,brief_json,status,created_at)VALUES(?,?,'planning',?,?,'incomplete',1)").run(sourceId,projectId,hash,JSON.stringify(b));
+    const proposal:CrewContribution={summary:'Synthetic retained proposal, not a fresh review',directions:b.shots.map(s=>({shotId:s.id,instruction:s.action,scriptureBasis:s.verseRef})),findings:[],emotionalTreatment:fixtureTreatment(b)};
+    const folder=`preparation/crew-reasoning/${projectId}/${sourceId}_creative_director_1_task-1_evidence-0/`;
+    file(folder+'request.json',JSON.stringify({requestedModel:'gpt-6.1-sol',schema:crewSchema('creative_director','planning')}));
+    file(folder+'usage.json',JSON.stringify({requestedModel:'gpt-6.1-sol',authentication:'chatgpt',reasoningEffort:'medium'}));
+    file(folder+'response.jsonl',[{type:'item.completed',item:{type:'agent_message',text:JSON.stringify({...proposal,contextRequests:[]})}},{type:'turn.completed',usage:{input_tokens:10,cached_input_tokens:0,output_tokens:20}}].map(x=>JSON.stringify(x)).join('\n'));
+    expect(retainedInitialCreativeProposal(db,state.dir,projectId,b,sourceId).reply).toEqual(proposal);
+    const call=vi.fn();
+    const recovered=await runProductionCrew(projectId,'planning',{db,dataDir:state.dir,reasoningProvider:'codex',retainedInitialCreativeRunId:sourceId,maxCalls:1,call});
+    expect(call).not.toHaveBeenCalled();expect(recovered.inferenceCalls).toBe(0);expect(recovered.contributions.creative_director?.summary).toBe(proposal.summary);
+    const event=db.prepare('SELECT model,output_json FROM production_events WHERE run_id=?').get(recovered.runId)!;
+    expect(event.model).toBe('codex_cli:retained:gpt-6.1-sol');expect(JSON.parse(String(event.output_json)).exchange).toBeTruthy();
+    const receipt=JSON.parse(String(db.prepare("SELECT payload FROM edit_commands WHERE command_type='reuse_initial_crew_proposal'").get()!.payload));
+    expect(receipt).toMatchObject({sourceRunId:sourceId,newProviderCalls:0,validatedAsCurrentProposal:true});
+    // Complete the initial cultural review once, then reuse only this exact
+    // upstream proposal and brief. The Codex mock records original provenance.
+    const cultural=await runProductionCrew(projectId,'planning',{db,dataDir:state.dir,reasoningProvider:'codex',retainedInitialCreativeRunId:sourceId,maxCalls:2,boundedContext:false,scopedContext:false});
+    expect(cultural.contributions.scripture_cultural_reviewer?.treatmentReview?.status).toBe('clear');
+    expect(cultural.inferenceCalls).toBe(1);
+    const both=await runProductionCrew(projectId,'planning',{db,dataDir:state.dir,reasoningProvider:'codex',retainedInitialCreativeRunId:sourceId,retainedInitialScriptureRunId:cultural.runId,maxCalls:2,call});
+    expect(both.inferenceCalls).toBe(0);expect(call).not.toHaveBeenCalled();
+    expect(both.contributions.scripture_cultural_reviewer?.treatmentReview?.status).toBe('clear');
+    expect(db.prepare("SELECT COUNT(*) n FROM production_events WHERE run_id=? AND model='codex_cli:retained:gpt-6.1-sol'").get(both.runId)!.n).toBe(2);
+    // All camera parts completed, but the old same-outcome merger failed.
+    // Preserve/revalidate those parts without another physical inference.
+    db.prepare("INSERT INTO production_events(id,run_id,sequence,role,round,prompt,error,model,created_at)VALUES(?,?,3,'cinematographer',1,'Synthetic old aggregation',?,'not_submitted',1)").run(cultural.runId+':camera-failure',cultural.runId,'Conflicting objectionResponses across shot tasks; no implicit overwrite');
+    for(let i=0;i<2;i++){
+      const prefix=`preparation/crew-reasoning/${projectId}/${cultural.runId}_cinematographer_1_task-${i+1}_evidence-0/`;
+      file(prefix+'request.json',JSON.stringify({requestedModel:'gpt-6.1-sol',prompt:`You are HeartWord's cinematographer. Phase: planning; ${hash}`,input:{sha256:'fixture'},schema:crewSchema('cinematographer','planning')}));
+      file(prefix+'usage.json',JSON.stringify({requestedModel:'gpt-6.1-sol',authentication:'chatgpt',reasoningEffort:'medium',inputSha256:'fixture'}));
+      const partial={summary:'Synthetic retained camera part',directions:[{shotId:b.shots[i]!.id,instruction:'Retain the source staging',scriptureBasis:b.shots[i]!.verseRef}],findings:[]};
+      file(prefix+'response.jsonl',[{type:'item.completed',item:{type:'agent_message',text:JSON.stringify(partial)}},{type:'turn.completed',usage:{input_tokens:10,cached_input_tokens:0,output_tokens:20}}].map(x=>JSON.stringify(x)).join('\n'));
+    }
+    const camera=await runProductionCrew(projectId,'planning',{db,dataDir:state.dir,reasoningProvider:'codex',retainedInitialCreativeRunId:sourceId,retainedInitialScriptureRunId:cultural.runId,retainedInitialCameraRunId:cultural.runId,maxCalls:3,call});
+    expect(camera.inferenceCalls).toBe(0);expect(camera.contributions.cinematographer?.directions).toHaveLength(2);expect(call).not.toHaveBeenCalled();
+    expect(db.prepare("SELECT COUNT(*) n FROM production_events WHERE run_id=? AND model='codex_cli:retained:gpt-6.1-sol'").get(camera.runId)!.n).toBe(3);
+    const choreography=await runProductionCrew(projectId,'planning',{db,dataDir:state.dir,reasoningProvider:'codex',retainedInitialCreativeRunId:sourceId,retainedInitialScriptureRunId:cultural.runId,retainedInitialCameraRunId:cultural.runId,maxCalls:4,boundedContext:false,scopedContext:false});
+    expect(choreography.inferenceCalls).toBe(1);expect(choreography.contributions.choreographer?.directions).toHaveLength(2);
+    const four=await runProductionCrew(projectId,'planning',{db,dataDir:state.dir,reasoningProvider:'codex',retainedInitialCreativeRunId:sourceId,retainedInitialScriptureRunId:cultural.runId,retainedInitialCameraRunId:cultural.runId,retainedInitialChoreographyRunId:choreography.runId,maxCalls:4,call});
+    expect(four.inferenceCalls).toBe(0);expect(four.contributions.choreographer?.directions).toHaveLength(2);expect(call).not.toHaveBeenCalled();
+    // Only the malformed final staging batch is regenerated. Its repair must
+    // bind both original files and preserve complete upstream input identity.
+    db.prepare("INSERT INTO production_events(id,run_id,sequence,role,round,prompt,error,model,created_at)VALUES(?,?,5,'staging_designer',1,'Synthetic duplicate batch','Duplicate shot direction.','not_submitted',1)").run(four.runId+':staging-failure',four.runId);
+    const stagingBase=`preparation/crew-reasoning/${projectId}/${four.runId}_staging_designer_1_task-1`,originalDir=join(state.dir,'assets',stagingBase+'_evidence-0');
+    const stagingSchema:any=crewSchema('staging_designer','planning');stagingSchema.properties.directions.items.properties.shotId.enum=['shot1','shot2'];
+    const stagingRequest={requestedModel:'gpt-6.1-sol',prompt:`You are HeartWord's staging designer. Phase: planning; ${hash}`,input:{sha256:'staging-fixture'},schema:stagingSchema};
+    const stagingUsage={requestedModel:'gpt-6.1-sol',authentication:'chatgpt',reasoningEffort:'medium',inputSha256:'staging-fixture'};
+    const events=(value:unknown)=>[{type:'item.completed',item:{type:'agent_message',text:JSON.stringify(value)}},{type:'turn.completed',usage:{input_tokens:10,cached_input_tokens:0,output_tokens:20}}].map(x=>JSON.stringify(x)).join('\n');
+    const originalResponse=events({summary:'Malformed staging',directions:[{shotId:'shot1',instruction:'first',scriptureBasis:'source'},{shotId:'shot1',instruction:'duplicate',scriptureBasis:'source'}],findings:[]});
+    file(stagingBase+'_evidence-0/request.json',JSON.stringify(stagingRequest));file(stagingBase+'_evidence-0/response.jsonl',originalResponse);file(stagingBase+'_evidence-0/usage.json',JSON.stringify(stagingUsage));
+    const sha=(v:string)=>createHash('sha256').update(v).digest('hex');
+    const repairRequest={...stagingRequest,recoveryOf:{requestSha256:sha(JSON.stringify(stagingRequest)),responseSha256:sha(originalResponse),originalDirectory:originalDir}};
+    file(stagingBase+'_repair-1/request.json',JSON.stringify(repairRequest));file(stagingBase+'_repair-1/usage.json',JSON.stringify(stagingUsage));
+    file(stagingBase+'_repair-1/response.jsonl',events({summary:'Corrected staging',directions:{shot1:{instruction:'first',scriptureBasis:'source'},shot2:{instruction:'second',scriptureBasis:'source'}},findings:[]}));
+    const fiveOptions={db,dataDir:state.dir,reasoningProvider:'codex' as const,retainedInitialCreativeRunId:sourceId,retainedInitialScriptureRunId:cultural.runId,retainedInitialCameraRunId:cultural.runId,retainedInitialChoreographyRunId:choreography.runId,retainedInitialStagingRunId:four.runId,maxCalls:5,call};
+    const five=await runProductionCrew(projectId,'planning',fiveOptions);
+    expect(five.inferenceCalls).toBe(0);expect(call).not.toHaveBeenCalled();expect(five.contributions.staging_designer?.directions.map(d=>d.shotId)).toEqual(['shot1','shot2']);
+    state.reply=(prompt:string)=>{const output=reply(prompt);if(context(prompt).role==='costume_designer')output.findings=[{shotId:'shot1',severity:'blocking',evidence:'Synthetic missing body reference',requestedChange:'Owner review still required',confidence:90,limitations:'Fixture only'}];return output;};
+    const costume=await runProductionCrew(projectId,'planning',{...fiveOptions,maxCalls:6,call:undefined,boundedContext:false,scopedContext:false});
+    expect(costume.inferenceCalls).toBe(1);expect(costume.contributions.costume_designer?.directions).toHaveLength(2);
+    const sixOptions={...fiveOptions,retainedInitialCostumeRunId:costume.runId,maxCalls:6};
+    const six=await runProductionCrew(projectId,'planning',sixOptions);
+    expect(six.inferenceCalls).toBe(0);expect(call).not.toHaveBeenCalled();expect(six.contributions.costume_designer?.directions).toHaveLength(2);expect(six.productionRecord!.objections.filter(o=>o.owner==='costume_designer')).toHaveLength(1);expect(six.productionRecord!.objections.find(o=>o.owner==='costume_designer')!.status).toBe('open');
+    const savedStaging=db.prepare("SELECT output_json FROM production_events WHERE run_id=? AND role='staging_designer'").get(costume.runId)!;
+    const changedStaging=JSON.parse(String(savedStaging.output_json));changedStaging.summary='Changed staging input';
+    db.prepare("UPDATE production_events SET output_json=? WHERE run_id=? AND role='staging_designer'").run(JSON.stringify(changedStaging),costume.runId);
+    await expect(runProductionCrew(projectId,'planning',sixOptions)).rejects.toThrow('identical complete five-role upstream');
+    db.prepare("UPDATE production_events SET output_json=? WHERE run_id=? AND role='staging_designer'").run(String(savedStaging.output_json),costume.runId);
+    file(stagingBase+'_repair-1/request.json',JSON.stringify({...repairRequest,recoveryOf:{...repairRequest.recoveryOf,responseSha256:'wrong'}}));
+    await expect(runProductionCrew(projectId,'planning',fiveOptions)).rejects.toThrow('exact rejected source');
+    file(stagingBase+'_repair-1/request.json',JSON.stringify(repairRequest));
+    file(stagingBase+'_repair-1/response.jsonl',events({summary:'Incomplete repair',directions:{shot1:{instruction:'first',scriptureBasis:'source'}},findings:[]}));
+    await expect(runProductionCrew(projectId,'planning',fiveOptions)).rejects.toThrow('exactly its own shot');
+    const sourceCamera=db.prepare("SELECT output_json FROM production_events WHERE run_id=? AND role='cinematographer'").get(choreography.runId)!;
+    const changedCamera=JSON.parse(String(sourceCamera.output_json));changedCamera.summary='Changed incoming camera guidance';
+    db.prepare("UPDATE production_events SET output_json=? WHERE run_id=? AND role='cinematographer'").run(JSON.stringify(changedCamera),choreography.runId);
+    await expect(runProductionCrew(projectId,'planning',{db,dataDir:state.dir,reasoningProvider:'codex',retainedInitialCreativeRunId:sourceId,retainedInitialScriptureRunId:cultural.runId,retainedInitialCameraRunId:cultural.runId,retainedInitialChoreographyRunId:choreography.runId,maxCalls:4,call})).rejects.toThrow('identical complete initial upstream');
+    const partPath=`preparation/crew-reasoning/${projectId}/${cultural.runId}_cinematographer_1_task-2_evidence-0/response.jsonl`,partBytes=readFileSync(join(state.dir,'assets',partPath));
+    file(partPath,JSON.stringify({type:'turn.failed'}));
+    await expect(runProductionCrew(projectId,'planning',{db,dataDir:state.dir,reasoningProvider:'codex',retainedInitialCreativeRunId:sourceId,retainedInitialScriptureRunId:cultural.runId,retainedInitialCameraRunId:cultural.runId,maxCalls:3,call})).rejects.toThrow('Codex turn failed');
+    file(partPath,partBytes);
+    // A changed upstream proposal cannot inherit the earlier source review.
+    const priorResult=JSON.parse(String(db.prepare('SELECT result_json FROM production_runs WHERE id=?').get(cultural.runId)!.result_json));
+    priorResult.contributions.creative_director.summary='Changed upstream proposal';
+    db.prepare('UPDATE production_runs SET result_json=? WHERE id=?').run(JSON.stringify(priorResult),cultural.runId);
+    await expect(runProductionCrew(projectId,'planning',{db,dataDir:state.dir,reasoningProvider:'codex',retainedInitialCreativeRunId:sourceId,retainedInitialScriptureRunId:cultural.runId,maxCalls:2,call})).rejects.toThrow('identical upstream');
+    const count=db.prepare('SELECT COUNT(*) n FROM production_runs').get()!.n;
+    await expect(runProductionCrew(projectId,'planning',{db,dataDir:state.dir,brief:{...b,producerNotes:[{id:'new',subjectId:projectId,note:'Changed controlling direction'}]},reasoningProvider:'codex',retainedInitialCreativeRunId:sourceId,call})).rejects.toThrow('exact same project and immutable');
+    expect(db.prepare('SELECT COUNT(*) n FROM production_runs').get()!.n).toBe(count);expect(call).not.toHaveBeenCalled();
+    expect(()=>retainedInitialCreativeProposal(db,state.dir,'another-project',b,sourceId)).toThrow('exact same project');
+    file(folder+'response.jsonl',JSON.stringify({type:'turn.failed'}));
+    expect(()=>retainedInitialCreativeProposal(db,state.dir,projectId,b,sourceId)).toThrow('Codex turn failed');
+  });
   it("pins accepted treatment into later briefs and retains legacy plans without authorizing new generation",async()=>{
     const result=await plan();expect(result.status,result.summary).toBe("approved");
     const later=loadCrewBrief(db,state.dir,projectId,"editing");
@@ -281,5 +383,28 @@ describe("saved crew production runtime",()=>{
     const candidate=await generateNonSpeakingVideoCandidate(db,projectId,"shot1",providers);expect(candidate.status).toBe("candidate");expect(wire).toHaveBeenCalledOnce();
     expect(()=>acceptFinalVideoCandidate(db,projectId,(candidate as any).attemptId,8000)).toThrow("earlier production revision");
     expect(db.prepare("SELECT status FROM generation_attempts WHERE id=?").get((candidate as any).attemptId)!.status).toBe("hold_for_review");
+  });
+});
+
+
+describe("Codex crew provider integration",()=>{
+  it("retains completed structured requests/usage without fabricated dollar costs or Gemini calls",async()=>{
+    const {generateJsonWithImagesMetered}=await import("../../src/providers/gemini-text.js");
+    vi.mocked(generateJsonWithImagesMetered).mockClear();
+    const result=await runProductionCrew(projectId,"planning",{db,dataDir:state.dir,reasoningProvider:"codex",boundedContext:false,maxSuppliedTextBytes:200000,maxCalls:1});
+    expect(result.calls).toBe(1);
+    const event=db.prepare("SELECT model,cost_usd FROM production_events WHERE run_id=?").get(result.runId)!;
+    expect(event.model).toBe("codex_cli:requested:gpt-6.1-sol");expect(event.cost_usd).toBeNull();
+    expect(generateJsonWithImagesMetered).not.toHaveBeenCalled();
+    const receipts=db.prepare("SELECT command_type,payload FROM edit_commands WHERE project_id=? AND command_type LIKE '%crew_reasoning' ORDER BY sequence").all(projectId);
+    expect(receipts.map(r=>r.command_type)).toEqual(["submit_crew_reasoning","complete_crew_reasoning"]);
+    const evidence=JSON.parse(String(receipts[0]!.payload));
+    expect(JSON.parse(readFileSync(join(evidence.evidenceDir,"usage.json"),"utf8")).usage.inputTokens).toBe(11000);
+  });
+  it("holds an unreconciled submission before making another model request",async()=>{
+    const {appendReasoningReceipt}=await import("../../src/pipeline/creative-direction/reasoning-receipts.js");
+    appendReasoningReceipt(db,projectId,"lost-request","submit_crew_reasoning",{provider:"codex_cli"});
+    await expect(runProductionCrew(projectId,"planning",{db,dataDir:state.dir,reasoningProvider:"codex"})).rejects.toThrow("reconcile submitted event");
+    expect(db.prepare("SELECT count(*) n FROM production_events WHERE run_id IN (SELECT id FROM production_runs WHERE project_id=?)").get(projectId)!.n).toBe(0);
   });
 });

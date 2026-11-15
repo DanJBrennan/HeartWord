@@ -1,6 +1,164 @@
 # Production Crew Communication Protocol
 
+November6 bounded historical repair: targetedRepairPacket carries a named baseline,
+exact relevant source, scoped versioned historical decisions, constraints, shared
+scene rules, changed-shot exceptions, a small issue index and exact evidence refs.
+It does not replay conversations or per-role whole-chapter directions. Replies are
+advisory until normal producer/plan acceptance; no unchanged scope is reapproved.
+Mark6 repair is limited to6 native crew calls and200000 cumulative reported input
+tokens, with conservative reservations before dispatch and stop on unknown usage.
+Global counters/receipts remain intact. Typical small packets are measured before
+live execution; raising the context ceiling is not the repair. Applicable door
+construction reaches both normal and Codex keyframe routes from the shared rule;
+Nazareth-specific reconstruction is scoped to Mark6 hometown scene, never palace.
+
+
 ## Status and purpose
+
+A complete exact-input planning run may remain held after the Director returns
+clear planning checks because older original-challenger blockers remain open.
+Verify the full retained lineage, actual native requests/replies/usage, normal
+response normalization and exact saved record replay. Retain only the unaffected
+role prefix before the earliest blocking challenger. The ordinary challenger
+suffix then reviews the complete current proposals, followed by a fresh Director
+verdict. All counts, original issue states and later media checks survive; no
+foreign closure, inherited chapter acceptance or fabricated failed call occurs.
+The same verification replays a completed native challenger suffix followed by
+an actual hash-validated Director instruction correction. A Director hold with
+no instruction change cannot use this correction path. Changed instructions
+remain proposals; the original challengers must reassess them before a fresh
+Director acceptance. Every suffix response/usage and exact record replay is
+required. Any non-challenger blocker, unverified receipt or changed input is
+ineligible.
+
+
+A scoped technical task can be held before submission when even its smallest
+packet exceeds the configured text budget. If every earlier submitted task has
+a valid completed receipt and no evidence request or native charge is pending,
+the existing continuation can retain that pure partial scope. It reviews only
+missing shots under a finite logged operational ceiling. This does not invent a
+failed submission, reset counters, accept partial scope or truncate protected data.
+
+A retained CLI stream can contain reconnect notices followed by a completed
+structured turn. Only the observed reconnect/HTTPS transport notices before a
+single valid completion are nonterminal; unknown errors and failed turns hold.
+For an initial camera owner consolidation previously rejected solely by that
+parser error, verify original input/media hashes, strict JSON schema, actual
+completion usage, complete unique shot coverage and accountable owner outcomes.
+Pass the recovered reply through the existing retained-role validation/commit;
+keep the original failed run and raw stream untouched. No new inference, forged
+usage file, partial issue closure or inherited chapter approval is introduced.
+
+Interrupted pure technical-role tasks can retain receipted owned issue outcomes
+as provisional evidence, including proposed resolutions. The continuation first
+finishes every missing shot, retaining neighboring directions and all original
+response scopes. It then requires the existing explicit whole-role owner
+consolidation before applying any outcome. Partial coverage, executable changes,
+foreign-owner decisions or missing receipts cannot clear an issue or handoff.
+
+When complete pure technical-role tasks disagree on objection outcomes, use the
+existing bounded whole-role consolidation instead of voting or replaying shots.
+The provisional proposal preserves all directions/findings and supplies every
+original response with task scope/hash. Only the actual issue owner may decide;
+the final reply must explicitly answer each referenced issue once. Empty answers
+are permitted only provisionally for evidence retrieval. No default preference
+for carried or resolved exists. Written planning consistency remains distinct
+from actual-frame, canon, source-timing and audiovisual verification.
+
+Recovery can retain a terminal merge-conflict run only with complete unique shot
+coverage, successful receipted tasks and the exact independently reproduced
+conflict. No partial closure is applied. It resumes directly at consolidation,
+not another shot pass. Later recovery replays the genuine consolidation/evidence
+receipts and resulting exchange; original calls/counts remain. This extends the
+existing task dispatcher and first-pass continuation, not a new review stage or
+chapter-approval bypass. Executable/cross-domain task changes do not qualify.
+
+The same complete-task recovery permits a locally rejected consolidation text
+budget when all native tasks have successful receipts, no consolidation request
+was submitted, every shot is covered once and the response conflict is reproduced.
+The recorded rejection must report actual bytes above its configured budget;
+unknown failures, incomplete coverage and missing/uncertain usage still hold.
+The full owner decision is submitted afresh after preflight; no outcome is inherited.
+Consolidation keeps the chapter packet's exchange-free current contributions,
+rather than reintroducing durable exchange envelopes. Exact exchanges stay in
+the archive and remain retrievable by ID; full current role directions/findings,
+original response scopes and controlling source/issues remain supplied.
+
+Chapter-wide packets also index historical foreign advisories and resolved
+findings instead of replaying their full prose. Owned findings, all open blockers,
+current exchange findings, unknown records and substantive pending-proposal links
+keep full bodies. Index entries preserve ID, owner, shot/global scope, severity,
+status, exact hash and retrieval/resolution refs; open global advisory actions
+remain supplied. Current proposals, source, baseline and accepted fact changes
+remain explicit. Exact old evidence is retrieved before reliance or substantive
+discussion. Projection never mutates the durable record or clears any issue;
+the full actual record controls acceptance.
+
+Pure chapter-detail tasks can likewise disagree on an owner's issue outcome.
+Their mandatory whole-chapter review receives the provisional complete proposal,
+every original response and task scope, and must explicitly answer each owned
+issue once. No extra detail-only disposition call precedes the global review.
+Whole-treatment judgments, verdicts and executable recipes remain reserved for
+that normal global schema. All local findings and directions survive; executable
+or cross-domain partial changes cannot use this issue-only reconciliation.
+
+Initial technical-role recovery also continues beyond completed Camera work.
+The verifier replays each newly completed pure shot-task role against its real
+native receipts and saved exchange, checking the exact resulting record and
+ordered prefix before retaining any remaining task. It supports no chapter
+verdict or second-pass recovery. Parent audit hashes, captions/images, source,
+canon, counts and every concern remain pinned; partial issue closures and
+executable changes do not qualify. The failed role's batch size can differ from
+the normal adaptive32-shot maximum for later roles, reducing repeated context.
+
+When a new run is created, verified completed proposals pass through existing
+exchange validation and recorded-finding reuse to create current selectable
+proposal IDs. Retained production events explicitly say codex_cli:retained,
+costnull and no new inference, with original evidence linked by the resume audit.
+The run, retained events and audit are committed atomically. Finding lifecycle
+state is preserved, never cleared or duplicated. These events consume no new
+logical/native calls; later actual calls and failures add to the original counts.
+Without this rebind, a retained proposal's old revision ID could not be selected
+by the Director. Normal source/ownership/acceptance checks remain mandatory.
+
+An interrupted initial Camera pass can continue from its two completed initial
+roles and actual completed shot-task replies. Store verification requires the
+latest terminal incomplete run, dead worker, exact brief/source/canon, unchanged
+supplemental and task-image bytes/captions, original successful native receipts,
+matching saved prefix events, retained concern-to-objection adaptation, and a
+terminal timeout with no returned contribution. No unknown submission is retried.
+Only nonoverlapping direction/finding tasks with carried objections qualify;
+mutations, issue closures and chapter verdicts do not. Existing first-pass resume
+skips completed role calls/logs, preserves their entire record and original call
+counts, and reviews missing camera shots in configurable1..32-shot batches.
+Relevant own neighboring directions accompany remaining tasks. The full merged
+proposal and all later reviews still pass normal validation. An explicitly raised
+logical-call ceiling can include the failed call; it never resets request usage.
+If that continuation also times out, the same verifier follows its append-only
+resume audit to the original terminal prefix. Every parent result/receipt hash,
+unchanged record (apart from run revision), exact contribution, retained shot set
+and original call count must match. Cycles, missing ancestry, changed concerns,
+duplicate shots or unknown submissions fail closed. All completed nonoverlapping
+Camera tasks survive the chain; failed attempts remain counted. This remains
+initial Camera recovery, never later-role/challenger/Director reuse.
+This narrow path does not relax the separate clear-only source-review reuse gate
+or confer chapter/canon/film acceptance.
+
+November 4 bounded continuation: chapter projections also index no-change
+historical prose; current issues, pending fact changes, baseline source and
+accepted fact differences remain explicit. Exact archived retrieval is mandatory
+before an omitted proposal is acknowledged or withdrawn. Completed initial
+Lighting may be retained only with an identical brief and six-role upstream
+prefix, through normal validation, with zero new inference and no implied approval.
+Configured chapter byte caps are application safeguards, not model context limits.
+An offline aggregate comparison determines whether a measured larger chapter
+request is cheaper than repeated scoped details. Oversized chapter review can
+inspect all shots in bounded parts then explicitly consolidate the whole chapter;
+parts never approve it, and their findings survive consolidation. The current
+role's full proposal is supplied in consolidation; other exact directions remain
+retrievable by direction_shot:<contribution-id>:<shot-id>. Unseen evidence stays
+unverified. A host-controlled pre-request hook permits account-allowance checks
+between serial requests, without a paid fallback or changing acceptance gates.
 
 This is HeartWord Studio's authoritative production-role contract. It serves
 the producer workflow: verified Scripture, source audio, and approved regional
@@ -15,6 +173,68 @@ contribution records owner, input versions, verse/audio/shot scope, rationale,
 evidence, status, and destination. No role may alter verified Scripture,
 source performance, approved canon, producer holds, or another role's record.
 
+Outgoing role schemas also pin shot identifiers to the current chapter. A
+specialist's direction identifiers are restricted to its task; chapter-wide
+findings may reference any actual chapter shot or remain global with null.
+This constrains identifier copying before inference while preserving semantic
+validation afterward. Foreign or nearly matching identifiers are rejected,
+never repaired through fuzzy matching or promoted into an accepted review.
+
+Scoped specialist replies use an exact shot-keyed directions object in the
+provider decoder, normalized to the existing direction array before semantic
+validation or persistence. All task keys are required; foreign keys and inner
+shot identifiers are rejected. An empty map is allowed only provisionally for
+an evidence request; a final empty contribution fails coverage validation.
+A terminal initial Staging duplicate-direction failure may retain all completed
+parts plus one separately receipted final-batch repair. Recovery requires exact
+immutable brief and four-role incoming prefix, original rejected request/reply
+hashes, completed transport/usage and complete unique chapter coverage. Original
+rejected evidence remains unchanged. Recovery still runs ordinary validations
+and later reviews; it never constitutes chapter or film acceptance.
+
+If exact task summaries together exceed the existing12000-character summary
+field, the aggregate uses a short mechanical coverage statement and retains
+all original prose in scoped taskSummaries, unchanged. Relevant task summaries
+stay in specialist context; the rest are indexed by owner, task, shot IDs and
+hash and retrievable via task_summary:<contribution-id>:<task-number>. Chapter
+reviewers receive them all. This does not summarize away decisions, drop issue
+bodies, increase a bound or change the original task responses. Combined replies
+must pass normal contribution validation before initial recovery qualifies.
+
+Codex visual-role reviews include the approved version's identity headshot and
+freshest baseline body/wardrobe view (or turnaround fallback), rather than
+inferring full clothing from a portrait. Carried-forward views are labeled;
+current version notes remain authoritative, not an automatic canon revision.
+Existing story-state/proof exclusions and source hashes apply. Compact boards
+preserve view labels, original hashes and exact provenance; Jesus views stay
+separate. Grid v2 uses even letterbox cells for mixed PNG/JPEG dimensions. Old
+boards and original art remain unchanged; unseen details remain unverified.
+
+Specialist exchange metadata is bounded by revision: current-revision exchanges
+and the latest role proposals are indexed, rather than every prior revision's
+index. A count/hash/archive locator describes older exact records. Current
+facts, controlling constraints, issue states and pending substantive proposal
+bodies remain in their existing projections; chapter review and durable history
+are unchanged. Exact contribution, previous-role and paged-history retrieval
+remain available. Acknowledgement or withdrawal of any retained proposal whose
+body was omitted requires exact retrieval, even when its ID was absent from the
+small index. An omitted older index is never evidence that its issues resolved.
+
+Codex adaptive sizing counts the exact provider protocol, captions and strict
+schema under the configured cap, instead of reserving a guessed4096 bytes. Image
+tokens remain separate and actual reported usage is retained. Issue references
+are derived as contribution:<id>; omitted ancestry lists have a count/hash and
+exact exchange retrieval. Task summary sources list available task numbers and
+an index hash; only relevant scope/prose is initially supplied. Exact off-task
+summaries can be fetched by task number or task_summary_shot:<contributionId>:<shotId>.
+No omitted evidence is claimed read. Complete initial Costume proposals can be
+rebound only for the identical immutable brief and verified five-role incoming
+prefix. Blocking findings remain. For any verified retained initial role, exact
+existing findings retain their original IDs/status/resolution and are linked by
+the current proposal, rather than reopened as fresh copies. Nonmatching or fresh
+inference findings are still recorded normally. Current-revision selection and
+all ordinary acceptance checks remain mandatory; reuse is never approval.
+
 The live Director response schema offers only contribution IDs from the current
 input and revision, excluding superseded proposals and its own previous verdict.
 Its new contribution ID is available once that reply is saved. Older evidence
@@ -22,6 +242,96 @@ remains in the record. Empty selections and holds remain available; the existing
 ownership, source, canon and acceptance checks still validate the returned reply.
 Objection-response IDs are similarly limited to that role's own retained
 findings; a Director cannot close another reviewer's finding through its reply.
+Domain-response IDs are limited to retained proposals containing a change owned
+by the responding domain. Withdrawal IDs are limited to that role's own
+proposals/revisions. Empty eligible sets require empty response lists; neither
+field offers unrelated findings as acceptances or withdrawals. Semantic
+ownership validation still applies after inference.
+Craft-response IDs are separately restricted to the current review's retained
+craft findings. With none present, that response list must be empty; historical
+storyboard objections still use the objection lifecycle. Request-specific
+schema constraints never mutate the shared schema for later reviews.
+On-demand contribution retrieval can include the exact successful saved role
+reply alongside its exchange envelope. The store restricts lookup to this
+chapter's retained proposals/revisions; omitted replies are not replayed in
+initial prompts. Retrieved treatments and directions remain evidence, never
+current approval, and existing request-byte and evidence-round caps still apply.
+Specialist-scoped contributions omit their duplicate `exchange` envelopes just
+as chapter packets do. Relevant exchanges remain in the projected production
+record, and exact saved role replies remain available on demand. This avoids
+replaying whole-chapter scopes inside each task without changing durable history.
+Specific newly recorded findings carry their actual shot/scene scope instead of
+inheriting the entire review's scope. Historical envelopes remain unchanged.
+Specialist packets use the finding's authoritative shot ID to index another
+owner's off-task issue by ID, owner, shot, severity, status, confidence and
+snapshot hash. Full explanations remain for open global/unknown scopes, affected
+shots and the responding owner's findings. Another owner's resolved global
+history is indexed with its exact resolution reference; controlling approved
+constraints remain in the brief and current fact differences. The index preserves any
+open blocking status. Exact contribution retrieval supplies the full finding
+record, including evidence and authoritative shot scope; indexed or retrieved
+records do not approve themselves. Chapter reviewers and deterministic acceptance
+still receive/use the full record, so a smaller task packet cannot clear a hold.
+Specialist tasks also index no-change historical exchange prose instead of
+replaying it beside current role directions and issue bodies. The index retains
+exact IDs, hashes, ownership, revision links and resolution outcomes; substantive
+pending fact proposals keep their bodies. Exact archived retrieval is required
+before acknowledging or withdrawing an indexed proposal. Current facts, source,
+canon, constraints and unresolved issue states remain controlling. Durable
+history and chapter-wide review are unchanged.
+Task source AND reference verses cover target and continuity shots. The chapter
+scene/treatment overview remains present; omitted verses are explicitly listed
+and retrievable as source_verse:<number>, containing exact source and reference
+records. Chapter reviewers still receive the full chapter. No verse is removed
+from durable source or from assembly coverage by this prompt projection.
+When tasks from the same role repeat a disposition with the same outcome, the
+merger retains every distinct exact rationale and evidence text within the
+existing exchange bound. Opposing outcomes or substantive conflicting changes
+still hold. Original task replies are not mutated; no evidence is truncated.
+Specialists index other roles' whole-chapter summaries and disposition
+explanations separately from current task directions. The index preserves
+disposition IDs/outcomes and hashes, with exact role-output retrieval; successful
+current-run role replies are added to that retrieval map when saved. Another
+owner's global advisory keeps its complete requested action and issue state,
+while evidence is indexed. Open global blocking holds, unknown/affected shot
+findings and owned findings retain their bodies. An advisory request is not an
+approved constraint. Historical exchange indices retain only ID, owner, kind,
+input revision, supersession, scope counts, hash and resolution outcome; exact
+scope, dependency links and prose remain retrievable, rather than copying their
+large link arrays into every task. Duplicate audit ID lists are omitted from
+specialist prompts. The full saved record and chapter reviewers are unchanged.
+An explicitly selected completed initial Creative Director proposal may be
+recovered from retained Codex evidence only when project, phase and the complete
+immutable brief hash match. Completed transport/authentication evidence is
+required; evidence requests and incomplete replies do not qualify. Recovery
+revalidates the proposal through current source, treatment and ownership checks,
+logs source hashes and retained provenance, and consumes no new physical
+inference. It is neither a fresh model review nor chapter acceptance. Changed
+inputs hold before dispatch; later specialist replies remain normal reviews.
+The initial Scripture/cultural review can likewise be retained only for the
+identical immutable brief and identical upstream Creative Director proposal,
+from a completed original Codex review with clear treatment and no blocking
+findings. Reuse is logged separately and all normal ownership and treatment
+validation still runs. It never substitutes for review of later edits or film.
+If the initial Cinematographer's task responses all completed but a terminal
+aggregation failure rejected their matching dispositions, the completed task
+parts can likewise recover under the exact brief and identical upstream Creative
+and Scripture reviews. Every task requires completed Codex transport/auth/input
+provenance and the merged directions must cover every shot exactly once. Partial
+coverage, fact edits, domain responses and withdrawals do not qualify. Original
+requests/replies stay retained; the aggregate runs normal current validations,
+logs its task hashes and counts zero new physical inference. This is limited
+initial-prefix recovery, never approval of later edits or actual film.
+The completed initial Choreographer reply may also survive a later persistence
+fault. Recovery requires the same immutable brief and identical successful
+Creative, Scripture and Camera inputs, an original completed Codex event and
+complete direction/objection-only coverage. Every normal validation still runs;
+partial staging is not recovered as a completed role. The event/hash provenance
+is logged with zero new inference. Progress observation opens the production
+database read-only. Writer connections retain PERSIST journaling and wait up to
+five seconds for a brief competing writer, rather than immediately discarding a
+returned model result's completion receipt. Longer failures still hold for
+explicit reconciliation from retained transport evidence, never blind retry.
 Sound and music cue schemas likewise offer only the registered assets of the
 role's kind. With none available, cues stay empty and the role can request a new
 recording. File aliases and future generation IDs do not approve an asset;
@@ -587,3 +897,449 @@ rebuke/anger/grief/fear and uncertain passages cannot silently inherit a smile.
 Rufus/Tessa/Kit retain source-grounded treatment and exception reasons. Existing
 prompt overrides take precedence, and no role may infer Hatam timing, alter the
 recording or regenerate accepted media merely to adopt this preference.
+
+## Bounded inference tasks (Mark 6 preparation, October 31)
+
+The Codex route now uses existing immutable crew state as a read-only inference
+view. Six shot design specialists receive adaptive groups of up to 32 shots,
+plus adjacent/referenced shots, the chapter reference overview, applicable
+producer instructions, scoped treatment and all open cross-run objections.
+Unknown producer-note subjects remain visible. Returned directions must cover
+exactly the task IDs. The runtime merges complete task results into the existing
+role contribution; conflicting fact/owner responses hold instead of overwriting.
+Chapter-wide treatment, editorial, continuity, cultural/fidelity and Director
+reviews remain chapter-wide. Nothing in the task projection grants approval.
+
+Visual tasks select captioned canon references by the character IDs in their
+task and continuity context; unscoped visual evidence remains visible. Oversized
+Codex image packets use the existing deterministic, letterboxed reference-grid
+workflow, with up to four non-Jesus identities per board and Jesus separate.
+Original files and hashes remain unchanged; cached boards retain source maps and
+output hashes. These review views create no new character design or image-model
+call and cannot certify details absent from their pixels. Image count/byte limits
+and caption text are checked before submission, alongside the text/schema cap.
+
+Unchanged baseline intent stays in the brief. Changed accepted values, status
+and accountable owners stay explicit in acceptedFactDifferences; snapshot hashes
+pin the complete authority/evidence records. Exact before-facts must be retrieved
+before filmChanges, then pass the existing ownership/acceptance checks. Historical
+media notes are indexed rather than resent as current-pixel approval. Each
+finishing specialist retains its own full previous replacement recipe.
+
+A model can request exact saved contribution, shot, producer-note, audio-asset,
+media-review, snapshot or fact records. History indices have bounded pages. A
+fresh request receives the immutable task plus exact requested records, not the
+previous model conversation. Two evidence rounds maximum; missing evidence or
+oversize data holds. Full original exchanges remain in existing durable records.
+No model filesystem tools, new dispatcher or additional production stage is added.
+
+The encoder may share repeated object-row column names as well as exact
+repeated values. With the outer `objectRowsEncoding: prefix_columns_v1` marker,
+`$columns` lists keys and `$rows` contains their ordered value arrays. Short
+rows omit only trailing keys. References and nested rows resolve recursively;
+every value, Unicode string, row order and absent property is preserved. Arrays
+with incompatible key layouts remain ordinary JSON. Literal reserved table
+properties disable this encoding, and it is selected only when it reduces
+bytes. This is lossless transport, not another summary or a change to source
+facts, finding states or review authority.
+
+A receipted provisional chapter-consolidation evidence request may survive a
+local rejection of its unsubmitted follow-up. Recovery verifies the complete
+detail coverage, completed role prefix, exact native request/response/usage and
+known local failure. It carries the requested references and original round
+into the normal continuation. The first new native call receives the exact
+records at the next evidence round; previous attempts still count. Unknown
+failures, missing usage, partial coverage, exhausted rounds or a returned final
+verdict that was not applied cannot use this recovery. It creates no verdict
+or disposition and never resets the two-round limit.
+
+For `previous_role`, a known role with no prior recipe or contribution returns
+explicit `not_recorded` evidence. This is absence of optional history, never a
+review or approval. A retained role envelope keeps its provenance and limitations;
+finishing still retrieves the full previous replacement recipe when available.
+Unknown roles and missing required source/fact/approval references continue to
+hold rather than supplying invented evidence.
+
+Defaults: 200,000 supplied UTF-8 bytes per specialist request, 600,000 for a
+chapter review, and at most 180 physical inference attempts per crew run, separate
+from existing role/pass limits. Provider wrapper/schema overhead is checked again
+before submission. These are byte caps, not measured token caps. The early
+100 KB target cannot fit all protected notes in heavily annotated historical
+chapters. One live 16-shot historic task used 66,771 input tokens and returned
+all task directions. It supplied no images/cut and approved no film. Most inputs
+for a new chapter should be smaller; the initial 10-25k token target is not claimed
+achieved universally. Splitting calls can increase aggregate input (measured in
+one historical lighting case); no equivalent dollar saving is promised.
+
+Every physical Codex request retains its own immutable request, response and
+usage receipt. Role events retain the task prompts and merged result;
+Timeout/output-limit stops also retain the bounded partial stdout and their
+failure reason; an unknown exit status remains null rather than success code0.
+Transport termination does not establish a valid result or measured token usage.
+The default timeout is600seconds; an explicit operational
+`HEARTWORD_CODEX_TIMEOUT_SECONDS` can choose60..1800seconds before process start.
+No stop automatically retries or switches providers. Missing historical output
+requires explicit terminal reconciliation with unknown usage preserved.
+Archived contribution and previous-role retrieval also supports exact JSON
+field selectors such as `contribution:<id>#/roleOutput/emotionalTreatment` and
+`previous_role:<role>#/roleOutput/treatmentReview`. The reply pins the original
+record hash, selected-field hash and explicit partial scope. Missing fields are
+reported as not recorded, never invented. Prefer these fields for global
+assessments and existing `direction_shot` references for individual directions;
+several full role replies can exceed the transport ceiling even when the
+initial packet fits. Partial keys never satisfy the existing full-contribution
+retrieval requirement for acknowledgement or withdrawal. Original full records,
+fact retrieval, task coverage, approvals and byte/character guards are unchanged.
+Oversized whole-chapter consolidation can index its own already-reviewed
+directions only after complete unique scoped coverage. Each
+`current_direction:<shotId>` lookup returns the exact instruction, its hash,
+the owning role and full proposal hash; it creates no saved approval. Source,
+baseline, all local findings and current global review/issue evidence remain
+explicit. Empty returned directions retain the complete original proposal,
+including every instruction and finding, rather than its smaller prompt
+projection. Missing or ambiguous lookups hold. Evidence already retrieved is
+preserved if a local size guard switches to this projection; indexing does not
+consume another model call or reset the two evidence rounds.
+inferenceCalls reports physical attempts while calls retains old role-count
+semantics. Continuation requires the retained physical count. Audiovisual reviews
+remain one paid Gemini request per role: they cannot dispatch extra paid evidence
+iterations or specialist batches. No silent model/provider fallback is added.
+This is implemented in the isolated preparation worktree; deployment is pending.
+
+
+### Fresh correction review of a completed held plan
+
+A completed held planning run may supply its complete saved role proposals as
+context for a fresh review. The current source, canon and timed baseline must
+match exactly; producer evidence may change. Every role runs again through the
+normal ownership, treatment and Director gates. An explicit empty directions
+array retains all original instructions only; it does not inherit findings,
+responses, treatment clearance or a verdict. Old findings keep their existing
+lifecycle and require explicit owner dispositions rather than being appended
+again. Exact indexed instruction retrieval remains mandatory before reliance.
+The source run and matching saved events remain unchanged and provenance is
+recorded in the ordinary edit-command audit. No paid fallback is introduced.
+
+During consolidation, exact foreign owner responses addressing the current
+reviewer's issue IDs are supplied directly. Other response bodies remain
+retrievable by exact field ID. Displaying an answer neither resolves an issue nor
+claims the current owner has accepted it. A fully rejected first correction reply
+may be retried against the unchanged completed held proposals; any successful
+intervening owner proposal requires continuation of that newer work instead.
+Rejected raw event bodies retain their error and are never treated as success.
+
+
+### Oversized specialist evidence consolidation
+
+After lossless encoding and current-direction indexing, a specialist consolidation
+may index foreign issues and resolved owned issues by exact ID, owner, shot scope,
+severity and live status. Newly indexed open issues retain requested actions. Own
+open issues, unknown owners and links from pending fact proposals retain full
+bodies. All issue lifecycle entries remain visible; explanation bodies and original
+finding aliases stay retrievable by exact contribution ID. Redundant per-role
+finding/response indexes may be replaced by the complete issue-owner index and
+existing hashed response retrieval locator. This applies no disposition and does
+not confer acknowledgement of an indexed contribution. Director consolidations
+retain their existing full-blocker view. Source, canon, producer constraints and
+explicitly retrieved evidence are unchanged. When retrieved evidence already
+contains exactly the current direction array, share it losslessly instead of
+sending an additional direction-ID index. The transport character bound remains
+1,048,576; packet UTF-8 byte budgets are a separate check.
+
+A correction continuation distinguishes its fifteen saved context proposals from
+the prefix of owners actually reviewed in this run. Verify held-seed audit/hash,
+source/canon/timing, successful current native replies and exchange bodies, every
+request/response/usage/media receipt and pending evidence rounds. Only the proven
+completed prefix is skipped; all other owners still run afresh. Resume a provisional
+request at its original next evidence round; cumulative counts and the two-round
+limit never reset. Rejected/partial/unknown charges or uncommitted final verdicts
+remain holds. Normal ownership, treatment and Director acceptance gates apply.
+
+
+If a specialist follow-up still exceeds the transport bound, long foreign
+proposal summaries and foreign treatment-review explanations/limitations may be
+indexed by exact hashed field locator. Preserve each review's status, requested
+action and uncalibrated confidence. Current-role, Creative Director and
+Scripture/Cultural prose remain supplied. Explicitly requested evidence values
+are never projected or truncated, including full archived outputs. State clearly
+that indexed prose was not read and that status alone grants no certification
+or clearance. The Director's full review remains unchanged.
+
+Each native evidence request retains its 1–12 distinct-record limit. A resumed
+second evidence round may need the union of two earlier requests (at most24
+unique records); restore that verified union in local lookup groups of at most12.
+This creates no model calls or extra rounds. Preserve every earlier requested
+value and reject duplicate/oversized unions. A native request over12 remains
+invalid; round2 cannot request another round.
+
+
+### Lossless durable finding-ID prefixes
+
+For repeated durable UUID/role/pass/finding ID prefixes, the packet may declare
+`idPrefixEncoding: crew_id_v1` and an outer `idPrefixes` array. A value
+`{$crewId:[i,suffix]}` decodes to the exact string `idPrefixes[i]+suffix`; preserve
+the suffix verbatim, including leading zeros. Resolve ordinary `$ref` values and
+ID tokens recursively alongside prefix-column rows. This changes serialization
+only: no finding is renumbered, dropped, resolved or reassigned. Native response
+schemas and durable source records keep their original full IDs. Dictionary
+encoding is used only for sufficiently repeated prefixes when it reduces size.
+Literal reserved `$crewId` input disables this mode; strings with extra
+whitespace/newlines are never mistaken for exact identifiers. Full decoded JSON,
+field/value order and requested evidence remain unchanged and hash-verifiable.
+The existing transport bound is retained.
+
+
+### Exact fact absence
+
+For a well-formed fact locator in a recorded scene, a missing entity/key returns
+explicit `not_recorded` evidence tagged `notAFact`, the snapshot hash, and actual
+entity IDs/fact keys for that layer. No value, substitute fact, approval or
+before-fact authority is supplied. Known recorded facts keep their exact legacy
+response. Unknown scenes, unsupported namespaces and malformed locators still
+fail. Per-shot lighting normally uses state:<shotId>/light.direction; do not
+guess a scene-ID state or a generic lighting field.
+
+A correction continuation may recover a locally failed known-absence lookup only
+when its recorded native provisional request actually asked for that exact ref,
+the original snapshot independently proves absence, all request/response/usage
+receipts match and the usual ownership/round/input checks pass. Other missing or
+unsupported lookups remain ineligible. The next native response receives absence
+and exact-name hints; the operator does not silently redirect a query or invent
+a scene fact. An absence placeholder cannot authorize a filmChanges before-fact.
+
+### Mark 6 finite Lighting recovery (November 5)
+
+The default evidence ceiling remains two. Dan authorized finite logged internal
+limit extensions. An exhausted first-pass correction owner may receive exactly
+one additional round (maximum three) only through an edit-command audit pinned
+to the failed run, result SHA, brief hash, role, and explicit authority. The
+continuation verifier preserves all receipts, completed owners and requested
+records; it does not reset the evidence counter. Other roles and second-pass
+reviews retain the default ceiling. At the final allowed round the native schema
+requires empty contextRequests; the owner must return a review with unresolved
+holds where evidence is insufficient. This grants no automatic approval, fact
+selection, finding closure, extra global reservations or paid calls.
+
+### Explicit refusal of an oversized full archive body
+
+After an exact native planning-rollup packet fails the existing transport budget,
+a requested full contribution may be replaced by an explicit not-supplied index.
+It carries the original immutable hash/byte count and exact field pointers with
+hashes/sizes. The requested body remains unread, not a fact or approval. Other
+requested records remain exact. Field selections themselves are never silently
+replaced by this index. The agent can request specific fields within its remaining
+evidence rounds, or return a hold for unmet evidence. An indexed full request
+cannot authorize acknowledgement, withdrawal or Director chapter approval.
+
+If the Director packet still exceeds budget, already-resolved known-owner issue
+bodies without pending substantive links may be indexed. All open blockers,
+currently supplied open bodies, pending links and unknown records remain full;
+IDs, owners, scope, severity and status remain visible for every indexed record.
+This uses the existing retrieval/rollup stage, adds no inference round, changes
+no durable issue lifecycle, and does not raise the installed CLI transport cap.
+
+When the Director's exact requested instruction field still cannot fit, the
+last projection may index already-indexed NONBLOCKING global advisory action
+prose and foreign long summaries/review explanations. IDs/scopes/severities/live
+statuses remain visible, with an exact archive hash and field lookup. ALL open
+blocking bodies stay full and unchanged; current-role findings/instructions,
+Creative Director/Scripture-Cultural prose and every explicitly requested field
+remain full. Foreign status/action/confidence is not certification of its indexed
+rationale. No advisory is passed or waived; requirements must be retrieved
+before dependent execution. This preserves the fixed transport/evidence caps.
+
+When a requested exact directions field equals the current proposal by hash,
+the consolidation supplies that same complete array and removes its redundant
+shot index. This applies equally to a full role output and a selected array.
+It changes no instruction or acknowledgement status.
+
+Chapter rollups now use the same archived-ancestry count/hash/lookup index as
+scoped tasks. Obsolete ancestry-link ID lists remain in exact saved exchanges;
+they are not another copy of active issues. The full record hash pins them.
+Offline continuation preflights must rebase to a production-shaped UUID, not
+a shorter placeholder that understates the real transport payload.
+
+A continuation held locally before making ANY native request can be recovered
+only when it has a verified parent pending query, exact retained-prefix rebase,
+one failed-role budget-hold event, unchanged native counts and unchanged
+inherited receipts/evidence rounds. Preserve the additional local logical
+attempt. Unknown failures, tampered pending metadata and reset counts reject.
+
+### Invalid exact-fact syntax
+
+A fact locator containing invalid JSON (including prose after its closing array)
+returns an explicit invalid_fact_reference response, retaining the raw requested
+string. No lookup is performed, no valid prefix is silently substituted, and no
+before-fact is supplied. The response is notAFact/notAnApproval; the existing
+mutation guard excludes it. The owner must re-request a valid exact locator
+within its unchanged evidence-round cap. Well-formed invalid namespaces and
+unknown scenes still reject as before.
+
+A correction interrupted by the older JSON parse exception can resume only if
+the exact exception is independently reproduced from a malformed fact string
+in its receipted native pending request, and the current lookup yields that
+explicit nonfact error. Unrequested references, unrelated/wrong error messages,
+missing receipts, altered scope and reset counts reject. Completed owners,
+source inputs, prior calls and the original next evidence round are retained.
+
+### Hash-pinned direction deltas and literal before-facts
+
+Recorded-proposal corrections can return directions=[] with optional
+directionUpdates={baseDirectionsSha256,updates:[complete changed entries]}.
+The base hash must match the exact saved directions array. Nonempty full
+replacement directions cannot be mixed with deltas. Duplicate/foreign IDs,
+empty updates and stale bases reject atomically. Every unlisted instruction
+is cloned exactly. The accepted contribution still contains every chapter
+shot; the native raw delta and base hash remain in the receipt archive.
+A partial directions array without this explicit contract is still invalid.
+The continuation verifier uses the same normalization and requires the
+archived request schema to have offered the delta field.
+
+Mutation-critical retrieved fact records also appear as literal JSON after
+the bounded packet, grouped by their exact hash. This avoids requiring model
+reconstruction of deeply referenced tables to copy a before-fact. Preserve
+the entire fact object including owner/status/evidence. A proposed baseline
+object is a recorded before-state for proposing a correction, not approval of
+pixels. Invalid/absent references and partial-field selections are excluded. Existing field/ownership/
+Director acceptance gates and input caps remain unchanged.
+
+A timed-out pending evidence round can be retried at that SAME round only
+when terminal transport/stream receipts prove no completed turn, agent result
+or tool side effect. Only startup metadata, reasoning and the already-known
+nonfatal code-mode-host-disabled notice are eligible. Unknown errors reject.
+All earlier successful evidence, the timed-out native reservation, logical
+attempt and unreported usage remain preserved; usage is never invented as
+zero. The new retry has a distinct run/event ID and remains within the global
+request/account caps. This does not reset the evidence-round counter or
+accept any incomplete proposal.
+
+### Director evidence priority
+
+For chapter acceptance, current treatmentReview objects remain complete, including
+rationale/evidence and limitations. Specialist compression may still index foreign
+review explanations. Director budget fallback first indexes eligible resolved
+history and optional nonblocking advisory/summary prose, before indexing its own
+complete direction handoff. Rebuilding an indexed handoff preserves prior archive
+choices. Required reviews that cannot fit cause a local hold; no implicit waiver,
+truncation, owner disposition or chapter approval is introduced. Exact requested
+fields and every open blocking body retain existing protections.
+
+### Complete instruction fields versus archived exchanges
+
+Direction sources expose exact existing JSON-pointer locators for the complete
+instruction array, summary and objection responses. Recorded-owner review also
+names its complete-array locator in the literal direction base. A full contribution
+includes archived exchanges; request it only when that history itself is needed.
+Requesting a directions leaf supplies the entire saved array, never an inferred
+partial array. A refused full-archive lookup remains unread and cannot authorize
+approval; no automatic substitution or implicit acknowledgement is added.
+
+Chapter-owner budget fallback indexes eligible foreign issue/review prose before
+indexing the owner's own complete handoff. Foreign issue requested actions, own
+open bodies, pinned source/canon/audio and explicitly requested fields keep their
+existing protections. Rebuilding an own-direction index preserves earlier archive
+choices. Director still retains all open blockers and all mandatory review bodies.
+
+
+### Unrequested prior replies and nonblocking foreign explanations
+
+On a Director transport hold, a pure recorded proposal's prior objection-response
+explanations may be archived behind exact source/count/hash lookup. Live owned
+issues remain full and require fresh explicit responses. Prior substantive film
+changes, owner responses, withdrawals, generation requests, unknown issue rows,
+or pending fact links disable this projection. Explicitly requested response
+fields remain exact; indexing old outcomes supplies no fresh disposition.
+
+Eligible foreign open advisory explanations can use the existing issue index:
+ID, owner, shot scope, severity and status, with complete requested actions in a
+separate uniform table keyed by issue ID. Uniform rows preserve the existing
+lossless table encoding rather than inflating every entry with varied keys. An unread
+archive count/hash pins the full array; each body is retrievable with
+contribution:<issue-id>#/findingRecord. Own open bodies, ALL open blockers,
+unknown owners and pending fact links remain full. Mandatory current treatment
+reviews and exact requested fields stay complete. No advisory is cleared or
+waived, no omitted evidence is claimed read, and no approval is inherited.
+Required explanations that still cannot fit cause an honest local hold.
+
+
+### Fresh Director review after an indexed-instruction hold
+
+The existing verified first-pass continuation also admits one narrowly evidenced
+completed hold: an audited continuation has fourteen unchanged exact-input owner
+reviews, followed by a pure held Director reply whose actual request omitted its
+own instruction bodies behind the exact complete ID/hash index. The native reply,
+usage, schema, attachments, prior continuation audit, all retained events and
+full saved record are replay-verified. Already supplied complete instructions,
+changed owner proposals, new findings, substantive effects, resolved outcomes,
+accepted contributions, unmatched receipts or reset counters are ineligible.
+
+This starts a FRESH Director owner review, not a resumed old evidence round or
+inherited approval. Preserve all original calls, receipts and unresolved issues;
+retain the actual held verdict as context. The fourteen identical-input reviews
+are rebased through existing exchange validation. The Director must explicitly
+review its complete instructions and resolve or carry its own issues. Its old
+pending lookup list is not replayed. Source/canon/media changes still require
+normal fresh review; no foreign issue closure or acceptance gate is bypassed.
+Recorded Director corrections cannot hide their sole generation instructions
+behind an index to fit a request: hold locally rather than submit that incomplete
+handoff. Genuine completed scoped-detail consolidations keep their existing
+indexed-direction and exact-retrieval behavior.
+
+
+### Bounded text parts on the same included Codex model
+
+A complete chapter instruction review can exceed one text item's character limit
+while fitting the selected model's default context. The existing provider keeps
+legacy ephemeral exec and unchanged historical input hashes for smaller requests.
+Oversized bounded requests use the same authenticated CLI app-server with one
+fresh ephemeral thread/turn, ordered text parts that rejoin the exact prompt,
+local still images and the same output schema. Per-part1,048,576-character and
+aggregate1,700,000-character guards are separate from the explicit chapter UTF-8
+budget; Mark6's authorized chapter bound is1,750,000bytes. The default model
+context remains500,000tokens; no experimental window or model/provider fallback.
+
+Before submission, verify ChatGPT account, exact model/medium effort/read-only
+sandbox, no prior turns or imported instructions, and no active MCP tools or
+resources. Read configuration only in process memory to disable inherited named
+MCP/plugin entries; empty maps alone do not erase merged user settings. Never
+copy account/configuration secrets into film evidence, change user configuration
+or read/write authentication files. Disable other agent tools and notifications.
+Startup-only checks may stop before the model turn without creating an inference.
+
+Retain actual protocol output and actual aggregate usage. The parser checks the
+isolated prepared thread, one started/completed turn, item identities, output JSON,
+valid token totals and the unchanged model context. Unknown tools, RPC errors,
+missing usage, failed/interrupted turns, wrong auth/model or repeated handshake
+responses fail closed with no retry/fallback. Old receipts stay unchanged and
+all cumulative reservations remain authoritative. This extends only transport;
+source, ownership, acceptance and the final film/editable-project requirements
+remain unchanged. Byte counts remain distinct from measured model token usage.
+
+
+### Aggregate turn-input limit and exact context framing
+
+The installed server rejects turn/start when the SUM of text parts exceeds
+1,048,576 characters; smaller individual parts do not bypass that aggregate
+transport limit. A live rejected request retained the exact JSON-RPC -32602
+input_too_large error before any turn started. Its reservation remains counted;
+no zero usage receipt or model completion is invented.
+
+For a larger bounded packet, use documented thread/inject_items on the fresh
+isolated ephemeral thread to supply the packet prefix as ONE user context item
+with bounded input_text parts. The EXISTING final instruction line goes into
+turn/start with the local images and output schema. Prefer a newline boundary;
+fall back to the existing final text part. Context text plus final-turn text must
+rejoin the original immutable prompt exactly. Nothing is duplicated, summarized
+or added; this is one provided review packet, not accumulated discussion history.
+Only after context acknowledgement and normal submission recording does the
+single model turn start. Aggregate prompt/model budgets and all ownership gates
+remain unchanged. Metadata-only probes must throw before that model turn.
+
+The existing continuation verifier can retry the SAME pending round after this
+specific pre-model rejection only when the prepared model/provider/sandbox,
+actual full-prompt character count, exact two-record RPC failure, absence of a
+turn/model output/usage, parent pending evidence and original counts all match.
+Retain the raw rejection and its hashes, separately from genuine unknown-usage
+timeouts. Unknown errors, accepted turns, altered sizes, wrong models or reported
+usage are not eligible. No counter reset, refund, source approval or foreign
+finding disposition is supplied by this recovery.

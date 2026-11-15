@@ -1,5 +1,92 @@
 # Audio & Speakers
 
+Local speaking recovery may explicitly supply `sectionPerformancePrompts` for
+unsubmitted source sections. Each direction retains the same locked-canon and
+length checks. The measured source plan, audio, reference, crop and production
+revision remain unchanged. A retained section cannot receive a different
+direction; its saved prompt hash and available actual native request must agree.
+The line manifest records resolved section prompts and each section's prompt hash;
+complete-line provenance distinguishes them from the unchanged default prompt.
+This permits a failed section's speaking instruction to be corrected while keeping
+reviewed native footage. It adds no automatic retake, new speech, acceptance,
+paid fallback or HTTP control. Per-section gates and complete-line AV still apply.
+
+Local speaking recovery can explicitly bind an exact held `line.json` SHA to
+the same request ID, source, canon, prompt and production revision. It verifies
+every retained raw/audio/carry hash and reuses native sections without another
+generation. A corrected crop after the first section rebuilds separate picture
+and native-coordinate carry derivatives; the original manifest and derivatives
+remain retained. After multiple generated sections, a new crop must lie wholly
+inside the previous crop. Each cached section preserves its actual native input
+path, hash and crop at generation, separately from the newly selected carry.
+Decoded RGB pixels inside the new crop must match the original native input;
+reframing never claims that an earlier call used a new derivative. New sections
+use the newly cleaned actual retained endpoint. Unsubmitted source audio is
+regenerated locally for byte verification before further inference. Recovery
+never approves the line or bypasses per-section submission/review/cost gates.
+
+Editing can retain a complete review-performance PCM master through the existing
+`retain_review_performance_master` typed command. Its exact file/evidence hashes,
+physical source duration and a signature of effective source intervals, speaker
+treatment and active cast-master bytes/mappings must match. Planning omits this
+output choice, preserving its visual revision. The renderer still validates
+original/cast availability and attribution, then reads the retained master at
+the original global source offsets. Its saved map retains both original input
+lineage and actual performance references. It does not change ingestion, voice
+or LTX inputs or authorize arbitrary model-supplied audio paths.
+
+Contiguous master reads cross merely visual/speaker-label boundaries once,
+avoiding new resampling seams. Actual approved pauses/source discontinuities
+still split the read and receive the existing chopped-onset/end checks; ordinary
+raw/cast rendering retains its speaker-turn checks. Whole source coverage, safe
+pause, rendered audio and final audiovisual gates remain. Retaining a performance
+for review does not certify native-language accuracy or release approval.
+
+A retained `retain_preprocessed_music` edit can bind an already producer-approved
+music stem to its exact asset SHA and retained approval-evidence SHA. Editing and
+finishing expose only that compact approval; changed/missing evidence holds.
+Such a cue explicitly uses `preserveApprovedMix: true`: finishing retains its
+existing level/ducking rather than ducking it again. Relative gain may remain0dB
+or be lowered in a later reviewed edit. Other overlapping music, a duplicate
+stem, unapproved preservation flags and level increases hold. Ordinary music/SFX
+retain their existing gain and ducking checks. Speech stays on its separate
+unchanged base track, with the existing latency-compensated peak limiter.
+This extends finishing's cue recipe, not its source clock or approval authority.
+
+Bound single-shot speech assembly trims decoded cast-master samples at the
+measured sample rate, including fractional-millisecond source boundaries.
+It retains enough real picture frames to enclose the entire utterance, refuses
+frame cloning for a short source, and muxes without a shortest-stream cutoff.
+The MP4 movie clock uses the audio sample rate so its edit list preserves the
+exact sample duration. Ordinary and legacy unbound assembly retain their
+existing behavior. Evidence records sample endpoints and retained frame count;
+no new speech, source timing, picture acceptance or chapter coverage is implied.
+
+An explicitly authorized local native section retake may supply an integer
+seed to the existing A2V adapter. The default stays 42; the actual submitted
+seed remains recorded in the native request. This permits a bounded failed-tail
+correction with exact earlier sections/source/carry retained. It adds no
+automatic retry, audio change, paid fallback, model/settings change or quality
+acceptance. The new complete performance still requires audiovisual review.
+
+The normal voice/lip-sync stage can forward `performancePrompts[shotId]` to
+the existing local speaking provider. Each exact speaking shot receives only
+its own scene-specific prompt; omission retains the provider default. Locked
+canon validation and final-prompt provenance remain in the provider, and all
+source, single-face, authorization and candidate-review checks still apply.
+This is an internal operational option, not a new HTTP control or approval.
+
+November 4 Mark6 bounded test: the chained local speaking provider accepts an
+explicit scene-specific performancePrompt. It is sent verbatim apart from
+appending any locked visual facts, and keeps the existing length/prohibited
+phrase checks; empty overrides hold before inference. Default callers retain
+their current prompt. The exact prompt is recorded in line/native provenance.
+An explicit speaking prompt passed the short Herod48kHz control; this is evidence
+for that sample, not approval of other sections or full lines. Existing injected
+section generation can reuse an exactly verified reviewed native prefix without
+counting another inference; source, identity, input/crop and lineage proofs and
+complete-line AV review remain mandatory.
+
 Finishing executes its stored picture and sound filter components as separate
 FFmpeg graphs. A concatenated title/scene can change decoded color metadata;
 reinitializing a shared graph can discard buffered audio and shift the source
@@ -34,6 +121,14 @@ prepared. Empty/foreign scopes hold before spending. The ordinary unscoped
 chapter run retains its full-batch checks, source bindings, budget reservations,
 single-face rule and candidate acceptance requirements.
 
+The internal voice/lip-sync options can pass the existing local section-generator
+dependency through to `LtxChainedSpeaking`. This lets the Mark 6 operational
+runner reserve its native-call allowance at the actual A2V submission boundary,
+without counting the surrounding repeated source/plan checks as generations.
+All stage authorization, source/canon bindings, crops, uninterrupted line audio,
+attempt retention and audiovisual acceptance remain unchanged. No function-valued
+dependency is exposed through the HTTP route and no cloud fallback is enabled.
+
 ## Inputs
 
 - A narrator's full recording of the chapter/book in the heart language (the
@@ -50,6 +145,11 @@ single-face rule and candidate acceptance requirements.
   language, still driven by the same source recording/text where possible.
 
 ## Lip-sync
+
+The local A2V section adapter preserves the negative prompt from the successful
+standalone speaking request, rather than inheriting Desktop's generic video
+default. Request evidence records it. This restores request parity only; actual
+returned lip/jaw timing, identity and complete-line joins still require review.
 
 October 22 assembly preservation: single-shot assembly uses an existing exact
 utterance binding and its source/voice-matched cast-map entry, including an
@@ -72,15 +172,31 @@ for sync, silence behavior, identity, expression and join quality. Five-second
 speaking windows failed the reviewed tests; the native five-second generation
 minimum is filled only with tail silence for short sections. Starting-image
 conditioning is not hard frame locking and does not guarantee later motion.
+When balanced sections leave a join during speech, the existing short-speaking
+planner checks for a complete route through measured quiet on the same frame
+clock. It may use another container to keep every internal join in quiet;
+source samples remain consecutive and the full-line soundtrack stays intact.
+If no such route exists within four seconds per section, the explicit join-review
+finding remains. Silence detection is candidate evidence, not native attestation;
+the actual approved cast performance and complete assembled line still need review.
 See the [preferred procedure, evidence and implementation status](../production/LTX_LIPSYNC_EXPERIMENT.md).
 
-This supersedes the October 6 Kling-first preference. The normal automatic
-stage still constructs `KlingLipSyncProvider`; segmentation/chaining/assembly
-currently use the verified standalone procedure and are not yet integrated
-there. This wiring must not be mistaken for the new production preference.
+This supersedes the October 6 Kling-first preference. The Mark 6 preparation
+worktree now connects the existing stage to local `LtxChainedSpeaking` by default;
+`provider: "kling"` or `HEARTWORD_LIPSYNC_PROVIDER=kling` selects Avatar explicitly.
+Scene-motion selection remains separate. LTX requires its session credential,
+current source/canon/voice bindings and a separate evidenced native-coordinate
+picture crop per long speaking shot (`pictureCrops[shotId]`); there is no universal
+portrait crop or cloud fallback. Short-source clips are padded only at the tail
+to the backend's five-second container. The assembled candidate uses a single
+full-line audio encode and remains held for complete-line AV and producer review.
+
+Local synthetic-media tests verify exact sample partition, retained-frame carry,
+continuous assembled audio and the existing candidate workflow. They do not
+establish actual Mark 6 lip sync, silence behavior, caption cleanup, identity or
+runtime. This implementation has not been deployed to the original checkout.
 Kling remains available under existing production/source/cost/review gates.
-Ordinary scene-motion provider selection is separate from A2V lip-sync; this
-decision does not authorize synthesized replacement speech or alter canon.
+No synthesized replacement speech or canon change is authorized by this route.
 
 October 14 verified direction support: the existing Avatar adapter accepts
 saved descriptive acting intent compiled into documented `prompt` and optional
@@ -99,8 +215,7 @@ reference was a standalone proof of concept, never used in a film; no film
 binding/approval is inferred. Two bounded comparison requests were rejected for
 insufficient API balance, with no tasks returned or automatic retries.
 That Avatar-specific comparison remains incomplete. The later local LTX tests
-and October 30 producer preference are recorded above; automatic-stage migration
-has not been implemented.
+and October 30 producer preference are recorded above; actual Mark 6 production validation remains pending.
 
 Dan's standing preference when using Kling Avatar (October 14): for most neutral and positive lip-sync
 performances, prefer “Smiling warmly at the camera, the character exudes a calm
@@ -322,7 +437,10 @@ An exact lip-sync/performance window has its own `bind_speech_run_utterance`
 history record, existing shot binding, approved voice version and independent
 `timingEvidence`. It may cross internal alignment rows of the same run without
 requiring internal verse alignment. Shared cast offsets are reused directly;
-separate retained cast files can be joined locally for that exact provider
+native sample endpoints may use fractional milliseconds. Bindings retain
+finite source-contained values rather than rounding a complete endpoint or
+extending it beyond the accepted source window.
+Separate retained cast files can be joined locally for that exact provider
 window without revoicing or changing the soundtrack. Cached joins retain and
 verify input/output hashes and duration. Neither range attribution
 nor a broad duration envelope proves a semantic phrase/emotional beat. Internal
@@ -359,3 +477,27 @@ policy or permission to regenerate accepted assets.
 - Final call on cloud GPU rental vs. a dedicated workstation for lip-sync.
 - How closely per-character dialogue audio needs to be split out of the single
   narrator recording vs. regenerated per character.
+
+### Mark 6 alignment preparation finding (October 31)
+
+Direct model listening found the 73 unmatched target words in the recording.
+This is supplementary auditory evidence, not exact word timing or native
+verification, and does not inflate the earlier 95.46% local placement metric.
+The five short intervals called non-Scripture also contain speech. Future
+unidentified model results remain unresolved, never proof of non-Scripture or
+silence; the original source is retained. Some model timestamps exceeded their
+clip lengths and are rejected. Short repeated words and clip-edge targets still
+have explicit timing uncertainty. Original source text/audio and live DB are
+unchanged.
+
+Three isolated LTX test packets are prepared with original, exact-sample source
+clips, tail-padded section WAVs, approved Jesus v5 identity references, scene-frame
+requests and frame/sample plans. They cover a 3.1 s v37 line, an 8.5 s v4 chained
+line and a 3.891 s v50 line retaining 200 ms of existing quiet before/after the
+quote. Original narrator audio tests feasibility; it does not approve a character
+voice or replace the eventual cast performance. Model quote edges remain proposed.
+Scene-framed starting images and a measured chain crop still require preparation
+and acceptance before generation. Five local inference containers are forecast at
+about 68 minutes from the historical median, before retakes/review. Read-only
+Mac preflight confirms local Fast is available and cloud generation is disabled.
+No Mark 6 video or voice request has been submitted.

@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig-reference-handoff-20261105.json",
+  "include": [
+    "./finish-demand-coverage-root-review-20261109.ts",
+    "./reuse-demand-ending-for-sorrow-20261109.ts",
+    "./generate-herod-sorrow-native-20261109.ts",
+    "./review-herod-sorrow-complete-20261109.ts",
+    "./accept-herod-sorrow-20261109.ts",
+    "./review-herod-sorrow-complete-selected120-20261109.ts",
+    "./accept-herod-sorrow-selected120-20261109.ts"
+  ]
+}

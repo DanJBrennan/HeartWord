@@ -1,0 +1,10 @@
+import 'dotenv/config';
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {getGeminiReviewFile} from '../../src/providers/gemini-text.js';
+const folder='outputs/mark6-production/complete-feeding-parent-source-window-20261111',read=(p:string)=>JSON.parse(readFileSync(p,'utf8')),m=read(folder+'/review-preparation-proof.json'),p=read(folder+'/files-main-attachment.json');
+if(p.attemptId!=='complete-feeding-parent-accepted-normal1706'||p.localPath!==m.whole||p.expected.sha256!==m.wholeSha256||createHash('sha256').update(readFileSync(m.whole)).digest('hex')!==m.wholeSha256)throw Error('Exactretainedreviewfile required');
+const file=await getGeminiReviewFile(p.file,p.expected),observed={at:new Date().toISOString(),attemptId:'complete-feeding-parent-accepted-normal1706',localPath:m.whole,expected:p.expected,file,serverHashSizeMimeAndResourceVerified:true,generationCalls:0,transportRequests:1,notMediaAcceptance:true,wholeFilmReady:false};
+const path=folder+'/file-metadata-observations.json',j=existsSync(path)?read(path):{observations:[]};j.observations.push(observed);writeFileSync(path,JSON.stringify(j,null,2));
+if(file.state==='ACTIVE')writeFileSync(folder+'/files-main-attachment-ready.json',JSON.stringify(observed,null,2));
+console.log(JSON.stringify({name:file.name,state:file.state,serverHashVerified:true,generationCalls:0}));if(file.state==='FAILED')throw Error('Attachmentprocessingfailed; nogeneration/noreupload');

@@ -1,0 +1,18 @@
+import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {reserveBoundedAttempt} from './attempt-control.js';
+const root='outputs/mark6-production',read=(p:string)=>JSON.parse(readFileSync(p,'utf8')),key=process.argv[2]??'';
+if(!['james','jude','jude-layering-v2','executioner-poses'].includes(key))throw Error('Explicit prepared character required');
+if(!read(join(root,'full-production-resumption-20261105.json')).fullProductionHoldLifted)throw Error('Authorization required');
+const job=read(join(root,'wardrobe-sheets-prepared-20261105.json')).jobs.find((j:any)=>j.key===key),id=key==='jude-layering-v2'?'mark6-jude-wardrobe-sheet-20261105-v2':key==='executioner-poses'?'mark6-executioner-pose-sheet-20261105-v1':`mark6-${key}-wardrobe-sheet-20261105-v1`;
+if(!job||createHash('sha256').update(job.prompt).digest('hex')!==job.promptSha256)throw Error('Prepared prompt missing or changed');
+for(const ref of job.references)if(createHash('sha256').update(readFileSync(ref.absolutePath)).digest('hex')!==ref.sha256)throw Error('Reference bytes changed');
+const folder=join(root,'wardrobe-sheets-20261105',key),journalPath=join(root,'images/execution.json'),journal=read(journalPath);
+if(existsSync(join(folder,'request.json'))||journal.calls.length>=journal.maximumIncludedCalls||journal.calls.some((c:any)=>c.id===id||c.status==='pending_builtin'))throw Error('Existing or pending image requires reconciliation');
+mkdirSync(folder,{recursive:true});reserveBoundedAttempt(root,'includedStartingFrameGenerations',id);
+const request={id,status:'reserved_for_single_builtin_call',...job,canonOrLiveContextMutation:false};
+writeFileSync(join(folder,'request.json'),JSON.stringify(request,null,2),{flag:'wx'});
+journal.calls.push({id,route:'included_builtin_imagegen',status:'pending_builtin',referenceEvidence:join(folder,'request.json'),apiFallback:false,providerModel:'built-in included image tool; no paid fallback'});writeFileSync(journalPath,JSON.stringify(journal,null,2));
+const execution=read(join(root,'execution.json'));execution.images.calls=journal.calls.length;writeFileSync(join(root,'execution.json'),JSON.stringify(execution,null,2));
+console.log(JSON.stringify({id,prompt:job.prompt,referenced_image_paths:job.references.map((r:any)=>r.absolutePath)}));

@@ -6,8 +6,8 @@ import { dirname, join, relative } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { crewBriefHash, digest, loadCrewBrief, productionAssetPath } from "../creative-direction/crew-context.js";
 import { latestCrewRun } from "../creative-direction/crew-store.js";
-import type { CrewResult } from "../creative-direction/crew-types.js";
-import { planEditorialCut } from "./editorial-plan.js";
+import type { CrewBrief, CrewContribution, CrewResult } from "../creative-direction/crew-types.js";
+import { planEditorialCut, resolveEditorialClip } from "./editorial-plan.js";
 import { mediaDurationMs } from "./finishing.js";
 import { assertSpeakerAudioContinuity, continuousAudioGroups, type ResolvedAudioPlacement } from "./continuous-audio.js";
 import { decodeToPcm16Mono } from "../ingestion/pitch.js";
@@ -36,14 +36,60 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
   if (crewBriefHash(brief, "editing") !== run.brief_hash) throw new Error("Editing inputs changed; review the current footage first.");
   const result = JSON.parse(run.result_json!) as CrewResult;
   const cut = planEditorialCut(brief, result.contributions.picture_editor!);
+  return executeEditorialCut(db, dataDir, projectId, brief, cut, { idempotencyKey: `editorial:${runId}`, runId });
+}
+
+/** A producer's explicit, exact-input review is retained as an edit, never a crew run. */
+export interface ProducerReviewedCut {
+  id: string;
+  reviewer: string;
+  evidence: string;
+  briefHash: string;
+  contribution: CrewContribution;
+}
+
+export function renderProducerReviewedCut(db: DatabaseSync, dataDir: string, projectId: string,
+  review: ProducerReviewedCut): { path: string; renderId: string } {
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}$/.test(review.id) || !review.reviewer.trim() || !review.evidence.trim() ||
+      !review.contribution.edits?.length || review.contribution.edits.some(edit => typeof edit.clipId !== "string" || !edit.clipId)) {
+    throw new Error("A named producer review with evidence and explicit accepted clip IDs is required.");
+  }
+  if (review.contribution.decision !== "approve" || review.contribution.findings.some(f => f.severity === "blocking") ||
+      (review.contribution.coverageRequests?.length ?? 0) > 0 ||
+      (review.contribution.acceptanceChecks && review.contribution.acceptanceChecks.status !== "clear")) {
+    throw new Error("Producer cut must be approved with no blocking findings, pending coverage, or held acceptance checks.");
+  }
+  const reviewSha256 = digest(JSON.stringify(review)), idempotencyKey = `producer-editorial:${projectId}:${review.id}`;
+  const existing = db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND idempotency_key=?").get(projectId, idempotencyKey);
+  if (existing) {
+    const saved = JSON.parse(String(existing.payload));
+    if (saved.producerReview?.reviewSha256 !== reviewSha256 ||
+        digest(readFileSync(productionAssetPath(dataDir, saved.path))) !== saved.producerReview.outputSha256) {
+      throw new Error("The saved producer review or rendered media changed; preserve that revision and create a new review.");
+    }
+    return { path: saved.path, renderId: saved.renderId };
+  }
+  assertEditorialRebuildable(db, projectId);
+  const brief = loadCrewBrief(db, dataDir, projectId, "editing");
+  if (crewBriefHash(brief, "editing") !== review.briefHash) throw new Error("Editing inputs changed; review the current footage first.");
+  const cut = planEditorialCut(brief, review.contribution);
+  return executeEditorialCut(db, dataDir, projectId, brief, cut,
+    { idempotencyKey, producerReview: { ...review, reviewSha256 } });
+}
+
+function executeEditorialCut(db: DatabaseSync, dataDir: string, projectId: string, brief: CrewBrief,
+  cut: ReturnType<typeof planEditorialCut>, authority: { idempotencyKey: string; runId?: string;
+    producerReview?: ProducerReviewedCut & { reviewSha256: string } }): { path: string; renderId: string } {
   const directory = mkdtempSync(join(tmpdir(), "heartword-edit-"));
   const runFfmpeg = (args: string[]) => execFileSync("ffmpeg", ["-v", "error", "-n", ...args], { stdio: ["ignore", "ignore", "pipe"] });
   try {
     const videos: string[] = [];
     for (const [index, edit] of cut.timeline.entries()) {
-      const clip = edit.shotId !== null ? brief.shots.find(s => s.id === edit.shotId)!.clip!
+      const clip = edit.shotId !== null ? resolveEditorialClip(brief.shots.find(s => s.id === edit.shotId), edit.clipId)!
         : [...brief.editorialOpening ?? [], ...brief.editorialClosing ?? []].find(beat => beat.id === edit.editorialBeatId)!;
       const input = productionAssetPath(dataDir, clip.path);
+      // Retain the exact selected media in the executable saved timeline.
+      if (edit.clipId !== undefined) { edit.path = clip.path; edit.sha256 = digest(readFileSync(input)); }
       if (edit.sourceStartMs + edit.endMs - edit.startMs > mediaDurationMs(input) + 50) throw new Error("A clip is shorter than its saved duration; request coverage instead of freezing it.");
       const frames = Math.round(edit.endMs * 24 / 1000) - Math.round(edit.startMs * 24 / 1000);
       if (frames < 1) throw new Error("An edit is shorter than a video frame.");
@@ -83,7 +129,14 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
     // listener, or cover shot within a spoken interval keeps the same cast
     // voice until that source interval ends.
     assertSpeakerAudioContinuity(brief.audio, resolvedAudio);
-    const audioGroups = continuousAudioGroups(resolvedAudio);
+    const performance = brief.retainedPerformanceMaster;
+    const readAudio = performance ? resolvedAudio.map((placement,index) => ({...placement,path:performance.path,
+      sourceStartMs:brief.audio[index]!.startMs,sourceEndMs:brief.audio[index]!.endMs})) : resolvedAudio;
+    assertSpeakerAudioContinuity(brief.audio,readAudio);
+    // Preserve the already reviewed waveform across speaker/visual labels.
+    // Only actual extraction ends/production pauses can cut this master;
+    // standard raw/cast rendering keeps its original speaker-turn guards.
+    const audioGroups = continuousAudioGroups(readAudio,Boolean(performance));
     for (const [index, group] of audioGroups.entries()) {
       silence(group.startMs - cursor);
       const input = productionAssetPath(dataDir, group.path);
@@ -127,6 +180,9 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
       const tail = detectTruncatedRenewal(renderedPcm.subarray(Math.max(0, end - 12_000), end), 8000);
       if (tail) throw new Error(`Rendered chapter ${path} holds a ${tail.activeTailMs} ms renewed onset cut off at audio turn ${group.endMs} ms (${group.segmentIds.join(", ")}). The unpromoted render is retained for diagnosis; reconcile the source boundary without discarding speech.`);
     }
+    if (authority.producerReview && crewBriefHash(loadCrewBrief(db, dataDir, projectId, "editing"), "editing") !== authority.producerReview.briefHash) {
+      throw new Error("Editing inputs changed while rendering; the unpromoted output is retained for review.");
+    }
     db.exec("BEGIN IMMEDIATE");
     try {
       db.prepare("INSERT INTO chapter_renders (id,project_id,result_asset_path,total_duration_ms,shot_count,created_at) VALUES (?,?,?,?,?,?)").run(renderId, projectId, path, duration, cut.timeline.length, Date.now());
@@ -135,12 +191,15 @@ export function renderEditorialCut(db: DatabaseSync, dataDir: string, projectId:
         const segment = brief.audio[index]!;
         if (segment.provenance && !sourceHashes.has(segment.path)) sourceHashes.set(segment.path, digest(readFileSync(productionAssetPath(dataDir, segment.path))));
         return { ...placement, voice: resolvedAudio[index]!.voice, speakerId: resolvedAudio[index]!.speakerId,
+          ...(performance ? { performance:{path:performance.path,sha256:performance.sha256,
+            sourceStartMs:segment.startMs,sourceEndMs:segment.endMs,authorityId:performance.authorityId,
+            originalInput:{path:resolvedAudio[index]!.path,sourceStartMs:resolvedAudio[index]!.sourceStartMs,sourceEndMs:resolvedAudio[index]!.sourceEndMs}} } : {}),
           ...(segment.provenance ? { provenance: segment.provenance, sourcePath: segment.path, sourceSha256: sourceHashes.get(segment.path)! } : {}) };
       });
       db.prepare("INSERT INTO chapter_render_manifests (render_id,timeline_json,source_audio_json) VALUES (?,?,?)").run(renderId, JSON.stringify(cut.timeline), JSON.stringify(auditedAudioMap));
       const sequence = Number(db.prepare("SELECT COALESCE(MAX(sequence),0)+1 AS n FROM edit_commands WHERE project_id=?").get(projectId)!.n);
       db.prepare("INSERT INTO edit_commands (id,project_id,sequence,command_type,payload,idempotency_key,applied_at) VALUES (?,?,?,'render_editorial_cut',?,?,?)")
-        .run(randomUUID(), projectId, sequence, JSON.stringify({ path, renderId, runId, cut }), `editorial:${runId}`, Date.now());
+        .run(randomUUID(), projectId, sequence, JSON.stringify({ path, renderId, ...(authority.runId ? { runId: authority.runId } : { producerReview: { ...authority.producerReview!, outputSha256: digest(readFileSync(output)) } }), cut }), authority.idempotencyKey, Date.now());
       db.exec("COMMIT");
     } catch (error) { db.exec("ROLLBACK"); throw error; }
     return { path, renderId };

@@ -1,3 +1,4 @@
+import { sourceParagraphDecisions, type SourceParagraphDecisions } from "./source-paragraph-decisions.js";
 import { readZipEntry } from "./simple-zip.js";
 
 /**
@@ -108,22 +109,29 @@ export interface VerseRecord {
  * caller needs to locate something (like a quotation) within a specific
  * verse rather than only the paragraph it's part of.
  */
-export function parseSourceTextByVerse(docxPath: string): VerseRecord[] {
+export function parseSourceTextByVerse(docxPath: string, suppliedDecisions?: SourceParagraphDecisions): VerseRecord[] {
   const xml = readDocumentXml(docxPath);
   const lines = xmlToParagraphLines(xml);
 
+  const decisions = suppliedDecisions ?? sourceParagraphDecisions(xml);
   const records: VerseRecord[] = [];
   lines.forEach((line, paragraphIndex) => {
     const verses = splitParagraphIntoVerses(line);
     const firstMarker = [...line.matchAll(VERSE_MARKER)][0];
     const prefix = firstMarker ? line.slice(0, firstMarker.index).trim() : "";
     const previous = records.at(-1);
+    if (!verses.length && decisions?.continuations[paragraphIndex] !== undefined) {
+      if (!previous || previous.verse !== decisions.continuations[paragraphIndex]) throw new Error("Source paragraph continuation no longer matches its pinned verse.");
+      previous.text += " " + line;
+      (previous.continuationParagraphIndices ??= []).push(paragraphIndex);
+      return;
+    }
     // Mark 5:9's reply is at the start of the paragraph containing v10.
     // Preserve these supplied words on v9; they are neither a heading nor
     // part of v10. Require adjacent paragraphs and consecutive verse numbers
     // so an unrelated preface is not silently attached to earlier Scripture.
     const previousParagraph = previous?.continuationParagraphIndices?.at(-1) ?? previous?.paragraphIndex;
-    if (prefix && previous && previousParagraph === paragraphIndex - 1 && verses[0]?.verse === previous.verse + 1) {
+    if (prefix && previous && (previousParagraph === paragraphIndex - 1 || decisions?.prefixes[paragraphIndex] === previous.verse) && verses[0]?.verse === previous.verse + 1) {
       previous.text += " " + prefix;
       (previous.continuationParagraphIndices ??= []).push(paragraphIndex);
     }
@@ -189,15 +197,17 @@ export function parseNarratedParagraphTitles(docxPath:string):NarratedParagraphT
  * would also wrongly catch a heading that happened to be short and
  * capitalized.
  */
-export function parseSourceHeadings(docxPath: string): SourceHeading[] {
+export function parseSourceHeadings(docxPath: string, suppliedDecisions?: SourceParagraphDecisions): SourceHeading[] {
   const xml = readDocumentXml(docxPath);
-  const lines = xmlToParagraphLines(xml).slice(1); // drop the bare chapter title (first paragraph)
+  const decisions = suppliedDecisions ?? sourceParagraphDecisions(xml);
+  const lines = xmlToParagraphLines(xml).map((text, index) => ({text,index})).slice(1); // original paragraph indices remain authoritative
 
   const headings: SourceHeading[] = [];
   let pendingHeading: string | null = null;
   let pendingParallelRefs: string | null = null;
 
-  for (const line of lines) {
+  for (const {text:line,index} of lines) {
+    if (decisions?.continuations[index] !== undefined) continue;
     const verses = splitParagraphIntoVerses(line);
     if (verses.length > 0) {
       if (pendingHeading !== null) {
@@ -248,4 +258,20 @@ export function parseSourceText(docxPath: string, book: string, chapter: number)
   flush();
 
   return groups;
+}
+
+/** Account for all supplied body words, not merely the presence of verse numbers.
+ * Only reference-paired published headings, reference lines and a printed chapter
+ * identity are excluded. Unknown prose causes a hold rather than being discarded.
+ * No timing or native-language correctness is inferred from this local check. */
+export function auditSourceBodyCoverage(docxPath:string, chapter:number, suppliedDecisions?:SourceParagraphDecisions) {
+  const xml=readDocumentXml(docxPath),lines=xmlToParagraphLines(xml);
+  const headings=new Set(parseNarratedParagraphTitles(docxPath).map(h=>h.paragraphIndex));
+  const records=parseSourceTextByVerse(docxPath,suppliedDecisions);
+  const normalized=(text:string)=>text.replace(/\s+/gu," ").trim();
+  const expected=normalized(lines.filter((line,index)=>!(index===0&&parseChapterTitle(docxPath,chapter)!==null)&&!headings.has(index)&&!/^\(.+\)$/.test(line)).map(line=>line.replace(VERSE_MARKER," ")).join(" "));
+  const extracted=normalized(records.map(v=>v.text).join(" "));
+  const decisions=suppliedDecisions??sourceParagraphDecisions(xml);
+  return {complete:expected===extracted,expectedCharacters:expected.length,extractedCharacters:extracted.length,
+    paragraphDecisions:decisions??null,limitations:"Text extraction/order only; not audio alignment, translation or human source approval."};
 }

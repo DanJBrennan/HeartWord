@@ -33,9 +33,19 @@ function providers(): VideoProviders {
   })},veo:{generateFinal:vi.fn(async()=>result)},kling:{generateFinal:vi.fn(async()=>result)},draft:{generateDraft:vi.fn(async()=>result),generateGuided:vi.fn(async()=>result)}};
 }
 it("sends focused shot direction without the full chapter treatment or FDL and never truncates its actual instruction",()=>{
- const shot="production director: The boat gently reaches the gravel; everyone remains aboard.";
- const focused=localMotionDirection("\nAPPROVED FILM DIRECTION (fixture):\n"+shot+"\n\nACCEPTED FDL CONSTRAINTS (fixture):\n"+"chapter metadata ".repeat(1000)+"\nACCEPTED EMOTIONAL TREATMENT\nUnrelated later story action.");
+ const shot="The boat gently reaches the gravel; everyone remains aboard.";
+ const focused=localMotionDirection("\nAPPROVED FILM DIRECTION (fixture):\n"+"production director: "+shot+"\n\nACCEPTED FDL CONSTRAINTS (fixture):\n"+"chapter metadata ".repeat(1000)+"\nACCEPTED EMOTIONAL TREATMENT\nUnrelated later story action.");
  expect(focused).toBe(shot);expect(localMotionDirection("long actual shot instruction ".repeat(300))).toHaveLength("long actual shot instruction ".repeat(300).trim().length);
+});
+it("keeps quiet arrival motion without generic reach cues or source words that prompted English narration",()=>{
+ const actual="Five people walk forward quietly. Their arms stay relaxed; walking continues through the last frame.";
+ const wrapped='Animate the approved start. NATURAL CROWD MOTION RULE: a few people reach, shift, or react.\nAPPROVED FILM DIRECTION (current):\nproduction director: '+actual+'\nPurpose: Mark 6:1: \"He went away from there and came to his hometown.\"\n\nACCEPTED FDL CONSTRAINTS: other source evidence';
+ expect(localMotionDirection(wrapped)).toBe(actual);
+});
+it("preserves a Purpose line inside actual direction and leaves unwrapped instructions intact",()=>{
+ const actual='Static view.\nPurpose: keep the face readable.\nContinue walking at the same pace.';
+ expect(localMotionDirection('APPROVED FILM DIRECTION (current):\nproduction director: '+actual+'\nPurpose: Source quotation.')).toBe(actual);
+ expect(localMotionDirection(actual)).toBe(actual);
 });
 it("does not turn a broader wardrobe list into additional visible cast",()=>{
  expect(localMotionDirection("Wide static view. The boat reaches gravel. Jesus wears cream; James wears terracotta. Cool light from the left.")).toBe("Wide static view. The boat reaches gravel. Cool light from the left.");

@@ -1,0 +1,20 @@
+import {spawn,type ChildProcess} from 'node:child_process';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,resolve} from 'node:path';
+import {afterEach,it,expect,vi} from 'vitest';
+let root:string|undefined,child:ChildProcess|undefined,db:import('node:sqlite').DatabaseSync|undefined;
+afterEach(()=>{db?.close();db=undefined;if(child?.exitCode===null)child.kill();child=undefined;vi.unstubAllEnvs();vi.resetModules();if(root&&resolve(root).startsWith(join(tmpdir(),'hw-db-contention-')))rmSync(root,{recursive:true,force:true});});
+it('keeps a receipt write through a short competing PERSIST writer without losing either commit',async()=>{
+ root=mkdtempSync(join(tmpdir(),'hw-db-contention-'));vi.stubEnv('HEARTWORD_DATA_DIR',root);vi.resetModules();
+ const first=await import('../../src/db/client.js');first.getDb().close();vi.resetModules();
+ const code=`const {DatabaseSync}=require('node:sqlite');const db=new DatabaseSync(process.argv[1]);db.exec("PRAGMA busy_timeout=5000;PRAGMA journal_mode=PERSIST;CREATE TABLE contention_probe(value TEXT);BEGIN IMMEDIATE;INSERT INTO contention_probe VALUES('child');");process.stdout.write('locked\\n');setTimeout(()=>{db.exec('COMMIT');db.close();},300);`;
+ child=spawn(process.execPath,['-e',code,join(root,'db','heartword.sqlite')],{windowsHide:true,stdio:['ignore','pipe','pipe']});let childErrors='';child.stderr!.on('data',chunk=>{childErrors+=chunk.toString();});
+ const processDone=new Promise<number|null>((done,error)=>{child!.once('exit',done);child!.once('error',error);});
+ await new Promise<void>((ready,error)=>{let text='';child!.stdout!.on('data',chunk=>{text+=chunk.toString();if(text.includes('locked'))ready();});child!.once('error',error);});
+ db=(await import('../../src/db/client.js')).getDb();
+ db.prepare("INSERT INTO contention_probe VALUES('parent-receipt')").run();
+ expect(await processDone,childErrors).toBe(0);
+ expect(db.prepare('SELECT value FROM contention_probe ORDER BY value').all().map(r=>r.value)).toEqual(['child','parent-receipt']);
+ expect(db.prepare('PRAGMA journal_mode').get()!.journal_mode).toBe('persist');
+},15000);

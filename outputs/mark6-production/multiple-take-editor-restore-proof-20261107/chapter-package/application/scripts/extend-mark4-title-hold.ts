@@ -1,0 +1,15 @@
+/** Hold the approved Mark 4 placid-lake title for four readable seconds without shifting the source chapter clock. */
+import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { randomUUID } from "node:crypto";
+import { getDataDir, getDb } from "../src/db/client.js";
+const projectId="8a5659a4-b033-4d5f-80e2-904b217cf8a0",dataDir=getDataDir(),assets=join(dataDir,"assets"),db=getDb();
+const title="generated/editorial/mark4-intro/title-over-lake-r1.png",intro="generated/editorial/mark4-intro/mark4-intro-three-beat-motion-preview-r3.mp4",prior="generated/chapter/mark4-autonomous-overnight-final-v9-mastered.mp4",outRel="generated/chapter/mark4-autonomous-overnight-final-v10-title-hold.mp4",out=join(assets,outRel);
+for(const p of [title,intro,prior])if(!existsSync(join(assets,p)))throw Error(`Missing approved title input: ${p}`);const duration=551.292;
+// Four seconds of full title, then seven and a half seconds of retained motion footage. Both halves use half-second fades at their boundary.
+const filter="[0:v]scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720,setsar=1,fps=24,fade=t=out:st=3.5:d=0.5,setpts=PTS-STARTPTS[title];[1:v]trim=start=4:end=11.5,scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720,setsar=1,fps=24,fade=t=in:st=0:d=0.5,setpts=PTS-STARTPTS[opening];[2:v]trim=start=11.5,setsar=1,setpts=PTS-STARTPTS[chapter];[title][opening][chapter]concat=n=3:v=1:a=0[video]";
+execFileSync("ffmpeg",["-v","error","-y","-loop","1","-framerate","1/4","-t","4","-i",join(assets,title),"-i",join(assets,intro),"-i",join(assets,prior),"-filter_complex",filter,"-map","[video]","-map","2:a:0","-t",String(duration),"-c:v","libx264","-preset","medium","-crf","18","-pix_fmt","yuv420p","-c:a","copy","-movflags","+faststart",out],{stdio:["ignore","ignore","pipe"]});
+const actual=Math.round(Number(execFileSync("ffprobe",["-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",out],{encoding:"utf8"}).trim())*1000);if(Math.abs(actual-Math.round(duration*1000))>150)throw Error("Extended title candidate has wrong duration.");
+const id=randomUUID();db.exec("BEGIN IMMEDIATE");try{db.prepare("INSERT INTO chapter_renders (id,project_id,result_asset_path,total_duration_ms,shot_count,created_at) VALUES (?,?,?,?,?,?)").run(id,projectId,outRel,actual,166,Date.now());db.prepare("INSERT INTO chapter_render_manifests (render_id,timeline_json,source_audio_json) VALUES (?,?,?)").run(id,JSON.stringify([{kind:"approved_pre_source_lake_title_hold",startMs:0,endMs:4000},{kind:"approved_opening_location_coverage",startMs:4000,endMs:11500},{kind:"source_chapter",startMs:11500,endMs:527292},{kind:"post_source_editorial_bridge",startMs:527292,endMs:551292}]),JSON.stringify({pictureAndMixBase:prior,titleSource:title,titleHoldMs:4000,sourceClockUnshifted:true}));db.exec("COMMIT");}catch(e){db.exec("ROLLBACK");throw e;}
+console.log(JSON.stringify({outRel,durationMs:actual,titleHoldMs:4000},null,2));

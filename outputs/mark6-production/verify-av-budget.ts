@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {inspectAvBudget} from './av-call.js';
+const read=(p:string)=>JSON.parse(readFileSync('outputs/mark6-production/'+p,'utf8'));
+const original=read('voice-review/execution.json'),model=read('av-model-preflight.json'),before=JSON.stringify(original);
+assert.deepEqual(inspectAvBudget(original,model,'wholePerformanceAV'),{total:.013801,reserve:.82});
+const pending=structuredClone(original);pending.calls[0].status='submission_started';assert.throws(()=>inspectAvBudget(pending,model,'wholePerformanceAV'),/pending/);
+const unknown=structuredClone(original);unknown.calls[0].usage.promptTokenCount=0;assert.throws(()=>inspectAvBudget(unknown,model,'wholePerformanceAV'),/Unknown/);
+const mismatch=structuredClone(original);mismatch.estimatedUsd=0;assert.throws(()=>inspectAvBudget(mismatch,model,'wholePerformanceAV'),/mismatch/);
+assert.throws(()=>inspectAvBudget(original,{...model,model:'unpriced-fallback'},'wholePerformanceAV'),/preflight/);
+assert.throws(()=>inspectAvBudget(original,model,'wholePerformanceAV',Date.parse('2027-01-01T00:00:01Z')),/preflight/);
+const many=structuredClone(original);many.calls=Array.from({length:30},(_,i)=>({...original.calls[0],id:'call-'+i}));many.estimatedUsd=+(many.calls.length*original.calls[0].costUsd).toFixed(6);assert.throws(()=>inspectAvBudget(many,model,'wholePerformanceAV'),/ceiling/);
+const category=structuredClone(original);category.calls.push(...Array.from({length:18},(_,i)=>({...original.calls[0],id:'extra-'+i,category:'wholePerformanceAV'})));category.estimatedUsd=+category.calls.reduce((s:number,c:any)=>s+c.costUsd,0).toFixed(6);assert.throws(()=>inspectAvBudget(category,model,'wholePerformanceAV'),/ceiling/);
+const expensive=structuredClone(original);const cost=Math.round(1048576*.75+8192*3.75)/1000000;expensive.calls=Array.from({length:9},(_,i)=>({id:'expensive-'+i,status:'returned_reconciled',model:model.model,costUsd:cost,usage:{promptTokenCount:1048576,candidatesTokenCount:8192,thoughtsTokenCount:0,totalTokenCount:1056768}}));expensive.estimatedUsd=+(9*cost).toFixed(6);assert.throws(()=>inspectAvBudget(expensive,model,'wholePerformanceAV'),/ceiling/);
+assert.equal(JSON.stringify(original),before);
+const result={status:'offline_budget_guards_verified',checks:9,realGenerationCalls:0,journalUnchanged:true,sharedExistingJournal:true,maximumRequests:30,maximumUsd:8,perRequestWorstModelContextAnd8192OutputReserveUsd:.82,limitation:'Budget guard only; no video or listening verdict exists yet.'};
+writeFileSync('outputs/mark6-production/av-budget-verification.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));

@@ -1,0 +1,15 @@
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {getDb,getDataDir} from '../../src/db/client.js';
+const folder='outputs/mark6-production/complete-reused-jesus-before-peter-source-window-20261109',read=(p:string)=>JSON.parse(readFileSync(p,'utf8')),r=read(folder+'/registration.json'),hash=(p:string)=>createHash('sha256').update(readFileSync(p)).digest('hex'),db=getDb();
+try{
+ const row=db.prepare("SELECT c.id FROM clips c JOIN generation_attempts ga ON ga.id=c.generation_attempt_id WHERE ga.id=? AND ga.status='accepted'").get(r.attemptId);if(!row||existsSync(folder+'/selection-and-assembly.json'))throw Error('Exact existing accepted reuse required, never resubmit');
+ const asset='generated/assembled/4b40e89f-a1d1-46ba-b169-3a898d9a5393-2ecb26b2-c8b6-4d67-9f09-a05ceceee78d.mp4',out=join(getDataDir(),'assets',asset),selected=folder+'/selected21-picture-review-only.mp4';
+ const streams=JSON.parse(execFileSync('ffprobe',['-v','error','-count_frames','-show_streams','-of','json',out],{encoding:'utf8',windowsHide:true})).streams;
+ const frames=(p:string)=>execFileSync('ffmpeg',['-v','error','-nostdin','-i',p,'-map','0:v:0','-an','-f','framemd5','-'],{encoding:'utf8',windowsHide:true}).split(/\r?\n/).filter(l=>l&&!l.startsWith('#')).map(l=>l.split(',').at(-1)!.trim());const x=frames(out),y=frames(selected);
+ if(streams.length!==1||streams[0].width!==1280||streams[0].height!==720||streams[0].r_frame_rate!=='24/1'||Number(streams[0].nb_read_frames)!==21||Math.abs(Number(streams[0].duration)-.875)>.000001||x.length!==21||JSON.stringify(x)!==JSON.stringify(y))throw Error('Existing normal21 verification failed');
+ execFileSync('ffmpeg',['-v','error','-nostdin','-n','-i',out,'-vf',"select='eq(n,20)'",'-frames:v','1',folder+'/actual-normal-20.png'],{windowsHide:true});
+ const proof={at:new Date().toISOString(),attemptId:r.attemptId,noteId:r.noteId,selection:{clipId:row.id,reused:false},assembled:{shotId:'4b40e89f-a1d1-46ba-b169-3a898d9a5393',assembledVideoPath:asset,durationMs:875,hasDialogueAudio:false},assembledSha256:hash(out),sourceWindowMs:[530100,530993.5],sourceDurationMs:893.5,sourceSamples24k:21444,pictureFrames:21,pictureDurationMs:875,pictureMinusAudioMs:-18.5,decodedAll21NormalPicturesIdenticalToSelectedPicture:true,selectedPicture:selected,selectedPictureSha256:hash(selected),derivation:r.derivation,receipt:r.derivation.receipt,contextReview:r.derivation.contextReview,actualNormalDirectReviewPending:true,recovery:{reason:'Last PNG extraction filter comma escaping failed AFTER existing registration/selection/assembly and decoded verification. Inspected exact existing clip/output and reverified all21, no selection repeated.',newGenerationOrAssembly:false},providerCalls:0,wholeFilmReady:false};writeFileSync(folder+'/selection-and-assembly.json',JSON.stringify(proof,null,2),{flag:'wx'});console.log(JSON.stringify(proof));
+}finally{db.close();}

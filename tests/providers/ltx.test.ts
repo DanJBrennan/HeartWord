@@ -14,6 +14,7 @@ const token = "synthetic-session-secret";
 let root: string, server: Server | undefined;
 let baseUrl: string;
 let health: Record<string, unknown>;
+let runtimePolicy:Record<string,unknown>,settings:Record<string,unknown>;
 let healthCode: number, generateCode: number, generationStatus: string;
 let requests: Array<{ path: string; auth?: string; body?: any }>;
 let pollCount: number, pollFailure: boolean, delayed: boolean, disconnect: boolean, generating: boolean;
@@ -37,6 +38,7 @@ beforeEach(async () => {
   mkdirSync(join(root,"assets"));
   writeFileSync(join(root,"assets","key frame.png"),"synthetic keyframe");
   health = {status:"ok",models_loaded:true,active_model:"fast"};
+  runtimePolicy={force_api_generations:false};settings={userPrefersLtxApiVideoGenerations:false,userPrefersFalApiImageGenerations:false,useLocalTextEncoder:false,activeLtxModelId:'ltx-2.5-22b-distilled'};
   healthCode = generateCode = 200; generationStatus = "complete";
   pollCount = 0; requests = []; pollFailure = delayed = disconnect = generating = false;
   server = createServer(async (req,res) => {
@@ -44,6 +46,8 @@ beforeEach(async () => {
     for await (const chunk of req) content += chunk;
     requests.push({path:req.url!,auth:req.headers.authorization,body:content ? JSON.parse(content) : undefined});
     if (req.url === "/health") { res.writeHead(healthCode); res.end(JSON.stringify(health)); }
+    else if(req.url==='/api/runtime-policy')res.end(JSON.stringify(runtimePolicy));
+    else if(req.url==='/api/settings')res.end(JSON.stringify(settings));
     else if (req.url === "/api/generation/progress") {
       pollCount++;
       if (pollFailure && pollCount > 1) { res.writeHead(503); res.end("progress temporarily unavailable"); }
@@ -71,6 +75,50 @@ function provider() { return new LtxVideoProvider({transport,dataDir:root,sleep:
 const options = {startFrame:{path:"key frame.png"},durationSeconds:5,seed:42};
 
 describe("LTX Desktop adapter", () => {
+  it('uses a fresh connection for generation instead of reusing the preflight keep-alive socket',async()=>{
+    const sockets:unknown[]=[];
+    server!.on('request',req=>{if(req.url==='/health'||req.url==='/api/generate')sockets.push(req.socket);});
+    await ltxJson(baseUrl,'/health',token,1000);
+    await new Promise(resolve=>setTimeout(resolve,0));
+    await ltxJson(baseUrl,'/api/generate',token,1000,{prompt:'synthetic request'});
+    expect(sockets).toHaveLength(2);
+    expect(sockets[1]).not.toBe(sockets[0]);
+    expect(requests.filter(r=>r.path==='/api/generate')).toHaveLength(1);
+  });
+  it('submits once through the refreshed tunnel when the final readiness check reconnects',async()=>{
+    let connects=0;
+    transport.connect=vi.fn(async()=>{
+      if(++connects===1)return baseUrl;
+      const previous=server!;
+      const replacement=createServer((req,res)=>{previous.emit('request',req,res);});
+      await new Promise<void>(resolve=>replacement.listen(0,'127.0.0.1',resolve));
+      const refreshed=`http://127.0.0.1:${(replacement.address() as {port:number}).port}`;
+      previous.closeAllConnections();
+      await new Promise<void>(resolve=>previous.close(()=>resolve()));
+      server=replacement;
+      return refreshed;
+    });
+    const result=await new LtxVideoProvider({transport,dataDir:root,lazyLoadDownloadedFast:true}).generateFinal(request,options);
+    expect(result.provenance.provider).toBe('ltx_local');
+    expect(requests.filter(r=>r.path==='/api/generate')).toHaveLength(1);
+    expect(transport.connect).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(readFileSync(String(result.metadata!.metadataPath),'utf8')).status).toBe('complete');
+  });
+  it('permits explicitly selected downloaded Fast to load on the real native request, without a warmup or settings write',async()=>{
+    health={status:'ok',models_loaded:false,active_model:null,models_status:[{id:'fast',downloaded:true}]};
+    const result=await new LtxVideoProvider({transport,dataDir:root,lazyLoadDownloadedFast:true}).generateFinal(request,options);
+    expect(result.provenance.provider).toBe('ltx_local');expect(requests.filter(r=>r.path==='/api/generate')).toHaveLength(1);
+    expect(requests.filter(r=>r.path==='/api/runtime-policy')).toHaveLength(2);expect(requests.filter(r=>r.path==='/api/settings').every(r=>r.body===undefined)).toBe(true);
+  });
+  it.each(['cloud','localEncoder','apiPreference','wrongModel'])('holds opt-in cold start before upload when %s violates local execution',async violation=>{
+    health={status:'ok',models_loaded:false,active_model:null,models_status:[{id:'fast',downloaded:true}]};
+    if(violation==='cloud')runtimePolicy.force_api_generations=true;
+    if(violation==='localEncoder')settings.useLocalTextEncoder=true;
+    if(violation==='apiPreference')settings.userPrefersLtxApiVideoGenerations=true;
+    if(violation==='wrongModel')settings.activeLtxModelId='other';
+    await expect(new LtxVideoProvider({transport,dataDir:root,lazyLoadDownloadedFast:true}).generateFinal(request,options)).rejects.toThrow('Local-only');
+    expect(transport.upload).not.toHaveBeenCalled();expect(requests.filter(r=>r.path==='/api/generate')).toHaveLength(0);
+  });
   it("holds an oversized prompt before SSH, upload or generation, including mandatory audio rules",async()=>{
     const length=LTX_MAX_PROMPT_CHARACTERS-LTX_AMBIENT_DIRECTION.length-2;
     await expect(provider().generateFinal({...request,prompt:"x".repeat(length+1)},options)).rejects.toThrow("text-encoding limit");

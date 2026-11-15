@@ -77,18 +77,26 @@ describe("external keyframe handoff", () => {
     }
     expect(db.prepare("SELECT COUNT(*) n FROM generation_attempts").get()!.n).toBe(0);
   });
-  it("prepares approved Hatam Mark 5 with catalog source hashes while keeping other chapters scoped out", () => {
-    db.exec("UPDATE projects SET chapter=5; UPDATE scenes SET verse_start='Mark 5:1',verse_end='Mark 5:2'; UPDATE shots SET verse_ref='Mark 5:1-2'; UPDATE audio_segments SET verse_ref='Mark 5:1-2'");
-    for (const path of ["source/hatam/text/Mark/Mark 5.docx", "source/english-esv/text/Mark/Mark 5.docx"]) {
+  it.each([5,6])("prepares authorized Hatam Mark %i with its catalog hashes while keeping other chapters scoped out", (chapter) => {
+    db.exec(`UPDATE projects SET chapter=${chapter}; UPDATE scenes SET verse_start='Mark ${chapter}:1',verse_end='Mark ${chapter}:2'; UPDATE shots SET verse_ref='Mark ${chapter}:1-2'; UPDATE audio_segments SET verse_ref='Mark ${chapter}:1-2'`);
+    for (const path of [`source/hatam/text/Mark/Mark ${chapter}.docx`, `source/english-esv/text/Mark/Mark ${chapter}.docx`]) {
       const target=join(dir,"assets",path); mkdirSync(join(target,".."),{recursive:true});
       writeFileSync(target,readFileSync(join(dir,"assets/source/hatam/mark-2/mark-2-text.docx")));
     }
     brief();
-    const prepared=prepareKeyframe(db,dir,"shot","16:9 synthetic Mark 5 view","Producer-approved chapter preparation");
-    expect(prepared.sources.map(s=>s.path)).toEqual(["source/hatam/text/Mark/Mark 5.docx","source/english-esv/text/Mark/Mark 5.docx"]);
+    const prepared=prepareKeyframe(db,dir,"shot",`16:9 synthetic Mark ${chapter} view`,"Producer-authorized chapter preparation");
+    expect(prepared.sources.map(s=>s.path)).toEqual([`source/hatam/text/Mark/Mark ${chapter}.docx`,`source/english-esv/text/Mark/Mark ${chapter}.docx`]);
     expect(prepared.sources.every(s=>s.sha256===sha256(readFileSync(assetPath(dir,s.path))))).toBe(true);
+    db.exec("UPDATE projects SET chapter=7");
+    expect(()=>getKeyframeContext(db,dir,"shot")).toThrow("producer-authorized Mark 4, 5 and 6");
+  });
+  it("keeps Mark 6 generation held without a current plan or approved canon",()=>{
     db.exec("UPDATE projects SET chapter=6");
-    expect(()=>getKeyframeContext(db,dir,"shot")).toThrow("producer-approved Mark 4 and 5");
+    expect(getKeyframeContext(db,dir,'shot').project.chapter).toBe(6);
+    expect(()=>prepareKeyframe(db,dir,'shot','16:9 synthetic view','No plan yet')).toThrow('production crew');
+    expect(db.prepare('SELECT COUNT(*) n FROM generation_attempts').get()!.n).toBe(0);
+    db.exec("UPDATE character_versions SET status='candidate'");
+    expect(()=>getKeyframeContext(db,dir,'shot')).toThrow('approved version');
   });
   it("keeps candidate canon reviews distinct from chapter creative guidance until promotion",()=>{
     const before=crewBriefHash(loadCrewBrief(db,dir,"project","planning"),"planning");
@@ -167,6 +175,8 @@ describe("external keyframe handoff", () => {
     const prepared=prepareKeyframe(db,dir,"shot","16:9 retain the witness","Fixture workflow");
     expect(prepared.filmInput!.snapshot.extensions.bibleRegional).toMatchObject({regionalIdentity:{region:"Papuan",medium:"video"},historicalSetting:{period:"First century"}});
     expect(prepared.prompt).toContain("PINNED FDL WORLD / BIBLE-REGIONAL CONTEXT");
+      expect(prepared.prompt).toContain("wooden pivot pegs");
+      expect(prepared.prompt).toContain("No modern paneled doors");
     expect(prepared.prompt).toContain("Image 1, cells in row-major order: Witness");
     expect(keyframeFilmDirection(prepared.filmInput)).not.toContain("architecture: null");
     const current={...run,result_json:JSON.stringify(result)};

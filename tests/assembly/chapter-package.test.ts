@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync, renameSync } from "node:fs";
+import { closeSync, mkdtempSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync, writeSync, existsSync, renameSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -34,6 +34,42 @@ beforeEach(() => {
 });
 afterEach(() => { db.close(); if (resolve(directory).startsWith(resolve(tmpdir(), "heartword-package-"))) rmSync(directory, { recursive: true, force: true }); });
 describe("editable chapter preservation", () => {
+  it("copies identical external reference images once and restores both original paths", () => {
+    const external = mkdtempSync(join(tmpdir(), "heartword-external-references-"));
+    try {
+    const origins = [join(external, "review-one", "reference.png"), join(external, "review-two", "reference.png")];
+    for (const path of origins) { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, "same reviewed pixels"); }
+    db.prepare("INSERT INTO edit_commands(id,project_id,sequence,command_type,payload,idempotency_key,applied_at) VALUES('external','p',2,'producer_decision',?,'external',2)")
+      .run(JSON.stringify({ references: origins.map(path => ({ path })) }));
+    const packaged = join(directory, "external-package"), restored = join(directory, "external-restored");
+    const manifest = exportChapterPackage(db, directory, "p", packaged, { includeApplication: false, extraFiles: origins });
+    const retained = manifest.files.filter(f => f.sha256 === digest("same reviewed pixels"));
+    expect(retained).toHaveLength(1);
+    expect(retained[0]!.originals).toEqual(expect.arrayContaining(origins));
+    verifyChapterPackage(packaged);
+    restoreChapterPackage(packaged, restored);
+    const reopened = new DatabaseSync(join(restored, "db", "heartword.sqlite"));
+    try {
+      const payload = JSON.parse(String(reopened.prepare("SELECT payload FROM edit_commands WHERE id='external'").get()!.payload));
+      expect(payload.references[0].path).toBe(payload.references[1].path);
+      expect(readFileSync(join(restored, "assets", payload.references[0].path), "utf8")).toBe("same reviewed pixels");
+    } finally { reopened.close(); }
+    } finally { rmSync(external, { recursive: true, force: true }); }
+  });
+  it("preserves a multi-chunk binary take and detects same-size corruption after a chunk boundary", () => {
+    const bytes = Buffer.alloc(2 * 1024 * 1024 + 37);
+    for (let i = 0; i < bytes.length; i++) bytes[i] = (i * 17 + Math.floor(i / 1024)) % 251;
+    const source = put("long-take.mp4", ""); writeFileSync(source, bytes);
+    db.exec("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('long','shot','fixture','fixture','generate','accepted','long-take.mp4',0,2)");
+    const packaged = join(directory, "binary-package"), restored = join(directory, "binary-restored");
+    const manifest = exportChapterPackage(db, directory, "p", packaged, { includeApplication: false });
+    expect(manifest.files.find(f => f.path === "assets/long-take.mp4")?.sha256).toBe(createHash("sha256").update(bytes).digest("hex"));
+    restoreChapterPackage(packaged, restored);
+    expect(readFileSync(join(restored, "assets/long-take.mp4"))).toEqual(bytes);
+    const fd = openSync(join(packaged, "assets/long-take.mp4"), "r+");
+    try { writeSync(fd, Buffer.from([255]), 0, 1, 1024 * 1024 + 5); } finally { closeSync(fd); }
+    expect(() => verifyChapterPackage(packaged)).toThrow("Retained asset integrity failed");
+  });
   it("retains rejected takes, old canon, source authority, producer history and lineage without copying unrelated chapters", () => {
     const packageDir = join(directory, "package"), restored = join(directory, "other-root");
     const manifest = exportChapterPackage(db, directory, "p", packageDir);
@@ -137,6 +173,38 @@ describe("editable chapter preservation", () => {
       expect(projection.references).toContainEqual([remote,"assets/take.png"]);
       expect(projection.references).toContainEqual([absolute,"assets/take.png"]);
     }finally{reopened.close();}
+  });
+  it("preserves LTX transport history while restoring verified local counterparts without original assets",()=>{
+    const native=put("native.mp4","retained native video");
+    const metadata={provider:"ltx_local",sourceKeyframe:"canon.png",sourceKeyframeSha256:digest("canon.png"),sourceEndKeyframe:"canon-old.png",sourceEndKeyframeSha256:digest("canon-old.png"),localOutputPath:native,remoteInputPath:"/Users/synthetic/LTX-Inbox/start.png",remoteEndInputPath:"/Users/synthetic/LTX-Inbox/end.png",remoteOutputPath:"/Users/synthetic/LTXDesktop/output.mp4",request:{imagePath:"/Users/synthetic/LTX-Inbox/start.png",lastImagePath:"/Users/synthetic/LTX-Inbox/end.png"}};
+    const original=JSON.stringify(metadata);put("native.mp4.json",original);
+    db.prepare("INSERT INTO video_generation_jobs(id,project_id,shot_id,backend,status,metadata_json,updated_at)VALUES('local-job','p','shot','ltx','completed',?,1)").run(original);
+    const packaged=join(directory,"ltx-package"),restored=join(directory,"ltx-restored");
+    const exported=exportChapterPackage(db,directory,"p",packaged,{includeApplication:false});
+    expect(exported.files.some(f=>f.originals.some(p=>p.startsWith("/Users/synthetic/")))).toBe(false);
+    restoreChapterPackage(packaged,restored);
+    const assets=resolve(directory,"assets"),offline=resolve(directory,"assets-offline");
+    if(dirname(assets)!==resolve(directory)||dirname(offline)!==resolve(directory))throw Error("Fixture move escapes temporary root.");
+    renameSync(assets,offline);
+    const reopened=new DatabaseSync(join(restored,"db/heartword.sqlite"));try{
+      const saved=JSON.parse(String(reopened.prepare("SELECT metadata_json FROM video_generation_jobs WHERE id='local-job'").get()!.metadata_json));
+      expect(saved.request).toEqual(metadata.request);expect(saved.remoteInputPath).toBe(metadata.remoteInputPath);expect(saved.remoteOutputPath).toBe(metadata.remoteOutputPath);
+      expect(saved.localOutputPath).toBe("native.mp4");
+      expect(readFileSync(join(restored,"assets/native.mp4.json"),"utf8")).toBe(original);
+      expect(inspectChapterPackage(reopened,restored,"p",{includeApplication:false}).manifest.problems).toEqual([]);
+    }finally{reopened.close();}
+  });
+  it.each(["wrong-hash","missing-input","missing-output","unbound-request","unknown-provider","unrelated-path"])("holds unverified LTX dependencies: %s",variant=>{
+    const metadata:any={provider:"ltx_local",sourceKeyframe:"canon.png",sourceKeyframeSha256:digest("canon.png"),localOutputPath:put("native.mp4","native"),remoteInputPath:"/Users/synthetic/start.png",remoteOutputPath:"/Users/synthetic/output.mp4",request:{imagePath:"/Users/synthetic/start.png"}};
+    if(variant==="wrong-hash")metadata.sourceKeyframeSha256=digest("wrong");
+    if(variant==="missing-input")metadata.sourceKeyframe="missing.png";
+    if(variant==="missing-output")metadata.localOutputPath="missing.mp4";
+    if(variant==="unbound-request")metadata.request.imagePath="/Users/synthetic/other.png";
+    if(variant==="unknown-provider")metadata.provider="other";
+    if(variant==="unrelated-path")metadata.render={videoPath:metadata.remoteOutputPath};
+    db.prepare("INSERT INTO video_generation_jobs(id,project_id,shot_id,backend,status,metadata_json,updated_at)VALUES('local-job','p','shot','ltx','completed',?,1)").run(JSON.stringify(metadata));
+    expect(inspectChapterPackage(db,directory,"p",{includeApplication:false}).manifest.problems.length).toBeGreaterThan(0);
+    expect(()=>exportChapterPackage(db,directory,"p",join(directory,"held-package"),{includeApplication:false})).toThrow("Preservation held");
   });
   it("preserves valid relative path spelling instead of changing pinned planning inputs",()=>{
     put("folder/take.png","synthetic retained alias");

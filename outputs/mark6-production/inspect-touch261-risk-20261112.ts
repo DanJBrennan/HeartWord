@@ -1,0 +1,1 @@
+import {getDb} from '../../src/db/client.js';import {shotRiskFor} from '../../src/pipeline/media-generation/shot-risk-lookup.js';const db=getDb();try{console.log(JSON.stringify(shotRiskFor(db,'4eca09f5-e472-4045-8ecb-4ff633c933e6')));}finally{db.close();}

@@ -1,0 +1,2 @@
+import {SshLtxTransport} from '../../src/providers/ltx/transport.js';import {writeFileSync} from 'node:fs';
+const t=new SshLtxTransport();try{await t.connect();const r=await t.remote('grep -n -B 5 -A 7 "DEFAULT_NEGATIVE_PROMPT" "/Applications/LTX Desktop.app/Contents/Resources/backend/ltx2_server.py" | head -32');writeFileSync('outputs/mark6-production/speaking-default-negative-definition-20261107.txt',r);console.log(r);}finally{t.reset();}

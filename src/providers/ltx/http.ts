@@ -13,7 +13,9 @@ export async function ltxJson(baseUrl: string, path: string, token: string, time
   if (url.protocol !== "http:" || url.hostname !== "127.0.0.1") throw new Error("LTX API must use the SSH tunnel on IPv4 loopback.");
   return new Promise((resolve, reject) => {
     const payload = body === undefined ? undefined : JSON.stringify(body);
-    const req = request(url, { method: payload ? "POST" : "GET", headers: { Authorization: `Bearer ${token}`, ...(payload ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) } : {}) } }, res => {
+    // Source authorization can outlast a preflight socket's keep-alive window.
+    // A generation POST gets a fresh connection; uncertain POSTs still never retry.
+    const req = request(url, { method: payload ? "POST" : "GET", agent: payload ? false : undefined, headers: { Authorization: `Bearer ${token}`, ...(payload ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) } : {}) } }, res => {
       let data = "";
       res.setEncoding("utf8");
       res.on("data", chunk => { data += chunk; if (data.length > 1024 * 1024) req.destroy(new Error("LTX response exceeded one MiB.")); });

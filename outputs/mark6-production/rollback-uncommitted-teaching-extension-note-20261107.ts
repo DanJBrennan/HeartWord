@@ -1,0 +1,7 @@
+import {writeFileSync,existsSync} from 'node:fs';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {crewBriefHash,loadCrewBrief} from '../../src/pipeline/creative-direction/crew-context.js';
+const db=getDb(),id='1c66e96b-b94e-470c-8cfb-dc3ccf82d888',project='c457a815-d07d-4902-91b5-7b936b549856',out='outputs/mark6-production/native-motion/scene1-shot3-continued-teaching-take2-v1/rolled-back-brief-changing-note-node-proof.json';
+try{db.exec('PRAGMA busy_timeout=5000');const r=db.prepare('SELECT * FROM review_notes WHERE id=?').get(id);if(!r||r.subject_id!=='72f96eff-3aab-4786-ba4d-89c03539e160'||r.created_at!==1794039539613||existsSync(out))throw Error('Exact failed newly-created note required');
+writeFileSync(out,JSON.stringify({at:new Date().toISOString(),status:'rollback_of_new_uncommitted_extension_note',row:r,reason:'Creation changed controlling brief; preserve row here and rollback only this new note before further generation. No old decisions removed, no extension submitted.'},null,2),{flag:'wx'});
+db.exec('BEGIN IMMEDIATE');try{db.prepare('DELETE FROM review_notes WHERE id=?').run(id);const restored=crewBriefHash(loadCrewBrief(db,getDataDir(),project,'planning'),'planning');if(restored!=='07ffceb50c4deb9cf684d0473286bf8a69692149d01fcf3f16b83186dac7f412')throw Error('Unexpected remaining brief change');db.exec('COMMIT');console.log(JSON.stringify({restoredBrief:restored,removedOnlyNewFailedRequest:true}));}catch(e){db.exec('ROLLBACK');throw e;}}finally{db.close();}

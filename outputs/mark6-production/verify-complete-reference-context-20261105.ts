@@ -1,0 +1,21 @@
+import {DatabaseSync} from 'node:sqlite';
+import {join} from 'node:path';
+import {writeFileSync} from 'node:fs';
+import {getDataDir} from '../../src/db/client.js';
+import {loadCrewBrief,crewBriefHash} from '../../src/pipeline/creative-direction/crew-context.js';
+import {retainedInitialCreativeProposal} from '../../src/pipeline/creative-direction/crew-store.js';
+const projectId='c457a815-d07d-4902-91b5-7b936b549856',root='outputs/mark6-production',data=getDataDir(),db=new DatabaseSync(join(data,'db/heartword.sqlite'),{readOnly:true});
+const run=db.prepare('SELECT brief_json,brief_hash FROM production_runs WHERE id=?').get('298a1ce7-8f2b-4d30-bab8-40abd55a3692')!;
+const old=JSON.parse(String(run.brief_json)),current=loadCrewBrief(db,data,projectId,'planning');
+const same=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
+const changed=Object.keys(current).filter(k=>!same(old[k],current[k as keyof typeof current]));
+if(!same(changed,['source']))throw Error('Unexpected independent brief change: '+changed.join(','));
+if(!same(old.source.text,current.source.text)||!same(old.source.hashes,current.source.hashes))throw Error('Original source text or bytes changed');
+if(!same(old.source.reference.filter((v:{verse:number})=>v.verse!==6),current.source.reference.filter(v=>v.verse!==6)))throw Error('Other reference verses changed');
+const verse=current.source.reference.find(v=>v.verse===6)!;
+if(verse.text!==old.source.reference.find((v:{verse:number})=>v.verse===6).text+' And he went about among the villages teaching.')throw Error('Continuation differs from inspected exact source');
+let reuseRejected=false,rejection='';
+try{retainedInitialCreativeProposal(db,data,projectId,current,'b66c122d-7722-436b-bab7-a09f4091159f');}catch(e){reuseRejected=true;rejection=(e as Error).message;}
+if(!reuseRejected||crewBriefHash(current,'planning')===run.brief_hash)throw Error('Changed reference must invalidate exact initial proposal reuse');
+writeFileSync(join(root,'complete-reference-context-proof-20261105.json'),JSON.stringify({status:'verified_exact_reference_correction_fresh_review_required',at:new Date().toISOString(),changedTopLevelFields:changed,oldBriefHash:run.brief_hash,newBriefHash:crewBriefHash(current,'planning'),verse6:verse,unchanged:['Hatam text and continuation','all raw source hashes','reference verses1-5 and7-56','audio','canon','shots','producer decisions and approved music'],oldInitialReuseRejected:reuseRejected,rejection,newProviderCalls:0},null,2));
+console.log(JSON.stringify({changed,reference6:verse.text,oldInitialReuseRejected:reuseRejected,shots:current.shots.length,newProviderCalls:0}));db.close();

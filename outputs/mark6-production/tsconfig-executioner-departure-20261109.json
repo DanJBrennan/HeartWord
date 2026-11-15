@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig-reference-handoff-20261105.json",
+  "include": [
+    "./prepare-executioner-departure-frame-20261109.ts",
+    "./import-executioner-departure114-20261109.ts",
+    "./generate-executioner-departure-native-20261109.ts",
+    "./review-executioner-departure-complete-20261109.ts",
+    "./accept-executioner-departure-20261109.ts"
+  ]
+}

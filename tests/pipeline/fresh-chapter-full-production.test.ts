@@ -53,6 +53,7 @@ function docx(lines: string[]) { const n=Buffer.from("word/document.xml"), b=Buf
 function mp4(path: string, color: string) { mkdirSync(dirname(path), { recursive:true }); execFileSync("ffmpeg", ["-v","error","-y","-f","lavfi","-i",`color=${color}:s=160x90:r=24:d=1`,"-f","lavfi","-i","sine=frequency=440:duration=1","-shortest","-c:v","libx264","-pix_fmt","yuv420p","-c:a","aac",path]); }
 
 it("takes a fresh reviewed chapter through real common stages without provider calls", async () => {
+  vi.stubEnv("HEARTWORD_LIPSYNC_PROVIDER","kling");
   vi.stubEnv("HEARTWORD_VIDEO_PROVIDER","veo");
   delete process.env.GEMINI_API_KEY;
   root=mkdtempSync(join(tmpdir(),"hw-full-fresh-")); const assets=join(root,"assets"), source=join(assets,"source","hatam","mark-5"); mkdirSync(source,{recursive:true});
@@ -74,6 +75,20 @@ it("takes a fresh reviewed chapter through real common stages without provider c
   const review=await fetch(`http://127.0.0.1:${port}/api/projects/fresh-full/source-alignment-review`,{method:"POST",headers:{"content-type":"application/json",connection:"close"},body:JSON.stringify({reviewerName:"Synthetic language reviewer",attestation:"confirm",evidence:"Compared each fixture interval with the supplied DOCX, audio, and English reference."})}); expect(review.status).toBe(201);
   vi.stubEnv("HEARTWORD_CREW_CALL_UPPER_BOUND_USD","1");
   reconcileAvatarBudget(db,{projectId:"fresh-full",actor:"Synthetic reviewer",evidence:"Mocked provider fixture; no external charges or liabilities.",unreportedUpperBoundUsd:0,outstandingUpperBoundUsd:0,idempotencyKey:"fixture-planning-budget"});
+  // A selected reasoning provider owns the initial plan. Its failure must not
+  // silently trigger Gemini or leave a partly written storyboard.
+  const { runSceneBreakdown } = await import("../../src/pipeline/scene-breakdown/index.js");
+  expect((await runSceneBreakdown("fresh-full")).ok).toBe(true);
+  const { runCastingWithPlanner } = await import("../../src/pipeline/casting/index.js");
+  const geminiPlanner = vi.spyOn(await import("../../src/providers/gemini-text.js"), "generateJson");
+  const selectedPlanner = vi.fn(async () => { throw new Error("Selected provider unavailable; no fallback authorized."); });
+  const selectedResult = await runCastingWithPlanner("fresh-full", selectedPlanner);
+  expect(selectedPlanner).toHaveBeenCalledTimes(1);
+  expect(selectedResult.ok).toBe(false);
+  expect(selectedResult.reasoning).toContain("Selected provider unavailable");
+  expect(geminiPlanner).not.toHaveBeenCalled();
+  expect(db.prepare("SELECT COUNT(*) n FROM shots").get()).toMatchObject({ n: 0 });
+  geminiPlanner.mockRestore();
   const planned=await runPipeline("fresh-full"); expect(planned.stoppedAt, planned.results.at(-1)?.reasoning).toBe("media_generation");
   const { acceptFinalVideoCandidate }=await import("../../src/pipeline/media-generation/final-video.js");
   const videoCandidates=db.prepare("SELECT id FROM generation_attempts WHERE operation='generate_final_video'").all() as Array<{id:string}>;

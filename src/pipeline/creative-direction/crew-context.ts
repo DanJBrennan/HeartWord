@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
@@ -86,6 +87,7 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
   // Alignment describes attributed speech, not the physical end of a recording.
   // Preserve the last file's remaining samples for editing/finishing without
   // changing reviewed attribution rows or invalidating a current planning run.
+  let performanceCast: Record<string, unknown>[] = [];
   if (phase !== "planning") {
     const last = alignedAudio.at(-1)!;
     const recordingEndMs = Math.ceil(decodeToPcm16Mono(productionAssetPath(dataDir, last.path), 8000).length / 8);
@@ -109,6 +111,36 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
       WHERE project_id=? AND layer='composite_cast_master' ORDER BY id`).all(projectId);
     source.hashes.push(digest(JSON.stringify(castMaster)));
     for (const row of castMaster) source.hashes.push(digest(readFileSync(productionAssetPath(dataDir, String(row.source_path)))));
+    performanceCast = castMaster.map(row => ({...row, source_path:relative(resolve(dataDir,"assets"),productionAssetPath(dataDir,String(row.source_path))).replaceAll("\\","/"),sha256:digest(readFileSync(productionAssetPath(dataDir,String(row.source_path))))}));
+  }
+  // Bind a retained level-matched performance to actual input bytes, source
+  // spans, speaker treatment and cast lineage, independently of picture edits.
+  let performanceInputSignature: string | undefined;
+  let retainedPerformanceMaster: CrewBrief["retainedPerformanceMaster"];
+  if (phase !== "planning") {
+    const castMappings = db.prepare(`SELECT m.composite_segment_id,m.original_segment_id,m.source_hash,m.voice_version_id
+      FROM composite_audio_source_map m JOIN audio_segments a ON a.id=m.composite_segment_id
+      WHERE a.project_id=? ORDER BY m.composite_segment_id`).all(projectId);
+    // Package restoration rewrites absolute asset roots. Bind logical asset
+    // identities and actual bytes, never a machine-specific root or the
+    // legacy brief hash of absolute cast paths.
+    const portableAudio = audio.map(segment => ({...segment,path:relative(resolve(dataDir,"assets"),productionAssetPath(dataDir,segment.path)).replaceAll("\\","/"),sha256:digest(readFileSync(productionAssetPath(dataDir,segment.path)))}));
+    performanceInputSignature = digest(JSON.stringify({ projectId, audio:portableAudio, textHashes:source.hashes.slice(0,2),cast:performanceCast,castMappings }));
+    const row = db.prepare("SELECT id,payload FROM edit_commands WHERE project_id=? AND command_type='retain_review_performance_master' ORDER BY sequence DESC LIMIT 1").get(projectId);
+    if (row) {
+      const saved = JSON.parse(String(row.payload));
+      if (!saved || saved.version !== 1 || saved.inputSignature !== performanceInputSignature || typeof saved.path !== "string" ||
+          !/^[a-f0-9]{64}$/.test(saved.sha256) || typeof saved.evidencePath !== "string" || !/^[a-f0-9]{64}$/.test(saved.evidenceSha256) ||
+          digest(readFileSync(productionAssetPath(dataDir,saved.path))) !== saved.sha256 ||
+          digest(readFileSync(productionAssetPath(dataDir,saved.evidencePath))) !== saved.evidenceSha256 ||
+          audio[0]!.startMs !== 0 || saved.durationMs !== audio.at(-1)!.endMs ||
+          audio.some((a,i) => i>0 && a.startMs !== audio[i-1]!.endMs)) throw new Error("Retained performance master has changed or stale source/cast evidence.");
+      const stream = JSON.parse(execFileSync("ffprobe",["-v","error","-select_streams","a:0","-show_streams","-of","json",productionAssetPath(dataDir,saved.path)],{encoding:"utf8",windowsHide:true})).streams[0];
+      const rate = Number(stream?.sample_rate), duration = Number(stream?.duration_ts)*1000/rate;
+      if (stream?.codec_name !== "pcm_s16le" || stream.channels !== 2 || !Number.isSafeInteger(rate) || rate<1 || stream.time_base !== `1/${rate}` ||
+          !Number.isFinite(duration) || Math.abs(duration-saved.durationMs)>1000/rate) throw new Error("Retained performance master has a different physical source clock.");
+      retainedPerformanceMaster = { path:saved.path,sha256:saved.sha256,durationMs:saved.durationMs,authorityId:String(row.id),inputSignature:performanceInputSignature };
+    }
   }
   const shots = db.prepare(`SELECT s.id, s.scene_id AS sceneId, sc.sequence AS sceneSequence, s.sequence,
     s.verse_ref AS verseRef, s.action, s.framing, s.camera_movement AS cameraMovement,
@@ -135,6 +167,14 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
       WHERE cl.shot_id = ? AND ga.operation = 'assemble_shot' AND ga.status = 'accepted'
       ORDER BY ga.created_at DESC, ga.id DESC LIMIT 1`).get(shot.id) as CrewShot["clip"]) ?? null;
     if (phase !== "planning" && shot.clip) source.hashes.push(digest(readFileSync(productionAssetPath(dataDir, shot.clip.path))));
+    if (phase === "editing" || phase === "finishing") {
+      shot.availableClips = db.prepare(`SELECT ga.id,ga.result_asset_path AS path,
+        cl.timeline_end_ms-cl.timeline_start_ms AS durationMs FROM clips cl
+        JOIN generation_attempts ga ON ga.id=cl.generation_attempt_id
+        WHERE cl.shot_id=? AND ga.operation='assemble_shot' AND ga.status='accepted'
+        ORDER BY ga.created_at DESC,ga.id DESC`).all(shot.id) as NonNullable<CrewShot["availableClips"]>;
+      for (const clip of shot.availableClips) if (clip.id !== shot.clip?.id) source.hashes.push(digest(readFileSync(productionAssetPath(dataDir, clip.path))));
+    }
   }
   const canon: CrewBrief["canon"] = [];
   const characterIds = [...new Set([...shots.flatMap(s => [...s.characterIds, ...s.beats.flatMap(b => b.characterId ? [b.characterId] : [])]), ...audio.flatMap(a => a.speakerId ? [a.speakerId] : [])])].sort();
@@ -207,8 +247,22 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
   producerNotes.push(...appliedLessons.map(lesson => ({ id: lesson.id, subjectId: lesson.subjectId ?? projectId, note: `Reusable lesson (${lesson.scopeKind}): ${lesson.requestedChange}${lesson.rationale ? ` Rationale: ${lesson.rationale}` : ""}` })));
   const spentUsd = Number(db.prepare("SELECT COALESCE(SUM(amount_usd), 0) AS total FROM cost_ledger_entries WHERE project_id = ?").get(projectId)!.total);
   const audioAssets = db.prepare(`SELECT id, kind, description, path, sha256, duration_ms AS durationMs
-    FROM production_audio_assets WHERE project_id = ? ORDER BY id`).all(projectId) as CrewBrief["audioAssets"];
+    FROM production_audio_assets WHERE project_id = ? ORDER BY id`).all(projectId) as unknown as CrewBrief["audioAssets"];
   for (const asset of audioAssets) if (digest(readFileSync(productionAssetPath(dataDir, asset.path))) !== asset.sha256) throw new Error(`Approved audio asset changed: ${asset.description}.`);
+  if (phase !== "planning") {
+    const seen = new Set<string>();
+    for (const row of db.prepare("SELECT id,payload FROM edit_commands WHERE project_id=? AND command_type='retain_preprocessed_music' ORDER BY sequence DESC").all(projectId)) {
+      const approval = JSON.parse(String(row.payload));
+      if (!approval || typeof approval.assetId !== "string") throw new Error("Invalid processed music approval.");
+      if (seen.has(approval.assetId)) continue;
+      seen.add(approval.assetId);
+      const asset = audioAssets.find(a => a.id === approval.assetId && a.kind === "music");
+      if (!asset || approval.assetSha256 !== asset.sha256 || approval.includesDucking !== true ||
+          typeof approval.approvalEvidencePath !== "string" || typeof approval.approvalEvidenceSha256 !== "string" ||
+          digest(readFileSync(productionAssetPath(dataDir, approval.approvalEvidencePath))) !== approval.approvalEvidenceSha256) throw new Error("Processed music approval or retained evidence changed.");
+      asset.processedMusic = { approvalId: String(row.id), includesDucking: true };
+    }
+  }
   let render: CrewBrief["render"] = null;
   if (phase === "finishing") {
     const row = db.prepare(`SELECT r.id, r.result_asset_path AS path, r.total_duration_ms AS durationMs,
@@ -225,12 +279,25 @@ export function loadCrewBrief(db: DatabaseSync, dataDir: string, projectId: stri
       const payload = JSON.parse(String(applied.payload));
       const baseId = payload.baseRenderId ?? payload.parentRenderId;
       const base = db.prepare("SELECT result_asset_path AS path FROM chapter_renders WHERE id=? AND project_id=?").get(baseId, projectId);
-      const reviewed = db.prepare("SELECT result_json FROM production_runs WHERE id=? AND project_id=?").get(payload.runId, projectId);
-      if (!base || !reviewed) throw new Error("Finishing provenance is incomplete; preserve the existing cut and resolve its base render first.");
-      render.finishing = { baseRenderId: baseId, basePath: String(base.path), baseSha256: digest(readFileSync(productionAssetPath(dataDir, String(base.path)))), previousDecisions: JSON.parse(String(reviewed.result_json)).contributions };
+      const reviewed = typeof payload.runId === "string" ? db.prepare("SELECT result_json FROM production_runs WHERE id=? AND project_id=?").get(payload.runId, projectId) : undefined;
+      let decisions: CrewResult["contributions"] | undefined;
+      if (payload.producerReview) {
+        const {reviewSha256,...review}=payload.producerReview;
+        if (payload.runId || digest(JSON.stringify(review))!==reviewSha256 || payload.sha256!==render.sha256 ||
+            typeof review.reviewer!=="string" || !review.reviewer.trim() || typeof review.evidence!=="string" || !review.evidence.trim() ||
+            ["colorist","composer","sound_designer"].some(role=>review.contributions?.[role]?.decision!=="approve"))
+          throw new Error("Producer finishing provenance changed; preserve the existing cut and review its evidence.");
+        decisions=Object.fromEntries(Object.entries(review.contributions).map(([role,c])=>{
+          const {decision:_approval,...wire}=c as Record<string,unknown>;return [role,wire];
+        })) as CrewResult["contributions"];
+      } else if (reviewed) decisions=JSON.parse(String(reviewed.result_json)).contributions;
+      if (!base || !decisions) throw new Error("Finishing provenance is incomplete; preserve the existing cut and resolve its base render first.");
+      render.finishing = { baseRenderId: baseId, basePath: String(base.path), baseSha256: digest(readFileSync(productionAssetPath(dataDir, String(base.path)))), previousDecisions: decisions };
     }
   }
   const brief: CrewBrief = { project, source, audio, canon, shots, producerNotes, appliedLessons, spentUsd, audioAssets, render };
+  if (performanceInputSignature) brief.performanceInputSignature = performanceInputSignature;
+  if (retainedPerformanceMaster) brief.retainedPerformanceMaster = retainedPerformanceMaster;
   if (phase !== "planning") {
     const opening = readAcceptedEditorialOpening(db,dataDir,projectId);
     if (opening.length) brief.editorialOpening = opening;
@@ -262,6 +329,6 @@ export function crewBriefHash(brief: CrewBrief, phase: CrewPhase): string {
   // editing/finishing run invalidate its own brief as soon as its first
   // metered call is recorded.
   if (phase !== "planning") return digest(JSON.stringify({ ...brief, spentUsd: 0 }));
-  const { acceptedEmotionalTreatment: _treatment, ...planning } = brief;
-  return digest(JSON.stringify({ ...planning, spentUsd: 0, audioAssets: [], render: null, shots: brief.shots.map(s => ({ ...s, clip: null })) }));
+  const { acceptedEmotionalTreatment: _treatment, performanceInputSignature:_performanceSignature, retainedPerformanceMaster:_performanceMaster, ...planning } = brief;
+  return digest(JSON.stringify({ ...planning, spentUsd: 0, audioAssets: [], render: null, shots: brief.shots.map(({availableClips:_clips,...s}) => ({ ...s, clip: null })) }));
 }

@@ -1,0 +1,22 @@
+import {existsSync,readFileSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {appendReasoningReceipt,assertNoUncertainReasoning} from '../../src/pipeline/creative-direction/reasoning-receipts.js';
+const db=getDb(),projectId='c457a815-d07d-4902-91b5-7b936b549856',runId='bed4ef7b-b369-4957-94dc-ee4ce38fa727',eventId=runId+':creative_director:1:task-1:evidence-0';
+const run=db.prepare('SELECT status,worker_pid FROM production_runs WHERE id=? AND project_id=?').get(runId,projectId)!;
+const event=db.prepare('SELECT error FROM production_events WHERE run_id=? AND role=? AND round=1').get(runId,'creative_director');
+if(run?.status!=='incomplete'||!String(event?.error).includes('Codex request timed out'))throw Error('Expected exact terminal timeout');
+try{process.kill(Number(run.worker_pid),0);throw Error('Original worker remains alive');}catch(e){if((e as NodeJS.ErrnoException).code!=='ESRCH')throw e;}
+const folder=join(getDataDir(),'assets/preparation/crew-reasoning',projectId,eventId.replaceAll(':','_'));
+if(!existsSync(join(folder,'request.json'))||existsSync(join(folder,'response.jsonl')))throw Error('Inspect retained output instead of this lost-output reconciliation');
+const request=JSON.parse(readFileSync(join(folder,'request.json'),'utf8'));
+const submitted=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='submit_crew_reasoning' AND json_extract(payload,'$.eventId')=?").get(projectId,eventId);
+if(!submitted||JSON.parse(String(submitted.payload)).input.sha256!==request.input.sha256)throw Error('Original submitted input mismatch');
+const account=JSON.parse(readFileSync('outputs/mark6-production/codex-timeout-account-observation-20261105.json','utf8'));
+if(account.ordinaryUsageAllowed!==true||account.credits.hasCredits!==false||Number(account.credits.balance)!==0||account.usedPercent>=100||Date.now()-Date.parse(account.at)>300000)throw Error('Fresh actual included account observation required');
+const receipt={provider:'codex_cli',transport:'local_timeout_terminal_original_adapter_discarded_partial_stdout',exitCode:null,resultAccepted:false,providerSuccessClaimed:false,actualTokenUsage:null,allowanceUsage:'Unreported per request, not zero. Actual account-wide usage11%; cannot attribute the increment to this request.',costUsd:null,physicalRequestsRetained:1,originalSubmissionAndErrorRetained:true,billing:'ChatGPT login verified before original beforeSubmit receipt; API keys removed by adapter. Current account has no credits/balance. No API purchase, paid fallback or reset.',accountObservation:'codex-timeout-account-observation-20261105.json',recovery:'Explicit controlled new-ID attempt only after failed-output retention/finite1200second limit pass full tests. No missing result accepted or original request repeated implicitly.'};
+if(db.prepare("SELECT id FROM edit_commands WHERE project_id=? AND command_type='complete_crew_reasoning' AND json_extract(payload,'$.eventId')=?").get(projectId,eventId))throw Error('Already reconciled; inspect original terminal receipt');
+appendReasoningReceipt(db,projectId,eventId,'complete_crew_reasoning',receipt);
+assertNoUncertainReasoning(db,projectId);
+writeFileSync('outputs/mark6-production/codex-timeout-terminal-reconciliation-20261105.json',JSON.stringify({eventId,...receipt},null,2),{flag:'wx'});
+console.log(JSON.stringify({terminalTransportReconciled:true,actualTokenUsage:null,resultAccepted:false,newProviderCalls:0}));db.close();

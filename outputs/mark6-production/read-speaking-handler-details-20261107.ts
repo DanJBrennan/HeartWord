@@ -1,0 +1,2 @@
+import {SshLtxTransport} from '../../src/providers/ltx/transport.js';import {writeFileSync} from 'node:fs';
+const t=new SshLtxTransport();try{await t.connect();const r=await t.remote('sed -n "433,522p" "/Applications/LTX Desktop.app/Contents/Resources/backend/handlers/video_generation_handler.py"; grep -n -A 24 "def _resolve_prompt_enhancement" "/Applications/LTX Desktop.app/Contents/Resources/backend/handlers/video_generation_handler.py"');writeFileSync('outputs/mark6-production/speaking-route-a2v-handler-20261107.txt',r);console.log(r);}finally{t.reset();}

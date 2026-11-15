@@ -55,7 +55,12 @@ export function finishingRecipe(brief: CrewBrief, result: CrewResult): { inputs:
   }
   const colors = result.contributions.colorist!.colorAdjustments!;
   const cues = [...result.contributions.sound_designer!.audioCues!, ...result.contributions.composer!.audioCues!];
-  const edges = cues.flatMap(c => [{ time: c.startMs, delta: Math.pow(10, c.gainDb / 20) }, { time: c.endMs, delta: -Math.pow(10, c.gainDb / 20) }])
+  // A producer-approved processed stem already has its level and ducking.
+  // Never layer another music cue over it, including a second copy of itself.
+  for (const [i, cue] of cues.entries()) if (cue.preserveApprovedMix) for (const [j, other] of cues.entries()) {
+    if (i !== j && brief.audioAssets.find(a => a.id === other.assetId)!.kind === "music" && cue.startMs < other.endMs && other.startMs < cue.endMs) throw new Error("Approved processed music cannot overlap another music cue.");
+  }
+  const edges = cues.filter(c => !c.preserveApprovedMix).flatMap(c => [{ time: c.startMs, delta: Math.pow(10, c.gainDb / 20) }, { time: c.endMs, delta: -Math.pow(10, c.gainDb / 20) }])
     .sort((a, b) => a.time - b.time || a.delta - b.delta);
   let gain = 0;
   const levels = [...edges, ...(brief.render.audioMap ?? []).flatMap(a => [{ time: a.startMs, delta: 0 }, { time: a.endMs, delta: 0 }])].sort((a,b) => a.time-b.time || a.delta-b.delta);
@@ -78,12 +83,22 @@ export function finishingRecipe(brief: CrewBrief, result: CrewResult): { inputs:
     filters.push(`[${index + 1}:a]atrim=start=${cue.sourceStartMs / 1000}:duration=${duration},asetpts=PTS-STARTPTS,volume=${cue.gainDb}dB,${fades.length ? fades.join(",") + "," : ""}adelay=${cue.startMs}:all=1[cue${index}]`);
   });
   if (cues.length) {
-    filters.push(`[0:a]asplit=2[speech][detector]`);
-    filters.push(`${cues.map((_, i) => `[cue${i}]`).join("")}amix=inputs=${cues.length}:normalize=0,apad[bed]`);
-    filters.push("[bed][detector]sidechaincompress=threshold=0.03:ratio=8:attack=10:release=250[ducked]");
+    const ordinary = cues.flatMap((cue,i) => cue.preserveApprovedMix ? [] : [i]);
+    const processed = cues.flatMap((cue,i) => cue.preserveApprovedMix ? [i] : []);
+    const layers = ["[speech]"];
+    if (ordinary.length) {
+      filters.push(`[0:a]asplit=2[speech][detector]`);
+      filters.push(`${ordinary.map(i => `[cue${i}]`).join("")}amix=inputs=${ordinary.length}:normalize=0,apad[bed]`);
+      filters.push("[bed][detector]sidechaincompress=threshold=0.03:ratio=8:attack=10:release=250[ducked]");
+      layers.push("[ducked]");
+    } else filters.push("[0:a]anull[speech]");
+    if (processed.length) {
+      filters.push(`${processed.map(i => `[cue${i}]`).join("")}amix=inputs=${processed.length}:normalize=0,apad[processed]`);
+      layers.push("[processed]");
+    }
     // Compensate the limiter's lookahead: otherwise it delays the exact
     // source clock by 239 samples at48kHz, even when no peak is limited.
-    filters.push("[speech][ducked]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.98:level=false:latency=true[sound]");
+    filters.push(`${layers.join("")}amix=inputs=${layers.length}:duration=first:normalize=0,alimiter=limit=0.98:level=false:latency=true[sound]`);
   } else filters.push("[0:a]anull[sound]");
   return { inputs, filter: filters.join(";"), videoLabel: "[picture]", audioLabel: "[sound]" };
 }
@@ -141,6 +156,50 @@ export function applyFinishing(db: DatabaseSync, dataDir: string, projectId: str
   const brief = loadCrewBrief(db, dataDir, projectId, "finishing");
   if (crewBriefHash(brief, "finishing") !== run.brief_hash) throw new Error("Finishing review is stale. Review the current cut first.");
   const result = JSON.parse(run.result_json!) as CrewResult;
+  return executeFinishing(db, dataDir, projectId, brief, result, {idempotencyKey:`finishing:${runId}`, runId});
+}
+
+/** Producer decisions are edit history, not generated crew approvals. */
+export interface ProducerReviewedFinishing {
+  id: string;
+  reviewer: string;
+  evidence: string;
+  briefHash: string;
+  contributions: Pick<CrewResult["contributions"], "colorist" | "composer" | "sound_designer">;
+}
+
+export function applyProducerReviewedFinishing(db: DatabaseSync, dataDir: string, projectId: string,
+  review: ProducerReviewedFinishing): {path:string; renderId:string} {
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}$/.test(review.id) || !review.reviewer.trim() || !review.evidence.trim())
+    throw new Error("A named producer finishing review with evidence is required.");
+  for (const role of ["colorist", "composer", "sound_designer"] as const) {
+    const c = review.contributions[role];
+    if (!c || c.decision !== "approve" || c.findings.some(f=>f.severity === "blocking") ||
+        (c.coverageRequests?.length ?? 0) > 0 || (c.generationRequests?.length ?? 0) > 0 ||
+        (c.acceptanceChecks && c.acceptanceChecks.status !== "clear"))
+      throw new Error("Producer finishing requires approved decisions with no blocking findings, pending coverage/generation or held acceptance checks.");
+  }
+  const reviewSha256=digest(JSON.stringify(review)), idempotencyKey=`producer-finishing:${projectId}:${review.id}`;
+  const existing=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND idempotency_key=?").get(projectId,idempotencyKey);
+  if(existing){
+    const saved=JSON.parse(String(existing.payload));
+    if(saved.producerReview?.reviewSha256!==reviewSha256 || digest(readFileSync(productionAssetPath(dataDir,saved.path)))!==saved.sha256)
+      throw new Error("The saved producer finishing review or rendered media changed; create a new review revision.");
+    return {path:saved.path,renderId:saved.renderId};
+  }
+  const brief=loadCrewBrief(db,dataDir,projectId,"finishing");
+  if(crewBriefHash(brief,"finishing")!==review.briefHash)throw new Error("Finishing inputs changed; review the current cut first.");
+  // Approval belongs to the producer record; the role wire schemas still
+  // validate the unchanged bounded finishing decisions.
+  const contributions=Object.fromEntries(Object.entries(review.contributions).map(([role,c])=>{
+    const {decision:_approval,...wire}=c!;return [role,wire];
+  })) as CrewResult["contributions"];
+  const result: CrewResult={status:"approved",calls:0,summary:review.evidence,contributions};
+  return executeFinishing(db,dataDir,projectId,brief,result,{idempotencyKey,producerReview:{...review,reviewSha256}});
+}
+
+function executeFinishing(db: DatabaseSync, dataDir: string, projectId: string, brief: CrewBrief,
+  result: CrewResult, authority:{idempotencyKey:string;runId?:string;producerReview?:ProducerReviewedFinishing & {reviewSha256:string}}):{path:string;renderId:string}{
   const recipe = finishingRecipe(brief, result);
   const renderId = randomUUID();
   const path = `generated/chapter/${projectId}/${renderId}.mp4`;
@@ -152,7 +211,8 @@ export function applyFinishing(db: DatabaseSync, dataDir: string, projectId: str
     "-t", String(brief.render!.durationMs / 1000), "-movflags", "+faststart", out], { stdio: ["ignore", "ignore", "pipe"] });
   const duration = mediaDurationMs(out);
   if (Math.abs(duration - brief.render!.durationMs) > 100) throw new Error("Finishing changed the cut duration; output was not promoted.");
-  const payload = { path, renderId, parentRenderId: brief.render!.id, baseRenderId: brief.render!.finishing?.baseRenderId ?? brief.render!.id, runId, recipe, sha256: digest(readFileSync(out)) };
+  if(authority.producerReview && crewBriefHash(loadCrewBrief(db,dataDir,projectId,"finishing"),"finishing")!==authority.producerReview.briefHash) throw new Error("Finishing inputs changed while rendering; output was not promoted.");
+  const payload = { path, renderId, parentRenderId: brief.render!.id, baseRenderId: brief.render!.finishing?.baseRenderId ?? brief.render!.id, ...(authority.runId ? {runId:authority.runId} : {}), ...(authority.producerReview ? {producerReview:authority.producerReview} : {}), recipe, sha256: digest(readFileSync(out)) };
   db.exec("BEGIN IMMEDIATE");
   try {
     db.prepare("INSERT INTO chapter_renders (id, project_id, result_asset_path, total_duration_ms, shot_count, created_at) VALUES (?, ?, ?, ?, ?, ?)")
@@ -160,7 +220,7 @@ export function applyFinishing(db: DatabaseSync, dataDir: string, projectId: str
     db.prepare("INSERT INTO chapter_render_manifests (render_id, timeline_json, source_audio_json) SELECT ?, timeline_json, source_audio_json FROM chapter_render_manifests WHERE render_id = ?").run(renderId, brief.render!.id);
     const sequence = Number(db.prepare("SELECT COALESCE(MAX(sequence), 0) + 1 AS n FROM edit_commands WHERE project_id = ?").get(projectId)!.n);
     db.prepare("INSERT INTO edit_commands (id, project_id, sequence, command_type, payload, idempotency_key, applied_at) VALUES (?, ?, ?, 'apply_finishing', ?, ?, ?)")
-      .run(randomUUID(), projectId, sequence, JSON.stringify(payload), `finishing:${runId}`, Date.now());
+      .run(randomUUID(), projectId, sequence, JSON.stringify(payload), authority.idempotencyKey, Date.now());
     db.exec("COMMIT");
   } catch (error) { db.exec("ROLLBACK"); throw error; }
   return { path, renderId };

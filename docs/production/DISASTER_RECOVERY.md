@@ -6,11 +6,49 @@ Acceptable loss is one working day. **Cloud capacity/upload/remote restoration
 must be verified before the deployment is called protected.** Details and
 known gaps: [disaster-recovery design](../design/disaster-recovery.md).
 
-Deployment is currently blocked: the configured `dan@brenn.onmicrosoft.com`
-OneDrive shows 495.9 GB used of 1 TB, below the agreed 750 GiB-free threshold.
-Its sync root is `C:\Users\danbr\OneDrive - dsc`; the older `OneDrive` folder
-is not evidence of an active sync account. No upload/task has been enabled.
-Dan's destination or revised-retention decision is needed.
+October 24 setup: Dan selected his new personal OneDrive account and asked
+the assistant to start the backup. OneDrive Settings identifies
+`danbrennan@verizon.net`, **97.4 GB used of 2.0 TB**; this passes the agreed
+750 GiB-free requirement. The verified Windows sync root is
+`C:\Users\danbr\OneDrive\Documents\OneDrive - Personal\OneDrive`.
+Completed backups belong in **OneDrive / HeartWordBackups / <snapshot>**.
+The first new capture is named `20261024-first-personal`.
+
+The older business-account check below is historical. Do not use the stale
+`OneDrive`/`OneDriveCommercial` environment values pointing at `OneDrive - dsc`
+for this account. Pass the verified personal root explicitly to the runner.
+OneDrive's separate "Back up folders on this PC" Documents warning does not
+require moving the live database or turning on Documents backup: placing
+completed snapshots in the verified sync root is sufficient to queue upload.
+
+The current read-only inventory is **99,896 files / 167,002,386,310 bytes
+(155.533 GiB)** with **56 SQLite files**, including retained snapshots and
+isolated chapter restorations. Essential history and rejected/superseded work
+remain included. Seven full copies now require about **1,089 GiB**, before
+growth; the new account has capacity, subject to remeasurement. C: had about
+486 GiB free before this run, so cloud copies must eventually use Files
+On-Demand and surplus local staging must not accumulate indefinitely.
+
+The first snapshot's upload, full cloud recall, isolated restoration and normal
+Mark 5 opening/playback now pass. Exact evidence is recorded in
+`outputs/disaster-backup-deployment-20261024.json` and
+`outputs/disaster-backup-normal-workflow-20261026.json`. This protects the saved
+October 24 capture; it does not include later work. **Nightly backups remain
+disabled pending the daily storage/upload policy decision below.**
+
+October 25 recovery warning: the entire first snapshot passed upload and
+online-only metadata checks, but this computer returns Win32 380 when opening
+some online-only files whose full local paths reach 260 characters. Explicitly
+requesting **Always keep on this device** for the affected cloud file downloaded
+it successfully, with the expected SHA-256. Before restoring, request that
+OneDrive download the completed snapshot and wait for every file to become
+locally available; then verify all hashes. Do not bypass a failed hash or use
+working-disk files to fill a gap in a claimed cloud-recovery test. The completed
+drill explicitly prefetched 16,052 long-path files (27.1 GB), then verified their
+cloud bytes and the full restore. This is a recovery-cache step, not permission
+to place the live SQLite database in synced storage. After a successful drill,
+use Free up space on only the completed cloud backup; keep the isolated working
+restore outside sync. Never delete cloud files to clear this cache.
 
 ## Before a failure
 
@@ -50,7 +88,8 @@ npm run data:backup -- inventory
 npm run data:backup -- stage 'C:\Users\danbr\HeartWordBackupStaging\NEW-TIMESTAMP'
 npm run data:backup -- verify 'C:\Users\danbr\HeartWordBackupStaging\NEW-TIMESTAMP'
 # Run publish only after checking the selected account has >=750 GiB free.
-$selectedSyncBackup = Join-Path $env:OneDrive 'HeartWordBackups\NEW-TIMESTAMP'
+$selectedPersonalRoot = 'C:\Users\danbr\OneDrive\Documents\OneDrive - Personal\OneDrive'
+$selectedSyncBackup = Join-Path $selectedPersonalRoot 'HeartWordBackups\NEW-TIMESTAMP'
 npm run data:backup -- publish 'C:\Users\danbr\HeartWordBackupStaging\NEW-TIMESTAMP' $selectedSyncBackup
 npm run data:backup -- status
 ```
@@ -60,13 +99,21 @@ finished for the entire folder, download the snapshot from the cloud and run
 the following restore. No completed marker means no completed snapshot.
 Do not edit a completed snapshot or merge an incomplete one into it.
 
-After capacity and the first remote drill pass, the nightly runner can be
-registered in Windows Task Scheduler for 23:30 Eastern, once daily under Dan's
-account while logged on (OneDrive needs its normal signed-in session):
+**Do not register the existing nightly runner yet.** The first transfer took
+about 14.6 hours to reach verified cloud-only storage. With full copies at
+23:30, a failure before the next upload finishes can lose more than one working
+day; the current runner also accumulates staging and publication copies.
+Dan's choice is pending: use separate fast nightly storage plus this OneDrive
+copy, authorize a modest changed-file upload design, or revise the acceptable
+loss. No automatic cleanup or new format has been chosen.
+
+The following is a proposed registration only after that decision, measured
+upload time and local cache/staging headroom meet the loss target. Run under
+Dan's logged-on account; OneDrive needs its normal signed-in session:
 
 ```
 Program: powershell.exe
-Arguments: -NoProfile -WindowStyle Hidden -File "C:\Users\danbr\OneDrive\Documents\HeartWord\scripts\backup-nightly.ps1" -CloudCapacityConfirmed
+Arguments: -NoProfile -WindowStyle Hidden -File "C:\Users\danbr\OneDrive\Documents\HeartWord\scripts\backup-nightly.ps1" -SyncRoot "C:\Users\danbr\OneDrive\Documents\OneDrive - Personal\OneDrive\HeartWordBackups" -CloudCapacityConfirmed
 Start in: C:\Users\danbr\OneDrive\Documents\HeartWord
 ```
 
@@ -107,7 +154,7 @@ npm run build:web
 node --import tsx src/server/index.ts
 ```
 
-4. Open `http://localhost:4000`. Select **Hatam → Mark → chapter 3** (or the
+4. Open `http://127.0.0.1:4000`. Select **Hatam → Mark → chapter 5** (or the
    chapter used in the recorded drill). Inspect source/reference verses,
    approved canon, selected and rejected takes, existing cut, reviews/costs,
    producer decisions and edit history. Play retained footage. Use normal
@@ -158,6 +205,28 @@ Your dot/Mabel coordination is not available from these tools. No new sender,
 phone number, paid notification subscription or credentials were invented.
 
 ## Recorded local drill
+
+The first personal-OneDrive cloud drill completed on October 26 UTC. Its full
+snapshot has 101,156 retained files plus `backup.json`; all 56 databases passed
+integrity/relationship checks. After every file was confirmed online-only,
+the isolated restore used cloud recall without live-data access. Every main
+production row was compared, preserving original prose/decisions/costs and
+allowing only exact retained-file path projections; the cloud snapshot retains
+the original unprojected rows.
+
+Recovered data: `C:\Users\danbr\HeartWordRecoveryDrill\20261024-personal-cloud`.
+Recovered application: the same path with `-application` appended. `npm ci`
+and the web build passed there. The normal app opened at port 4048 with provider
+credentials absent. Select Hatam / Mark / 5, open its workspace, then choose
+**Recorded cut**. Native playback advanced beyond two minutes; the full
+video/audio decode and approved SHA-256 passed. Chapter dependency/editability
+findings are empty. Screenshots and all evidence are under repository outputs.
+Existing Uncertain/queued labels and historical cost estimates were retained,
+not rewritten as approvals or invoices. The successful test used the installed
+host's Node/FFmpeg; replacement software and credentials still need the separate
+recovery steps above. No generation or distribution was performed.
+
+The October 7 local-only drill below is historical.
 
 The full local restore at
 `C:\Users\danbr\HeartWordRecoveryDrill\20261007-verified` passed all database

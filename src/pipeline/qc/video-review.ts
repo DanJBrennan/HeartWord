@@ -51,7 +51,7 @@ export const VIDEO_REVIEW_MIN_CONFIDENCE = 80;
  *  smaller proxy rather than a failed call halfway through a render. */
 export const MAX_REVIEW_PROXY_BYTES = 18 * 1024 * 1024;
 
-function verifiedReviewProxy(originalPath: string, streamCopy = false): NonNullable<VideoReviewResult["reviewInput"]> {
+export function verifiedReviewProxy(originalPath: string, streamCopy = false): NonNullable<VideoReviewResult["reviewInput"]> {
   const hash = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
   const path = `${originalPath}.picture-review-proxy.mp4`, provenancePath = `${path}.json`, originalSha256 = hash(originalPath);
   const probe = (file: string) => JSON.parse(execFileSync("ffprobe", ["-v","error","-count_frames","-show_streams","-of","json",file], { encoding: "utf8", windowsHide: true })) as

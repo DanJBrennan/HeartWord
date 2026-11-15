@@ -14,6 +14,23 @@ function brief(): CrewBrief {
 const editor = (): CrewContribution => ({ summary: "Cut", directions: [], findings: [], coverageRequests: [],
   edits: [{ shotId: "s0", sourceStartMs: 0, durationMs: 4000 }, { shotId: "s1", sourceStartMs: 0, durationMs: 4000 }], pauses: [] });
 describe("Picture Editor and protected performance", () => {
+  it("uses distinct accepted takes from one shot without changing protected speech",()=>{
+    const b=brief(),e=editor();b.shots[0]!.availableClips=[{id:"older",path:"older.mp4",durationMs:2000}];
+    e.edits=[{shotId:"s0",clipId:"older",sourceStartMs:0,durationMs:2000},{shotId:"s0",clipId:"v0",sourceStartMs:0,durationMs:2000},e.edits![1]!];
+    const cut=planEditorialCut(b,e);
+    expect(cut.timeline.slice(0,2).map(t=>[t.clipId,t.path,t.startMs,t.endMs])).toEqual([["older","older.mp4",0,2000],["v0","v0.mp4",2000,4000]]);
+    expect(cut.audioMap).toEqual(planEditorialCut(brief(),editor()).audioMap);
+  });
+  it.each(["unknown","v1","",null,123])("rejects an unavailable or wrong-shot explicit take %s",clipId=>{
+    const e=editor();(e.edits![0] as any).clipId=clipId;
+    expect(()=>planEditorialCut(brief(),e)).toThrow(/unavailable footage/);
+  });
+  it("checks the chosen alternative's actual duration and preserves lip-sync placement",()=>{
+    const b=brief(),e=editor();b.shots[0]!.availableClips=[{id:"short",path:"short.mp4",durationMs:500}];e.edits![0]!.clipId="short";
+    expect(()=>planEditorialCut(b,e)).toThrow(/beyond its content/);
+    e.edits![0]!.clipId="v0";b.shots[1]!.availableClips=[{id:"speech-alt",path:"speech-alt.mp4",durationMs:4000}];e.edits![1]!.clipId="speech-alt";e.edits!.reverse();
+    expect(()=>planEditorialCut(b,e)).toThrow(/lip-synced/);
+  });
   it("adds an establishing view and emotional breathing room while retaining every source millisecond", () => {
     const b = brief(), e = editor();
     e.pauses = [{ afterSegmentId: null, durationMs: 2000, reason: "Establishing view" }, { afterSegmentId: "n", durationMs: 1000, reason: "Let the reaction breathe" }];

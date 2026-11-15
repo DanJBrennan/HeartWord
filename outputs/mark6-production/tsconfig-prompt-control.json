@@ -1,0 +1,1 @@
+{"extends":"../../src/server/tsconfig.json","include":["./herod-prompt-control.ts"],"compilerOptions":{"noEmit":true}}

@@ -38,7 +38,9 @@ export function parseVerseRange(verseRef: string): { start: number; end: number 
   // Anchor on the colon so "Mark 2:8-10" extracts 8-10, not the chapter
   // number "2" that precedes the colon.
   const afterColon = verseRef.includes(":") ? verseRef.slice(verseRef.indexOf(":") + 1) : verseRef;
-  const match = afterColon.match(/(\d+)(?:-(\d+))?/);
+  // Treatment/reference validation already accepts the printed en dash.
+  // Preserve both endpoints rather than silently narrowing that range.
+  const match = afterColon.match(/(\d+)(?:[-–](\d+))?/);
   if (!match) throw new Error(`parseVerseRange: could not find a verse number in "${verseRef}"`);
   const start = Number(match[1]);
   const end = match[2] ? Number(match[2]) : start;

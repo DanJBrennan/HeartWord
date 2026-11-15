@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { getDataDir, getDb } from "../../db/client.js";
 import type { Stage } from "../types.js";
 import { detectSilences, getAudioDurationMs } from "./detect-silences.js";
-import { parseChapterTitle, parseNarratedParagraphTitles, parseSourceText, parseSourceTextByVerse, type VerseRecord } from "./parse-source-text.js";
+import { auditSourceBodyCoverage, parseChapterTitle, parseNarratedParagraphTitles, parseSourceText, parseSourceTextByVerse, type VerseRecord } from "./parse-source-text.js";
 import { selectBoundaries } from "./select-boundaries.js";
 import { decodeToPcm16Mono, computePitchTrack } from "./pitch.js";
 import { scoreMark2Utterances } from "./mark-2-acoustic-scoring.js";
@@ -135,6 +135,8 @@ export async function runIngestionWithAlignment(projectId: string, aligner = ali
   // General corpus alignment is evidence-first. It never supplies speaker
   // identities and never removes an unmatched interval; failures are retained
   // as reviewable evidence while the conservative timing fallback remains.
+  const bodyCoverage = auditSourceBodyCoverage(docxPath, project.chapter);
+  if (!bodyCoverage.complete) return {ok:false,reasoning:"Ingestion held before alignment: extracted verse text does not account for every supplied body word in document order. Inspect unnumbered paragraphs and source structure; no model call was submitted."};
   const verseRecords = parseSourceTextByVerse(docxPath);
   const chapterTitle = parseChapterTitle(docxPath, project.chapter);
   const narratedTitles = parseNarratedParagraphTitles(docxPath);

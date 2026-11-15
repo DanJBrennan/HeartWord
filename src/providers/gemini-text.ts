@@ -17,6 +17,8 @@
  * the string through casting/index.ts if this one gets retired too.
  */
 
+import { createHash } from "node:crypto";
+
 export const GEMINI_TEXT_MODEL = "gemini-3.6-flash";
 
 // A JSON-Schema-like object, per Gemini's responseSchema (a restricted
@@ -44,27 +46,131 @@ const GEMINI_TEXT_INPUT_USD_PER_MILLION_TOKENS = 0.75;
 const GEMINI_TEXT_OUTPUT_USD_PER_MILLION_TOKENS = 3.75;
 
 export interface GeminiUsage { promptTokenCount: number; candidatesTokenCount: number; thoughtsTokenCount: number; totalTokenCount: number }
+export interface GeminiTextOptions { maxOutputTokens?: number; thinkingLevel?: "minimal" | "low" | "medium" | "high" }
+export class GeminiResponseError extends Error {
+  constructor(message:string, readonly receipt:{usage:GeminiUsage;costUsd:number;model:string;finishReason:string|null;rawText:string|null}) { super(message); this.name="GeminiResponseError"; }
+}
 export interface GeminiMeteredResult<T> { result: T; usage: GeminiUsage; costUsd: number }
 export interface GeminiMediaInput {
   mimeType: string;
   data: string;
+  fileUri?: never;
   caption?: string;
   /** Optional static video sampling; omitted inputs retain the provider default. */
   videoMetadata?: { fps: number };
 }
+/** Keep inline-only consumers (including Codex) on the original media type. */
+export type GeminiRequestMediaInput = GeminiMediaInput | (Omit<GeminiMediaInput,"data"|"fileUri"> & {fileUri:string;data?:never});
 
-function estimateGeminiTextCostUsd(usage: GeminiUsage): number {
-  const inputCost = usage.promptTokenCount * GEMINI_TEXT_INPUT_USD_PER_MILLION_TOKENS / 1_000_000;
-  const outputCost = (usage.candidatesTokenCount + usage.thoughtsTokenCount) * GEMINI_TEXT_OUTPUT_USD_PER_MILLION_TOKENS / 1_000_000;
+export interface GeminiUploadedFile {
+  name: string; uri: string; mimeType: string; sizeBytes: string;
+  sha256Hash: string; state: "PROCESSING" | "ACTIVE" | "FAILED"; expirationTime: string;
+}
+export const GEMINI_JSON_REQUEST_LIMIT_BYTES = 20_000_000;
+const fileNamePattern = /^files\/[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
+const fileUriPrefix = "https://generativelanguage.googleapis.com/v1beta/";
+function fileName(name: string): string {
+  if (!fileNamePattern.test(name)) throw new Error("Invalid Gemini uploaded file name.");
+  return name;
+}
+function fileKey(): string {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new Error("Explicit Gemini file API configuration required.");
+  return key;
+}
+/** Verify server metadata against the exact local bytes, not a display name. */
+export function verifyGeminiUploadedFile(value: unknown, expected: {sha256: string; mimeType: string; sizeBytes: number}): GeminiUploadedFile {
+  const f = value as GeminiUploadedFile;
+  if (!f || typeof f.name !== "string" || !fileNamePattern.test(f.name) || f.uri !== fileUriPrefix + f.name ||
+      !Number.isSafeInteger(expected.sizeBytes) || expected.sizeBytes < 1 || expected.sizeBytes > 2_000_000_000 ||
+      !/^[a-f0-9]{64}$/.test(expected.sha256) || f.mimeType !== expected.mimeType || f.sizeBytes !== String(expected.sizeBytes) ||
+      typeof f.sha256Hash !== "string" || !["PROCESSING", "ACTIVE", "FAILED"].includes(f.state) ||
+      !Number.isFinite(Date.parse(f.expirationTime)) || Date.parse(f.expirationTime) <= Date.now()) {
+    throw new Error("Gemini uploaded file metadata does not match the retained media.");
+  }
+  let digest = f.sha256Hash;
+  if (!/^[a-f0-9]{64}$/.test(digest)) {
+    if (digest.length > 88) throw new Error("Invalid Gemini uploaded file hash encoding.");
+    const decoded = Buffer.from(digest,"base64");
+    if (decoded.toString("base64") !== digest) throw new Error("Invalid Gemini uploaded file hash encoding.");
+    // Files API has returned both raw digest bytes and an ASCII hex digest
+    // inside the base64 JSON bytes field. Both must identify the SAME bytes.
+    digest = decoded.length === 32 ? decoded.toString("hex") :
+      decoded.length === 64 && /^[a-f0-9]{64}$/.test(decoded.toString("utf8")) ? decoded.toString("utf8") : "";
+  }
+  if (digest !== expected.sha256) throw new Error("Gemini uploaded file hash differs from retained media.");
+  return {name:f.name, uri:f.uri, mimeType:f.mimeType, sizeBytes:f.sizeBytes, sha256Hash:f.sha256Hash, state:f.state, expirationTime:f.expirationTime};
+}
+/** Non-generative transport only. No retries, model selection or inference call. */
+export async function uploadGeminiReviewFile(bytes: Uint8Array, mimeType: string, displayName: string): Promise<GeminiUploadedFile> {
+  const key = fileKey();
+  if (!bytes.byteLength || bytes.byteLength > 2_000_000_000 || !["video/mp4", "audio/wav", "audio/mpeg", "image/png", "image/jpeg"].includes(mimeType) || !displayName || displayName.length > 512) throw new Error("Invalid bounded review attachment.");
+  const start = await fetch("https://generativelanguage.googleapis.com/upload/v1beta/files", {
+    method:"POST", redirect:"error", signal:AbortSignal.timeout(60000),
+    headers:{"x-goog-api-key":key,"X-Goog-Upload-Protocol":"resumable","X-Goog-Upload-Command":"start","X-Goog-Upload-Header-Content-Length":String(bytes.byteLength),"X-Goog-Upload-Header-Content-Type":mimeType,"Content-Type":"application/json"},
+    body:JSON.stringify({file:{displayName}})
+  });
+  if (!start.ok) throw new Error(`Gemini file upload initialization failed: ${start.status}`);
+  const location = start.headers.get("x-goog-upload-url");
+  const url = location ? new URL(location) : undefined;
+  if (!url || url.protocol !== "https:" || url.hostname !== "generativelanguage.googleapis.com" || url.port || url.username || url.password || url.pathname !== "/upload/v1beta/files" || url.hash) throw new Error("Untrusted Gemini resumable upload destination.");
+  const done = await fetch(url.href, {method:"POST", redirect:"error", signal:AbortSignal.timeout(180000),
+    headers:{"Content-Length":String(bytes.byteLength),"X-Goog-Upload-Offset":"0","X-Goog-Upload-Command":"upload, finalize"},
+    body:new Uint8Array(bytes).buffer});
+  if (!done.ok) throw new Error(`Gemini file upload failed: ${done.status}`);
+  return verifyGeminiUploadedFile((await done.json() as {file:unknown}).file, {sha256:createHash("sha256").update(bytes).digest("hex"),mimeType,sizeBytes:bytes.byteLength});
+}
+export async function getGeminiReviewFile(file: GeminiUploadedFile, expected: {sha256:string;mimeType:string;sizeBytes:number}): Promise<GeminiUploadedFile> {
+  verifyGeminiUploadedFile(file, expected);
+  const res = await fetch(fileUriPrefix + fileName(file.name), {headers:{"x-goog-api-key":fileKey()},redirect:"error",signal:AbortSignal.timeout(60000)});
+  if (!res.ok) throw new Error(`Gemini file metadata failed: ${res.status}`);
+  return verifyGeminiUploadedFile(await res.json(), expected);
+}
+export async function deleteGeminiReviewFile(file: GeminiUploadedFile): Promise<void> {
+  if (file.uri !== fileUriPrefix + fileName(file.name)) throw new Error("Invalid Gemini uploaded file URI.");
+  const res = await fetch(file.uri,{method:"DELETE",headers:{"x-goog-api-key":fileKey()},redirect:"error",signal:AbortSignal.timeout(60000)});
+  if (!res.ok && res.status !== 404) throw new Error(`Gemini file deletion failed: ${res.status}`);
+}
+
+/** Also used before the review journal reserves a potentially billable call. */
+export function geminiJsonRequestBody(prompt: string, images: GeminiRequestMediaInput[], schema: GeminiJsonSchema, options: GeminiTextOptions = {}): string {
+  const parts = [{text:prompt}, ...images.flatMap(img => {
+    const inline = typeof img.data === "string" && img.data.length > 0;
+    if (inline === (img.fileUri !== undefined) || (!inline && img.data !== undefined) ||
+        (img.fileUri !== undefined && (!img.fileUri.startsWith(fileUriPrefix) || !fileNamePattern.test(img.fileUri.slice(fileUriPrefix.length))))) throw new Error("Gemini media requires exactly one inline payload or verified file URI.");
+    return [...(img.caption ? [{text:img.caption}] : []), {
+      ...(img.fileUri ? {fileData:{mimeType:img.mimeType,fileUri:img.fileUri}} : {inlineData:{mimeType:img.mimeType,data:img.data}}),
+      ...(img.videoMetadata ? {videoMetadata:img.videoMetadata} : {})
+    }];
+  })];
+  const body = JSON.stringify({contents:[{role:"user",parts}],generationConfig:{temperature:0.4,responseMimeType:"application/json",responseSchema:schema,
+    ...(options.maxOutputTokens === undefined ? {} : {maxOutputTokens:options.maxOutputTokens}),
+    ...(options.thinkingLevel === undefined ? {} : {thinkingConfig:{thinkingLevel:options.thinkingLevel.toUpperCase()}})}});
+  if (Buffer.byteLength(body,"utf8") > GEMINI_JSON_REQUEST_LIMIT_BYTES) throw new Error("Gemini encoded request exceeds 20 MB; attach verified media through the Files API.");
+  return body;
+}
+
+function estimateGeminiTextCostUsd(usage: GeminiUsage, model=GEMINI_TEXT_MODEL): number {
+  // Standard rates verified 2026-10-31 against ai.google.dev/gemini-api/docs/pricing.
+  // Do not price Pro alignment fills at Flash rates or rewrite historical costs.
+  const pro=model==="gemini-3.1-pro-preview",long=usage.promptTokenCount>200000;
+  const inputRate=pro?(long?4:2):GEMINI_TEXT_INPUT_USD_PER_MILLION_TOKENS;
+  const outputRate=pro?(long?18:12):GEMINI_TEXT_OUTPUT_USD_PER_MILLION_TOKENS;
+  const inputCost = usage.promptTokenCount * inputRate / 1_000_000;
+  const outputCost = (usage.candidatesTokenCount + usage.thoughtsTokenCount) * outputRate / 1_000_000;
   return Math.round((inputCost + outputCost) * 1e6) / 1e6;
 }
 
 async function callGemini<T>(
   prompt: string,
-  images: GeminiMediaInput[],
+  images: GeminiRequestMediaInput[],
   schema: GeminiJsonSchema,
-  model: string
+  model: string,
+  options: GeminiTextOptions = {}
 ): Promise<GeminiMeteredResult<T>> {
+  if (![GEMINI_TEXT_MODEL,"gemini-3.1-pro-preview"].includes(model)) throw new Error("Gemini reasoning held: model pricing must be verified before a new paid model is enabled.");
+  if (options.maxOutputTokens !== undefined && (!Number.isSafeInteger(options.maxOutputTokens) || options.maxOutputTokens < 16 || options.maxOutputTokens > 8192)) throw new Error("Bounded Gemini output must be 16–8192 tokens.");
+  if (options.thinkingLevel !== undefined && (!["minimal","low","medium","high"].includes(options.thinkingLevel) || (model === "gemini-3.1-pro-preview" && options.thinkingLevel === "minimal"))) throw new Error("Unsupported bounded thinking level for this Gemini model.");
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error(
@@ -77,28 +183,14 @@ async function callGemini<T>(
   // Gemini's inlineData parts carry no label of their own, so a caller
   // sending several images (e.g. one per chapter character) has no other
   // way to tell the model which is which.
-  const parts = [
-    { text: prompt },
-    ...images.flatMap((img) => [
-      ...(img.caption ? [{ text: img.caption }] : []),
-      { inlineData: { mimeType: img.mimeType, data: img.data },
-        ...(img.videoMetadata ? { videoMetadata: img.videoMetadata } : {}) }
-    ])
-  ];
+  const body = geminiJsonRequestBody(prompt, images, schema, options);
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const res = await fetch(url, {
     method: "POST",
     signal: AbortSignal.timeout(180000),
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts }],
-      generationConfig: {
-        temperature: 0.4,
-        responseMimeType: "application/json",
-        responseSchema: schema
-      }
-    })
+    body
   });
 
   if (!res.ok) {
@@ -107,25 +199,24 @@ async function callGemini<T>(
   }
 
   const data = (await res.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?:string }>;
     usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number; totalTokenCount?: number };
   };
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    throw new Error(`Gemini returned no text in its response: ${JSON.stringify(data)}`);
-  }
   const usage: GeminiUsage = {
     promptTokenCount: data.usageMetadata?.promptTokenCount ?? 0,
     candidatesTokenCount: data.usageMetadata?.candidatesTokenCount ?? 0,
     thoughtsTokenCount: data.usageMetadata?.thoughtsTokenCount ?? 0,
     totalTokenCount: data.usageMetadata?.totalTokenCount ?? 0
   };
-  const costUsd = estimateGeminiTextCostUsd(usage);
+  const costUsd = estimateGeminiTextCostUsd(usage,model);
 
+  const receipt={usage,costUsd,model,finishReason:data.candidates?.[0]?.finishReason??null,rawText:text??null};
+  if(!text)throw new GeminiResponseError("Gemini returned no final text; usage retained for reconciliation.",receipt);
   try {
     return { result: JSON.parse(text) as T, usage, costUsd };
   } catch (err) {
-    throw new Error(`Gemini's response wasn't valid JSON despite responseSchema: ${(err as Error).message} -- raw: ${text}`);
+    throw new GeminiResponseError(`Gemini's response wasn't valid JSON despite responseSchema: ${(err as Error).message}`,receipt);
   }
 }
 
@@ -158,11 +249,12 @@ export async function generateJsonWithImages<T>(
  */
 export async function generateJsonWithImagesMetered<T>(
   prompt: string,
-  images: GeminiMediaInput[],
+  images: GeminiRequestMediaInput[],
   schema: GeminiJsonSchema,
-  model = GEMINI_TEXT_MODEL
+  model = GEMINI_TEXT_MODEL,
+  options: GeminiTextOptions = {}
 ): Promise<GeminiMeteredResult<T>> {
-  return callGemini<T>(prompt, images, schema, model);
+  return callGemini<T>(prompt, images, schema, model, options);
 }
 
 /**

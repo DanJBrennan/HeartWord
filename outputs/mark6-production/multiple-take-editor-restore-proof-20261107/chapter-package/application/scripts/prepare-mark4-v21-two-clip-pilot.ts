@@ -1,0 +1,17 @@
+import { randomUUID } from "node:crypto";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { getDataDir, getDb } from "../src/db/client.js";
+import { runVoicing } from "../src/pipeline/voicing/index.js";
+const projectId="8a5659a4-b033-4d5f-80e2-904b217cf8a0",shotId="611a8078-e67e-47c3-9cff-8c920809798e",sourceId="f13972b1-1558-466c-abd8-68cc4a083d37",cut=3680;
+const ids=["97b6e0ba-1d35-4bb5-a0c2-ab738ee1c52e","5f784c56-ed26-4341-88ed-6736144285ec"] as const,db=getDb(),dataDir=getDataDir();
+const source=db.prepare("SELECT start_ms,end_ms,source_path,speaker_character_id FROM audio_segments WHERE id=? AND project_id=? AND layer='original_reading'").get(sourceId,projectId) as {start_ms:number;end_ms:number;source_path:string;speaker_character_id:string|null}|undefined;
+if(!source||source.start_ms!==262484||source.end_ms!==270880||!source.speaker_character_id)throw Error("Mark 4:21 source interval is unavailable.");
+const beats=ids.map(id=>{const row=db.prepare("SELECT id,sequence,beat_type,needs_lip_sync,keyframe_asset_path,status FROM coverage_beats WHERE id=? AND shot_id=?").get(id,shotId) as {id:string;sequence:number;beat_type:string;needs_lip_sync:number;keyframe_asset_path:string|null;status:string}|undefined;if(!row||row.status!=="accepted"||!row.keyframe_asset_path)throw Error(`Approved keyframe missing for ${id}.`);return row;});
+if(beats[0]!.beat_type!=="master"||beats[1]!.needs_lip_sync!==1)throw Error("Approved Mark 4:21 beat roles changed.");
+const segments=[{sequence:1,start:0,end:cut,beatId:beats[0]!.id,role:"mouth-hidden lamp master"},{sequence:2,start:cut,end:8396,beatId:beats[1]!.id,role:"Jesus lamp insert"}];
+const note="Dan Brennan approved automated Mark 4:21 two-clip pilot boundaries: use the source pause midpoint at 3680 ms, preserving the complete 8396 ms Jesus line. This is review-only and does not authorize chapter-wide media.";
+if(!db.prepare("SELECT id FROM review_notes WHERE project_id=? AND subject_type='shot' AND subject_id=? AND source='human' AND note=?").get(projectId,shotId,note))db.prepare("INSERT INTO review_notes (id,project_id,subject_type,subject_id,source,note,resolved,created_at) VALUES (?,?,?,?, 'human', ?,1,?)").run(randomUUID(),projectId,"shot",shotId,note,Date.now());
+const voiced=await runVoicing(projectId,{sourceSegmentIds:[sourceId]});if(!voiced.ok)throw Error(voiced.reasoning);
+const out=join(dataDir,"assets","generated","pilot-source","mark4-v21-two-clip-pilot.json");mkdirSync(join(dataDir,"assets","generated","pilot-source"),{recursive:true});writeFileSync(out,JSON.stringify({purpose:"Held Mark 4:21 two-clip pilot only.",source:{id:sourceId,path:source.source_path,startMs:source.start_ms,endMs:source.end_ms},cutMs:cut,segments,keyframes:beats.map(beat=>({beatId:beat.id,path:beat.keyframe_asset_path}))},null,2));
+console.log(JSON.stringify({cutMs:cut,segments,voiced,manifest:out},null,2));

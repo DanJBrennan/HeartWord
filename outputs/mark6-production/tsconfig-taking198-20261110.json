@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig-departure-extended-20261109.json",
+  "include": [
+    "./review-taking197-reserve-end144-20261110.ts",
+    "./generate-jesus-taking-final198-guided-20261110.ts",
+    "./review-jesus-taking198-20261110.ts",
+    "./accept-jesus-taking198-20261110.ts",
+    "./reconcile-known-av-ledger-count136-20261110.ts",
+    "./finish-jesus-taking198-root-review-20261110.ts"
+  ]
+}

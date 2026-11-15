@@ -1,0 +1,14 @@
+import {DatabaseSync} from 'node:sqlite';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {getDataDir} from '../../src/db/client.js';
+import {encodeCrewPacket} from '../../src/pipeline/creative-direction/crew-packet.js';
+const db=new DatabaseSync(join(getDataDir(),'db','heartword.sqlite'),{readOnly:true});
+const row=db.prepare("SELECT prompt FROM production_events WHERE run_id=? AND role='script_supervisor' AND round=1").get('25ed817f-cae7-4a39-86af-8ce9429295e7')!;
+const prompt=String(row.prompt),encoded=JSON.parse(prompt.split('BOUNDED CONTEXT:\n')[1]!.split('\nUse filmChanges')[0]!);
+const read=(n:any):any=>n&&typeof n==='object'&&n.$ref?read(encoded.definitions[Number(n.$ref.split('/').at(-1))]):Array.isArray(n)?n.map(read):n&&typeof n==='object'?Object.fromEntries(Object.entries(n).map(([k,v])=>[k,read(v)])):n;
+const packet=read(encoded.payload??encoded),bytes=Buffer.byteLength(encodeCrewPacket(packet),'utf8');
+const removal=Object.keys(packet).map(key=>{const copy={...packet};delete copy[key];return{key,savedBytes:bytes-Buffer.byteLength(encodeCrewPacket(copy),'utf8')};}).sort((a,b)=>b.savedBytes-a.savedBytes);
+const recordRemoval=['history','objections'].map(key=>{const copy={...packet,productionRecord:{...packet.productionRecord}};delete copy.productionRecord[key];return{key,savedBytes:bytes-Buffer.byteLength(encodeCrewPacket(copy),'utf8')};});
+const value={status:'read_only_actual_failed_chapter_packet_attribution',packetBytes:bytes,removal,recordRemoval,historyEntries:packet.productionRecord?.history?.length,substantiveProposals:packet.productionRecord?.history?.filter((h:any)=>h.proposedChanges.length).length,currentRoles:Object.keys(packet.contributions??{}),sourceVerses:packet.brief.source.text.length,shots:packet.brief.shots.length,newProviderCalls:0};
+writeFileSync('outputs/mark6-production/chapter-packet-attribution-r40.json',JSON.stringify(value,null,2));console.log(JSON.stringify(value));db.close();

@@ -1,0 +1,16 @@
+import {writeFileSync} from 'node:fs';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {loadCrewBrief,crewBriefHash} from '../../src/pipeline/creative-direction/crew-context.js';
+import {retainedInitialCreativeProposal,retainedInitialScriptureProposal,retainedInitialCameraProposal,retainedInitialChoreographyProposal,retainedInitialStagingProposal,retainedInitialCostumeProposal} from '../../src/pipeline/creative-direction/crew-store.js';
+import {assertNoUncertainReasoning} from '../../src/pipeline/creative-direction/reasoning-receipts.js';
+const db=getDb(),projectId='c457a815-d07d-4902-91b5-7b936b549856';
+if(db.prepare("SELECT id FROM production_runs WHERE project_id=? AND status='running'").get(projectId))throw Error('Do not duplicate active crew');
+assertNoUncertainReasoning(db,projectId);
+const b=loadCrewBrief(db,getDataDir(),projectId,'planning'),creative=retainedInitialCreativeProposal(db,getDataDir(),projectId,b,'b66c122d-7722-436b-bab7-a09f4091159f');
+const scripture=retainedInitialScriptureProposal(db,projectId,b,'4511c6c3-f3cb-4a7f-8b65-936dc9fdac8e',creative.reply);
+const camera=retainedInitialCameraProposal(db,getDataDir(),projectId,b,'844299e7-6367-4c90-906b-d051bada1dd0',creative.reply,scripture.reply);
+const choreography=retainedInitialChoreographyProposal(db,projectId,b,'7181d4c9-606c-46b1-b482-0976d204d3e6',creative.reply,scripture.reply,camera.reply);
+const staging=retainedInitialStagingProposal(db,getDataDir(),projectId,b,'9298c395-6570-444d-8b08-71244b1c8fc1',{creative_director:creative.reply,scripture_cultural_reviewer:scripture.reply,cinematographer:camera.reply,choreographer:choreography.reply});
+const costume=retainedInitialCostumeProposal(db,projectId,b,'5eeda48e-84a7-4e78-bb5d-fc727134d46c',{creative_director:creative.reply,scripture_cultural_reviewer:scripture.reply,cinematographer:camera.reply,choreographer:choreography.reply,staging_designer:staging.reply});
+const result={status:'exact_six_role_initial_prefix_verified_not_plan_approval',briefHash:crewBriefHash(b,'planning'),sources:{creative:creative.provenance,scripture:scripture.provenance,camera:camera.provenance,choreography:choreography.provenance,staging:staging.provenance,costume:costume.provenance},cameraDirections:camera.reply.directions.length,choreographyDirections:choreography.reply.directions.length,newProviderCalls:0,pendingReasoningSubmissions:0,stagingDirections:staging.reply.directions.length,originalStagingRejectionPreserved:true,costumeDirections:costume.reply.directions.length,costumeBlockingFindings:costume.reply.findings.filter(f=>f.severity==='blocking').length};
+writeFileSync('outputs/mark6-production/preflight-prefix-r39.json',JSON.stringify(result,null,2));console.log(JSON.stringify({status:result.status,briefHash:result.briefHash,cameraDirections:result.cameraDirections,choreographyDirections:result.choreographyDirections,newProviderCalls:0}));

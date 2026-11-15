@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig-reference-handoff-20261105.json",
+  "include": [
+    "./prepare-executioner-empty-ending-guide-20261109.ts",
+    "./generate-executioner-guided-continuation-20261109.ts",
+    "./register-executioner-continued-20261109.ts",
+    "./review-executioner-continued-complete-20261109.ts",
+    "./accept-executioner-continued-20261109.ts",
+    "./finish-executioner-continued-root-review-20261109.ts",
+    "./generate-departure-offscreen-narration-hold-20261109.ts"
+  ]
+}

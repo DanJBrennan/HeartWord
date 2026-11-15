@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import { runCrew, validateContribution } from "../../src/pipeline/creative-direction/crew.js";
 import { crewBriefHash } from "../../src/pipeline/creative-direction/crew-context.js";
+import { newProductionRecord, saveContribution } from "../../src/pipeline/creative-direction/production-record.js";
 import { directionsFromRun, runProductionCrew } from "../../src/pipeline/creative-direction/crew-store.js";
 import { finishingRecipe, structuralCutFindings } from "../../src/pipeline/assembly/finishing.js";
 import { FINISHING_ROLES, PLANNING_ROLES, type CrewBrief, type CrewContribution, type CrewEvent, type CrewRole, type CrewResult } from "../../src/pipeline/creative-direction/crew-types.js";
@@ -41,6 +42,59 @@ function response(role: CrewRole): CrewContribution {
 const roleFromPrompt = (prompt: string): CrewRole => prompt.match(/You are HeartWord's ([^.]+)\./)![1]!.replaceAll(" ", "_") as CrewRole;
 
 describe("coordinated filmmaking", () => {
+  it('retains all seven completed initial roles without resubmission and keeps their unresolved holds',async()=>{
+    const call=vi.fn(),events:CrewEvent[]=[],lighting=response('lighting_designer');
+    lighting.findings=[{shotId:'s1',severity:'blocking',evidence:'Original unresolved evidence',requestedChange:'Owner review required',confidence:90,limitations:'Planning only'}];
+    const result=await runCrew({phase:'planning',brief:brief(),maxCalls:7,creativeFeedback:true,
+      retainedInitialCreativeReply:response('creative_director'),retainedInitialScriptureReply:response('scripture_cultural_reviewer'),retainedInitialCameraReply:response('cinematographer'),retainedInitialChoreographyReply:response('choreographer'),retainedInitialStagingReply:response('staging_designer'),retainedInitialCostumeReply:response('costume_designer'),retainedInitialLightingReply:lighting,
+      call,log:e=>events.push(e)});
+    expect(call).not.toHaveBeenCalled();expect(result.inferenceCalls).toBe(0);expect(Object.keys(result.contributions)).toHaveLength(7);
+    expect(result.contributions.lighting_designer!.findings).toEqual(lighting.findings);expect(result.status).toBe('incomplete');expect(events.every(e=>!e.error)).toBe(true);
+  });
+  it("revalidates a retained initial proposal without another physical inference",async()=>{
+    const call=vi.fn(),events:CrewEvent[]=[];
+    const result=await runCrew({phase:'planning',brief:brief(),maxCalls:1,creativeFeedback:true,retainedInitialCreativeReply:response('creative_director'),call,log:e=>events.push(e)});
+    expect(call).not.toHaveBeenCalled();expect(result.calls).toBe(1);expect(result.inferenceCalls).toBe(0);
+    expect(result.contributions.creative_director?.directions).toHaveLength(2);expect(events[0]!.error).toBeNull();
+    const invalid=response('creative_director');invalid.emotionalTreatment!.beats[0]!.sourceTrigger.quote='Invented source words';
+    const refused=await runCrew({phase:'planning',brief:brief(),maxCalls:1,retainedInitialCreativeReply:invalid,call,log:()=>{}});
+    expect(refused.status).toBe('incomplete');expect(refused.summary).toContain('quote the supplied Scripture');expect(call).not.toHaveBeenCalled();
+  });
+  it("offers domain responses only for assigned changes and withdrawals only for authored proposals", async () => {
+    const b=brief(),record=newProductionRecord(b,"old","hash");
+    const authored=saveContribution(record,b,"creative_director",1,response("creative_director"),"planning")[0]!;
+    const before=record.snapshots[0]!.states[0]!.facts.performance!;
+    const proposal=response("lighting_designer");
+    proposal.filmChanges=[{target:{layer:"states",entityId:"state:s1",fact:"performance"},before,
+      after:{...before,value:"Restrained listening",status:"proposed",approvalRecord:null}}];
+    proposal.findings=[{shotId:"s1",severity:"advisory",evidence:"Review a reaction",requestedChange:"Retain restraint",confidence:90,limitations:"Planning only"}];
+    const change=saveContribution(record,b,"lighting_designer",1,proposal,"planning")[0]!;
+    await runCrew({phase:"planning",brief:b,productionRecord:record,maxCalls:1,log:()=>{},call:async(prompt,schema)=>{
+      const props=schema.properties as any;
+      expect(props.ownerResponses.items.properties.contributionId.enum).toEqual([change.id]);
+      expect(props.withdrawals.items.properties.contributionId.enum).toEqual([authored.id]);
+      expect(props.ownerResponses.items.properties.contributionId.enum).not.toContain(`${change.id}:finding:0`);
+      return response(roleFromPrompt(prompt));
+    }});
+    const empty=newProductionRecord(b,"empty","hash");
+    await runCrew({phase:"planning",brief:b,productionRecord:empty,maxCalls:1,log:()=>{},call:async(prompt,schema)=>{
+      expect((schema.properties as any).ownerResponses.maxItems).toBe(0);
+      expect((schema.properties as any).withdrawals.maxItems).toBe(0);
+      return response(roleFromPrompt(prompt));
+    }});
+  });
+  it("does not offer persistent objection IDs as first-pass craft response IDs", async () => {
+    let checked = false;
+    await runCrew({phase:"planning",brief:brief(),creativeFeedback:true,maxCalls:1,log:()=>{},call:async(prompt,schema)=>{
+      expect((schema.properties as any).creativeResponses.maxItems).toBe(0);
+      checked = true;
+      return response(roleFromPrompt(prompt));
+    }});
+    expect(checked).toBe(true);
+    // Request-local constraints must not leak into a later independent schema.
+    const {crewSchema} = await import("../../src/pipeline/creative-direction/crew.js");
+    expect((crewSchema("creative_director").properties as any).creativeResponses.maxItems).toBeUndefined();
+  });
   it("rejects invalid cue envelopes while preserving legacy cues without fades", () => {
     const b=brief(), out=response("composer");
     out.audioCues=[{assetId:"music",startMs:0,endMs:4000,sourceStartMs:0,gainDb:-24,reason:"Restrained music"}];

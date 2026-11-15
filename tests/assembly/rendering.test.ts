@@ -5,8 +5,8 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { expect, it } from "vitest";
 import { crewBriefHash, digest, loadCrewBrief } from "../../src/pipeline/creative-direction/crew-context.js";
-import { renderEditorialCut } from "../../src/pipeline/assembly/render-editorial-cut.js";
-import { applyFinishing, mediaDurationMs } from "../../src/pipeline/assembly/finishing.js";
+import { renderEditorialCut, renderProducerReviewedCut } from "../../src/pipeline/assembly/render-editorial-cut.js";
+import { applyFinishing, applyProducerReviewedFinishing, mediaDurationMs } from "../../src/pipeline/assembly/finishing.js";
 import type { CrewResult } from "../../src/pipeline/creative-direction/crew-types.js";
 import { exportChapterPackage, restoreChapterPackage, verifyChapterPackage } from "../../src/pipeline/assembly/chapter-package.js";
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
@@ -21,7 +21,7 @@ function docx(text: string): Buffer {
   const end = Buffer.alloc(22); end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(1, 10); end.writeUInt32LE(local.length + name.length + bytes.length, 16);
   return Buffer.concat([local, name, bytes, central, name, end]);
 }
-it.skipIf(!ffmpegAvailable)("renders real pauses and cast speech, then applies a reviewed score without shifting the cut", () => {
+it.skipIf(!ffmpegAvailable).each([{retained:false,producer:false},{retained:true,producer:false},{retained:true,producer:true}])("renders pauses, cast and score, then independently restores the edit (%j)", ({retained,producer}) => {
   const directory = mkdtempSync(join(tmpdir(), "heartword-render-test-")), assets = join(directory, "assets");
   mkdirSync(assets);
   const db = new DatabaseSync(":memory:"); db.exec(readFileSync("src/db/schema.sql", "utf8"));
@@ -46,31 +46,92 @@ it.skipIf(!ffmpegAvailable)("renders real pauses and cast speech, then applies a
       db.prepare("INSERT INTO generation_attempts (id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at) VALUES (?,?,'local','test','assemble_shot','accepted',?,0,1)").run(name, name, `${name}.mp4`);
       db.prepare("INSERT INTO clips (id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at) VALUES (?,?,?,0,1000,1)").run(name, name, name);
     }
+    ffmpeg(["-f","lavfi","-i","color=green:s=160x90:r=24:d=1","-c:v","libx264","-pix_fmt","yuv420p",join(assets,"narration-alt.mp4")]);
+    db.exec("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES('narration-alt','narration','local','test','assemble_shot','accepted','narration-alt.mp4',0,2); INSERT INTO clips(id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)VALUES('narration-alt','narration','narration-alt',0,1000,2)");
+    if(retained){
+      ffmpeg(["-i",join(assets,"source.wav"),"-i",join(assets,"dub.wav"),"-filter_complex","[0:a]atrim=end=1,asetpts=PTS-STARTPTS,volume=0.5[n];[1:a]volume=0.75[d];[n][d]concat=n=2:v=0:a=1[out]","-map","[out]","-ac","2","-c:a","pcm_s16le",join(assets,"retained-performance.wav")]);
+      put("performance-evidence.json",JSON.stringify({fixture:true,reviewOnly:true}));
+      const saved={version:1,path:"retained-performance.wav",sha256:digest(readFileSync(join(assets,"retained-performance.wav"))),durationMs:2000,
+        evidencePath:"performance-evidence.json",evidenceSha256:digest(readFileSync(join(assets,"performance-evidence.json"))),inputSignature:loadCrewBrief(db,directory,"p","editing").performanceInputSignature};
+      db.prepare("INSERT INTO edit_commands(id,project_id,sequence,command_type,payload,idempotency_key,applied_at)VALUES('performance','p',1,'retain_review_performance_master',?,'performance',1)").run(JSON.stringify(saved));
+    }
     const before = loadCrewBrief(db, directory, "p", "editing");
     const edit: CrewResult = { status: "approved", calls: 5, summary: "Intro and pause", contributions: { picture_editor: { summary: "Cut", directions: [], findings: [], coverageRequests: [],
-      edits: [{ shotId: "narration", sourceStartMs: 0, durationMs: 500 }, { shotId: "narration", sourceStartMs: 0, durationMs: 1000 }, { shotId: "narration", sourceStartMs: 0, durationMs: 500 }, { shotId: "dialogue", sourceStartMs: 0, durationMs: 1000 }],
+      edits: [{ shotId: "narration", clipId:"narration", sourceStartMs: 0, durationMs: 500 }, { shotId: "narration", clipId:"narration-alt", sourceStartMs: 0, durationMs: 1000 }, { shotId: "narration", clipId:"narration", sourceStartMs: 0, durationMs: 500 }, { shotId: "dialogue", sourceStartMs: 0, durationMs: 1000 }],
       pauses: [{ afterSegmentId: null, durationMs: 500, reason: "Establish location" }, { afterSegmentId: "n", durationMs: 500, reason: "A reaction" }] } } };
-    db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('edit','p','editing',?,?,'approved',?,1)").run(crewBriefHash(before, "editing"), JSON.stringify(before), JSON.stringify(edit));
-    const cut = renderEditorialCut(db, directory, "p", "edit");
-    expect(renderEditorialCut(db, directory, "p", "edit")).toEqual(cut);
+    const producerCut = {...edit.contributions.picture_editor!, decision:"approve" as const, edits: edit.contributions.picture_editor!.edits!.map(e=>({...e,clipId:e.clipId??e.shotId}))};
+    const producerReview = {id:"producer-edit",reviewer:"Fixture producer",evidence:"Reviewed exact source, explicit alternate takes and protected speech.",briefHash:crewBriefHash(before,"editing"),contribution:producerCut};
+    if (!producer) db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('edit','p','editing',?,?,'approved',?,1)").run(crewBriefHash(before, "editing"), JSON.stringify(before), JSON.stringify(edit));
+    if (producer) {
+      expect(()=>renderEditorialCut(db,directory,"p","edit")).toThrow(/approved Picture Editor/);
+      expect(()=>renderProducerReviewedCut(db,directory,"p",{...producerReview,briefHash:"stale"})).toThrow(/inputs changed/);
+      expect(()=>renderProducerReviewedCut(db,directory,"p",{...producerReview,contribution:edit.contributions.picture_editor!})).toThrow(/explicit accepted clip IDs/);
+      expect(()=>renderProducerReviewedCut(db,directory,"p",{...producerReview,contribution:{...producerCut,decision:"hold"}})).toThrow(/must be approved/);
+      expect(()=>renderProducerReviewedCut(db,directory,"p",{...producerReview,contribution:{...producerCut,findings:[{shotId:null,severity:"blocking",evidence:"Missing source",requestedChange:"Reconcile",confidence:100,limitations:"Fixture"}]}})).toThrow(/blocking findings/);
+      expect(()=>renderProducerReviewedCut(db,directory,"p",{...producerReview,contribution:{...producerCut,coverageRequests:[{shotId:"narration",additionalMs:100,description:"More coverage",reason:"Unresolved"}]}})).toThrow(/pending coverage/);
+      expect(()=>renderProducerReviewedCut(db,directory,"p",{...producerReview,contribution:{...producerCut,acceptanceChecks:{status:"unverified",evidence:"Not checked"}}})).toThrow(/held acceptance/);
+      const unavailable=structuredClone(producerReview);unavailable.contribution.edits[0]!.clipId="missing";
+      expect(()=>renderProducerReviewedCut(db,directory,"p",unavailable)).toThrow(/unavailable footage/);
+    }
+    const cut = producer ? renderProducerReviewedCut(db,directory,"p",producerReview) : renderEditorialCut(db, directory, "p", "edit");
+    if(producer){
+      expect(db.prepare("SELECT COUNT(*) AS n FROM production_runs WHERE phase='editing'").get()!.n).toBe(0);
+      const saved=JSON.parse(String(db.prepare("SELECT payload FROM edit_commands WHERE idempotency_key='producer-editorial:p:producer-edit'").get()!.payload));
+      expect(saved.producerReview.reviewer).toBe("Fixture producer");expect(saved.runId).toBeUndefined();
+      expect(()=>renderProducerReviewedCut(db,directory,"p",{...producerReview,evidence:"Changed review under same ID"})).toThrow(/saved producer review/);
+    }
+    const colorsAt=(path:string)=>[.25,1,1.75,2.5].map(t=>[...execFileSync("ffmpeg",["-v","error","-ss",String(t),"-i",path,"-vf","scale=1:1","-frames:v","1","-threads","1","-pix_fmt","rgb24","-f","rawvideo","pipe:1"])]);
+    const assertChosenTakes=(path:string)=>{const c=colorsAt(path);expect(c[0]![0]).toBeGreaterThan(c[0]![1]!+100);expect(c[1]![1]).toBeGreaterThan(c[1]![0]!+80);expect(c[2]![0]).toBeGreaterThan(c[2]![1]!+100);expect(c[3]![2]).toBeGreaterThan(c[3]![0]!+100);};
+    assertChosenTakes(join(assets,cut.path));
+    const chosen=JSON.parse(String(db.prepare("SELECT timeline_json FROM chapter_render_manifests WHERE render_id=?").get(cut.renderId)!.timeline_json));
+    expect(chosen.slice(0,3).map((p:any)=>[p.clipId,p.path])).toEqual([["narration","narration.mp4"],["narration-alt","narration-alt.mp4"],["narration","narration.mp4"]]);
+    for(const p of chosen.slice(0,3))expect(p.sha256).toBe(digest(readFileSync(join(assets,p.path))));
+    expect(producer ? renderProducerReviewedCut(db,directory,"p",producerReview) : renderEditorialCut(db, directory, "p", "edit")).toEqual(cut);
     expect(audioSampleRate(join(assets, cut.path))).toBe(48000);
     expect(Math.abs(mediaDurationMs(join(assets, cut.path)) - 3000)).toBeLessThan(100);
     const raw = execFileSync("ffmpeg", ["-v", "error", "-i", join(assets, cut.path), "-f", "f32le", "-ac", "1", "-ar", "8000", "pipe:1"]);
     const samples = new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4);
     const rms = (start: number, end: number) => Math.sqrt(samples.slice(start * 8000, end * 8000).reduce((sum, n) => sum + n * n, 0) / ((end - start) * 8000));
     expect(rms(0.1, 0.4)).toBeLessThan(0.001); expect(rms(1.6, 1.9)).toBeLessThan(0.001);
-    expect(rms(0.6, 1.4)).toBeGreaterThan(0.04); expect(rms(2.1, 2.9)).toBeGreaterThan(0.04);
+    expect(rms(0.6, 1.4)).toBeGreaterThan(retained?0.02:0.04); expect(rms(2.1, 2.9)).toBeGreaterThan(0.04);
+    if(retained){
+      const inputRms=(name:string)=>{const bytes=execFileSync("ffmpeg",["-v","error","-i",join(assets,name),"-f","f32le","-ac","1","-ar","8000","pipe:1"]);const values=new Float32Array(bytes.buffer,bytes.byteOffset,bytes.byteLength/4);return Math.sqrt(values.slice(800,7200).reduce((sum,n)=>sum+n*n,0)/6400);};
+      expect(rms(0.6,1.4)/inputRms("source.wav")).toBeCloseTo(0.5,2);
+      expect(rms(2.1,2.9)/inputRms("dub.wav")).toBeCloseTo(0.75,2);
+    }
     const crossings = (start: number, end: number) => { let count = 0; for (let i = start * 8000 + 1; i < end * 8000; i++) if (samples[i - 1]! <= 0 && samples[i]! > 0) count++; return count / (end - start); };
     expect(crossings(0.6, 1.4)).toBeCloseTo(440, -1); expect(crossings(2.1, 2.9)).toBeCloseTo(880, -1);
     db.prepare("INSERT INTO production_audio_assets (id,project_id,kind,description,path,sha256,duration_ms,created_at) VALUES ('m','p','music','Test instrumental','music.wav',?,3000,1)").run(digest(readFileSync(join(assets, "music.wav"))));
     const brief = loadCrewBrief(db, directory, "p", "finishing");
+    if(retained){
+      expect(brief.render!.audioMap.map(p=>p.performance?.sourceStartMs)).toEqual([0,1000]);
+      expect(brief.render!.audioMap.map(p=>p.performance?.originalInput.path)).toEqual(["source.wav","dub.wav"]);
+    }
     const finish: CrewResult = { status: "approved", calls: 7, summary: "Restrained score", contributions: {
       colorist: { summary: "Match", directions: [], findings: [], colorAdjustments: [{ shotId: "narration", brightness: 0.01, contrast: 1, saturation: 1, reason: "Match adjacent shot" }] },
       composer: { summary: "Cue", directions: [], findings: [], generationRequests: [], audioCues: [{ assetId: "m", startMs: 0, endMs: 3000, sourceStartMs: 0, gainDb: -24, reason: "Quiet underscore", fadeInMs: 500, fadeOutMs: 500 }] },
       sound_designer: { summary: "No effects needed", directions: [], findings: [], generationRequests: [], audioCues: [] }
     } };
-    db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('finish','p','finishing',?,?,'approved',?,2)").run(crewBriefHash(brief, "finishing"), JSON.stringify(brief), JSON.stringify(finish));
-    const finished = applyFinishing(db, directory, "p", "finish"); expect(applyFinishing(db, directory, "p", "finish")).toEqual(finished);
+    const producerFinish=(id:string,current:typeof brief,decisions:CrewResult)=>({id,reviewer:"Fixture producer",evidence:"Reviewed actual cut and separate protected speech and music.",briefHash:crewBriefHash(current,"finishing"),contributions:{
+      colorist:{...decisions.contributions.colorist!,decision:"approve" as const},
+      composer:{...decisions.contributions.composer!,decision:"approve" as const},
+      sound_designer:{...decisions.contributions.sound_designer!,decision:"approve" as const}}});
+    const finishReview=producerFinish("producer-finish",brief,finish);
+    if(producer){
+      expect(()=>applyProducerReviewedFinishing(db,directory,"p",{...finishReview,briefHash:"stale"})).toThrow(/inputs changed/);
+      const held=structuredClone(finishReview);held.contributions.composer.decision="hold" as "approve";
+      expect(()=>applyProducerReviewedFinishing(db,directory,"p",held)).toThrow(/approved decisions/);
+      const blocked=structuredClone(finishReview);blocked.contributions.sound_designer.findings=[{shotId:null,severity:"blocking",evidence:"Unresolved",requestedChange:"Review",confidence:100,limitations:"Fixture"}];
+      expect(()=>applyProducerReviewedFinishing(db,directory,"p",blocked)).toThrow(/blocking findings/);
+      const requested=structuredClone(finishReview);requested.contributions.composer.generationRequests=[{prompt:"Unmade music",durationMs:1000,loop:false,startMs:0,gainDb:-24,reason:"Missing"}];
+      expect(()=>applyProducerReviewedFinishing(db,directory,"p",requested)).toThrow(/pending coverage\/generation/);
+    }else db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('finish','p','finishing',?,?,'approved',?,2)").run(crewBriefHash(brief, "finishing"), JSON.stringify(brief), JSON.stringify(finish));
+    const finished = producer ? applyProducerReviewedFinishing(db,directory,"p",finishReview) : applyFinishing(db, directory, "p", "finish");
+    expect(producer ? applyProducerReviewedFinishing(db,directory,"p",finishReview) : applyFinishing(db,directory,"p","finish")).toEqual(finished);
+    if(producer){
+      expect(db.prepare("SELECT COUNT(*) AS n FROM production_runs WHERE phase='finishing'").get()!.n).toBe(0);
+      expect(()=>applyProducerReviewedFinishing(db,directory,"p",{...finishReview,evidence:"Changed under same ID"})).toThrow(/saved producer finishing review/);
+    }
     expect(finished.path).not.toBe(cut.path); expect(Math.abs(mediaDurationMs(join(assets, finished.path)) - 3000)).toBeLessThan(100);
     expect(audioSampleRate(join(assets, finished.path))).toBe(48000);
     const finishedRaw = execFileSync("ffmpeg", ["-v", "error", "-i", join(assets, finished.path), "-f", "f32le", "-ac", "1", "-ar", "8000", "pipe:1"]);
@@ -102,8 +163,8 @@ it.skipIf(!ffmpegAvailable)("renders real pauses and cast speech, then applies a
     expect(loadCrewBrief(db, directory, "p", "finishing").render!.audioMap).toEqual(brief.render!.audioMap);
     const revisedBrief = loadCrewBrief(db, directory, "p", "finishing");
     expect(revisedBrief.render!.finishing!.baseRenderId).toBe(cut.renderId);
-    db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('finish2','p','finishing',?,?,'approved',?,3)").run(crewBriefHash(revisedBrief, "finishing"), JSON.stringify(revisedBrief), JSON.stringify(finish));
-    const revised = applyFinishing(db, directory, "p", "finish2");
+    if(!producer) db.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('finish2','p','finishing',?,?,'approved',?,3)").run(crewBriefHash(revisedBrief, "finishing"), JSON.stringify(revisedBrief), JSON.stringify(finish));
+    const revised = producer ? applyProducerReviewedFinishing(db,directory,"p",producerFinish("producer-finish2",revisedBrief,finish)) : applyFinishing(db, directory, "p", "finish2");
     expect(audioSampleRate(join(assets, revised.path))).toBe(48000);
     const pcm = (path: string) => execFileSync("ffmpeg", ["-v", "error", "-i", join(assets, path), "-f", "s16le", "-ac", "1", "-ar", "8000", "pipe:1"]);
     const first = pcm(finished.path), second = pcm(revised.path);
@@ -123,17 +184,37 @@ it.skipIf(!ffmpegAvailable)("renders real pauses and cast speech, then applies a
     const packaged = join(directory, "portable-chapter"), restored = join(directory, "different-root");
     exportChapterPackage(db, directory, "p", packaged);
     restoreChapterPackage(packaged, restored);
-    renameSync(assets, join(directory, "offline-original-assets"));
+    const offlineAssets=join(directory,"offline-original-assets");
+    if(dirname(assets)!==directory||dirname(offlineAssets)!==directory)throw Error("Fixture move escapes temporary workspace.");
+    renameSync(assets, offlineAssets);
     const reopened = new DatabaseSync(join(restored, "db", "heartword.sqlite"));
     try {
+      const pictureBrief=loadCrewBrief(reopened,restored,"p","editing");
+      expect(pictureBrief.shots.find(s=>s.id==="narration")!.availableClips?.map(c=>c.id)).toContain("narration");
+      if(!producer) reopened.prepare("INSERT INTO production_runs(id,project_id,phase,brief_hash,brief_json,status,result_json,created_at)VALUES('restored-picture','p','editing',?,?,'approved',?,5)")
+        .run(crewBriefHash(pictureBrief,"editing"),JSON.stringify(pictureBrief),JSON.stringify(edit));
+      const rebuilt=producer ? renderProducerReviewedCut(reopened,restored,"p",{...producerReview,id:"restored-producer-picture",briefHash:crewBriefHash(pictureBrief,"editing")}) : renderEditorialCut(reopened,restored,"p","restored-picture");
+      if(producer) expect(reopened.prepare("SELECT COUNT(*) AS n FROM production_runs WHERE phase='editing'").get()!.n).toBe(0);
+      assertChosenTakes(join(restored,"assets",rebuilt.path));
+      expect(mediaDurationMs(join(restored,"assets",rebuilt.path))).toBeCloseTo(3000,-2);
+      expect(reopened.prepare("SELECT COUNT(*) AS n FROM cost_ledger_entries").get()).toEqual(db.prepare("SELECT COUNT(*) AS n FROM cost_ledger_entries").get());
       const reopenedBrief = loadCrewBrief(reopened, restored, "p", "finishing");
       expect(reopenedBrief.render!.audioMap).toEqual(revisedBrief.render!.audioMap);
       const modified = structuredClone(finish);
       modified.summary = "Lower retained music by 1 dB";
       modified.contributions.composer!.audioCues![0]!.gainDb = -26;
-      reopened.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('restored-edit','p','finishing',?,?,'approved',?,4)")
+      if(!producer) reopened.prepare("INSERT INTO production_runs (id,project_id,phase,brief_hash,brief_json,status,result_json,created_at) VALUES ('restored-edit','p','finishing',?,?,'approved',?,4)")
         .run(crewBriefHash(reopenedBrief, "finishing"), JSON.stringify(reopenedBrief), JSON.stringify(modified));
-      const preview = applyFinishing(reopened, restored, "p", "restored-edit");
+      const preview = producer ? applyProducerReviewedFinishing(reopened,restored,"p",producerFinish("restored-producer-finish",reopenedBrief,modified)) : applyFinishing(reopened, restored, "p", "restored-edit");
+      if(producer){
+        expect(reopened.prepare("SELECT COUNT(*) AS n FROM production_runs WHERE phase='finishing'").get()!.n).toBe(0);
+        const row=reopened.prepare("SELECT id,payload FROM edit_commands WHERE idempotency_key='producer-finishing:p:restored-producer-finish'").get()!;
+        const tampered=JSON.parse(String(row.payload));tampered.producerReview.reviewer="Different reviewer";
+        reopened.prepare("UPDATE edit_commands SET payload=? WHERE id=?").run(JSON.stringify(tampered),row.id);
+        expect(()=>loadCrewBrief(reopened,restored,"p","finishing")).toThrow(/Producer finishing provenance changed/);
+        reopened.prepare("UPDATE edit_commands SET payload=? WHERE id=?").run(row.payload,row.id);
+        expect(loadCrewBrief(reopened,restored,"p","finishing").render!.finishing!.baseRenderId).toBe(rebuilt.renderId);
+      }
       expect(audioSampleRate(join(restored, "assets", preview.path))).toBe(48000);
       expect(mediaDurationMs(join(restored, "assets", preview.path))).toBeCloseTo(3000, -2);
       const previewPcm = execFileSync("ffmpeg", ["-v", "error", "-i", join(restored, "assets", preview.path), "-f", "s16le", "-ac", "1", "-ar", "8000", "pipe:1"]);
@@ -142,7 +223,7 @@ it.skipIf(!ffmpegAvailable)("renders real pauses and cast speech, then applies a
       const editedError = previewSamples.reduce((sum, sample, index) => sum + (sample - firstSamples[index]!) ** 2, 0);
       expect(Math.sqrt(editedError / firstSamples.length)).toBeGreaterThan(8);
       expect(reopened.prepare("SELECT COUNT(*) AS n FROM cost_ledger_entries").get()).toEqual(db.prepare("SELECT COUNT(*) AS n FROM cost_ledger_entries").get());
-      expect(reopened.prepare("SELECT payload FROM edit_commands WHERE idempotency_key='finishing:restored-edit'").get()).toBeTruthy();
+      expect(reopened.prepare("SELECT payload FROM edit_commands WHERE idempotency_key=?").get(producer?"producer-finishing:p:restored-producer-finish":"finishing:restored-edit")).toBeTruthy();
       expect(verifyChapterPackage(packaged).files.length).toBeGreaterThan(6);
       if (process.env.HEARTWORD_PRESERVATION_DEMO_DIR) {
         const demo = process.env.HEARTWORD_PRESERVATION_DEMO_DIR;

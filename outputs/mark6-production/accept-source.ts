@@ -1,0 +1,16 @@
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {getDb} from '../../src/db/client.js';
+import {attestSourceAlignment,hasCurrentSourceReview,sourceReviewHashes} from '../../src/pipeline/ingestion/source-review.js';
+const root='outputs/mark6-production',read=(p:string)=>JSON.parse(readFileSync(p,'utf8'));
+const projectId=read(root+'/workspace.json').projectId,db=getDb();
+if(existsSync(root+'/producer-source-acceptance.json'))throw Error('Acceptance already recorded; do not duplicate.');
+const projection=read(root+'/source-projection.json'),rows=db.prepare("SELECT id,start_ms,end_ms,verse_ref,speaker_character_id FROM audio_segments WHERE project_id=? AND layer='original_reading' ORDER BY start_ms").all(projectId) as any[];
+if(rows.length!==projection.rows.length||rows.some((r,i)=>{const p=projection.rows[i];return r.id!==p.id||r.start_ms!==p.startMs||r.end_ms!==p.endMs||r.verse_ref!==p.verseRef||r.speaker_character_id!==p.characterId;}))throw Error('Prepared alignment changed before acceptance.');
+const question='May I record your acceptance of the prepared Mark 6 alignment for producing the review cut, with uncertain internal verse timing flagged and all source audio preserved? The existing source-review gate in `src/pipeline/ingestion/source-review.ts` requires explicit named acceptance; this would not certify native-language accuracy or authorize publishing.';
+const answer='Accept prepared alignment for review production';
+const evidence=JSON.stringify({question,answer,scope:'Producer acceptance of prepared timing for review production only. Preserve all source audio and flag uncertain internal verse timing. No certification of native-language accuracy, personal listening to every boundary, or publishing authorization.',sourceProjection:'source-projection.json',verification:'production-verification.json'});
+const reviewId=attestSourceAlignment(db,{projectId,reviewerName:'Dan — producer acceptance for review production',attestation:answer,evidence});
+if(!hasCurrentSourceReview(db,projectId))throw Error('Saved acceptance does not bind current sources.');
+writeFileSync(root+'/producer-source-acceptance.json',JSON.stringify({projectId,reviewId,question,answer,scope:JSON.parse(evidence).scope,...sourceReviewHashes(db,projectId),at:new Date().toISOString(),nativeLanguageCertification:false,publishing:false},null,2),{flag:'wx'});
+const state=read(root+'/execution.json');state.status='source_accepted_storyboard_production';state.goalStatus='active';state.source.namedAcceptancePending=false;state.source.producerAcceptance='producer-source-acceptance.json';delete state.pendingQuestion;writeFileSync(root+'/execution.json',JSON.stringify(state,null,2));
+console.log(JSON.stringify({projectId,reviewId,currentSourceAccepted:true,nativeLanguageCertification:false}));

@@ -11,6 +11,11 @@ let db: import("node:sqlite").DatabaseSync;
 let dataDir = "";
 vi.mock("../../src/db/client.js", () => ({ getDb: () => db, getDataDir: () => dataDir }));
 const sync = vi.fn();
+const ltxOptions = vi.fn();
+vi.mock("../../src/pipeline/voice-lipsync/ltx-speaking.js", () => ({ LtxChainedSpeaking: class {
+  constructor(options: unknown) { ltxOptions(options); }
+  sync = sync;
+} }));
 vi.mock("../../src/providers/kling/index.js", () => ({ KlingLipSyncProvider: class { sync = sync; } }));
 vi.mock("../../src/providers/elevenlabs.js", () => ({ reVoiceAudio: vi.fn(async (_voice: string, path: string) => ({ audioBuffer: readFileSync(path) })) }));
 async function fixtureCrewContribution(prompt: string) {
@@ -94,14 +99,14 @@ describe.skipIf(!ffmpeg)("durable production recovery", () => {
     await expect(runPipeline("p").then(result => result.results.at(-1))).resolves.toMatchObject({stage:"qc",ok:true});
   }, 30000);
 
-  it("builds real cast-master intervals, never syncs narration, and resumes accepted exact utterances", async () => {
+  it.each(["kling", "ltx"] as const)("builds real cast-master intervals with %s, never syncs narration, and resumes accepted exact utterances", async (provider) => {
     dataDir = mkdtempSync(join(tmpdir(), "heartword-speaking-")); cleanup.push(dataDir); mkdirSync(join(dataDir, "assets"));
     db = new DatabaseSync(":memory:"); db.exec(readFileSync("src/db/schema.sql", "utf8"));
     const assets = join(dataDir, "assets"); mkdirSync(join(assets, "source", "synthetic", "mark-1"), { recursive: true });
     execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "lavfi", "-i", "sine=frequency=440:duration=3", "-c:a", "libmp3lame", join(assets, "source", "synthetic", "mark-1", "mark-1-fcbh-audio.mp3")]);
     for (const [path, content] of [["source/hatam/mark-1/mark-1-text.docx", docx("1Original words.")], ["reference/english/mark-1/mark-1-text.docx", docx("1Reference words.")], ["ref.png", Buffer.from("approved reference")]] as const) { const absolute=join(assets,path); mkdirSync(dirname(absolute),{recursive:true}); writeFileSync(absolute,content); }
     writeFileSync(join(assets, "key.png"), "synthetic keyframe"); video(join(assets, "returned.mp4"), "green");
-    sync.mockClear(); sync.mockResolvedValue({ media: { path: "returned.mp4" }, cost: { usd: 0 }, provenance: { provider: "mock-kling", model: "mock", prompt: "synthetic" } });
+    sync.mockClear(); ltxOptions.mockClear(); sync.mockResolvedValue({ media: { path: "returned.mp4" }, cost: { usd: 0 }, provenance: { provider: `mock-${provider}`, model: "mock", prompt: "synthetic" } });
     db.exec(`INSERT INTO projects (id,language,book,chapter,created_at,updated_at) VALUES ('p','hatam','mark',1,1,1);
       INSERT INTO scenes (id,project_id,sequence,verse_start,verse_end,created_at) VALUES ('s','p',1,'Mark 1:1','Mark 1:1',1);
       INSERT INTO characters (id,name,scope_kind,canon_status,region,created_at,updated_at) VALUES ('speaker','Speaker','global','approved','Papuan',1,1);
@@ -124,7 +129,13 @@ describe.skipIf(!ffmpeg)("durable production recovery", () => {
     const { reconcileAvatarBudget } = await import("../../src/pipeline/voice-lipsync/performance-direction.js");
     reconcileAvatarBudget(db,{projectId:"p",actor:"Synthetic test",evidence:"All provider calls are mocked in this fixture; no external charges or outstanding work.",unreportedUpperBoundUsd:0,outstandingUpperBoundUsd:0,idempotencyKey:"fixture-avatar-budget"});
     vi.stubEnv("HEARTWORD_CREW_CALL_UPPER_BOUND_USD","1");
-    expect((await runVoiceLipSync("p")).ok).toBe(false); expect(sync).toHaveBeenCalledTimes(2);
+    vi.stubEnv("HEARTWORD_LIPSYNC_PROVIDER",provider);
+    vi.stubEnv("LTX_TOKEN","synthetic-test-session");
+    const options = { performancePrompts: { a: "First exact scene performance.", b: "Second exact scene performance." } };
+    expect((await runVoiceLipSync("p",undefined,options)).ok).toBe(false); expect(sync).toHaveBeenCalledTimes(2);
+    if (provider === "ltx") {
+      expect(ltxOptions.mock.calls.map(([options]) => options.performancePrompt)).toEqual([options.performancePrompts.a, options.performancePrompts.b]);
+    } else expect(ltxOptions).not.toHaveBeenCalled();
     expect(db.prepare("SELECT COUNT(*) n FROM generation_attempts WHERE operation='lip_sync'").get()).toMatchObject({ n: 2 });
     const { acceptLipSyncCandidate } = await import("../../src/pipeline/voice-lipsync/candidate-selection.js");
     for (const row of db.prepare("SELECT id FROM generation_attempts WHERE operation='lip_sync'").all() as Array<{id:string}>) acceptLipSyncCandidate(db, "p", row.id);

@@ -15,6 +15,31 @@ Combines per-scene generated video (with lip-synced audio already applied) into
 one continuous, watchable chapter video, in scene order, with continuous audio
 from the source narration.
 
+## Producer-reviewed assembly
+
+A producer can supply a named review pinned to the exact current editing brief
+and explicit accepted assembled clip IDs through `renderProducerReviewedCut`.
+Approval is explicit; blocking findings, pending coverage or held/unverified
+acceptance checks hold the cut. This extends the existing assembly stage: it uses the same cut planner,
+source/speech continuity guards, opening/closing placement, renderer and saved
+executable manifests as an approved crew edit. It makes no model calls and
+creates no crew run or simulated crew approval. The review, contribution,
+input hash and output hash remain in edit history and chapter packages.
+Reusing a review ID with changed evidence or changed output is rejected;
+changed inputs require a new review. The normal crew admission is unchanged.
+The producer remains responsible for content review; this path is not a native
+language certification or publishing authorization.
+
+Producer finishing uses `applyProducerReviewedFinishing` with the same named,
+exact-current-brief review contract and explicit approval for the existing
+color, score and sound decisions. Blocking findings, unresolved coverage,
+generation requests and held checks prevent application. It executes the same
+finishing recipe, protected-source clock, approved processed-music constraints,
+base-render reuse and manifest/history preservation. The saved review and output
+hash are verified when reopening; no finishing crew run is fabricated. A changed
+cut needs a new review, and repeated finishing always starts from its unscored
+base so music is not layered twice. This is review production, not publishing.
+
 ## Requirements
 
 - Preserve sync between the heart-language audio and on-screen lip movement
@@ -159,6 +184,16 @@ makes this safe, based on what worked in a prior attempt at this project:
   current state stays inspectable.
 
 ## Frame-addressable review contract
+
+An editorial edit may name an accepted assembled `clipId` within its shot,
+allowing distinct additional takes to cover narration without repeating the
+latest take. Omitting it keeps the existing latest-selected behavior. Editing
+and finishing briefs include the shot's accepted assembled alternatives and
+hash their actual media; planning omits those choices and retains its revision.
+Unknown, wrong-shot and unaccepted takes cannot be addressed through this list.
+The executable timeline retains an explicit choice's ID, path and actual hash
+for portable reconstruction. Source, lip-sync, duration and coverage checks
+remain unchanged; no arbitrary input path is accepted from a crew response.
 
 When a producer reviews a rendered chapter frame by frame, the displayed frame
 number, timecode, and any edit command must refer to the same decoded image.

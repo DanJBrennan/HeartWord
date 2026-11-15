@@ -3,6 +3,10 @@ import { buildScenesFromHeadings, parseVerseRange } from "./build-scenes.js";
 import type { SourceHeading } from "../ingestion/parse-source-text.js";
 
 describe("parseVerseRange", () => {
+  it("retains both endpoints of an en-dash range, including narrated references", () => {
+    expect(parseVerseRange("Mark 6:1\u20133")).toEqual({start:1,end:3});
+    expect(parseVerseRange("Mark 6:53\u201356 (narration)")).toEqual({start:53,end:56});
+  });
   it("parses a single-verse ref", () => {
     expect(parseVerseRange("Mark 2:5")).toEqual({ start: 5, end: 5 });
   });

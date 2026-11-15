@@ -102,6 +102,28 @@ describe("controlled wardrobe refinement",()=>{
     const c=approve(imported().version.id);writeFileSync(join(dir,"assets",c.assets[0]!.path),"changed");
     expect(()=>promoteWardrobeCandidate(db,dir,c.version.id,{candidateHash:c.candidateHash,reason:"stale"})).toThrow("bytes changed");
   });
+  it("records explicitly delegated reviews and promotion with the actual reviewer and authority",()=>{
+    const authority={reviewer:"Codex",authority:"Producer explicitly delegated these routine identity and wardrobe reviews; synthetic test authority."};
+    let d=imported();
+    d=reviewWardrobeCandidate(db,dir,d.version.id,{domain:"identity",candidateHash:d.candidateHash,outcome:"approved",evidence:"Synthetic identity evidence"},authority);
+    d=reviewWardrobeCandidate(db,dir,d.version.id,{domain:"wardrobe",candidateHash:d.candidateHash,outcome:"approved",evidence:"Synthetic seven-view comparison",checks:wardrobeChecks.map(check=>({check,status:"pass",evidence:`Synthetic visible ${check}`}))},authority);
+    d=promoteWardrobeCandidate(db,dir,d.version.id,{candidateHash:d.candidateHash,reason:"Explicitly delegated synthetic promotion"},authority);
+    const decisions=d.history.filter(e=>e.kind==="review"||e.kind==="promotion");expect(decisions).toHaveLength(3);
+    for(const decision of decisions){expect(decision.reviewer).toBe("Codex");expect(decision.delegatedAuthority).toBe(authority.authority);expect(db.prepare("SELECT source FROM review_notes WHERE id=?").get(decision.id)?.source).toBe("qc");}
+    expect(d.version.status).toBe("approved");expect(d.version.voice_id).toBe("voice-unchanged");expect(d.base.status).toBe("superseded");
+  });
+  it.each([{reviewer:"",authority:"Explicit delegation"},{reviewer:"Codex",authority:" "}])("rejects incomplete delegated attribution before writing a decision",authority=>{
+    const d=imported(),before=db.prepare("SELECT COUNT(*) n FROM review_notes").get()!.n;
+    expect(()=>reviewWardrobeCandidate(db,dir,d.version.id,{domain:"identity",candidateHash:d.candidateHash,outcome:"approved",evidence:"Synthetic identity evidence"},authority)).toThrow("named reviewer");
+    expect(()=>promoteWardrobeCandidate(db,dir,d.version.id,{candidateHash:d.candidateHash,reason:"Delegated"},authority)).toThrow("named reviewer");
+    expect(db.prepare("SELECT COUNT(*) n FROM review_notes").get()!.n).toBe(before);
+  });
+  it("retains all visible-check and separate-review gates for a delegated caller",()=>{
+    const authority={reviewer:"Codex",authority:"Explicit synthetic producer delegation"};let d=imported();
+    d=reviewWardrobeCandidate(db,dir,d.version.id,{domain:"identity",candidateHash:d.candidateHash,outcome:"approved",evidence:"Synthetic identity evidence"},authority);
+    expect(()=>reviewWardrobeCandidate(db,dir,d.version.id,{domain:"wardrobe",candidateHash:d.candidateHash,outcome:"approved",evidence:"Fringe not visible",checks:wardrobeChecks.map(check=>({check,status:check==="fringe"?"not_visible":"pass",evidence:`Synthetic ${check}`}))},authority)).toThrow("hold approval");
+    expect(()=>promoteWardrobeCandidate(db,dir,d.version.id,{candidateHash:d.candidateHash,reason:"Too early"},authority)).toThrow("wardrobe");expect(refinementDetail(db,dir,d.version.id).version.status).toBe("candidate");
+  });
   it("promotes atomically with prior assets, provenance and accepted film authority intact",()=>{
     const oldVersion=db.prepare("SELECT * FROM character_versions WHERE id='v1'").get()!,oldAssets=db.prepare("SELECT * FROM character_assets WHERE character_version_id='v1'").all();
     const film=db.prepare("SELECT * FROM generation_attempts").all();const c=approve(imported().version.id);

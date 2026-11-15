@@ -144,7 +144,7 @@ export function validateFilmExchange(output: CrewContribution, role: CrewRole, r
   if (output.acceptedContributionIds?.length && role !== "production_director") throw new Error("Only the Production Director can select reviewed contributions.");
 }
 
-export function saveContribution(record: ProductionRecord, brief: CrewBrief, role: CrewRole, round: number, output: CrewContribution, phase: CrewPhase): SavedContribution[] {
+export function saveContribution(record: ProductionRecord, brief: CrewBrief, role: CrewRole, round: number, output: CrewContribution, phase: CrewPhase, reuseRecordedFindings=false): SavedContribution[] {
   validateFilmExchange(output, role, record);
   const id = `${record.revision}:${role}:${round}`;
   const previous = record.history.filter(h => h.owner === role && (h.kind === "proposal" || h.kind === "revision")).at(-1);
@@ -158,13 +158,34 @@ export function saveContribution(record: ProductionRecord, brief: CrewBrief, rol
     relatedContributions: ids([...(previous ? [previous.id] : []), ...(output.ownerResponses ?? []).map(r => r.contributionId)]), supersedes: previous?.id ?? null, finding: null, resolution: null };
   const events: SavedContribution[] = [primary];
   for (const [index, finding] of output.findings.entries()) {
+    if(reuseRecordedFindings){
+      // Store-verified retained proposals are not fresh observations. Preserve
+      // every exact prior finding and its lifecycle instead of reopening copies.
+      const retained=record.objections.filter(o=>o.owner===role&&same(finding,Object.fromEntries(Object.keys(finding).map(k=>[k,(o as unknown as Record<string,unknown>)[k]]))));
+      if(retained.length){
+        primary.relatedContributions=ids([...primary.relatedContributions,...retained.map(o=>o.id)]);
+        continue;
+      }
+    }
     const objectionId = `${id}:finding:${index}`;
+    const affected=brief.shots.find(s=>s.id===finding.shotId);
+    const findingScope=affected?{projectId:brief.project.id,sceneIds:[affected.sceneId],shotIds:[affected.id],
+      verseRefs:ids([affected.verseRef]),audioBindingRefs:affected.sourceSegmentId?[affected.sourceSegmentId]:[]}:scope;
     record.objections.push({ ...copy(finding), id: objectionId, owner: role, status: "open" });
-    events.push({ ...copy(primary), id: objectionId, kind: "objection", proposedChanges: [], supersedes: null, rationale: finding.requestedChange,
+    events.push({ ...copy(primary), scope:copy(findingScope), id: objectionId, kind: "objection", proposedChanges: [], supersedes: null, rationale: finding.requestedChange,
       finding: { severity:finding.severity, confidence:finding.confidence, limitations:finding.limitations }, relatedContributions: [id], objections: [] });
   }
   for (const [index, response] of (output.objectionResponses ?? []).entries()) {
     const resolutionId = `${id}:objection:${index}`, objection = record.objections.find(o => o.id === response.objectionId)!;
+    if(reuseRecordedFindings){
+      const original=record.history.filter(h=>h.owner===role&&h.kind==='resolution'&&
+        h.rationale===`${response.rationale}\nEvidence: ${response.evidence}`&&
+        h.resolution?.objectionDispositions.some(d=>d.objectionId===response.objectionId&&d.outcome===response.outcome&&d.reason===response.rationale)).at(-1);
+      if(original){
+        primary.relatedContributions=ids([...primary.relatedContributions,original.id]);
+        continue; // Historical action, not a new change to current lifecycle.
+      }
+    }
     if (response.outcome === "resolved") { objection.status = "resolved"; objection.resolutionId = resolutionId; }
     events.push({ ...copy(primary), id: resolutionId, kind: "resolution", proposedChanges: [], supersedes: null, rationale: `${response.rationale}\nEvidence: ${response.evidence}`,
       relatedContributions: [id, response.objectionId], objections: [response.objectionId],

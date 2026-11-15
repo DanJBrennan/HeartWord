@@ -1,0 +1,19 @@
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {productionAuthorization,validateAttemptRevision} from '../../src/pipeline/creative-direction/crew-store.js';
+import {selectFinalVideoRange} from '../../src/pipeline/media-generation/final-video.js';
+import {assembleSingleShot} from '../../src/pipeline/assembly/assemble-single-shot.js';
+const top='outputs/mark6-production',folder=top+'/complete-jesus-answer-intro-native179-range63-121-source-window-20261110',read=(p:string)=>JSON.parse(readFileSync(p,'utf8')),hash=(p:string)=>createHash('sha256').update(readFileSync(p)).digest('hex'),m=read(folder+'/review-preparation-proof.json'),av=read(folder+'/complete-window-av-review.json'),d=read(folder+'/direct-selected-picture-review.json'),db=getDb(),data=getDataDir(),project='c457a815-d07d-4902-91b5-7b936b549856';
+try{
+ const auth=productionAuthorization(db,data,project);auth.assertCurrent();validateAttemptRevision(db,data,project,m.attemptId);
+ if(existsSync(folder+'/selection-and-assembly.json')||av.attemptId!==m.attemptId||JSON.stringify(m.reviewedSelectedNativeRange)!=='[63,121]'||!m.fullParentRemainsHeld||m.frames!==58||m.sourceSamples24k!==57600||av.response.result.status!=='clear'||Object.keys(av.response.result.checks).length!==10||Object.values(av.response.result.checks).some((x:any)=>x.status!=='clear')||d.status!=='actual_all58_and_full0_29_57_and_incoming_seen'||JSON.stringify(d.selectedNativeRange)!=='[63,121]'||d.wholeSha256!==m.wholeSha256||hash(m.raw)!==m.rawSha256||hash(m.whole)!==m.wholeSha256||!db.prepare("SELECT id FROM generation_attempts WHERE id=? AND status='hold_for_review'").get(m.attemptId))throw Error('Exact actual heldparent and independentlycleared contiguous63-121 source range required');
+ const receipt='mark6-production-audio-review-m6_jesus_intro179_range63_121_and_join_av_20261110';if(!db.prepare('SELECT id FROM cost_ledger_entries WHERE id=? AND project_id=? AND amount_usd=?').get(receipt,project,av.response.costUsd))throw Error('Actual known AV121 receipt required');
+ const review={reviewer:'HeartWord under Dan delegated autonomous review-production authority',evidence:JSON.stringify({scope:'ONLY actualnative179range63-121/58pictures under original2400msnarrator; fullparent0-62 remainsheld',actualDirect:folder+'/direct-selected-picture-review.json',actualAv:folder+'/complete-window-av-review.json',all10Clear:true,receipt,minorInitialChinSettlingRetained:true,noFreezeLoopRetimeOrNewVoice:true})};
+ const range=selectFinalVideoRange(db,project,m.attemptId,{startFrame:63,endFrameExclusive:121},review,data);
+ if(!db.prepare("SELECT id FROM generation_attempts WHERE id=? AND status='hold_for_review'").get(m.attemptId))throw Error('Full parent status changed');
+ const assembled=assembleSingleShot(db,'a55cfba9-873b-44b5-935c-942ecf7a4b39'),out=join(data,'assets',assembled.assembledVideoPath);
+ const p={at:new Date().toISOString(),attemptId:range.attemptId,parentAttemptId:m.attemptId,selection:{clipId:range.clipId,reused:range.reused},range,assembled,assembledSha256:hash(out),rawSource:m.raw,rawSourceSha256:m.rawSha256,sourceWindowMs:[544172,546572],sourceDurationMs:2400,sourceSamples24k:57600,selectedNativeFrames:[63,121],normalVerificationPending:true,review:folder+'/complete-window-av-review.json',receipt,finalEditorUse:'Accepted lossless native179 frame range63-121; full58pictures at original speed under unchanged continuous approvedglobalmaster/source2400ms. Fullparent remainsheld; do not use encodedreview derivative or sourcepause.',providerCalls:0,wholeFilmReady:false};
+ writeFileSync(folder+'/selection-and-assembly.json',JSON.stringify(p,null,2),{flag:'wx'});console.log(JSON.stringify({range,assembled,normalVerificationPending:true}));
+}finally{db.close();}

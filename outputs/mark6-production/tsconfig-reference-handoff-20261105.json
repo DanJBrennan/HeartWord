@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig-recovery-r41.json",
+  "include": [
+    "./review-storyboard.ts",
+    "./attempt-control.ts",
+    "./recover-for-reference-review-20261105.ts",
+    "./verify-complete-reference-context-20261105.ts",
+    "./reconcile-timeout-20261105.ts",
+    "./refresh-local-readiness-20261105.ts",
+    "./field-evidence-preflight-20261105.ts",
+    "./camera-400k-preflight-20261105.ts",
+    "./reserve-green-grass-reference-20261105.ts",
+    "./reserve-construction-correction-20261105.ts",
+    "./verify-costume-response-reconciliation-20261105.ts",
+    "./reserve-wardrobe-sheet-20261105.ts",
+    "./register-wardrobe-sheets-20261105.ts",
+    "./review-promote-wardrobe-sheets-20261105.ts",
+    "./current-canon-fresh-preflight-20261105.ts"
+  ]
+}

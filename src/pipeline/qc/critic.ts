@@ -123,6 +123,8 @@ export interface CriticInputs {
    *  just this one. Loaded by the caller from review_notes rows scoped to
    *  the whole project, distinct from a one-shot exception below. */
   canonDecisions?: string[];
+  /** Scoped historical checks, not artistic overrides or claimed archaeology. */
+  historicalSettingRules?: string;
   /** Producer decisions already made for THIS specific shot (e.g. "the
    *  missing debris here is fine, people obscure the floor"). Must NOT be
    *  treated as generalizing to any other shot -- that's the difference
@@ -302,6 +304,7 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
     scriptureText,
     characterReferences,
     canonDecisions,
+    historicalSettingRules,
     shotOverrides,
     precedingCoverageFrame,
     coverageBeat
@@ -402,6 +405,7 @@ export async function runCritic(inputs: CriticInputs): Promise<CriticReport> {
         `states an intervening action. Report an unexplained change such as Jesus standing in one beat and seated in the next as ` +
         `a staging continuity failure.\n\n`
       : ""}` +
+    `${historicalSettingRules ? `SCOPED HISTORICAL CHECKS -- inspect the actual image, including background details. Earlier pictures do not override these rules; flag visible conflicts and carry hidden/uncertain details explicitly.\n${historicalSettingRules}\n\n` : ""}` +
     `${canonDecisions?.length
       ? `STANDING PRODUCTION CANON DECISIONS -- the production has explicitly reviewed and approved the following ` +
         `deviations or calibrations as deliberate choices that apply ACROSS THE WHOLE PRODUCTION, not just one shot. ` +

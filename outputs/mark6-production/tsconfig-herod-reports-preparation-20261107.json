@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig-production-followup-20261106.json",
+  "include": [
+    "./retain-review-performance-master-20261107.ts",
+    "./resume-charge-caption-cleanup-20261107.ts",
+    "./repair-charge-section1-seed43-20261107.ts",
+    "./reuse-headroom-herod-for-reports-close-20261107.ts",
+    "./prepare-herod-reports-coverage-20261107.ts",
+    "./generate-herod-reports-view-20261107.ts"
+  ]
+}

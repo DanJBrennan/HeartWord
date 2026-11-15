@@ -1,3 +1,16 @@
+## October 31 Mark 6 preparation implementation checkpoint
+
+The isolated Mark 6 worktree now implements the preferred short-section recipe
+in `voice-lipsync/ltx-speaking.ts` and the normal stage. Local synthetic tests
+prove exact sample partitioning, the last retained native frame used for chaining,
+and one continuous full-line audio encode. Five-second raw containers are kept;
+only up-to-four-second source-bound speech pictures enter the assembled candidate.
+Long lines require a shot-specific native crop with evidence; a universal portrait
+crop is not accepted. This is local assembly validation, not Mark 6 generation,
+caption-free/identity/sync approval or deployed production. Actual scene-framed
+short, chained and pause tests plus full-line AV review remain outstanding.
+The historical wiring statements below describe the earlier experiment checkpoint.
+
 # Local LTX lip-sync — production preference and test record
 
 ## Preferred production technique — producer decision, October 30, 2026

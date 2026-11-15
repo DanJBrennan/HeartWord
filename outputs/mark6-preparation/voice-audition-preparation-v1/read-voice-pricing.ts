@@ -1,0 +1,12 @@
+// Account/model/voice metadata only. No speech endpoint is invoked.
+import{readFileSync,writeFileSync,existsSync}from'node:fs';import{resolve}from'node:path';
+(await import('dotenv')).config({path:'C:/Users/danbr/OneDrive/Documents/HeartWord/.env'});
+const out=resolve('outputs/mark6-preparation/voice-audition-preparation-v1/account-pricing-preflight.json');if(existsSync(out))throw Error('Retained read exists');
+const key=process.env.ELEVENLABS_API_KEY;if(!key)throw Error('Missing credential');
+const assigned=JSON.parse(readFileSync(resolve('outputs/mark6-preparation/canon-package-v1/voice-assignment-receipt.json'),'utf8')).assignments;
+async function get(path:string){const r=await fetch('https://api.elevenlabs.io'+path,{headers:{'xi-api-key':key}});if(!r.ok)throw Error('Read failed '+r.status+' '+path);return r.json();}
+const requests=['/v1/user/subscription','/v1/models',...assigned.map((a:any)=>'/v1/voices/'+a.voiceId)];
+const results=await Promise.allSettled(requests.map(get));const failures=results.map((r,i)=>r.status==='rejected'?{path:requests[i],error:String(r.reason).split(key).join('[redacted]')}:null).filter(Boolean);if(failures.length){writeFileSync(out,JSON.stringify({status:'held',failures},null,2));throw Error('Read-only preflight incomplete');}
+const values=results.map((r:any)=>r.value),s=values[0];
+const metadata={status:'read_only_preflight_complete',readAt:new Date().toISOString(),subscription:{tier:s.tier,status:s.status,usedCredits:s.character_count,creditLimit:s.character_limit,remainingCredits:s.character_limit-s.character_count,currency:s.currency,billingPeriod:s.billing_period,maxCreditLimitExtension:s.max_credit_limit_extension},model:values[1].find((m:any)=>m.model_id==='eleven_multilingual_sts_v2'),voices:assigned.map((a:any,i:number)=>{const v=values[i+2];return{key:a.key,name:v.name,voiceId:v.voice_id,category:v.category,settings:v.settings??null,sharing:v.sharing?{status:v.sharing.status,rate:v.sharing.rate,original_voice_id:v.sharing.original_voice_id,financial_rewards_enabled:v.sharing.financial_rewards_enabled}:null,rateFields:Object.fromEntries(Object.entries(v).filter(([k])=>/rate|credit|price|multiplier/.test(k)))};}),speechCalls:0,creditPurchase:false,fullProductionHold:true};
+writeFileSync(out,JSON.stringify(metadata,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({subscription:metadata.subscription,modelAvailable:!!metadata.model?.can_do_voice_conversion,voices:metadata.voices.map(({settings,...v}:any)=>v)}));

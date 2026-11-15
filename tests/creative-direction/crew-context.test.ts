@@ -1,9 +1,9 @@
 import { createRequire } from "node:module";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, rmSync, renameSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { crewBriefHash, loadCrewBrief, productionAssetPath } from "../../src/pipeline/creative-direction/crew-context.js";
+import { crewBriefHash, digest, loadCrewBrief, productionAssetPath } from "../../src/pipeline/creative-direction/crew-context.js";
 import { requireCurrentPlan, validateHandoffPlan } from "../../src/pipeline/creative-direction/crew-store.js";
 import { importCutManifest } from "../../src/pipeline/assembly/import-cut-manifest.js";
 import { assertEditorialRebuildable } from "../../src/pipeline/assembly/render-editorial-cut.js";
@@ -11,6 +11,7 @@ import { recordCutTimingAudit, type CutTimingAudit } from "../../src/pipeline/as
 import { structuralCutFindings } from "../../src/pipeline/assembly/finishing.js";
 import { fixtureTreatment } from "../helpers/crew-treatment.js";
 import { fixtureWave } from "../helpers/pcm-wave.js";
+import { exportChapterPackage, restoreChapterPackage } from "../../src/pipeline/assembly/chapter-package.js";
 
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 let db: InstanceType<typeof DatabaseSync>, directory: string;
@@ -47,6 +48,104 @@ afterEach(() => {
   if (relative(tmpdir(), directory).startsWith("heartword-crew-test-")) rmSync(directory, { recursive: true, force: true });
 });
 describe("immutable project brief", () => {
+  function retainPerformance(durationMs=8000) {
+    const mono=fixtureWave(durationMs,220),frames=(mono.length-44)/2;
+    const stereo=Buffer.alloc(44+frames*4);mono.copy(stereo,0,0,44);
+    stereo.writeUInt32LE(stereo.length-8,4);stereo.writeUInt16LE(2,22);
+    stereo.writeUInt32LE(48000*4,28);stereo.writeUInt16LE(4,32);stereo.writeUInt32LE(frames*4,40);
+    for(let i=0;i<frames;i++){stereo.writeInt16LE(mono.readInt16LE(44+i*2),44+i*4);stereo.writeInt16LE(mono.readInt16LE(44+i*2),46+i*4);}
+    file("performance.wav",stereo);file("performance-proof.json",JSON.stringify({reviewProduction:true,originalSourcePreserved:true}));
+    const saved={version:1,path:"performance.wav",sha256:digest(stereo),durationMs:8000,
+      evidencePath:"performance-proof.json",evidenceSha256:digest(readFileSync(join(directory,"assets/performance-proof.json"))),
+      inputSignature:loadCrewBrief(db,directory,"p","editing").performanceInputSignature};
+    db.prepare("INSERT INTO edit_commands(id,project_id,sequence,command_type,payload,idempotency_key,applied_at)VALUES('performance','p',1,'retain_review_performance_master',?,'performance',1)").run(JSON.stringify(saved));
+    return saved;
+  }
+  it("retains a level-matched performance across portable restoration without changing planning",()=>{
+    const before=crewBriefHash(loadCrewBrief(db,directory,"p","planning"),"planning");
+    db.prepare("UPDATE audio_segments SET source_path=? WHERE id='audio'").run(join(directory,"assets/source.wav"));
+    const afterPath=crewBriefHash(loadCrewBrief(db,directory,"p","planning"),"planning");
+    const saved=retainPerformance();
+    expect(loadCrewBrief(db,directory,"p","editing").retainedPerformanceMaster).toMatchObject({path:saved.path,inputSignature:saved.inputSignature,authorityId:"performance"});
+    expect(loadCrewBrief(db,directory,"p","planning").retainedPerformanceMaster).toBeUndefined();
+    expect(crewBriefHash(loadCrewBrief(db,directory,"p","planning"),"planning")).toBe(afterPath);
+    expect(before).toBeTruthy();
+    const packaged=join(directory,"performance-package"),restored=join(directory,"performance-restored");
+    exportChapterPackage(db,directory,"p",packaged,{includeApplication:false});restoreChapterPackage(packaged,restored);
+    const original=join(directory,"assets"),offline=join(directory,"offline-assets");
+    if(dirname(original)!==directory||dirname(offline)!==directory)throw Error("Fixture move escapes temporary root");
+    renameSync(original,offline);
+    const reopened=new DatabaseSync(join(restored,"db/heartword.sqlite"));try{
+      expect(loadCrewBrief(reopened,restored,"p","editing").retainedPerformanceMaster).toMatchObject({inputSignature:saved.inputSignature,sha256:saved.sha256});
+    }finally{reopened.close();}
+  });
+  it.each(["source_bytes","speaker","timing","master_bytes","evidence_bytes","physical_clock"])("holds stale retained performance: %s",state=>{
+    retainPerformance(state==="physical_clock"?7990:8000);
+    if(state==="source_bytes")file("source.wav",fixtureWave(8000,330));
+    if(state==="speaker")db.exec("UPDATE audio_segments SET speaker_character_id='c' WHERE id='audio'");
+    if(state==="timing")db.exec("UPDATE audio_segments SET end_ms=7900 WHERE id='audio'");
+    if(state==="master_bytes")file("performance.wav","changed master");
+    if(state==="evidence_bytes")file("performance-proof.json","changed evidence");
+    expect(()=>loadCrewBrief(db,directory,"p","editing")).toThrow(/performance master/);
+  });
+  it("binds processed music to exact retained approval evidence without changing visual planning",()=>{
+    const approvalText=JSON.stringify({producer:"Fixture producer",approved:true});
+    const before=crewBriefHash(loadCrewBrief(db,directory,"p","planning"),"planning");
+    file("score.wav","approved score");file("music-approval.json",approvalText);
+    db.prepare("INSERT INTO production_audio_assets VALUES('score','p','music','Approved processed score','score.wav',?,8000,1)").run(digest("approved score"));
+    const proof={assetId:"score",assetSha256:digest("approved score"),includesDucking:true,approvalEvidencePath:"music-approval.json",approvalEvidenceSha256:digest(approvalText)};
+    db.prepare("INSERT INTO edit_commands(id,project_id,sequence,command_type,payload,idempotency_key,applied_at)VALUES('approval','p',1,'retain_preprocessed_music',?,'music-approval',1)").run(JSON.stringify(proof));
+    expect(loadCrewBrief(db,directory,"p","editing").audioAssets[0]!.processedMusic).toEqual({approvalId:"approval",includesDucking:true});
+    expect(crewBriefHash(loadCrewBrief(db,directory,"p","planning"),"planning")).toBe(before);
+    file("music-approval.json","changed approval");
+    expect(()=>loadCrewBrief(db,directory,"p","editing")).toThrow(/evidence changed/);
+    file("music-approval.json",approvalText);
+    const packaged=join(directory,"processed-package"),restored=join(directory,"processed-restored");
+    exportChapterPackage(db,directory,"p",packaged,{includeApplication:false});restoreChapterPackage(packaged,restored);
+    const original=join(directory,"assets"),offline=join(directory,"offline-assets");
+    if(dirname(original)!==directory||dirname(offline)!==directory)throw Error("Fixture move escapes temporary root");
+    renameSync(original,offline);
+    const reopened=new DatabaseSync(join(restored,"db/heartword.sqlite"));try{
+      const loaded=loadCrewBrief(reopened,restored,"p","editing");
+      expect(loaded.audioAssets[0]!.processedMusic).toEqual({approvalId:"approval",includesDucking:true});
+      expect(readFileSync(join(restored,"assets/music-approval.json"),"utf8")).toBe(approvalText);
+    }finally{reopened.close();}
+  });
+  it.each(["wrong_hash","missing_evidence","wrong_kind","not_ducked","escaping_evidence"])("holds unverified processed music approval: %s",state=>{
+    file("score.wav","approved score");file("music-approval.json","producer approval");
+    db.prepare("INSERT INTO production_audio_assets VALUES('score','p','music','Approved processed score','score.wav',?,8000,1)").run(digest("approved score"));
+    const proof={assetId:"score",assetSha256:digest("approved score"),includesDucking:true,approvalEvidencePath:"music-approval.json",approvalEvidenceSha256:digest("producer approval")};
+    if(state==="wrong_hash")proof.assetSha256=digest("other");
+    if(state==="missing_evidence")proof.approvalEvidencePath="missing.json";
+    if(state==="wrong_kind")db.exec("UPDATE production_audio_assets SET kind='sfx'");
+    if(state==="not_ducked")proof.includesDucking=false;
+    if(state==="escaping_evidence")proof.approvalEvidencePath="../outside.json";
+    db.prepare("INSERT INTO edit_commands(id,project_id,sequence,command_type,payload,idempotency_key,applied_at)VALUES('approval','p',1,'retain_preprocessed_music',?,'music-approval',1)").run(JSON.stringify(proof));
+    expect(()=>loadCrewBrief(db,directory,"p","editing")).toThrow();
+  });
+  it("exposes accepted assembled alternatives to editing while preserving planning authority",()=>{
+    const before=crewBriefHash(loadCrewBrief(db,directory,"p","planning"),"planning");
+    for(const [id,status,operation,time] of [["old","accepted","assemble_shot",1],["new","accepted","assemble_shot",2],["held","hold_for_review","assemble_shot",3],["raw","accepted","generate_final_video",4]] as const){
+      file(id+".mp4",id);db.prepare("INSERT INTO generation_attempts(id,shot_id,provider,model,operation,status,result_asset_path,cost_usd,created_at)VALUES(?,'shot','fixture','fixture',?,?,?,0,?)").run(id,operation,status,id+".mp4",time);
+      db.prepare("INSERT INTO clips(id,shot_id,generation_attempt_id,timeline_start_ms,timeline_end_ms,created_at)VALUES(?,'shot',?,0,1000,?)").run(id,id,time);
+    }
+    const planning=loadCrewBrief(db,directory,"p","planning"),editing=loadCrewBrief(db,directory,"p","editing");
+    expect(planning.shots[0]!.availableClips).toBeUndefined();expect(crewBriefHash(planning,"planning")).toBe(before);
+    expect(editing.shots[0]!.availableClips?.map(c=>c.id)).toEqual(["new","old"]);
+    planning.shots[0]!.availableClips=editing.shots[0]!.availableClips;
+    expect(crewBriefHash(planning,"planning")).toBe(before);
+    const editHash=crewBriefHash(editing,"editing");file("old.mp4","changed retained old take");
+    expect(crewBriefHash(loadCrewBrief(db,directory,"p","editing"),"editing")).not.toBe(editHash);
+    expect(crewBriefHash(loadCrewBrief(db,directory,"p","planning"),"planning")).toBe(before);
+  });
+  it("keeps execution-only source coverage out of creative inputs while retaining genuine edit staleness",()=>{
+    const before=crewBriefHash(loadCrewBrief(db,directory,"p","planning"),"planning");
+    db.prepare("INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at)VALUES('coverage','p','shot','shot','qc',?,0,2)").run('Production Director approved source coverage v1:'+JSON.stringify({kind:'same_approved_action',runId:'current',briefHash:before,acceptedAttemptId:'selected',reason:'Measured source coverage deficit'}));
+    expect(crewBriefHash(loadCrewBrief(db,directory,"p","planning"),"planning")).toBe(before);
+    db.prepare("INSERT INTO review_notes(id,project_id,subject_type,subject_id,source,note,resolved,created_at)VALUES('edit','p','shot','shot','qc','Production Director approved edit: change the action',0,3)").run();
+    expect(crewBriefHash(loadCrewBrief(db,directory,"p","planning"),"planning")).not.toBe(before);
+  });
+
   const existingCut = () => {
     file("existing.mp4", "unchanged film fixture");
     db.exec("INSERT INTO chapter_renders (id,project_id,result_asset_path,total_duration_ms,shot_count,created_at) VALUES ('cut','p','existing.mp4',10000,1,1)");

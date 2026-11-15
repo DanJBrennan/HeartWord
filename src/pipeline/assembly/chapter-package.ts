@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
-import { constants, copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { closeSync, constants, copyFileSync, existsSync, lstatSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { basename, dirname, extname, isAbsolute, relative, resolve } from "node:path";
 import { execFileSync } from "node:child_process";
 import type { DatabaseSync } from "node:sqlite";
 import { discoverSourcePaths } from "../ingestion/source-catalog.js";
+import { hashPackageRecords, readPackageRecords, writePackageRecords } from "./chapter-package-records.js";
 
 type Row = Record<string, string | number | null>;
 type Tables = Record<string, Row[]>;
@@ -22,6 +23,17 @@ export interface ChapterPackageManifest {
 }
 export interface PackageOptions { extraFiles?: string[]; includeApplication?: boolean }
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
+// Review masters can exceed readFileSync's 2 GiB limit. Hash every byte without
+// retaining complete media in memory during inspect/copy/restore.
+function hashFile(path: string): string {
+  const digest = createHash("sha256"), buffer = Buffer.allocUnsafe(1024 * 1024);
+  const fd = openSync(path, "r");
+  try {
+    let bytes: number;
+    while ((bytes = readSync(fd, buffer, 0, buffer.length, null)) > 0) digest.update(buffer.subarray(0, bytes));
+    return digest.digest("hex");
+  } finally { closeSync(fd); }
+}
 const slash = (value: string) => value.replaceAll("\\", "/");
 const quote = (name: string) => `"${name.replaceAll('"', '""')}"`;
 function inside(root: string, path: string): boolean {
@@ -131,6 +143,7 @@ export function inspectChapterPackage(db: DatabaseSync, dataDir: string, project
   const projection = existsSync(projectionFile) ? JSON.parse(readFileSync(projectionFile, "utf8")) as { version: number; references: Array<[string, string]> } : null;
   if (projection && (projection.version !== 1 || !Array.isArray(projection.references))) throw new Error("Invalid saved recovery path projection.");
   const restoredReferences = new Map(projection?.references ?? []);
+  const noTransfers = new Map<string, string>();
   function add(value: string, reference: string, role: PreservedFile["role"] = "original", lockedDependency = false) {
     const retained = restoredReferences.get(value);
     const full = retained ? portablePath(dataDir, retained) : isAbsolute(value) ? resolve(value) : resolve(assets, value);
@@ -143,7 +156,7 @@ export function inspectChapterPackage(db: DatabaseSync, dataDir: string, project
       if (role === "original") prior.role = role;
       return;
     }
-    const sha256 = hash(readFileSync(actual));
+    const sha256 = hashFile(actual);
     const path = inside(dataDir, actual) ? slash(relative(resolve(dataDir), actual)) : `assets/preserved-external/${sha256}/${basename(actual)}`;
     bySource.set(actual, { path, sha256, bytes: statSync(actual).size, originals: [value], references: [reference], role });
     if (extname(actual).toLowerCase() === ".json" && !reference.startsWith("producer-supplied dependency")) pendingJson.push(actual);
@@ -163,31 +176,56 @@ export function inspectChapterPackage(db: DatabaseSync, dataDir: string, project
         else for (const item of dependency.files) {
           const file = portablePath(bundleRoot, item.path);
           add(file, `Blender dependency:${value}`, "original", true);
-          if (existsSync(file) && hash(readFileSync(file)) !== item.sha256) problems.push(`Changed Blender dependency: ${file}`);
+          if (existsSync(file) && hashFile(file) !== item.sha256) problems.push(`Changed Blender dependency: ${file}`);
         }
         add(lock, `Blender dependency lock:${value}`);
       }
     }
   }
-  function visit(value: unknown, key: string, reference: string, legacyGeneratedRoot = false) {
+  function visit(value: unknown, key: string, reference: string, legacyGeneratedRoot = false, transfers: ReadonlyMap<string, string> = noTransfers) {
     if (typeof value === "string") {
       if (originKey.test(key)) return;
+      const localTransfer = transfers.get(value);
+      if (localTransfer && /^(?:remoteInputPath|remoteEndInputPath|remoteOutputPath|imagePath|lastImagePath)$/.test(key)) {
+        // The captured API payload keeps its original Mac paths verbatim.
+        // Preserve the verified local counterpart, not a transient upload path.
+        add(localTransfer, `${reference} (retained local LTX transfer counterpart)`); return;
+      }
       if (value.startsWith("{") || value.startsWith("[")) {
         let parsed: unknown; try { parsed = JSON.parse(value); } catch { return; }
-        visit(parsed, key, reference, legacyGeneratedRoot); return;
+        visit(parsed, key, reference, legacyGeneratedRoot, transfers); return;
       }
       if (/^(?:https?:|data:|s3:)/i.test(value)) return;
       const full = isAbsolute(value) ? value : resolve(assets, value);
       if (legacyGeneratedRoot && key === "src" && !isAbsolute(value)) add(`generated/${value}`, `${reference} (legacy patch recipe: generated root)`);
       else if (pathKey.test(key) && (fileSuffix.test(value) || existsSync(full))) add(value, reference, /thumbnail|proxy/i.test(key) ? "derived" : "original");
       else if (fileSuffix.test(value) && existsSync(full)) add(value, reference, /thumbnail|proxy/i.test(key) ? "derived" : "original");
-    } else if (Array.isArray(value)) value.forEach(item => visit(item, key, reference, legacyGeneratedRoot));
+    } else if (Array.isArray(value)) value.forEach(item => visit(item, key, reference, legacyGeneratedRoot, transfers));
     else if (value && typeof value === "object") {
       const recipe = value as Record<string, unknown>;
+      let scopedTransfers = transfers;
+      if (recipe.provider === "ltx_local") {
+        const bound = new Map(transfers);
+        const bind = (remoteKey: string, localKey: string, hashKey?: string) => {
+          const remote = recipe[remoteKey], local = recipe[localKey];
+          if (typeof remote !== "string" || typeof local !== "string") return;
+          add(local, `${reference}.${localKey} (LTX transfer binding)`);
+          const retained = [...bySource.values()].find(file => file.originals.includes(local));
+          if (!retained) return; // The missing local dependency remains a problem.
+          if (hashKey && retained.sha256 !== recipe[hashKey]) {
+            problems.push(`LTX input hash mismatch: ${local} (${reference}.${hashKey})`); return;
+          }
+          bound.set(remote, local);
+        };
+        bind("remoteInputPath", "sourceKeyframe", "sourceKeyframeSha256");
+        bind("remoteEndInputPath", "sourceEndKeyframe", "sourceEndKeyframeSha256");
+        bind("remoteOutputPath", "localOutputPath");
+        scopedTransfers = bound;
+      }
       // This retained historical patch format is defined by patchtool.py and
       // v73tool.py: picture src values are relative to assets/generated.
       const generatedRoot = legacyGeneratedRoot || (typeof recipe.pictureBase === "string" && Array.isArray(recipe.picture));
-      for (const [childKey, child] of Object.entries(value)) visit(child, childKey, `${reference}.${childKey}`, generatedRoot);
+      for (const [childKey, child] of Object.entries(value)) visit(child, childKey, `${reference}.${childKey}`, generatedRoot, scopedTransfers);
     }
   }
   for (const [table, rows] of Object.entries(tables)) for (const row of rows) visit(row, "", `${table}:${row.id ?? row.render_id ?? row.project_id ?? "relationship"}`);
@@ -214,7 +252,7 @@ export function inspectChapterPackage(db: DatabaseSync, dataDir: string, project
     if (statSync(path).isDirectory()) for (const name of readdirSync(path)) addApplication(resolve(path, name));
     else {
       const full = realpathSync(path), bytes = statSync(full).size;
-      bySource.set(full, { path: `application/${slash(relative(resolve("."), full))}`, bytes, sha256: hash(readFileSync(full)), originals: [full], references: ["application source snapshot"], role: "original" });
+      bySource.set(full, { path: `application/${slash(relative(resolve("."), full))}`, bytes, sha256: hashFile(full), originals: [full], references: ["application source snapshot"], role: "original" });
     }
   }
   if (options.includeApplication !== false) for (const path of ["src", "scripts", "package.json", "package-lock.json", "tsconfig.json", "tsconfig.base.json", "vite.config.ts", "vitest.config.ts", "docs/design/fdl",
@@ -250,14 +288,29 @@ export function inspectChapterPackage(db: DatabaseSync, dataDir: string, project
     }
   }
   if (!(tables.audio_segments ?? []).some(a => a.project_id === projectId && a.layer === "original_reading")) editability.push("No saved original-reading intervals.");
+  // Content-addressed external dependencies can have the same basename and
+  // bytes in multiple review folders. Copy that portable file once, retaining
+  // every origin/reference so restoration can project each original path.
+  const sources = new Map<string, PreservedFile>();
+  const destinations = new Map<string, PreservedFile>();
+  for (const [source, file] of bySource) {
+    const key = file.path.toLowerCase(), prior = destinations.get(key);
+    if (!prior) { destinations.set(key, file); sources.set(source, file); continue; }
+    if (prior.sha256 !== file.sha256 || prior.bytes !== file.bytes) {
+      problems.push(`Conflicting portable asset: ${file.path}`); continue;
+    }
+    prior.originals = [...new Set([...prior.originals, ...file.originals])];
+    prior.references = [...new Set([...prior.references, ...file.references])];
+    if (file.role === "original") prior.role = "original";
+  }
   const manifest: ChapterPackageManifest = {
     format: "heartword-chapter", version: 1, project, createdAt: new Date().toISOString(),
     application: { version: JSON.parse(readFileSync("package.json", "utf8")).version, gitCommit: toolVersion("git", ["rev-parse", "HEAD"]), node: process.version, ffmpeg: toolVersion("ffmpeg", ["-version"]).split("\n")[0]!, schemaSha256: hash(schema) },
     retention: { originals: "indefinite", rejectedAndSuperseded: "indefinite", automaticDeletion: false },
-    sourceRoot: resolve(dataDir), schemaFile: "schema.sql", recordsFile: "records.json", recordsSha256: hash(JSON.stringify(tables)),
-    files: [...bySource.values()], problems: [...new Set(problems)], editability
+    sourceRoot: resolve(dataDir), schemaFile: "schema.sql", recordsFile: "records.json", recordsSha256: hashPackageRecords(tables),
+    files: [...sources.values()], problems: [...new Set(problems)], editability
   };
-  return { manifest, tables, schema, sources: bySource };
+  return { manifest, tables, schema, sources };
 }
 function toolVersion(program: string, args: string[]) {
   try { return execFileSync(program, args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim(); } catch { return "not_reported"; }
@@ -271,10 +324,12 @@ export function exportChapterPackage(db: DatabaseSync, dataDir: string, projectI
   for (const [source, file] of snapshot.sources) {
     const out = portablePath(destination, file.path); mkdirSync(dirname(out), { recursive: true });
     copyFileSync(source, out, constants.COPYFILE_EXCL);
-    if (hash(readFileSync(out)) !== file.sha256) throw new Error(`Asset changed during packaging: ${source}`);
+    if (hashFile(out) !== file.sha256) throw new Error(`Asset changed during packaging: ${source}`);
   }
   writeFileSync(resolve(destination, "schema.sql"), snapshot.schema, { flag: "wx" });
-  writeFileSync(resolve(destination, "records.json"), JSON.stringify(snapshot.tables), { flag: "wx" });
+  const recordsPath = resolve(destination, "records.json");
+  writePackageRecords(recordsPath, snapshot.tables);
+  if (hashFile(recordsPath) !== snapshot.manifest.recordsSha256) throw new Error("Package records changed while writing.");
   // Completion marker is written last. A partial directory is never a package.
   writeFileSync(resolve(destination, "chapter-package.json"), JSON.stringify(snapshot.manifest, null, 2), { flag: "wx" });
   return snapshot.manifest;
@@ -283,14 +338,14 @@ export function exportChapterPackage(db: DatabaseSync, dataDir: string, projectI
 export function verifyChapterPackage(directory: string): ChapterPackageManifest {
   const manifest = JSON.parse(readFileSync(portablePath(directory, "chapter-package.json"), "utf8")) as ChapterPackageManifest;
   if (manifest.format !== "heartword-chapter" || manifest.version !== 1 || !Array.isArray(manifest.files) || manifest.problems.length) throw new Error("Unsupported or incomplete chapter package.");
-  if (hash(readFileSync(portablePath(directory, manifest.schemaFile))) !== manifest.application.schemaSha256 || hash(readFileSync(portablePath(directory, manifest.recordsFile))) !== manifest.recordsSha256) throw new Error("Package records/schema integrity failed.");
+  if (hash(readFileSync(portablePath(directory, manifest.schemaFile))) !== manifest.application.schemaSha256 || hashFile(portablePath(directory, manifest.recordsFile)) !== manifest.recordsSha256) throw new Error("Package records/schema integrity failed.");
   const seen = new Set<string>();
   for (const file of manifest.files) {
     const path = portablePath(directory, file.path);
     if (seen.has(file.path.toLowerCase())) throw new Error(`Duplicate portable asset: ${file.path}`);
     seen.add(file.path.toLowerCase());
     if (!existsSync(path)) throw new Error(`Missing retained asset: ${file.path}`);
-    if (statSync(path).size !== file.bytes || hash(readFileSync(path)) !== file.sha256) throw new Error(`Retained asset integrity failed: ${file.path}`);
+    if (statSync(path).size !== file.bytes || hashFile(path) !== file.sha256) throw new Error(`Retained asset integrity failed: ${file.path}`);
   }
   return manifest;
 }
@@ -301,7 +356,7 @@ export function verifyChapterPackage(directory: string): ChapterPackageManifest 
 export function restoreChapterPackage(directory: string, destination: string): ChapterPackageManifest {
   const manifest = verifyChapterPackage(directory);
   if (existsSync(destination)) throw new Error("Restore requires a new data directory; existing production is protected.");
-  const tables = JSON.parse(readFileSync(portablePath(directory, manifest.recordsFile), "utf8")) as Tables;
+  const tables = readPackageRecords(portablePath(directory, manifest.recordsFile));
   const relocations = new Map<string, string>();
   for (const file of manifest.files) for (const original of file.originals) {
     const rel = file.path.replace(/^assets\//, "");
@@ -317,7 +372,7 @@ export function restoreChapterPackage(directory: string, destination: string): C
   for (const file of manifest.files) {
     const target = portablePath(destination, file.path); mkdirSync(dirname(target), { recursive: true });
     copyFileSync(portablePath(directory, file.path), target, constants.COPYFILE_EXCL);
-    if (hash(readFileSync(target)) !== file.sha256) throw new Error(`Restore integrity failed: ${file.path}`);
+    if (hashFile(target) !== file.sha256) throw new Error(`Restore integrity failed: ${file.path}`);
   }
   restoreProductionRecords(resolve(destination, "db", "heartword.sqlite"), tables, readFileSync(portablePath(directory, manifest.schemaFile), "utf8"), relocations);
   // Provider/review sidecars are immutable and can contain absolute paths to

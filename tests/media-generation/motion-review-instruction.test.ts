@@ -59,20 +59,20 @@ it("uses the submitted motion request when an older draft adapter omits prompt p
   expect(instruction).not.toContain("gate hardware");
   expect(db.prepare("SELECT resolution FROM generation_attempts WHERE operation='generate_draft'").get()!.resolution).toBe("360p");
 });
-it("requests ten seconds of new local coverage and retains the verified review-input proof without selecting held picture or audio", async () => {
+it.each([5,10] as const)("requests %i seconds of local coverage and retains review-input proof without selecting held picture or audio", async durationSeconds => {
   const proof = { originalPath: "motion.mp4", originalSha256: "fixture-original", path: "motion.mp4.picture-review-proxy.mp4", sha256: "fixture-proxy", provenancePath: "motion.mp4.picture-review-proxy.mp4.json" };
   vi.mocked(reviewGeneratedVideo).mockResolvedValueOnce({ verdict: { pass: true,confidence: 70,reason: "Synthetic visible picture; uncalibrated low score retained" },costUsd: .01,reviewInput: proof });
-  const generate = vi.fn(async()=>({ status: "accepted" as const,media: { path: "motion.mp4" },cost: { usd: 0 },provenance: { provider: "ltx_local",model: "fixture",prompt: "Actual ten-second motion" } }));
-  const result = await generateNonSpeakingVideoCandidate(db,"p","shot",{ primaryBackend: "ltx",ltx: { generateFinal: generate } } as any,{ durationSeconds: 10,allowDraftFallback: false });
-  expect(generate).toHaveBeenCalledTimes(1); expect(generate.mock.calls[0]![1]).toMatchObject({ durationSeconds: 10,resolution: "720p" });
+  const generate = vi.fn(async()=>({ status: "accepted" as const,media: { path: "motion.mp4" },cost: { usd: 0 },provenance: { provider: "ltx_local",model: "fixture",prompt: "Actual local motion" } }));
+  const result = await generateNonSpeakingVideoCandidate(db,"p","shot",{ primaryBackend: "ltx",ltx: { generateFinal: generate } } as any,{ durationSeconds,allowDraftFallback: false });
+  expect(generate).toHaveBeenCalledTimes(1); expect(generate.mock.calls[0]![1]).toMatchObject({ durationSeconds,resolution: "720p" });
   expect(result).toMatchObject({ status: "candidate",reviewPassed: false,reviewInput: proof });
   const saved = db.prepare("SELECT payload FROM edit_commands WHERE command_type='retain_review_media_input'").get()!;
   expect(JSON.parse(String(saved.payload))).toMatchObject({ projectId: "p",shotId: "shot",reviewInput: proof });
   expect(db.prepare("SELECT COUNT(*) n FROM clips").get()!.n).toBe(0); expect(db.prepare("SELECT COUNT(*) n FROM production_audio_assets").get()!.n).toBe(0);
 });
-it("holds an unsupported ten-second backend request before any provider submission", async()=>{
+it.each([5,10] as const)("holds an unsupported %i-second backend request before any provider submission", async durationSeconds=>{
   const generate = vi.fn();
-  await expect(generateNonSpeakingVideoCandidate(db,"p","shot",{ primaryBackend: "veo",veo: { generateFinal: generate } } as any,{ durationSeconds: 10 })).rejects.toThrow("configured local LTX");
+  await expect(generateNonSpeakingVideoCandidate(db,"p","shot",{ primaryBackend: "veo",veo: { generateFinal: generate } } as any,{ durationSeconds })).rejects.toThrow("configured local LTX");
   expect(generate).not.toHaveBeenCalled(); expect(db.prepare("SELECT COUNT(*) n FROM video_generation_jobs").get()!.n).toBe(0);
 });
 it("forwards and retains the provider-pinned ending reference without inventing an endpoint",async()=>{

@@ -1,0 +1,23 @@
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {join} from 'node:path';
+import {createHash,randomUUID} from 'node:crypto';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {requireCurrentPlan} from '../../src/pipeline/creative-direction/crew-store.js';
+import {readAcceptedEditorialClosing} from '../../src/pipeline/assembly/editorial-beats.js';
+const top='outputs/mark6-production',folder=top+'/closing-credits-prepared-20261105/actual-review-20261111',db=getDb(),data=getDataDir(),project='c457a815-d07d-4902-91b5-7b936b549856',read=(p:string)=>JSON.parse(readFileSync(p,'utf8')),h=(p:string)=>createHash('sha256').update(readFileSync(p)).digest('hex');
+try{
+ const p=requireCurrentPlan(db,data,project),r=read(folder+'/direct-review.json'),j=read(top+'/native-generation/execution.json');
+ if(existsSync(folder+'/selection-proof.json')||p.id!=='67631c67-22d8-4c51-8d1e-e567dafeaaed'||p.brief_hash!=='07ffceb50c4deb9cf684d0473286bf8a69692149d01fcf3f16b83186dac7f412'||j.entries.length!==222||j.entries.slice(0,221).some((x:any)=>x.status!=='returned_unreviewed')||!['reserved_native_submission','returned_unreviewed'].includes(j.entries[221].status)||r.status!=='clear_silent_closing_media_for_post_source_review_production'||!r.actualFullScrollStripViewed||!r.actualEntireScroll1fpsBoardViewed||h(r.media)!==r.sha256||r.sha256!=='398a1bf5800847d1a9adbdcb16165a5368c8394ec2808dea6c2df572820227d1'||r.frames!==336||r.durationMs!==14000||!r.silent)throw Error('Exact approvedplan/actualreviewedcredits/currentworker required');
+ if(db.prepare("SELECT id FROM editorial_beats WHERE project_id=? AND placement='post_source'").get(project))throw Error('Existing closing beat, inspect instead of duplicate');
+ const source=read(top+'/closing-credits-prepared-20261105/source-credit-provenance.json');if(h(source.sourceRecording)!==source.sourceSha256)throw Error('Original credit metadata source changed');
+ const beatId='mark6-reviewed-closing-credits-20261111',path='preparation/mark6-closing-credits-20261105-v2/credits-scroll.mp4',now=Date.now(),approvedBy='HeartWord under Dan delegated autonomous review-production authority',payload={projectId:project,editorialBeatId:beatId,path,sha256:r.sha256,durationMs:14000,approvedBy,review:folder+'/direct-review.json',scope:'NonnarrativepostsourcecreditsONLY aftercomplete796680ms source and6500ms approvedopening; actualrenderrebasesaftercompletecut. No sourcepause/overlap/newmusic/event/nextchapterhandoff.'};
+ if(h(join(data,'assets',path))!==r.sha256)throw Error('Exact in-assets credits required');
+ db.exec('BEGIN IMMEDIATE');let selected;try{
+ const sequence=Number(db.prepare('SELECT COALESCE(MAX(sequence),0)+1 n FROM editorial_beats WHERE project_id=?').get(project)!.n);
+ db.prepare("INSERT INTO editorial_beats(id,project_id,sequence,placement,beat_type,description,rationale,evidence,duration_ms,timeline_start_ms,timeline_end_ms,source_label,status,approved_by,created_at)VALUES(?,?,?,'post_source','title_card',?,?,?,?,?,?,?,'accepted',?,?)").run(beatId,project,sequence,'Markus 6 Hatam source credits and HeartWord Studio closing scroll','Requiredproductendingcredits; exactretainedsourcecopyright/propernames/brandingonly, no narrativehandoff.',folder+'/direct-review.json',14000,803180,817180,'Closing credits after complete source',approvedBy,now);
+ const editSeq=Number(db.prepare('SELECT COALESCE(MAX(sequence),0)+1 n FROM edit_commands WHERE project_id=?').get(project)!.n);
+ db.prepare("INSERT INTO edit_commands(id,project_id,sequence,command_type,payload,idempotency_key,applied_at)VALUES(?,?,?,'select_editorial_media',?,?,?)").run(randomUUID(),project,editSeq,JSON.stringify(payload),'mark6-reviewed-closing-credits-20261111',now);
+ selected=readAcceptedEditorialClosing(db,data,project);const after=requireCurrentPlan(db,data,project);if(after.id!==p.id||after.brief_hash!==p.brief_hash||selected.length!==1||selected[0]!.durationMs!==14000)throw Error('Planning/source authority changed or closing contract failed');db.exec('COMMIT');
+ }catch(e){db.exec('ROLLBACK');throw e;}
+ const proof={at:new Date().toISOString(),status:'actual_reviewed_silent_credits_selected_in_existing_editorial_contract',selected,productionRunId:p.id,planningBriefHashUnchanged:p.brief_hash,review:folder+'/direct-review.json',sourceCopyrightProvenance:top+'/closing-credits-prepared-20261105/source-credit-provenance.json',noSourceMusicVoicesCanonChange:true,actualFullFilmPlacementVerified:false,newProviderCalls:0,wholeFilmReady:false};writeFileSync(folder+'/selection-proof.json',JSON.stringify(proof,null,2),{flag:'wx'});console.log(JSON.stringify(proof));
+}finally{db.close();}

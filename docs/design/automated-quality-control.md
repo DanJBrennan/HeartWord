@@ -1,5 +1,38 @@
 # Automated Quality Control
 
+November11 producer decision: one specific failed Mark6 AV request may consume
+its entire $0.82 reserve after Dan explicitly authorizes that accounting. Its
+original error, unknown usage and unresolved provider charge remain unchanged.
+Known receipt totals and conservative exposure are recorded separately; both
+consume the unchanged $8 review ceiling. The failed call still consumes a
+request/category slot. The authorization pins that request, its retained input
+hash and one named replacement; it grants no automatic retry or media approval.
+Other unknown charges, active reservations and actual service limits still hold.
+Only successful, measured provider receipts enter the actual cost ledger.
+
+November11 Mark6 review transport: the bounded reviewer can attach original
+media through Gemini's Files API when base64 plus the prompt, captions and
+schema would exceed the conservative20MB encoded-request ceiling. Local and
+server SHA256, byte count, MIME, resource URI, ACTIVE state and expiry must match
+before inference. Captions and video sampling remain on the same content part.
+The exact encoded body is checked before reserving a billable review, including
+for inline-only packets. Upload/poll/delete are non-generative transport, with no
+automatic upload or model retry. They do not change the model, review scope,
+source, canon, dollar/request caps or unknown-charge holds. Original and proxy
+evidence remain retained; no oversized packet grants media acceptance. This
+extends the existing provider/reviewer, not a pipeline stage. See the official
+[Files API](https://aistudio.google.com/docs/files) and
+[video input guidance](https://aistudio.google.com/docs/video-understanding).
+
+November6 historical carryover repair: normal shot, external-keyframe and coverage
+critics receive scoped historicalSettingRules separately from artistic canon
+exceptions. These are checks against actual visible content, including background
+details, not permission to overlook errors. The same versioned doorway/location
+facts reach crew packets and the Codex handoff. Hidden joints and exact ancient
+geometry remain unverified; a clear still review does not approve motion or source
+language. Mark6 repaired preview remains for Dan review before new footage.
+
+
 Oversized ordinary motion files use a local review-only H264 copy before the
 first model submission. It preserves every decoded frame, native dimensions,
 frame rate and duration, strips the separately reviewed native sound, and retains
@@ -19,6 +52,13 @@ is automatically re-reviewed or promoted by this input correction.
 
 ## Scope
 
+The bounded Mark 6 motion-review runner includes explicitly mapped supplementary
+actor canon boards even when those actors are outside the principal cast's
+reference numbering. It preserves image numbers and canon-versus-set roles,
+checks reference bytes, and excludes unmapped set supplements from identity
+inputs. This corrects review-packet coverage only; it does not re-review or
+approve earlier media, change the rubric, or bypass request/cost limits.
+
 Automated checks that run across generated media and the assembled chapter
 video, to catch obvious problems the pipeline itself can detect (rather than
 relying on the user to spot everything by eye), both per-shot as media comes
@@ -26,6 +66,12 @@ back from a generation provider and across the whole assembled video before
 it's handed to the user for review.
 
 ## Automated Media Review (per returned shot)
+
+November 2 Mark 6 production uses the existing shot/keyframe review path with
+its own catalog Hatam source and English reference, extending its explicit
+Mark 2/4/5 scope to Mark 6. This does not approve a candidate, change review
+thresholds or enable unbounded paid calls. Actual returned media, identity,
+wardrobe, source and budget checks retain their existing authority.
 
 October 21 Mark 5 execution: built-in shot review uses the approved chapter's
 catalog Scripture, scoped to Hatam Mark 2/4/5. Identity may use its approved

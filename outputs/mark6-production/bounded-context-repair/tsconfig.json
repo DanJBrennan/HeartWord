@@ -1,0 +1,6 @@
+{
+  "extends": "../tsconfig-leaf-priority-20261106.json",
+  "include": [
+    "./*.ts"
+  ]
+}

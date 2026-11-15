@@ -7,7 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
 import { runCrew } from "../../src/pipeline/creative-direction/crew.js";
 import { runProductionCrew, productionRecordForRun, latestCrewRun } from "../../src/pipeline/creative-direction/crew-store.js";
-import { newProductionRecord } from "../../src/pipeline/creative-direction/production-record.js";
+import { newProductionRecord,saveContribution } from "../../src/pipeline/creative-direction/production-record.js";
 import { acceptedCoverageMedia } from "../../src/pipeline/creative-direction/visual-reference-media.js";
 import { craftScore, craftImproved, validateCraftAssessment, type CraftAssessment, type CreativeFeedback } from "../../src/pipeline/creative-direction/creative-feedback.js";
 import type { CrewBrief, CrewContribution, CrewEvent, CrewRole } from "../../src/pipeline/creative-direction/crew-types.js";
@@ -50,6 +50,23 @@ async function review(options:{secondScore?:number;missingResponse?:boolean;seco
 }
 
 describe("bounded evidence-based craft feedback",()=>{
+  it('can accept executable planning intent without generated clips, preserving the ungenerated media state',async()=>{
+    const b=brief();b.shots[0]!.clip=null;const original=JSON.stringify(b),record=newProductionRecord(b,'intent','hash');
+    const result=await runCrew({phase:'planning',brief:b,creativeFeedback:true,productionRecord:record,log:()=>{},call:async p=>{
+      const out=response(p);if(roleOf(p)==='picture_editor')out.craftAssessment=fixtureCraftAssessment();return out;
+    }});
+    expect(result.status,result.summary).toBe('approved');expect(result.productionRecord!.status).toBe('accepted');expect(JSON.stringify(b)).toBe(original);expect(b.shots[0]!.clip).toBeNull();
+  });
+  it.each(['governingReference','legacyFutureTarget'])('does not waive an unresolved owner blocker during planning (%s)',async kind=>{
+    const b=brief();b.shots[0]!.clip=null;const record=newProductionRecord(b,'intent','hash');
+    if(kind==='legacyFutureTarget')saveContribution(record,b,'cinematographer',0,{summary:'Earlier future-target hold',directions:[],findings:[{shotId:'s',severity:'blocking',evidence:'Future target has not been inspected',requestedChange:'Owner must explicitly disposition this planning hold while retaining later target QC',confidence:90,limitations:'No actual media exists'}]},'planning');
+    const result=await runCrew({phase:'planning',brief:b,creativeFeedback:true,productionRecord:record,log:()=>{},call:async p=>{
+      const out=response(p);if(roleOf(p)==='picture_editor')out.craftAssessment=fixtureCraftAssessment();
+      if(kind==='governingReference'&&roleOf(p)==='cinematographer')out.findings=[{shotId:'s',severity:'blocking',evidence:'Supplied governing reference conflicts with approved canon',requestedChange:'Correct the governing reference before generation',confidence:95,limitations:'Reference conflict, not missing future footage'}];
+      return out;
+    }});
+    expect(result.status,result.summary).toBe('held');expect(result.productionRecord!.objections.some(o=>o.owner==='cinematographer'&&o.severity==='blocking'&&o.status==='open')).toBe(true);expect(b.shots[0]!.clip).toBeNull();
+  });
   it("retains the earlier acceptable plan at a plateau, with all later replies and routing visible",async()=>{
     const {result,events}=await review();
     expect(result.status,result.summary).toBe("approved");expect(result.calls).toBe(30);

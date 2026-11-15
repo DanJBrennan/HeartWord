@@ -1,0 +1,15 @@
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+const folder=resolve('outputs/mark6-production/native-motion/herod-reports-preparation-v1/profile-final-after-reconcile-v2'),source='C:/Users/danbr/HeartWordData/assets/generated/video/dee2961e-724d-4feb-885e-e1a8ec6205ac-ltx-23499989-283b-4058-82d6-52a05ed1f3fc.mp4';
+const hash=(p:string)=>createHash('sha256').update(readFileSync(p)).digest('hex'),sha=hash(source),range=join(folder,'quiet-prefix-diagnostic.mp4'),first=join(folder,'actual-frame0.png');
+if(existsSync(range)||existsSync(first))throw Error('Existing range requires reconciliation, not overwrite');
+const ff=(a:string[])=>execFileSync('ffmpeg',['-v','error','-nostdin','-n',...a],{windowsHide:true,maxBuffer:32*1024*1024}),filter='trim=start_frame=0:end_frame=144,setpts=PTS-STARTPTS';
+ff(['-i',source,'-map','0:v:0','-an','-vf',filter,'-fps_mode','passthrough','-c:v','libx264','-qp','0',range]);
+ff(['-i',source,'-vf','select=eq(n\\,0)','-frames:v','1',first]);
+const hashes=(p:string,vf?:string)=>ff(['-i',p,'-map','0:v:0','-an',...(vf?['-vf',vf]:[]),'-f','framemd5','-']).toString().split(/\r?\n/).filter(l=>l&&!l.startsWith('#')).map(l=>l.split(',').at(-1)!.trim());
+const expected=hashes(source,filter),actual=hashes(range);if(expected.length!==144||JSON.stringify(expected)!==JSON.stringify(actual)||hash(source)!==sha)throw Error('Exact native range decoded-frame proof failed');
+const proof={at:new Date().toISOString(),kind:'diagnostic_exact_native_range_not_selected',parentAttemptId:'a661770f-528a-472d-a33d-6605c8cffee2',sourcePath:source,sourceSha256:sha,rangeStartFrame:0,rangeEndFrameExclusive:144,rangePath:range,rangeSha256:hash(range),firstFramePath:first,firstFrameSha256:hash(first),frames:144,durationSeconds:6,decodedFramesIdentical:true,nativeAudioExcluded:true,newProviderCalls:0,parentWholeClipHeld:true,parentDefect:'Late broad closed-mouth smile around7to10s contrary to quiet report-listening direction; excluded suffix unapproved.'};
+writeFileSync(join(folder,'quiet-prefix-diagnostic-proof.json'),JSON.stringify(proof,null,2),{flag:'wx'});
+writeFileSync(join(folder,'root-whole-parent-hold.json'),JSON.stringify({at:proof.at,status:'whole_parent_held_prefix_review_pending',attemptId:proof.parentAttemptId,reviewer:'Codex all241frame contacts and fullsecond samples',observedDefects:[proof.parentDefect],proposedPrefixFrames:[0,144],prefixNotYetSelected:true,originalsRetained:true,providerCalls:0},null,2),{flag:'wx'});console.log(JSON.stringify(proof));

@@ -1,0 +1,11 @@
+import {DatabaseSync} from 'node:sqlite';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {dispatchCrewTask} from '../../src/pipeline/creative-direction/crew-tasks.js';
+import {crewSchema} from '../../src/pipeline/creative-direction/crew.js';
+const root='C:/Users/danbr/HeartWordData',run='9c4f4dd1-dedf-4351-843e-d12eec7a13c6',db=new DatabaseSync(root+'/db/heartword.sqlite',{readOnly:true});
+const row=db.prepare('SELECT brief_json,result_json,project_id FROM production_runs WHERE id=?').get(run)!,brief=JSON.parse(String(row.brief_json)),result=JSON.parse(String(row.result_json));
+const folder=root+'/assets/preparation/crew-reasoning/'+row.project_id+'/'+run+'_production_director_1_chapter-rollup_task-1_evidence-',request=JSON.parse(readFileSync(folder+'0/request.json','utf8'));
+const messages=(n:number)=>readFileSync(folder+n+'/response.jsonl','utf8').split('\n').filter(Boolean).map(l=>JSON.parse(l)).filter(e=>e.type==='item.completed'&&e.item?.type==='agent_message').map(e=>JSON.parse(e.item.text));
+const refs=[...messages(0).at(-1).contextRequests,...messages(1).at(-1).contextRequests],retained=Object.fromEntries(Object.values(result.contributions).flatMap((c:any)=>(c.exchange??[]).filter((h:any)=>h.kind==='proposal'||h.kind==='revision').map((h:any)=>[h.id,c])));
+const media=request.media.map((m:any)=>({mimeType:m.mimeType,caption:m.caption,data:readFileSync(m.path).toString('base64')}));
+await dispatchCrewTask({prompt:request.prompt,schema:crewSchema('production_director'),media,role:'production_director',phase:'planning',brief,contributions:result.contributions,record:result.productionRecord,reviewRecordedProposal:true,pendingEvidence:{role:'production_director',nextRound:2,refs,originEventId:run+':production_director:1:chapter-rollup:task-1:evidence-1'},retainedContributions:retained,specialistBytes:550000,chapterBytes:1100000,onRequest:()=>{},validate:raw=>raw as any,call:async(prompt)=>{writeFileSync('outputs/mark6-production/director-r64-direct-fit.json',JSON.stringify({promptCharacters:prompt.length,newProviderCalls:0}));throw Error('OFFLINE_CAPTURE_ONLY');}});

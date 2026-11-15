@@ -38,11 +38,13 @@ it("holds a real wardrobe mismatch even when the general Critic reports no conce
  vi.mocked(checkCanonicalLikeness).mockResolvedValueOnce({score:99,instanceCount:1,wardrobeStatus:"mismatch",wardrobeNotes:"Synthetic material garment drift",notes:"Synthetic identity match",costUsd:0.01});
  expect((await runKeyframeCandidateReview("attempt")).decision.status).toBe("retry_modified");
 });
-it("reviews Mark 5 with its own catalog passage instead of the old Mark 2 pilot",async()=>{
- for(const [path,text] of [["source/hatam/text/Mark/Mark 5.docx","Mark five source"],["source/english-esv/text/Mark/Mark 5.docx","Mark five reference"],["source/hatam/mark-2/mark-2-text.docx","Wrong chapter two"]]){
+it.each([5,6])("reviews Mark %i with its own catalog passage instead of the old Mark 2 pilot",async(chapter)=>{
+ db.exec(`UPDATE projects SET chapter=${chapter};UPDATE shots SET verse_ref='Mark ${chapter}:1'`);
+ for(const [path,text] of [[`source/hatam/text/Mark/Mark ${chapter}.docx`,`Mark ${chapter} source`],[`source/english-esv/text/Mark/Mark ${chapter}.docx`,`Mark ${chapter} reference`],["source/hatam/mark-2/mark-2-text.docx","Wrong chapter two"]]){
   const target=join(directory,"assets",path!);mkdirSync(join(target,".."),{recursive:true});writeFileSync(target,text!);
  }
  await runKeyframeCandidateReview("attempt");
  const request=vi.mocked(runCritic).mock.calls.at(-1)![0];
- expect(request.scriptureText).toContain("Mark five source");expect(request.scriptureText).toContain("Mark five reference");expect(request.scriptureText).not.toContain("Wrong chapter two");
+ expect(request.historicalSettingRules).toContain("wooden pivot pegs");
+ expect(request.scriptureText).toContain(`Mark ${chapter} source`);expect(request.scriptureText).toContain(`Mark ${chapter} reference`);expect(request.scriptureText).not.toContain("Wrong chapter two");
 });

@@ -1,0 +1,7 @@
+// Small readonly task slice; no crew dispatch, judgment calls or media selection.
+import {writeFileSync} from 'node:fs';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {requireCurrentPlan,directionsFromRun} from '../../src/pipeline/creative-direction/crew-store.js';
+import {getKeyframeContext} from '../../src/pipeline/media-generation/external-keyframes.js';
+const db=getDb(),data=getDataDir(),project='c457a815-d07d-4902-91b5-7b936b549856';
+try{const plan=requireCurrentPlan(db,data,project);const items=['135ca979-54f8-42e8-9ee9-f25336536bde','7fe4c536-ee13-466d-88e7-f75a6c5e2bb6'].map(id=>{const c=getKeyframeContext(db,data,id);return {shot:c.shot,references:c.references,director:directionsFromRun(plan,id).split('\nACCEPTED FDL CONSTRAINTS')[0],existingFrameCandidates:db.prepare("SELECT id,operation,status,result_asset_path FROM generation_attempts WHERE shot_id=? AND operation IN ('generate','generate_final_video','lip_sync') ORDER BY created_at DESC LIMIT 3").all(id)};});const proof={at:new Date().toISOString(),scope:'Small readonly nextreaction and existingcostquestion/source bindings only',projectId:project,planId:plan.id,briefSha:plan.brief_hash,sourceReactionMs:[549385,553152.5],items,providerCalls:0,databaseWrites:0,noNewSourceTimingOrMotionApproval:true};writeFileSync('outputs/mark6-production/checkpoints/next-cost-reaction-scoped-readonly-20261110.json',JSON.stringify(proof,null,2),{flag:'wx'});console.log(JSON.stringify(proof));}finally{db.close();}

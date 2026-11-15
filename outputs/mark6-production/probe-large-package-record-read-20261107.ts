@@ -1,0 +1,6 @@
+import {readFileSync,writeFileSync,statSync} from 'node:fs';
+import {hashPackageRecords,readPackageRecords} from '../../src/pipeline/assembly/chapter-package-records.js';
+const folder='outputs/mark6-production/large-record-roundtrip-20261107',prior=JSON.parse(readFileSync(folder+'/write-proof.json','utf8')),start=Date.now();
+const tables=readPackageRecords(prior.records),sha256=hashPackageRecords(tables),counts=Object.fromEntries(Object.entries(tables).map(([name,rows])=>[name,rows.length]));
+if(sha256!==prior.expectedSha256||JSON.stringify(counts)!==JSON.stringify(prior.counts)||statSync(prior.records).size!==prior.bytes)throw Error('Actual large records roundtrip mismatch');
+const result={at:new Date().toISOString(),status:'real_large_v1_records_roundtrip_passed',bytes:prior.bytes,canonicalSha256:sha256,counts,allRowsAndValuesPreserved:true,readInSeparateProcess:true,seconds:(Date.now()-start)/1000,peakMemory:process.resourceUsage().maxRSS,providerCalls:0,databaseWrites:0,fullChapterPackageOrRestoreNotYetComplete:true};writeFileSync(folder+'/read-proof.json',JSON.stringify(result,null,2),{flag:'wx'});console.log(JSON.stringify({status:result.status,bytes:result.bytes,seconds:result.seconds,allRowsAndValuesPreserved:true}));

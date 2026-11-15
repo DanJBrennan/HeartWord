@@ -35,6 +35,52 @@ function fixture() {
 }
 
 describe("additional non-speaking source coverage", () => {
+  it("continues from a selected reviewed native range while keeping its rejected full parent held",async()=>{
+    const {db,generateFinal,providers,policy}=fixture();
+    try{
+      db.exec("UPDATE generation_attempts SET operation='trim_final_video',provider='ffmpeg',model='native_frame_range' WHERE id='prefix'");
+      const original=db.prepare("SELECT * FROM generation_attempts WHERE id='raw'").get();
+      await expect(generateNonSpeakingVideoCandidate(db,"p","sh",providers,{additionalCoverage:{...policy.additionalCoverage,acceptedAttemptId:"raw"}})).rejects.toThrow(/selected accepted take/);
+      expect(generateFinal).not.toHaveBeenCalled();
+      expect((await generateNonSpeakingVideoCandidate(db,"p","sh",providers,policy)).status).toBe("candidate");
+      expect(generateFinal).toHaveBeenCalledTimes(1);
+      expect(db.prepare("SELECT * FROM generation_attempts WHERE id='raw'").get()).toEqual(original);
+      expect(db.prepare("SELECT generation_attempt_id FROM clips WHERE id='selected'").get()?.generation_attempt_id).toBe("prefix");
+    }finally{db.close();}
+  });
+  it.each(["held_range","unselected_range"])("refuses a %s as additional-coverage authority",async state=>{
+    const {db,generateFinal,providers,policy}=fixture();
+    try{
+      db.exec("UPDATE generation_attempts SET operation='trim_final_video' WHERE id='prefix'");
+      if(state==="held_range")db.exec("UPDATE generation_attempts SET status='hold_for_review' WHERE id='prefix'");
+      else db.exec("DELETE FROM clips WHERE id='selected'");
+      await expect(generateNonSpeakingVideoCandidate(db,"p","sh",providers,policy)).rejects.toThrow(/selected accepted take/);
+      expect(generateFinal).not.toHaveBeenCalled();
+    }finally{db.close();}
+  });
+  it("executes a same-action request pinned to the current revision without replacing existing footage", async () => {
+    const {db,generateFinal,providers,policy}=fixture();
+    try {
+      const pin={kind:"same_approved_action",runId:"reviewed-fixture-plan",briefHash:"a".repeat(64),acceptedAttemptId:"prefix",reason:policy.additionalCoverage.reason};
+      db.prepare("UPDATE review_notes SET note=? WHERE id='director'").run("Production Director approved source coverage v1:"+JSON.stringify(pin));
+      expect((await generateNonSpeakingVideoCandidate(db,"p","sh",providers,policy)).status).toBe("candidate");
+      expect(generateFinal).toHaveBeenCalledTimes(1);
+      expect(db.prepare("SELECT generation_attempt_id FROM clips WHERE id='selected'").get()?.generation_attempt_id).toBe("prefix");
+    } finally {db.close();}
+  });
+
+  it.each(["kind","runId","briefHash","acceptedAttemptId","reason","malformed","null"])("holds a same-action coverage request with invalid %s before generation",async field=>{
+    const {db,generateFinal,providers,policy}=fixture();
+    try {
+      const pin:Record<string,string>={kind:"same_approved_action",runId:"reviewed-fixture-plan",briefHash:"a".repeat(64),acceptedAttemptId:"prefix",reason:policy.additionalCoverage.reason};
+      pin[field]="changed";
+      const payload=field==="malformed"?"{":field==="null"?"null":JSON.stringify(pin);
+      db.prepare("UPDATE review_notes SET note=? WHERE id='director'").run("Production Director approved source coverage v1:"+payload);
+      await expect(generateNonSpeakingVideoCandidate(db,"p","sh",providers,policy)).rejects.toThrow(/coverage/i);
+      expect(generateFinal).not.toHaveBeenCalled();
+    } finally {db.close();}
+  });
+
   it("retains the accepted prefix and raw history, reviews one new take, and holds repeat submission", async () => {
     const { db, generateFinal, providers, policy } = fixture();
     try {

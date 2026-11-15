@@ -1,0 +1,13 @@
+import {writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {DatabaseSync} from 'node:sqlite';
+import {getDataDir} from '../../src/db/client.js';
+const db=new DatabaseSync(join(getDataDir(),'db','heartword.sqlite'),{readOnly:true}),projectId='c457a815-d07d-4902-91b5-7b936b549856';
+db.exec('PRAGMA busy_timeout=5000');
+const run=db.prepare("SELECT id,status,worker_pid FROM production_runs WHERE project_id=? AND phase='planning' ORDER BY created_at DESC,rowid DESC LIMIT 1").get(projectId)!;
+const events=db.prepare('SELECT role,round,model,error FROM production_events WHERE run_id=? ORDER BY sequence').all(run.id);
+const receipts=db.prepare("SELECT command_type,json_extract(payload,'$.eventId') eventId FROM edit_commands WHERE project_id=? AND command_type IN ('submit_crew_reasoning','complete_crew_reasoning') AND json_extract(payload,'$.eventId') LIKE ? ORDER BY sequence").all(projectId,String(run.id)+':%');
+const submitted=receipts.filter(r=>r.command_type==='submit_crew_reasoning'),completed=new Set(receipts.filter(r=>r.command_type==='complete_crew_reasoning').map(r=>r.eventId));
+const value={observedAt:new Date().toISOString(),run,events,newPhysicalSubmitted:submitted.length,newPhysicalCompleted:completed.size,pending:submitted.filter(r=>!completed.has(r.eventId)).map(r=>r.eventId),acceptedPlan:run.status==='approved'};
+writeFileSync('outputs/mark6-production/crew-progress-current.json',JSON.stringify(value,null,2));console.log(JSON.stringify(value));
+db.close();

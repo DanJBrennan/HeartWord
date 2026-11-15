@@ -1,0 +1,33 @@
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {requireCurrentPlan,validateAttemptRevision} from '../../src/pipeline/creative-direction/crew-store.js';
+import {inspectAvBudget} from './av-call.js';
+const root='outputs/mark6-production',id='m6_s3s2_final1_motion_20261106',attemptId='ae9f8e9d-10bf-4484-a239-7e77c9f67460',projectId='c457a815-d07d-4902-91b5-7b936b549856',folder=root+'/native-generation/scene3-shot2-final-v1';
+const journalPath=root+'/voice-review/execution.json',original=readFileSync(journalPath,'utf8'),state=JSON.parse(original),call=state.calls.at(-1),request=JSON.parse(readFileSync(root+'/av-review/'+id+'-request.json','utf8'));
+if(state.calls.length!==13||state.pendingUsd!==.82||call.id!==id||call.status!=='held_unknown_no_retry'||call.model!=='gemini-3.6-flash'||call.error!=='Unknown/out-of-bound AV usage; no further call')throw Error('Expected exact retained review receipt; no generic unknown-cost override');
+const u=call.usage;
+if(u.promptTokenCount!==11602||u.candidatesTokenCount!==584||u.thoughtsTokenCount!==0||u.totalTokenCount!==12186||call.costUsd!==.010891||!call.result)throw Error('Changed retained actual usage/result');
+const providerEstimate=Math.round((u.promptTokenCount*.75/1e6+(u.candidatesTokenCount+u.thoughtsTokenCount)*3.75/1e6)*1e6)/1e6;
+const integerEstimate=Math.round(u.promptTokenCount*.75+(u.candidatesTokenCount+u.thoughtsTokenCount)*3.75)/1e6;
+if(providerEstimate!==call.costUsd||integerEstimate!==.010892)throw Error('Mismatch is not the exact reproduced half-microdollar case');
+const hash=(p:string)=>createHash('sha256').update(readFileSync(p)).digest('hex');
+if(JSON.stringify(call.media)!==JSON.stringify(request.media))throw Error('Receipt/request media mismatch');
+for(const m of call.media)if(hash(m.path)!==m.sha256)throw Error('Retained review input changed');
+const db=getDb();try{
+ const plan=requireCurrentPlan(db,getDataDir(),projectId);validateAttemptRevision(db,getDataDir(),projectId,attemptId);
+ const before=state.calls.slice(0,-1).reduce((n:number,c:any)=>n+c.costUsd,0);if(+before.toFixed(6)!==state.estimatedUsd)throw Error('Earlier costs changed');
+ const proof={at:new Date().toISOString(),id,attemptId,issue:'Exact same saved token counts; floating dollar-term rounding versus integer token-rate-sum rounding',providerEstimate,integerEstimate,differenceUsd:+(integerEstimate-providerEstimate).toFixed(6),originalJournalSha256:createHash('sha256').update(original).digest('hex'),resultSha256:createHash('sha256').update(JSON.stringify(call.result)).digest('hex'),actualMediaHashesVerified:true,providerCalls:0,noRetry:true,limitsUnchanged:true,reportedEstimatePreserved:true,notProviderInvoice:true};
+ call.status='returned_reconciled';call.reconciliation=proof;state.estimatedUsd=+(before+call.costUsd).toFixed(6);state.pendingUsd=0;
+ inspectAvBudget(state,JSON.parse(readFileSync(root+'/av-model-preflight.json','utf8')),'pairedSceneReviews');
+ const response={result:call.result,usage:call.usage,costUsd:call.costUsd,recoveredFromRetainedJournal:true,reconciliation:proof};
+ const backup=root+'/av-review/'+id+'-original-held-journal.json';if(existsSync(backup))throw Error('Reconciliation already attempted; inspect artifacts');
+ writeFileSync(backup,original,{flag:'wx'});
+ writeFileSync(root+'/av-review/'+id+'-response.json',JSON.stringify(response,null,2),{flag:'wx'});
+ writeFileSync(folder+'/motion-av-review.json',JSON.stringify({attemptId,projectId,productionRunId:plan.id,media:call.media,response},null,2),{flag:'wx'});
+ writeFileSync(root+'/av-review/'+id+'-rounding-proof.json',JSON.stringify(proof,null,2),{flag:'wx'});
+ if(readFileSync(journalPath,'utf8')!==original)throw Error('Journal changed concurrently; do not overwrite');
+ writeFileSync(journalPath,JSON.stringify(state,null,2));
+ const mainPath=root+'/execution.json',main=JSON.parse(readFileSync(mainPath,'utf8'));main.geminiAv={requests:13,estimatedUsd:state.estimatedUsd,pendingUsd:0,journal:'voice-review/execution.json'};writeFileSync(mainPath,JSON.stringify(main,null,2));
+ console.log(JSON.stringify({status:'exact_retained_receipt_reconciled',id,providerCalls:0,reportedCostUsd:call.costUsd,knownTotalAvUsd:state.estimatedUsd,pendingUsd:0}));
+}finally{db.close();}

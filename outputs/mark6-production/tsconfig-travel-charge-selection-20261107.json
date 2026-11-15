@@ -1,0 +1,33 @@
+{
+  "extends": "./tsconfig-production-followup-20261106.json",
+  "include": [
+    "./retain-review-performance-master-20261107.ts",
+    "./resume-charge-caption-cleanup-20261107.ts",
+    "./repair-charge-section1-seed43-20261107.ts",
+    "./reuse-headroom-herod-for-reports-close-20261107.ts",
+    "./prepare-herod-reports-coverage-20261107.ts",
+    "./generate-herod-reports-view-20261107.ts",
+    "./extend-correction-av-count12-20261107.ts",
+    "./prepare-daughter-to-mother-route-20261107.ts",
+    "./review-charge-articulation-diagnostic-20261107.ts",
+    "./recover-charge-active-articulation-20261107.ts",
+    "./reconcile-known-av-ledger-charge-diagnostic-20261107.ts",
+    "./review-charge-window1-20261107.ts",
+    "./resume-charge-interior-crop-20261107.ts",
+    "./inspect-charge-window1-complete-20261107.ts",
+    "./reconcile-known-av-ledger-charge-window1-20261107.ts",
+    "./continue-travel-charge-window-20261107.ts",
+    "./clarify-charge-window1-speaking-review-20261107.ts",
+    "./generate-charge-listeners-cutaway-20261107.ts",
+    "./build-charge-window1-listener-repair-20261107.ts",
+    "./review-charge-window1-listener-repair-20261107.ts",
+    "./accept-charge-window1-listener-repair-20261107.ts",
+    "./prepare-daughter-demand-frame-20261107.ts",
+    "./complete-included-keyframe-generation.ts",
+    "./prepare-daughter-return-frame-20261107.ts",
+    "./review-travel-charge-window-20261107.ts",
+    "./inspect-travel-charge-window-20261107.ts",
+    "./reconcile-known-production-av-receipts.ts",
+    "./accept-travel-charge-window-20261107.ts"
+  ]
+}

@@ -1,0 +1,13 @@
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {validateReferenceFiles,getKeyframeContext,sha256,assetPath} from '../../src/pipeline/media-generation/external-keyframes.js';
+import {requireCurrentPlan} from '../../src/pipeline/creative-direction/crew-store.js';
+import {reserveBoundedAttempt} from './attempt-control.js';
+const top='outputs/mark6-production',folder=top+'/keyframes/scene4-distribution-20261110-v1',read=(p:string)=>JSON.parse(readFileSync(p,'utf8')),db=getDb(),data=getDataDir();
+try {
+ const b=read(folder+'/draft-brief.json'),n=read(top+'/native-generation/execution.json'),images=read(top+'/images/execution.json'),plan=requireCurrentPlan(db,data,'c457a815-d07d-4902-91b5-7b936b549856');
+ if(existsSync(folder+'/request.json')||n.entries.length!==203||n.entries.some((x:any)=>x.status!=='returned_unreviewed')||images.calls.length!==148||images.calls.some((x:any)=>!String(x.status).startsWith('returned'))||plan.id!==b.productionRunId||b.prompt.length>18000||sha256(JSON.stringify(getKeyframeContext(db,data,b.context.shot.id)))!==b.contextHash||b.generationInputs.length!==4)throw Error('Current idle203/images148/exact prepared149 fourinputs required');
+ validateReferenceFiles(data,b);const id='mark6-distribution-149-20261110';reserveBoundedAttempt(top,'includedStartingFrameGenerations',id);
+ const req={at:new Date().toISOString(),id,briefFile:data+'/exports/keyframe-briefs/'+b.id+'/brief.json',prompt:b.prompt,promptSha256:b.promptHash,referenced_image_paths:b.generationInputs.map((x:any)=>assetPath(data,x.path)),generationInputs:b.generationInputs,apiFallback:false,providerModel:'not reported by builtin tool',scope:'Approvedshot26mediumwide distribution START afteraccepted203handoff. Fouractualinputimages seen: IMAGE1currentJesusBODY, IMAGE2rowmajorJohn/headwrap/Andrew/PeterBODYboard, IMAGE3currentelderBODY, IMAGE4accepted198world plus203foodownership. Sixnamedcurrentcast, bread ANDfishapportioning/carrying alongseatedgroups, BEFOREeating/collection/baskets. Proposed10seditorial611613.875-621613.875/uncertainparent, no newnativewordtimes. Geometry/foodsections/poses remainproposed. No newcanon/audio/music/voice or motionclearance'};
+ writeFileSync(folder+'/request.json',JSON.stringify(req,null,2),{flag:'wx'});images.calls.push({id,route:'included_builtin_imagegen',status:'pending_builtin',shotId:b.context.shot.id,referenceEvidence:folder+'/request.json',apiFallback:false,providerModel:'not reported by builtin tool'});writeFileSync(top+'/images/execution.json',JSON.stringify(images,null,2));console.log(JSON.stringify({id,briefId:b.id,promptCharacters:b.prompt.length,inputCount:b.generationInputs.length}));
+} finally {db.close();}

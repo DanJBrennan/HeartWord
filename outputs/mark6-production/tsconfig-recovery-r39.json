@@ -1,0 +1,1 @@
+{"extends": "../../src/server/tsconfig.json", "include": ["./preflight-prefix-r39.ts", "./lighting-preflight-r39.ts", "./review-storyboard.ts"], "compilerOptions": {"noEmit": true}}

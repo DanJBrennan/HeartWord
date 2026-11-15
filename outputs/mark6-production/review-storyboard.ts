@@ -1,0 +1,66 @@
+import {readFileSync,writeFileSync,readdirSync,existsSync} from 'node:fs';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {getDb} from '../../src/db/client.js';
+import {hasCurrentSourceReview} from '../../src/pipeline/ingestion/source-review.js';
+import {runProductionCrew} from '../../src/pipeline/creative-direction/crew-store.js';
+import {awaitCrewPermit} from './attempt-control.js';
+const root='outputs/mark6-production',read=(p:string)=>JSON.parse(readFileSync(p,'utf8')),projectId=read(root+'/workspace.json').projectId,db=getDb();
+if(!hasCurrentSourceReview(db,projectId))throw Error('Current prepared-source acceptance is required.');
+if(db.prepare("SELECT id FROM production_runs WHERE project_id=? AND status='running'").get(projectId))throw Error('Existing worker must be reconciled, never duplicated.');
+const archive='C:/Users/danbr/HeartWordData/assets/preparation/crew-reasoning/'+projectId;
+const priorInitial=readdirSync(root+'/planning').filter(f=>/^scene-\d+\.request\.json$/.test(f)).length;
+const priorCrew=existsSync(archive)?readdirSync(archive).filter(f=>existsSync(join(archive,f,'request.json'))).length:0;
+const bounded=read(root+'/bounded-resume-20261104.json');
+if(!bounded.status.startsWith('authorized_')||!bounded.fullProductionApproval)throw Error('Expected Dan-approved full production resumption');
+const maximumNewInferenceRequestsPerContinuation=300,remaining=Math.min(maximumNewInferenceRequestsPerContinuation,bounded.limits.reviewRequestCount-bounded.usage.crewRequests);
+if(!Number.isSafeInteger(remaining)||remaining<1)throw Error('Bounded review allowance exhausted');
+const specialistBytes=Number(process.env.HEARTWORD_CREW_SPECIALIST_BYTES??400000);
+if(!Number.isSafeInteger(specialistBytes)||specialistBytes<400000||specialistBytes>600000)throw Error('Expected a finite logged specialist byte ceiling');
+if(specialistBytes>(bounded.limits.specialistPacketUtf8Bytes??400000))throw Error('Specialist ceiling needs its recorded internal authorization');
+const chapterBytes=Number(process.env.HEARTWORD_CREW_CHAPTER_BYTES??1000000);
+if(!Number.isSafeInteger(chapterBytes)||chapterBytes<1000000||chapterBytes>1750000||chapterBytes>(bounded.limits.chapterPacketUtf8Bytes??1000000))throw Error('Chapter ceiling needs a finite recorded internal authorization');
+const retainedInitialCreativeRunId=process.env.HEARTWORD_RETAINED_INITIAL_CREATIVE_RUN_ID;
+const resumeInitialCameraRunId=process.env.HEARTWORD_RESUME_INITIAL_CAMERA_RUN_ID;
+const resumeFirstPassRunId=process.env.HEARTWORD_RESUME_FIRST_PASS_RUN_ID;
+const planningCorrectionRunId=process.env.HEARTWORD_PLANNING_CORRECTION_RUN_ID;
+const resumeSource=resumeFirstPassRunId??resumeInitialCameraRunId;
+const shotTaskSize=Number(process.env.HEARTWORD_CREW_SHOT_TASK_SIZE??32);
+const failedRoleShotTaskSize=Number(process.env.HEARTWORD_CREW_FAILED_ROLE_SHOT_TASK_SIZE??8);
+const savedContinuation=resumeSource?JSON.parse(String(db.prepare('SELECT result_json FROM production_runs WHERE id=? AND project_id=?').get(resumeSource,projectId)?.result_json??'{}')):undefined;
+const priorInferenceCalls=Number(savedContinuation?.inferenceCalls??0);
+if(!Number.isSafeInteger(priorInferenceCalls)||priorInferenceCalls<0)throw Error('Invalid retained inference counter');
+const inferenceCeiling=priorInferenceCalls+remaining;
+const completedContinuationOwners=resumeSource?Number(db.prepare('SELECT COUNT(*) total FROM production_events WHERE run_id=? AND error IS NULL AND output_json IS NOT NULL').get(resumeSource)!.total):0;
+const continuationCalls=savedContinuation?30+Number(savedContinuation.calls)-completedContinuationOwners:30;
+const retainedInitialScriptureRunId=process.env.HEARTWORD_RETAINED_INITIAL_SCRIPTURE_RUN_ID;
+const retainedInitialCameraRunId=process.env.HEARTWORD_RETAINED_INITIAL_CAMERA_RUN_ID;
+const retainedInitialChoreographyRunId=process.env.HEARTWORD_RETAINED_INITIAL_CHOREOGRAPHY_RUN_ID;
+const retainedInitialStagingRunId=process.env.HEARTWORD_RETAINED_INITIAL_STAGING_RUN_ID;
+const retainedInitialCostumeRunId=process.env.HEARTWORD_RETAINED_INITIAL_COSTUME_RUN_ID;
+const retainedInitialLightingRunId=process.env.HEARTWORD_RETAINED_INITIAL_LIGHTING_RUN_ID;
+const retainedInitialPlanningRunIds=process.env.HEARTWORD_CREW_FRESH_INITIAL_REVIEW!=='1'&&existsSync(root+'/retained-additional-initial-directions-20261105.json')?read(root+'/retained-additional-initial-directions-20261105.json').sourceRunIds:undefined;
+// Optional actual reference evidence for a NEW immutable review context.
+// Existing running workers keep their captured media; candidates are not canon.
+const supplementalPath=process.env.HEARTWORD_CREW_SUPPLEMENTAL_MEDIA_MANIFEST;
+const hashFile=(path:string)=>createHash('sha256').update(readFileSync(path)).digest('hex');
+const supplementalHash=supplementalPath?hashFile(supplementalPath):undefined;
+const supplemental=supplementalPath?read(supplementalPath):undefined;
+const assertSupplemental=()=>{
+ if(!supplementalPath)return;
+ if(hashFile(supplementalPath)!==supplementalHash)throw Error('Supplemental reference context changed; start a new review context');
+ for(const ref of supplemental.media)if(hashFile(ref.path)!==ref.sha256)throw Error('Pinned supplemental reference bytes changed');
+};
+assertSupplemental();
+const media=supplemental?.media.map((ref:any)=>({mimeType:ref.mimeType,data:readFileSync(ref.path).toString('base64'),caption:`REFERENCE ${ref.key}; SHA256:${ref.sha256}. ${ref.caption} These supplemental references were not seen by retained initial proposals; they require actual current owner review.`,...(ref.characterIds?{characterIds:ref.characterIds}:{})}));
+
+const state=read(root+'/execution.json');state.status='full_production_crew_review_running';state.goalStatus='active';state.currentCrew={pid:process.pid,priorInitialReasoningRequests:priorInitial,priorCrewReasoningRequests:priorCrew,maximumNewInferenceRequestsPerContinuation,priorInferenceCalls,additionalRequestAllowance:remaining,currentRunRequestLimit:inferenceCeiling,specialistBytes,provider:'codex',noPaidFallback:true,retainedInitialCreativeRunId,retainedInitialScriptureRunId,retainedInitialCameraRunId,retainedInitialChoreographyRunId,retainedInitialStagingRunId,retainedInitialCostumeRunId,retainedInitialLightingRunId,retainedInitialPlanningRunIds,resumeFirstPassRunId,resumeInitialCameraRunId,shotTaskSize,failedRoleShotTaskSize,logicalRoleCallCeiling:continuationCalls,contextVersion:"r69-verified-corrected-director-suffix-followup"};
+writeFileSync(root+'/execution.json',JSON.stringify(state,null,2));
+db.prepare("UPDATE projects SET stage='casting',status='in_progress',updated_at=? WHERE id=?").run(Date.now(),projectId);
+console.log(JSON.stringify({projectId,pid:process.pid,currentRunReasoningLimit:inferenceCeiling,additionalRequestAllowance:remaining,initialScenesPreserved:true}));
+const result=await runProductionCrew(projectId,'planning',{reasoningProvider:'codex',avReviewProvider:'gemini',scopedContext:true,maxSuppliedTextBytes:specialistBytes,maxReviewTextBytes:chapterBytes,maxInferenceCalls:inferenceCeiling,maxCalls:continuationCalls,resumeInitialCameraRunId,resumeFirstPassRunId,planningCorrectionRunId,maxShotTaskSize:shotTaskSize,resumeFailedRoleTaskSize:failedRoleShotTaskSize,retainedInitialCreativeRunId,retainedInitialScriptureRunId,retainedInitialCameraRunId,retainedInitialChoreographyRunId,retainedInitialStagingRunId,retainedInitialCostumeRunId,retainedInitialLightingRunId,retainedInitialPlanningRunIds,media,
+ beforeModelRequest:async request=>{assertSupplemental();await awaitCrewPermit(root,request);assertSupplemental();}});
+writeFileSync(root+'/storyboard-review-result-'+result.runId+'.json',JSON.stringify(result,null,2));
+const current=read(root+'/execution.json');current.status=result.status==='approved'?'storyboard_approved_keyframes_next':'storyboard_revision_or_reconciliation_needed';current.currentCrew={...current.currentCrew,runId:result.runId,status:result.status,resultFile:'storyboard-review-result-'+result.runId+'.json'};writeFileSync(root+'/execution.json',JSON.stringify(current,null,2));
+db.prepare("UPDATE projects SET stage='casting',status=?,updated_at=? WHERE id=?").run(result.status==='approved'?'in_progress':'held',Date.now(),projectId);
+console.log(JSON.stringify({runId:result.runId,status:result.status,summary:result.summary}));

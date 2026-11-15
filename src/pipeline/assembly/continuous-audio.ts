@@ -44,11 +44,14 @@ export function assertSpeakerAudioContinuity(
   }
 }
 
-export function continuousAudioGroups(placements: ResolvedAudioPlacement[]): ContinuousAudioGroup[] {
+/** A retained composite performance may be read across voice labels because
+ * its file is already continuous. Attribution is still asserted separately;
+ * a real production pause, source discontinuity or different file still splits. */
+export function continuousAudioGroups(placements: ResolvedAudioPlacement[], retainedContinuousPerformance = false): ContinuousAudioGroup[] {
   const groups: ContinuousAudioGroup[] = [];
   for (const placement of placements) {
     const previous = groups.at(-1);
-    if (previous && previous.path === placement.path && previous.speakerId === placement.speakerId && previous.voice === placement.voice &&
+    if (previous && previous.path === placement.path && (retainedContinuousPerformance || (previous.speakerId === placement.speakerId && previous.voice === placement.voice)) &&
         previous.sourceEndMs === placement.sourceStartMs && previous.endMs === placement.startMs) {
       previous.sourceEndMs = placement.sourceEndMs;
       previous.endMs = placement.endMs;

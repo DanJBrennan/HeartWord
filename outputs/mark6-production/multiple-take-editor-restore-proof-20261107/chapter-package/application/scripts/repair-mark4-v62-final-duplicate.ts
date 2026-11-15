@@ -1,0 +1,12 @@
+/** Held v62: replace the final repeated olive-grove over-the-shoulder shot. */
+import { execFileSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { getDataDir, getDb } from "../src/db/client.js";
+const projectId="8a5659a4-b033-4d5f-80e2-904b217cf8a0",total=13831,fps=24;
+const inputRel="generated/chapter/mark4-autonomous-overnight-final-v61-olive-duplicates-held.mp4";
+const outputRel="generated/chapter/mark4-autonomous-overnight-final-v62-no-duplicate-coverage-held.mp4";
+const altRel="generated/assembled/fdf0aa09-ecb0-4373-a23c-0604eed55c5e.mp4";
+const at=5580,frames=60,data=getDataDir(),assets=join(data,"assets"),input=join(assets,inputRel),alt=join(assets,altRel),output=join(assets,outputRel);if(!existsSync(input)||!existsSync(alt))throw Error("Missing v61 or retained olive group coverage.");
+const fs=[`[0:v]trim=start_frame=0:end_frame=${at},setpts=PTS-STARTPTS,fps=${fps}[a]`,`[1:v]trim=start_frame=0:end_frame=${frames},setpts=PTS-STARTPTS,fps=${fps},scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720,setsar=1[b]`,`[0:v]trim=start_frame=${at+frames}:end_frame=${total},setpts=PTS-STARTPTS,fps=${fps}[c]`,`[a][b][c]concat=n=3:v=1:a=0[v]`];execFileSync("ffmpeg",["-v","error","-y","-i",input,"-i",alt,"-filter_complex",fs.join(";"),"-map","[v]","-map","0:a:0","-c:v","libx264","-preset","veryfast","-crf","18","-pix_fmt","yuv420p","-c:a","copy","-movflags","+faststart",output],{stdio:"inherit"});const count=Number(execFileSync("ffprobe",["-v","error","-show_entries","stream=nb_frames","-select_streams","v:0","-of","default=nw=1:nk=1",output],{encoding:"utf8"}).trim());if(count!==total)throw Error(`Frame lock ${count}`);const db=getDb(),id=randomUUID(),now=Date.now();db.exec("BEGIN IMMEDIATE");try{db.prepare("INSERT INTO chapter_renders (id,project_id,result_asset_path,total_duration_ms,shot_count,created_at) VALUES (?,?,?,?,?,?)").run(id,projectId,outputRel,576292,3,now);db.prepare("INSERT INTO chapter_render_manifests (render_id,timeline_json,source_audio_json) VALUES (?,?,?)").run(id,JSON.stringify({heldForReview:true,pictureBase:inputRel,replacement:{startFrame:at,endFrame:at+frames-1,path:altRel,label:"distinct olive group replaces final duplicate"}}),JSON.stringify({audioBase:inputRel,sourceCastAudioCopied:true}));db.exec("COMMIT");}catch(e){db.exec("ROLLBACK");throw e};console.log(JSON.stringify({outputRel,count,heldForReview:true},null,2));

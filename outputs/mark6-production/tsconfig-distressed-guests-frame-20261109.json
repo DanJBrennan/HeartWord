@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig-reference-handoff-20261105.json",
+  "include": [
+    "./prepare-distressed-herod-guests-frame-20261109.ts",
+    "./import-distressed-herod-guests113-20261109.ts",
+    "./generate-distressed-herod-guests-native-20261109.ts",
+    "./review-distressed-herod-guests-complete-20261109.ts",
+    "./accept-distressed-herod-guests-20261109.ts"
+  ]
+}

@@ -1,0 +1,21 @@
+/* Existing presentation portraits only. Identity and runtime come from the role registry. */
+export const crewPortraits: Record<string,string> = {
+  Mabel: new URL("../../docs/assets/control-room/agent-portraits/mabel-control-supervisor.png", import.meta.url).href,
+  Rufus: new URL("../../docs/assets/control-room/agent-portraits/rufus-creative-director.png", import.meta.url).href,
+  June: new URL("../../docs/assets/control-room/agent-portraits/june-production-director.png", import.meta.url).href,
+  Miriam: new URL("../../docs/assets/control-room/agent-portraits/miriam-scripture-reviewer.png", import.meta.url).href,
+  Dottie: new URL("../../docs/assets/control-room/agent-portraits/dottie-casting-director.png", import.meta.url).href,
+  Pippa: new URL("../../docs/assets/control-room/agent-portraits/pippa-shot-planner.png", import.meta.url).href,
+  Leon: new URL("../../docs/assets/control-room/agent-portraits/leon-cinematographer.png", import.meta.url).href,
+  Tessa: new URL("../../docs/assets/control-room/agent-portraits/tessa-choreography.png", import.meta.url).href,
+  Arlo: new URL("../../docs/assets/control-room/agent-portraits/arlo-staging.png", import.meta.url).href,
+  Orion: new URL("../../docs/assets/control-room/agent-portraits/orion-gemini-video-analyzer.png", import.meta.url).href,
+  Gus: new URL("../../docs/assets/control-room/agent-portraits/gus-media-generator.png", import.meta.url).href,
+  Vera: new URL("../../docs/assets/control-room/agent-portraits/vera-inspector.png", import.meta.url).href,
+  Kit: new URL("../../docs/assets/control-room/agent-portraits/kit-lip-sync-specialist.png", import.meta.url).href,
+  Nell: new URL("../../docs/assets/control-room/agent-portraits/nell-editor.png", import.meta.url).href,
+  Sam: new URL("../../docs/assets/control-room/agent-portraits/sam-sound-director.png", import.meta.url).href,
+  Ada: new URL("../../docs/assets/control-room/agent-portraits/ada-scripture-fidelity-challenger.png", import.meta.url).href,
+  Theo: new URL("../../docs/assets/control-room/agent-portraits/theo-dramatic-impact-challenger.png", import.meta.url).href,
+  Cora: new URL("../../docs/assets/control-room/agent-portraits/cora-production-feasibility-challenger.png", import.meta.url).href,
+};

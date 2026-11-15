@@ -302,3 +302,35 @@ omits those sentences and explicitly preserves the approved frame's people and
 sparse-shot count. It retains the full source direction in the production record.
 The failed take, actual review and inspected frame remain available; a deliberate
 retake is separate. This does not switch to local encoding or cloud inference.
+
+
+## November 7 Mark 6 non-speaking motion findings
+
+Keep machine hashes, IDs, timing bookkeeping and discussion history in retained
+production records rather than asking the native animation encoder to interpret
+them visually. A bounded, positive description of the current visible action can
+be supplied while the entire approved direction remains pinned and is checked
+against the actual result. This does not authorize dropping source or canon rules.
+
+In the controlled four-listener comparison, the same starting/ending pictures,
+seed842426578, model,720p,24fps and five-second duration produced a collective bow
+with the longer handoff (native44) and restrained upright reactions with focused
+motion wording (native47). Actual input/settings were verified at selection; mild
+elder chin/blink variation was logged. This is one observed comparison, not a
+universal or deterministic guarantee. See Mark6 production evidence
+`native-motion/scene1-shot7-offense-positive-guided-final-v4/`.
+
+Matched ending guidance plus focused prose also produced usable elder/woman
+healing takes45/46. Ending guidance alone had not prevented44's middle bow. Review
+the complete actual motion and selected boundaries; an upright final still never
+certifies the intervening performance. Record observed contact/framing variations
+rather than claiming literal perfection or relying on model confidence numbers.
+
+Provide comfortable complete-hair headroom before native generation; the neutral
+Herod and Jesus response starts were widened while retaining their original face,
+expression, clothing authority and light. Reuse compatible approved photographs
+and steady-state endpoint copies explicitly as reuse, with zero new image calls.
+Guidance stills are not moving footage, freezes or loops, and native sound is not
+automatically the approved soundtrack. Preserve exact source audio/music and
+perform source-clock placement instead of concatenating excess available frames
+as additional recording time.

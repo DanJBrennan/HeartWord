@@ -1,0 +1,23 @@
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {join} from 'node:path';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {prepareKeyframe,prepareReferencePacket,sha256,assetPath} from '../../src/pipeline/media-generation/external-keyframes.js';
+const db=getDb(),data=getDataDir(),folder='outputs/mark6-production/keyframes/scene1-shot11-v1';mkdirSync(folder,{recursive:true});
+const prompt='Photographic cinematic16:9 STATIC medium-wide three-person PRE-CONTACT starting frame for the final representative healing, exact appended director direction. Same adjacent healing/teaching area after the separate elder and cream-woman healings. Jesus image-left and approved young witness image-right face each other at comfortable arms reach, both independently balanced with planted sandal-clad feet visible; young man tense attentive face, mouth closed, arms at his OWN sides. Jesus arms hang relaxed at HIS OWN sides, hands distinctly separate from young man. Peter stands nearby behind/left of interaction, clear of both arms and aisle, silently watching without copied reaction. Exactly these3 approved visible actors; REMOVE woman and elder from set image. Use accepted woman healing starting image only for Jesus position, same far-wall/perimeter-bench direction and fixed daylight/warm bounce. Widen camera on same interaction-axis side, do not cross axis or make a second chamber, retain long bench line and hall depth without inventing hidden doorway geometry. Full head/hair/sandal margins, space between all bodies, readable hands and faces. Exact body/wardrobes govern: Jesus cream center-front slit/indigo routing/brown tie, young witness cream/indigo clavi/brown belt/pale drape, Peter current cream-striped tunic/rust mantle/plain narrow strap/four small corner knots. Portrait only Jesus identity, not old rounded neckline. No text, smile, relief already completed, glow, diagnosis, symptom test, prop, assistance or extra actor. Later native action gently touches young upper arms without gripping, visible contact before small brow/shoulder easing, one release. No inferred conversion or resolution of earlier offense;3representatives do not assert scriptural count. No new pause or phrase timestamp.';
+const brief=prepareKeyframe(db,data,'1c917e59-a1c5-4d86-be75-9f3372103694',prompt,'Mark6:5 final representative healing after elder and cream woman. Current young witness and Peter identities/garments, no new people or diagnosis. Initial hands separate, native upper-arm contact precedes relief, no conversion claim. Existing source/plan/canon gates retained.');
+const set=brief.context.sceneReferences?.find(s=>s.recordRef.endsWith('2ddd4ec8-72b5-4081-b817-1c0f38256624'));
+if(!set)throw Error('Latest accepted pre-contact healing setup required');
+const reply=JSON.parse(readFileSync(join(data,'exports/keyframe-briefs/22ae5575-c251-414e-a16e-0c150eb2be00/brief.json'),'utf8'));
+const head=reply.context.references.find((r:any)=>r.category==='headshot'&&r.sha256==='2def5561b44a38162a969d66cb802e65a234566e6127cd7de7cdb286d98a54fb');
+if(!head||!brief.context.references.some(r=>r.character_id===head.character_id&&r.version_id===head.version_id))throw Error('Current separate Jesus head identity required');
+const packet=prepareReferencePacket(data,brief.id+'-reply-lighting-only',[head,...brief.context.references],[set]);
+const start=brief.prompt.indexOf('\nREFERENCE INPUT MAP:'),end=brief.prompt.indexOf('\nCONTROLLING SCOPED HISTORICAL',start);
+if(start<0||end<0)throw Error('Exact reference-map boundaries required');
+brief.prompt=brief.prompt.slice(0,start)+packet.direction+brief.prompt.slice(end);brief.generationInputs=packet.inputs;brief.promptHash=sha256(brief.prompt);
+if(brief.prompt.length>32000||brief.generationInputs.length>5)throw Error('Review compact packet before model call');
+brief.prompt+='\nFINAL STARTING-IMAGE REQUIREMENT: Jesus hands at HIS OWN sides, young man hands at HIS OWN sides; no contact anywhere yet, no easing yet. Only Jesus, young witness and Peter visible. Director describes FUTURE video; still is BEFORE arm raise. Preserve exact current identities/garments and shared room light.';brief.promptHash=sha256(brief.prompt);
+const dir=join(data,'exports/keyframe-briefs',brief.id);mkdirSync(dir,{recursive:true});writeFileSync(join(dir,'brief.json'),JSON.stringify(brief,null,2),{flag:'wx'});writeFileSync(join(dir,'prompt.txt'),brief.prompt,{flag:'wx'});
+const result={brief:join(dir,'brief.json'),promptCharacters:brief.prompt.length,generationInputs:brief.generationInputs.map(r=>({...r,path:assetPath(data,r.path)}))};writeFileSync(join(folder,'prepare-result.json'),JSON.stringify(result,null,2),{flag:'wx'});console.log(JSON.stringify(result));db.close();
+
+
+

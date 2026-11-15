@@ -55,3 +55,24 @@ it("treats a response with no usageMetadata as zero tokens and zero cost rather 
   expect(metered.usage).toEqual({ promptTokenCount: 0, candidatesTokenCount: 0, thoughtsTokenCount: 0, totalTokenCount: 0 });
   expect(metered.costUsd).toBe(0);
 });
+
+it("prices bounded Pro alignment fills at Pro rates including thinking instead of Flash rates",async()=>{
+ stubFetch({candidates:[{content:{parts:[{text:'{"ok":true}'}]}}],usageMetadata:{promptTokenCount:1000,candidatesTokenCount:200,thoughtsTokenCount:50,totalTokenCount:1250}});
+ const result=await generateJsonWithImagesMetered("Prompt",[],{type:"object",properties:{}},"gemini-3.1-pro-preview",{maxOutputTokens:2048});
+ expect(result.costUsd).toBe(.005);
+ const request=JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string);
+ expect(request.generationConfig.maxOutputTokens).toBe(2048);
+});
+it("holds unverified model pricing and invalid output limits before a paid request",async()=>{
+ stubFetch({});
+ await expect(generateJsonWithImagesMetered("Prompt",[],{},"unpriced-model")).rejects.toThrow("pricing must be verified");
+ await expect(generateJsonWithImagesMetered("Prompt",[],{},undefined,{maxOutputTokens:100000})).rejects.toThrow("Bounded Gemini output");
+ expect(fetch).not.toHaveBeenCalled();
+});
+
+it("retains reported charges and raw malformed output, and limits thinking explicitly",async()=>{
+ stubFetch({candidates:[{content:{parts:[{text:'{"partial":'}]},finishReason:"MAX_TOKENS"}],usageMetadata:{promptTokenCount:1000,candidatesTokenCount:100,thoughtsTokenCount:50,totalTokenCount:1150}});
+ await expect(generateJsonWithImagesMetered("Prompt",[],{},undefined,{maxOutputTokens:4096,thinkingLevel:"low"})).rejects.toMatchObject({name:"GeminiResponseError",receipt:{costUsd:.001312,finishReason:"MAX_TOKENS",rawText:'{"partial":',usage:{totalTokenCount:1150}}});
+ const request=JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string);
+ expect(request.generationConfig.thinkingConfig).toEqual({thinkingLevel:"LOW"});
+});

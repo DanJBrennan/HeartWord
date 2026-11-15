@@ -1,11 +1,57 @@
 # Media Generation
 
+The existing reviewed non-speaking frame-range selector can retain a fixed,
+explicitly reviewed crop as well as a frame interval. It validates even pixel
+bounds against the actual decoded source, preserves frame count and rate, and
+compares every losslessly retained pixel with that exact source rectangle.
+The crop participates in the idempotency key, edit record and retained parent
+provenance. Without a crop, the existing full-frame behavior is unchanged.
+Acceptance applies only to the reviewed rectangle and interval; it does not
+approve excluded defects, unseen contacts or the parent take. Normal assembly
+and chapter preservation consume the same selected derivative and its lineage.
+This permits ordinary editorial reframing of usable performances without a new
+generation or pipeline stage. Actual source, canon, audiovisual and join review
+remain required; reframing is not proof that an offscreen action occurred.
+
+The final local-only readiness check can reconnect the SSH tunnel after an
+upload. The generation POST and later polling use the address returned by that
+check, rather than the earlier closed tunnel. This is a pre-submission address
+refresh only: a disconnected generation POST is still retained for explicit
+reconciliation and is never automatically resubmitted.
+Generation POSTs use a fresh HTTP connection rather than a preflight keep-alive
+socket that can expire while source authorization runs. Read-only health and
+progress requests retain their normal connection behavior. This changes neither
+submission accounting nor the requirement to reconcile a disconnected POST.
+
+November6: the built-in Codex keyframe handoff now receives the same shared plain
+plank/pivot doorway rule as the ordinary generator. Historical decisions are small,
+versioned and site-scoped. Mark6 hometown imagery uses a modest Nazareth limestone
+reconstruction; no Capernaum basalt transfer, late ornate synagogue template or
+unsupported decorative diamond grille. Exact building geometry remains unknown.
+Prior pictures are continuity evidence, not authority for an archaeological error.
+The corrected frame is a review candidate; it does not approve a new chapter plan,
+replace earlier originals, resolve source timing or authorize video regeneration.
+
+
+November4 Mark6 test: an explicitly selected lazyLoadDownloadedFast option allows
+the ordinary local adapter to use already downloaded Fast weights when its video
+pipeline is not resident. The installed backend loads that pipeline inside the
+real generation request. This submits no warmup or model-download request.
+The opt-in checks selected2.5Fast, downloaded/resident availability, local-only
+runtime/preferences and free web encoder before upload AND again before native
+submission. Defaults still require resident Fast. Source, spending, leases,
+unknown-job reconciliation and actual media review remain unchanged.
+
 Ordinary non-speaking final requests default to eight seconds. A caller may
-request ten seconds from the configured local LTX backend when measured source
+request five seconds from the configured local LTX backend for short measured
+coverage, or ten seconds when measured source
 coverage needs it; resolution, frame rate, source performance and fallback gates
 remain unchanged. Existing accepted or uncertain takes are still reconciled
 before another submission. A requested duration is not proof of usable returned
 coverage; measure and review the actual result before selecting its interval.
+Five seconds uses the existing supported 720p/24fps Fast duration matrix and
+avoids rendering an unused eight-second tail. It does not shorten the source
+soundtrack, fill a coverage gap, select a candidate or change the review gates.
 
 When an accepted short interval leaves source narration uncovered, the existing
 candidate stage can request additional coverage explicitly. It requires the
@@ -17,7 +63,31 @@ source, budget and separate native-audio gates remain unchanged. Ordinary calls
 continue to reuse the selected clip. This adds a versioned take to the existing
 stage, not a replacement selection or a new planning stage.
 
+A selected accepted `trim_final_video` native frame range can also be that
+additional-coverage basis. Its rejected or held full parent remains held; the
+range's own accepted selection, current revision and saved Director request
+control the continuation. A held or unselected range is insufficient. This does
+not promote excluded frames or waive later unresolved-candidate/job guards.
+
+A same-action execution request can instead retain a `Production Director approved
+source coverage v1:` note with JSON pins for `kind: same_approved_action`, current
+run ID/brief hash, accepted attempt and exact measured reason. Unlike a creative
+edit note, this execution receipt does not change the planning brief. The existing
+candidate stage verifies every pin against the current plan before generation;
+changed action/source/canon still makes that plan stale. This permits additional
+real footage without rerunning planning merely to request more of its approved
+action. Existing creative `extend_existing` approvals and all media/review gates
+retain their behavior; no duration, source placement or new content is approved.
+
 ## Scope
+
+November 2 Mark 6 authorization extends the existing built-in keyframe handoff
+to Hatam Mark 6 alongside Mark 2/4/5. Chapter eligibility alone authorizes no
+generation or selection: current accepted crew plan/treatment, source evidence,
+approved canon, immutable brief/reference hashes and existing review/acceptance
+checks remain required. Use the current chapter's catalog source/reference;
+no pilot passage or old chapter timing is substituted. Other chapters/languages
+remain outside this handoff's implemented scope.
 
 Turns a scene's casting + action/blocking decision into actual visual content:
 backgrounds, characters in position, camera framing — in the project's
@@ -26,6 +96,17 @@ established photorealistic visual style (see
 was considered and rejected).
 
 ## Local LTX primary backend (2026-10-06)
+
+November6 actual Mark6 arrival draft: the source-purpose quotation accompanied
+unwanted English native narration, while generic crowd cues competed with the
+quiet walking direction. Local motion adaptation now extracts the complete
+accepted Director instruction body, excluding the separate trailing Purpose/
+Scripture evidence and generic wrapper when that handoff is present. Full source,
+FDL and rationale remain in the production record. Unwrapped operational motion
+instructions retain their text; provider no-speech rules, source authorization,
+budgets and actual video/native-audio review are unchanged. This is existing
+backend prompt adaptation, not new source interpretation or a new stage.
+
 
 Dan's proven M4 Pro Mac mini is the primary scene-video backend through LTX
 Desktop's local LTX 2.5 Fast image-to-video API. It implements the existing
@@ -38,8 +119,10 @@ Fast A2V short speaking clips (up to four seconds) chained from the preceding
 last retained frame, with unchanged continuous audio and no text. See
 [audio and speakers](audio-and-speakers.md#lip-sync) and the
 [verified procedure and current wiring](../production/LTX_LIPSYNC_EXPERIMENT.md).
-The automatic lip-sync stage is still wired to Kling Avatar; changing the
-scene-motion selector does not implement A2V chaining. This October 30 preference
+The Mark 6 preparation worktree now wires the existing lip-sync stage to local
+A2V chaining, with per-shot framing evidence and complete-line review still
+required. Actual Mark 6 takes and deployment remain pending; changing the
+scene-motion selector alone does not activate this speaking treatment. This October 30 preference
 supersedes the October 6 Kling-first lip-sync decision.
 
 Normal generation requests 720p, 24 fps, 5–10-second shots (currently 8s for
@@ -248,6 +331,15 @@ scoped to the approved Hatam/Papuan production world; other language/canon
 reuse is a separate producer decision, not an inference from an empty cast.
 
 ## Draft Room and Cost-Tiered Generation
+
+Reviewed ordinary non-speaking footage may select an exact interior native-frame
+range. The original provider attempt remains unchanged and unapproved portions
+remain held. The existing media stage writes a separate silent, lossless
+`trim_final_video` derivative with parent/hash/range/reviewer provenance and
+decoded-frame equality proof, then selects that local derivative. This makes
+usable intervals available without another provider request or any source-audio
+edit. Current revision guards, normal shot assembly, and portable preservation
+remain applicable; this operation cannot retime speaking footage.
 
 October 22 execution: the existing draft stage may receive a local LTX preview
 through its provider interface when the configured cloud draft request is held.

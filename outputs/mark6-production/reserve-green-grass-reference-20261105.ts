@@ -1,0 +1,21 @@
+// Included built-in preparation edit only; no film/canon selection or API fallback.
+import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {reserveBoundedAttempt} from './attempt-control.js';
+const root='outputs/mark6-production',read=(p:string)=>JSON.parse(readFileSync(p,'utf8')),id='mark6-feeding-green-grass-reference-20261105-v1';
+const approval=read(join(root,'full-production-resumption-20261105.json'));
+if(!approval.fullProductionHoldLifted)throw Error('Full production preparation authorization required');
+const source=read(join(root,'starting-frame-reuse-screen.json')).rows.find((r:any)=>r.id==='short-v37');
+if(!source||createHash('sha256').update(readFileSync(source.candidatePath)).digest('hex')!==source.sha256)throw Error('Original inspected preparation frame changed');
+const folder=join(root,'reference-corrections-20261105','feeding-green-grass');mkdirSync(folder,{recursive:true});
+if(existsSync(join(folder,'request.json')))throw Error('Existing immutable edit request: reconcile rather than repeat');
+const journalPath=join(root,'images/execution.json'),journal=read(journalPath);
+if(journal.calls.length>=journal.maximumIncludedCalls||journal.calls.some((c:any)=>c.id===id||c.status==='pending_builtin'))throw Error('Image journal requires reconciliation');
+const prompt="EDIT TARGET: the supplied photorealistic landscape portrait of Jesus for the Hatam Mark6 feeding scene. Make a very localized BACKGROUND VEGETATION CORRECTION only. Replace the dry golden/tan field grass and dry foreground stalks behind him with clearly living GREEN GRASS across the visible ground on both sides of him and into the midground. Keep that grass natural, varied and convincingly green under the existing warm late-afternoon sunlight; do not simply apply a green color cast. Preserve the supplied man's exact Papuan/Melanesian face, skin tone and texture, age, eyes, shoulder-length dark waves, beard and gray strands, closed resting lips, calm neutral expression, pose and position. Preserve his cream linen tunic/mantle, blue vertical bands, neckline, folds and fabric colors unchanged. Preserve the exact camera angle, close portrait framing, full visible hair, headroom, depth of field, warm light direction, sky, trees, boulders, hills and lake geography. Do not enlarge or reshape his head, alter facial expression, change wardrobe, move the horizon or introduce people, food, baskets, buildings, objects or narrative action. Output one clean photorealistic16:9 landscape frame without borders, lettering, captions, subtitles, logos or overlays. This is a separately reviewed preparation candidate; keep the original identity and composition, with the grass correction as the sole intentional change.";
+reserveBoundedAttempt(root,'includedStartingFrameGenerations',id);
+const request={id,status:'reserved_for_single_included_builtin_edit',kind:'preparation_reference_candidate_not_film_generation',source:{path:source.candidatePath,sha256:source.sha256,canonVersionId:source.canonVersionId},prompt,promptSha256:createHash('sha256').update(prompt).digest('hex'),route:'included_builtin_imagegen',apiFallback:false,sourceCanonCurrentCrewMutation:false,acceptance:'Actual target/canon/framing review and accepted production plan still required; no selection implied'};
+writeFileSync(join(folder,'request.json'),JSON.stringify(request,null,2),{flag:'wx'});
+journal.calls.push({id,route:'included_builtin_imagegen',status:'pending_builtin',referenceEvidence:join(folder,'request.json'),apiFallback:false,providerModel:'built-in included edit; no API model substituted'});journal.status='green_grass_preparation_builtin_pending';writeFileSync(journalPath,JSON.stringify(journal,null,2));
+const execution=read(join(root,'execution.json'));execution.images.calls=journal.calls.length;writeFileSync(join(root,'execution.json'),JSON.stringify(execution,null,2));
+console.log(JSON.stringify({id,prompt,referenced_image_paths:[source.candidatePath]}));

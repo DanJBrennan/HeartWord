@@ -19,7 +19,10 @@ export function bindShotUtterance(db: DatabaseSync, input: { projectId:string; s
   if (input.speechRunId && (!run || run.characterId !== shot?.characterId || !run.members.some(m => m.id === input.sourceSegmentId))) throw new Error("Utterance must belong to the confirmed speech and matched speaker.");
   const containingRun = run ?? runs.find(r => r.members.some(m => m.id === input.sourceSegmentId));
   if (containingRun && !input.timingEvidence?.trim()) throw new Error("An exact generation/performance window needs independent timing evidence; broad speech attribution does not align a phrase or emotional beat.");
-  if (!shot || !source || !version || !source.speakerId || source.speakerId!==shot.characterId || !input.approvedBy.trim() || !Number.isInteger(input.startMs) || !Number.isInteger(input.endMs) || input.startMs<(run?.startMs ?? source.start_ms) || input.endMs>(run?.endMs ?? source.end_ms) || input.endMs<=input.startMs) throw new Error("Utterance binding must be a producer-approved speaking interval inside its matched original source segment.");
+  // Native sample endpoints need not land on whole milliseconds (for example,
+  // a 24kHz source can end at579613.875ms). Keep the exact finite bounds; a
+  // rounded endpoint would either clip speech or exceed the approved source.
+  if (!shot || !source || !version || !source.speakerId || source.speakerId!==shot.characterId || !input.approvedBy.trim() || !Number.isFinite(input.startMs) || !Number.isFinite(input.endMs) || input.startMs<(run?.startMs ?? source.start_ms) || input.endMs>(run?.endMs ?? source.end_ms) || input.endMs<=input.startMs) throw new Error("Utterance binding must be a producer-approved speaking interval inside its matched original source segment.");
   const path=join(getDataDir(),"assets",source.source_path); if (!existsSync(path)) throw new Error("Bound source audio file is missing.");
   const binding:UtteranceBinding={id:randomUUID(),shotId:input.shotId,sourceSegmentId:source.id,startMs:input.startMs,endMs:input.endMs,characterVersionId:input.characterVersionId,sourceHash:hashFile(path)};
   db.exec("BEGIN TRANSACTION");

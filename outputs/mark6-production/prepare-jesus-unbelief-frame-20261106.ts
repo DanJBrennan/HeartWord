@@ -1,0 +1,23 @@
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {join} from 'node:path';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {prepareKeyframe,prepareReferencePacket,sha256,assetPath} from '../../src/pipeline/media-generation/external-keyframes.js';
+const db=getDb(),data=getDataDir(),folder='outputs/mark6-production/keyframes/scene1-shot12-v1';mkdirSync(folder,{recursive:true});
+const prompt='Photographic cinematic16:9 static eye-level CLOSE-UP of the exact approved Papuan Jesus AFTER all pictured healings, exact appended direction. Same actual standing position in established adjacent healing area, camera from listening-area side, provisionally75mm, no new chamber or actor relocation. His full head, all shoulder-length dark curls, beard and upper shoulders visible with comfortable headroom; head/shoulders occupy central picture with breathing room. Near-frontal face, eyes just beside camera toward listeners, closed lips, sober searching attention and only a faint beginning brow lift. No smile, angry glare, despair, accusation or exaggerated surprise. Hands remain lowered OUTSIDE picture; no contact, teaching gesture, departure or village enactment. Exact governing portrait supplies identity only, current body supplies central slit/cream cloth/indigo routing; preserve folds inherited from actual healing setup. Latest accepted young healing view is ONLY actual room/light/position anchor; omit the young man and Peter from crop, do not transfer their features or wardrobe. Depth-soft same plain far-wall texture, room scale, existing soft opening daylight/warm bounce, facial exposure/shadow softness/white balance. No new window, doorway, beauty light, rim, stronger catchlight, glow, text, halo, prop or setting modernization. This still begins one restrained wordless response to unbelief; native video supplies tiny brow lift then settling, independent breathing/blink, no freeze or speech. Entire Mark6:5-6 narration including village teaching is preserved across existing healing/reaction coverage, with no invented exact clause boundary or pause.';
+const brief=prepareKeyframe(db,data,'9b79d8e5-c8ec-402d-b54d-618133242db4',prompt,'Mark6:6 restrained silent marveling after healings; source includes complete village-teaching continuation offscreen, no guessed Hatam clause timing. Same physical area/current Jesus portrait and body identity; no new canon or scene event.');
+const set=brief.context.sceneReferences?.find(s=>s.recordRef.endsWith('d2a75268-7f0b-42e4-bac3-56decd180c3e'));
+if(!set)throw Error('Latest accepted pre-contact healing setup required');
+const reply=JSON.parse(readFileSync(join(data,'exports/keyframe-briefs/22ae5575-c251-414e-a16e-0c150eb2be00/brief.json'),'utf8'));
+const head=reply.context.references.find((r:any)=>r.category==='headshot'&&r.sha256==='2def5561b44a38162a969d66cb802e65a234566e6127cd7de7cdb286d98a54fb');
+if(!head||!brief.context.references.some(r=>r.character_id===head.character_id&&r.version_id===head.version_id))throw Error('Current separate Jesus head identity required');
+const packet=prepareReferencePacket(data,brief.id+'-reply-lighting-only',[head,...brief.context.references],[set]);
+const start=brief.prompt.indexOf('\nREFERENCE INPUT MAP:'),end=brief.prompt.indexOf('\nCONTROLLING SCOPED HISTORICAL',start);
+if(start<0||end<0)throw Error('Exact reference-map boundaries required');
+brief.prompt=brief.prompt.slice(0,start)+packet.direction+brief.prompt.slice(end);brief.generationInputs=packet.inputs;brief.promptHash=sha256(brief.prompt);
+if(brief.prompt.length>32000||brief.generationInputs.length>5)throw Error('Review compact packet before model call');
+brief.prompt+='\nFINAL STARTING-IMAGE REQUIREMENT: Jesus alone, close-up, sober searching closed-mouth face with very slight brow lift; no renewed contact, smile or other actors. Full hair with margins, no cropped forehead. Preserve current body-authoritative neckline and indigo layout; old portrait is FACE ONLY. Still is not motion or final-source coverage approval.';brief.promptHash=sha256(brief.prompt);
+const dir=join(data,'exports/keyframe-briefs',brief.id);mkdirSync(dir,{recursive:true});writeFileSync(join(dir,'brief.json'),JSON.stringify(brief,null,2),{flag:'wx'});writeFileSync(join(dir,'prompt.txt'),brief.prompt,{flag:'wx'});
+const result={brief:join(dir,'brief.json'),promptCharacters:brief.prompt.length,generationInputs:brief.generationInputs.map(r=>({...r,path:assetPath(data,r.path)}))};writeFileSync(join(folder,'prepare-result.json'),JSON.stringify(result,null,2),{flag:'wx'});console.log(JSON.stringify(result));db.close();
+
+
+

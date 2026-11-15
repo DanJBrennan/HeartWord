@@ -61,6 +61,9 @@ export function getDb(): DatabaseSync {
 
   db = new DatabaseSync(join(dbDir, "heartword.sqlite"));
   openedDataDir = dataDir;
+  // A short competing writer must not discard an already returned provider
+  // result or its receipt. Keep PERSIST crash safety and wait only boundedly.
+  db.exec("PRAGMA busy_timeout = 5000;");
   // journal_mode=PERSIST, not the SQLite default (DELETE) or WAL:
   //   - WAL's mmap-based shared memory fails outright ("disk I/O error")
   //     over the network-style mount this dev shell reaches HeartWordData

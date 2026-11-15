@@ -7,6 +7,101 @@ least **750 GiB free**, and accepts losing up to **one working day**.
 Cloud capacity and remote delivery must be established before deployment is
 called complete. The live database remains outside synced storage.
 
+October 24 deployment continuation: Dan supplied a new personal OneDrive
+account and authorized starting backup. Its Settings show 97.4 GB used of
+2.0 TB for `danbrennan@verizon.net`, meeting the 750 GiB-free condition.
+The verified sync root is
+`C:\Users\danbr\OneDrive\Documents\OneDrive - Personal\OneDrive`; completed
+snapshots go in `HeartWordBackups/`, with explicit root selection instead of
+the stale business-account environment default. The new measured data is
+155.533 GiB / 99,896 files / 56 SQLite files; the October 7 inventory and failed
+business-account capacity check below are historical. Seven full copies now
+need roughly 1,089 GiB before growth. No production input, source performance,
+canon, accepted asset, approval or cost gate changes for backup deployment.
+
+The current tree contains several restored application directories. The
+backup inventory now validates ancestors once at its root and each directory
+as it walks, rather than rechecking all ancestors for every child. Actual
+source reads still reject linked ancestors, and destination/verification
+path checks remain. A real junction test covers nested links and a linked
+root ancestor. This avoids millions of redundant metadata checks without
+removing source-change detection or link rejection.
+
+The first new capture is `20261024-first-personal`. Deployment and recovery
+evidence is saved separately at `outputs/disaster-backup-deployment-20261024.json`;
+absence of a successful remote-recovery record means independent survival
+has not been established. No old verified snapshot is deleted by this setup.
+
+October 25 cloud-recovery drill (historical progress): all 101,157 files, including
+the completion manifest, reported IN_SYNC and online-only at 15:08:34Z. The first
+all-synced observation was 14:59:26Z, at most 14.425 hours after publication;
+an earlier metadata probe omitted some MAX_PATH descendants, so this is an
+observation bound rather than an exact upload duration. Extended-length
+enumeration corrected that diagnostic without changing any backup bytes.
+
+The actual cold read exposed a Windows/OneDrive recovery limitation: ordinary
+recall returns Win32 380 for sampled paths at least 260 characters long, even
+though their placeholders report IN_SYNC. Short-path samples recalled with
+matching hashes. Explicitly pinning the failing file through the supported
+CfSetPinState API downloaded it and its SHA-256 matched the immutable manifest.
+The drill is now requesting explicit downloads for the 16,052 affected files
+(27,053,991,189 bytes), before repeating the isolated hash/database restore.
+This changes local cache policy only; it never supplies replacement content or
+uses original production files to repair the cloud copy. No remote-recovery
+success or unattended schedule is claimed until the full drill passes.
+Evidence: `outputs/disaster-backup-cloud-recall-diagnostic-20261025.json`,
+`outputs/disaster-backup-long-path-recall-20261025.json`, and the deployment
+record. A sync icon alone demonstrably does not satisfy acceptance.
+
+October 26 UTC verified result: the full cloud baseline passed every retained
+file hash and all 56 SQLite integrity/foreign-key checks, then restored to
+`C:\Users\danbr\HeartWordRecoveryDrill\20261024-personal-cloud`, with its
+application in the `-application` sibling. The strict read audit denied live
+HeartWordData content. All 59 production tables / 16,423 rows, schema and all
+non-path values match; 1,623 exact retained-file references were projected for
+the restored location. A first audit incorrectly demanded byte-identical JSON
+path strings; a separate leaf comparison verified prose, decisions, IDs,
+amounts, timestamps and protected origin fields instead of altering records.
+The unprojected originals remain in the immutable baseline. No copy was repeated
+after the successful restore marker merely to repair that audit.
+
+The one-off strict drill additionally preflighted ancestor metadata without
+granting parent-directory content access. A single owned-drill-prefix grant
+avoids overlapping wildcard-grant behavior in the installed Node version.
+Node permission mode disables fsync; only new restored metadata deferred that
+flush to the outer worker, which validated the isolated paths and called
+Flush(true). The normal application/recovery implementation and sealed snapshot
+were unchanged by these drill adapters. Evidence is retained in the boundary,
+permission-selftest and metadata-flush reports under `outputs/`.
+
+The normal recovered app at port 4048 opened Mark 5, its retained storyboard,
+18 approved Papuan visual cast entries and 657 saved discussion entries.
+Its recorded-cut asset and delivered master both match the approved film SHA;
+native playback advanced beyond two minutes, and FFmpeg decoded the whole
+9:32.380 video/audio successfully. Its 3,225-file chapter audit reports no
+dependency or editability findings. Matching installed host software was used;
+this is an isolated data/application restore, not a clean-OS installation test.
+Historical Mark 2/Blender gaps and legacy status/cost displays remain explicit.
+
+The first-copy disk-loss acceptance passes. Ongoing one-working-day protection
+does not yet pass: publication to all-cloud-only acknowledgement took 14.577
+hours, and the existing nightly runner retains two local full copies per run.
+It remains disabled. Dan must choose separate fast nightly storage, a bounded
+changed-file upload approach, or a revised loss allowance before dependent
+scheduling work. There is no new provider, paid transport, pruning platform or
+SMS delivery claim. The separate Goal Guardian review records these outcomes.
+
+Final documentation/cache follow-through: all three updated notes in
+`HeartWordBackups/recovery-guide-20261024-first-personal-20261026/` passed
+IN_SYNC/online-only checks and cloud-read SHA-256 comparison against their
+publication receipt. At 2026-10-26T02:58:30Z, all 101,157 snapshot files were
+again IN_SYNC and online-only; C: had 350,629,101,568 bytes free. The restored
+working data/application remain retained. No cloud content was deleted. The
+follow-up stops pending Dan's already requested daily-policy decision; no
+nightly accumulation job is enabled. Exact evidence is in
+`outputs/disaster-backup-recovery-guide-cloud-proof-20261026.json` and the
+final deployment record.
+
 ## Product goal and acceptance
 
 PRODUCT_VISION requires verified Scripture, original performance, approved

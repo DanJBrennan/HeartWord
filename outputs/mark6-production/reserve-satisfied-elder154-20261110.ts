@@ -1,0 +1,13 @@
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {validateReferenceFiles,getKeyframeContext,sha256,assetPath} from '../../src/pipeline/media-generation/external-keyframes.js';
+import {requireCurrentPlan} from '../../src/pipeline/creative-direction/crew-store.js';
+import {reserveBoundedAttempt} from './attempt-control.js';
+const top='outputs/mark6-production',folder=top+'/keyframes/scene4-satisfied-elder-20261110-v1',read=(p:string)=>JSON.parse(readFileSync(p,'utf8')),db=getDb(),data=getDataDir();
+try {
+ const b=read(folder+'/draft-brief.json'),n=read(top+'/native-generation/execution.json'),images=read(top+'/images/execution.json'),plan=requireCurrentPlan(db,data,'c457a815-d07d-4902-91b5-7b936b549856');
+ if(existsSync(folder+'/request.json')||n.entries.length!==207||n.entries.some((x:any)=>x.status!=='returned_unreviewed')||images.calls.length!==153||images.calls.some((x:any)=>!String(x.status).startsWith('returned'))||plan.id!==b.productionRunId||b.prompt.length>18000||sha256(JSON.stringify(getKeyframeContext(db,data,b.context.shot.id)))!==b.contextHash||b.generationInputs.length!==2)throw Error('Current idle203/images148/exact prepared149 fourinputs required');
+ validateReferenceFiles(data,b);const id='mark6-satisfied-elder-154-20261110';reserveBoundedAttempt(top,'includedStartingFrameGenerations',id);
+ const req={at:new Date().toISOString(),id,briefFile:data+'/exports/keyframe-briefs/'+b.id+'/brief.json',prompt:b.prompt,promptSha256:b.promptHash,referenced_image_paths:b.generationInputs.map((x:any)=>assetPath(data,x.path)),generationInputs:b.generationInputs,apiFallback:false,providerModel:'not reported by builtin tool',scope:'Approvedshot28 mediumclose quietsatisfiedelder START afteraccepted207eating. IMAGE1currentapprovedelderBODY, IMAGE2accepted198world and207actualending assceneviewonly. One namedactorwithrestinghands/relaxedbrow, extensivegatheringoutside tightframe. No newdialogue/foodpile/collection. Proposed8s625613.875-633613.875 editorialuncertainparent, not nativewordtime. No source/music/voice/canonchange ormotionapproval'};
+ writeFileSync(folder+'/request.json',JSON.stringify(req,null,2),{flag:'wx'});images.calls.push({id,route:'included_builtin_imagegen',status:'pending_builtin',shotId:b.context.shot.id,referenceEvidence:folder+'/request.json',apiFallback:false,providerModel:'not reported by builtin tool'});writeFileSync(top+'/images/execution.json',JSON.stringify(images,null,2));console.log(JSON.stringify({id,briefId:b.id,promptCharacters:b.prompt.length,inputCount:b.generationInputs.length}));
+} finally {db.close();}

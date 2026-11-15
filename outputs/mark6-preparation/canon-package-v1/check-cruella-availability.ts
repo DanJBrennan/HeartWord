@@ -1,0 +1,10 @@
+import{writeFileSync,existsSync}from'node:fs';
+import{resolve}from'node:path';
+(await import('dotenv')).config({path:'C:/Users/danbr/OneDrive/Documents/HeartWord/.env'});
+const out=resolve('outputs/mark6-preparation/canon-package-v1/cruella-availability.json');
+if(existsSync(out))throw Error('Prior availability receipt exists');
+const key=process.env.ELEVENLABS_API_KEY;if(!key)throw Error('No credential');
+const response=await fetch('https://api.elevenlabs.io/v1/voices/WMKg7TxPpPWCryaXE42r',{headers:{'xi-api-key':key}});
+const raw=await response.json();
+const result={status:response.status,readOnly:true,voiceId:'WMKg7TxPpPWCryaXE42r',name:raw.name??null,category:raw.category??null,sharing:raw.sharing?{status:raw.sharing.status,public_owner_id:raw.sharing.public_owner_id??null,original_voice_id:raw.sharing.original_voice_id??null}:null,error:raw.detail?{status:raw.detail.status,message:String(raw.detail.message??'').split(key).join('[redacted]')}:null,speechCalls:0};
+writeFileSync(out,JSON.stringify(result,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify(result));

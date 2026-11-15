@@ -42,7 +42,9 @@ function assetPath(root: string, path: string) {
 let queue: Promise<unknown> = Promise.resolve();
 export class LtxVideoProvider implements VideoProvider {
   private readonly transport: LtxTransport;
-  constructor(private readonly dependencies: { transport?: LtxTransport; dataDir?: string; sleep?: (ms: number) => Promise<void> } = {}) {
+  constructor(private readonly dependencies: { transport?: LtxTransport; dataDir?: string; sleep?: (ms: number) => Promise<void>;
+    /** Explicit cold-start permission; native backend loads existing Fast weights. */
+    lazyLoadDownloadedFast?: true } = {}) {
     this.transport = dependencies.transport ?? sharedLtxTransport();
   }
   async checkHealth(): Promise<Record<string, unknown>> {
@@ -53,7 +55,13 @@ export class LtxVideoProvider implements VideoProvider {
       const baseUrl = await this.transport.connect();
       try {
         const health = await ltxJson(baseUrl, "/health", token, 10_000);
-        if (health.status !== "ok" || health.models_loaded !== true || health.active_model !== "fast") throw new LtxHttpError(503, "LTX Desktop is not ready: /health must report status=ok, models_loaded=true, active_model=fast. Load the local Fast model on the Mac.");
+        const resident=health.models_loaded===true&&health.active_model==='fast';
+        const downloaded=this.dependencies.lazyLoadDownloadedFast===true&&Array.isArray(health.models_status)&&health.models_status.some((m:any)=>m.id==='fast'&&m.downloaded===true);
+        if (health.status !== "ok" || (!resident&&!downloaded)) throw new LtxHttpError(503, "LTX Desktop is not ready: /health must report status=ok, models_loaded=true, active_model=fast. Load the local Fast model on the Mac.");
+        if(this.dependencies.lazyLoadDownloadedFast){
+          const policy=await ltxJson(baseUrl,'/api/runtime-policy',token,10000),settings=await ltxJson(baseUrl,'/api/settings',token,10000);
+          if(policy.force_api_generations!==false||settings.userPrefersLtxApiVideoGenerations!==false||settings.userPrefersFalApiImageGenerations!==false||settings.useLocalTextEncoder!==false||settings.activeLtxModelId!=='ltx-2.5-22b-distilled')throw new LtxHttpError(503,'Local-only downloaded Fast/free-web-encoder execution is not verified; no generation submitted.');
+        }
         return { baseUrl, health };
       } catch (error) {
         if (error instanceof LtxHttpError || attempt === 1) throw error;
@@ -122,7 +130,7 @@ export class LtxVideoProvider implements VideoProvider {
     let ambientAudio: { path: string } | undefined;
     try {
       emit({ phase: "connecting", percentage: null, currentStep: null, totalSteps: null });
-      const { baseUrl } = await this.ready(token);
+      let { baseUrl } = await this.ready(token);
       const home = await this.transport.remote('printf "%s" "$HOME"');
       const inbox = process.env.LTX_INBOX_DIR?.trim() || `${home}/LTX-Inbox`;
       if (!inbox.startsWith("/") || /[\r\n\0]/.test(inbox)) throw new Error("LTX_INBOX_DIR must be an absolute Mac directory.");
@@ -148,6 +156,7 @@ export class LtxVideoProvider implements VideoProvider {
       const body = { prompt, resolution, model: "fast", cameraMotion: "none", negativePrompt: "human speech, dialogue, narration, words, gibberish voices, singing, human vocals, music, visible talking", duration, fps, audio: audioMode === "ambient", imagePath: remoteInput, lastImagePath: remoteEndInput ?? null, keyframes: [], audioPath: null, aspectRatio: "16:9", seed, loras: [] };
       metadata.request = body;
       if(hashImage(input.absolute)!==inputHash || (endInput && hashImage(endInput.absolute)!==endHash))throw new Error("LTX input image changed during upload; prepare a new request.");
+      if(this.dependencies.lazyLoadDownloadedFast)({baseUrl}=await this.ready(token));
       request.authorizeSubmission?.();
       metadata.productionRevision = request.productionRevision;
       metadata.status = "running";

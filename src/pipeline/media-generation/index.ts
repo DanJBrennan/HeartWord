@@ -1,3 +1,4 @@
+import {DOORWAY_RULE} from "../historical-setting.js";
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -162,18 +163,14 @@ const CASTING_AND_SETTING_ANCHOR =
   "African tribal clothing, adornment, or setting -- no grass or woven-fiber skirts, no bare chests as everyday " +
   "dress, no shell/bone/wood jewelry or arm bands, no face or body paint, no tropical island scenery. The people " +
   "are Papuan; the world around them is first-century Judea, exactly as it would be for any other casting.\n\n" +
-  "ARCHITECTURE: buildings are constructed from rough, unhewn DARK BASALT FIELDSTONE bound with mud mortar -- " +
-  "not light tan adobe, smooth plaster, or sandstone. Roofs are FLAT (timber beams topped with reeds/branches and " +
+  "ARCHITECTURE: follow the approved location-specific reconstruction. Capernaum uses rough DARK BASALT FIELDSTONE bound with mud mortar; do not transfer that stone choice to Nazareth or Jerusalem. Avoid " +
+  "unsupported modern surfaces. Roofs are FLAT (timber beams topped with reeds/branches and " +
   "packed mud/clay), never pitched, gabled, or covered in fired ceramic tiles. Do not show projecting rounded " +
   "log-ends (vigas) on exterior walls, glass windows, modern paneled doors with metal hardware, tiled or polished " +
   "floors, minarets, or any modern rooftop fixtures (tanks, pipes, wiring). If the location is by the water, it " +
   "is the Sea of Galilee -- an inland freshwater lake surrounded by rolling hills, never an ocean coastline or " +
   "sea cliffs.\n\n" +
-  "DOORWAYS: whenever a door is visible, use a historically grounded plank-leaf door turning on wooden pivot pegs " +
-  "seated in sockets in the stone threshold -- never modern butt hinges, lever handles, decorative hardware, or tidy " +
-  "modern trim. Ordinary homes use one smaller plank leaf; public buildings such as synagogues may use heavier two-leaf " +
-  "doors. In Capernaum, thresholds and jambs are dark basalt; in Jerusalem, they are local limestone. Temple doors are " +
-  "a separate, source-specific production design and must not be guessed from domestic or synagogue doors.\n\n" +
+  DOORWAY_RULE + "\n\n" +
   "COSTUME PALETTE: named characters must retain their approved canon clothing exactly. For unnamed people, use " +
   "plain-weave or subtly striped wool and linen in a controlled first-century palette: unbleached cream, brown, charcoal, " +
   "ochre, muted madder, and restrained indigo. Do NOT invent high-contrast green-and-white vertical stripes, vivid modern " +

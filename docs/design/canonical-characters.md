@@ -134,6 +134,15 @@ explicitly, since Mark's Pharisees and scribes actually reappear at 2:6-8,
 
 ## Character Groups
 
+Producer exception, 2026-11-02: in **Hatam Mark 6 only**, the three anonymous
+reports in 6:14–15 (preparation quote-04/05/06) retain the immutable original
+narrator voice and their separate introductions, over nonspeaking context.
+Dan explicitly approved this treatment; no additional reporter voices or
+speaking faces are required. This does not change other group dialogue, canon
+voice defaults, source/native approval, music levels or production authority.
+The exact scoped approval is retained in
+`outputs/mark6-preparation/targeted-crew-review-v1/producer-reports-approval.json`.
+
 Some characters are not named individuals but generic **groups** -- a
 crowd, the Pharisees and scribes, temple guards -- where the point is a
 consistent population showing up across a scene, not one named figure with
@@ -204,6 +213,13 @@ rear, side, seated and construction/detail views. Failed/unverified checks
 hold. Promotion is atomic against the original approved basis; old assets,
 approval history, films and voice assignments survive. A candidate never
 becomes the current canon through creation time or a voice selection.
+
+When the producer explicitly delegates routine reviews, internal assistant/script
+calls can record the named reviewer and that authority separately from the HTTP
+review body. Those reviews/promotions are attributed to `qc`, with the actor and
+delegation retained; ordinary manual reviews retain `human` attribution. This
+records existing authority, never grants it or waives any exact-hash, separate
+identity/wardrobe, visible-check, basis or voice-preservation requirement.
 
 The existing canon-review page links to the comparison/approval controls.
 Future shot/coverage keyframe packets distinguish identity-only portraits from

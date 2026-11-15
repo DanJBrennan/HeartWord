@@ -1,0 +1,13 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {loadCrewBrief,crewBriefHash} from '../../src/pipeline/creative-direction/crew-context.js';
+import {canonReferenceMedia} from '../../src/pipeline/creative-direction/visual-reference-media.js';
+const root='outputs/mark6-production',id=JSON.parse(readFileSync(root+'/workspace.json','utf8')).projectId,brief=loadCrewBrief(getDb(),getDataDir(),id,'planning');
+const raw=canonReferenceMedia(getDb(),getDataDir(),brief),compact=canonReferenceMedia(getDb(),getDataDir(),brief,{compact:true});
+const identities=(media:typeof raw)=>media.flatMap(m=>m.characterIds??[]).sort(),expected=brief.canon.map(c=>c.id).sort();
+if(JSON.stringify(identities(raw))!==JSON.stringify(expected)||JSON.stringify(identities(compact))!==JSON.stringify(expected))throw Error('Missing/duplicated canon identity in bounded review inputs');
+const total=(media:typeof raw)=>media.reduce((n,m)=>n+Buffer.byteLength(m.data,'base64'),0);
+if(compact.length>16||total(compact)>16*1024*1024)throw Error('Compact review packet still exceeds model image cap');
+const result={projectId:id,briefHash:crewBriefHash(brief,'planning'),allCanonIdentitiesPresent:expected.length,rawImages:raw.length,rawBytes:total(raw),reviewImages:compact.length,reviewBytes:total(compact),jesusSeparate:compact.filter(m=>m.characterIds?.some(id=>brief.canon.find(c=>c.id===id)?.name.toLowerCase()==='jesus')).every(m=>m.characterIds?.length===1),referenceViews:compact.map(m=>({characterIds:m.characterIds,sha256:createHash('sha256').update(Buffer.from(m.data,'base64')).digest('hex'),caption:m.caption})),newImageGenerationCalls:0,noCanonOrSourceModification:true};
+writeFileSync(root+'/canon-review-packaging-verification.json',JSON.stringify(result,null,2));console.log(JSON.stringify({identities:expected.length,rawImages:raw.length,rawMiB:result.rawBytes/1048576,reviewImages:compact.length,reviewMiB:result.reviewBytes/1048576,newImageGenerationCalls:0}));

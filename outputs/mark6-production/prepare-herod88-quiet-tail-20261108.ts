@@ -1,0 +1,15 @@
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+const folder=resolve('outputs/mark6-production/native-motion/herod-reports-preparation-v1/close-final-quiet-end-guided-v1'),source='C:/Users/danbr/HeartWordData/assets/generated/video/5d061b83-d717-4c37-86be-39e3e227585a-ltx-e9f84674-d92c-4897-a5ff-aeaefa35f0de.mp4';
+const hash=(p:string)=>createHash('sha256').update(readFileSync(p)).digest('hex'),sha=hash(source),range=join(folder,'quiet-tail-diagnostic.mp4'),first=join(folder,'actual-frame120.png');
+if(existsSync(range)||existsSync(first))throw Error('Existing range requires reconciliation, not overwrite');
+const ff=(a:string[])=>execFileSync('ffmpeg',['-v','error','-nostdin','-n',...a],{windowsHide:true,maxBuffer:32*1024*1024}),filter='trim=start_frame=120:end_frame=192,setpts=PTS-STARTPTS';
+ff(['-i',source,'-map','0:v:0','-an','-vf',filter,'-fps_mode','passthrough','-c:v','libx264','-qp','0',range]);
+ff(['-i',source,'-vf','select=eq(n\\,120)','-frames:v','1',first]);
+const hashes=(p:string,vf?:string)=>ff(['-i',p,'-map','0:v:0','-an',...(vf?['-vf',vf]:[]),'-f','framemd5','-']).toString().split(/\r?\n/).filter(l=>l&&!l.startsWith('#')).map(l=>l.split(',').at(-1)!.trim());
+const expected=hashes(source,filter),actual=hashes(range);if(expected.length!==72||JSON.stringify(expected)!==JSON.stringify(actual)||hash(source)!==sha)throw Error('Exact native range decoded-frame proof failed');
+const proof={at:new Date().toISOString(),kind:'diagnostic_exact_native_range_not_selected',parentAttemptId:'cb2079aa-8901-48b1-a4e4-d32d316f85ba',sourcePath:source,sourceSha256:sha,rangeStartFrame:120,rangeEndFrameExclusive:192,rangePath:range,rangeSha256:hash(range),firstFramePath:first,firstFrameSha256:hash(first),frames:72,durationSeconds:3,decodedFramesIdentical:true,nativeAudioExcluded:true,newProviderCalls:0,parentWholeClipHeld:true,parentDefect:'Briefsmile~1.5to3s andraisedbrow~4to4.7s incompatiblewithquietseriouslistening; onlysettled5to8s tail proposed.'};
+writeFileSync(join(folder,'quiet-tail-diagnostic-proof.json'),JSON.stringify(proof,null,2),{flag:'wx'});
+writeFileSync(join(folder,'root-whole-parent-hold.json'),JSON.stringify({at:proof.at,status:'whole_parent_held_tail_review_pending',attemptId:proof.parentAttemptId,reviewer:'Codex all193frame contacts and fullsecond samples',observedDefects:[proof.parentDefect],proposedTailFrames:[120,192],tailNotYetSelected:true,originalsRetained:true,providerCalls:0},null,2),{flag:'wx'});console.log(JSON.stringify(proof));

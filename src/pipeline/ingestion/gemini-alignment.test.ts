@@ -20,3 +20,58 @@ it("does not count a supplied standalone parenthesis as an uncovered spoken word
  const result=await alignWithGemini({audioPath:fixture(),durationMs:1000,gaps:[],verses:[{verse:7,paragraphIndex:1,text:"one two three ("}],identify:async()=>({isScripture:true,span:"one two three"})});
  expect(result.coverage).toBe(1);expect(result.uncoveredVerses).toEqual([]);
 });
+
+it("keeps a long initial Mark 6 announcement separate without shifting subsequent verse anchors",async()=>{
+ let call=0;
+ const result=await alignWithGemini({audioPath:fixture(),durationMs:9000,
+  gaps:[{startMs:3500,endMs:4500,durationMs:1000},{startMs:6500,endMs:7000,durationMs:500}],chapterTitle:"MARKUS 6",
+  verses:[{verse:1,paragraphIndex:1,text:"one two three"},{verse:2,paragraphIndex:2,text:"four five six"}],
+  identify:async()=>({isScripture:true,span:["MARKUS 6","one two three","four five six"][call++]})});
+ expect(result.segments.map(s=>({start:s.startMs,end:s.endMs,kind:s.sourceKind,verse:s.verseRef}))).toEqual([
+  {start:0,end:3500,kind:"chapter_title",verse:null},{start:4500,end:6500,kind:"scripture",verse:"v1"},{start:7000,end:9000,kind:"scripture",verse:"v2"}]);
+ expect(result.coverage).toBe(1);expect(result.uncoveredVerses).toEqual([]);expect(call).toBe(3);
+ expect(result.segments[0]!.note).toContain("not a verbatim transcript");
+});
+it("does not relax slow short Scripture guesses or accept a repeated chapter identity later in the recording",async()=>{
+ let call=0;
+ const result=await alignWithGemini({audioPath:fixture(),durationMs:9000,
+  gaps:[{startMs:4000,endMs:5000,durationMs:1000}],chapterTitle:"MARKUS 6",
+  verses:[{verse:1,paragraphIndex:1,text:"one two three"}],
+  config:{fastModel:"fast",strongModel:"strong"},
+  identify:async(_audio,_context,model)=>({isScripture:true,span:model==="strong"?"one two":call++===0?"one two":"MARKUS 6"})});
+ expect(result.segments.every(s=>s.status!=="matched")).toBe(true);expect(result.coverage).toBe(0);
+});
+
+it("holds mixed title-and-verse audio instead of counting Scripture as a title interval",async()=>{
+ const result=await alignWithGemini({audioPath:fixture(),durationMs:3000,gaps:[],chapterTitle:"MARKUS 6",
+  verses:[{verse:1,paragraphIndex:1,text:"one two three"}],identify:async()=>({isScripture:true,span:"MARKUS 6 one two three"})});
+ expect(result.segments[0]!.status).toBe("unresolved");expect(result.coverage).toBe(0);expect(result.uncoveredVerses).toEqual([1]);
+});
+it("never labels a later interval as the initial chapter announcement even at ordinary speech rate",async()=>{
+ let call=0;
+ const result=await alignWithGemini({audioPath:fixture(),durationMs:2500,gaps:[{startMs:1000,endMs:1500,durationMs:500}],chapterTitle:"MARKUS 6",
+  verses:[{verse:1,paragraphIndex:1,text:"one two three"}],identify:async()=>({isScripture:true,span:call++===0?"one two three":"MARKUS 6"})});
+ expect(result.segments[0]!.verseRef).toBe("v1");expect(result.segments[1]!.sourceKind).not.toBe("chapter_title");
+});
+
+it("does not let a copied whole verse outweigh independent consecutive audio snippets",async()=>{
+ let fast=0;
+ const result=await alignWithGemini({audioPath:fixture(),durationMs:10000,gaps:[{startMs:3000,endMs:3500,durationMs:500},{startMs:6500,endMs:7000,durationMs:500}],
+ verses:[{verse:1,paragraphIndex:0,text:"alpha beta gamma delta epsilon zeta eta theta iota kappa lambda omega"}],config:{fastModel:"fast",strongModel:"strong"},
+ identify:async(_audio,_context,model)=>({isScripture:true,span:model==="strong"?"alpha beta gamma delta":["alpha beta gamma delta epsilon zeta eta theta iota kappa lambda omega","epsilon zeta eta theta","iota kappa lambda omega"][fast++]})});
+ expect(result.segments.map(s=>s.text)).toEqual(["alpha beta gamma delta","epsilon zeta eta theta","iota kappa lambda omega"]);expect(result.coverage).toBe(1);
+});
+it("ignores prompt verse labels and preserves internal standalone punctuation without displacing words",async()=>{
+ const result=await alignWithGemini({audioPath:fixture(),durationMs:2000,gaps:[],verses:[{verse:3,paragraphIndex:0,text:"one two ( three four ) five"}],identify:async()=>({isScripture:true,span:"[v3] one two three four five"})});
+ expect(result.coverage).toBe(1);expect(result.segments[0]!.text).toBe("one two ( three four ) five");
+});
+it("does not submit a stronger request after an uncertain transport failure",async()=>{
+ const identify=vi.fn(async()=>{throw new Error("lost response")});
+ const result=await alignWithGemini({audioPath:fixture(),durationMs:1000,gaps:[],verses:[{verse:1,paragraphIndex:0,text:"one two three"}],identify});
+ expect(identify).toHaveBeenCalledTimes(1);expect(result.segments[0]!.status).toBe("unresolved");
+});
+
+it("keeps unidentified speech unresolved rather than treating it as proven non-Scripture",async()=>{
+ const result=await alignWithGemini({audioPath:fixture(),durationMs:1000,gaps:[],verses:[{verse:1,paragraphIndex:0,text:"one two three"}],identify:async()=>({isScripture:false})});
+ expect(result.segments[0]!.status).toBe("unresolved");expect(result.segments[0]!.note).toContain("does not establish non-Scripture or silence");
+});

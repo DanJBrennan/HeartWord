@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mark 4:11 — Boundary Review</title>
+  <style>
+    body { background:#10151d; color:#f5f2e9; font:18px/1.45 system-ui,sans-serif; margin:0; }
+    main { max-width:760px; margin:7vh auto; padding:32px; background:#1c2530; border-radius:14px; box-shadow:0 12px 45px #0008; }
+    h1 { margin-top:0; font-size:1.6rem; }
+    .clock { font:700 3rem ui-monospace,SFMono-Regular,Consolas,monospace; letter-spacing:-.08em; color:#9cd4ff; margin:28px 0 8px; }
+    .total { color:#b7c3d0; }
+    audio, input[type=range] { display:block; width:100%; margin:20px 0; }
+    .controls { display:flex; align-items:center; gap:10px; justify-content:center; }
+    button { background:#d9a441; border:0; border-radius:7px; padding:9px 14px; font-weight:700; cursor:pointer; }
+    .hint { color:#c9d2dc; } code { color:#a8db9e; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Mark 4:11 — exact source-boundary review</h1>
+    <p>The full <strong>11.068-second</strong> excerpt is Jesus. The clock and scrubber are relative to the beginning of this verse, not chapter time.</p>
+    <audio id="audio" controls preload="auto" src="/media/generated/pilot-source/mark4-v11-jesus-source-review.mp3"></audio>
+    <div id="clock" class="clock" aria-live="polite">0.00 s</div>
+    <div class="total">of 11.07 s</div>
+    <input id="scrub" type="range" min="0" max="11.068" step="0.01" value="0" aria-label="Scrub source excerpt in hundredths of a second">
+    <div class="controls">
+      <button type="button" data-step="-0.05">−0.05 s</button>
+      <button type="button" data-step="-0.01">−0.01 s</button>
+      <button type="button" data-step="0.01">+0.01 s</button>
+      <button type="button" data-step="0.05">+0.05 s</button>
+    </div>
+    <p class="hint">Pause or scrub to each desired cut, then tell me the three displayed times. The keyboard arrow keys on the scrubber move by <code>0.01 s</code>.</p>
+  </main>
+  <script>
+    const duration = 11.068, audio = document.querySelector('#audio'), scrub = document.querySelector('#scrub'), clock = document.querySelector('#clock');
+    const clamp = value => Math.min(duration, Math.max(0, value));
+    const show = value => { const safe = clamp(value); scrub.value = safe.toFixed(3); clock.textContent = `${safe.toFixed(2)} s`; };
+    let frame;
+    const tick = () => { show(audio.currentTime); frame = requestAnimationFrame(tick); };
+    audio.addEventListener('play', () => { cancelAnimationFrame(frame); tick(); });
+    audio.addEventListener('pause', () => { cancelAnimationFrame(frame); show(audio.currentTime); });
+    audio.addEventListener('ended', () => { cancelAnimationFrame(frame); show(duration); });
+    scrub.addEventListener('input', () => { audio.pause(); audio.currentTime = Number(scrub.value); show(audio.currentTime); });
+    document.querySelectorAll('[data-step]').forEach(button => button.addEventListener('click', () => { audio.pause(); audio.currentTime = clamp(audio.currentTime + Number(button.dataset.step)); show(audio.currentTime); }));
+  </script>
+</body>
+</html>

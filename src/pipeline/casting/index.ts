@@ -314,7 +314,7 @@ Do not invent theological content, dialogue, or narrative beyond what the text s
  *
  * Re-running refines the existing shot plan through the production crew.
  */
-const buildCasting: Stage = async (projectId) => {
+const buildCasting = async (projectId: string, planner: typeof generateJson = generateJson) => {
   const db = getDb();
   const project = db.prepare(`SELECT id, language, book, chapter FROM projects WHERE id = ?`).get(projectId) as
     | ProjectRow
@@ -461,7 +461,7 @@ const buildCasting: Stage = async (projectId) => {
       if (scene.sequence === 1) required.push("chapterOpening");
       if (scene.id === scenes.at(-1)!.id && nextChapter) required.push("chapterEnding");
       const schema = { ...SHOT_RESPONSE_SCHEMA, required };
-      responses.set(scene.id, await generateJson<GeminiSceneResponse>(buildScenePrompt(project, scene, text, speakers, canon, narrationBudget,
+      responses.set(scene.id, await planner<GeminiSceneResponse>(buildScenePrompt(project, scene, text, speakers, canon, narrationBudget,
         scene.id === scenes.at(-1)!.id ? nextChapter : null), schema));
     }
   } catch (error) { return { ok: false, reasoning: `Initial storyboard planning incomplete: ${(error as Error).message}` }; }
@@ -668,12 +668,12 @@ const buildCasting: Stage = async (projectId) => {
     reasoning:
       crew.summary + " " +
       `Cast and directed ${scenes.length} scene(s) for ${project.book} ${project.chapter}: ${totalShots} shots ` +
-      `planned via Gemini, grounded in the English reference text, each with a framing/camera-movement decision ` +
+      `planned via the selected reasoning provider, grounded in the English reference text, each with a framing/camera-movement decision ` +
           `and shared lighting and spatial-continuity plans set per scene.` +
       ` A separate ${introPlan.status} chapter opening has ${introPlan.shots.length} pre-story location shot(s); the verified title card and source-clock entrance are recorded in chapter_intro_plans.` +
       ` A separate ${endingPlan.status} chapter-ending handoff has ${endingPlan.shots.length} post-source shot(s), recorded in chapter_ending_plans against the next verified first verse.` +
       (unresolvedNames.size > 0
-        ? ` ${unresolvedNames.size} character name(s) Gemini returned didn't match the canon list and were dropped ` +
+        ? ` ${unresolvedNames.size} character name(s) the planner returned didn't match the canon list and were dropped ` +
           "-- flagged in review_notes."
         : "") +
       (framingCorrections.length > 0
@@ -690,10 +690,14 @@ const buildCasting: Stage = async (projectId) => {
 // Prevent duplicate paid planning when the same request arrives twice.
 const activeCasting = new Set<string>();
 export const runCasting: Stage = projectId => observeWork(projectId, "casting", () => runCastingImpl(projectId));
-const runCastingImpl: Stage = async projectId => {
+/** Select the initial storyboard reasoning route without changing stage gates,
+ * saved shots, crew review, or duplicate-submission protection. */
+export const runCastingWithPlanner = (projectId: string, planner: typeof generateJson) =>
+  observeWork(projectId, "casting", () => runCastingImpl(projectId, planner));
+const runCastingImpl = async (projectId: string, planner: typeof generateJson = generateJson) => {
   if (activeCasting.has(projectId)) return { ok: false, reasoning: "Storyboard creation is already running for this chapter." };
   activeCasting.add(projectId);
-  try { return await buildCasting(projectId); }
+  try { return await buildCasting(projectId, planner); }
   finally { activeCasting.delete(projectId); }
 };
 import { observeWork } from "../observed-work.js";

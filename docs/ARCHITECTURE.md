@@ -14,6 +14,14 @@ requirement.
 
 ## Pipeline stages
 
+Source paragraph continuations can use inspected decisions pinned to the exact
+document XML hash. English Mark 6 paragraph 3 continues verse 6 across an
+unnumbered paragraph; it must remain reference Scripture rather than a heading
+or omitted prose. Changed XML receives no inherited decision. Corrected parsed
+reference text changes the crew brief hash even when original file bytes are
+unchanged, so earlier exact-brief initial reviews cannot stand in for fresh
+review. This does not alter source audio, invent timing or certify translation.
+
 1. **Ingestion & alignment** — take the chapter's source-language audio
    recording and its translated/latinized text; align text to audio timing.
 2. **Scene breakdown** — split the aligned chapter into scenes and lines.

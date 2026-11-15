@@ -39,6 +39,14 @@ function treatment(b=brief()) {
 }
 afterEach(()=>vi.unstubAllEnvs());
 describe("advance emotional treatment",()=>{
+  it("checks the complete printed en-dash range while retaining exact source-quote validation",()=>{
+    const b=brief(),before=JSON.stringify(b),t=fixtureTreatment(b);
+    t.beats[0]!.sourceTrigger={verseRef:"Mark 5:1\u20132",textKind:"reference",quote:b.source.reference[1]!.text};
+    expect(()=>validateEmotionalTreatment(t,b)).not.toThrow();
+    t.beats[0]!.sourceTrigger.quote="An invented replacement for the source words.";
+    expect(()=>validateEmotionalTreatment(t,b)).toThrow("quote the supplied Scripture range exactly");
+    expect(JSON.stringify(b)).toBe(before);
+  });
   it("uses a Gemini-compatible version field while rejecting unsupported returned versions",()=>{
     const version = emotionalTreatmentSchema.properties.version;
     expect(version).toMatchObject({type:"integer"});

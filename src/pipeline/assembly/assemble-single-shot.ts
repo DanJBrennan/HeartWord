@@ -75,8 +75,8 @@ function ffprobeFrameCount(absPath: string): number {
  *  regardless of encoder timing. Falls back to padding (cloning the
  *  last frame) only in the genuine edge case where the source doesn't
  *  have enough frames after conversion to hit the target at all. */
-function normalizeAndTrim(sourcePath: string, durationMs: number, outPath: string): void {
-  const targetFrames = Math.round((durationMs / 1000) * TARGET_FPS);
+function normalizeAndTrim(sourcePath: string, durationMs: number, outPath: string,
+  targetFrames = Math.round((durationMs / 1000) * TARGET_FPS), allowPadding = true): void {
   const firstPassPath = `${outPath}.pass1.mp4`;
   execFileSync(
     "ffmpeg",
@@ -106,6 +106,7 @@ function normalizeAndTrim(sourcePath: string, durationMs: number, outPath: strin
     renameSync(firstPassPath, outPath);
     return;
   }
+  if (!allowPadding) throw new Error("Bound speaking picture has insufficient real frames for the complete performance; frame cloning is prohibited.");
   // Genuine source shortfall (fewer real frames existed than requested)
   // -- pad the deficit by cloning the last frame. Computed from the
   // frame-count gap directly, not a duration tag, for the same reason
@@ -180,6 +181,27 @@ function muxAudio(videoPath: string, audioPath: string, audioStartSec: string, a
   );
 }
 
+/** Source-bound windows may start between milliseconds and end between video
+ * frames. Trim decoded source samples, keep the enclosing real video frame,
+ * and let both streams finish independently instead of using -shortest. */
+function muxBoundAudio(videoPath: string, audioPath: string, startMs: number, endMs: number,
+  durationMs: number, targetFrames: number, outPath: string): string {
+  const probe = JSON.parse(execFileSync("ffprobe", ["-v","error","-select_streams","a:0","-show_streams","-of","json",audioPath], {encoding:"utf8",windowsHide:true}));
+  const rate = Number(probe.streams[0]?.sample_rate), start = Math.round(startMs * rate / 1000), end = Math.round(endMs * rate / 1000);
+  if (!Number.isSafeInteger(rate) || rate <= 0 || !Number.isSafeInteger(start) || start < 0 || !Number.isSafeInteger(end) || end <= start || Math.abs((end-start)*1000/rate-durationMs)>1000/rate) {
+    throw new Error("Bound speaking audio must retain its complete measured source-sample window.");
+  }
+  execFileSync("ffmpeg", ["-v","error","-y","-i",videoPath,"-i",audioPath,
+    "-map","0:v:0","-map","1:a:0","-af",`atrim=start_sample=${start}:end_sample=${end},asetpts=PTS-STARTPTS`,
+    "-c:v","copy","-c:a","aac","-ar",String(rate),"-movie_timescale",String(rate),"-movflags","+faststart",outPath],
+    {stdio:["ignore","ignore","pipe"],windowsHide:true});
+  const actual = JSON.parse(execFileSync("ffprobe", ["-v","error","-select_streams","a:0","-show_streams","-of","json",outPath], {encoding:"utf8",windowsHide:true})).streams[0];
+  if (ffprobeFrameCount(outPath)!==targetFrames || Number(actual?.sample_rate)!==rate || actual?.time_base!==`1/${rate}` || Number(actual?.duration_ts)!==end-start) {
+    throw new Error("Bound speaking assembly changed the complete frame or source-sample duration.");
+  }
+  return `Source-bound speech samples ${start}-${end} at ${rate}Hz; ${targetFrames} real picture frames; no rounded millisecond trim, shortest-stream cutoff or frame padding.`;
+}
+
 export interface AssembleSingleShotResult {
   shotId: string;
   assembledVideoPath: string;
@@ -219,13 +241,16 @@ export function assembleSingleShot(db: DatabaseSync, shotId: string): AssembleSi
   const tmpDir = mkdtempSync(join(tmpdir(), "heartword-single-assemble-"));
   try {
     const trimmedPath = join(tmpDir, "trimmed.mp4");
-    normalizeAndTrim(join(dataDir, "assets", clip.result_asset_path), durationMs, trimmedPath);
+    const boundSpeech = Boolean(shot.needs_lip_sync && db.prepare("SELECT 1 FROM shot_utterance_bindings WHERE shot_id=?").get(shotId));
+    const targetFrames = boundSpeech ? Math.ceil(durationMs * TARGET_FPS / 1000 - 1e-9) : Math.round(durationMs * TARGET_FPS / 1000);
+    normalizeAndTrim(join(dataDir, "assets", clip.result_asset_path), durationMs, trimmedPath, targetFrames, !boundSpeech);
 
     const relPath = join("generated", "assembled", `${shotId}-${randomUUID()}.mp4`);
     const outPath = join(dataDir, "assets", relPath);
     mkdirSync(join(dataDir, "assets", "generated", "assembled"), { recursive: true });
 
     let hasDialogueAudio = false;
+    let assemblyEvidence: string | null = null;
     if (shot.needs_lip_sync && shot.dialogue_character_id && shot.verse_ref) {
       const bound = db.prepare(`SELECT ub.*,o.project_id,o.source_path,o.start_ms original_start_ms,o.end_ms original_end_ms,
         o.speaker_character_id,cv.character_id version_character_id,cv.status version_status FROM shot_utterance_bindings ub
@@ -258,7 +283,7 @@ export function assembleSingleShot(db: DatabaseSync, shotId: string): AssembleSi
           audio={path:cast.path,startMs:cast.startMs+bound.source_start_ms-bound.original_start_ms,
             endMs:cast.startMs+bound.source_end_ms-bound.original_start_ms};
         }
-        muxAudio(trimmedPath,join(dataDir,"assets",audio.path),(audio.startMs/1000).toFixed(3),(durationMs/1000).toFixed(3),durationMs,outPath);
+        assemblyEvidence=muxBoundAudio(trimmedPath,join(dataDir,"assets",audio.path),audio.startMs,audio.endMs,durationMs,targetFrames,outPath);
         hasDialogueAudio=true;
       } else {
       const { start: verseStart, end: verseEnd } = parseVerseRange(shot.verse_ref);
@@ -312,8 +337,8 @@ export function assembleSingleShot(db: DatabaseSync, shotId: string): AssembleSi
     db.prepare(
       `INSERT INTO generation_attempts
          (id, shot_id, provider, model, operation, resolution, prompt, status, result_asset_path, cost_usd, created_at)
-       VALUES (?, ?, 'local', 'ffmpeg-assemble', 'assemble_shot', ?, NULL, 'accepted', ?, 0, ?)`
-    ).run(attemptId, shotId, `${TARGET_WIDTH}x${TARGET_HEIGHT}`, relPath, now);
+       VALUES (?, ?, 'local', 'ffmpeg-assemble', 'assemble_shot', ?, ?, 'accepted', ?, 0, ?)`
+    ).run(attemptId, shotId, `${TARGET_WIDTH}x${TARGET_HEIGHT}`, assemblyEvidence, relPath, now);
     db.prepare(
       `INSERT INTO clips (id, shot_id, generation_attempt_id, timeline_start_ms, timeline_end_ms, created_at) VALUES (?, ?, ?, 0, ?, ?)`
     ).run(randomUUID(), shotId, attemptId, durationMs, now);

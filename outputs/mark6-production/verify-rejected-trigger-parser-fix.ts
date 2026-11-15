@@ -1,0 +1,17 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {getDb} from '../../src/db/client.js';
+import {parseCodexEvents,stripOptionalNulls} from '../../src/providers/codex-text.js';
+import {validateContribution} from '../../src/pipeline/creative-direction/crew.js';
+import {validateEmotionalTreatment} from '../../src/pipeline/creative-direction/emotional-treatment.js';
+const db=getDb(),runId='b66c122d-7722-436b-bab7-a09f4091159f';
+const row=db.prepare('SELECT brief_json FROM production_runs WHERE id=?').get(runId)!;
+const brief=JSON.parse(String(row.brief_json));
+const folder='C:/Users/danbr/HeartWordData/assets/preparation/crew-reasoning/c457a815-d07d-4902-91b5-7b936b549856/'+runId+'_creative_director_1_task-1_evidence-0';
+const request=JSON.parse(readFileSync(folder+'/request.json','utf8')),response=readFileSync(folder+'/response.jsonl','utf8');
+const raw=stripOptionalNulls(parseCodexEvents(response).result,request.schema);
+const {contextRequests:_taskProtocol,...contribution}=raw;
+const output=validateContribution(contribution,'creative_director',brief);
+const treatment=validateEmotionalTreatment(output.emotionalTreatment,brief);
+const value={status:'unchanged_rejected_reply_revalidates_after_range_parser_fix',runId,sourceBriefSha256:createHash('sha256').update(String(row.brief_json)).digest('hex'),rawResponseSha256:createHash('sha256').update(response).digest('hex'),directions:output.directions.length,beats:treatment.beats.length,sourceOrReplyWordsChanged:false,acceptedLiveContribution:false,newProviderCalls:0,reason:'Shared parser previously narrowed valid en-dash ranges to their first verse; all original trigger quotes pass against full source ranges.'};
+writeFileSync('outputs/mark6-production/trigger-parser-fix-verification.json',JSON.stringify(value,null,2));console.log(JSON.stringify(value));

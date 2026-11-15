@@ -33,3 +33,13 @@ it("blocks narrator leakage through a covered speaker interval before render", (
   expect(() => assertSpeakerAudioContinuity(source, [{ ...coveredLine[0] }, { ...coveredLine[1], path: "source.wav", voice: "original" }]))
     .toThrow(/independent of picture coverage/);
 });
+
+it("reads a retained continuous performance across attribution labels but preserves real gaps",()=>{
+  const base={path:"performance.wav",speakerId:null,voice:"original" as const,sourceStartMs:0,sourceEndMs:1000,startMs:0,endMs:1000};
+  const placements=[{...base,segmentId:"narrator"},{...base,segmentId:"cast",speakerId:"jesus",voice:"cast" as const,sourceStartMs:1000,sourceEndMs:2000,startMs:1000,endMs:2000},
+    {...base,segmentId:"after-pause",sourceStartMs:2000,sourceEndMs:3000,startMs:2200,endMs:3200},
+    {...base,segmentId:"source-gap",sourceStartMs:3100,sourceEndMs:4100,startMs:3200,endMs:4200},
+    {...base,segmentId:"other-file",path:"other.wav",sourceStartMs:4100,sourceEndMs:5100,startMs:4200,endMs:5200}];
+  expect(continuousAudioGroups(placements,true).map(g=>g.segmentIds)).toEqual([["narrator","cast"],["after-pause"],["source-gap"],["other-file"]]);
+  expect(continuousAudioGroups(placements).map(g=>g.segmentIds)).toEqual(placements.map(p=>[p.segmentId]));
+});

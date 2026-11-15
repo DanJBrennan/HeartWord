@@ -1,0 +1,18 @@
+{
+  "extends": "../../src/server/tsconfig.json",
+  "include": [
+    "./chapter-preflight-r41.ts",
+    "./review-storyboard.ts",
+    "./attempt-control.ts",
+    "./native-budget.ts",
+    "./av-call.ts",
+    "./run-representative.ts",
+    "./review-representative.ts",
+    "./audio-role-preflight-20261105.ts",
+    "./reserve-reference-image.ts",
+    "./reconcile-exit1-20261105.ts"
+  ],
+  "compilerOptions": {
+    "noEmit": true
+  }
+}

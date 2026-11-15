@@ -51,6 +51,30 @@ it("holds a stale source binding without falling back to a verse match",()=>{
   expect(()=>assembleSingleShot(db,"shot")).toThrow("approved source, voice");
   expect(db.prepare("SELECT COUNT(*) n FROM generation_attempts WHERE operation='assemble_shot'").get()!.n).toBe(0);
 });
+it.each([24000,48000])("preserves fractional sample endpoints and the last real picture frame at %iHz",rate=>{
+  const source=join(root,"assets",`fractional-${rate}.wav`),expected=join(root,"assets","expected.m4a");
+  ffmpeg(["-f","lavfi","-i",`sine=frequency=883:sample_rate=${rate}:duration=1`,"-c:a","pcm_s16le",source]);
+  const start=Math.round(rate*.1)+1,count=Math.floor(rate*.722)+1,end=start+count,durationMs=count*1000/rate;
+  db.prepare("UPDATE audio_segments SET source_path=? WHERE id='cast'").run(`fractional-${rate}.wav`);
+  db.prepare("UPDATE shot_utterance_bindings SET source_start_ms=?,source_end_ms=?").run(1000+start*1000/rate,1000+end*1000/rate);
+  db.prepare("UPDATE clips SET timeline_end_ms=? WHERE id='selected'").run(durationMs);
+  const result=assembleSingleShot(db,"shot"),output=join(root,"assets",result.assembledVideoPath);
+  const streams=JSON.parse(execFileSync("ffprobe",["-v","error","-count_frames","-show_streams","-of","json",output],{encoding:"utf8"})).streams;
+  expect(Number(streams.find((s:any)=>s.codec_type==='video').nb_read_frames)).toBe(18);
+  expect(streams.find((s:any)=>s.codec_type==='audio')).toMatchObject({sample_rate:String(rate),duration_ts:count});
+  ffmpeg(["-i",source,"-af",`atrim=start_sample=${start}:end_sample=${end},asetpts=PTS-STARTPTS`,"-c:a","aac","-ar",String(rate),"-movie_timescale",String(rate),expected]);
+  const packets=(p:string)=>JSON.parse(execFileSync("ffprobe",["-v","error","-select_streams","a:0","-show_packets","-show_data_hash","sha256","-show_entries","packet=data_hash","-of","json",p],{encoding:"utf8"})).packets.map((p:any)=>p.data_hash);
+  // Exact deterministic AAC payload parity detects even a one-sample start
+  // shift; frame/sample counts alone would miss that error.
+  expect(packets(output)).toEqual(packets(expected));
+  expect(db.prepare("SELECT prompt FROM generation_attempts WHERE operation='assemble_shot'").get()!.prompt).toContain(`samples ${start}-${end} at ${rate}Hz`);
+});
+it("holds insufficient bound speaking frames instead of cloning the ending",()=>{
+  ffmpeg(["-f","lavfi","-i","color=red:s=160x90:r=24:d=0.5","-c:v","libx264","-pix_fmt","yuv420p",join(root,"assets","short.mp4")]);
+  db.exec("UPDATE generation_attempts SET result_asset_path='short.mp4' WHERE id='raw'");
+  expect(()=>assembleSingleShot(db,"shot")).toThrow("insufficient real frames");
+  expect(db.prepare("SELECT COUNT(*) n FROM generation_attempts WHERE operation='assemble_shot'").get()!.n).toBe(0);
+});
 it("holds a stale cast voice mapping even when the verse label still matches",()=>{
   db.exec("UPDATE composite_audio_source_map SET voice_version_id='stale'");
   expect(()=>assembleSingleShot(db,"shot")).toThrow("verse fallback is prohibited");

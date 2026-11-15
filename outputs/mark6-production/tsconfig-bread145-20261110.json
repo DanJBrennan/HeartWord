@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig-departure-extended-20261109.json",
+  "include": [
+    "./prepare-bread-breaking145-20261110.ts",
+    "./reserve-bread-breaking145-20261110.ts",
+    "./prepare-reserve-bread-cuffs146-20261110.ts",
+    "./import-bread-breaking146-20261110.ts",
+    "./normalize-bread146-frame-format-20261110.ts",
+    "./generate-bread-breaking-draft199-20261110.ts",
+    "./choose-bread199-reserve-end147-20261110.ts",
+    "./generate-bread-breaking-final200-guided-20261110.ts",
+    "./review-bread-breaking200-20261110.ts",
+    "./hold-bread200-piece-continuity-20261110.ts",
+    "./generate-bread-breaking-final201-continuous-half-20261110.ts",
+    "./review-bread-breaking201-20261110.ts"
+  ]
+}

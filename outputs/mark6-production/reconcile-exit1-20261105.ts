@@ -1,0 +1,20 @@
+import {existsSync,readFileSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {getDb,getDataDir} from '../../src/db/client.js';
+import {appendReasoningReceipt,assertNoUncertainReasoning} from '../../src/pipeline/creative-direction/reasoning-receipts.js';
+const db=getDb(),projectId='c457a815-d07d-4902-91b5-7b936b549856',runId='172aaf7e-c3bb-4ab1-91bd-970ec2ffb19c';
+const eventId=runId+':script_supervisor:1:task-1:evidence-0';
+const run=db.prepare('SELECT status,worker_pid,result_json FROM production_runs WHERE id=?').get(runId)!;
+if(run.status!=='incomplete'||!String(run.result_json).includes('Codex exited with code 1'))throw Error('Expected completed unsuccessful transport');
+try{process.kill(Number(run.worker_pid),0);throw Error('Worker remains active');}catch(e){if((e as NodeJS.ErrnoException).code!=='ESRCH')throw e;}
+const path=join(getDataDir(),'assets/preparation/crew-reasoning',projectId,eventId.replaceAll(':','_'));
+if(!existsSync(join(path,'request.json'))||existsSync(join(path,'response.jsonl')))throw Error('Inspect existing response before terminal reconciliation');
+const request=JSON.parse(readFileSync(join(path,'request.json'),'utf8'));
+const row=db.prepare("SELECT payload FROM edit_commands WHERE project_id=? AND command_type='submit_crew_reasoning' AND json_extract(payload,'$.eventId')=?").get(projectId,eventId)!;
+const submitted=JSON.parse(String(row.payload));
+if(submitted.input.sha256!==request.input.sha256)throw Error('Input evidence mismatch');
+const receipt={provider:'codex_cli',transport:'exited_unsuccessfully_code_1_original_adapter_discarded_stdout',resultAccepted:false,providerSuccessClaimed:false,actualTokenUsage:null,allowanceUsage:'unreported, not zero',costUsd:null,submissionRetained:true,physicalRequestsRetained:1,billing:'Existing ChatGPT authenticated route; API keys removed. No purchase, reset or paid fallback.',recovery:'One controlled retry under a new request ID after transport diagnostic passed; new adapter preserves failed stdout. Do not fabricate or accept the missing result.'};
+if(!db.prepare("SELECT id FROM edit_commands WHERE project_id=? AND command_type='complete_crew_reasoning' AND json_extract(payload,'$.eventId')=?").get(projectId,eventId))appendReasoningReceipt(db,projectId,eventId,'complete_crew_reasoning',receipt);
+assertNoUncertainReasoning(db,projectId);
+writeFileSync('outputs/mark6-production/codex-exit1-terminal-reconciliation-20261105.json',JSON.stringify({eventId,...receipt},null,2));
+console.log(JSON.stringify({terminalFailureReconciled:true,resultAccepted:false,usage:'unreported',newProviderCalls:0}));db.close();
