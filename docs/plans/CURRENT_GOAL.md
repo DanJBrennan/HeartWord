@@ -1,3 +1,18 @@
+# Current goal: stopped after retained-media canary
+
+November15: Dan authorized retained-media canary checks only. The first fresh
+neutral model review cleared known speech activity/rest concerns and confused
+file endpoints with source-boundary verification. The shared QC gate held the
+clip, but the semantic review canary did not pass. Stop before new generation.
+
+See [the completed canary report](completed/mark6-retained-media-canary-20261115.md).
+One review, estimated$0.011300; no further reviews/retries, application fixes,
+production mutations, new-media canary or regeneration. Both forensic checkpoints,
+all production evidence and approved Mark5 remain preserved. All3uncertain Hatam
+seams remain held. This record exists only in the isolated canary worktree.
+
+---
+
 # Current goal: Mark6 QC recovery gates; production remains held
 
 Dan authorized only the three-unit QC plan in an isolated worktree from82850d5.
